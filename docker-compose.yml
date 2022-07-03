@@ -1,0 +1,9 @@
+version: '3.4'
+
+services:
+    mb4-web:
+        build: .
+        image: mb4-web:1.0
+        container_name: mb4-web-container
+        ports:
+            - "3000:80"

@@ -36,7 +36,7 @@ function buildImageProps(mediaObj, type) {
             height: project.image_props.HEIGHT + 'px',
             backgroundSize: '25px',
             backgroundRepeat: 'no-repeat',
-            backgroundImage: 'url(' + '/src/assets/images/loader.png' + ')',
+            backgroundImage: 'url(' + '/images/loader.png' + ')',
             backgroundPosition: '10px 10px',
           }"
           class="card-img-top"

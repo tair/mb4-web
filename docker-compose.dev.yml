@@ -1,0 +1,11 @@
+version: '3.4'
+
+services:
+    mb4-web-dev:
+        build: 
+            context: .
+            target: dev-stage
+        image: mb4-web-dev:1.0
+        container_name: mb4-web-container-dev
+        ports:
+            - "3001:3000"

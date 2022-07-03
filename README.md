@@ -22,8 +22,26 @@ npm install
 npm run dev
 ```
 
+### Compile and Hot-Reload for Development With Container
+
+```sh
+docker compose -f docker-compose.dev.yml up
+```
+
 ### Compile and Minify for Production
 
 ```sh
 npm run build
+```
+
+### Compile and Minify for Production With Container - Build Only
+
+```sh
+docker build -t mb4-web:<version_number> .
+```
+
+### Compile and Minify for Production With Container - Host As a Server
+
+```sh
+docker-compose up --build
 ```

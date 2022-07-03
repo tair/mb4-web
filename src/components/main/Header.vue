@@ -19,7 +19,7 @@ function onLogout() {
     >
       <div class="container">
         <a class="navbar-brand" href="#">
-          <img :src="`/src/assets/images/mb-logo.gif`" height="80" />
+          <img :src="`/images/mb-logo.gif`" height="80" />
         </a>
         <button
           class="navbar-toggler"

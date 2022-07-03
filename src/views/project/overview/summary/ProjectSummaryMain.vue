@@ -41,7 +41,7 @@ function formatBytes(bytes, decimals = 2) {
           height: projectStore.overview.image_props.HEIGHT + 'px',
           backgroundSize: '20px',
           backgroundRepeat: 'no-repeat',
-          backgroundImage: 'url(' + '/src/assets/images/loader.png' + ')',
+          backgroundImage: 'url(' + '/images/loader.png' + ')',
           backgroundPosition: '10px 10px',
         }"
         class="col-md-4 m-3 mt-1 ms-0 me-3 rounded float-sm-start"

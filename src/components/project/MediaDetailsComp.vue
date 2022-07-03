@@ -39,7 +39,7 @@ function buildImageProps(mediaObj, type) {
             height: media_file.media['medium'].HEIGHT + 'px',
             backgroundSize: '20px',
             backgroundRepeat: 'no-repeat',
-            backgroundImage: 'url(' + '/src/assets/images/loader.png' + ')',
+            backgroundImage: 'url(' + '/images/loader.png' + ')',
             backgroundPosition: '10px 10px',
           }"
           class="card-img-top"
@@ -120,7 +120,7 @@ function buildImageProps(mediaObj, type) {
           height: media_file.media.thumbnail.HEIGHT + 'px',
           backgroundSize: '20px',
           backgroundRepeat: 'no-repeat',
-          backgroundImage: 'url(' + '/src/assets/images/loader.png' + ')',
+          backgroundImage: 'url(' + '/images/loader.png' + ')',
           backgroundPosition: '10px 10px',
         }"
         class="card-img-top"
