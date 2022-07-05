@@ -25,7 +25,7 @@ npm run dev
 ### Compile and Hot-Reload for Development With Container
 
 ```sh
-docker compose -f docker-compose.dev.yml up
+docker compose -f docker-compose.dev.yml up --build
 ```
 
 ### Compile and Minify for Production
