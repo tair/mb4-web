@@ -24,6 +24,8 @@ npm run dev
 
 ### Compile and Hot-Reload for Development With Container
 
+The container is accessible on http://localhost:3000/
+
 ```sh
 docker compose -f docker-compose.dev.yml up --build
 ```
@@ -41,6 +43,8 @@ docker build -t mb4-web:<version_number> .
 ```
 
 ### Compile and Minify for Production With Container - Host As a Server
+
+The container is accessible on http://localhost:4000/
 
 ```sh
 docker-compose up --build
