@@ -61,7 +61,7 @@ const props = defineProps({
         'list-group-item',
       ]"
     >
-      <RouterLink class="nav-link m-0 p-0" :to="`/project/media/${project_id}`"
+      <RouterLink class="nav-link m-0 p-0" :to="`/project/${project.project_id}/media`"
         >Media</RouterLink
       >
     </li>
@@ -76,7 +76,7 @@ const props = defineProps({
     >
       <RouterLink
         class="nav-link m-0 p-0"
-        :to="`/project/media_views/${project_id}`"
+        :to="`/project/${project.project_id}/views`"
         >Views of Media</RouterLink
       >
     </li>

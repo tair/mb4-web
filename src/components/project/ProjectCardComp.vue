@@ -68,7 +68,7 @@ function buildImageProps(mediaObj, type) {
         </div>
         <div class="col d-flex align-items-stretch">
           <RouterLink
-            :to="`/project/media/${project.project_id}`"
+            :to="`/project/${project.project_id}/media`"
             class="nav-link p-0"
           >
             <i class="bi bi-camera"></i>
