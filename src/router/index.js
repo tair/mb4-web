@@ -17,6 +17,7 @@ import UserView from "@/views/users/UserView.vue";
 import AdminHomeView from "@/views/admin/AdminHomeView.vue";
 import ProjectView from "@/views/project/ProjectView.vue";
 import MyProjectsView from "@/views/project/MyProjectsView.vue";
+import MyProjectMatrixView from "@/views/project/MyProjectMatrixView.vue";
 import UserProfileView from "@/views/users/UserProfileView.vue";
 import UserRegistrationView from "@/views/users/UserRegistrationView.vue";
 import AskUsView from "@/views/misc/AskUsView.vue";
@@ -136,6 +137,13 @@ const router = createRouter({
           return { name: "UserLogin" };
         }
       },
+      children: [
+        {
+          path: ":id/matrix",
+          name: "MyProjectMatrixView",
+          component: MyProjectMatrixView,
+        }
+      ]
     },
     {
       path: "/project",
@@ -149,42 +157,42 @@ const router = createRouter({
         },
 
         {
-          path: "overview/:id",
+          path: ":id/overview",
           name: "ProjectOverviewView",
           component: ProjectOverviewView,
         },
         {
-          path: "matrices/:id",
+          path: ":id/matrices",
           name: "ProjectMatrixView",
           component: ProjectMatrixView,
         },
         {
-          path: "media/:id",
+          path: ":id/media",
           name: "ProjectMediaView",
           component: ProjectMediaView,
         },
         {
-          path: "media_views/:id",
+          path: ":id/views",
           name: "ProjectMediaViewsView",
           component: ProjectMediaViewsView,
         },
         {
-          path: "specimens/:id",
+          path: ":id/specimens",
           name: "ProjectSpecimenView",
           component: ProjectSpecimenView,
         },
         {
-          path: "taxa/:id",
+          path: ":id/taxa",
           name: "ProjectTaxaView",
           component: ProjectTaxaView,
         },
         {
-          path: "bibliography/:id",
+          path: ":id/bibliography",
           name: "ProjectBibliographyView",
           component: ProjectBibliographyView,
         },
         {
-          path: "docs/:id",
+          path: ":id/documents",
           name: "ProjectDocumentView",
           component: ProjectDocumentView,
         },

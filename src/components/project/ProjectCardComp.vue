@@ -27,7 +27,7 @@ function buildImageProps(mediaObj, type) {
 
 <template>
   <div class="card shadow" style="width: 18rem">
-    <RouterLink :to="`/project/overview/${project.project_id}`">
+    <RouterLink :to="`/project/${project.project_id}/overview`">
       <div class="border-bottom" style="height: 145px">
         <img
           :src="buildImageProps(project.image_props)"
@@ -57,42 +57,38 @@ function buildImageProps(mediaObj, type) {
       <div class="row align-items-stretch">
         <div class="col d-flex align-items-stretch">
           <RouterLink
-            :to="`/project/docs/${project.project_id}`"
-            class="nav-link p-0"
-          >
+            :to="`/project/${project.project_id}/docs`"
+            class="nav-link p-0">
             <i class="bi bi-files"></i>
-            <small class="text-nowrap ms-1"
-              >{{ project.project_stats.docs }} documents</small
-            >
+            <small class="text-nowrap ms-1">
+              {{ project.project_stats.docs }} documents
+            </small>
           </RouterLink>
         </div>
         <div class="col d-flex align-items-stretch">
           <RouterLink
             :to="`/project/${project.project_id}/media`"
-            class="nav-link p-0"
-          >
+            class="nav-link p-0">
             <i class="bi bi-camera"></i>
             <small class="text-nowrap ms-1"
               >{{ project.project_stats.media }} media</small
-            ></RouterLink
-          >
-        </div>
-        <div class="col d-flex align-items-stretch">
-          <RouterLink
-            :to="`/project/matrices/${project.project_id}`"
-            class="nav-link p-0"
-          >
-            <i class="bi bi-badge-3d"></i>
-            <small class="text-nowrap ms-1"
-              >{{ project.project_stats.matrices }} matrices</small
             >
           </RouterLink>
         </div>
         <div class="col d-flex align-items-stretch">
           <RouterLink
-            :to="`/project/overview/${project.project_id}`"
-            class="nav-link p-0"
-          >
+            :to="`/project/${project.project_id}/matrices`"
+            class="nav-link p-0">
+            <i class="bi bi-badge-3d"></i>
+            <small class="text-nowrap ms-1">
+              {{ project.project_stats.matrices }} matrices
+            </small>
+          </RouterLink>
+        </div>
+        <div class="col d-flex align-items-stretch">
+          <RouterLink
+            :to="`/project/${project.project_id}/overview`"
+            class="nav-link p-0">
             <i class="bi bi-house"></i>
             <small class="text-nowrap ms-1">Home</small>
           </RouterLink>
