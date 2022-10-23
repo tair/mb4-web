@@ -17,6 +17,7 @@ import UserView from "@/views/users/UserView.vue";
 import AdminHomeView from "@/views/admin/AdminHomeView.vue";
 import ProjectView from "@/views/project/ProjectView.vue";
 import MyProjectsView from "@/views/project/MyProjectsView.vue";
+import MyProjectHomeView from "@/views/project/MyProjectHomeView.vue";
 import MyProjectMatrixView from "@/views/project/MyProjectMatrixView.vue";
 import UserProfileView from "@/views/users/UserProfileView.vue";
 import UserRegistrationView from "@/views/users/UserRegistrationView.vue";
@@ -139,10 +140,15 @@ const router = createRouter({
       },
       children: [
         {
+          path: ":id",
+          name: "MyProjectHomeView",
+          component: MyProjectHomeView,
+        },
+        {
           path: ":id/matrix",
           name: "MyProjectMatrixView",
           component: MyProjectMatrixView,
-        }
+        },
       ]
     },
     {

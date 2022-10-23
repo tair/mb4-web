@@ -29,8 +29,6 @@ function buildImageProps(mediaObj, type) {
 
 <template>
   <div class="card shadow">
-    <!-- <RouterLink :to="`/project/overview/${project.project_id}`"> -->
-
     <div class="m-1">
       <img
         :src="buildImageProps(media_file.media.thumbnail)"
