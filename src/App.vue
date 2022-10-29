@@ -30,7 +30,7 @@ onMounted(() => {
 html,
 body {
   font-family: "Open Sans", sans-serif;
-  font-size: small;
+  font-size: x-small;
 }
 main > .container {
   padding: 130px 10px 60px;
@@ -69,5 +69,17 @@ a:hover {
 .card-header {
   color: white;
   background-color: #ef782f;
+}
+
+.btn-warning,
+.btn-warning:disabled {
+  background-color: #ef782f;
+  border: #ef782f;
+  color: white;
+}
+
+.btn-warning:hover {
+  background-color: #d86c13;
+  color: white;
 }
 </style>
