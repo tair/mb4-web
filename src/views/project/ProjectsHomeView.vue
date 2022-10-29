@@ -44,6 +44,23 @@ watch(selectedPageSize, (currentValue, oldValue) => {
       downloaded data in the last thirty days.
     </div>
 
+    <div class="d-grid gap-2 d-md-flex">
+      <button type="button" class="btn btn-warning btn-sm">
+        Publication Date
+      </button>
+      <button type="button" class="btn btn-secondary btn-sm">
+        Project Number
+      </button>
+      <button type="button" class="btn btn-secondary btn-sm">
+        Project title
+      </button>
+      <button type="button" class="btn btn-secondary btn-sm">Author</button>
+      <button type="button" class="btn btn-secondary btn-sm">
+        Publication
+      </button>
+      <button type="button" class="btn btn-secondary btn-sm">Popular</button>
+    </div>
+
     <div class="d-flex justify-content-end">
       <div class="me-5">
         Showing page

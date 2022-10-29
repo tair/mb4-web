@@ -8,6 +8,10 @@ export const useProjectsStore = defineStore({
     projects: null,
     err: null,
 
+    /// browse data ////
+    titles: null,
+    ///////////////
+
     // pagination info //
     projectList: null,
     currentPage: 1,
@@ -52,6 +56,24 @@ export const useProjectsStore = defineStore({
       } catch (e) {
         console.error(`store:projects:fetchProjects(): ${e}`);
         this.err = "Error fetching project list.";
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async fetchProjectTitles(sort_by) {
+      this.loading = true;
+      this.err = null;
+
+      try {
+        const url = `${
+          import.meta.env.VITE_API_URL
+        }/public/projects/titles/${sort_by}`;
+        const res = await axios.get(url);
+        this.titles = res.data;
+      } catch (e) {
+        console.error(`store:projects:fetchProjectTitles()`);
+        this.err = "Error fetching project titles.";
       } finally {
         this.loading = false;
       }
