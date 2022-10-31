@@ -2,6 +2,7 @@
 import { ref, onMounted } from "vue";
 import { useProjectsStore } from "@/stores/storeProjects.js";
 import GenericLoaderComp from "../../components/project/GenericLoaderComp.vue";
+import ProjectMenuComp from "../../components/project/ProjectMenuComp.vue";
 import { RouterLink, useRoute } from "vue-router";
 
 const route = useRoute();
@@ -38,24 +39,8 @@ function onSorted(sort) {
       downloaded data in the last thirty days.
     </div>
 
-    <div class="d-grid gap-2 d-md-flex mb-4">
-      <button type="button" class="btn btn-secondary btn-sm">
-        Publication Date
-      </button>
-      <button type="button" class="btn btn-secondary btn-sm">
-        Project Number
-      </button>
-      <button type="buttons" class="btn btn-warning btn-sm">
-        Project title
-      </button>
-      <button type="button" class="btn btn-secondary btn-sm">Author</button>
-      <button type="button" class="btn btn-secondary btn-sm">
-        Publication
-      </button>
-      <button type="button" class="btn btn-secondary btn-sm">Popular</button>
-
-      <div style="width: 30px"></div>
-
+    <div class="d-flex justify-content-between">
+      <ProjectMenuComp menuItem="prj-title"></ProjectMenuComp>
       <div class="d-grid gap-1 d-md-flex">
         <a
           href="#"
@@ -74,7 +59,7 @@ function onSorted(sort) {
     </div>
 
     <div class="list-group" :key="n" v-for="(title, n) in projectsStore.titles">
-      <div class="list-group-item list-group-item-action">
+      <div class="list-group-item list-group-item-action mb-1">
         <div class="row">
           <div class="col-2">Project {{ title.project_id }}:</div>
 
