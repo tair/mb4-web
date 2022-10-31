@@ -11,6 +11,7 @@ export const useProjectsStore = defineStore({
     /// browse data ////
     titles: null,
     authors: "",
+    journals: "",
     ///////////////
 
     // pagination info //
@@ -109,6 +110,27 @@ export const useProjectsStore = defineStore({
       } catch (e) {
         console.error(`store:projects:fetchProjectAuthor()`);
         this.err = "Error fetching project authors.";
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async fetchProjectJournal() {
+      // if already loaded, return them.
+      if (this.journals) return this.journals;
+
+      this.loading = true;
+      this.err = null;
+
+      try {
+        const url = `${
+          import.meta.env.VITE_API_URL
+        }/public/projects/journals_projects`;
+        const res = await axios.get(url);
+        this.journals = res.data;
+      } catch (e) {
+        console.error(`store:projects:fetchProjectJournal()`);
+        this.err = "Error fetching project journals.";
       } finally {
         this.loading = false;
       }

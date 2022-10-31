@@ -10,17 +10,20 @@ const projectsStore = useProjectsStore();
 let idx = 0;
 
 onMounted(() => {
-  projectsStore.fetchProjectAuthor();
+  projectsStore.fetchProjectJournal();
 });
 
 // normalize the string (convert diacritics to ascii chars)
 // then return the first char
 function getNormalizedCharAt1(str) {
-  return str
-    .split("|")[1]
-    .charAt(0)
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+  try {
+    return str
+      .charAt(0)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  } catch (e) {
+    return str;
+  }
 }
 
 let prev_char = "";
@@ -29,7 +32,7 @@ let prev_char = "";
 <template>
   <GenericLoaderComp
     :isLoading="projectsStore.isLoading"
-    :errorMessage="!projectsStore.err ? null : 'No project authors available.'"
+    :errorMessage="!projectsStore.err ? null : 'No project journals available.'"
   >
     <div class="mb-3">
       There are {{ projectsStore.projects?.length }} publicly accessible
@@ -43,23 +46,29 @@ let prev_char = "";
     </div>
 
     <div class="d-flex justify-content-between">
-      <ProjectMenuComp menuItem="author"></ProjectMenuComp>
+      <ProjectMenuComp menuItem="publication"></ProjectMenuComp>
     </div>
 
-    <div v-if="projectsStore.authors != ''">
+    <div v-if="projectsStore.journals != ''">
       <div class="mb-3 text-black-50 fw-bold">
-        {{ Object.keys(projectsStore.authors["authors"]).length }} authors have
-        published data in MorphoBank
+        {{ Object.keys(projectsStore.journals["journals"]).length }} journals
+        have published data in MorphoBank
       </div>
 
-      <div class="d-grid gap-2 d-md-flex _offset2" id="top">
-        <div :key="n" v-for="(char, n) in projectsStore.authors.chars">
+      <div class="d-grid gap-2 d-md-flex _offset2 mb-4" id="top">
+        <div :key="n" v-for="(char, n) in projectsStore.journals.chars">
           <a :href="`#${char}`" class="fw-bold">{{ char }}</a>
         </div>
       </div>
 
-      <div :key="n" v-for="(author, n) in projectsStore.authors['authors']">
-        <div class="fw-bold mt-3" v-if="prev_char != getNormalizedCharAt1(n)">
+      <div :key="n" v-for="(author, n) in projectsStore.journals['journals']">
+        <div
+          class="fw-bold mt-3"
+          v-if="
+            /[a-zA-Z]/.test(getNormalizedCharAt1(n)) &&
+            prev_char != getNormalizedCharAt1(n)
+          "
+        >
           <a :id="`${getNormalizedCharAt1(n)}`" href="#top">
             <p class="_offset">
               {{ (prev_char = getNormalizedCharAt1(n)) }}
@@ -82,7 +91,7 @@ let prev_char = "";
                 <div style="width: 5px"></div>
                 <small>
                   ({{
-                    projectsStore.authors["authors"][n].length + ` projects`
+                    projectsStore.journals["journals"][n].length + ` projects`
                   }})
                 </small>
               </button>
@@ -95,7 +104,7 @@ let prev_char = "";
               <div class="accordion-body p-0">
                 <ul
                   class="list-group list-group-flush"
-                  v-for="(project, n) in projectsStore.authors['authors'][n]"
+                  v-for="(project, n) in projectsStore.journals['journals'][n]"
                   :key="n"
                 >
                   <li
