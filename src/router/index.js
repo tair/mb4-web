@@ -7,6 +7,7 @@ import ProjectTaxaView from "@/views/project/ProjectTaxaView.vue";
 import ProjectsHomeView from "@/views/project/ProjectsHomeView.vue";
 import ProjectTitleView from "@/views/project/ProjectTitleView.vue";
 import ProjectAuthorView from "@/views/project/ProjectAuthorView.vue";
+import ProjectJournalView from "@/views/project/ProjectJournalView.vue";
 import ProjectBibliographyView from "@/views/project/ProjectBibliographyView.vue";
 import ProjectDocumentView from "@/views/project/ProjectDocumentView.vue";
 import ProjectMatrixView from "@/views/project/ProjectMatrixView.vue";
@@ -173,6 +174,11 @@ const router = createRouter({
           path: "author",
           name: "ProjectAuthorView",
           component: ProjectAuthorView,
+        },
+        {
+          path: "journal",
+          name: "ProjectJournalView",
+          component: ProjectJournalView,
         },
         {
           path: ":id/overview",

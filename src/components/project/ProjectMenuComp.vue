@@ -63,7 +63,7 @@ const props = defineProps({
     </div>
 
     <RouterLink
-      :to="`/project`"
+      :to="`/project/journal`"
       class="nav-link p-0"
       v-if="menuItem != 'publication'"
     >
