@@ -41,6 +41,24 @@ function onSorted(sort) {
 
     <div class="d-flex justify-content-between">
       <ProjectMenuComp menuItem="prj-title"></ProjectMenuComp>
+    <div class="d-grid gap-2 d-md-flex mb-4">
+      <button type="button" class="btn btn-secondary btn-sm">
+        Publication Date
+      </button>
+      <button type="button" class="btn btn-secondary btn-sm">
+        Project Number
+      </button>
+      <button type="buttons" class="btn btn-warning btn-sm">
+        Project title
+      </button>
+      <button type="button" class="btn btn-secondary btn-sm">Author</button>
+      <button type="button" class="btn btn-secondary btn-sm">
+        Publication
+      </button>
+      <button type="button" class="btn btn-secondary btn-sm">Popular</button>
+
+      <div style="width: 30px"></div>
+
       <div class="d-grid gap-1 d-md-flex">
         <a
           href="#"
@@ -60,6 +78,7 @@ function onSorted(sort) {
 
     <div class="list-group" :key="n" v-for="(title, n) in projectsStore.titles">
       <div class="list-group-item list-group-item-action mb-1">
+      <div class="list-group-item list-group-item-action">
         <div class="row">
           <div class="col-2">Project {{ title.project_id }}:</div>
 
