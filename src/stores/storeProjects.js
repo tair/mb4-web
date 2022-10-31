@@ -10,6 +10,7 @@ export const useProjectsStore = defineStore({
 
     /// browse data ////
     titles: null,
+    authors: "",
     ///////////////
 
     // pagination info //
@@ -62,6 +63,19 @@ export const useProjectsStore = defineStore({
     },
 
     async fetchProjectTitles(sort_by) {
+      // if already loaded, return them.
+      if (this.titles) {
+        this.titles.sort((a, b) => {
+          const nameA = a.name.trim().toUpperCase(); // ignore upper and lowercase
+          const nameB = b.name.trim().toUpperCase(); // ignore upper and lowercase
+          if (nameA < nameB) return sort_by == "asc" ? -1 : 1;
+          if (nameA > nameB) return sort_by != "asc" ? -1 : 1;
+          return 0;
+        });
+
+        return this.titles;
+      }
+
       this.loading = true;
       this.err = null;
 
@@ -74,6 +88,27 @@ export const useProjectsStore = defineStore({
       } catch (e) {
         console.error(`store:projects:fetchProjectTitles()`);
         this.err = "Error fetching project titles.";
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async fetchProjectAuthor() {
+      // if already loaded, return them.
+      if (this.authors) return this.authors;
+
+      this.loading = true;
+      this.err = null;
+
+      try {
+        const url = `${
+          import.meta.env.VITE_API_URL
+        }/public/projects/authors_projects`;
+        const res = await axios.get(url);
+        this.authors = res.data;
+      } catch (e) {
+        console.error(`store:projects:fetchProjectAuthor()`);
+        this.err = "Error fetching project authors.";
       } finally {
         this.loading = false;
       }

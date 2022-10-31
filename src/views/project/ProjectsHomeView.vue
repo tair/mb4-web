@@ -2,6 +2,7 @@
 import { ref, watch, onMounted } from "vue";
 import { useProjectsStore } from "@/stores/storeProjects.js";
 import GenericLoaderComp from "../../components/project/GenericLoaderComp.vue";
+import ProjectMenuComp from "../../components/project/ProjectMenuComp.vue";
 import ProjectCardComp from "../../components/project/ProjectCardComp.vue";
 import { useRoute } from "vue-router";
 
@@ -44,6 +45,8 @@ watch(selectedPageSize, (currentValue, oldValue) => {
       downloaded data in the last thirty days.
     </div>
 
+    <div class="d-flex justify-content-between">
+      <ProjectMenuComp menuItem="pub-date"></ProjectMenuComp>
     <div class="d-grid gap-2 d-md-flex">
       <button type="button" class="btn btn-warning btn-sm">
         Publication Date
@@ -76,17 +79,32 @@ watch(selectedPageSize, (currentValue, oldValue) => {
         of {{ projectsStore.totalPages }} pages.
       </div>
 
-      <div>
-        Items per page:
-        <select v-model="selectedPageSize">
-          <option
-            :selected="idx == 10"
-            v-for="(idx, type) in [3, 5, 10, 25, 50, 100]"
-            :value="idx"
-          >
-            {{ idx }}
-          </option>
-        </select>
+      <div class="d-grid gap-1 d-md-flex">
+        <div class="me-3">
+          Items per page:
+          <select v-model="selectedPageSize">
+            <option
+              :selected="idx == 10"
+              v-for="(idx, type) in [3, 5, 10, 25, 50, 100]"
+              :value="idx"
+            >
+              {{ idx }}
+            </option>
+          </select>
+        </div>
+        <div>
+          Showing page
+          <select v-model="selectedPage">
+            <option
+              :selected="idx == 1"
+              v-for="(idx, type) in projectsStore.totalPages"
+              :value="idx"
+            >
+              {{ idx }}
+            </option>
+          </select>
+          of {{ projectsStore.totalPages }} pages
+        </div>
       </div>
     </div>
 
