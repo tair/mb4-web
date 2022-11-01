@@ -6,11 +6,6 @@ dist-ssr
 coverage
 *.local
 
-# local database data files and database environment files
-db-dev/*.sql
-!db-dev/schema.sql
-db-dev/*.env
-
 # env files
 *.env
 
