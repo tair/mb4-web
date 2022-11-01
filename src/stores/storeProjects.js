@@ -41,6 +41,38 @@ export const useProjectsStore = defineStore({
       }
     },
 
+    async sortProjectsByPublishedDate(sort_by) {
+      // load projects if not exists
+      if (!this.projects) await this.fetchProjects();
+
+      this.projects.sort((a, b) => {
+        if (a.published_on < b.published_on) return sort_by == "asc" ? -1 : 1;
+        if (a.published_on > b.published_on) return sort_by != "asc" ? -1 : 1;
+        return 0;
+      });
+
+      this.recalculatePageInfo();
+      this.fetchByPage(1);
+
+      return this.projects;
+    },
+
+    async sortProjectsByNumber(sort_by) {
+      // load projects if not exists
+      if (!this.projects) await this.fetchProjects();
+
+      this.projects.sort((a, b) => {
+        if (a.project_id < b.project_id) return sort_by == "asc" ? -1 : 1;
+        if (a.project_id > b.project_id) return sort_by != "asc" ? -1 : 1;
+        return 0;
+      });
+
+      this.recalculatePageInfo();
+      this.fetchByPage(1);
+
+      return this.projects;
+    },
+
     async fetchProjects() {
       // if already loaded, return them.
       if (this.projects) return this.projects;

@@ -18,8 +18,7 @@ const props = defineProps({
     <i class="bi bi-chevron-double-left me-1"></i>
     <RouterLink class="nav-link m-0 p-0" :to="`/project`">
       Browse projects
-    </RouterLink
-    >
+    </RouterLink>
   </div>
 
   <ul class="list-group list-group-item-action list-group-flush">
@@ -33,7 +32,8 @@ const props = defineProps({
     >
       <RouterLink
         class="nav-link m-0 p-0"
-        :to="`/project/${project_id}/overview`">
+        :to="`/project/${project_id}/overview`"
+      >
         Project Overview
       </RouterLink>
     </li>
@@ -48,7 +48,8 @@ const props = defineProps({
     >
       <RouterLink
         class="nav-link m-0 p-0"
-        :to="`/project/${project_id}/matrices`">
+        :to="`/project/${project_id}/matrices`"
+      >
         Matrices
       </RouterLink>
     </li>
@@ -72,9 +73,7 @@ const props = defineProps({
         'list-group-item',
       ]"
     >
-      <RouterLink
-        class="nav-link m-0 p-0"
-        :to="`/project/${project_id}/views`"
+      <RouterLink class="nav-link m-0 p-0" :to="`/project/${project_id}/views`"
         >Views of Media</RouterLink
       >
     </li>
@@ -89,7 +88,8 @@ const props = defineProps({
     >
       <RouterLink
         class="nav-link m-0 p-0"
-        :to="`/project/${project_id}/specimens`">
+        :to="`/project/${project_id}/specimens`"
+      >
         Specimens
       </RouterLink>
     </li>
@@ -102,8 +102,7 @@ const props = defineProps({
     >
       <RouterLink class="nav-link m-0 p-0" :to="`/project/${project_id}/taxa`">
         Taxa
-      </RouterLink
-      >
+      </RouterLink>
     </li>
 
     <li
@@ -116,10 +115,10 @@ const props = defineProps({
     >
       <RouterLink
         class="nav-link m-0 p-0"
-        :to="`/project/${project_id}/bibliography`">
-        Bibliography
-      </RouterLink
+        :to="`/project/${project_id}/bibliography`"
       >
+        Bibliography
+      </RouterLink>
     </li>
 
     <li
@@ -130,7 +129,10 @@ const props = defineProps({
         'list-group-item',
       ]"
     >
-      <RouterLink class="nav-link m-0 p-0" :to="`/project/${project_id}/documents`">
+      <RouterLink
+        class="nav-link m-0 p-0"
+        :to="`/project/${project_id}/documents`"
+      >
         Documents
       </RouterLink>
     </li>
