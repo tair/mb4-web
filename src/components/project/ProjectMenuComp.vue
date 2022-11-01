@@ -7,39 +7,43 @@ const props = defineProps({
 <template>
   <div class="d-grid gap-2 d-md-flex mb-3">
     <RouterLink
-      :to="`/project`"
+      :to="`/project/pub_date`"
       class="nav-link p-0"
-      v-if="menuItem != 'pub-date'"
+      v-if="menuItem != 'pub_date'"
     >
       <button type="button" class="btn btn-secondary btn-sm">
         Publication Date
       </button>
     </RouterLink>
     <div v-else>
-      <button type="button" class="btn btn-warning btn-sm">
-        Publication Date
-      </button>
+      <RouterLink :to="`/project/pub_date`" class="nav-link p-0">
+        <button type="button" class="btn btn-warning btn-sm">
+          Publication Date
+        </button>
+      </RouterLink>
     </div>
 
     <RouterLink
-      :to="`/project`"
+      :to="`/project/prj_no`"
       class="nav-link p-0"
-      v-if="menuItem != 'prj-no'"
+      v-if="menuItem != 'prj_no'"
     >
       <button type="button" class="btn btn-secondary btn-sm">
         Project Number
       </button>
     </RouterLink>
     <div v-else>
-      <button type="button" class="btn btn-warning btn-sm">
-        Project Number
-      </button>
+      <RouterLink :to="`/project/prj_no`" class="nav-link p-0">
+        <button type="button" class="btn btn-warning btn-sm">
+          Project Number
+        </button>
+      </RouterLink>
     </div>
 
     <RouterLink
       :to="`/project/title`"
       class="nav-link p-0"
-      v-if="menuItem != 'prj-title'"
+      v-if="menuItem != 'prj_title'"
     >
       <button type="button" class="btn btn-secondary btn-sm">
         Project title
@@ -76,7 +80,7 @@ const props = defineProps({
     </div>
 
     <RouterLink
-      :to="`/project`"
+      :to="`/project/pub_date`"
       class="nav-link p-0"
       v-if="menuItem != 'popular'"
     >

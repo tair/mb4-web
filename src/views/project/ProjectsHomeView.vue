@@ -8,13 +8,54 @@ import { useRoute } from "vue-router";
 
 const route = useRoute();
 const projectsStore = useProjectsStore();
+let sort_by = ref("desc");
+let is_asc = ref(false);
+let page_type = ref(route.path.split("/")[2]);
 
 onMounted(() => {
+  page_type.value = route.path.split("/")[2];
   projectsStore.fetchProjects();
+  projectsStore.sortProjectsByPublishedDate("desc");
 });
 
 let selectedPage = ref(projectsStore.currentPage);
 let selectedPageSize = ref(projectsStore.itemsPerPage);
+
+function log(msg) {
+  console.log(msg);
+}
+
+function onSorted(sort) {
+  // if (sort === sort_by.value) return;
+
+  sort_by.value = sort;
+  is_asc.value = sort === "asc" ? true : false;
+
+  if (page_type.value == "pub_date")
+    projectsStore.sortProjectsByPublishedDate(sort);
+  else if (page_type.value == "prj_no")
+    projectsStore.sortProjectsByNumber(sort);
+
+  selectedPage.value = 1;
+  selectedPageSize.value = 25;
+}
+
+watch(route, (currValue, oldValue) => {
+  let currPath = currValue.path.split("/")[2];
+  if (page_type.value == currPath) return;
+
+  page_type.value = currPath;
+
+  if (currPath == "prj_no") {
+    sort_by.value = "asc";
+    is_asc.value = true;
+  } else if (currPath == "pub_date") {
+    sort_by.value = "desc";
+    is_asc.value = false;
+  }
+
+  onSorted(sort_by.value);
+});
 
 watch(selectedPage, (currentValue, oldValue) => {
   projectsStore.currentPage = currentValue;
@@ -46,10 +87,26 @@ watch(selectedPageSize, (currentValue, oldValue) => {
     </div>
 
     <div class="d-flex justify-content-between">
-      <ProjectMenuComp menuItem="pub-date"></ProjectMenuComp>
+      <ProjectMenuComp :menuItem="page_type"></ProjectMenuComp>
+
+      <div class="d-grid gap-1 d-md-flex">
+        <a
+          href="#"
+          @click="onSorted('asc')"
+          :style="{ color: is_asc ? '#ef782f' : 'gray' }"
+          ><i class="fa-solid fa-arrow-up fa-xl"></i
+        ></a>
+
+        <a
+          href="#"
+          @click="onSorted('desc')"
+          :style="{ color: !is_asc ? '#ef782f' : 'gray' }"
+          ><i class="fa-solid fa-arrow-down fa-xl"></i
+        ></a>
+      </div>
     </div>
 
-    <div class="d-flex justify-content-end">
+    <div class="d-flex justify-content-end border-bottom border-top py-2">
       <div class="d-grid gap-1 d-md-flex">
         <div class="me-3">
           Items per page:

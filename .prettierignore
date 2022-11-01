@@ -1,0 +1,19 @@
+/data
+
+.DS_Store
+dist
+dist-ssr
+coverage
+*.local
+
+# env files
+*.env
+
+# Editor directories and files
+.vscode/*
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

@@ -9,7 +9,7 @@
           <li class="nav-item">
             <a class="nav-link p-1 me-3" href="#">
               Terms of use & Privary Policy
-              </a>
+            </a>
           </li>
           <li class="nav-item">
             <a class="nav-link p-1 me-3" href="#">API Documentation</a>
@@ -24,7 +24,8 @@
         hosted there from 2001-2021.
       </div>
       <div class="text-muted">
-        MorphoBank Version 4.0; &copy; The MorphoBank Project, {{new Date().getFullYear()}}
+        MorphoBank Version 4.0; &copy; The MorphoBank Project,
+        {{ new Date().getFullYear() }}
       </div>
     </div>
   </footer>

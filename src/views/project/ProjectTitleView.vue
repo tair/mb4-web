@@ -40,7 +40,7 @@ function onSorted(sort) {
     </div>
 
     <div class="d-flex justify-content-between">
-      <ProjectMenuComp menuItem="prj-title"></ProjectMenuComp>
+      <ProjectMenuComp menuItem="prj_title"></ProjectMenuComp>
 
       <div class="d-grid gap-1 d-md-flex">
         <a

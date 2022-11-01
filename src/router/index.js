@@ -161,8 +161,13 @@ const router = createRouter({
 
       children: [
         {
-          path: "",
-          name: "ProjectsHomeView",
+          path: "pub_date",
+          name: "ProjectPubDateView",
+          component: ProjectsHomeView,
+        },
+        {
+          path: "prj_no",
+          name: "ProjectNoView",
           component: ProjectsHomeView,
         },
         {
