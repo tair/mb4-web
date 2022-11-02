@@ -5,7 +5,7 @@ const props = defineProps({
 </script>
 
 <template>
-  <div class="d-grid gap-2 d-md-flex mb-3">
+  <div class="d-grid gap-2 d-sm-flex mb-3">
     <RouterLink
       :to="`/project/pub_date`"
       class="nav-link p-0"

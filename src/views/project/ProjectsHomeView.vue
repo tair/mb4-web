@@ -89,7 +89,7 @@ watch(selectedPageSize, (currentValue, oldValue) => {
     <div class="d-flex justify-content-between">
       <ProjectMenuComp :menuItem="page_type"></ProjectMenuComp>
 
-      <div class="d-grid gap-1 d-md-flex">
+      <div class="d-grid gap-1 d-sm-flex">
         <a
           href="#"
           @click="onSorted('asc')"
@@ -107,7 +107,7 @@ watch(selectedPageSize, (currentValue, oldValue) => {
     </div>
 
     <div class="d-flex justify-content-end border-bottom border-top py-2">
-      <div class="d-grid gap-1 d-md-flex">
+      <div class="d-grid gap-1 d-sm-flex">
         <div class="me-3">
           Items per page:
           <select v-model="selectedPageSize">
