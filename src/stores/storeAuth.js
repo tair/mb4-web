@@ -1,8 +1,8 @@
-import axios from "axios";
-import { defineStore } from "pinia";
+import axios from 'axios'
+import { defineStore } from 'pinia'
 
 export const useAuthStore = defineStore({
-  id: "auth",
+  id: 'auth',
   state: () => ({
     err: null,
     user: {
@@ -14,52 +14,52 @@ export const useAuthStore = defineStore({
   }),
   getters: {
     isLoading(state) {
-      return state.loading;
+      return state.loading
     },
   },
   actions: {
     invalidate() {
-      this.user = null;
-      localStorage.removeItem("mb-user");
+      this.user = null
+      localStorage.removeItem('mb-user')
     },
 
     fetchLocalStore() {
-      let lsUser = localStorage.getItem("mb-user");
-      if (!lsUser) return;
+      let lsUser = localStorage.getItem('mb-user')
+      if (!lsUser) return
 
-      lsUser = JSON.parse(lsUser);
-      this.user = lsUser;
+      lsUser = JSON.parse(lsUser)
+      this.user = lsUser
     },
     async fetchUsers() {
-      if (!this.user?.authToken) throw new Error("Auth token is invalid!");
+      if (!this.user?.authToken) throw new Error('Auth token is invalid!')
 
-      const url = `http://localhost:8080/users`;
+      const url = `http://localhost:8080/users`
       try {
         const res = await axios.get(url, {
           headers: {
             Authorization: `Bearer ${this.user.authToken}`,
           },
-        });
-        console.log(res.data);
+        })
+        console.log(res.data)
       } catch (e) {
         console.error(
           `store:auth:fetchUsers(): ${e}\n${e.response.data.message}`
-        );
-        this.err = "Error while fetching users.";
+        )
+        this.err = 'Error while fetching users.'
       }
     },
 
     async login(email, password) {
-      this.loading = true;
-      this.err = null;
+      this.loading = true
+      this.err = null
 
       try {
-        const url = `http://localhost:8080/auth/login`;
+        const url = `http://localhost:8080/auth/login`
         const userObj = {
           email: email,
           password: password,
-        };
-        const res = await axios.post(url, userObj);
+        }
+        const res = await axios.post(url, userObj)
         // console.log(res);
 
         const uObj = {
@@ -67,20 +67,20 @@ export const useAuthStore = defineStore({
           userId: res.data.user.userId,
           userEmail: res.data.user.email,
           userName: res.data.user.name,
-        };
-        this.user = uObj;
+        }
+        this.user = uObj
 
-        localStorage.setItem("mb-user", JSON.stringify(uObj));
-        console.log("Login successful");
-        return true;
+        localStorage.setItem('mb-user', JSON.stringify(uObj))
+        console.log('Login successful')
+        return true
       } catch (e) {
-        console.error(`store:auth:login(): ${e}\n${e.response.data.message}`);
-        this.err = e.response.data.message;
-        return false;
+        console.error(`store:auth:login(): ${e}\n${e.response.data.message}`)
+        this.err = e.response.data.message
+        return false
       } finally {
-        this.loading = false;
+        this.loading = false
       }
-      return false;
+      return false
     },
   },
-});
+})

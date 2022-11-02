@@ -1,12 +1,12 @@
 <script setup>
-import { useAuthStore } from "@/stores/storeAuth.js";
-import router from "../../router";
-const authStore = useAuthStore();
+import { useAuthStore } from '@/stores/storeAuth.js'
+import router from '../../router'
+const authStore = useAuthStore()
 
 function onLogout() {
-  console.log("Log out...");
-  authStore.invalidate();
-  router.push({ path: "/users/login" });
+  console.log('Log out...')
+  authStore.invalidate()
+  router.push({ path: '/users/login' })
 }
 </script>
 

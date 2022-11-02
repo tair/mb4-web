@@ -1,29 +1,29 @@
 <script setup>
-import { ref, onMounted } from "vue";
-import { useProjectsStore } from "@/stores/storeProjects.js";
-import GenericLoaderComp from "../../components/project/GenericLoaderComp.vue";
-import ProjectMenuComp from "../../components/project/ProjectMenuComp.vue";
-import { RouterLink, useRoute } from "vue-router";
+import { ref, onMounted } from 'vue'
+import { useProjectsStore } from '@/stores/storeProjects.js'
+import GenericLoaderComp from '../../components/project/GenericLoaderComp.vue'
+import ProjectMenuComp from '../../components/project/ProjectMenuComp.vue'
+import { RouterLink, useRoute } from 'vue-router'
 
-const route = useRoute();
-const projectsStore = useProjectsStore();
-let idx = 0;
+const route = useRoute()
+const projectsStore = useProjectsStore()
+let idx = 0
 
 onMounted(() => {
-  projectsStore.fetchProjectAuthor();
-});
+  projectsStore.fetchProjectAuthor()
+})
 
 // normalize the string (convert diacritics to ascii chars)
 // then return the first char
 function getNormalizedCharAt1(str) {
   return str
-    .split("|")[1]
+    .split('|')[1]
     .charAt(0)
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
 }
 
-let prev_char = "";
+let prev_char = ''
 </script>
 
 <template>
@@ -48,7 +48,7 @@ let prev_char = "";
 
     <div v-if="projectsStore.authors != ''">
       <div class="mb-3 text-black-50 fw-bold">
-        {{ Object.keys(projectsStore.authors["authors"]).length }} authors have
+        {{ Object.keys(projectsStore.authors['authors']).length }} authors have
         published data in MorphoBank
       </div>
 
@@ -78,11 +78,11 @@ let prev_char = "";
                 aria-expanded="true"
                 :aria-controls="`collapse${idx}`"
               >
-                <div class="text-mb fw-bold">{{ n.replace("|", " ") }}</div>
+                <div class="text-mb fw-bold">{{ n.replace('|', ' ') }}</div>
                 <div style="width: 5px"></div>
                 <small>
                   ({{
-                    projectsStore.authors["authors"][n].length + ` projects`
+                    projectsStore.authors['authors'][n].length + ` projects`
                   }})
                 </small>
               </button>

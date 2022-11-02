@@ -10,7 +10,7 @@ const projectsStore = useProjectsStore()
 let idx = 0
 
 onMounted(() => {
-  projectsStore.fetchProjectJournal()
+  projectsStore.fetchProjectInstitutions()
 })
 
 // normalize the string (convert diacritics to ascii chars)
@@ -46,22 +46,25 @@ let prev_char = ''
     </div>
 
     <div class="d-flex justify-content-between">
-      <ProjectMenuComp menuItem="publication"></ProjectMenuComp>
+      <ProjectMenuComp menuItem="institution"></ProjectMenuComp>
     </div>
 
-    <div v-if="projectsStore.journals != ''">
+    <div v-if="projectsStore.institutions != ''">
       <div class="mb-3 text-black-50 fw-bold">
-        {{ Object.keys(projectsStore.journals['journals']).length }} journals
-        have published data in MorphoBank
+        {{ Object.keys(projectsStore.institutions['institutions']).length }}
+        institutions have publlished projects in MorphoBank
       </div>
 
-      <div class="d-grid gap-2 d-sm-flex _offset2 mb-4" id="top">
-        <div :key="n" v-for="(char, n) in projectsStore.journals.chars">
+      <div class="d-grid gap-2 d-md-flex _offset2 mb-4" id="top">
+        <div :key="n" v-for="(char, n) in projectsStore.institutions.chars">
           <a :href="`#${char}`" class="fw-bold">{{ char }}</a>
         </div>
       </div>
 
-      <div :key="n" v-for="(author, n) in projectsStore.journals['journals']">
+      <div
+        :key="n"
+        v-for="(author, n) in projectsStore.institutions['institutions']"
+      >
         <div
           class="fw-bold mt-3"
           v-if="
@@ -87,11 +90,12 @@ let prev_char = ''
                 aria-expanded="true"
                 :aria-controls="`collapse${idx}`"
               >
-                <div class="text-mb fw-bold">{{ n.replace('|', ' ') }}</div>
+                <div class="text-mb fw-bold">{{ n }}</div>
                 <div style="width: 5px"></div>
                 <small>
                   ({{
-                    projectsStore.journals['journals'][n].length + ` projects`
+                    projectsStore.institutions['institutions'][n].length +
+                    ` projects`
                   }})
                 </small>
               </button>
@@ -104,7 +108,9 @@ let prev_char = ''
               <div class="accordion-body p-0">
                 <ul
                   class="list-group list-group-flush"
-                  v-for="(project, n) in projectsStore.journals['journals'][n]"
+                  v-for="(project, n) in projectsStore.institutions[
+                    'institutions'
+                  ][n]"
                   :key="n"
                 >
                   <li

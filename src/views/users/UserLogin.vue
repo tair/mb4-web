@@ -1,19 +1,19 @@
 <script setup>
-import { reactive } from "vue";
-import router from "../../router";
-import { useAuthStore } from "@/stores/storeAuth.js";
+import { reactive } from 'vue'
+import router from '../../router'
+import { useAuthStore } from '@/stores/storeAuth.js'
 
-const authStore = useAuthStore();
+const authStore = useAuthStore()
 
 const state = reactive({
-  email: "t@g.com",
-  password: "12345",
-});
+  email: 't@g.com',
+  password: '12345',
+})
 
 const submitForm = async () => {
-  const flag = await authStore.login(state.email, state.password);
-  if (flag) router.push({ path: "/myprojects" });
-};
+  const flag = await authStore.login(state.email, state.password)
+  if (flag) router.push({ path: '/myprojects' })
+}
 </script>
 
 <template>

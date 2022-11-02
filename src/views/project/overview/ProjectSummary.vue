@@ -1,6 +1,6 @@
 <script setup>
-import ProjectSummaryMain from "@/views/project/overview/summary/ProjectSummaryMain.vue";
-import ProjectSummaryRight from "@/views/project/overview/summary/ProjectSummaryRight.vue";
+import ProjectSummaryMain from '@/views/project/overview/summary/ProjectSummaryMain.vue'
+import ProjectSummaryRight from '@/views/project/overview/summary/ProjectSummaryRight.vue'
 </script>
 
 <template>

@@ -1,73 +1,72 @@
 <script setup>
-import { ref, watch, onMounted } from "vue";
-import { useProjectsStore } from "@/stores/storeProjects.js";
-import GenericLoaderComp from "../../components/project/GenericLoaderComp.vue";
-import ProjectMenuComp from "../../components/project/ProjectMenuComp.vue";
-import ProjectCardComp from "../../components/project/ProjectCardComp.vue";
-import { useRoute } from "vue-router";
+import { ref, watch, onMounted } from 'vue'
+import { useProjectsStore } from '@/stores/storeProjects.js'
+import GenericLoaderComp from '../../components/project/GenericLoaderComp.vue'
+import ProjectMenuComp from '../../components/project/ProjectMenuComp.vue'
+import ProjectCardComp from '../../components/project/ProjectCardComp.vue'
+import { useRoute } from 'vue-router'
 
-const route = useRoute();
-const projectsStore = useProjectsStore();
-let sort_by = ref("desc");
-let is_asc = ref(false);
-let page_type = ref(route.path.split("/")[2]);
+const route = useRoute()
+const projectsStore = useProjectsStore()
+let sort_by = ref('desc')
+let is_asc = ref(false)
+let page_type = ref(route.path.split('/')[2])
 
 onMounted(() => {
-  page_type.value = route.path.split("/")[2];
-  projectsStore.fetchProjects();
-  projectsStore.sortProjectsByPublishedDate("desc");
-});
+  page_type.value = route.path.split('/')[2]
+  projectsStore.fetchProjects()
+  projectsStore.sortProjectsByPublishedDate('desc')
+})
 
-let selectedPage = ref(projectsStore.currentPage);
-let selectedPageSize = ref(projectsStore.itemsPerPage);
+let selectedPage = ref(projectsStore.currentPage)
+let selectedPageSize = ref(projectsStore.itemsPerPage)
 
 function log(msg) {
-  console.log(msg);
+  console.log(msg)
 }
 
 function onSorted(sort) {
   // if (sort === sort_by.value) return;
 
-  sort_by.value = sort;
-  is_asc.value = sort === "asc" ? true : false;
+  sort_by.value = sort
+  is_asc.value = sort === 'asc' ? true : false
 
-  if (page_type.value == "pub_date")
-    projectsStore.sortProjectsByPublishedDate(sort);
-  else if (page_type.value == "prj_no")
-    projectsStore.sortProjectsByNumber(sort);
+  if (page_type.value == 'pub_date')
+    projectsStore.sortProjectsByPublishedDate(sort)
+  else if (page_type.value == 'prj_no') projectsStore.sortProjectsByNumber(sort)
 
-  selectedPage.value = 1;
-  selectedPageSize.value = 25;
+  selectedPage.value = 1
+  selectedPageSize.value = 25
 }
 
 watch(route, (currValue, oldValue) => {
-  let currPath = currValue.path.split("/")[2];
-  if (page_type.value == currPath) return;
+  let currPath = currValue.path.split('/')[2]
+  if (page_type.value == currPath) return
 
-  page_type.value = currPath;
+  page_type.value = currPath
 
-  if (currPath == "prj_no") {
-    sort_by.value = "asc";
-    is_asc.value = true;
-  } else if (currPath == "pub_date") {
-    sort_by.value = "desc";
-    is_asc.value = false;
+  if (currPath == 'prj_no') {
+    sort_by.value = 'asc'
+    is_asc.value = true
+  } else if (currPath == 'pub_date') {
+    sort_by.value = 'desc'
+    is_asc.value = false
   }
 
-  onSorted(sort_by.value);
-});
+  onSorted(sort_by.value)
+})
 
 watch(selectedPage, (currentValue, oldValue) => {
-  projectsStore.currentPage = currentValue;
-  projectsStore.fetchByPage();
-});
+  projectsStore.currentPage = currentValue
+  projectsStore.fetchByPage()
+})
 
 watch(selectedPageSize, (currentValue, oldValue) => {
-  projectsStore.itemsPerPage = currentValue;
-  projectsStore.currentPage = 1;
-  projectsStore.recalculatePageInfo();
-  projectsStore.fetchByPage();
-});
+  projectsStore.itemsPerPage = currentValue
+  projectsStore.currentPage = 1
+  projectsStore.recalculatePageInfo()
+  projectsStore.fetchByPage()
+})
 </script>
 
 <template>
