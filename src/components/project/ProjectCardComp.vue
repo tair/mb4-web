@@ -1,26 +1,26 @@
 <script setup>
-import { RouterLink } from "vue-router";
-import { onUpdated, onMounted } from "vue";
+import { RouterLink } from 'vue-router'
+import { onUpdated, onMounted } from 'vue'
 
 const props = defineProps({
   project: Object,
-});
+})
 
 function buildImageProps(mediaObj, type) {
   try {
-    let media = mediaObj;
-    if (type) media = mediaObj[type];
+    let media = mediaObj
+    if (type) media = mediaObj[type]
 
-    if (!media.HASH || !media.MAGIC || !media.FILENAME) return null;
+    if (!media.HASH || !media.MAGIC || !media.FILENAME) return null
 
     const url =
       `https://morphobank.org/media/morphobank3/` +
-      `images/${media.HASH}/${media.MAGIC}_${media.FILENAME}`;
+      `images/${media.HASH}/${media.MAGIC}_${media.FILENAME}`
 
-    return url;
+    return url
   } catch (e) {
-    console.error(e);
-    return null;
+    console.error(e)
+    return null
   }
 }
 </script>

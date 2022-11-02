@@ -1,6 +1,6 @@
 <script setup>
-import { useProjectStore } from "@/stores/storeProjectDetails.js";
-const projectStore = useProjectStore();
+import { useProjectStore } from '@/stores/storeProjectDetails.js'
+const projectStore = useProjectStore()
 </script>
 
 <template>
@@ -18,17 +18,17 @@ const projectStore = useProjectStore();
       <tbody>
         <tr>
           <th scope="row">Total project views</th>
-          <td>{{ projectStore.overview.project_views["total"] }}</td>
+          <td>{{ projectStore.overview.project_views['total'] }}</td>
           <td></td>
         </tr>
         <tr>
           <th scope="row">Project overview</th>
-          <td>{{ projectStore.overview.project_views["P"] }}</td>
+          <td>{{ projectStore.overview.project_views['P'] }}</td>
           <td></td>
         </tr>
         <tr>
           <th scope="row">Matrix views</th>
-          <td>{{ projectStore.overview.project_views["X"] }}</td>
+          <td>{{ projectStore.overview.project_views['X'] }}</td>
           <td>
             <span class="badge rounded-pill bg-secondary mx-2"
               >Matrix landing page (9796 views)</span
@@ -40,7 +40,7 @@ const projectStore = useProjectStore();
         </tr>
         <tr>
           <th scope="row">Media views</th>
-          <td>{{ projectStore.overview.project_views["M"] }}</td>
+          <td>{{ projectStore.overview.project_views['M'] }}</td>
           <td>
             <span class="badge rounded-pill bg-secondary mx-2"
               >M130184 (2 views)</span
@@ -70,27 +70,27 @@ const projectStore = useProjectStore();
 
         <tr>
           <th scope="row">Views for media list</th>
-          <td>{{ projectStore.overview.project_views["V"] }}</td>
+          <td>{{ projectStore.overview.project_views['V'] }}</td>
           <td></td>
         </tr>
         <tr>
           <th scope="row">Specimen list</th>
-          <td>{{ projectStore.overview.project_views["S"] }}</td>
+          <td>{{ projectStore.overview.project_views['S'] }}</td>
           <td></td>
         </tr>
         <tr>
           <th scope="row">Taxon list</th>
-          <td>{{ projectStore.overview.project_views["T"] }}</td>
+          <td>{{ projectStore.overview.project_views['T'] }}</td>
           <td></td>
         </tr>
         <tr>
           <th scope="row">Bibliography</th>
-          <td>{{ projectStore.overview.project_views["B"] }}</td>
+          <td>{{ projectStore.overview.project_views['B'] }}</td>
           <td></td>
         </tr>
         <tr>
           <th scope="row">Documents list</th>
-          <td>{{ projectStore.overview.project_views["D"] }}</td>
+          <td>{{ projectStore.overview.project_views['D'] }}</td>
           <td></td>
         </tr>
       </tbody>

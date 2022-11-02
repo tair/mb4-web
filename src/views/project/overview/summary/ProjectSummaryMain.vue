@@ -1,33 +1,33 @@
 <script setup>
-import { useProjectStore } from "@/stores/storeProjectDetails.js";
+import { useProjectStore } from '@/stores/storeProjectDetails.js'
 
-const projectStore = useProjectStore();
+const projectStore = useProjectStore()
 
 function buildImageProps(mediaObj, type) {
   try {
-    let media = mediaObj;
-    if (type) media = mediaObj[type];
+    let media = mediaObj
+    if (type) media = mediaObj[type]
 
-    if (!media.HASH || !media.MAGIC || !media.FILENAME) return null;
+    if (!media.HASH || !media.MAGIC || !media.FILENAME) return null
 
     const url =
       `https://morphobank.org/media/morphobank3/` +
-      `images/${media.HASH}/${media.MAGIC}_${media.FILENAME}`;
+      `images/${media.HASH}/${media.MAGIC}_${media.FILENAME}`
 
-    return url;
+    return url
   } catch (e) {
-    console.error(e);
-    return null;
+    console.error(e)
+    return null
   }
 }
 
 function formatBytes(bytes, decimals = 2) {
-  if (bytes === 0) return "0 Bytes";
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const dm = decimals < 0 ? 0 : decimals
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
 }
 </script>
 

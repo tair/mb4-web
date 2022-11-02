@@ -1,41 +1,41 @@
 <script setup>
-import { onMounted, ref, watch } from "vue";
-import { useMediaStore } from "@/stores/storeMedia.js";
-import ProjectLoaderComp from "../../components/project/ProjectLoaderComp.vue";
-import MediaCardComp from "../../components/project/MediaCardComp.vue";
-import MediaDetailsComp from "../../components/project/MediaDetailsComp.vue";
+import { onMounted, ref, watch } from 'vue'
+import { useMediaStore } from '@/stores/storeMedia.js'
+import ProjectLoaderComp from '../../components/project/ProjectLoaderComp.vue'
+import MediaCardComp from '../../components/project/MediaCardComp.vue'
+import MediaDetailsComp from '../../components/project/MediaDetailsComp.vue'
 
-import { useRoute } from "vue-router";
-const route = useRoute();
+import { useRoute } from 'vue-router'
+const route = useRoute()
 
-const mediaStore = useMediaStore();
-const project_id = route.params.id;
-let mediaDetailsFor = ref(null);
+const mediaStore = useMediaStore()
+const project_id = route.params.id
+let mediaDetailsFor = ref(null)
 
 onMounted(() => {
-  mediaStore.fetchMediaFiles(project_id);
-});
+  mediaStore.fetchMediaFiles(project_id)
+})
 
-let isDetailsActive = ref(false);
-let selectedPage = ref(mediaStore.currentPage);
-let selectedPageSize = ref(mediaStore.itemsPerPage);
+let isDetailsActive = ref(false)
+let selectedPage = ref(mediaStore.currentPage)
+let selectedPageSize = ref(mediaStore.itemsPerPage)
 
 function onShowDetails(media_file) {
-  isDetailsActive.value = true;
-  mediaDetailsFor.value = media_file;
+  isDetailsActive.value = true
+  mediaDetailsFor.value = media_file
 }
 
 watch(selectedPage, (currentValue, oldValue) => {
-  mediaStore.currentPage = currentValue;
-  mediaStore.fetchByPage();
-});
+  mediaStore.currentPage = currentValue
+  mediaStore.fetchByPage()
+})
 
 watch(selectedPageSize, (currentValue, oldValue) => {
-  mediaStore.itemsPerPage = currentValue;
-  mediaStore.currentPage = 1;
-  mediaStore.recalculatePageInfo();
-  mediaStore.fetchByPage();
-});
+  mediaStore.itemsPerPage = currentValue
+  mediaStore.currentPage = 1
+  mediaStore.recalculatePageInfo()
+  mediaStore.fetchByPage()
+})
 </script>
 
 <template>

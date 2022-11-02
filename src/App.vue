@@ -1,15 +1,15 @@
 <script setup>
-import { RouterView } from "vue-router";
+import { RouterView } from 'vue-router'
 
-import Header from "@/components/main/Header.vue";
-import Footer from "@/components/main/Footer.vue";
-import { onMounted } from "vue";
-import { useAuthStore } from "@/stores/storeAuth.js";
-const authStore = useAuthStore();
+import Header from '@/components/main/Header.vue'
+import Footer from '@/components/main/Footer.vue'
+import { onMounted } from 'vue'
+import { useAuthStore } from '@/stores/storeAuth.js'
+const authStore = useAuthStore()
 
 onMounted(() => {
-  authStore.fetchLocalStore();
-});
+  authStore.fetchLocalStore()
+})
 </script>
 <template>
   <Header> </Header>
@@ -29,7 +29,7 @@ onMounted(() => {
 
 html,
 body {
-  font-family: "Open Sans", sans-serif;
+  font-family: 'Open Sans', sans-serif;
   font-size: x-small;
 }
 main > .container {

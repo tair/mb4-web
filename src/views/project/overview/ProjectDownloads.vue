@@ -1,6 +1,6 @@
 <script setup>
-import { useProjectStore } from "@/stores/storeProjectDetails.js";
-const projectStore = useProjectStore();
+import { useProjectStore } from '@/stores/storeProjectDetails.js'
+const projectStore = useProjectStore()
 </script>
 
 <template>
@@ -18,12 +18,12 @@ const projectStore = useProjectStore();
       <tbody>
         <tr>
           <th scope="row">Total downloads from project</th>
-          <td>{{ projectStore.overview.project_downloads["total"] }}</td>
+          <td>{{ projectStore.overview.project_downloads['total'] }}</td>
           <td></td>
         </tr>
         <tr>
           <th scope="row">Matrix downloads</th>
-          <td>{{ projectStore.overview.project_downloads["X"] }}</td>
+          <td>{{ projectStore.overview.project_downloads['X'] }}</td>
           <td>
             <span class="badge rounded-pill bg-secondary mx-2"
               >Matrix landing page (9796 views)</span
@@ -32,7 +32,7 @@ const projectStore = useProjectStore();
         </tr>
         <tr>
           <th scope="row">Document downloads</th>
-          <td>{{ projectStore.overview.project_downloads["D"] }}</td>
+          <td>{{ projectStore.overview.project_downloads['D'] }}</td>
           <td>
             <span class="badge rounded-pill bg-secondary mx-2"
               >Matrix landing page (9796 views)</span
@@ -44,7 +44,7 @@ const projectStore = useProjectStore();
         </tr>
         <tr>
           <th scope="row">Media downloads</th>
-          <td>{{ projectStore.overview.project_downloads["M"] }}</td>
+          <td>{{ projectStore.overview.project_downloads['M'] }}</td>
           <td>
             <span class="badge rounded-pill bg-secondary mx-2"
               >M130184 (2 views)</span
@@ -74,7 +74,7 @@ const projectStore = useProjectStore();
 
         <tr>
           <th scope="row">Project downloads</th>
-          <td>{{ projectStore.overview.project_downloads["P"] }}</td>
+          <td>{{ projectStore.overview.project_downloads['P'] }}</td>
           <td></td>
         </tr>
       </tbody>

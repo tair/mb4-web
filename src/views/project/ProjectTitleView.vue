@@ -1,25 +1,25 @@
 <script setup>
-import { ref, onMounted } from "vue";
-import { useProjectsStore } from "@/stores/storeProjects.js";
-import GenericLoaderComp from "../../components/project/GenericLoaderComp.vue";
-import ProjectMenuComp from "../../components/project/ProjectMenuComp.vue";
-import { RouterLink, useRoute } from "vue-router";
+import { ref, onMounted } from 'vue'
+import { useProjectsStore } from '@/stores/storeProjects.js'
+import GenericLoaderComp from '../../components/project/GenericLoaderComp.vue'
+import ProjectMenuComp from '../../components/project/ProjectMenuComp.vue'
+import { RouterLink, useRoute } from 'vue-router'
 
-const route = useRoute();
-const projectsStore = useProjectsStore();
-let sort_by = ref("asc");
-let is_asc = ref(true);
+const route = useRoute()
+const projectsStore = useProjectsStore()
+let sort_by = ref('asc')
+let is_asc = ref(true)
 
 onMounted(() => {
-  projectsStore.fetchProjectTitles(sort_by);
-});
+  projectsStore.fetchProjectTitles(sort_by)
+})
 
 function onSorted(sort) {
-  if (sort === sort_by.value) return;
+  if (sort === sort_by.value) return
 
-  sort_by.value = sort;
-  is_asc.value = sort === "asc" ? true : false;
-  projectsStore.fetchProjectTitles(sort);
+  sort_by.value = sort
+  is_asc.value = sort === 'asc' ? true : false
+  projectsStore.fetchProjectTitles(sort)
 }
 </script>
 

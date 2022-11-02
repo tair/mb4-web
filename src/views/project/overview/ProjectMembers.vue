@@ -1,6 +1,6 @@
 <script setup>
-import { useProjectStore } from "@/stores/storeProjectDetails.js";
-const projectStore = useProjectStore();
+import { useProjectStore } from '@/stores/storeProjectDetails.js'
+const projectStore = useProjectStore()
 </script>
 
 <template>
@@ -29,7 +29,7 @@ const projectStore = useProjectStore();
       <tbody>
         <tr :key="idx" v-for="(member, idx) in projectStore.overview.members">
           <td scope="row">
-            <div class="fw-bold">{{ member.fname + " " + member.lname }}</div>
+            <div class="fw-bold">{{ member.fname + ' ' + member.lname }}</div>
 
             <small v-if="member.administrator == '1'" class="text-danger"
               >Project Administrator</small

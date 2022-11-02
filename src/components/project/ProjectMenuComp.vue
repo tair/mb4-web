@@ -1,7 +1,7 @@
 <script setup>
 const props = defineProps({
   menuItem: String,
-});
+})
 </script>
 
 <template>
@@ -88,6 +88,19 @@ const props = defineProps({
     </RouterLink>
     <div v-else>
       <button type="button" class="btn btn-warning btn-sm">Popular</button>
+    </div>
+
+    <RouterLink
+      :to="`/project/institution`"
+      class="nav-link p-0"
+      v-if="menuItem != 'institution'"
+    >
+      <button type="button" class="btn btn-secondary btn-sm">
+        institution
+      </button>
+    </RouterLink>
+    <div v-else>
+      <button type="button" class="btn btn-warning btn-sm">institution</button>
     </div>
   </div>
 </template>

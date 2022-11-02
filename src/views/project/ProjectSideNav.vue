@@ -1,5 +1,5 @@
 <script setup>
-import { RouterLink } from "vue-router";
+import { RouterLink } from 'vue-router'
 
 const props = defineProps({
   project_id: {
@@ -10,7 +10,7 @@ const props = defineProps({
     type: String,
     required: true,
   },
-});
+})
 </script>
 
 <template>

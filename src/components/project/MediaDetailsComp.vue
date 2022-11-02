@@ -3,25 +3,25 @@ const props = defineProps({
   media_file: {
     type: Object,
   },
-});
+})
 
 function buildImageProps(mediaObj, type) {
   try {
     // console.log(mediaObj)
-    let media = mediaObj;
-    if (type) media = mediaObj[type];
+    let media = mediaObj
+    if (type) media = mediaObj[type]
 
-    if (!media.HASH || !media.MAGIC || !media.FILENAME) return null;
+    if (!media.HASH || !media.MAGIC || !media.FILENAME) return null
 
     const url =
       `https://morphobank.org/media/morphobank3/` +
-      `images/${media.HASH}/${media.MAGIC}_${media.FILENAME}`;
+      `images/${media.HASH}/${media.MAGIC}_${media.FILENAME}`
 
-    return url;
+    return url
   } catch (e) {
-    console.log("VV: " + mediaObj);
-    console.error(e);
-    return null;
+    console.log('VV: ' + mediaObj)
+    console.error(e)
+    return null
   }
 }
 </script>

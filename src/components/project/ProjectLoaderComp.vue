@@ -1,6 +1,6 @@
 <script setup>
-import ProjectSideNav from "@/views/project/ProjectSideNav.vue";
-import ProjectTitleComp from "@/components/project/ProjectTitleComp.vue";
+import ProjectSideNav from '@/views/project/ProjectSideNav.vue'
+import ProjectTitleComp from '@/components/project/ProjectTitleComp.vue'
 
 const props = defineProps({
   project_id: {
@@ -16,7 +16,7 @@ const props = defineProps({
     type: String,
     required: true,
   },
-});
+})
 </script>
 
 <template>
