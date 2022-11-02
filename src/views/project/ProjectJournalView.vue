@@ -55,7 +55,7 @@ let prev_char = "";
         have published data in MorphoBank
       </div>
 
-      <div class="d-grid gap-2 d-md-flex _offset2 mb-4" id="top">
+      <div class="d-grid gap-2 d-sm-flex _offset2 mb-4" id="top">
         <div :key="n" v-for="(char, n) in projectsStore.journals.chars">
           <a :href="`#${char}`" class="fw-bold">{{ char }}</a>
         </div>
