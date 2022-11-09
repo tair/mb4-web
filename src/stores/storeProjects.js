@@ -75,6 +75,22 @@ export const useProjectsStore = defineStore({
       return this.projects
     },
 
+    async sortProjectsByJournalYear(sort_by) {
+      // load projects if not exists
+      if (!this.projects) await this.fetchProjects()
+
+      this.projects.sort((a, b) => {
+        if (a.journal_year < b.journal_year) return sort_by == 'asc' ? -1 : 1
+        if (a.journal_year > b.journal_year) return sort_by != 'asc' ? -1 : 1
+        return 0
+      })
+
+      this.recalculatePageInfo()
+      this.fetchByPage(1)
+
+      return this.projects
+    },
+
     async fetchProjects() {
       // if already loaded, return them.
       if (this.projects) return this.projects

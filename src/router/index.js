@@ -172,6 +172,11 @@ const router = createRouter({
           component: ProjectsHomeView,
         },
         {
+          path: 'journal_year',
+          name: 'ProjectJornalYearView',
+          component: ProjectsHomeView,
+        },
+        {
           path: 'title',
           name: 'ProjectTitleView',
           component: ProjectTitleView,
@@ -191,6 +196,7 @@ const router = createRouter({
           name: 'ProjectInstitutionView',
           component: ProjectInstitutionView,
         },
+
         {
           path: ':id/overview',
           name: 'ProjectOverviewView',

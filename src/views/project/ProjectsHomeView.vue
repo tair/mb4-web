@@ -26,14 +26,14 @@ function log(msg) {
 }
 
 function onSorted(sort) {
-  // if (sort === sort_by.value) return;
-
   sort_by.value = sort
   is_asc.value = sort === 'asc' ? true : false
 
   if (page_type.value == 'pub_date')
     projectsStore.sortProjectsByPublishedDate(sort)
   else if (page_type.value == 'prj_no') projectsStore.sortProjectsByNumber(sort)
+  else if (page_type.value == 'journal_year')
+    projectsStore.sortProjectsByJournalYear(sort)
 
   selectedPage.value = 1
   selectedPageSize.value = 25

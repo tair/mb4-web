@@ -52,6 +52,9 @@ function buildImageProps(mediaObj, type) {
       <p class="card-text">
         {{ project.article_title }}
       </p>
+      <span class="p-0 small m-0 fw-lighter"
+        >Journal Year: {{ project.journal_year }}</span
+      >
     </div>
     <div class="card-footer">
       <div class="row align-items-stretch">

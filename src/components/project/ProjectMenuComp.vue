@@ -96,11 +96,24 @@ const props = defineProps({
       v-if="menuItem != 'institution'"
     >
       <button type="button" class="btn btn-secondary btn-sm">
-        institution
+        Institution
       </button>
     </RouterLink>
     <div v-else>
-      <button type="button" class="btn btn-warning btn-sm">institution</button>
+      <button type="button" class="btn btn-warning btn-sm">Institution</button>
+    </div>
+
+    <RouterLink
+      :to="`/project/journal_year`"
+      class="nav-link p-0"
+      v-if="menuItem != 'journal_year'"
+    >
+      <button type="button" class="btn btn-secondary btn-sm">
+        Journal Year
+      </button>
+    </RouterLink>
+    <div v-else>
+      <button type="button" class="btn btn-warning btn-sm">Journal Year</button>
     </div>
   </div>
 </template>

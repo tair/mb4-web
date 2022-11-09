@@ -66,7 +66,7 @@ function onLogout() {
                   <li class="nav-item border-bottom m-1">
                     <RouterLink
                       class="nav-link p-0 m-1 text-nowrap"
-                      to="/project"
+                      to="/project/pub_date"
                       >Browse Projects</RouterLink
                     >
                   </li>
