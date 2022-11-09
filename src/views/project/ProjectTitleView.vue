@@ -42,7 +42,7 @@ function onSorted(sort) {
     <div class="d-flex justify-content-between">
       <ProjectMenuComp menuItem="prj_title"></ProjectMenuComp>
 
-      <div class="d-grid gap-1 d-sm-flex">
+      <div class="d-grid gap-1 d-md-flex">
         <a
           href="#"
           @click="onSorted('asc')"

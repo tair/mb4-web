@@ -30,7 +30,7 @@ onMounted(() => {
 html,
 body {
   font-family: 'Open Sans', sans-serif;
-  font-size: x-small;
+  font-size: medium;
 }
 main > .container {
   padding: 130px 10px 60px;
