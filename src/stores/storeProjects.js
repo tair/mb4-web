@@ -114,9 +114,7 @@ export const useProjectsStore = defineStore({
       this.err = null
 
       try {
-        const url = `${
-          import.meta.env.VITE_API_URL
-        }/public/projects/titles/${sort_by}`
+        const url = `${import.meta.env.VITE_API_URL}/public/projects/titles`
         const res = await axios.get(url)
         this.titles = res.data
       } catch (e) {
@@ -169,9 +167,26 @@ export const useProjectsStore = defineStore({
       }
     },
 
-    async fetchProjectInstitutions() {
+    async fetchProjectInstitutions(sort_field, order) {
       // if already loaded, return them.
-      if (this.institutions) return this.institutions
+      if (this.institutions) {
+        this.institutions.sort((a, b) => {
+          let A, B
+          if (sort_field == 'name') {
+            A = a.name.trim().toUpperCase()
+            B = b.name.trim().toUpperCase()
+          } else {
+            A = a.count
+            B = b.count
+          }
+
+          if (A < B) return order == 'asc' ? -1 : 1
+          if (A > B) return order != 'asc' ? -1 : 1
+          return 0
+        })
+
+        return this.institutions
+      }
 
       this.loading = true
       this.err = null
