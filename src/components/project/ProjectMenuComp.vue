@@ -80,7 +80,7 @@ const props = defineProps({
     </div>
 
     <RouterLink
-      :to="`/project/pub_date`"
+      :to="`/project/popular`"
       class="nav-link p-0"
       v-if="menuItem != 'popular'"
     >
