@@ -13,6 +13,7 @@ export const useProjectsStore = defineStore({
     authors: '',
     journals: '',
     institutions: '',
+    stats: null,
     ///////////////
 
     // pagination info //
@@ -91,6 +92,48 @@ export const useProjectsStore = defineStore({
       return this.projects
     },
 
+    async fetchProjectStats() {
+      // if already loaded, return them.
+      if (this.stats) return this.stats
+
+      this.loading = true
+      this.err = null
+
+      try {
+        let res = await axios.get(
+          `https://mb4-data.s3.us-west-2.amazonaws.com/stats_files/projectViewsForLast30Days.json`
+        )
+        const projectViewsForLast30Days = res.data
+
+        res = await axios.get(
+          `https://mb4-data.s3.us-west-2.amazonaws.com/stats_files/matrixDownloadsForLast30Days.json`
+        )
+        const matrixDownloadsForLast30Days = res.data
+
+        res = await axios.get(
+          `https://mb4-data.s3.us-west-2.amazonaws.com/stats_files/mediaViewsForLast30Days.json`
+        )
+        const mediaViewsForLast30Days = res.data
+
+        res = await axios.get(
+          `https://mb4-data.s3.us-west-2.amazonaws.com/stats_files/docDownloadsForLast30Days.json`
+        )
+        const docDownloadsForLast30Days = res.data
+
+        this.stats = {
+          projectViewsForLast30Days,
+          matrixDownloadsForLast30Days,
+          mediaViewsForLast30Days,
+          docDownloadsForLast30Days,
+        }
+      } catch (e) {
+        console.error(`store:projects:fetchProjectStats(): ${e}`)
+        this.err = 'Error fetching project stats.'
+      } finally {
+        this.loading = false
+      }
+    },
+
     async fetchProjects() {
       // if already loaded, return them.
       if (this.projects) return this.projects
@@ -142,7 +185,7 @@ export const useProjectsStore = defineStore({
     },
 
     async fetchProjectAuthor() {
-      // if already loaded, return them.
+      // if already loaded, return them.ƒ
       if (this.authors) return this.authors
 
       this.loading = true
