@@ -49,7 +49,10 @@ onMounted(() => {
         v-for="(item, n) in projectsStore.stats?.projectViewsForLast30Days"
       >
         <div class="list-group-item p-0 m-0">
-          <div class="py-2 m-0" style="border-bottom: 1px solid #e0e0e0">
+          <div
+            class="py-2 m-0"
+            style="border-bottom: 1px solid #e0e0e0; background-color: #f8f8f8"
+          >
             <div class="row p-0 m-0">
               <div class="col-2 small">Project {{ item.project_id }}:</div>
               <div class="col">
@@ -78,7 +81,10 @@ onMounted(() => {
         v-for="(item, n) in projectsStore.stats?.mediaViewsForLast30Days"
       >
         <div class="list-group-item p-0 m-0">
-          <div class="py-2 m-0" style="border-bottom: 1px solid #e0e0e0">
+          <div
+            class="py-2 m-0"
+            style="border-bottom: 1px solid #e0e0e0; background-color: #f8f8f8"
+          >
             <div class="row p-0 m-0">
               <div class="col-2 small">Media</div>
               <div class="col">
@@ -114,7 +120,10 @@ onMounted(() => {
         v-for="(item, n) in projectsStore.stats?.docDownloadsForLast30Days"
       >
         <div class="list-group-item p-0 m-0">
-          <div class="py-2 m-0" style="border-bottom: 1px solid #e0e0e0">
+          <div
+            class="py-2 m-0"
+            style="border-bottom: 1px solid #e0e0e0; background-color: #f8f8f8"
+          >
             <div class="row p-0 m-0">
               <div class="col-2 small">Document</div>
               <div class="col">
@@ -155,7 +164,10 @@ onMounted(() => {
         v-for="(item, n) in projectsStore.stats?.matrixDownloadsForLast30Days"
       >
         <div class="list-group-item p-0 m-0">
-          <div class="py-2 m-0" style="border-bottom: 1px solid #e0e0e0">
+          <div
+            class="py-2 m-0"
+            style="border-bottom: 1px solid #e0e0e0; background-color: #f8f8f8"
+          >
             <div class="row p-0 m-0">
               <div class="col-2 small">Matrix {{ item.matrix_id }}</div>
               <div class="col">

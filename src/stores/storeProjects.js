@@ -157,6 +157,9 @@ export const useProjectsStore = defineStore({
 
     async fetchProjectTitles(sort_by) {
       // if already loaded, return them.
+      console.log('this.title: ')
+      console.log(this.title)
+      console.log('end')
       if (this.titles) {
         this.titles.sort((a, b) => {
           const A = a.name.trim().toUpperCase() // ignore upper and lowercase
