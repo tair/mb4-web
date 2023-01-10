@@ -31,9 +31,11 @@ export const useAuthStore = defineStore({
       this.user = lsUser
     },
     async fetchUsers() {
-      if (!this.user?.authToken) throw new Error('Auth token is invalid!')
+      if (!this.user?.authToken) {
+        throw new Error('Auth token is invalid!')
+      }
 
-      const url = `http://localhost:8080/users`
+      const url = `${import.meta.env.VITE_API_URL}/users`
       try {
         const res = await axios.get(url, {
           headers: {
@@ -54,14 +56,12 @@ export const useAuthStore = defineStore({
       this.err = null
 
       try {
-        const url = `http://localhost:8080/auth/login`
+        const url = `${import.meta.env.VITE_API_URL}/auth/login`
         const userObj = {
           email: email,
           password: password,
         }
         const res = await axios.post(url, userObj)
-        // console.log(res);
-
         const uObj = {
           authToken: res.data.accessToken,
           userId: res.data.user.userId,
@@ -80,7 +80,6 @@ export const useAuthStore = defineStore({
       } finally {
         this.loading = false
       }
-      return false
     },
   },
 })
