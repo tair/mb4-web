@@ -46,9 +46,6 @@ export const useMediaStore = defineStore({
       try {
         const url = `https://mb4-data.s3.us-west-2.amazonaws.com/media_files/prj_${project_id}.json`
         const res = await axios.get(url)
-        // const res = await axios.get(
-        //   `http://localhost:8080/projects/media_files/${project_id}`
-        // );
         this.media_files = res.data
         this.project_id = project_id
         this.recalculatePageInfo()

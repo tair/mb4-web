@@ -35,8 +35,6 @@ export const useProjectStore = defineStore({
       this.err = null
 
       try {
-        // id = 1005;
-        // const url = `http://localhost:8080/projects/${id}`;
         const url = `https://mb4-data.s3.us-west-2.amazonaws.com/prj_details/prj_${id}.json`
         const res = await axios.get(url)
 
