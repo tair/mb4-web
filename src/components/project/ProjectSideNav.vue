@@ -2,11 +2,15 @@
 import { RouterLink } from 'vue-router'
 
 const props = defineProps({
-  project_id: {
+  projectId: {
     type: [Number, String],
     required: true,
   },
   item: {
+    type: String,
+    required: true,
+  },
+  basePath: {
     type: String,
     required: true,
   },
@@ -16,8 +20,10 @@ const props = defineProps({
 <template>
   <div class="nav-link mb-1 d-flex fw-bold small m-0 p-0 mb-3">
     <i class="bi bi-chevron-double-left me-1"></i>
-    <RouterLink class="nav-link m-0 p-0" :to="`/project`">
-      Browse projects
+    <RouterLink class="nav-link m-0 p-0" :to="`/${basePath}`">
+      <span v-if="basePath == 'project'">Browse projects</span>
+      <span v-else>My projects</span>
+      
     </RouterLink>
   </div>
 
@@ -32,7 +38,7 @@ const props = defineProps({
     >
       <RouterLink
         class="nav-link m-0 p-0"
-        :to="`/project/${project_id}/overview`"
+        :to="`/${basePath}/${projectId}/overview`"
       >
         Project Overview
       </RouterLink>
@@ -48,7 +54,7 @@ const props = defineProps({
     >
       <RouterLink
         class="nav-link m-0 p-0"
-        :to="`/project/${project_id}/matrices`"
+        :to="`/${basePath}/${projectId}/matrices`"
       >
         Matrices
       </RouterLink>
@@ -60,7 +66,7 @@ const props = defineProps({
         'list-group-item',
       ]"
     >
-      <RouterLink class="nav-link m-0 p-0" :to="`/project/${project_id}/media`"
+      <RouterLink class="nav-link m-0 p-0" :to="`/${basePath}/${projectId}/media`"
         >Media</RouterLink
       >
     </li>
@@ -73,7 +79,7 @@ const props = defineProps({
         'list-group-item',
       ]"
     >
-      <RouterLink class="nav-link m-0 p-0" :to="`/project/${project_id}/views`"
+      <RouterLink class="nav-link m-0 p-0" :to="`/${basePath}/${projectId}/views`"
         >Views of Media</RouterLink
       >
     </li>
@@ -88,7 +94,7 @@ const props = defineProps({
     >
       <RouterLink
         class="nav-link m-0 p-0"
-        :to="`/project/${project_id}/specimens`"
+        :to="`/${basePath}/${projectId}/specimens`"
       >
         Specimens
       </RouterLink>
@@ -100,7 +106,7 @@ const props = defineProps({
         'list-group-item',
       ]"
     >
-      <RouterLink class="nav-link m-0 p-0" :to="`/project/${project_id}/taxa`">
+      <RouterLink class="nav-link m-0 p-0" :to="`/${basePath}/${projectId}/taxa`">
         Taxa
       </RouterLink>
     </li>
@@ -115,7 +121,7 @@ const props = defineProps({
     >
       <RouterLink
         class="nav-link m-0 p-0"
-        :to="`/project/${project_id}/bibliography`"
+        :to="`/${basePath}/${projectId}/bibliography`"
       >
         Bibliography
       </RouterLink>
@@ -131,7 +137,7 @@ const props = defineProps({
     >
       <RouterLink
         class="nav-link m-0 p-0"
-        :to="`/project/${project_id}/documents`"
+        :to="`/${basePath}/${projectId}/documents`"
       >
         Documents
       </RouterLink>

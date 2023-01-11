@@ -9,11 +9,11 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 
 const mediaStore = useMediaStore()
-const project_id = route.params.id
+const projectId = route.params.id
 let mediaDetailsFor = ref(null)
 
 onMounted(() => {
-  mediaStore.fetchMediaFiles(project_id)
+  mediaStore.fetchMediaFiles(projectId)
 })
 
 let isDetailsActive = ref(false)
@@ -40,9 +40,10 @@ watch(selectedPageSize, (currentValue, oldValue) => {
 
 <template>
   <ProjectLoaderComp
-    :project_id="project_id"
+    :projectId="projectId"
     :isLoading="mediaStore.isLoading"
     :errorMessage="mediaStore.media_files ? null : 'No media data available.'"
+    basePath="project"
     itemName="media"
   >
     <p>
