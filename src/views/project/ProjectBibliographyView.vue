@@ -6,7 +6,7 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 
 const projectStore = useProjectStore()
-const project_id = route.params.id
+const projectId = route.params.id
 
 onMounted(() => {
   projectStore.fetchProject(project_id)
@@ -15,11 +15,12 @@ onMounted(() => {
 
 <template>
   <ProjectLoaderComp
-    :project_id="project_id"
+    :projectId="projectId"
     :isLoading="projectStore.isLoading"
     :errorMessage="
       projectStore.bibliography ? null : 'No bibliography data available.'
     "
+    basePath="project"
     itemName="bibliography"
   >
     This project has {{ projectStore.bibliography?.length }} bibliographic

@@ -6,17 +6,19 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 
 const projectStore = useProjectStore()
-const project_id = route.params.id
+const projectId = route.params.id
+
 onMounted(() => {
-  projectStore.fetchProject(project_id)
+  projectStore.fetchProject(projectId)
 })
 </script>
 
 <template>
   <ProjectLoaderComp
-    :project_id="project_id"
+    :projectId="projectId"
     :isLoading="projectStore.isLoading"
     :errorMessage="projectStore.docs ? null : 'No documents data available.'"
+    basePath="project"
     itemName="documents"
   >
     <div :key="n" v-for="(fld, n) in projectStore.docs">

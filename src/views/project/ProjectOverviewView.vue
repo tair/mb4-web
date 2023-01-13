@@ -8,21 +8,24 @@ import ProjectTaxa from './overview/ProjectTaxa.vue'
 import { useProjectStore } from '@/stores/storeProjectDetails.js'
 import ProjectLoaderComp from '../../components/project/ProjectLoaderComp.vue'
 import { useRoute } from 'vue-router'
+
 const route = useRoute()
 const projectStore = useProjectStore()
-const project_id = route.params.id
+const projectId = route.params.id
+
 onMounted(() => {
-  projectStore.fetchProject(project_id)
+  projectStore.fetchProject(projectId)
 })
 </script>
 <template>
   <ProjectLoaderComp
-    :key="project_id"
-    :project_id="project_id"
+    :key="projectId"
+    :projectId="projectId"
     :isLoading="projectStore.isLoading"
     :errorMessage="
       projectStore.overview ? null : 'No project overview data available.'
     "
+    basePath="project"
     itemName="overview"
   >
     <div class="pb-5 border-bottom"><ProjectSummary></ProjectSummary></div>

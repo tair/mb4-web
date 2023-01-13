@@ -3,21 +3,24 @@ import { onMounted } from 'vue'
 import { useProjectStore } from '@/stores/storeProjectDetails.js'
 import ProjectLoaderComp from '../../components/project/ProjectLoaderComp.vue'
 import { useRoute } from 'vue-router'
+
 const route = useRoute()
 const projectStore = useProjectStore()
-const project_id = route.params.id
+const projectId = route.params.id
+
 onMounted(() => {
-  projectStore.fetchProject(project_id)
+  projectStore.fetchProject(projectId)
 })
 </script>
 
 <template>
   <ProjectLoaderComp
-    :project_id="project_id"
+    :projectId="projectId"
     :isLoading="projectStore.isLoading"
     :errorMessage="
       projectStore.media_views ? null : 'No media views data available.'
     "
+    basePath="project"
     itemName="media_views"
   >
     <ul class="list-group">

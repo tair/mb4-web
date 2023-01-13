@@ -1,39 +1,38 @@
 import { useAuthStore } from '@/stores/storeAuth.js'
 import { createRouter, createWebHistory } from 'vue-router'
 
-import HomeView from '../views/HomeView.vue'
-import ProjectOverviewView from '@/views/project/ProjectOverviewView.vue'
-import ProjectTaxaView from '@/views/project/ProjectTaxaView.vue'
-import ProjectsHomeView from '@/views/project/ProjectsHomeView.vue'
-import ProjectTitleView from '@/views/project/ProjectTitleView.vue'
-import ProjectPopularView from '@/views/project/ProjectPopularView.vue'
+import AdminHomeView from '@/views/admin/AdminHomeView.vue'
+import AdminView from '@/views/admin/AdminView.vue'
+import AskUsView from '@/views/misc/AskUsView.vue'
+import CuratorHomeView from '@/views/curator/CuratorHomeView.vue'
+import CuratorView from '@/views/curator/CuratorView.vue'
+import DocsView from '@/views/misc/DocsView.vue'
+import FaqView from '@/views/misc/FaqView.vue'
+import HomeView from '@/views/HomeView.vue'
+import MyProjectHomeView from '@/views/project/MyProjectHomeView.vue'
+import MyProjectMatrixView from '@/views/project/MyProjectMatrixView.vue'
+import MyProjectsView from '@/views/project/MyProjectsView.vue'
+import NewsView from '@/views/misc/NewsView.vue'
+import NotFoundView from '@/views/NotFoundView.vue'
 import ProjectAuthorView from '@/views/project/ProjectAuthorView.vue'
-import ProjectJournalView from '@/views/project/ProjectJournalView.vue'
-import ProjectInstitutionView from '@/views/project/ProjectInstitutionView.vue'
 import ProjectBibliographyView from '@/views/project/ProjectBibliographyView.vue'
 import ProjectDocumentView from '@/views/project/ProjectDocumentView.vue'
+import ProjectInstitutionView from '@/views/project/ProjectInstitutionView.vue'
+import ProjectJournalView from '@/views/project/ProjectJournalView.vue'
 import ProjectMatrixView from '@/views/project/ProjectMatrixView.vue'
 import ProjectMediaView from '@/views/project/ProjectMediaView.vue'
 import ProjectMediaViewsView from '@/views/project/ProjectMediaViewsView.vue'
+import ProjectOverviewView from '@/views/project/ProjectOverviewView.vue'
+import ProjectPopularView from '@/views/project/ProjectPopularView.vue'
 import ProjectSpecimenView from '@/views/project/ProjectSpecimenView.vue'
-import NotFoundView from '@/views/NotFoundView.vue'
-import UserLogin from '@/views/users/UserLogin.vue'
-import UserView from '@/views/users/UserView.vue'
-
-import AdminHomeView from '@/views/admin/AdminHomeView.vue'
+import ProjectTaxaView from '@/views/project/ProjectTaxaView.vue'
+import ProjectTitleView from '@/views/project/ProjectTitleView.vue'
 import ProjectView from '@/views/project/ProjectView.vue'
-import MyProjectsView from '@/views/project/MyProjectsView.vue'
-import MyProjectHomeView from '@/views/project/MyProjectHomeView.vue'
-import MyProjectMatrixView from '@/views/project/MyProjectMatrixView.vue'
+import ProjectsHomeView from '@/views/project/ProjectsHomeView.vue'
+import UserLogin from '@/views/users/UserLogin.vue'
 import UserProfileView from '@/views/users/UserProfileView.vue'
 import UserRegistrationView from '@/views/users/UserRegistrationView.vue'
-import AskUsView from '@/views/misc/AskUsView.vue'
-import DocsView from '@/views/misc/DocsView.vue'
-import FaqView from '@/views/misc/FaqView.vue'
-import NewsView from '@/views/misc/NewsView.vue'
-import AdminView from '@/views/admin/AdminView.vue'
-import CuratorHomeView from '@/views/curator/CuratorHomeView.vue'
-import CuratorView from '@/views/curator/CuratorView.vue'
+import UserView from '@/views/users/UserView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -133,7 +132,7 @@ const router = createRouter({
       ],
     },
 
-    // projects
+    // User's Projects
     {
       path: '/myprojects',
       name: 'MyProjectsView',
@@ -157,10 +156,11 @@ const router = createRouter({
         },
       ],
     },
+
+    // Public view of Projects
     {
       path: '/project',
       component: ProjectView,
-
       children: [
         {
           path: 'pub_date',
@@ -202,7 +202,6 @@ const router = createRouter({
           name: 'ProjectInstitutionView',
           component: ProjectInstitutionView,
         },
-
         {
           path: ':id/overview',
           name: 'ProjectOverviewView',
@@ -245,7 +244,6 @@ const router = createRouter({
         },
       ],
     },
-
     {
       path: '/:catchAll(.*)',
       component: NotFoundView,

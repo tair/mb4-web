@@ -1,9 +1,9 @@
 <script setup>
-import ProjectSideNav from '@/views/project/ProjectSideNav.vue'
+import ProjectSideNav from '@/components/project/ProjectSideNav.vue'
 import ProjectTitleComp from '@/components/project/ProjectTitleComp.vue'
 
 const props = defineProps({
-  project_id: {
+  projectId: {
     type: [Number, String],
     required: true,
   },
@@ -13,6 +13,10 @@ const props = defineProps({
   },
   errorMessage: String,
   itemName: {
+    type: String,
+    required: true,
+  },
+  basePath: {
     type: String,
     required: true,
   },
@@ -28,18 +32,19 @@ const props = defineProps({
     <div class="row">
       <div class="col-2 border-end">
         <ProjectSideNav
-          :project_id="project_id"
+          :projectId="projectId"
           :item="itemName"
+          :basePath="basePath"
         ></ProjectSideNav>
       </div>
 
       <div class="col-10">
-        <div v-if="!errorMessage">
-          <ProjectTitleComp></ProjectTitleComp>
-          <slot />
+        <div v-if="errorMessage">
+          <strong>{{ errorMessage }}</strong>
         </div>
         <div v-else>
-          <strong>{{ errorMessage }}</strong>
+          <ProjectTitleComp></ProjectTitleComp>
+          <slot />
         </div>
       </div>
     </div>
