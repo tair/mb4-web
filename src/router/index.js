@@ -1,4 +1,4 @@
-import { useAuthStore } from '@/stores/storeAuth.js'
+import { useAuthStore } from '@/stores/AuthStore.js'
 import { createRouter, createWebHistory } from 'vue-router'
 
 import AdminHomeView from '@/views/admin/AdminHomeView.vue'
@@ -150,7 +150,7 @@ const router = createRouter({
           component: MyProjectHomeView,
         },
         {
-          path: ':id/matrix',
+          path: ':id/matrices',
           name: 'MyProjectMatrixView',
           component: MyProjectMatrixView,
         },

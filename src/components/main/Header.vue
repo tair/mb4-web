@@ -1,5 +1,5 @@
 <script setup>
-import { useAuthStore } from '@/stores/storeAuth.js'
+import { useAuthStore } from '@/stores/AuthStore.js'
 import router from '../../router'
 const authStore = useAuthStore()
 

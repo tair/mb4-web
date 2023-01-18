@@ -1,7 +1,7 @@
 <script setup>
-import { useProjectStore } from '@/stores/storeProjectDetails.js'
+import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 
-const projectStore = useProjectStore()
+const projectStore = usePublicProjectDetailsStore()
 
 function buildImageProps(mediaObj, type) {
   try {

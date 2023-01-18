@@ -1,6 +1,6 @@
 <script setup>
-import { useProjectStore } from '@/stores/storeProjectDetails.js'
-const projectStore = useProjectStore()
+import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
+const projectStore = usePublicProjectDetailsStore()
 
 function timeConverter(UNIX_timestamp) {
   var a = new Date(UNIX_timestamp * 1000)
