@@ -1,12 +1,12 @@
 <script setup>
 import { onMounted } from 'vue'
 import ProjectLoaderComp from '../../components/project/ProjectLoaderComp.vue'
-import { useProjectStore } from '@/stores/storeProjectDetails.js'
+import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const projectId = route.params.id
-const projectStore = useProjectStore()
+const projectStore = usePublicProjectDetailsStore()
 
 onMounted(() => {
   projectStore.fetchProject(projectId)

@@ -1,13 +1,13 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
-import { useProjectsStore } from '@/stores/storeProjects.js'
+import { usePublicProjectsStore } from '@/stores/PublicProjectsStore.js'
 import GenericLoaderComp from '../../components/project/GenericLoaderComp.vue'
 import ProjectMenuComp from '../../components/project/ProjectMenuComp.vue'
 import ProjectCardComp from '../../components/project/ProjectCardComp.vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
-const projectsStore = useProjectsStore()
+const projectsStore = usePublicProjectsStore()
 let sort_by = ref('desc')
 let is_asc = ref(false)
 let page_type = ref(route.path.split('/')[2])

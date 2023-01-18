@@ -1,8 +1,8 @@
 import axios from 'axios'
 import { defineStore } from 'pinia'
 
-export const useProjectStore = defineStore({
-  id: 'projectDetails',
+export const usePublicProjectDetailsStore = defineStore({
+  id: 'publicProjectDetails',
   state: () => ({
     loading: false,
     err: null,

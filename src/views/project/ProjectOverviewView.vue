@@ -5,12 +5,12 @@ import ProjectMembers from './overview/ProjectMembers.vue'
 import ProjectSummary from './overview/ProjectSummary.vue'
 import ProjectViews from './overview/ProjectViews.vue'
 import ProjectTaxa from './overview/ProjectTaxa.vue'
-import { useProjectStore } from '@/stores/storeProjectDetails.js'
+import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 import ProjectLoaderComp from '../../components/project/ProjectLoaderComp.vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
-const projectStore = useProjectStore()
+const projectStore = usePublicProjectDetailsStore()
 const projectId = route.params.id
 
 onMounted(() => {

@@ -16,9 +16,9 @@ onMounted(() => {
   <ProjectLoaderComp 
     :projectId="projectId"
     :isLoading="false"
-    :errorMessage="null" 
+    :errorMessage="null"
     basePath="myprojects" 
     itemName="matrices">
-    Nothing here!
+    There are {{ matrices?.length }} matrices associated with this project.
   </ProjectLoaderComp>
 </template>
