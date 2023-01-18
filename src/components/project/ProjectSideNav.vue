@@ -23,7 +23,6 @@ const props = defineProps({
     <RouterLink class="nav-link m-0 p-0" :to="`/${basePath}`">
       <span v-if="basePath == 'project'">Browse projects</span>
       <span v-else>My projects</span>
-      
     </RouterLink>
   </div>
 
@@ -66,7 +65,9 @@ const props = defineProps({
         'list-group-item',
       ]"
     >
-      <RouterLink class="nav-link m-0 p-0" :to="`/${basePath}/${projectId}/media`"
+      <RouterLink
+        class="nav-link m-0 p-0"
+        :to="`/${basePath}/${projectId}/media`"
         >Media</RouterLink
       >
     </li>
@@ -79,7 +80,9 @@ const props = defineProps({
         'list-group-item',
       ]"
     >
-      <RouterLink class="nav-link m-0 p-0" :to="`/${basePath}/${projectId}/views`"
+      <RouterLink
+        class="nav-link m-0 p-0"
+        :to="`/${basePath}/${projectId}/views`"
         >Views of Media</RouterLink
       >
     </li>
@@ -106,7 +109,10 @@ const props = defineProps({
         'list-group-item',
       ]"
     >
-      <RouterLink class="nav-link m-0 p-0" :to="`/${basePath}/${projectId}/taxa`">
+      <RouterLink
+        class="nav-link m-0 p-0"
+        :to="`/${basePath}/${projectId}/taxa`"
+      >
         Taxa
       </RouterLink>
     </li>
