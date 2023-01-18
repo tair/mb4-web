@@ -2,7 +2,7 @@ import axios from 'axios'
 import { defineStore } from 'pinia'
 
 export const usePublicMediaStore = defineStore({
-  id: 'media',
+  id: 'publicMedia',
   state: () => ({
     loading: false,
     project_id: null,
