@@ -28,7 +28,7 @@ onMounted(() => {
 
     <ProjectMatrixComp
       v-for="matrix in matricesStore.matrices"
-      :key="matrix.id"
+      :key="matrix.matrix_id"
       :matrix="matrix"
     >
     </ProjectMatrixComp>
