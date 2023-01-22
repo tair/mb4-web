@@ -37,7 +37,7 @@ main > .container {
 }
 
 .text-mb {
-  color: #d86c13;
+  color: #ef782f;
 }
 
 .mb-color {
@@ -59,7 +59,7 @@ a:link {
 }
 
 a:hover {
-  color: rgb(171, 80, 23);
+  color: #ef782f;
 }
 
 .nav-link {
@@ -81,5 +81,20 @@ a:hover {
 .btn-warning:hover {
   background-color: #d86c13;
   color: white;
+}
+
+.btn-primary {
+  background-color: #ef782f;
+  border: none;
+  outline: none;
+}
+
+.btn-primary:hover {
+  background-color: #ef630b;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #ef630b;
 }
 </style>

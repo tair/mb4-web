@@ -23,14 +23,24 @@ onMounted(() => {
     basePath="myprojects"
     itemName="matrices"
   >
-    There are {{ matricesStore.matrices?.length }} matrices associated with this
-    project.
-
-    <ProjectMatrixComp
-      v-for="matrix in matricesStore.matrices"
-      :key="matrix.matrix_id"
-      :matrix="matrix"
-    >
-    </ProjectMatrixComp>
+    <header>
+      There are {{ matricesStore.matrices?.length }} matrices associated with
+      this project.
+    </header>
+    <div class="d-flex flex-column matrix-cards">
+      <ProjectMatrixComp
+        v-for="matrix in matricesStore.matrices"
+        :key="matrix.matrix_id"
+        :matrix="matrix"
+        :canEditMatrix="matricesStore.canEditMatrix"
+        :partitions="matricesStore.partitions"
+      >
+      </ProjectMatrixComp>
+    </div>
   </ProjectContainerComp>
 </template>
+<style scoped>
+.matrix-cards {
+  gap: 16px;
+}
+</style>

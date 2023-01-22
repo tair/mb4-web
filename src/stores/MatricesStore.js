@@ -6,6 +6,8 @@ export const useMatricesStore = defineStore({
   state: () => ({
     isLoading: true,
     matrices: null,
+    partitions: null,
+    canEditMatrix: null,
   }),
   getters: {},
   actions: {
@@ -15,6 +17,8 @@ export const useMatricesStore = defineStore({
       }/projects/${projectId}/matrices`
       const response = await axios.get(url)
       this.matrices = response.data.matrices
+      this.partitions = response.data.partitions
+      this.canEditMatrix = response.data.canEditMatrix
       this.isLoading = false
     },
   },
