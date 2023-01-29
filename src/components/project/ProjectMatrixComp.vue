@@ -34,12 +34,12 @@ const notes = ref(true)
 const format = ref(formats.keys()?.next()?.value)
 const partitionId = ref('')
 
+const projectId = route.params.id
+const matrixId = props.matrix.matrix_id
+const baseUrl = `${import.meta.env.VITE_API_URL}/projects/${projectId}/matrices/${matrixId}`
+
 async function onDownloadMatrix() {
-  const projectId = route.params.id
-  const downloadUrl = `${
-    import.meta.env.VITE_API_URL
-  }/projects/${projectId}/matrices/${props.matrix.matrix_id}/download`
-  const url = new URL(downloadUrl)
+  const url = new URL(`${baseUrl}/download`)
   const searchParams = url.searchParams
   if (notes.value) {
     searchParams.append('notes', notes.value)
@@ -54,7 +54,24 @@ async function onDownloadMatrix() {
 }
 
 async function onDownloadCharacters() {
-  // TODO(kenzley): Implement downloading characters
+  const url = new URL(`${baseUrl}/download/characters`)
+  const searchParams = url.searchParams
+  if (notes.value) {
+    searchParams.append('notes', notes.value)
+  }
+  if (partitionId.value) {
+    searchParams.append('partitionId', partitionId.value)
+  }
+  window.location.href = url
+}
+
+async function onDownloadOntology() {
+  const url = new URL(`${baseUrl}/download/ontology`)
+  window.location.href = url
+}
+
+async function toggleMatrixStreaming() {
+  // TODO(kenzley): Implement toggling matrix streaming.
 }
 </script>
 <template>
@@ -85,7 +102,7 @@ async function onDownloadCharacters() {
           <div class="dropdown-menu">
             <h6 class="dropdown-header">Settings:</h6>
             <div class="dropdown-divider"></div>
-            <button type="button" class="dropdown-item">
+            <button type="button" class="dropdown-item" @click="toggleMatrixStreaming">
               <i class="bi bi-check2"></i>
               Enable Streaming
             </button>
@@ -220,6 +237,9 @@ async function onDownloadCharacters() {
             @click="onDownloadCharacters"
           >
             Download Characters
+          </button>
+          <button type="button" class="btn btn-sm btn-secondary" @click="onDownloadOntology">
+            Download Ontology
           </button>
         </div>
       </div>
