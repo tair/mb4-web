@@ -1,6 +1,7 @@
 <script setup>
-import { useRoute } from 'vue-router'
+import axios from 'axios'
 import { ref } from 'vue'
+import { useRoute } from 'vue-router'
 
 const props = defineProps({
   matrix: {
@@ -34,12 +35,14 @@ const notes = ref(true)
 const format = ref(formats.keys()?.next()?.value)
 const partitionId = ref('')
 
+const projectId = route.params.id
+const matrixId = props.matrix.matrix_id
+const baseUrl = `${
+  import.meta.env.VITE_API_URL
+}/projects/${projectId}/matrices/${matrixId}`
+
 async function onDownloadMatrix() {
-  const projectId = route.params.id
-  const downloadUrl = `${
-    import.meta.env.VITE_API_URL
-  }/projects/${projectId}/matrices/${props.matrix.matrix_id}/download`
-  const url = new URL(downloadUrl)
+  const url = new URL(`${baseUrl}/download`)
   const searchParams = url.searchParams
   if (notes.value) {
     searchParams.append('notes', notes.value)
@@ -54,7 +57,34 @@ async function onDownloadMatrix() {
 }
 
 async function onDownloadCharacters() {
-  // TODO(kenzley): Implement downloading characters
+  const url = new URL(`${baseUrl}/download/characters`)
+  const searchParams = url.searchParams
+  if (notes.value) {
+    searchParams.append('notes', notes.value)
+  }
+  if (partitionId.value) {
+    searchParams.append('partitionId', partitionId.value)
+  }
+  window.location.href = url
+}
+
+async function onDownloadOntology() {
+  const url = new URL(`${baseUrl}/download/ontology`)
+  window.location.href = url
+}
+
+async function toggleMatrixStreaming() {
+  const url = new URL(`${baseUrl}/setPreference`)
+  const value = !matrix.preferences?.ENABLE_STREAMING | 0
+  const response = await axios.post(url, {
+    name: 'ENABLE_STREAMING',
+    value: value,
+  })
+  if (response.status == 200) {
+    matrix.preferences.ENABLE_STREAMING = value
+  } else {
+    alert(response.data?.message || 'Failed to set preferences')
+  }
 }
 </script>
 <template>
@@ -85,8 +115,15 @@ async function onDownloadCharacters() {
           <div class="dropdown-menu">
             <h6 class="dropdown-header">Settings:</h6>
             <div class="dropdown-divider"></div>
-            <button type="button" class="dropdown-item">
-              <i class="bi bi-check2"></i>
+            <button
+              type="button"
+              class="dropdown-item"
+              @click="toggleMatrixStreaming"
+            >
+              <i
+                class="bi bi-check2"
+                :class="{ hidden: !matrix.preferences?.ENABLE_STREAMING }"
+              ></i>
               Enable Streaming
             </button>
           </div>
@@ -221,6 +258,13 @@ async function onDownloadCharacters() {
           >
             Download Characters
           </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-secondary"
+            @click="onDownloadOntology"
+          >
+            Download Ontology
+          </button>
         </div>
       </div>
       <div
@@ -267,5 +311,9 @@ async function onDownloadCharacters() {
 .tab-content-buttons {
   display: flex;
   gap: 8px;
+}
+
+.hidden {
+  visibility: hidden;
 }
 </style>

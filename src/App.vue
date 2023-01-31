@@ -1,14 +1,21 @@
 <script setup>
-import { RouterView } from 'vue-router'
-
 import Header from '@/components/main/Header.vue'
 import Footer from '@/components/main/Footer.vue'
+import axios from 'axios'
+import { RouterView } from 'vue-router'
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/AuthStore.js'
 const authStore = useAuthStore()
 
 onMounted(() => {
   authStore.fetchLocalStore()
+  axios.interceptors.request.use((config) => {
+    const token = authStore.user?.authToken
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  })
 })
 </script>
 <template>
@@ -22,11 +29,7 @@ onMounted(() => {
 
   <Footer></Footer>
 </template>
-
 <style>
-/* @import "@/assets/base.css"; */
-/* @import "@/assets/sb-admin-2.css"; */
-
 html,
 body {
   font-family: 'Open Sans', sans-serif;
@@ -96,5 +99,16 @@ a:hover {
 
 .btn-primary:hover {
   background-color: #ef630b;
+}
+
+.btn-outline-primary {
+  border-color: #ef630b;
+  color: #ef630b;
+  outline: none;
+}
+
+.btn-outline-primary:hover {
+  background-color: #ef630b;
+  border-color: #6c757d;
 }
 </style>
