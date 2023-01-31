@@ -1,5 +1,6 @@
 import { useAuthStore } from '@/stores/AuthStore.js'
 import { createRouter, createWebHistory } from 'vue-router'
+import { MY_PROJECT_VIEWS } from '@/router/projects.js'
 
 import AdminHomeView from '@/views/admin/AdminHomeView.vue'
 import AdminView from '@/views/admin/AdminView.vue'
@@ -9,14 +10,6 @@ import CuratorView from '@/views/curator/CuratorView.vue'
 import DocsView from '@/views/misc/DocsView.vue'
 import FaqView from '@/views/misc/FaqView.vue'
 import HomeView from '@/views/HomeView.vue'
-import MyProjectBibliographyView from '@/views/project/MyProjectBibliographyView.vue'
-import MyProjectHomeView from '@/views/project/MyProjectHomeView.vue'
-import MyProjectMatrixView from '@/views/project/MyProjectMatrixView.vue'
-import MyProjectMediaView from '@/views/project/MyProjectMediaView.vue'
-import MyProjectMediaViewsView from '@/views/project/MyProjectMediaViewsView.vue'
-import MyProjectSpecimensView from '@/views/project/MyProjectSpecimensView.vue'
-import MyProjectTaxaView from '@/views/project/MyProjectTaxaView.vue'
-import MyProjectDocumentsView from '@/views/project/MyProjectDocumentsView.vue'
 import MyProjectsView from '@/views/project/MyProjectsView.vue'
 import NewsView from '@/views/misc/NewsView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
@@ -149,48 +142,7 @@ const router = createRouter({
           return { name: 'UserLogin' }
         }
       },
-      children: [
-        {
-          path: ':id',
-          name: 'MyProjectHomeView',
-          component: MyProjectHomeView,
-        },
-        {
-          path: ':id/matrices',
-          name: 'MyProjectMatrixView',
-          component: MyProjectMatrixView,
-        },
-        {
-          path: ':id/media',
-          name: 'MyProjectMediaView',
-          component: MyProjectMediaView,
-        },
-        {
-          path: ':id/views',
-          name: 'MyProjectMediaViewsView',
-          component: MyProjectMediaViewsView,
-        },
-        {
-          path: ':id/specimens',
-          name: 'MyProjectSpecimensView',
-          component: MyProjectSpecimensView,
-        },
-        {
-          path: ':id/taxa',
-          name: 'MyProjectTaxaView',
-          component: MyProjectTaxaView,
-        },
-        {
-          path: ':id/bibliography',
-          name: 'MyProjectBibliographyView',
-          component: MyProjectBibliographyView,
-        },
-        {
-          path: ':id/documents',
-          name: 'MyProjectDocumentsView',
-          component: MyProjectDocumentsView,
-        },
-      ],
+      children: MY_PROJECT_VIEWS,
     },
 
     // Public view of Projects

@@ -1,6 +1,7 @@
 <script setup>
-import { useRoute } from 'vue-router'
+import axios from 'axios'
 import { ref } from 'vue'
+import { useRoute } from 'vue-router'
 
 const props = defineProps({
   matrix: {
@@ -36,7 +37,9 @@ const partitionId = ref('')
 
 const projectId = route.params.id
 const matrixId = props.matrix.matrix_id
-const baseUrl = `${import.meta.env.VITE_API_URL}/projects/${projectId}/matrices/${matrixId}`
+const baseUrl = `${
+  import.meta.env.VITE_API_URL
+}/projects/${projectId}/matrices/${matrixId}`
 
 async function onDownloadMatrix() {
   const url = new URL(`${baseUrl}/download`)
@@ -71,7 +74,17 @@ async function onDownloadOntology() {
 }
 
 async function toggleMatrixStreaming() {
-  // TODO(kenzley): Implement toggling matrix streaming.
+  const url = new URL(`${baseUrl}/setPreference`)
+  const value = !matrix.preferences?.ENABLE_STREAMING | 0
+  const response = await axios.post(url, {
+    name: 'ENABLE_STREAMING',
+    value: value,
+  })
+  if (response.status == 200) {
+    matrix.preferences.ENABLE_STREAMING = value
+  } else {
+    alert(response.data?.message || 'Failed to set preferences')
+  }
 }
 </script>
 <template>
@@ -102,8 +115,15 @@ async function toggleMatrixStreaming() {
           <div class="dropdown-menu">
             <h6 class="dropdown-header">Settings:</h6>
             <div class="dropdown-divider"></div>
-            <button type="button" class="dropdown-item" @click="toggleMatrixStreaming">
-              <i class="bi bi-check2"></i>
+            <button
+              type="button"
+              class="dropdown-item"
+              @click="toggleMatrixStreaming"
+            >
+              <i
+                class="bi bi-check2"
+                :class="{ hidden: !matrix.preferences?.ENABLE_STREAMING }"
+              ></i>
               Enable Streaming
             </button>
           </div>
@@ -238,7 +258,11 @@ async function toggleMatrixStreaming() {
           >
             Download Characters
           </button>
-          <button type="button" class="btn btn-sm btn-secondary" @click="onDownloadOntology">
+          <button
+            type="button"
+            class="btn btn-sm btn-secondary"
+            @click="onDownloadOntology"
+          >
             Download Ontology
           </button>
         </div>
@@ -287,5 +311,9 @@ async function toggleMatrixStreaming() {
 .tab-content-buttons {
   display: flex;
   gap: 8px;
+}
+
+.hidden {
+  visibility: hidden;
 }
 </style>
