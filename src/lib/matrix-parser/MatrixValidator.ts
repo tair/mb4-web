@@ -80,7 +80,7 @@ export class MatrixValidator {
   }
 
   private hasMatchingBrackets(name: string): boolean {
-    const stack : string[] = []
+    const stack: string[] = []
     const matchLookup = new Map([
       ['(', ')'],
       ['[', ']'],

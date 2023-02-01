@@ -94,7 +94,7 @@ export abstract class AbstractBaseTokenizer extends Tokenizer {
 
     let isNumber = AbstractBaseTokenizer.isNumeric(character)
 
-    const cstring : string[] = []
+    const cstring: string[] = []
     do {
       isNumber = isNumber && AbstractBaseTokenizer.isNumeric(character)
 

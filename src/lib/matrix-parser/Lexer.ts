@@ -37,7 +37,7 @@ export class Lexer {
     if (!tokenizer) {
       throw Error('List of tokenziers are empty')
     }
-    this.tokenizer = tokenizer 
+    this.tokenizer = tokenizer
   }
 
   /**

@@ -141,7 +141,6 @@ export class MatrixObject {
     const character = this.characters.get(characterName)
     if (!row || !character) {
       throw 'failed to get row or character'
-
     }
     const cell = row[character.characterNumber]
     if (!cell) {

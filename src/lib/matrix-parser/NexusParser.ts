@@ -160,8 +160,8 @@ export class NexusParser extends AbstractParser {
       }
 
       if (this.tokenizer.consumeTokenIfMatch([Token.TEXT])) {
-        let taxaNumber : number | undefined = undefined
-        let characterNumber : number | undefined = undefined
+        let taxaNumber: number | undefined = undefined
+        let characterNumber: number | undefined = undefined
         let stateNumber: number | undefined = undefined
         let text: string | undefined = undefined
         while (this.untilToken([Token.SEMICOLON])) {
