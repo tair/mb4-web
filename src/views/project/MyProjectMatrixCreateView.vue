@@ -12,7 +12,9 @@ const charactersStore = useCharactersStore()
 const projectId = route.params.id
 
 const importedMatrix = reactive({})
-const defaultNumbering = computed(() => importedMatrix.format === 'NEXUS' ? 1 : 0)
+const defaultNumbering = computed(() =>
+  importedMatrix.format === 'NEXUS' ? 1 : 0
+)
 const incompletedCharactersCount = computed(() => {
   let count = 0
   if (!importedMatrix.characters) {
@@ -61,7 +63,9 @@ function cancelEditedCharacter() {
 
 function removeCharacterState(character, index) {
   if (character.states.length <= character.maxScoredStatePosition) {
-    alert(`The data matrix you uploaded has at least ${character.maxScoredStatePosition} states for this character. Please define the missing one or update the data matrix and then reupload.`)
+    alert(
+      `The data matrix you uploaded has at least ${character.maxScoredStatePosition} states for this character. Please define the missing one or update the data matrix and then reupload.`
+    )
     return
   }
   character.states.splice(index, 1)
@@ -78,7 +82,9 @@ function confirmCharacter(character) {
   if (character.states) {
     for (const state of character.states) {
       if (state.name.match(/State\ \d+$/)) {
-        alert(`You must rename the generic state: '${state.name}' or recode the character in the matrix.`)
+        alert(
+          `You must rename the generic state: '${state.name}' or recode the character in the matrix.`
+        )
         return
       }
       delete state.incompleteType
@@ -282,24 +288,36 @@ onMounted(() => {
               We found {{ importedMatrix?.characters?.size }} characters in your
               matrix.
             </h5>
-            <p v-if="duplicatedCharacters">
-              <div class='duplicate-characters'>
-                <span>
-                  Duplicate characters have been detected and renamed to distinguish them from the
-                  first instance of the following characters:
-                </span>
-                <ul>
-                  <li v-for="(characters, key) in duplicatedCharacters">
-                    {{ characters.length }} characters named "{{  key }}". Duplicate{{ characters.length ? 's have' : ' has'}} been renamed to "{{ characters.slice(0, -1).join('", "') + '", and "' + characters.at(-1) }}"
-                  </li>
-                </ul>
-              </div>
-            </p>
+
+            <div v-if="duplicatedCharacters" class="duplicate-characters">
+              <span>
+                Duplicate characters have been detected and renamed to
+                distinguish them from the first instance of the following
+                characters:
+              </span>
+              <ul>
+                <li v-for="(characters, key) in duplicatedCharacters">
+                  {{ characters.length }} characters named "{{ key }}".
+                  Duplicate{{ characters.length ? 's have' : ' has' }} been
+                  renamed to "{{
+                    characters.slice(0, -1).join('", "') +
+                    '", and "' +
+                    characters.at(-1)
+                  }}"
+                </li>
+              </ul>
+            </div>
 
             <p v-if="incompletedCharactersCount > 0">
-              {{ incompletedCharactersCount == 1 ? '1 state has' : `${incompletedCharactersCount} states have` }}
-              been flagged in <b class="flagged">RED</b> for incompleteness. Please review and (1) update the missing character
-              state information on the screen, save your edits and click next or (2) update the data matrix file and reupload.
+              {{
+                incompletedCharactersCount == 1
+                  ? '1 state has'
+                  : `${incompletedCharactersCount} states have`
+              }}
+              been flagged in <b class="flagged">RED</b> for incompleteness.
+              Please review and (1) update the missing character state
+              information on the screen, save your edits and click next or (2)
+              update the data matrix file and reupload.
             </p>
             <p v-else>
               Please confirm that the character and their states are correct.
@@ -329,14 +347,26 @@ onMounted(() => {
                     </td>
                     <td>
                       <b v-if="character.type == 'C'">(continuous character)</b>
-                      <b v-else-if="character.type == 'M'">(meristic character)</b>
+                      <b v-else-if="character.type == 'M'"
+                        >(meristic character)</b
+                      >
                       <ol v-else-if="character.states">
-                        <li v-for="state in character.states" :class="{'flagged': state.incompleteType}">
+                        <li
+                          v-for="state in character.states"
+                          :class="{ flagged: state.incompleteType }"
+                        >
                           {{ state.name }}
                         </li>
                       </ol>
-                      
-                      <p class="incomplete-state-warning" v-for="incompleteState in new Set(character.states.map(s => s.incompleteType).filter(w => !!w))">
+
+                      <p
+                        class="incomplete-state-warning"
+                        v-for="incompleteState in new Set(
+                          character.states
+                            .map((s) => s.incompleteType)
+                            .filter((w) => !!w)
+                        )"
+                      >
                         {{ getIncompleteStateText(incompleteState) }}
                       </p>
                     </td>
@@ -345,13 +375,15 @@ onMounted(() => {
                         :href="`#character${character.characterNumber}`"
                         data-bs-toggle="modal"
                         data-bs-target="#characterModal"
-                        @click.stop.prevent="editCharacter(character)">
+                        @click.stop.prevent="editCharacter(character)"
+                      >
                         Edit
                       </a>
 
                       <a
                         :href="`#character${character.characterNumber}`"
-                        @click.stop.prevent="confirmCharacter(character)">
+                        @click.stop.prevent="confirmCharacter(character)"
+                      >
                         Confirm
                       </a>
                     </td>
@@ -414,7 +446,9 @@ onMounted(() => {
                           />
                           <i
                             class="remove-state bi bi-x-lg"
-                            @click="removeCharacterState(editingCharacter, index)"
+                            @click="
+                              removeCharacterState(editingCharacter, index)
+                            "
                           ></i>
                         </span>
                       </div>
@@ -584,6 +618,10 @@ onMounted(() => {
 .incomplete-state-warning {
   color: red;
   font-style: italic;
+}
+
+.duplicate-characters {
+  padding-top: 10px;
 }
 
 .matrix-confirmation-screen table {
