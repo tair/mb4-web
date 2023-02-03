@@ -101,6 +101,11 @@ a:hover {
   background-color: #ef630b;
 }
 
+.btn-primary:disabled {
+  background-color: #f6ba95;
+  cursor: not-allowed;
+}
+
 .btn-outline-primary {
   border-color: #ef630b;
   color: #ef630b;

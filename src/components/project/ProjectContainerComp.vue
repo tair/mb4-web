@@ -8,7 +8,7 @@ const props = defineProps({
   },
   isLoading: {
     type: Boolean,
-    required: true,
+    default: false,
   },
   errorMessage: String,
   itemName: {
