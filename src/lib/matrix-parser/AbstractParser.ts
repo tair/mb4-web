@@ -32,7 +32,7 @@ export abstract class AbstractParser implements Parser {
    * Gets the format of the parser.
    * @returns A string indicate the format.
    */
-  public abstract getFormat(): string;
+  public abstract getFormat(): string
 
   /**
    * This will skip all the tokens until a semicolon is encountered. This is
