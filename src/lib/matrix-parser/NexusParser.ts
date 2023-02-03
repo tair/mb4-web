@@ -21,6 +21,10 @@ export class NexusParser extends AbstractParser {
     return this.matrixObject
   }
 
+  public override getFormat(): string {
+    return 'NEXUS'
+  }
+
   public isNexus() {
     while (this.tokenizer.consumeTokenIfMatch([Token.COMMENT]));
     return this.tokenizer.isToken([Token.NEXUS])
@@ -185,9 +189,9 @@ export class NexusParser extends AbstractParser {
             text = this.tokenizer.getTokenValue().getValue()
           } else if (this.tokenizer.consumeTokenIfMatch([Token.TAXA])) {
             this.tokenizer.assertToken(Token.EQUAL)
-            // this refers to the title of the TAXA that the notes should be applied to
-            // for now, let's ignore this since there is only one taxa list per Nexus file.
-            // TAXA = title
+            // This refers to the title of the TAXA that the notes should be
+            // applied to for now, let's ignore this since there is only one
+            // taxa list per Nexus file. TAXA = title
             this.tokenizer.getTokenValue()
           }
         }

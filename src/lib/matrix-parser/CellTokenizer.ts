@@ -47,7 +47,10 @@ export class CellTokenizer extends Tokenizer {
     return TokenValue.of(this.reader.getPosition(), Token.EOF, '')
   }
 
-  /** The characters that are used to separate cells in a grouping (e.g. [1 2], [1,3,4]). */
+  /**
+   * The characters that are used to separate cells in a grouping
+   * (e.g. [1 2], [1,3,4]).
+   */
   private static isCellSeparator(character: string): boolean {
     return (
       Tokenizer.isWhiteSpace(character) ||

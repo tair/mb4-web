@@ -6,13 +6,13 @@ export class Lexer {
   /** The current tokenizer that is being used to tokenize the reader. */
   protected tokenizer: Tokenizer
 
-  /*
-   * The list of tokenizers that were previous tokenizing but was replaced by the current
-   * tokenizer.
+  /**
+   * The list of tokenizers that were previous tokenizing but was replaced
+   * by the current tokenizer.
    */
   protected tokenizers: Tokenizer[]
 
-  /* The current token value. May be null if it was not read.  */
+  /** The current token value. May be null if it was not read.  */
   protected currentTokenValue: TokenValue | null
 
   constructor(tokenizer: Tokenizer) {
@@ -51,7 +51,8 @@ export class Lexer {
   }
 
   /**
-   * Asserts that the current token is a specific token, consumes the token, and return its value.
+   * Asserts that the current token is a specific token, consumes the token,
+   * and return its value.
    *
    * @param token Array or single token to compare.
    * @throw error if the tokens do not match.
@@ -99,8 +100,9 @@ export class Lexer {
   }
 
   /**
-   * This checks to see if we have reached the end of the file. Remember, that this is based on the current character.
-   * Hence the next character can be the EOF character and the next call can be to this method will return true.
+   * This checks to see if we have reached the end of the file. Remember, that
+   * this is based on the current character. Hence the next character can be the
+   * EOF character and the next call can be to this method will return true.
    * @return boolean whether the tokenizer has finished reading the file.
    */
   public isFinished() {
@@ -129,8 +131,8 @@ export class Lexer {
   }
 
   /**
-   * Returns the next token but does not consume it. Therefore multiple, successive calls
-   * this method should return the same token.
+   * Returns the next token but does not consume it. Therefore multiple,
+   * successive calls this method should return the same token.
    * @return Token next token
    */
   private peekTokenValue(): TokenValue {

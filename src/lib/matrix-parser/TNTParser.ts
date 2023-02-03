@@ -23,6 +23,10 @@ export class TNTParser extends AbstractParser {
     return this.matrixObject
   }
 
+  public override getFormat(): string {
+    return 'TNT'
+  }
+
   public isTNT(): boolean {
     if (this.tokenizer.isToken([Token.XREAD])) {
       return true
@@ -113,8 +117,9 @@ export class TNTParser extends AbstractParser {
       const rowName = this.tokenizer.getTokenValue()
       this.matrixObject.addTaxon(rowName.getValue())
 
-      // For TNT files, it is possible to have an AT symbol to indicate higher taxonomy ranks. This is ignored
-      // by the parse so we just get value of discard it.
+      // For TNT files, it is possible to have an AT symbol to indicate higher
+      // taxonomy ranks. This is ignored by the parse so we just get value of
+      // discard it.
       if (this.tokenizer.consumeTokenIfMatch([Token.AT])) {
         this.tokenizer.consumeToken()
       }

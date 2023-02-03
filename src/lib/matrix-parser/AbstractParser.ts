@@ -17,7 +17,7 @@ export abstract class AbstractParser implements Parser {
   constructor(reader: Reader, tokenizer: Tokenizer) {
     this.reader = reader
     this.tokenizer = new Lexer(tokenizer)
-    this.matrixObject = new MatrixObject()
+    this.matrixObject = new MatrixObject(this.getFormat())
     this.lastLoopPosition = new FilePosition(0, 0, 0)
     this.loopIteration = 0
   }
@@ -29,8 +29,15 @@ export abstract class AbstractParser implements Parser {
   public abstract parse(): MatrixObject
 
   /**
-   * This will skip all the tokens until a semicolon is encountered. This is useful when the parser
-   * does not need to include the next block or command into the matrix.
+   * Gets the format of the parser.
+   * @returns A string indicate the format.
+   */
+  public abstract getFormat(): string;
+
+  /**
+   * This will skip all the tokens until a semicolon is encountered. This is
+   * useful when the parser does not need to include the next block or command
+   * into the matrix.
    */
   protected skipToSemicolon(): void {
     this.skipUntilToken(Token.SEMICOLON)

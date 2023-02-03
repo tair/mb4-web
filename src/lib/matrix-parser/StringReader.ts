@@ -27,8 +27,8 @@ export class StringReader implements Reader {
 
     let character = this.content[this.currentPosition++]
 
-    // Let's consume both the carriage return and new line so that the parsers don't need to worry
-    // about platform differences.
+    // Let's consume both the carriage return and new line so that the parsers
+    // don't need to worry about platform differences.
     if (character === '\r' && this.content[this.currentPosition] === '\n') {
       character = this.content[this.currentPosition++]
     }

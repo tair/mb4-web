@@ -52,7 +52,8 @@ export abstract class AbstractBaseTokenizer extends Tokenizer {
   protected abstract isKeyword(token: Token): boolean
 
   /**
-   * Returns a boolean indicating whether the given token is a terminating token for strings.
+   * Returns a boolean indicating whether the given token is a terminating token
+   * for strings.
    */
   protected isTerminatingToken(token: Token): boolean {
     return AbstractBaseTokenizer.stringTerminatingTokens.has(token)

@@ -6,23 +6,28 @@ import {
 } from './MatrixObject'
 
 export class MatrixValidator {
+  /**
+   * Validate the matrix object to ensure that the file is correct.
+   */
   validate(matrixObject: MatrixObject): boolean {
+    this.validateCharacters(matrixObject.getCharacters())
     return true
   }
 
   /**
-   * This will determine whether the number of character states exceeds the number of scores in the cells. If the
-   * numbers are different it's a clear indication that the character state was parsed incorrectly. Since we don't know
-   * which state was incorrectly parsed, we'll flag all of them.
+   * This will determine whether the number of character states exceeds the
+   * number of scores in the cells. If the numbers are different it's a clear
+   * indication that the character state was parsed incorrectly. Since we don't
+   * know which state was incorrectly parsed, we'll flag all of them.
    */
   private validateCharacters(characters: Character[]) {
     for (const character of characters) {
       const maxScoredStateIndex = character.maxScoredStatePosition
-      const states = character.states
       const generic_state = /State\ \d+/
 
       let isMarkedAsIncomplete = false
-      // If this character was already marked as incomplete, we don't need to mark it again.
+      // If this character was already marked as incomplete, we don't need to
+      // mark it again.
       for (const state of character.states) {
         if (state.incompleteType) {
           isMarkedAsIncomplete = true
@@ -33,8 +38,8 @@ export class MatrixValidator {
         }
       }
 
-      // If none of the states were marked as incomplete and the scores/states mismatch, then we'll mark all of the
-      // characters states are incomplete.
+      // If none of the states were marked as incomplete and the scores/states
+      // mismatch, then we'll mark all of the characters states are incomplete.
       const scoredMismatch = maxScoredStateIndex != character.states.length - 1
       if (
         !isMarkedAsIncomplete &&
@@ -49,22 +54,12 @@ export class MatrixValidator {
     }
   }
 
-  private getIncompleteCharacterStatesCount(characters: Character[]) {
-    let count = 0
-    for (const character of characters) {
-      for (const state of character.states) {
-        if (state.incompleteType) {
-          ++count
-        }
-      }
-    }
-    return count
-  }
-
-  // This method is used to determine whether we should flag characters which have more states and scores. This is
-  // usually the case when Mesquite incorrectly writes the NEXUS file and the states are split up. This usually happens
-  // when there are special characters such as parenthesis. So we'll check to see if there is a mismatch of parenthesis
-  // among the character states.
+  // This method is used to determine whether we should flag characters which
+  // have more states and scores. This is usually the case when Mesquite
+  // incorrectly writes the NEXUS file and the states are split up. This usually
+  // happens when there are special characters such as parenthesis. So we'll
+  // check to see if there is a mismatch of parenthesis among the character
+  // states.
   private possibleErronenousStates(characterStates: CharacterState[]) {
     const stateNames: string[] = []
     let matchingBracketsForNames = true

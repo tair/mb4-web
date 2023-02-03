@@ -1,6 +1,6 @@
 /**
- * This class indicates a position within a file. This is used to mark the line and column number
- * of a file.
+ * This class indicates a position within a file. This is used to mark the line
+ * and column number of a file.
  */
 export class FilePosition {
   private readonly position: number

@@ -1,4 +1,5 @@
 export class MatrixObject {
+  private readonly format: string
   private readonly title: Map<string, string>
   private readonly dimensions: Map<string, number>
 
@@ -11,7 +12,8 @@ export class MatrixObject {
 
   private dataType: DataType
 
-  constructor() {
+  constructor(format: string) {
+    this.format = format
     this.title = new Map()
     this.dimensions = new Map()
     this.characters = new Map()
@@ -65,6 +67,10 @@ export class MatrixObject {
       this.cells.set(taxonName, cells)
     }
     return this.cells.get(taxonName) as Cell[]
+  }
+
+  getCharacters() {
+    return Array.from(this.characters.values())
   }
 
   addCharacter(characterNumber: number, characterName: string): void {
@@ -127,9 +133,9 @@ export class MatrixObject {
     isSankoff: boolean,
     weight: number
   ) {
-    // The current implementation doesn't support fully support CCODEs. It only supports ordering
-    // and unordered characters. So let's just set the ordering if the the characters are marked
-    // as active.
+    // The current implementation doesn't support fully support CCODEs. It only
+    // supports ordering and unordered characters. So let's just set the
+    // ordering if the the characters are marked as active.
     const ordering = isActive
       ? CharacterOrdering.ORDERING
       : CharacterOrdering.UNORDERING

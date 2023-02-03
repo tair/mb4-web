@@ -1,13 +1,91 @@
 <script setup>
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
-
 import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
-import { reactive } from 'vue'
+import { useCharactersStore } from '@/stores/CharactersStore'
+import { useTaxaStore } from '@/stores/TaxaStore'
+import { getIncompleteStateText } from '@/lib/matrix-parser/text.ts'
 
 const route = useRoute()
+const taxaStore = useTaxaStore()
+const charactersStore = useCharactersStore()
 const projectId = route.params.id
 
-let importedMatrix = reactive({})
+const importedMatrix = reactive({})
+const defaultNumbering = computed(() => importedMatrix.format === 'NEXUS' ? 1 : 0)
+const incompletedCharactersCount = computed(() => {
+  let count = 0
+  if (!importedMatrix.characters) {
+    return 0
+  }
+
+  for (const character of importedMatrix.characters.values()) {
+    if (!character.states) {
+      continue
+    }
+    for (const state of character?.states) {
+      if (state.incompleteType) {
+        ++count
+      }
+    }
+  }
+
+  return count
+})
+const duplicatedCharacters = computed(() => {
+  if (!importedMatrix.characters) {
+    return []
+  }
+  const duplicateCharactersNames = {}
+  for (const character of importedMatrix.characters.values()) {
+    if (character.duplicateCharacter) {
+      const originalCharacterName = character.duplicateCharacter
+      if (!duplicateCharactersNames.hasOwnProperty(originalCharacterName)) {
+        duplicateCharactersNames[originalCharacterName] = []
+      }
+      duplicateCharactersNames[originalCharacterName].push(character.name)
+    }
+  }
+  return duplicateCharactersNames
+})
+
+let editingCharacter = ref({})
+function editCharacter(character) {
+  editingCharacter.value = JSON.parse(JSON.stringify(character))
+  return false
+}
+
+function cancelEditedCharacter() {
+  editingCharacter.value = {}
+}
+
+function removeCharacterState(character, index) {
+  if (character.states.length <= character.maxScoredStatePosition) {
+    alert(`The data matrix you uploaded has at least ${character.maxScoredStatePosition} states for this character. Please define the missing one or update the data matrix and then reupload.`)
+    return
+  }
+  character.states.splice(index, 1)
+}
+function saveEditedCharacter() {
+  const characterNumber = editingCharacter.value.characterNumber
+  const keys = Array.from(importedMatrix.characters.keys())
+  const name = keys[characterNumber]
+  const character = importedMatrix.characters.get(name)
+  Object.assign(character, JSON.parse(JSON.stringify(editingCharacter.value)))
+}
+
+function confirmCharacter(character) {
+  if (character.states) {
+    for (const state of character.states) {
+      if (state.name.match(/State\ \d+$/)) {
+        alert(`You must rename the generic state: '${state.name}' or recode the character in the matrix.`)
+        return
+      }
+      delete state.incompleteType
+    }
+  }
+  return false
+}
 
 async function uploadMatrix(event) {
   const parser = await import('@/lib/matrix-parser/index.ts')
@@ -67,6 +145,16 @@ function moveToStep(step) {
 function submit() {
   // TODO(kenzley): Convert to JSON and upload to the server.
 }
+
+onMounted(() => {
+  if (!taxaStore.isLoaded) {
+    taxaStore.fetchTaxaByProjectId(projectId)
+  }
+
+  if (!charactersStore.isLoaded) {
+    charactersStore.fetchCharactersByProjectId(projectId)
+  }
+})
 </script>
 <template>
   <ProjectContainerComp
@@ -111,7 +199,7 @@ function submit() {
         </div>
       </div>
       <div>
-        <form>
+        <form @submit.prevent="moveToCharacters">
           <div class="row setup-content" id="step-1">
             <div class="form-group">
               <label for="matrix-title">Title</label>
@@ -184,11 +272,7 @@ function submit() {
               <button class="btn btn-primary btn-step-prev" type="button">
                 Cancel
               </button>
-              <button
-                class="btn btn-primary btn-step-next"
-                type="button"
-                @click="moveToCharacters"
-              >
+              <button class="btn btn-primary btn-step-next" type="submit">
                 Next
               </button>
             </div>
@@ -198,10 +282,28 @@ function submit() {
               We found {{ importedMatrix?.characters?.size }} characters in your
               matrix.
             </h5>
-            <b
-              >Please confirm that the character and their states are
-              correct.</b
-            >
+            <p v-if="duplicatedCharacters">
+              <div class='duplicate-characters'>
+                <span>
+                  Duplicate characters have been detected and renamed to distinguish them from the
+                  first instance of the following characters:
+                </span>
+                <ul>
+                  <li v-for="(characters, key) in duplicatedCharacters">
+                    {{ characters.length }} characters named "{{  key }}". Duplicate{{ characters.length ? 's have' : ' has'}} been renamed to "{{ characters.slice(0, -1).join('", "') + '", and "' + characters.at(-1) }}"
+                  </li>
+                </ul>
+              </div>
+            </p>
+
+            <p v-if="incompletedCharactersCount > 0">
+              {{ incompletedCharactersCount == 1 ? '1 state has' : `${incompletedCharactersCount} states have` }}
+              been flagged in <b class="flagged">RED</b> for incompleteness. Please review and (1) update the missing character
+              state information on the screen, save your edits and click next or (2) update the data matrix file and reupload.
+            </p>
+            <p v-else>
+              Please confirm that the character and their states are correct.
+            </p>
             <div class="matrix-confirmation-screen">
               <table>
                 <thead>
@@ -214,7 +316,9 @@ function submit() {
                 </thead>
                 <tbody>
                   <tr v-for="character in importedMatrix?.characters?.values()">
-                    <td>{{ character.characterNumber }}</td>
+                    <td :id="`character${character.characterNumber}`">
+                      {{ character.characterNumber + defaultNumbering }}
+                    </td>
                     <td>
                       {{ character.name }}
                       <p class="notes" v-if="character.note">
@@ -224,13 +328,33 @@ function submit() {
                       </p>
                     </td>
                     <td>
-                      <ol v-if="character.states">
-                        <li v-for="states in character.states">
-                          {{ states.name }}
+                      <b v-if="character.type == 'C'">(continuous character)</b>
+                      <b v-else-if="character.type == 'M'">(meristic character)</b>
+                      <ol v-else-if="character.states">
+                        <li v-for="state in character.states" :class="{'flagged': state.incompleteType}">
+                          {{ state.name }}
                         </li>
                       </ol>
+                      
+                      <p class="incomplete-state-warning" v-for="incompleteState in new Set(character.states.map(s => s.incompleteType).filter(w => !!w))">
+                        {{ getIncompleteStateText(incompleteState) }}
+                      </p>
                     </td>
-                    <td><i class="bi bi-pencil-square fa-m"></i>Edit</td>
+                    <td>
+                      <a
+                        :href="`#character${character.characterNumber}`"
+                        data-bs-toggle="modal"
+                        data-bs-target="#characterModal"
+                        @click.stop.prevent="editCharacter(character)">
+                        Edit
+                      </a>
+
+                      <a
+                        :href="`#character${character.characterNumber}`"
+                        @click.stop.prevent="confirmCharacter(character)">
+                        Confirm
+                      </a>
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -244,12 +368,78 @@ function submit() {
                 Prev
               </button>
               <button
-                class="btn btn-primary btn-step-next"
                 type="button"
+                class="btn btn-primary btn-step-next"
+                :disabled="incompletedCharactersCount > 0"
                 @click="moveToTaxa"
               >
                 Next
               </button>
+            </div>
+          </div>
+          <div class="modal" id="characterModal" tabindex="-1">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Edit Character</h5>
+                </div>
+                <form>
+                  <div class="modal-body">
+                    <div class="form-group">
+                      <label>Name</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        v-model="editingCharacter.name"
+                      />
+                    </div>
+                    <div class="form-group">
+                      <label>Notes</label><br />
+                      <textarea
+                        class="form-control"
+                        v-model="editingCharacter.note"
+                      ></textarea>
+                    </div>
+                    <div class="form-group">
+                      <label>States</label><br />
+                      <div>
+                        <span
+                          class="character-states"
+                          v-for="(state, index) in editingCharacter.states"
+                        >
+                          <input
+                            class="form-control"
+                            type="text"
+                            v-model="state.name"
+                          />
+                          <i
+                            class="remove-state bi bi-x-lg"
+                            @click="removeCharacterState(editingCharacter, index)"
+                          ></i>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+                <div class="modal-footer">
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                    @click="cancelEditedCharacter"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    data-bs-dismiss="modal"
+                    @click="saveEditedCharacter"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
           <div class="row setup-content" id="step-3">
@@ -387,6 +577,15 @@ function submit() {
   display: none;
 }
 
+.flagged {
+  color: red;
+}
+
+.incomplete-state-warning {
+  color: red;
+  font-style: italic;
+}
+
 .matrix-confirmation-screen table {
   background-color: #fff;
   border: 1px solid #ccc;
@@ -400,12 +599,16 @@ function submit() {
 }
 
 div.matrix-confirmation-screen table th {
-  vertical-align: top;
-  text-align: left;
   background-color: #fff;
   border: 1px solid #ccc;
   font-size: 14px;
   font-weight: bold;
+  text-align: left;
+  vertical-align: top;
+}
+
+div.matrix-confirmation-screen table th:last-child {
+  min-width: 50px;
 }
 
 div.matrix-confirmation-screen table tr:nth-child(odd) {
@@ -438,5 +641,16 @@ div.matrix-confirmation-screen table td {
   content: '(' counter(item) ') ';
   counter-increment: item;
   margin-left: -18px;
+}
+
+.character-states {
+  display: flex;
+  padding-bottom: 5px;
+}
+
+.character-states .remove-state {
+  color: #ef782f;
+  margin: auto;
+  padding: 0 4px;
 }
 </style>
