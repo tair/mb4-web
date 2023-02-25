@@ -5,6 +5,8 @@ import { Token } from './Token'
 export class TNTTokenizer extends AbstractBaseTokenizer {
   /** The set of keywords used in the TNT format. */
   private static readonly keywordsTokens: Set<Token> = new Set([
+    Token.AMPERSAND_CONT,
+    Token.AMPERSAND_NUM,
     Token.CCODE,
     Token.CNAMES,
     Token.COMMENTS,

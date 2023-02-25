@@ -11,6 +11,13 @@ export const useMatricesStore = defineStore({
   }),
   getters: {},
   actions: {
+    invalidate() {
+      this.isLoading = true
+      this.matrices = null
+      this.partitions = null
+      this.canEditMatrix = null
+    },
+
     async fetchMatricesByProjectId(projectId) {
       const url = `${
         import.meta.env.VITE_API_URL

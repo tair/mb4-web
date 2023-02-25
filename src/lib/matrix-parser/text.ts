@@ -1,4 +1,4 @@
-import { CharacterStateIncompleteType } from './MatrixObject'
+import { CharacterStateIncompleteType, CharacterType } from './MatrixObject'
 
 export function getIncompleteStateText(
   incompleteType: CharacterStateIncompleteType
@@ -14,5 +14,17 @@ export function getIncompleteStateText(
       return "Generic state labels like 'State 0' are not allowed, please add a descriptive label."
     default:
       return ''
+  }
+}
+
+export function getCharacterTypeText(characterType: CharacterType): string {
+  switch (characterType) {
+    case CharacterType.MERISTIC:
+      return 'Meristic'
+    case CharacterType.CONTINUOUS:
+      return 'Continuous'
+    case CharacterType.DISCRETE:
+    default:
+      return 'Discrete'
   }
 }

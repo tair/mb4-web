@@ -1,19 +1,25 @@
 <script setup>
+import axios from 'axios'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
 import { useCharactersStore } from '@/stores/CharactersStore'
+import { useMatricesStore } from '@/stores/MatricesStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { getIncompleteStateText } from '@/lib/matrix-parser/text.ts'
+import { mergeMatrix } from '@/lib/MatrixMerger.js'
+import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
+import router from '../../router'
 
 const route = useRoute()
 const taxaStore = useTaxaStore()
+const matricesStore = useMatricesStore()
 const charactersStore = useCharactersStore()
 const projectId = route.params.id
 
 const importedMatrix = reactive({})
 const defaultNumbering = computed(() =>
-  importedMatrix.format === 'NEXUS' ? 1 : 0
+  importedMatrix.format == 'NEXUS' ? 1 : 0
 )
 const incompletedCharactersCount = computed(() => {
   let count = 0
@@ -62,7 +68,7 @@ function cancelEditedCharacter() {
 }
 
 function removeCharacterState(character, index) {
-  if (character.states.length <= character.maxScoredStatePosition) {
+  if (character.states.length - 1 <= character.maxScoredStatePosition) {
     alert(
       `The data matrix you uploaded has at least ${character.maxScoredStatePosition} states for this character. Please define the missing one or update the data matrix and then reupload.`
     )
@@ -70,6 +76,7 @@ function removeCharacterState(character, index) {
   }
   character.states.splice(index, 1)
 }
+
 function saveEditedCharacter() {
   const characterNumber = editingCharacter.value.characterNumber
   const keys = Array.from(importedMatrix.characters.keys())
@@ -93,7 +100,25 @@ function confirmCharacter(character) {
   return false
 }
 
-async function uploadMatrix(event) {
+let currentEditingTaxonName = null
+let editingTaxon = ref({})
+function editTaxon(taxon) {
+  currentEditingTaxonName = taxon.name
+  editingTaxon.value = JSON.parse(JSON.stringify(taxon))
+  return false
+}
+
+function cancelEditedTaxon() {
+  currentEditingTaxonName = null
+  editingTaxon.value = {}
+}
+
+function saveEditedTaxon() {
+  const taxon = importedMatrix.taxa.get(currentEditingTaxonName)
+  Object.assign(taxon, JSON.parse(JSON.stringify(editingTaxon.value)))
+}
+
+async function importMatrix(event) {
   const parser = await import('@/lib/matrix-parser/index.ts')
   const files = event.target?.files
   if (files == null || files.length == 0) {
@@ -120,6 +145,21 @@ function moveUpload() {
 }
 
 function moveToCharacters() {
+  if (taxaStore.isLoaded && charactersStore.isLoaded) {
+    const otu = document.getElementById('otu')
+    const itemNote = document.getElementById('item-notes')
+    mergeMatrix(
+      importedMatrix,
+      otu.value,
+      itemNote.value,
+      taxaStore.taxa,
+      charactersStore.characters
+    )
+  } else {
+    // Add a loading screen when the taxa and characters are not loaded. We will
+    // delay component and move on the step-2 when taxa and characters have
+    // loaded. Consider using AsyncComponents
+  }
   moveToStep('step-2')
   return false
 }
@@ -148,8 +188,48 @@ function moveToStep(step) {
   window.scrollTo(0, 0)
 }
 
-function submit() {
-  // TODO(kenzley): Convert to JSON and upload to the server.
+let isUploading = ref(false)
+async function uploadMatrix() {
+  isUploading = true
+  try {
+    const formData = new FormData()
+
+    const title = document.getElementById('matrix-title')
+    formData.set('title', title.value)
+
+    const notes = document.getElementById('matrix-notes')
+    formData.set('notes', notes.value)
+
+    const itemNotes = document.getElementById('item-notes')
+    formData.set('itemNotes', itemNotes.value)
+
+    const otu = document.getElementById('otu')
+    formData.set('otu', otu.value)
+
+    const published = document.getElementById('published')
+    formData.set('published', published.value)
+
+    const file = document.getElementById('upload')
+    formData.set('file', file.files[0])
+
+    const serializedMatrix = serializeMatrix(importedMatrix)
+    formData.set('matrix', serializedMatrix)
+
+    const url = new URL(
+      `${import.meta.env.VITE_API_URL}/projects/${projectId}/matrices/upload`
+    )
+    const response = await axios.post(url, formData)
+    if (response.status != 200) {
+      alert('There was an error importing the matrix')
+      return
+    }
+
+    alert('Successfully imported')
+    matricesStore.invalidate()
+    router.push({ path: `/myprojects/${projectId}/matrices` })
+  } finally {
+    isUploading = false
+  }
 }
 
 onMounted(() => {
@@ -213,6 +293,7 @@ onMounted(() => {
                 type="text"
                 class="form-control"
                 id="matrix-title"
+                ref="matrixTitle"
                 required="required"
               />
             </div>
@@ -221,8 +302,8 @@ onMounted(() => {
               <textarea class="form-control" id="matrix-notes"></textarea>
             </div>
             <div class="form-group">
-              <label for="matrix-notes">Operational taxonomic unit</label>
-              <select name="otu" class="form-control">
+              <label for="otu">Operational taxonomic unit</label>
+              <select id="otu" name="otu" class="form-control">
                 <option value="supraspecific_clade">Supraspecific Clade</option>
                 <option value="higher_taxon_class">Class</option>
                 <option value="higher_taxon_subclass">Subclass</option>
@@ -237,7 +318,7 @@ onMounted(() => {
             </div>
             <div class="form-group">
               <label for="matrix-notes">Publishing Status</label>
-              <select name="published" class="form-control">
+              <select id="published" name="published" class="form-control">
                 <option value="0">Publish when project is published</option>
                 <option value="1">Never publish to project</option>
               </select>
@@ -260,14 +341,15 @@ onMounted(() => {
                 >
                 <input
                   type="file"
+                  id="upload"
                   name="upload"
                   class="form-control"
-                  @change="uploadMatrix"
+                  @change="importMatrix"
                   required="required"
                 />
               </div>
               <div class="form-group">
-                <label for="matrix-notes"
+                <label for="item-notes"
                   >Descriptive text to add to each character and taxon added to
                   the project from this file</label
                 >
@@ -289,7 +371,10 @@ onMounted(() => {
               matrix.
             </h5>
 
-            <div v-if="duplicatedCharacters" class="duplicate-characters">
+            <div
+              v-if="Object.keys(duplicatedCharacters).length"
+              class="duplicate-characters"
+            >
               <span>
                 Duplicate characters have been detected and renamed to
                 distinguish them from the first instance of the following
@@ -322,7 +407,14 @@ onMounted(() => {
             <p v-else>
               Please confirm that the character and their states are correct.
             </p>
-            <div class="matrix-confirmation-screen">
+            <div
+              class="matrix-loading-screen py-5"
+              v-if="!taxaStore.isLoaded || !charactersStore.isLoaded"
+            >
+              <div class="spinner-border text-success" role="status"></div>
+              Loading...
+            </div>
+            <div class="matrix-confirmation-screen" v-else>
               <table>
                 <thead>
                   <tr>
@@ -494,6 +586,7 @@ onMounted(() => {
                   <tr v-for="(taxon, index) in importedMatrix?.taxa?.values()">
                     <td>{{ index + 1 }}</td>
                     <td>
+                      {{ taxon.extinct ? '†' : '' }}
                       {{ taxon.name }}
                       <p class="notes" v-if="taxon.note">
                         <b>Notes:</b>
@@ -501,7 +594,16 @@ onMounted(() => {
                         <i>{{ taxon.note }}</i>
                       </p>
                     </td>
-                    <td><i class="bi bi-pencil-square fa-m"></i>Edit</td>
+                    <td>
+                      <a
+                        href="javascript:void(0);"
+                        data-bs-toggle="modal"
+                        data-bs-target="#taxonModal"
+                        @click.stop.prevent="editTaxon(taxon)"
+                      >
+                        Edit
+                      </a>
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -517,10 +619,65 @@ onMounted(() => {
               <button
                 class="btn btn-primary btn-step-next"
                 type="button"
-                @click="submit"
+                :disabled="isUploading"
+                @click="uploadMatrix"
               >
-                Submit
+                Upload
               </button>
+            </div>
+          </div>
+          <div class="modal" id="taxonModal" tabindex="-1">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Edit Taxon</h5>
+                </div>
+                <form>
+                  <div class="modal-body">
+                    <div class="form-group">
+                      <label>Name</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        v-model="editingTaxon.name"
+                      />
+                    </div>
+                    <div class="form-group">
+                      <label>Is Extinct</label>
+                      <input
+                        type="checkbox"
+                        class="form-check-input form-control"
+                        v-model="editingTaxon.extinct"
+                      />
+                    </div>
+                    <div class="form-group">
+                      <label>Notes</label><br />
+                      <textarea
+                        class="form-control"
+                        v-model="editingTaxon.note"
+                      ></textarea>
+                    </div>
+                  </div>
+                </form>
+                <div class="modal-footer">
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                    @click="cancelEditedTaxon"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    data-bs-dismiss="modal"
+                    @click="saveEditedTaxon"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </form>

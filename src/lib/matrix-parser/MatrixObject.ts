@@ -1,27 +1,31 @@
 export class MatrixObject {
+  private dataType: DataType
   private readonly format: string
   private readonly title: Map<string, string>
-  private readonly dimensions: Map<string, number>
+  private readonly dimensions: { [key: string]: number }
+  private readonly parameters: { [key: string]: string }
+  private readonly blocks: Block[]
 
-  // Note that Map and Set maintain insertion order.
+  // Map is used since they maintain insertion order. The key is the character
+  // name and taxon name for the character and taxa & cells, respectively.
   private readonly characters: Map<string, Character>
   private readonly taxa: Map<string, Taxon>
   private readonly cells: Map<string, Cell[]>
-  private readonly blocks: Map<string, string>
-  private readonly parameters: Map<string, string>
-
-  private dataType: DataType
 
   constructor(format: string) {
+    this.dataType = DataType.REGULAR
     this.format = format
     this.title = new Map()
-    this.dimensions = new Map()
+    this.dimensions = {}
+    this.parameters = {}
+    this.blocks = []
     this.characters = new Map()
     this.taxa = new Map()
     this.cells = new Map()
-    this.blocks = new Map()
-    this.parameters = new Map()
-    this.dataType = DataType.REGULAR
+  }
+
+  getFormat(): string {
+    return this.format
   }
 
   setDataType(dataType: DataType): void {
@@ -37,7 +41,7 @@ export class MatrixObject {
   }
 
   setDimensions(key: string, value: number): void {
-    this.dimensions.set(key, value)
+    this.dimensions[key] = value
   }
 
   addTaxon(taxonName: string) {
@@ -69,11 +73,22 @@ export class MatrixObject {
     return this.cells.get(taxonName) as Cell[]
   }
 
-  getCharacters() {
+  getCharacters(): Character[] {
     return Array.from(this.characters.values())
   }
 
-  addCharacter(characterNumber: number, characterName: string): void {
+  /**
+   * Adds a character to the matrix.
+   *
+   * In order to support duplicate characters, the name may be updated with a
+   * postfix. For example, duplicate names of "Homo Sapien" will be renamed to
+   * "Homo Sapien - 1" and "Homo Sapien 2".
+   *
+   * @param characterNumber The number of the character.
+   * @param characterName The name of the character.
+   * @returns A string indicating the name was was inserted.
+   */
+  addCharacter(characterNumber: number, characterName: string): string {
     if (characterNumber == null) {
       characterNumber = this.getCharacterCount()
     }
@@ -89,6 +104,7 @@ export class MatrixObject {
       character.duplicateCharacter = characterName
     }
     this.characters.set(serializedCharacterName, character)
+    return serializedCharacterName
   }
 
   getCharacterNames(): string[] {
@@ -181,8 +197,12 @@ export class MatrixObject {
     }
   }
 
+  getParameter(parameter: string): any {
+    return this.parameters[parameter]
+  }
+
   setCharacterParameter(parameter: string, value: any): void {
-    this.parameters.set(parameter, value)
+    this.parameters[parameter] = value
   }
 
   isMeristic(): boolean {
@@ -190,7 +210,10 @@ export class MatrixObject {
   }
 
   addBlock(name: string, content: string) {
-    this.blocks.set(name, content)
+    this.blocks.push({
+      name: name,
+      content: content,
+    })
   }
 
   private generateNameWithPostfix(
@@ -217,36 +240,67 @@ export class Character {
   note?: string
   ordering?: CharacterOrdering
   duplicateCharacter?: string
-  maxScoredStatePosition?: number
+  maxScoredStatePosition: number
 
   constructor(characterNumber: number, name: string) {
     this.characterNumber = characterNumber
     this.name = name
     this.type = CharacterType.DISCRETE
     this.states = []
+    this.maxScoredStatePosition = 0
   }
 
-  addState(stateName: string) {
+  addState(stateName: string): CharacterState {
     const state = new CharacterState(stateName)
     this.states.push(state)
+    return state
+  }
+
+  maybeSetMaxScoreStateIndex(stateIndex: number) {
+    if (
+      !this.maxScoredStatePosition ||
+      this.maxScoredStatePosition < stateIndex
+    ) {
+      this.maxScoredStatePosition = stateIndex
+    }
   }
 }
 
 export class Cell {
-  value: string
+  // This is the value of the cell. This can be a single value or multiple
+  // values.
+  score: string
   uncertain?: boolean
   note?: string
 
-  constructor(value: string, uncertain: boolean = false) {
-    this.value = value
-    this.uncertain = uncertain
+  constructor(score: string) {
+    if (score == '') {
+      debugger
+    }
+    this.score = score
+  }
+
+  toJson(): any {
+    if (this.uncertain == undefined || this.note == undefined) {
+      return this.score
+    }
+    const obj: any = {
+      score: this.score,
+    }
+    if (this.uncertain) {
+      obj.uncertain = this.uncertain
+    }
+    if (this.note) {
+      obj.note = this.note
+    }
+    return obj
   }
 }
 
 export class Taxon {
   name: string
   note?: string
-  isExtinct?: boolean
+  extinct: boolean
   duplicateTaxon?: string
 
   constructor(name: string) {
@@ -264,6 +318,16 @@ export class CharacterState {
   }
 }
 
+export class Block {
+  readonly name: string
+  readonly content: string
+
+  constructor(name: string, content: string) {
+    this.name = name
+    this.content = content
+  }
+}
+
 export enum CharacterStateIncompleteType {
   UNKNOWN,
   CREATED_STATE,
@@ -273,9 +337,9 @@ export enum CharacterStateIncompleteType {
 }
 
 export enum CharacterType {
-  DISCRETE,
-  CONTINUOUS,
-  MERISTIC,
+  DISCRETE = 0,
+  CONTINUOUS = 1,
+  MERISTIC = 2,
 }
 
 export enum CharacterOrdering {
@@ -284,7 +348,7 @@ export enum CharacterOrdering {
 }
 
 export enum DataType {
-  REGULAR,
-  DNA,
-  MERISTIC,
+  REGULAR = 0,
+  MERISTIC = 1,
+  DNA = 2,
 }

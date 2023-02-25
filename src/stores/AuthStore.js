@@ -64,7 +64,7 @@ export const useAuthStore = defineStore({
         const res = await axios.post(url, userObj)
         const uObj = {
           authToken: res.data.accessToken,
-          userId: res.data.user.userId,
+          userId: res.data.user.user_id,
           userEmail: res.data.user.email,
           userName: res.data.user.name,
         }

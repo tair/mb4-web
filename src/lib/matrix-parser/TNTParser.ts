@@ -40,6 +40,8 @@ export class TNTParser extends AbstractParser {
           this.matrixObject.setDataType(DataType.DNA)
           throw new Error('DNA TNT files are not supported')
         }
+        // Consume the next token.
+        this.tokenizer.consumeToken()
       }
       return true
     }
@@ -93,25 +95,10 @@ export class TNTParser extends AbstractParser {
         continue
       }
 
-      if (
-        this.tokenizer.consumeTokenIfMatch([Token.AMPERSAND]) &&
-        this.tokenizer.isToken([Token.COMMENT])
-      ) {
-        const characterTokenValue = this.tokenizer.getTokenValue().getValue()
-        if (
-          characterTokenValue == Token.CONT ||
-          characterTokenValue == Token.CONTINUOUS
-        ) {
-          characterType = CharacterType.CONTINUOUS
-        } else if (
-          characterTokenValue == Token.NUM ||
-          characterTokenValue == Token.NUMERIC
-        ) {
-          characterType = CharacterType.DISCRETE
-        } else {
-          throw new Error(`Invalid TOKEN for character type: ${characterType}`)
-        }
-        continue
+      if (this.tokenizer.consumeTokenIfMatch([Token.AMPERSAND_NUM])) {
+        characterType = CharacterType.DISCRETE
+      } else if (this.tokenizer.consumeTokenIfMatch([Token.AMPERSAND_CONT])) {
+        characterType = CharacterType.CONTINUOUS
       }
 
       const rowName = this.tokenizer.getTokenValue()
@@ -151,12 +138,15 @@ export class TNTParser extends AbstractParser {
         this.tokenizer.assertToken(Token.NUMBER)
       )
       const characterName = this.tokenizer.getTokenValue().getValue()
-      this.matrixObject.addCharacter(characterNumber, characterName)
+      const newCharacterName = this.matrixObject.addCharacter(
+        characterNumber,
+        characterName
+      )
 
       while (this.untilToken([Token.SEMICOLON])) {
         this.tokenizer.consumeTokenIfMatch([Token.COLON])
         const stateName = this.tokenizer.getTokenValue().getValue()
-        this.matrixObject.addCharacterState(characterName, stateName)
+        this.matrixObject.addCharacterState(newCharacterName, stateName)
 
         if (this.tokenizer.isToken([Token.OPEN_SBRACKET])) {
           break

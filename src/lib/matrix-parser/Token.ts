@@ -96,4 +96,8 @@ export enum Token {
   UNTITLED = 'UNTITLED',
   USERTYPE = 'USERTYPE',
   XREAD = 'XREAD',
+
+  // TNT TOKENS
+  AMPERSAND_NUM = '&[NUM]',
+  AMPERSAND_CONT = '&[CONT]',
 }

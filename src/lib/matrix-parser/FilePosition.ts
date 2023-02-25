@@ -32,4 +32,8 @@ export class FilePosition {
       this.columnNumber == position.columnNumber
     )
   }
+
+  toString(): string {
+    return `line ${this.lineNumber}, column ${this.columnNumber}`
+  }
 }

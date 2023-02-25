@@ -316,7 +316,10 @@ export class NexusParser extends AbstractParser {
         if (this.matrixObject.isMeristic()) {
           this.matrixObject.addCharacter(characterNumber, characterName)
         } else {
-          this.matrixObject.addCharacter(characterNumber, characterName)
+          const newCharacterName = this.matrixObject.addCharacter(
+            characterNumber,
+            characterName
+          )
           this.tokenizer.consumeTokenIfMatch([Token.BLACKSLASH])
 
           while (this.untilToken([Token.COMMA])) {
@@ -325,7 +328,7 @@ export class NexusParser extends AbstractParser {
             }
 
             const stateName = this.tokenizer.getTokenValue().getValue()
-            this.matrixObject.addCharacterState(characterName, stateName)
+            this.matrixObject.addCharacterState(newCharacterName, stateName)
           }
         }
       }
@@ -354,11 +357,17 @@ export class NexusParser extends AbstractParser {
         const cellTokenizer = this.matrixObject.isMeristic()
           ? new ContinuousCellTokenizer(reader)
           : new CellTokenizer(reader)
-        while (!cellTokenizer.isFinished()) {
+        while (row.length < characterCount) {
           const cellTokenValue = cellTokenizer.getTokenValue()
-          const isUncertian =
-            cellTokenValue.getToken() == Token.CELL_UNCERTAIN ? true : undefined
-          row.push(new Cell(cellTokenValue.getValue(), isUncertian))
+          if (cellTokenizer.isFinished()) {
+            break
+          }
+
+          const cell = new Cell(cellTokenValue.getValue())
+          if (cellTokenValue.getToken() == Token.CELL_UNCERTAIN) {
+            cell.uncertain = true
+          }
+          row.push(cell)
         }
       }
     }
