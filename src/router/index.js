@@ -137,6 +137,8 @@ const router = createRouter({
     {
       path: '/project',
       component: ProjectView,
+      // add default redirect to /project view
+      redirect: '/project/pub_date',
       children: [
         {
           path: 'pub_date',
