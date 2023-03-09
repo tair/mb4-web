@@ -100,22 +100,25 @@ export const usePublicProjectsStore = defineStore({
       this.err = null
 
       try {
-        let res = await axios.get(
+        var getter = axios.create();
+        delete getter.defaults.headers.common['Authorization'];
+
+        let res = await getter.get(
           `https://mb4-data.s3.us-west-2.amazonaws.com/stats_files/projectViewsForLast30Days.json`
         )
         const projectViewsForLast30Days = res.data
 
-        res = await axios.get(
+        res = await getter.get(
           `https://mb4-data.s3.us-west-2.amazonaws.com/stats_files/matrixDownloadsForLast30Days.json`
         )
         const matrixDownloadsForLast30Days = res.data
 
-        res = await axios.get(
+        res = await getter.get(
           `https://mb4-data.s3.us-west-2.amazonaws.com/stats_files/mediaViewsForLast30Days.json`
         )
         const mediaViewsForLast30Days = res.data
 
-        res = await axios.get(
+        res = await getter.get(
           `https://mb4-data.s3.us-west-2.amazonaws.com/stats_files/docDownloadsForLast30Days.json`
         )
         const docDownloadsForLast30Days = res.data
@@ -142,8 +145,11 @@ export const usePublicProjectsStore = defineStore({
       this.err = null
 
       try {
+        var getter = axios.create();
+        delete getter.defaults.headers.common['Authorization'];
+
         const url = `https://mb4-data.s3.us-west-2.amazonaws.com/projects.json`
-        const res = await axios.get(url)
+        const res = await getter.get(url)
         this.projects = res.data
         this.recalculatePageInfo()
         this.fetchByPage(1)
