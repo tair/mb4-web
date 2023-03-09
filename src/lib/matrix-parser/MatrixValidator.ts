@@ -5,100 +5,170 @@ import {
   MatrixObject,
 } from './MatrixObject'
 
-export class MatrixValidator {
-  /**
-   * Validate the matrix object to ensure that the file is correct.
-   */
-  validate(matrixObject: MatrixObject): boolean {
-    this.validateCharacters(matrixObject.getCharacters())
-    return true
+/**
+ * Validate the matrix object to ensure that the file is correct.
+ */
+export function validate(matrixObject: MatrixObject): boolean {
+  validateCells(matrixObject)
+  validateCharacters(matrixObject.getCharacters())
+  return true
+}
+
+function validateCells(matrixObject: MatrixObject) {
+  const characters = matrixObject.getCharacters()
+  const allStateNames: Set<string>[] = []
+  for (const character of characters) {
+    allStateNames.push(new Set(character.states.map((s) => s.name)))
   }
 
-  /**
-   * This will determine whether the number of character states exceeds the
-   * number of scores in the cells. If the numbers are different it's a clear
-   * indication that the character state was parsed incorrectly. Since we don't
-   * know which state was incorrectly parsed, we'll flag all of them.
-   */
-  private validateCharacters(characters: Character[]) {
-    for (const character of characters) {
-      const maxScoredStateIndex = character.maxScoredStatePosition
-      const generic_state = /State\ \d+/
-
-      let isMarkedAsIncomplete = false
-      // If this character was already marked as incomplete, we don't need to
-      // mark it again.
-      for (const state of character.states) {
-        if (state.incompleteType) {
-          isMarkedAsIncomplete = true
+  const taxonNames = matrixObject.getTaxaNames()
+  const missingSymbol = matrixObject.getParameter('MISSING') ?? '?'
+  const gapSymbol = matrixObject.getParameter('GAP') ?? '-'
+  const symbols = getSymbolsMap(matrixObject.getParameter('SYMBOLS'))
+  for (const taxonName of taxonNames) {
+    const cells = matrixObject.getCells(taxonName)
+    for (let x = 0; x < cells.length; ++x) {
+      const character = characters[x]
+      const stateNames = allStateNames[x]
+      const cell = cells[x]
+      const scores = cell.score.split('')
+      for (const score of scores) {
+        if (score == missingSymbol) {
           continue
         }
-        if (state.name.match(generic_state)) {
-          state.incompleteType = CharacterStateIncompleteType.GENERIC_STATE
+        if (score == gapSymbol) {
+          continue
         }
-      }
 
-      // If none of the states were marked as incomplete and the scores/states
-      // mismatch, then we'll mark all of the characters states are incomplete.
-      const scoredMismatch = maxScoredStateIndex != character.states.length - 1
-      if (
-        !isMarkedAsIncomplete &&
-        scoredMismatch &&
-        this.possibleErronenousStates(character.states)
-      ) {
-        for (const state of character.states) {
-          state.incompleteType =
-            CharacterStateIncompleteType.INCORRECT_NUMBER_OF_SCORES
+        let index
+        if (symbols) {
+          index = symbols.get(score)
+        } else if (score >= '0' && score <= '9') {
+          index = parseInt(score)
+        } else {
+          index = score.toUpperCase().charCodeAt(0) - 65 // A
         }
-      }
-    }
-  }
 
-  // This method is used to determine whether we should flag characters which
-  // have more states and scores. This is usually the case when Mesquite
-  // incorrectly writes the NEXUS file and the states are split up. This usually
-  // happens when there are special characters such as parenthesis. So we'll
-  // check to see if there is a mismatch of parenthesis among the character
-  // states.
-  private possibleErronenousStates(characterStates: CharacterState[]) {
-    const stateNames: string[] = []
-    let matchingBracketsForNames = true
-    for (const characterState of characterStates) {
-      stateNames.push(characterState.name)
-      matchingBracketsForNames =
-        matchingBracketsForNames &&
-        this.hasMatchingBrackets(characterState.name)
-    }
-    return (
-      this.hasMatchingBrackets(stateNames.join(' ')) != matchingBracketsForNames
-    )
-  }
+        if (character.states.length <= index) {
+          // In order to ensure that the targetted state index is available,
+          // we'll have to create all the states up to the targeted state index.
+          // The states are zero-indexed so it's fine to use the sizeof method
+          // to figure out the next state name.
+          for (let c = character.states.length; c <= index; ++c) {
+            let i = c
+            let stateName
+            do {
+              stateName = 'State ' + i++
+            } while (stateNames.has(stateName))
 
-  private hasMatchingBrackets(name: string): boolean {
-    const stack: string[] = []
-    const matchLookup = new Map([
-      ['(', ')'],
-      ['[', ']'],
-      ['{', '}'],
-    ])
-
-    for (let i = 0, l = name.length; i <= l; ++i) {
-      const char = name[i]
-      if (matchLookup.has(char)) {
-        stack.push(char)
-      } else if (char === ')' || char === ']' || char === '}') {
-        const lastBracket = stack.pop()
-        if (lastBracket && matchLookup.get(lastBracket) !== char) {
-          return false
+            const state = character.addState(stateName)
+            state.incompleteType = CharacterStateIncompleteType.CREATED_STATE
+            stateNames.add(stateName)
+          }
         }
+        character.maybeSetMaxScoreStateIndex(index)
       }
     }
-
-    return !stack.length
   }
 }
 
+/**
+ * This will determine whether the number of character states exceeds the
+ * number of scores in the cells. If the numbers are different it's a clear
+ * indication that the character state was parsed incorrectly. Since we don't
+ * know which state was incorrectly parsed, we'll flag all of them.
+ */
+function validateCharacters(characters: Character[]) {
+  for (const character of characters) {
+    const maxScoredStateIndex = character.maxScoredStatePosition
+    const generic_state = /State\ \d+/
+
+    let isMarkedAsIncomplete = false
+    // If this character was already marked as incomplete, we don't need to
+    // mark it again.
+    for (const state of character.states) {
+      if (state.incompleteType) {
+        isMarkedAsIncomplete = true
+        continue
+      }
+      if (state.name.match(generic_state)) {
+        state.incompleteType = CharacterStateIncompleteType.GENERIC_STATE
+      }
+    }
+
+    // If none of the states were marked as incomplete and the scores/states
+    // mismatch, then we'll mark all of the characters states are incomplete.
+    const scoredMismatch = maxScoredStateIndex != character.states.length - 1
+    if (
+      !isMarkedAsIncomplete &&
+      scoredMismatch &&
+      possibleErronenousStates(character.states)
+    ) {
+      for (const state of character.states) {
+        state.incompleteType =
+          CharacterStateIncompleteType.INCORRECT_NUMBER_OF_SCORES
+      }
+    }
+  }
+}
+
+// This method is used to determine whether we should flag characters which
+// have more states and scores. This is usually the case when Mesquite
+// incorrectly writes the NEXUS file and the states are split up. This usually
+// happens when there are special characters such as parenthesis. So we'll
+// check to see if there is a mismatch of parenthesis among the character
+// states.
+function possibleErronenousStates(characterStates: CharacterState[]) {
+  const stateNames: string[] = []
+  let matchingBracketsForNames = true
+  for (const characterState of characterStates) {
+    stateNames.push(characterState.name)
+    matchingBracketsForNames =
+      matchingBracketsForNames && hasMatchingBrackets(characterState.name)
+  }
+  return hasMatchingBrackets(stateNames.join(' ')) != matchingBracketsForNames
+}
+
+function hasMatchingBrackets(name: string): boolean {
+  const stack: string[] = []
+  const matchLookup = new Map([
+    ['(', ')'],
+    ['[', ']'],
+    ['{', '}'],
+  ])
+
+  for (let i = 0, l = name.length; i <= l; ++i) {
+    const char = name[i]
+    if (matchLookup.has(char)) {
+      stack.push(char)
+    } else if (char === ')' || char === ']' || char === '}') {
+      const lastBracket = stack.pop()
+      if (lastBracket && matchLookup.get(lastBracket) !== char) {
+        return false
+      }
+    }
+  }
+
+  return !stack.length
+}
+
+function getSymbolsMap(symbols: string): Map<string, number> {
+  if (symbols) {
+    return arrayFlip(symbols.split(''))
+  }
+  return null
+}
+
+function arrayFlip(arr: string[]): Map<string, number> {
+  const map = new Map()
+  for (const key in arr) {
+    map.set(arr[key], key)
+  }
+  return map
+}
+
 export enum MatrixError {
-  NO_CHARACTERS,
-  NO_TAXA,
+  UNKNOWN_ERROR = 0,
+  NO_CHARACTERS = 1,
+  NO_TAXA = 2,
 }

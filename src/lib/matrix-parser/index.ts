@@ -1,6 +1,6 @@
 import { ParserFactory } from './ParserFactory'
 import type { MatrixObject } from './MatrixObject'
-import { MatrixValidator } from './MatrixValidator'
+import { validate } from './MatrixValidator'
 
 function parseMatrixFile(file: string): MatrixObject | null {
   const parserFactory = new ParserFactory()
@@ -10,8 +10,7 @@ function parseMatrixFile(file: string): MatrixObject | null {
   }
 
   const matrixObject = parser.parse()
-  const validator = new MatrixValidator()
-  validator.validate(matrixObject)
+  validate(matrixObject)
 
   return matrixObject
 }

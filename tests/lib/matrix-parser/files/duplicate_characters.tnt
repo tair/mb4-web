@@ -1,0 +1,12 @@
+XREAD
+3 3
+Homo_erectus       000
+Homo_sapien        000
+Homo_sapien_sapien 000
+;
+
+cnames
+{0 bipedal absent present;
+{1 bipedal reduced_toe nonopposable_toe really_big_toe;
+{2 bipedal high_arch low_arch medium_arch no_arch;
+;
