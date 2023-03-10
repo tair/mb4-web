@@ -191,7 +191,7 @@ export const usePublicProjectsStore = defineStore({
     },
 
     async fetchProjectAuthor() {
-      // if already loaded, return them.ƒ
+      // if already loaded, return them.
       if (this.authors) return this.authors
 
       this.loading = true
@@ -263,8 +263,8 @@ export const usePublicProjectsStore = defineStore({
         const res = await axios.get(url)
         this.institutions = res.data
       } catch (e) {
-        console.error(`store:projects:fetchProjectJournal()`)
-        this.err = 'Error fetching project journals.'
+        console.error(`store:projects:fetchProjectInsitutions()`)
+        this.err = 'Error fetching project institutions.'
       } finally {
         this.loading = false
       }

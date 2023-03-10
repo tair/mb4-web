@@ -11,6 +11,7 @@ const projectsStore = usePublicProjectsStore()
 let sort_field = ref('name')
 let is_asc_name = ref(true)
 let is_asc_count = ref(true)
+let idx = 0
 
 onMounted(() => {
   projectsStore.fetchProjectInstitutions('name', 'asc')
@@ -96,17 +97,64 @@ function onSorted(field_name, sort) {
       </div>
     </div>
 
-    <div
-      class="list-group"
-      :key="n"
-      v-for="(institution, n) in projectsStore.institutions"
-    >
-      <div class="list-group-item list-group-item-action mb-2">
-        <div class="row">
-          <div class="col">
-            <div v-html="institution.name"></div>
+    <div v-if="projectsStore.institutions != ''">
+      <div class="mb-3 text-black-50 fw-bold">
+        {{ projectsStore.institutions.length }} institutions
+        have published data in MorphoBank
+      </div>
+
+      <div v-for="(institution, n) in projectsStore.institutions">
+        <div class="accordion mb-2" :id="`accordion${idx}`">
+          <div class="accordion-item">
+            <h2 class="accordion-header" :id="`heading${idx}`">
+              <button
+                class="accordion-button collapsed"
+                type="button"
+                data-bs-toggle="collapse"
+                :data-bs-target="`#collapse${idx}`"
+                aria-expanded="true"
+                :aria-controls="`collapse${idx}`"
+              >
+                <div class="text-mb fw-bold">{{ institution.name }}</div>
+                <div style="width: 5px"></div>
+                <small>
+                  ({{
+                    institution.count + ` projects`
+                  }})
+                </small>
+              </button>
+            </h2>
+            <div
+              :id="`collapse${idx}`"
+              class="accordion-collapse collapse"
+              :aria-labelledby="`heading${idx++}`"
+            >
+              <div class="accordion-body p-0">
+                <ul
+                  class="list-group list-group-flush"
+                  v-for="project in projectsStore.institutions[n].projects"
+                >
+                  <li
+                    class="list-group-item py-2"
+                    style="background-color: #f8f8f8"
+                  >
+                    <div class="row">
+                      <div class="col-2">Project {{ project.id }}:</div>
+
+                      <div class="col">
+                        <RouterLink
+                          :to="`/project/${project.id}/overview`"
+                          class="nav-link p-0"
+                        >
+                          <div v-html="project.name"></div>
+                        </RouterLink>
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
-          <div class="col-auto small">{{ institution.count }} Project(s)</div>
         </div>
       </div>
     </div>
