@@ -45,10 +45,12 @@ function buildImageProps(mediaObj, type) {
     </RouterLink>
 
     <div class="card-body">
-      <strong>
-        Project {{ project.project_id }}:
-        {{ project.article_authors }}
-      </strong>
+      <RouterLink :to="`/project/${project.project_id}/overview`">
+        <strong>
+          Project {{ project.project_id }}:
+          {{ project.article_authors }}
+        </strong>
+      </RouterLink>
       <p class="card-text">
         {{ project.article_title }}
       </p>
