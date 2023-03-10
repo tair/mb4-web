@@ -55,9 +55,6 @@ const submitForm = async () => {
     </form>
     <br />
 
-    <button class="btn btn-success" @click="authStore.fetchUsers()">
-      Fetch Users
-    </button>
   </div>
 </template>
 
