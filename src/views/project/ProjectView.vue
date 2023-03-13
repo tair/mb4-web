@@ -25,6 +25,14 @@ function toTop () {
   });
 }
 </script>
+<style scoped>
+  #btn-back-to-top {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    display: none;
+  }
+</style>
 
 <template>
   <RouterView></RouterView>
@@ -32,10 +40,6 @@ function toTop () {
         type="button"
         class="btn btn-warning btn-floating btn-lg"
         id="btn-back-to-top"
-        style="position: fixed;
-          bottom: 80px;
-          right: 20px;
-          display: none;"
         @click="toTop"
         >
     <i class="fas fa-arrow-up"></i>
