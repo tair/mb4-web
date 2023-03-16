@@ -42,6 +42,8 @@ docker-compose -f docker-compose.dev.yml up
 The container is accessible on http://localhost:3000/
 
 ```sh
+docker stop mb4-web-container-dev
+docker rm mb4-web-container-dev
 docker-compose -f docker-compose.dev.yml build --no-cache
 docker-compose -f docker-compose.dev.yml up
 ```
