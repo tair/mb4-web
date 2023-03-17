@@ -44,8 +44,11 @@ export const usePublicMediaStore = defineStore({
       this.err = null
 
       try {
+        var getter = axios.create();
+        delete getter.defaults.headers.common['Authorization'];
+
         const url = `https://mb4-data.s3.us-west-2.amazonaws.com/media_files/prj_${project_id}.json`
-        const res = await axios.get(url)
+        const res = await getter.get(url)
         this.media_files = res.data
         this.project_id = project_id
         this.recalculatePageInfo()

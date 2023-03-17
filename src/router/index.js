@@ -7,8 +7,6 @@ import AdminView from '@/views/admin/AdminView.vue'
 import AskUsView from '@/views/misc/AskUsView.vue'
 import CuratorHomeView from '@/views/curator/CuratorHomeView.vue'
 import CuratorView from '@/views/curator/CuratorView.vue'
-import DocsView from '@/views/misc/DocsView.vue'
-import FaqView from '@/views/misc/FaqView.vue'
 import HomeView from '@/views/HomeView.vue'
 import MyProjectsView from '@/views/project/MyProjectsView.vue'
 import NewsView from '@/views/misc/NewsView.vue'
@@ -47,16 +45,6 @@ const router = createRouter({
       path: '/askus',
       name: 'AskUsView',
       component: AskUsView,
-    },
-    {
-      path: '/docs',
-      name: 'DocsView',
-      component: DocsView,
-    },
-    {
-      path: '/faq',
-      name: 'FaqView',
-      component: FaqView,
     },
     {
       path: '/news',
@@ -149,6 +137,8 @@ const router = createRouter({
     {
       path: '/project',
       component: ProjectView,
+      // add default redirect to /project view
+      redirect: '/project/pub_date',
       children: [
         {
           path: 'pub_date',

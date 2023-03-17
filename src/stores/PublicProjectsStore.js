@@ -100,22 +100,25 @@ export const usePublicProjectsStore = defineStore({
       this.err = null
 
       try {
-        let res = await axios.get(
+        var getter = axios.create();
+        delete getter.defaults.headers.common['Authorization'];
+
+        let res = await getter.get(
           `https://mb4-data.s3.us-west-2.amazonaws.com/stats_files/projectViewsForLast30Days.json`
         )
         const projectViewsForLast30Days = res.data
 
-        res = await axios.get(
+        res = await getter.get(
           `https://mb4-data.s3.us-west-2.amazonaws.com/stats_files/matrixDownloadsForLast30Days.json`
         )
         const matrixDownloadsForLast30Days = res.data
 
-        res = await axios.get(
+        res = await getter.get(
           `https://mb4-data.s3.us-west-2.amazonaws.com/stats_files/mediaViewsForLast30Days.json`
         )
         const mediaViewsForLast30Days = res.data
 
-        res = await axios.get(
+        res = await getter.get(
           `https://mb4-data.s3.us-west-2.amazonaws.com/stats_files/docDownloadsForLast30Days.json`
         )
         const docDownloadsForLast30Days = res.data
@@ -142,8 +145,11 @@ export const usePublicProjectsStore = defineStore({
       this.err = null
 
       try {
+        var getter = axios.create();
+        delete getter.defaults.headers.common['Authorization'];
+
         const url = `https://mb4-data.s3.us-west-2.amazonaws.com/projects.json`
-        const res = await axios.get(url)
+        const res = await getter.get(url)
         this.projects = res.data
         this.recalculatePageInfo()
         this.fetchByPage(1)
@@ -185,7 +191,7 @@ export const usePublicProjectsStore = defineStore({
     },
 
     async fetchProjectAuthor() {
-      // if already loaded, return them.ƒ
+      // if already loaded, return them.
       if (this.authors) return this.authors
 
       this.loading = true
@@ -257,8 +263,8 @@ export const usePublicProjectsStore = defineStore({
         const res = await axios.get(url)
         this.institutions = res.data
       } catch (e) {
-        console.error(`store:projects:fetchProjectJournal()`)
-        this.err = 'Error fetching project journals.'
+        console.error(`store:projects:fetchProjectInsitutions()`)
+        this.err = 'Error fetching project institutions.'
       } finally {
         this.loading = false
       }

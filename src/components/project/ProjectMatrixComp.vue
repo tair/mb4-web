@@ -40,6 +40,9 @@ const matrixId = props.matrix.matrix_id
 const baseUrl = `${
   import.meta.env.VITE_API_URL
 }/projects/${projectId}/matrices/${matrixId}`
+const editorUrl = `${
+  import.meta.env.VITE_MATRIX_EDITOR_HOST
+}/projects/${projectId}/matrices/${matrixId}`
 
 async function onDownloadMatrix() {
   const url = new URL(`${baseUrl}/download`)
@@ -95,8 +98,8 @@ async function toggleMatrixStreaming() {
         >)
       </div>
       <div class="buttons">
-        <button type="button" class="btn btn-sm btn-primary">Open</button>
-        <button
+        <a :href="editorUrl + '/edit'" target="_blank"><button type="button" class="btn btn-sm btn-primary">Open</button></a>
+	<button
           v-if="canEditMatrix"
           type="button"
           class="btn btn-sm btn-secondary"

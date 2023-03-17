@@ -88,13 +88,13 @@ function onLogout() {
                     >
                   </li>
                   <li class="nav-item border-bottom m-1">
-                    <RouterLink class="nav-link p-0 m-1 text-nowrap" to="/docs"
-                      >Documentation</RouterLink
+                    <a class="nav-link p-0 m-1 text-nowrap" href="https://conf.phoenixbioinformatics.org/display/MD/MorphoBank+Documentation" target="_blank"
+                      >Documentation</a
                     >
                   </li>
                   <li class="nav-item border-bottom m-1">
-                    <RouterLink class="nav-link p-0 m-1 text-nowrap" to="/faq"
-                      >FAQ</RouterLink
+                    <a class="nav-link p-0 m-1 text-nowrap" href="https://conf.phoenixbioinformatics.org/display/MD/FAQ" target="_blank"
+                      >FAQ</a
                     >
                   </li>
                 </ul>

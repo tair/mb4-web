@@ -2,6 +2,11 @@
 
 This template should help get you started developing with Vue 3 in Vite.
 
+### Configure Local Environment File for Development
+```sh
+cp development.env.template .env
+```
+
 ## Recommended IDE Setup
 
 [VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=johnsoncodehk.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=johnsoncodehk.vscode-typescript-vue-plugin).
@@ -27,7 +32,20 @@ npm run dev
 The container is accessible on http://localhost:3000/
 
 ```sh
-docker compose -f docker-compose.dev.yml up --build
+docker-compose -f docker-compose.dev.yml up
+```
+
+### Force rebuild, compile and hot-Reload for Development With Container
+
+**Conduct this operation when the package.json file gets updated.**
+
+The container is accessible on http://localhost:3000/
+
+```sh
+docker stop mb4-web-container-dev
+docker rm mb4-web-container-dev
+docker-compose -f docker-compose.dev.yml build --no-cache
+docker-compose -f docker-compose.dev.yml up
 ```
 
 ### Compile and Minify for Production
