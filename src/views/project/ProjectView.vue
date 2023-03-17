@@ -1,10 +1,14 @@
 <script setup>
 import { RouterView } from 'vue-router'
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll);
 })
 
 function handleScroll() {
