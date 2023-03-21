@@ -24,23 +24,54 @@ function buildImageProps(mediaObj, type) {
   }
 }
 </script>
+<style scoped>
+.thumb {
+  float: left;
+  margin: 10px;
+  width: 100px;
+  height: 140px;
+  overflow: hidden;
+  backgroundSize: '25px';
+  backgroundRepeat: 'no-repeat';
+  backgroundImage: 'url(/images/loader.png)';
+  backgroundPosition: '10px 10px';
+}
+.thumb-row {
+  height: 160px;
+}
+.card {
+  width: 18rem;
+}
+.in-press {
+  background-color: #3362b4;
+  padding-top: 50px;
+  text-align: center;
+  color: #fff;
+  font-size: 18px;
+  height: 140px;
+  line-height: 1.3em;
+}
+</style>
 
 <template>
-  <div class="card shadow" style="width: 18rem">
+  <div class="card shadow" >
     <RouterLink :to="`/project/${project.project_id}/overview`">
-      <div class="border-bottom" style="height: 145px">
-        <img
-          :src="buildImageProps(project.image_props)"
-          :style="{
-            width: project.image_props.WIDTH + 'px',
-            height: project.image_props.HEIGHT + 'px',
-            backgroundSize: '25px',
-            backgroundRepeat: 'no-repeat',
-            backgroundImage: 'url(' + '/images/loader.png' + ')',
-            backgroundPosition: '10px 10px',
-          }"
-          class="card-img-top"
-        />
+      <div class="border-bottom row thumb-row">
+        <div class="col align-items-stretch thumb">
+          <img 
+            v-if="project.journal_cover_url"
+            :src="project.journal_cover_url"
+            class="card-img-top"
+          />
+          <div v-if="!project.journal_cover_url && project.journal_in_press" class="in-press">In<br/>Press</div>
+        </div>
+        <div class="col d-flex align-items-stretch thumb">
+          <img
+            :src="buildImageProps(project.image_props)"
+            
+            class="card-img-top"
+          />
+        </div>
       </div>
     </RouterLink>
 
