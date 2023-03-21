@@ -18,9 +18,9 @@ function onLogout() {
       style="border-bottom: 3px solid #ee7a19"
     >
       <div class="container">
-        <a class="navbar-brand" href="#">
+        <RouterLink class="navbar-brand" to="/">
           <img :src="`/images/mb-logo.gif`" height="80" />
-        </a>
+        </RouterLink>
         <button
           class="navbar-toggler"
           type="button"
