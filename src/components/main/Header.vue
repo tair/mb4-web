@@ -18,9 +18,9 @@ function onLogout() {
       style="border-bottom: 3px solid #ee7a19"
     >
       <div class="container">
-        <a class="navbar-brand" href="#">
+        <RouterLink class="navbar-brand" to="/">
           <img :src="`/images/mb-logo.gif`" height="80" />
-        </a>
+        </RouterLink>
         <button
           class="navbar-toggler"
           type="button"
@@ -77,6 +77,11 @@ function onLogout() {
             <div class="col">
               <div class="row">
                 <ul class="navbar-nav p-0 m-0 d-flex justify-content-end">
+                  <li class="nav-item border-bottom m-1">
+                    <RouterLink class="nav-link p-0 m-1 text-nowrap" to="/"
+                      >Home</RouterLink
+                    >
+                  </li>
                   <li class="nav-item border-bottom m-1">
                     <RouterLink class="nav-link p-0 m-1 text-nowrap" to="/news"
                       >News</RouterLink
