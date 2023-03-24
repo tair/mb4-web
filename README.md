@@ -31,15 +31,19 @@ npm run dev
 
 The container is accessible on http://localhost:3000/
 
+#### Start the container
+
 ```sh
 docker-compose -f docker-compose.dev.yml up
 ```
 
-### Force rebuild, compile and hot-Reload for Development With Container
+#### Rebuild when .env file gets updated
 
-**Conduct this operation when the package.json file gets updated.**
+```sh
+docker-compose -f docker-compose.dev.yml up --build
+```
 
-The container is accessible on http://localhost:3000/
+#### Force rebuild when package.json or package-lock.json file gets updated
 
 ```sh
 docker stop mb4-web-container-dev
@@ -64,6 +68,18 @@ docker build -t mb4-web:<version_number> .
 
 The container is accessible on http://localhost:4000/
 
+#### When there is NO package.json or package-lock.json file change 
+
 ```sh
 docker-compose up --build
+```
+
+#### When there is package.json or package-lock.json file change 
+
+
+```sh
+docker stop mb4-web-container
+docker rm mb4-web-container
+docker-compose build --no-cache
+docker-compose up
 ```
