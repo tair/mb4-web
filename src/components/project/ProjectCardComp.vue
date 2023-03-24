@@ -1,6 +1,7 @@
 <script setup>
 import { RouterLink } from 'vue-router'
 import { onUpdated, onMounted } from 'vue'
+import { Icon } from '@iconify/vue';
 
 const props = defineProps({
   project: Object,
@@ -23,6 +24,7 @@ function buildImageProps(mediaObj, type) {
     return null
   }
 }
+
 </script>
 <style scoped>
 .thumb {
@@ -51,6 +53,9 @@ function buildImageProps(mediaObj, type) {
   height: 140px;
   line-height: 1.3em;
 }
+.footer-row {
+  height: 50px;
+}
 </style>
 
 <template>
@@ -68,7 +73,6 @@ function buildImageProps(mediaObj, type) {
         <div class="col d-flex align-items-stretch thumb">
           <img
             :src="buildImageProps(project.image_props)"
-            
             class="card-img-top"
           />
         </div>
@@ -90,47 +94,56 @@ function buildImageProps(mediaObj, type) {
       >
     </div>
     <div class="card-footer">
-      <div class="row align-items-stretch">
-        <div class="col d-flex align-items-stretch">
+      <div class="row align-items-stretch footer-row">
+        <!-- tooltip dosplay order matters for layout -->
+        <div v-if="project.project_stats.matrices"
+          class="col d-flex align-items-stretch">
+          <RouterLink
+            :to="`/project/${project.project_id}/matrices`"
+            class="nav-link p-0"
+          >
+            <i class="bi bi-grid-fill"></i>
+            <small class="text-nowrap ms-1">
+              {{ project.project_stats.matrices }} matrices
+            </small>
+            <Icon v-if="project.has_continuous_char"
+              icon="radix-icons:ruler-horizontal" />
+          </RouterLink>
+        </div>
+        <div v-if="project.project_stats.docs"
+          class="col d-flex align-items-stretch">
           <RouterLink
             :to="`/project/${project.project_id}/docs`"
             class="nav-link p-0"
           >
             <i class="bi bi-files"></i>
             <small class="text-nowrap ms-1">
-              {{ project.project_stats.docs }} documents
+              {{ project.project_stats.docs }} {{ project.project_stats.docs > 99 ? 'document': 'documents' }}
             </small>
           </RouterLink>
         </div>
-        <div class="col d-flex align-items-stretch">
+        <div v-if="project.project_stats.media_image"
+          class="col d-flex align-items-stretch">
           <RouterLink
             :to="`/project/${project.project_id}/media`"
             class="nav-link p-0"
           >
             <i class="bi bi-camera"></i>
             <small class="text-nowrap ms-1"
-              >{{ project.project_stats.media }} media</small
+              >{{ project.project_stats.media_image }} images</small
             >
           </RouterLink>
         </div>
-        <div class="col d-flex align-items-stretch">
+        <div v-if="project.project_stats.media_3d"
+          class="col d-flex align-items-stretch">
           <RouterLink
-            :to="`/project/${project.project_id}/matrices`"
+            :to="`/project/${project.project_id}/media`"
             class="nav-link p-0"
           >
-            <i class="bi bi-badge-3d"></i>
-            <small class="text-nowrap ms-1">
-              {{ project.project_stats.matrices }} matrices
-            </small>
-          </RouterLink>
-        </div>
-        <div class="col d-flex align-items-stretch">
-          <RouterLink
-            :to="`/project/${project.project_id}/overview`"
-            class="nav-link p-0"
-          >
-            <i class="bi bi-house"></i>
-            <small class="text-nowrap ms-1">Home</small>
+            <i class="bi bi-box"></i>
+            <small class="text-nowrap ms-1"
+              >{{ project.project_stats.media_3d }} 3D media</small
+            >
           </RouterLink>
         </div>
       </div>
