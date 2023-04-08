@@ -74,7 +74,7 @@ export function mergeMatrix(
 
   for (const character of matrixObject.characters.values()) {
     const characterName = character.name
-    const note = character.note
+    let note = character.note
 
     if (projectCharactersNameMap.has(characterName)) {
       const projectCharacter = projectCharactersNameMap.get(characterName)
