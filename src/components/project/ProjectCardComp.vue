@@ -53,8 +53,11 @@ function buildImageProps(mediaObj, type) {
   height: 140px;
   line-height: 1.3em;
 }
-.footer-row {
-  height: 50px;
+.card-footer {
+  height: 90px;
+}
+.theme-color-text {
+  color: #ef782f !important;
 }
 </style>
 
@@ -94,7 +97,7 @@ function buildImageProps(mediaObj, type) {
       >
     </div>
     <div class="card-footer">
-      <div class="row align-items-stretch footer-row">
+      <div class="row align-items-stretch">
         <!-- tooltip dosplay order matters for layout -->
         <div v-if="project.project_stats.matrices"
           class="col d-flex align-items-stretch">
@@ -146,6 +149,12 @@ function buildImageProps(mediaObj, type) {
             >
           </RouterLink>
         </div>
+      </div>
+      <div class="theme-color-text" v-if="project.has_continuous_char">
+        <Icon icon="radix-icons:ruler-horizontal" />
+        <small class="text-nowrap ms-1">
+          Matrix has continuous characters
+        </small>
       </div>
     </div>
   </div>
