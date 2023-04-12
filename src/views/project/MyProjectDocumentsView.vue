@@ -2,11 +2,11 @@
 import axios from 'axios'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { setCopyRight } from '@/lib/copyright.js'
 import { useDocumentsStore } from '@/stores/DocumentsStore'
 import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
 import ProjectDocumentListComp from '@/components/project/ProjectDocumentListComp.vue'
-
-import { setCopyRight } from '@/lib/copyright.js'
+import DeleteFolderModelComp from '@/components/project/DeleteFolderModelComp.vue'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -14,8 +14,8 @@ const projectId = route.params.id
 const documentsStore = useDocumentsStore()
 
 const publish_cc0 = ref()
-const documentToDelete = ref()
-const folderToDelete = ref()
+const documentToDelete = ref({})
+const folderToDelete = ref({})
 
 const baseUrl = `${import.meta.env.VITE_API_URL}/projects/${projectId}/documents`
 async function deleteDocument(documentId) {
@@ -129,7 +129,12 @@ onMounted(() => {
                     <i class="bi bi-pencil-square fa-m"></i>
                   </button>
                 </RouterLink>
-                <button type="button" class="btn btn-sm btn-secondary">
+                <button 
+                  type="button" 
+                  class="btn btn-sm btn-secondary"
+                  data-bs-toggle="modal"
+                  data-bs-target="#folderDeleteModal"
+                  @click="folderToDelete = folder">
                   <i class="bi bi-trash fa-m"></i>
                 </button>
               </div>
@@ -246,19 +251,10 @@ onMounted(() => {
           <div class="modal-header">
             <h5 class="modal-title">Confirm</h5>
           </div>
-          <div class="modal-body">
+          <div class="modal-body" v-if="folderToDelete">
             Really delete folder: <i>{{ folderToDelete?.title }}</i> ?
-            <div :documents="documentsStore.getDocumentsForFolder(folder.folder_id)" :if="documents">
-              <p>
-                Deleting this folder will also delete the following 
-                {{ documents.length }} document within the folder!
-              </p>
-              <ul>
-                <li v-for="document in documents" :key="document.document_id">
-                  {{ document.title }}
-                </li>
-              </ul>
-            </div>
+            <DeleteFolderModelComp :documents="documentsStore.getDocumentsForFolder(folderToDelete?.folder_id)">
+            </DeleteFolderModelComp>
           </div>
           <div class="modal-footer">
             <button
