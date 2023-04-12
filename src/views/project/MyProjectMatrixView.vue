@@ -48,16 +48,5 @@ onMounted(() => {
   </ProjectContainerComp>
 </template>
 <style scoped>
-.matrix-cards {
-  margin-bottom: 32px;
-  gap: 16px;
-}
-
-.action-bar {
-  border-bottom: 3px solid rgb(238, 122, 25);
-  display: flex;
-  gap: 11px;
-  margin: 32px 0;
-  padding: 8px 0;
-}
+@import 'styles.css';
 </style>

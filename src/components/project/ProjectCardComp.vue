@@ -1,7 +1,7 @@
 <script setup>
 import { RouterLink } from 'vue-router'
 import { onUpdated, onMounted } from 'vue'
-import { Icon } from '@iconify/vue';
+import { Icon } from '@iconify/vue'
 
 const props = defineProps({
   project: Object,
@@ -24,7 +24,6 @@ function buildImageProps(mediaObj, type) {
     return null
   }
 }
-
 </script>
 <style scoped>
 .thumb {
@@ -33,10 +32,10 @@ function buildImageProps(mediaObj, type) {
   width: 100px;
   height: 140px;
   overflow: hidden;
-  backgroundSize: '25px';
-  backgroundRepeat: 'no-repeat';
-  backgroundImage: 'url(/images/loader.png)';
-  backgroundPosition: '10px 10px';
+  backgroundsize: '25px';
+  backgroundrepeat: 'no-repeat';
+  backgroundimage: 'url(/images/loader.png)';
+  backgroundposition: '10px 10px';
 }
 .thumb-row {
   height: 160px;
@@ -59,16 +58,21 @@ function buildImageProps(mediaObj, type) {
 </style>
 
 <template>
-  <div class="card shadow" >
+  <div class="card shadow">
     <RouterLink :to="`/project/${project.project_id}/overview`">
       <div class="border-bottom row thumb-row">
         <div class="col align-items-stretch thumb">
-          <img 
+          <img
             v-if="project.journal_cover_url"
             :src="project.journal_cover_url"
             class="card-img-top"
           />
-          <div v-if="!project.journal_cover_url && project.journal_in_press" class="in-press">In<br/>Press</div>
+          <div
+            v-if="!project.journal_cover_url && project.journal_in_press"
+            class="in-press"
+          >
+            In<br />Press
+          </div>
         </div>
         <div class="col d-flex align-items-stretch thumb">
           <img
@@ -96,8 +100,10 @@ function buildImageProps(mediaObj, type) {
     <div class="card-footer">
       <div class="row align-items-stretch footer-row">
         <!-- tooltip dosplay order matters for layout -->
-        <div v-if="project.project_stats.matrices"
-          class="col d-flex align-items-stretch">
+        <div
+          v-if="project.project_stats.matrices"
+          class="col d-flex align-items-stretch"
+        >
           <RouterLink
             :to="`/project/${project.project_id}/matrices`"
             class="nav-link p-0"
@@ -106,24 +112,31 @@ function buildImageProps(mediaObj, type) {
             <small class="text-nowrap ms-1">
               {{ project.project_stats.matrices }} matrices
             </small>
-            <Icon v-if="project.has_continuous_char"
-              icon="radix-icons:ruler-horizontal" />
+            <Icon
+              v-if="project.has_continuous_char"
+              icon="radix-icons:ruler-horizontal"
+            />
           </RouterLink>
         </div>
-        <div v-if="project.project_stats.docs"
-          class="col d-flex align-items-stretch">
+        <div
+          v-if="project.project_stats.docs"
+          class="col d-flex align-items-stretch"
+        >
           <RouterLink
             :to="`/project/${project.project_id}/docs`"
             class="nav-link p-0"
           >
             <i class="bi bi-files"></i>
             <small class="text-nowrap ms-1">
-              {{ project.project_stats.docs }} {{ project.project_stats.docs > 99 ? 'document': 'documents' }}
+              {{ project.project_stats.docs }}
+              {{ project.project_stats.docs > 99 ? 'document' : 'documents' }}
             </small>
           </RouterLink>
         </div>
-        <div v-if="project.project_stats.media_image"
-          class="col d-flex align-items-stretch">
+        <div
+          v-if="project.project_stats.media_image"
+          class="col d-flex align-items-stretch"
+        >
           <RouterLink
             :to="`/project/${project.project_id}/media`"
             class="nav-link p-0"
@@ -134,8 +147,10 @@ function buildImageProps(mediaObj, type) {
             >
           </RouterLink>
         </div>
-        <div v-if="project.project_stats.media_3d"
-          class="col d-flex align-items-stretch">
+        <div
+          v-if="project.project_stats.media_3d"
+          class="col d-flex align-items-stretch"
+        >
           <RouterLink
             :to="`/project/${project.project_id}/media`"
             class="nav-link p-0"

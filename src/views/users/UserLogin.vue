@@ -54,7 +54,6 @@ const submitForm = async () => {
       </div>
     </form>
     <br />
-
   </div>
 </template>
 
