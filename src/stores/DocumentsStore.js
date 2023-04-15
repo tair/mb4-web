@@ -34,9 +34,9 @@ export const useDocumentsStore = defineStore({
     },
     removeDocumentById(documentIds) {
       for (let x = 0; x < this.documents.length; ++x) {
-        if (documentIds.contains(this.documents[x].document_id)) {
+        if (documentIds.includes(this.documents[x].document_id)) {
           this.documents.splice(x, 1)
-          break;
+          break
         }
       }
     },
@@ -45,9 +45,14 @@ export const useDocumentsStore = defineStore({
         const folder = this.folders[x]
         if (folder.folder_id == folderId) {
           this.folders.splice(x, 1)
-          break;
+          break
         }
       }
+    },
+    invalidate() {
+      this.documents = null
+      this.folders = null
+      this.isLoaded = false
     },
   },
 })

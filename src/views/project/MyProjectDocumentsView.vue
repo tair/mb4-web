@@ -5,7 +5,7 @@ import { useRoute } from 'vue-router'
 import { setCopyRight } from '@/lib/copyright.js'
 import { useDocumentsStore } from '@/stores/DocumentsStore'
 import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
-import ProjectDocumentListComp from '@/components/project/ProjectDocumentListComp.vue'
+import ProjectDocumentList from '@/components/project/ProjectDocumentList.vue'
 import DeleteFolderModelComp from '@/components/project/DeleteFolderModelComp.vue'
 
 const route = useRoute()
@@ -67,7 +67,7 @@ onMounted(() => {
           <span> Create Document</span>
         </button>
       </RouterLink>
-      <RouterLink :to="`/myprojects/${projectId}/folders/create`">
+      <RouterLink :to="`/myprojects/${projectId}/documents/folders/create`">
         <button type="button" class="btn btn-m btn-outline-primary">
           <i class="bi bi-plus-square fa-m"></i>
           <span> Create Folder</span>
@@ -114,17 +114,18 @@ onMounted(() => {
               class="accordion-button collapsed"
               type="button"
               data-bs-toggle="collapse"
-              :data-bs-target="`#folder-${folder.folder_id}`"
-            >
+              :data-bs-target="`#folder-${folder.folder_id}`">
               <i class="bi bi-folder"></i>
-              <span> {{ folder.title }} </span>
-              <span class="badge bg-primary rounded-pill">
-                {{
-                  documentsStore.getDocumentsForFolder(folder.folder_id).length
-                }}
-              </span>
-              <div class="list-group-item-buttons">
-                <RouterLink :to="`/myprojects/${projectId}/folders/${folder.folder_id}/edit`">
+              <div class="folder-title">
+                <span> {{ folder.title }} </span>
+                <span class="badge bg-primary rounded-pill">
+                  {{
+                    documentsStore.getDocumentsForFolder(folder.folder_id).length
+                  }}
+                </span>
+              </div>
+              <div class="list-group-item-buttons folder-buttons">
+                <RouterLink :to="`/myprojects/${projectId}/documents/folders/${folder.folder_id}/edit`">
                   <button type="button" class="btn btn-sm btn-secondary">
                     <i class="bi bi-pencil-square fa-m"></i>
                   </button>
@@ -148,13 +149,13 @@ onMounted(() => {
             <div class="accordion-body">
               <em>{{ folder.description }} </em>
             </div>
-            <ProjectDocumentListComp
+            <ProjectDocumentList
               :documents="
                 documentsStore.getDocumentsForFolder(folder.folder_id)
               "
               v-model:deleteDocument="documentToDelete"
             >
-            </ProjectDocumentListComp>
+            </ProjectDocumentList>
           </div>
         </div>
       </div>
@@ -164,11 +165,11 @@ onMounted(() => {
         {{ documentsStore.uncategorizedDocuments.length }} Uncategorized
         Documents</strong
       >
-      <ProjectDocumentListComp
+      <ProjectDocumentList
         :documents="documentsStore.uncategorizedDocuments"
         v-model:deleteDocument="documentToDelete"
       >
-      </ProjectDocumentListComp>
+      </ProjectDocumentList>
     </div>
     <div class="modal" id="copyrightModal" tabindex="-1">
       <div class="modal-dialog">
@@ -279,4 +280,18 @@ onMounted(() => {
 </template>
 <style scoped>
 @import 'styles.css';
+
+.folder-title {
+  display: flex;
+  flex-grow: 1;
+}
+
+.folder-title span {
+  margin-left: 10px;
+}
+.folder-buttons {
+  display: flex;
+  gap: 7px;
+  padding-right: 10px;
+}
 </style>

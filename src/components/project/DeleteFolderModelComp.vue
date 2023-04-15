@@ -9,7 +9,7 @@ const props = defineProps({
 <template>
   <div v-if="documents.length > 0">
     <p>
-      Deleting this folder will also delete the following 
+      Deleting this folder will also delete the following
       {{ documents.length }} document within the folder!
     </p>
     <ul>

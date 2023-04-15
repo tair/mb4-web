@@ -1,4 +1,7 @@
 import MyProjectBibliographyView from '@/views/project/MyProjectBibliographyView.vue'
+import MyProjectDocumentCreateView from '@/views/project/MyProjectDocumentCreateView.vue'
+import MyProjectDocumentFolderCreateView from '@/views/project/MyProjectDocumentFolderCreateView.vue'
+import MyProjectDocumentsView from '@/views/project/MyProjectDocumentsView.vue'
 import MyProjectHomeView from '@/views/project/MyProjectHomeView.vue'
 import MyProjectMatrixChooseView from '@/views/project/MyProjectMatrixChooseView.vue'
 import MyProjectMatrixCreateView from '@/views/project/MyProjectMatrixCreateView.vue'
@@ -7,7 +10,6 @@ import MyProjectMediaView from '@/views/project/MyProjectMediaView.vue'
 import MyProjectMediaViewsView from '@/views/project/MyProjectMediaViewsView.vue'
 import MyProjectSpecimensView from '@/views/project/MyProjectSpecimensView.vue'
 import MyProjectTaxaView from '@/views/project/MyProjectTaxaView.vue'
-import MyProjectDocumentsView from '@/views/project/MyProjectDocumentsView.vue'
 
 export const MY_PROJECT_VIEWS = [
   {
@@ -59,5 +61,15 @@ export const MY_PROJECT_VIEWS = [
     path: ':id/documents',
     name: 'MyProjectDocumentsView',
     component: MyProjectDocumentsView,
+  },
+  {
+    path: ':id/documents/create',
+    name: 'MyProjectDocumentCreateView',
+    component: MyProjectDocumentCreateView,
+  },
+  {
+    path: ':id/documents/folders/create',
+    name: 'MyProjectDocumentFolderCreateView',
+    component: MyProjectDocumentFolderCreateView,
   },
 ]

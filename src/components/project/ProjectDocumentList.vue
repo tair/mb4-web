@@ -33,12 +33,13 @@ const props = defineProps({
           <button type="button" class="btn btn-sm btn-secondary">
             <i class="bi bi-pencil-square fa-m"></i>
           </button>
-          <button 
-            type="button" 
+          <button
+            type="button"
             class="btn btn-sm btn-secondary"
             data-bs-toggle="modal"
             data-bs-target="#documentDeleteModal"
-            @click="$emit('update:deleteDocument', document);">
+            @click="$emit('update:deleteDocument', document)"
+          >
             <i class="bi bi-trash fa-m"></i>
           </button>
         </div>
