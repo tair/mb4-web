@@ -12,7 +12,9 @@ const projectId = route.params.id
 const documentId = route.params.documentId
 const document = ref({})
 
-const baseUrl = `${import.meta.env.VITE_API_URL}/projects/${projectId}/documents`
+const baseUrl = `${
+  import.meta.env.VITE_API_URL
+}/projects/${projectId}/documents`
 const documentsStore = useDocumentsStore()
 
 async function editDocument(event) {
@@ -123,14 +125,20 @@ onMounted(async () => {
               name="published"
               class="form-control"
             >
-              <option value="0" :selected="document.published == 0">Publish when project is published</option>
-              <option value="1" :selected="document.published == 1">Never publish to project</option>
+              <option value="0" :selected="document.published == 0">
+                Publish when project is published
+              </option>
+              <option value="1" :selected="document.published == 1">
+                Never publish to project
+              </option>
             </select>
           </div>
           <div class="form-group">
             <label for="document-access">Access</label>
             <select id="document-access" name="access" class="form-control">
-              <option value="0" :selected="document.access == 0">Anyone may edit this item</option>
+              <option value="0" :selected="document.access == 0">
+                Anyone may edit this item
+              </option>
               <option value="1" :selected="document.access == 1">
                 Only the owner may edit this item
               </option>
@@ -144,12 +152,11 @@ onMounted(async () => {
             <button
               class="btn btn-primary"
               type="button"
-              @click="$router.go(-1)">
+              @click="$router.go(-1)"
+            >
               Cancel
             </button>
-            <button class="btn btn-primary" type="submit">
-              Edit
-            </button>
+            <button class="btn btn-primary" type="submit">Edit</button>
           </div>
         </div>
       </form>

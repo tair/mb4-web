@@ -11,7 +11,9 @@ const projectId = route.params.id
 const folderId = route.params.folderId
 const folder = ref({})
 
-const baseUrl = `${import.meta.env.VITE_API_URL}/projects/${projectId}/documents/folder`
+const baseUrl = `${
+  import.meta.env.VITE_API_URL
+}/projects/${projectId}/documents/folder`
 const documentsStore = useDocumentsStore()
 
 async function editFolder(event) {
@@ -45,7 +47,7 @@ onMounted(async () => {
   if (folderId) {
     const f = documentsStore.getFolderById(folderId)
     if (f != null) {
-      folder.value = {...f}
+      folder.value = { ...f }
     }
   }
 })
@@ -76,7 +78,8 @@ onMounted(async () => {
               class="form-control"
               id="folder-description"
               name="description"
-              v-model="folder.description"></textarea>
+              v-model="folder.description"
+            ></textarea>
           </div>
           <div class="form-group">
             <label for="folder-access">Access</label>
@@ -97,9 +100,7 @@ onMounted(async () => {
             >
               Cancel
             </button>
-            <button class="btn btn-primary" type="submit">
-              Edit
-            </button>
+            <button class="btn btn-primary" type="submit">Edit</button>
           </div>
         </div>
       </form>

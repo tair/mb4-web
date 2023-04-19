@@ -17,11 +17,14 @@ const publish_cc0 = ref()
 const documentToDelete = ref({})
 const folderToDelete = ref({})
 
-const baseUrl = `${import.meta.env.VITE_API_URL}/projects/${projectId}/documents`
+const baseUrl = `${
+  import.meta.env.VITE_API_URL
+}/projects/${projectId}/documents`
+
 async function deleteDocument(documentId) {
   const url = `${baseUrl}/delete`
   const response = await axios.post(url, {
-    'document_ids': [documentId]
+    document_ids: [documentId],
   })
   if (response.status == 200) {
     documentsStore.removeDocumentById([documentId])
@@ -114,28 +117,33 @@ onMounted(() => {
               class="accordion-button collapsed"
               type="button"
               data-bs-toggle="collapse"
-              :data-bs-target="`#folder-${folder.folder_id}`">
+              :data-bs-target="`#folder-${folder.folder_id}`"
+            >
               <i class="bi bi-folder"></i>
               <div class="folder-title">
                 <span> {{ folder.title }} </span>
                 <span class="badge bg-primary rounded-pill">
                   {{
-                    documentsStore.getDocumentsForFolder(folder.folder_id).length
+                    documentsStore.getDocumentsForFolder(folder.folder_id)
+                      .length
                   }}
                 </span>
               </div>
               <div class="list-group-item-buttons folder-buttons">
-                <RouterLink :to="`/myprojects/${projectId}/documents/folders/${folder.folder_id}/edit`">
+                <RouterLink
+                  :to="`/myprojects/${projectId}/documents/folders/${folder.folder_id}/edit`"
+                >
                   <button type="button" class="btn btn-sm btn-secondary">
                     <i class="bi bi-pencil-square fa-m"></i>
                   </button>
                 </RouterLink>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   class="btn btn-sm btn-secondary"
                   data-bs-toggle="modal"
                   data-bs-target="#folderDeleteModal"
-                  @click="folderToDelete = folder">
+                  @click="folderToDelete = folder"
+                >
                   <i class="bi bi-trash fa-m"></i>
                 </button>
               </div>
@@ -150,7 +158,7 @@ onMounted(() => {
               <em>{{ folder.description }} </em>
             </div>
             <ProjectDocumentList
-            :projectId="projectId"
+              :projectId="projectId"
               :documents="
                 documentsStore.getDocumentsForFolder(folder.folder_id)
               "
@@ -191,15 +199,22 @@ onMounted(() => {
             <p>
               <b>NOTE: media copyright is handled separately</b>
             </p>
-            <hr>
-            <p>
-              <div class="form-check">
-                <input v-model="publish_cc0" class="form-check-input" name="cc0" type="checkbox" value="1" id="publishContentAsCC0">
-                <label class="form-check-label" for="publishContentAsCC0">
-                   Publish project matrix, documents, character list and ontologies with CC0 copyright license
-                </label>
-              </div>
-            </p>
+            <hr />
+            <p></p>
+            <div class="form-check">
+              <input
+                v-model="publish_cc0"
+                class="form-check-input"
+                name="cc0"
+                type="checkbox"
+                value="1"
+                id="publishContentAsCC0"
+              />
+              <label class="form-check-label" for="publishContentAsCC0">
+                Publish project matrix, documents, character list and ontologies
+                with CC0 copyright license
+              </label>
+            </div>
           </div>
           <div class="modal-footer">
             <button
@@ -213,7 +228,12 @@ onMounted(() => {
               type="button"
               class="btn btn-primary"
               data-bs-dismiss="modal"
-              @click="() => { setCopyRight(projectId, {'publish_cc0': publish_cc0 ? 1 : 0 })}">
+              @click="
+                () => {
+                  setCopyRight(projectId, { publish_cc0: publish_cc0 ? 1 : 0 })
+                }
+              "
+            >
               Save
             </button>
           </div>
@@ -241,7 +261,8 @@ onMounted(() => {
               type="button"
               class="btn btn-primary"
               data-bs-dismiss="modal"
-              @click="deleteDocument(documentToDelete.document_id)">
+              @click="deleteDocument(documentToDelete.document_id)"
+            >
               Delete
             </button>
           </div>
@@ -256,7 +277,11 @@ onMounted(() => {
           </div>
           <div class="modal-body" v-if="folderToDelete">
             Really delete folder: <i>{{ folderToDelete?.title }}</i> ?
-            <DeleteFolderModelComp :documents="documentsStore.getDocumentsForFolder(folderToDelete?.folder_id)">
+            <DeleteFolderModelComp
+              :documents="
+                documentsStore.getDocumentsForFolder(folderToDelete?.folder_id)
+              "
+            >
             </DeleteFolderModelComp>
           </div>
           <div class="modal-footer">
@@ -271,7 +296,8 @@ onMounted(() => {
               type="button"
               class="btn btn-primary"
               data-bs-dismiss="modal"
-              @click="deleteFolder(folderToDelete.folder_id)">
+              @click="deleteFolder(folderToDelete.folder_id)"
+            >
               Delete
             </button>
           </div>

@@ -34,7 +34,9 @@ const props = defineProps({
           >
             <i class="bi bi-download fa-m"></i>
           </a>
-          <RouterLink :to="`/myprojects/${projectId}/documents/${document.document_id}/edit`">
+          <RouterLink
+            :to="`/myprojects/${projectId}/documents/${document.document_id}/edit`"
+          >
             <button type="button" class="btn btn-sm btn-secondary">
               <i class="bi bi-pencil-square fa-m"></i>
             </button>

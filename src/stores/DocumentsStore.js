@@ -11,7 +11,7 @@ export const useDocumentsStore = defineStore({
   getters: {
     uncategorizedDocuments() {
       return this.getDocumentsForFolder(null)
-    }
+    },
   },
   actions: {
     async fetchDocuments(projectId) {
