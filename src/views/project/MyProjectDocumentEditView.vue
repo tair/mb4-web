@@ -1,26 +1,26 @@
 <script setup>
 import axios from 'axios'
 import router from '@/router'
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDocumentsStore } from '@/stores/DocumentsStore'
 import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
+import { toDateString } from '@/utils/date'
 
 const route = useRoute()
 const projectId = route.params.id
+const documentId = route.params.documentId
+const document = ref({})
 
+const baseUrl = `${import.meta.env.VITE_API_URL}/projects/${projectId}/documents`
 const documentsStore = useDocumentsStore()
 
-async function createDocument(event) {
+async function editDocument(event) {
   const elements = event.target.elements
   const formData = new FormData()
-  formData.set('title', elements['document-title'].value)
-  formData.set('description', elements['document-description'].value)
-  formData.set('access', elements['document-access'].value)
-  formData.set('published', elements['document-published'].value)
 
   const folderId = parseInt(elements['document-folder'].value)
-  if (folderId) {
+  if (document.value.folder_id != folderId) {
     formData.set('folder_id', folderId)
   }
 
@@ -28,12 +28,23 @@ async function createDocument(event) {
     formData.set('file', elements['document-file'].files[0])
   }
 
-  const url = `${
-    import.meta.env.VITE_API_URL
-  }/projects/${projectId}/documents/create`
+  if (elements['document-title'].value != document.title) {
+    formData.set('title', elements['document-title'].value)
+  }
+  if (elements['document-description'].value != document.description) {
+    formData.set('description', elements['document-description'].value)
+  }
+  if (elements['document-access'].value != document.access) {
+    formData.set('access', elements['document-access'].value)
+  }
+  if (elements['document-published'].value != document.published) {
+    formData.set('published', elements['document-published'].value)
+  }
+
+  const url = `${baseUrl}/${documentId}/edit`
   const response = await axios.post(url, formData)
   if (response.status != 200) {
-    alert(response.data?.message || 'Failed to create document')
+    alert(response.data?.message || 'Failed to modify folder')
     return
   }
 
@@ -41,9 +52,15 @@ async function createDocument(event) {
   router.push({ path: `/myprojects/${projectId}/documents` })
 }
 
-onMounted(() => {
+onMounted(async () => {
   if (!documentsStore.isLoaded) {
-    documentsStore.fetchDocuments(projectId)
+    await documentsStore.fetchDocuments(projectId)
+  }
+  if (documentId) {
+    const d = documentsStore.getDocumentById(documentId)
+    if (d != null) {
+      document.value = { ...d }
+    }
   }
 })
 </script>
@@ -54,7 +71,7 @@ onMounted(() => {
     itemName="documents"
   >
     <div>
-      <form @submit.prevent="createDocument">
+      <form @submit.prevent="editDocument">
         <div class="row setup-content">
           <div class="form-group">
             <label for="document-title">Title</label>
@@ -64,6 +81,7 @@ onMounted(() => {
               id="document-title"
               name="title"
               required="required"
+              v-model="document.title"
             />
           </div>
           <div class="form-group">
@@ -72,6 +90,7 @@ onMounted(() => {
               class="form-control"
               id="document-description"
               name="description"
+              v-model="document.description"
             ></textarea>
           </div>
           <div class="form-group">
@@ -91,6 +110,7 @@ onMounted(() => {
                 v-for="folder in documentsStore.folders"
                 :key="folder.folder_id"
                 :value="folder.folder_id"
+                :selected="folder.folder_id == document.folder_id"
               >
                 {{ folder.title }}
               </option>
@@ -103,29 +123,32 @@ onMounted(() => {
               name="published"
               class="form-control"
             >
-              <option value="0">Publish when project is published</option>
-              <option value="1">Never publish to project</option>
+              <option value="0" :selected="document.published == 0">Publish when project is published</option>
+              <option value="1" :selected="document.published == 1">Never publish to project</option>
             </select>
           </div>
           <div class="form-group">
             <label for="document-access">Access</label>
             <select id="document-access" name="access" class="form-control">
-              <option value="0">Anyone may edit this item</option>
-              <option value="1" selected="selected">
+              <option value="0" :selected="document.access == 0">Anyone may edit this item</option>
+              <option value="1" :selected="document.access == 1">
                 Only the owner may edit this item
               </option>
             </select>
+          </div>
+          <div class="form-group">
+            <div>Uploaded on</div>
+            <div>{{ toDateString(document.uploaded_on) }}</div>
           </div>
           <div class="btn-form-group">
             <button
               class="btn btn-primary"
               type="button"
-              @click="$router.go(-1)"
-            >
+              @click="$router.go(-1)">
               Cancel
             </button>
             <button class="btn btn-primary" type="submit">
-              Create
+              Edit
             </button>
           </div>
         </div>

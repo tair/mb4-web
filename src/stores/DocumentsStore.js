@@ -11,7 +11,7 @@ export const useDocumentsStore = defineStore({
   getters: {
     uncategorizedDocuments() {
       return this.getDocumentsForFolder(null)
-    },
+    }
   },
   actions: {
     async fetchDocuments(projectId) {
@@ -22,6 +22,14 @@ export const useDocumentsStore = defineStore({
       this.documents = response.data.documents
       this.folders = response.data.folders
       this.isLoaded = true
+    },
+    getDocumentById(documentId) {
+      for (const document of this.documents) {
+        if (document.document_id == documentId) {
+          return document
+        }
+      }
+      return null
     },
     getDocumentsForFolder(folderId) {
       const documents = []
@@ -48,6 +56,14 @@ export const useDocumentsStore = defineStore({
           break
         }
       }
+    },
+    getFolderById(folderId) {
+      for (const folder of this.folders) {
+        if (folder.folder_id == folderId) {
+          return folder
+        }
+      }
+      return null
     },
     invalidate() {
       this.documents = null

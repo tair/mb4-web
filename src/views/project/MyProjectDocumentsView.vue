@@ -150,6 +150,7 @@ onMounted(() => {
               <em>{{ folder.description }} </em>
             </div>
             <ProjectDocumentList
+            :projectId="projectId"
               :documents="
                 documentsStore.getDocumentsForFolder(folder.folder_id)
               "
@@ -166,6 +167,7 @@ onMounted(() => {
         Documents</strong
       >
       <ProjectDocumentList
+        :projectId="projectId"
         :documents="documentsStore.uncategorizedDocuments"
         v-model:deleteDocument="documentToDelete"
       >

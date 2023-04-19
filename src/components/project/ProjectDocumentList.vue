@@ -1,5 +1,9 @@
 <script setup>
 const props = defineProps({
+  projectId: {
+    type: String,
+    required: true,
+  },
   documents: {
     type: Object,
     required: true,
@@ -30,9 +34,11 @@ const props = defineProps({
           >
             <i class="bi bi-download fa-m"></i>
           </a>
-          <button type="button" class="btn btn-sm btn-secondary">
-            <i class="bi bi-pencil-square fa-m"></i>
-          </button>
+          <RouterLink :to="`/myprojects/${projectId}/documents/${document.document_id}/edit`">
+            <button type="button" class="btn btn-sm btn-secondary">
+              <i class="bi bi-pencil-square fa-m"></i>
+            </button>
+          </RouterLink>
           <button
             type="button"
             class="btn btn-sm btn-secondary"
