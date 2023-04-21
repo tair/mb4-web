@@ -98,8 +98,10 @@ async function toggleMatrixStreaming() {
         >)
       </div>
       <div class="buttons">
-        <a :href="editorUrl + '/edit'" target="_blank"><button type="button" class="btn btn-sm btn-primary">Open</button></a>
-	<button
+        <a :href="editorUrl + '/edit'" target="_blank"
+          ><button type="button" class="btn btn-sm btn-primary">Open</button></a
+        >
+        <button
           v-if="canEditMatrix"
           type="button"
           class="btn btn-sm btn-secondary"

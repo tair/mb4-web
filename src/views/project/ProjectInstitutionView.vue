@@ -99,8 +99,8 @@ function onSorted(field_name, sort) {
 
     <div v-if="projectsStore.institutions != ''">
       <div class="mb-3 text-black-50 fw-bold">
-        {{ projectsStore.institutions.length }} institutions
-        have published data in MorphoBank
+        {{ projectsStore.institutions.length }} institutions have published data
+        in MorphoBank
       </div>
 
       <div v-for="(institution, n) in projectsStore.institutions">
@@ -117,11 +117,7 @@ function onSorted(field_name, sort) {
               >
                 <div class="text-mb fw-bold">{{ institution.name }}</div>
                 <div style="width: 5px"></div>
-                <small>
-                  ({{
-                    institution.count + ` projects`
-                  }})
-                </small>
+                <small> ({{ institution.count + ` projects` }}) </small>
               </button>
             </h2>
             <div

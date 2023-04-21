@@ -100,8 +100,8 @@ export const usePublicProjectsStore = defineStore({
       this.err = null
 
       try {
-        var getter = axios.create();
-        delete getter.defaults.headers.common['Authorization'];
+        var getter = axios.create()
+        delete getter.defaults.headers.common['Authorization']
 
         let res = await getter.get(
           `https://mb4-data.s3.us-west-2.amazonaws.com/stats_files/projectViewsForLast30Days.json`
@@ -145,8 +145,8 @@ export const usePublicProjectsStore = defineStore({
       this.err = null
 
       try {
-        var getter = axios.create();
-        delete getter.defaults.headers.common['Authorization'];
+        var getter = axios.create()
+        delete getter.defaults.headers.common['Authorization']
 
         const url = `https://mb4-data.s3.us-west-2.amazonaws.com/projects.json`
         const res = await getter.get(url)

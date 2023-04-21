@@ -13,7 +13,7 @@ const projectId = route.params.id
     :isLoading="false"
     :errorMessage="null"
     basePath="myprojects"
-    itemName="media"
+    itemName="bibliography"
   >
     Bibliography References
   </ProjectContainerComp>

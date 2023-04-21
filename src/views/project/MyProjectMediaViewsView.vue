@@ -13,7 +13,7 @@ const projectId = route.params.id
     :isLoading="false"
     :errorMessage="null"
     basePath="myprojects"
-    itemName="media"
+    itemName="media_views"
   >
     Media Views
   </ProjectContainerComp>
