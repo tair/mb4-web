@@ -1,7 +1,6 @@
 <script setup>
 import Header from '@/components/main/Header.vue'
 import Footer from '@/components/main/Footer.vue'
-import axios from 'axios'
 import { RouterView } from 'vue-router'
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/AuthStore.js'
@@ -9,13 +8,6 @@ const authStore = useAuthStore()
 
 onMounted(() => {
   authStore.fetchLocalStore()
-  axios.interceptors.request.use((config) => {
-    const token = authStore.user?.authToken
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  })
 })
 </script>
 <template>
