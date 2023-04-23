@@ -10,3 +10,49 @@
   margin: 32px 0;
   padding: 8px 0;
 }
+
+.alphabet-bar {
+  padding: 3px;
+  margin-bottom: 5px;
+}
+
+.alphabet-bar span {
+  font-weight: bold;
+  padding-left: 3px;
+}
+
+.selection-bar {
+  display: flex;
+  gap: 5px;
+  margin: 8px 0;
+}
+
+.selection-bar .item {
+  padding: 5px 10px;
+  margin: 3px; 
+}
+
+.selection-bar .item:hover {
+  border-radius: 50%;
+  border-color: gray;
+  background-color: lightgray;
+}
+
+.selection-bar .item.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.list-group-item-content {
+  display: flex;
+}
+
+.list-group-item-name {
+  display: flex;
+  flex-grow: 1;
+}
+
+.list-group-item-buttons {
+  display: flex;
+  gap: 7px;
+}

@@ -1,6 +1,5 @@
 import 'bootstrap/dist/css/bootstrap.css'
-// import "@/assets/css/main.min.css";
-import 'bootstrap/dist/js/bootstrap.js'
+import bootstrap from 'bootstrap/dist/js/bootstrap.js'
 
 import '@fortawesome/fontawesome-free/css/all.min.css'
 import '@fortawesome/fontawesome-free/js/all.min.js'
@@ -18,3 +17,15 @@ import router from './router'
 app.use(router)
 
 app.mount('#app')
+
+app.directive('tooltip', (el, binding) => {
+  const tooltip = new bootstrap.Tooltip(el, {
+    title: binding.value,
+    placement: binding.arg,
+    trigger: 'hover',
+    delay: { show: 300, hide: 150 },
+  })
+  el.addEventListener('click', () => {
+    tooltip.hide()
+  })
+})
