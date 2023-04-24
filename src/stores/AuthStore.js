@@ -30,27 +30,6 @@ export const useAuthStore = defineStore({
       lsUser = JSON.parse(lsUser)
       this.user = lsUser
     },
-    async fetchUsers() {
-      if (!this.user?.authToken) {
-        throw new Error('Auth token is invalid!')
-      }
-
-      const url = `${import.meta.env.VITE_API_URL}/users`
-      try {
-        const res = await axios.get(url, {
-          headers: {
-            Authorization: `Bearer ${this.user.authToken}`,
-          },
-        })
-        console.log(res.data)
-      } catch (e) {
-        console.error(
-          `store:auth:fetchUsers(): ${e}\n${e.response.data.message}`
-        )
-        this.err = 'Error while fetching users.'
-      }
-    },
-
     async login(email, password) {
       this.loading = true
       this.err = null

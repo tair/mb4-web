@@ -5,14 +5,13 @@ import { useAuthStore } from '@/stores/AuthStore.js'
 
 const authStore = useAuthStore()
 
-const state = reactive({
-  email: 't@g.com',
-  password: '12345',
-})
+const state = reactive({})
 
 const submitForm = async () => {
   const flag = await authStore.login(state.email, state.password)
-  if (flag) router.push({ path: '/myprojects' })
+  if (flag) {
+    router.push({ path: '/myprojects' })
+  }
 }
 </script>
 
@@ -24,7 +23,7 @@ const submitForm = async () => {
       <div class="form-floating">
         <input
           v-model.trim="state.email"
-          type="email"
+          type="text"
           class="form-control"
           id="email"
           placeholder="name@example.com"
@@ -50,7 +49,6 @@ const submitForm = async () => {
         class="border border-danger rounded text-danger p-3 my-3"
       >
         <div class="fw-bold">Login failed. Please try again!</div>
-        <!-- {{ authStore.err }} -->
       </div>
     </form>
     <br />
