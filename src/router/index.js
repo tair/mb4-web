@@ -68,8 +68,18 @@ const router = createRouter({
           component: UserProfileView,
           beforeEnter: (to, from) => {
             const authStore = useAuthStore()
-            if (!authStore.user?.authToken && to.name !== 'UserLogin') {
-              return { name: 'UserLogin' }
+            if (to.query.code) {
+              authStore.setORCIDProfile(to.query.code).then(result => {
+                if (!authStore.user?.authToken && to.name !== 'UserLogin') {
+                  return { name: 'UserLogin' }
+                }
+              }).catch(error => {
+                // Handle the error
+              })
+            } else {
+              if (!authStore.user?.authToken && to.name !== 'UserLogin') {
+                return { name: 'UserLogin' }
+              }
             }
           },
         },

@@ -1,7 +1,6 @@
 <script setup>
-import { reactive } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/AuthStore.js'
-import { ref } from 'vue';
 import axios from 'axios'
 import router from '../../router'
 
@@ -18,13 +17,9 @@ const submitForm = async () => {
 
 const orcidLoginUrl = ref(null)
 
-axios.get(`${import.meta.env.VITE_API_URL}/auth/get-orcid-login-url`)
-  .then(response => {
-    orcidLoginUrl.value = response.data.url;
-  })
-  .catch(error => {
-    console.error('Error fetching data:', error);
-  });
+onMounted(async () => {
+  orcidLoginUrl.value = await authStore.getOrcidLoginUrl()
+});
 </script>
 
 <template>
@@ -55,9 +50,7 @@ axios.get(`${import.meta.env.VITE_API_URL}/auth/get-orcid-login-url`)
       <button class="w-100 btn btn-lg btn-primary margin-s-top" type="submit">
         Sign in
       </button>
-      <button class="w-100 btn btn-lg btn-primary btn-white margin-s-top">
-        <a :href="orcidLoginUrl"><img alt="ORCID logo" src="/ORCIDiD_iconvector.svg" class="orcid-icon"/>  Sign in with ORCID</a>
-      </button>
+      <a :href="orcidLoginUrl" class="w-100 btn btn-lg btn-primary btn-white margin-s-top"><img alt="ORCID logo" src="/ORCIDiD_iconvector.svg" class="orcid-icon"/>  Sign in with ORCID</a>
 
       <div
         v-if="authStore.err"
@@ -80,8 +73,6 @@ axios.get(`${import.meta.env.VITE_API_URL}/auth/get-orcid-login-url`)
 .btn-white {
   background-color: #ffffff !important;
   border: 1px solid #ced4da !important;
-}
-.btn-white > a {
   color: #333333;
 }
 .margin-s-top {

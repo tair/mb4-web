@@ -9,8 +9,14 @@ export const useAuthStore = defineStore({
       authToken: null,
       userId: null,
       userEmail: null,
-      userName: null,
+      name: null,
     },
+    orcid: {
+      orcid: null,
+      accessToken: null,
+      tokenType: null,
+      name: null,
+    }
   }),
   getters: {
     isLoading(state) {
@@ -21,6 +27,7 @@ export const useAuthStore = defineStore({
     invalidate() {
       this.user = null
       localStorage.removeItem('mb-user')
+      localStorage.removeItem('orcid-user')
     },
 
     fetchLocalStore() {
@@ -30,6 +37,16 @@ export const useAuthStore = defineStore({
       lsUser = JSON.parse(lsUser)
       this.user = lsUser
     },
+
+    async getOrcidLoginUrl() {
+      try {
+        const response =  await axios.get(`${import.meta.env.VITE_API_URL}/auth/get-orcid-login-url`)
+        return response.data.url
+      } catch (e) {
+        console.error('Error getting Orcid login URL', e);
+      }
+    },
+
     async login(email, password) {
       this.loading = true
       this.err = null
@@ -45,7 +62,7 @@ export const useAuthStore = defineStore({
           authToken: res.data.accessToken,
           userId: res.data.user.user_id,
           userEmail: res.data.user.email,
-          userName: res.data.user.name,
+          name: res.data.user.name,
         }
         this.user = uObj
 
@@ -60,5 +77,44 @@ export const useAuthStore = defineStore({
         this.loading = false
       }
     },
+    
+    async setORCIDProfile(authCode) {
+      try {
+        const url = `${import.meta.env.VITE_API_URL}/auth/authenticate-orcid`
+        const body = {
+          authCode: authCode
+        }
+        const res = await axios.post(url, body)
+        
+        const orcidObj = {
+          orcid: res.data.orcidProfile.orcid,
+          accessToken: res.data.orcidProfile.access_token,
+          tokenType: res.data.orcidProfile.token_type,
+          name: res.data.orcidProfile.name,
+        }
+        this.orcid = orcidObj
+        localStorage.setItem('orcid-user', JSON.stringify(orcidObj))
+
+        // have db user associated with this ORCID
+        if (res.data.user) {
+          const uObj = {
+            authToken: res.data.accessToken,
+            userId: res.data.user.user_id,
+            userEmail: res.data.user.email,
+            name: res.data.user.name,
+          }
+          this.user = uObj
+          localStorage.setItem('mb-user', JSON.stringify(uObj))
+        } else if (res.data.potentialUsers) {
+          // TODO: handle case when user is not associated but has potential user
+        }
+
+        return true
+      } catch (e) {
+        console.error(`store:auth:login(): ${e}\n${e.response.data.message}`)
+        this.err = e.response.data.message
+        return false
+      }
+    }
   },
 })
