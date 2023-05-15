@@ -111,7 +111,7 @@ export const useAuthStore = defineStore({
 
         return true
       } catch (e) {
-        console.error(`store:auth:login(): ${e}\n${e.response.data.message}`)
+        console.error(`store:auth:setORCIDProfile(): ${e}\n${e.response.data.message}`)
         this.err = e.response.data.message
         return false
       }

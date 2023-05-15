@@ -25,7 +25,7 @@ onMounted(async () => {
 <template>
   <div class="form-signin">
     <form @submit.prevent="submitForm()">
-      <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
+      <h3 class="mb-3 fw-normal">Please sign in</h3>
 
       <div class="form-floating margin-s-top">
         <input

@@ -1,4 +1,4 @@
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import axios from 'axios'
 import { defineStore } from 'pinia'
 import { useAuthStore } from '@/stores/AuthStore.js'
@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/AuthStore.js'
 export const useUserStore = defineStore({
   id: 'user',
   state: () => ({
-    err: null,
+    err: ref(null),
     user: reactive({
       firstName: null,
       lastName: null,
@@ -14,6 +14,7 @@ export const useUserStore = defineStore({
       orcid: null,
       newPassword: null,
       newPasswordConfirm: null,
+      institutions: null,
     }),
   }),
   getters: {
@@ -25,6 +26,7 @@ export const useUserStore = defineStore({
         // this.user.email = null
         // this.user.newPassword = null
         // this.user.newPasswordConfirm = null
+        // this.err = null
     },
 
     async getCurrentUser() {
@@ -38,13 +40,16 @@ export const useUserStore = defineStore({
             this.user.lastName = response.data.lname
             this.user.email = response.data.email
             this.user.orcid = response.data.orcid
+            this.user.institutions = response.data.institutions
             return this.user
           } catch (e) {
             // TODO: display user fetch error
+            this.err = e
           }
       }
       return null
     },
+
   },
 })
 

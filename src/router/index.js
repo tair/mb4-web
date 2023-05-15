@@ -66,21 +66,31 @@ const router = createRouter({
           path: 'myprofile',
           name: 'UserProfileView',
           component: UserProfileView,
-          beforeEnter: (to, from) => {
+          beforeEnter: async (to, from, next) => {
             const authStore = useAuthStore()
             if (to.query.code) {
-              authStore.setORCIDProfile(to.query.code).then(result => {
+              try {
+                await authStore.setORCIDProfile(to.query.code)
                 if (!authStore.user?.authToken && to.name !== 'UserLogin') {
-                  return { name: 'UserLogin' }
+                  next({ name: 'UserLogin' })
                 }
-              }).catch(error => {
+                // remove ORCID auth code from path
+                const newPath = {
+                  name: to.name,
+                  params: to.params,
+                  query: { ...to.query, code: undefined },
+                };
+                next(newPath)
+              } catch(error) {
                 // Handle the error
-              })
+                next(error)
+              }
             } else {
               if (!authStore.user?.authToken && to.name !== 'UserLogin') {
-                return { name: 'UserLogin' }
+                next({ name: 'UserLogin' })
               }
             }
+            next()
           },
         },
         {

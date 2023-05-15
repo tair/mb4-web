@@ -1,13 +1,16 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { reactive, ref, onMounted } from "vue";
 import { useUserStore } from '@/stores/UserStore.js'
 import { useAuthStore } from '@/stores/AuthStore.js'
-import axios from 'axios'
+import Tooltip from '@/components/main/Tooltip.vue'
 
 const userStore = useUserStore()
 const authStore = useAuthStore()
 const user = ref(null);
+const error = reactive({});
 const orcidLoginUrl = ref(null);
+const emailTooltipText='The e-mail address of this user. The address will be used for all mail-based system notifications and alerts to this user'
+const insititutionalTootipText = 'Scientists on MorphoBank are often affiliated with more than one institution and those can be entered here. When you change institutions, your older, published projects will remain credited to the institution you belonged to at the time the paper was published on MorphoBank'
 
 onMounted(async () => {
   try {
@@ -24,29 +27,52 @@ const submitForm = async() => {
 </script>
 
 <template>
-  <h1>User Profile</h1>
-  <p>All fields are required</p>
-  <form @submit.prevent="submitForm" v-if="user">
-    <div>
-      <label for="firstname">First Name:</label>
-      <input type="text" id="firstname" v-model="user.firstName" required />
+  <form @submit.prevent="submitForm" v-if="user" class="form-profile">
+    <h3 class="mb-3 fw-normal">User Profile</h3>
+    <p>All fields are required</p>
+    <div class="form-group">
+      <label for="firstName">First Name</label>
+      <input id="firstName" type="text" class="form-control" v-model="user.firstName" required>
     </div>
+    <div class="form-group">
+      <label for="lastName">Last Name</label>
+      <input id="lastName" type="text" class="form-control" v-model="user.lastName" required>
+    </div>
+    <div class="form-group">
+      <label for="email">
+        Email <Tooltip :content="emailTooltipText"></Tooltip>
+      </label>
+      <input id="email" type="email" class="form-control" v-model="user.email" required>
+    </div>
+    <div class="form-group">
+      <label for="newPassword">Password<br>(Only enter a password if you wish to change your current password)</label>
+      <input id="newPassword" type="password" class="form-control" v-model="user.newPassword">
+    </div>
+    <div class="form-group">
+      <label for="newPasswordConfirm">Password (Confirm)</label>
+      <input id="newPasswordConfirm" type="password" class="form-control" v-model="user.newPasswordConfirm">
+    </div>
+    <div class="form-group">
+      <div class="data-error" id="institution-error" v-if="error.institutions">{{ error.institutions }}</div>
+      <label>
+        Institutional Affiliation(s) 
+        <Tooltip :content="insititutionalTootipText"></Tooltip>
+      </label> 
+      <ul>
+        <li v-for="institution in user.institutions" :key="institution.institution_id">{{ institution.name }}</li>
+      </ul>
 
-    <div>
-      <label for="lastname">Last Name:</label>
-      <input type="text" id="lastname" v-model="user.lastName" required />
     </div>
-
-    <div>
-      <label for="email">Email:</label>
-      <input type="email" id="email" v-model="user.email" required />
+    <div class="form-group row text-vert-center">
+      <div class="col-sm-2" style="">ORCID</div>
+      <div class="col-sm-10">
+        <a v-if= "!user.orcid" :href="orcidLoginUrl" class="w-100 btn btn-lg btn-primary btn-white"><img alt="ORCID logo" src="/ORCIDiD_iconvector.svg" class="orcid-icon"/>  Link Account with ORCID</a>
+        <div v-if="user.orcid">
+          <img alt="ORCID logo" src="/ORCIDiD_iconvector.svg" title="ORCID iD" class="orcid-icon"/>  {{ user.orcid }}
+        </div>
+      </div>
     </div>
-
-    <a v-if= "!user.orcid" :href="orcidLoginUrl" class="w-100 btn btn-lg btn-primary btn-white margin-s-top"><img alt="ORCID logo" src="/ORCIDiD_iconvector.svg" class="orcid-icon"/>  Link Account with ORCID</a>
-    <div v-if="user.orcid">
-      <img alt="ORCID logo" src="/ORCIDiD_iconvector.svg" class="orcid-icon"/>  {{ user.orcid }}
-    </div>
-    <button class="w-100 btn btn-lg btn-primary margin-s-top" type="submit">
+    <button class="w-100 btn btn-lg btn-primary form-group" type="submit">
         Update
     </button>
     <div
@@ -59,22 +85,31 @@ const submitForm = async() => {
 </template>
 
 <style scoped>
-.form-signin {
+.form-profile {
   width: 100%;
-  max-width: 330px;
+  max-width: 600px;
   padding: 15px;
-  margin: auto;
 }
 .btn-white {
   background-color: #ffffff !important;
   border: 1px solid #ced4da !important;
   color: #333333;
 }
-.margin-s-top {
+.margin-top-s {
   margin-top: 10px;
 }
 .orcid-icon {
   width: 24px;
   height: 24px;
+}
+.form-group {
+  margin-top: 10px;
+}
+.text-vert-center {
+  display: flex; align-items: center;
+}
+.data-error {
+  color: red;
+  font-weight: bold;
 }
 </style>
