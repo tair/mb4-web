@@ -10,14 +10,24 @@ import MyProjectMatrixCreateView from '@/views/project/MyProjectMatrixCreateView
 import MyProjectMatrixView from '@/views/project/MyProjectMatrixView.vue'
 import MyProjectMediaView from '@/views/project/MyProjectMediaView.vue'
 import MyProjectMediaViewsView from '@/views/project/MyProjectMediaViewsView.vue'
+import MyProjectOverView from '@/views/project/MyProjectOverView.vue'
 import MyProjectSpecimensView from '@/views/project/MyProjectSpecimensView.vue'
 import MyProjectTaxaView from '@/views/project/MyProjectTaxaView.vue'
 
 export const MY_PROJECT_VIEWS = [
   {
-    path: ':id',
+    path: '',
     name: 'MyProjectHomeView',
     component: MyProjectHomeView,
+  },
+  {
+    path: ':id',
+    component: MyProjectOverView,
+  },
+  {
+    path: ':id/overview',
+    name: 'MyProjectOverView',
+    component: MyProjectOverView,
   },
   {
     path: ':id/matrices',

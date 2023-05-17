@@ -70,11 +70,15 @@ onMounted(async() => {
       <div v-if="messages.msg" v-html="messages.msg"></div>
       <div class="margin-m-top">
         <div v-if="messages.signinMsg" v-html="messages.signinMsg"></div>
-        <RouterLink to="login" v-if="showSignin"><button class="margin-s-top w-100 btn btn-lg btn-primary">Sign in to MorphoBank</button></RouterLink>
+        <RouterLink :to="{ path: 'login', query: { redirect: 'myprofile' } }" v-if="showSignin">
+          <button class="margin-s-top w-100 btn btn-lg btn-primary">Sign in to MorphoBank</button>
+        </RouterLink>
       </div>
       <div class="margin-m-top">
           <div v-if="messages.registerMsg" v-html="messages.registerMsg"></div>
-          <RouterLink to="register" v-if="showRegister"><button class="margin-s-top w-100 btn btn-lg btn-white">Create an Account</button></RouterLink>
+          <RouterLink to="register" v-if="showRegister">
+            <button class="margin-s-top w-100 btn btn-lg btn-white">Create an Account</button>
+          </RouterLink>
       </div>
     </div>
   </div>

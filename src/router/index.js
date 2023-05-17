@@ -75,7 +75,7 @@ const router = createRouter({
         },
         {
           path: 'myprofile',
-          name: 'UserProfileView',
+          name: 'myprofile',
           component: UserProfileView,
           beforeEnter: (to, from) => {
             const authStore = useAuthStore()

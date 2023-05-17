@@ -1,16 +1,21 @@
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/AuthStore.js'
 import router from '../../router'
 
 const authStore = useAuthStore()
-
+const route = useRoute()
 const state = reactive({})
 
 const submitForm = async () => {
-  const flag = await authStore.login(state.email, state.password)
-  if (flag) {
-    router.push({ path: '/myprojects' })
+  const loggedIn = await authStore.login(state.email, state.password)
+  if (loggedIn) {
+    if (route.query.redirect) {
+      router.push({ name: `${route.query.redirect}` })
+    } else {
+      router.push({ path: '/myprojects' })
+    }
   }
 }
 
