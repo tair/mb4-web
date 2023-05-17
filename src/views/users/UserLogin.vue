@@ -1,7 +1,6 @@
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/AuthStore.js'
-import axios from 'axios'
 import router from '../../router'
 
 const authStore = useAuthStore()
@@ -34,6 +33,7 @@ onMounted(async () => {
           class="form-control"
           id="email"
           placeholder="name@example.com"
+          required
         />
         <label for="email">Email address</label>
       </div>
@@ -44,6 +44,7 @@ onMounted(async () => {
           class="form-control"
           id="password"
           placeholder="Password"
+          required
         />
         <label for="password">Password</label>
       </div>

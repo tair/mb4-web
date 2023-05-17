@@ -27,6 +27,7 @@ import ProjectTitleView from '@/views/project/ProjectTitleView.vue'
 import ProjectView from '@/views/project/ProjectView.vue'
 import ProjectsHomeView from '@/views/project/ProjectsHomeView.vue'
 import UserLogin from '@/views/users/UserLogin.vue'
+import UserAuth from '@/views/users/UserAuth.vue'
 import UserProfileView from '@/views/users/UserProfileView.vue'
 import UserRegistrationView from '@/views/users/UserRegistrationView.vue'
 import UserView from '@/views/users/UserView.vue'
@@ -63,34 +64,24 @@ const router = createRouter({
           component: UserLogin,
         },
         {
+          path: 'auth',
+          name: 'UserAuth',
+          component: UserAuth,
+          beforeEnter: (to, from) => {
+            if (!to.query.code) {
+              return { name: 'UserLogin' }
+            }
+          }
+        },
+        {
           path: 'myprofile',
           name: 'UserProfileView',
           component: UserProfileView,
-          beforeEnter: async (to, from, next) => {
+          beforeEnter: (to, from) => {
             const authStore = useAuthStore()
-            if (to.query.code) {
-              try {
-                await authStore.setORCIDProfile(to.query.code)
-                if (!authStore.user?.authToken && to.name !== 'UserLogin') {
-                  next({ name: 'UserLogin' })
-                }
-                // remove ORCID auth code from path
-                const newPath = {
-                  name: to.name,
-                  params: to.params,
-                  query: { ...to.query, code: undefined },
-                };
-                next(newPath)
-              } catch(error) {
-                // Handle the error
-                next(error)
-              }
-            } else {
-              if (!authStore.user?.authToken && to.name !== 'UserLogin') {
-                next({ name: 'UserLogin' })
-              }
+            if (!authStore.user?.authToken && to.name !== 'UserLogin') {
+              return { name: 'UserLogin' }
             }
-            next()
           },
         },
         {

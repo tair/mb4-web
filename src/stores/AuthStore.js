@@ -14,9 +14,9 @@ export const useAuthStore = defineStore({
     orcid: {
       orcid: null,
       accessToken: null,
-      tokenType: null,
+      refreshToken: null,
       name: null,
-    }
+    },
   }),
   getters: {
     isLoading(state) {
@@ -25,7 +25,19 @@ export const useAuthStore = defineStore({
   },
   actions: {
     invalidate() {
-      this.user = null
+      this.user = {
+        authToken: null,
+        userId: null,
+        userEmail: null,
+        name: null,
+      }
+      this.orcid = {
+        orcid: null,
+        accessToken: null,
+        refreshToken: null,
+        name: null,
+      }
+      this.err = null
       localStorage.removeItem('mb-user')
       localStorage.removeItem('orcid-user')
     },
@@ -53,9 +65,12 @@ export const useAuthStore = defineStore({
 
       try {
         const url = `${import.meta.env.VITE_API_URL}/auth/login`
-        const userObj = {
+        let userObj = {
           email: email,
           password: password,
+        }
+        if (this.orcid.orcid) {
+          userObj.orcid = this.orcid
         }
         const res = await axios.post(url, userObj)
         const uObj = {
@@ -88,13 +103,12 @@ export const useAuthStore = defineStore({
         
         const orcidObj = {
           orcid: res.data.orcidProfile.orcid,
-          accessToken: res.data.orcidProfile.access_token,
-          tokenType: res.data.orcidProfile.token_type,
           name: res.data.orcidProfile.name,
+          accessToken: res.data.orcidProfile.access_token,
+          refreshToken: res.data.orcidProfile.refresh_token
         }
         this.orcid = orcidObj
         localStorage.setItem('orcid-user', JSON.stringify(orcidObj))
-
         // have db user associated with this ORCID
         if (res.data.user) {
           const uObj = {
@@ -105,15 +119,48 @@ export const useAuthStore = defineStore({
           }
           this.user = uObj
           localStorage.setItem('mb-user', JSON.stringify(uObj))
-        } else if (res.data.potentialUsers) {
-          // TODO: handle case when user is not associated but has potential user
+          // the user is authenticated, the handler should redirect the user to destination page
+          // no message to display
+          return true
+        } else if (res.data.potentialUserByEmail) {
+          return {
+            messages: {
+              msg: `We find your email address <b>${res.data.potentialUserByEmail.email}</b> in our database.`,
+              signinMsg: 'Please sign in to MorphoBank to link with your ORCID account.'
+            },
+            showSignin: true,
+            showRegister: false
+          }
+        } else if (res.data.potentialUsersByName) {
+          return {
+            messages: {
+              msg: `We find user <b>${res.data.potentialUsersByName[0].name}</b> in our database.`,
+              signinMsg: "If it's you, please sign in to MorphoBank to link with your ORCID account.",
+              registerMsg: "Otherwise, please proceed to create an account with your ORCID record."
+            },
+            showSignin: true,
+            showRegister: true
+          }
+        } else {
+          return {
+            messages: {
+              msg: 'Please proceed to create an account with your ORCID record.',
+            },
+            showSignin: false,
+            showRegister: true
+          }
         }
 
-        return true
       } catch (e) {
-        console.error(`store:auth:setORCIDProfile(): ${e}\n${e.response.data.message}`)
-        this.err = e.response.data.message
-        return false
+        console.error(`store:auth:setORCIDProfile(): ${e}`)
+        this.err = e
+        return {
+          messages: {
+            msg: "We've experienced unexpected error when authenticating your profile.<br>Please try again or come back later."
+          },
+          showSignin: true,
+          showRegister: false
+        }
       }
     }
   },
