@@ -40,6 +40,12 @@ export const useAuthStore = defineStore({
       this.err = null
       localStorage.removeItem('mb-user')
       localStorage.removeItem('orcid-user')
+      axios.post(`${import.meta.env.VITE_API_URL}/auth/logout`)
+      .then(res => {
+        //do nothing
+      }).catch(e => {
+        //do nothing
+      })
     },
 
     fetchLocalStore() {
