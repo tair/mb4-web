@@ -27,6 +27,7 @@ import ProjectTitleView from '@/views/project/ProjectTitleView.vue'
 import ProjectView from '@/views/project/ProjectView.vue'
 import ProjectsHomeView from '@/views/project/ProjectsHomeView.vue'
 import UserLogin from '@/views/users/UserLogin.vue'
+import UserAuth from '@/views/users/UserAuth.vue'
 import UserProfileView from '@/views/users/UserProfileView.vue'
 import UserRegistrationView from '@/views/users/UserRegistrationView.vue'
 import UserView from '@/views/users/UserView.vue'
@@ -63,8 +64,18 @@ const router = createRouter({
           component: UserLogin,
         },
         {
+          path: 'auth',
+          name: 'UserAuth',
+          component: UserAuth,
+          beforeEnter: (to, from) => {
+            if (!to.query.code) {
+              return { name: 'UserLogin' }
+            }
+          }
+        },
+        {
           path: 'myprofile',
-          name: 'UserProfileView',
+          name: 'myprofile',
           component: UserProfileView,
           beforeEnter: (to, from) => {
             const authStore = useAuthStore()

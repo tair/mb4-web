@@ -1,0 +1,22 @@
+version: '3.8'
+
+# need to create a shared network
+# docker network create shared_network
+services:
+    mb4-web-dev:
+        build: 
+            context: .
+            target: dev-stage
+        image: mb4-web-dev:1.0
+        container_name: mb4-web-container-dev
+        volumes:
+            - .:/app
+            - /app/node_modules
+        ports:
+            - "3000:3000"
+        networks:
+            - shared_network
+
+networks:
+    shared_network:
+        external: true
