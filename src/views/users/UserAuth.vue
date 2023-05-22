@@ -16,7 +16,11 @@ onMounted(async() => {
   try {
     const setProfileMsg = await authStore.setORCIDProfile(authCode)
     if (authStore.user && authStore.user.authToken) {
-      router.push('/myprojects')
+      if (setProfileMsg.redirectToProfile) {
+        router.push('myprofile')
+      } else {
+        router.push('/myprojects')
+      }
       return
     }
     messages.value = setProfileMsg.messages

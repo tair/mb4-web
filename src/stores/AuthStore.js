@@ -126,8 +126,10 @@ export const useAuthStore = defineStore({
           this.user = uObj
           localStorage.setItem('mb-user', JSON.stringify(uObj))
           // the user is authenticated, the handler should redirect the user to destination page
-          // no message to display
-          return true
+          // depending on the redirect flag
+          return {
+            redirectToProfile: res.data.redirectToProfile
+          }
         } else if (res.data.potentialUserByEmail) {
           return {
             messages: {
