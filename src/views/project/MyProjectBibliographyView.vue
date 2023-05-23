@@ -4,7 +4,6 @@ import { computed, onMounted } from 'vue'
 import BibliographyItem from '@/components/project/BibliographyItem.vue'
 import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
-import { bottom } from '@popperjs/core'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -12,16 +11,16 @@ const projectId = route.params.id
 const bibliographiesStore = useBibliographiesStore()
 const allSelected = computed({
   get: function () {
-    return bibliographiesStore.filtered_bibliographies.every((b) => b.selected)
+    return bibliographiesStore.filteredBibliographies.every((b) => b.selected)
   },
   set: function (value) {
-    bibliographiesStore.filtered_bibliographies.forEach((b) => {
+    bibliographiesStore.filteredBibliographies.forEach((b) => {
       b.selected = value
     })
   },
 })
 const someSelected = computed(() =>
-  bibliographiesStore.filtered_bibliographies.some((b) => b.selected)
+  bibliographiesStore.filteredBibliographies.some((b) => b.selected)
 )
 
 onMounted(() => {
@@ -108,7 +107,7 @@ function refresh() {
     <div class="item-list">
       <ul class="list-group">
         <li
-          v-for="bibliography in bibliographiesStore.filtered_bibliographies"
+          v-for="bibliography in bibliographiesStore.filteredBibliographies"
           :key="bibliography.reference_id"
           class="list-group-item"
         >

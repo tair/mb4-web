@@ -19,7 +19,7 @@ export const useBibliographiesStore = defineStore({
       }
       return [...letters].sort()
     },
-    filtered_bibliographies() {
+    filteredBibliographies() {
       return this.filters.reduce(
         (bibliographies, filter) => bibliographies.filter(filter),
         this.bibliographies
