@@ -8,48 +8,76 @@
       </div>
       <div><i>* indicates required fields.</i></div>
     </div>
+    </div>
 
     <form @submit.prevent="submitForm">
-      <div style="float: left; width: 45%;">
+      <div style="float: left; width: 50%;">
         <div class="input-container">
-          <b>First name *</b><br>
+          <br>
+        </div>
+        <div class="input-container">
+          First Name*<br>
           <input class="input-field" v-model.trim="state.fname" name="fname" type="text" id="fname" />
         </div>
         <div class="input-container">
-          <b>Last name *</b><br>
+          Last Name*<br>
           <input class="input-field" v-model.trim="state.lname" name="lname" type="text" id="lname" />
         </div>
         <div class="input-container">
-          <b>Email address *</b><br>
+          Email*<br>
           <input class="input-field" v-model.trim="state.email" name="email" type="text" id="email" autocomplete="off" />
         </div>
         <div class="input-container">
-          <b>Password *</b><br>
+          Password*<br>
           <input class="input-field" v-model.trim="state.password" type="password" name="password" autocomplete="new-password" />
         </div>
         <div class="input-container">
-          <b>Re-Type password *</b><br>
+          Re-Type password*<br>
           <input class="input-field" v-model.trim="state.password2" type="password" name="password2" autocomplete="new-password" />
         </div>
+        <div class="input-container row" v-if="state.orcid">
+            <div class="col-sm-2 align-self-center">
+                <span style="input-container">ORCID</span>
+            </div>
+            <div class="col-sm-1">
+                <img alt="ORCID logo" src="/ORCIDiD_iconvector.svg" title="ORCID iD" class="orcid-icon" style="width: 30px; height: 30px;"/>
+            </div>
+            <div class="col-sm-5 align-self-center">
+                <span style="input-container">{{ state.orcid }}</span>
+            </div>
+        </div>
+
         <div class="input-container" style="display: flex; align-items: center;">
           <input v-model="state.accepted_terms_of_use" id="termsOfUseCheckbox" type="checkbox" name="accepted_terms_of_use" value="1" style="margin-right: 5px;" />
           <b>I have read and accepted the <a href="/index.php/TermsOfUse/Index">Morphobank Terms of Use &amp; Privacy Policy</a></b>
         </div>
-        <div><button class="button" type="submit">» Register</button></div>
+        <div>
+          <button class="w-100 btn btn-lg btn-primary form-group" type="submit">
+            Register
+          </button>
+        </div>
       </div>
-      <div class="text_block" style="float: right; width: 45%;">
-        <h3>
-          Registration is not required to view published projects. If you are interested in only viewing a project, please<br><br>
-          <a href="/index.php/Projects/Index">click to BROWSE published projects</a><br><br><em>OR</em><br><br>
-          SEARCH published projects in the search box at the top of the page
-        </h3>
-      </div>
+      <div class="input-container">
+          <br>
+          <br>
+          <br>
+          <br>
+          <br>
+          <br>
+        </div>
+        <div class="text_block" style="float: right; width: 45%;">
+          <h5 style="font-size: 16px;">
+            Registration is not required to view published projects. If you are interested in only viewing a project, please<br><br>
+            <a href="/index.php/Projects/Index">click to BROWSE published projects</a><br><br><em>OR</em><br><br>
+            SEARCH published projects in the search box at the top of the page
+          </h5>
+        </div>
     </form>
-  </div>
+
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, onMounted } from 'vue'
 import router from '../../router'
 import { useAuthStore } from '@/stores/AuthStore.js'
 import axios from 'axios'
@@ -62,12 +90,26 @@ const state = reactive({
   email: '',
   password: '',
   password2: '',
-  accepted_terms_of_use: false
+  accepted_terms_of_use: false,
+  orcid: ''
 })
 
 const toggleForms = () => {
   // logic to toggle between forms
 }
+
+onMounted(() => {
+  if (authStore.orcid.name) {
+    let names = authStore.orcid.name.split(' ')
+    state.fname = names[0]
+    state.lname = names.slice(1).join(' ')
+    state.orcid = authStore.orcid.orcid
+    console.log(state.orcid)
+  }
+  if (authStore.user.userEmail) {
+    state.email = authStore.user.userEmail
+  }
+})
 
 const submitForm = () => {
   if (state.fname && state.lname && state.email && state.password && state.password2 && state.accepted_terms_of_use) {
@@ -108,11 +150,11 @@ const submitForm = () => {
 
 <style scoped>
 #registerForm {
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 12px;
+  font-family: Arial, sans-serif;
+  font-size: medium;
   color: #333;
   text-align: left;
-  line-height: 1.3em;
+  line-height: 1em;
   background-color: #f8f9fa;
   padding: 20px;
   border-radius: 10px;
@@ -126,25 +168,7 @@ const submitForm = () => {
   padding: 5px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  margin-bottom: 10px;
+  margin-bottom: 1px;
   width: 100%;
-}
-
-#registerForm button.button {
-  font-size: 18px;
-  font-weight: bold;
-  text-decoration: none;
-  margin: 14px 0 0 0;
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
-  border-radius: 5px;
-  transition: background-color 0.3s;
-  border: none;
-  cursor: pointer;
-}
-
-#registerForm button.button:hover {
-  background-color: #0056b3;
 }
 </style>
