@@ -12,25 +12,25 @@
       <div class="form-section">
         <div class="input-container">
           <br>
-          First Name*<br>
+          <label for="fname">First Name*</label>
           <input class="input-field" v-model.trim="state.fname" name="fname" type="text" id="fname" />
         </div>
         <div class="input-container">
-          Last Name*<br>
+          <label for="fname">Last Name*</label>
           <input class="input-field" v-model.trim="state.lname" name="lname" type="text" id="lname" />
         </div>
         <div class="input-container">
-          Email*<br>
+          <label for="fname">Email*</label>
           <input class="input-field" v-model.trim="state.email" name="email" type="text" id="email" autocomplete="off" />
         </div>
         <div class="input-container">
-          Password*<br>
+          <label for="fname">Password*</label>
           <tippy content="Password must be 8 or more characters long, contain at least 1 number, 1 uppercase letter, and 1 lowercase letter.">
             <input class="input-field" v-model.trim="state.password" type="password" name="password" autocomplete="new-password" />
           </tippy>
         </div>
         <div class="input-container">
-          Confirm password*<br>
+          <label for="fname">Confirm Password*</label>
           <tippy content="Please input the password exactly as above.">
             <input class="input-field" v-model.trim="state.password2" type="password" name="password2" autocomplete="new-password" />
           </tippy>
@@ -48,7 +48,7 @@
         </div>
         <div class="input-container checkbox-container">
           <input class="checkbox" v-model="state.accepted_terms_of_use" id="termsOfUseCheckbox" type="checkbox" name="accepted_terms_of_use" value="1" />
-          <b>I have read and accepted the <a href="/index.php/TermsOfUse/Index">Morphobank Terms of Use &amp; Privacy Policy</a></b>
+          <b>I have read and accepted the <router-link to="/terms">Morphobank Terms of Use &amp; Privacy Policy</router-link></b>
         </div>
         <div v-if="state.errorMessage" class="alert alert-danger">
           {{ state.errorMessage }}
@@ -63,7 +63,7 @@
       <div class="registration-instructions">
         <h5>
             Registration is not required to view published projects. If you are interested in only viewing a project, please<br><br>
-            <a href="/index.php/Projects/Index">click to BROWSE published projects</a><br><br><em>OR</em><br><br>
+            <router-link to="/project/pub_date">click to BROWSE published projects</router-link><br><br><em>OR</em><br><br>
             SEARCH published projects in the search box at the top of the page
         </h5>
       </div>
@@ -88,6 +88,8 @@ const state = reactive({
   password2: '',
   accepted_terms_of_use: false,
   orcid: '',
+  accessToken: '',
+  refreshToken: '',
   errorMessage: null,  // Added new property for error message
 })
 
@@ -97,6 +99,8 @@ onMounted(() => {
     state.fname = names[0]
     state.lname = names.slice(1).join(' ')
     state.orcid = authStore.orcid.orcid
+    state.accessToken = authStore.orcid.accessToken
+    state.refreshToken = authStore.orcid.refreshToken
   }
 })
 
@@ -140,7 +144,10 @@ const submitForm = () => {
     fname: state.fname,
     lname: state.lname,
     email: state.email,
-    password: state.password
+    password: state.password,
+    orcid: state.orcid,
+    accessToken: state.accessToken,
+    refreshToken: state.refreshToken
   })
   .then(function (response) {
     // handle success
@@ -158,8 +165,6 @@ const submitForm = () => {
     state.errorMessage = 'An error occurred while creating user.'
   })
 }
-
-
 </script>
 
 <style scoped>
@@ -176,14 +181,17 @@ const submitForm = () => {
 
 .input-container {
   margin-bottom: 20px;
+  padding: 5px;
 }
-
+.input-container label {
+  margin-bottom: 10px;
+}
 .space-container {
   height: 100px;  /* adjust this value as needed */
 }
 
 .input-field {
-  padding: 5px;
+  padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
   margin-bottom: 1px;
