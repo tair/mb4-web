@@ -113,7 +113,7 @@ function onLogout() {
               <div class="row">
                 <ul class="navbar-nav p-0 m-0 d-flex justify-content-end">
                   <li
-                    v-if="!authStore?.user?.authToken"
+                    v-if="!authStore.hasValidAuthToken()"
                     class="nav-item border-bottom m-1"
                   >
                     <RouterLink
@@ -132,7 +132,7 @@ function onLogout() {
                   </li>
 
                   <li
-                    v-if="!authStore?.user?.authToken"
+                    v-if="!authStore.hasValidAuthToken()"
                     class="nav-item border-bottom m-1"
                   >
                     <RouterLink
@@ -142,7 +142,7 @@ function onLogout() {
                     >
                   </li>
                   <li
-                    v-if="authStore?.user?.authToken"
+                    v-if="authStore.hasValidAuthToken()"
                     class="nav-item border-bottom m-1"
                   >
                     <RouterLink class="nav-link p-0 m-1 text-nowrap" to="/admin"
@@ -150,7 +150,7 @@ function onLogout() {
                     >
                   </li>
                   <li
-                    v-if="authStore?.user?.authToken"
+                    v-if="authStore.hasValidAuthToken()"
                     class="nav-item border-bottom m-1"
                   >
                     <RouterLink
@@ -160,7 +160,7 @@ function onLogout() {
                     >
                   </li>
                   <li
-                    v-if="authStore?.user?.authToken"
+                    v-if="authStore.hasValidAuthToken()"
                     class="nav-item border-bottom m-1"
                   >
                     <RouterLink
