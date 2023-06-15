@@ -35,6 +35,17 @@
             <input class="input-field" v-model.trim="state.password2" type="password" name="password2" autocomplete="new-password" required />
           </tippy>
         </div>
+        <div class="input-container orcid-container row" v-if="state.orcid">
+            <div class="col-sm-2 align-self-center">
+                <span>ORCID</span>
+            </div>
+            <div class="col-sm-1">
+                <img alt="ORCID logo" src="/ORCIDiD_iconvector.svg" title="ORCID iD" class="orcid-icon"/>
+            </div>
+            <div class="col-sm-5 align-self-center">
+                <span>{{ state.orcid }}</span>
+            </div>
+        </div>
         <div class="input-container checkbox-container">
           <input class="checkbox" v-model="state.accepted_terms_of_use" id="termsOfUseCheckbox" type="checkbox" name="accepted_terms_of_use" value="1" required />
           <b>I have read and accepted the <router-link to="/terms">Morphobank Terms of Use &amp; Privacy Policy</router-link></b>
