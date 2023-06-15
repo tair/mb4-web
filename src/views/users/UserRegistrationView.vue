@@ -4,7 +4,7 @@
       <h1>Register</h1>
       <div>
         New to Morphobank? Register to create your own projects.
-        <a href="/users/login" id="loginLink">Click here to Login.</a>
+        <router-link to="/users/login" id="loginLink">Click here to Login.</router-link>
       </div>
       <div><i>* indicates required fields.</i></div>
     </div>
@@ -73,12 +73,14 @@
 
 
 <script setup>
-import { reactive, onMounted } from 'vue'
+import { reactive, onMounted, watch } from 'vue'
 import router from '../../router'
 import { useAuthStore } from '@/stores/AuthStore.js'
 import axios from 'axios'
+import { useMessageStore } from '@/stores/MessageStore.js'
 
 const authStore = useAuthStore()
+const messageStore = useMessageStore()
 
 const state = reactive({
   fname: '',
@@ -92,6 +94,23 @@ const state = reactive({
   refreshToken: '',
   errorMessage: null,  // Added new property for error message
 })
+//adding check while typing
+watch(() => state.password, (newPassword) => {
+  const passwordValidation = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+  if (!passwordValidation.test(newPassword)) {
+    state.errorMessage = 'Password must be 8 or more characters long, have at least 1 number, 1 uppercase letter, 1 lowercase letter, and 1 special character.';
+  } else {
+    state.errorMessage = null;
+  }
+});
+
+watch(() => state.password2, (newConfirmPassword) => {
+  if (newConfirmPassword !== state.password) {
+    state.errorMessage = 'Passwords do not match.';
+  } else {
+    state.errorMessage = null;
+  }
+});
 
 onMounted(() => {
   if (authStore.orcid.name) {
@@ -125,7 +144,7 @@ const validatePasswords = () => {
     return false;
   }
   
-  const passwordValidation = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/
+  const passwordValidation = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
   if (!passwordValidation.test(state.password)) {
     state.errorMessage = 'Password must be 8 or more characters long, have at least 1 number, 1 uppercase letter, and 1 lowercase letter.';
     return false;
@@ -135,25 +154,36 @@ const validatePasswords = () => {
 }
 
 const submitForm = () => {
-  if (!validateInputFields() || !validatePasswords()) {
-    return;
-  }
   
+  // Object to send to backend and also to contain all the inputs based on whether there is a cached token for ORCID
+  let formObject = {};
+  if(state.orcid){
+    formObject = {
+      fname: state.fname,
+      lname: state.lname,
+      email: state.email,
+      password: state.password,
+      orcid: state.orcid,
+      accessToken: state.accessToken,
+      refreshToken: state.refreshToken
+    }
+  }else{
+    formObject = {
+      fname: state.fname,
+      lname: state.lname,
+      email: state.email,
+      password: state.password
+    }
+  }
+
   // Make a request for a user with a given ID
-  axios.post('/services/auth/signup', {
-    fname: state.fname,
-    lname: state.lname,
-    email: state.email,
-    password: state.password,
-    orcid: state.orcid,
-    accessToken: state.accessToken,
-    refreshToken: state.refreshToken
-  })
+  axios.post('/services/auth/signup', formObject)
   .then(function (response) {
     // handle success
     if(response.status === 201) {
       state.errorMessage = null  // Clear the error message
-      router.push({ path: '/myprojects' })
+      messageStore.setMessage('User was created successfully!')
+      router.push({ path: '/users/login'})
     } else {
       // handle error
       state.errorMessage = 'An error occurred while creating user.'
@@ -161,7 +191,6 @@ const submitForm = () => {
   })
   .catch(function (error) {
     // handle error
-    console.log(error);
     state.errorMessage = 'An error occurred while creating user.'
   })
 }
