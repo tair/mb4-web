@@ -1,73 +1,79 @@
 <template>
-  <div id="registerForm">
-    <div class="interior_mainheader_title">
-      <h1>Register</h1>
-      <div>
-        New to Morphobank? Register to create your own projects.
-        <router-link to="/users/login" id="loginLink">Click here to Login.</router-link>
+  <div id="registerForm" class="container">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="interior_mainheader_title">
+          <h1>Register</h1>
+          <div>
+            New to Morphobank? Register to create your own projects.
+            <router-link to="/users/login" id="loginLink">Click here to Login.</router-link>
+          </div>
+          <div><br><i>* indicates required fields.</i></div>
+        </div>
+        <form @submit.prevent="submitForm">
+          <div class="form-section">
+            <div class="input-container">
+              <br>
+              <label for="fname">First Name*</label>
+              <input class="input-field" v-model.trim="state.fname" name="fname" type="text" id="fname" required />
+            </div>
+            <div class="input-container">
+              <label for="lname">Last Name*</label>
+              <input class="input-field" v-model.trim="state.lname" name="lname" type="text" id="lname" required />
+            </div>
+            <div class="input-container">
+              <label for="email">Email*</label>
+              <input class="input-field" v-model.trim="state.email" name="email" type="text" id="email" autocomplete="off" required />
+            </div>
+            <div class="input-container">
+              <label for="password">Password*</label>
+              <tippy content="Password must be 8 or more characters long, contain at least 1 number, 1 uppercase letter, and 1 lowercase letter.">
+                <input class="input-field" v-model.trim="state.password" type="password" name="password" autocomplete="new-password" required />
+              </tippy>
+            </div>
+            <div class="input-container">
+              <label for="password2">Confirm Password*</label>
+              <tippy content="Please input the password exactly as above.">
+                <input class="input-field" v-model.trim="state.password2" type="password" name="password2" autocomplete="new-password" required />
+              </tippy>
+            </div>
+            <div class="input-container orcid-container row" v-if="state.orcid">
+                <div class="col-sm-2 align-self-center">
+                    <span>ORCID</span>
+                </div>
+                <div class="col-sm-1">
+                    <img alt="ORCID logo" src="/ORCIDiD_iconvector.svg" title="ORCID iD" class="orcid-icon"/>
+                </div>
+                <div class="col-sm-5 align-self-center">
+                    <span>{{ state.orcid }}</span>
+                </div>
+            </div>
+            <div class="input-container checkbox-container">
+              <input class="checkbox" v-model="state.accepted_terms_of_use" id="termsOfUseCheckbox" type="checkbox" name="accepted_terms_of_use" value="1" required />
+              <b>I have read and accepted the <router-link to="/terms">Morphobank Terms of Use &amp; Privacy Policy</router-link></b>
+            </div>
+            <div v-if="state.errorMessage" class="alert alert-danger">
+              {{ state.errorMessage }}
+            </div>
+            <div>
+              <button class="w-100 btn btn-lg btn-primary form-group" type="submit">
+                Register
+              </button>
+            </div>
+          </div>
+          <div class="input-container space-container"></div>
+        </form>
       </div>
-      <div><i>* indicates required fields.</i></div>
+      <div class="col-md-6 d-flex align-items-center">
+        <div class="registration-instructions">
+          <h5>
+              Registration is not required to view published projects. If you are interested in only viewing a project, please<br><br>
+              <router-link to="/project/pub_date">click to BROWSE published projects</router-link><br><br><em>OR</em><br><br>
+              SEARCH published projects in the search box at the top of the page
+          </h5>
+        </div>
+      </div>
     </div>
-    <form @submit.prevent="submitForm">
-      <div class="form-section">
-        <div class="input-container">
-          <br>
-          <label for="fname">First Name*</label>
-          <input class="input-field" v-model.trim="state.fname" name="fname" type="text" id="fname" required />
-        </div>
-        <div class="input-container">
-          <label for="lname">Last Name*</label>
-          <input class="input-field" v-model.trim="state.lname" name="lname" type="text" id="lname" required />
-        </div>
-        <div class="input-container">
-          <label for="email">Email*</label>
-          <input class="input-field" v-model.trim="state.email" name="email" type="text" id="email" autocomplete="off" required />
-        </div>
-        <div class="input-container">
-          <label for="password">Password*</label>
-          <tippy content="Password must be 8 or more characters long, contain at least 1 number, 1 uppercase letter, and 1 lowercase letter.">
-            <input class="input-field" v-model.trim="state.password" type="password" name="password" autocomplete="new-password" required />
-          </tippy>
-        </div>
-        <div class="input-container">
-          <label for="password2">Confirm Password*</label>
-          <tippy content="Please input the password exactly as above.">
-            <input class="input-field" v-model.trim="state.password2" type="password" name="password2" autocomplete="new-password" required />
-          </tippy>
-        </div>
-        <div class="input-container orcid-container row" v-if="state.orcid">
-            <div class="col-sm-2 align-self-center">
-                <span>ORCID</span>
-            </div>
-            <div class="col-sm-1">
-                <img alt="ORCID logo" src="/ORCIDiD_iconvector.svg" title="ORCID iD" class="orcid-icon"/>
-            </div>
-            <div class="col-sm-5 align-self-center">
-                <span>{{ state.orcid }}</span>
-            </div>
-        </div>
-        <div class="input-container checkbox-container">
-          <input class="checkbox" v-model="state.accepted_terms_of_use" id="termsOfUseCheckbox" type="checkbox" name="accepted_terms_of_use" value="1" required />
-          <b>I have read and accepted the <router-link to="/terms">Morphobank Terms of Use &amp; Privacy Policy</router-link></b>
-        </div>
-        <div v-if="state.errorMessage" class="alert alert-danger">
-          {{ state.errorMessage }}
-        </div>
-        <div>
-          <button class="w-100 btn btn-lg btn-primary form-group" type="submit">
-            Register
-          </button>
-        </div>
-      </div>
-      <div class="input-container space-container"></div>
-      <div class="registration-instructions">
-        <h5>
-            Registration is not required to view published projects. If you are interested in only viewing a project, please<br><br>
-            <router-link to="/project/pub_date">click to BROWSE published projects</router-link><br><br><em>OR</em><br><br>
-            SEARCH published projects in the search box at the top of the page
-        </h5>
-      </div>
-    </form>
   </div>
 </template>
 
@@ -197,11 +203,6 @@ const submitForm = () => {
   width: 100%;
 }
 
-.form-section {
-  float: left; 
-  width: 50%;
-}
-
 .orcid-container .col-sm-2.align-self-center span {
   /* style based on your requirement */
   align-items: center;
@@ -214,11 +215,6 @@ const submitForm = () => {
 
 .checkbox {
   margin-right: 10px;  /* adjust this value as needed */
-}
-
-.registration-instructions {
-  float: right; 
-  width: 45%;
 }
 
 .orcid-icon {
