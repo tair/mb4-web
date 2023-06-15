@@ -13,41 +13,30 @@
         <div class="input-container">
           <br>
           <label for="fname">First Name*</label>
-          <input class="input-field" v-model.trim="state.fname" name="fname" type="text" id="fname" />
+          <input class="input-field" v-model.trim="state.fname" name="fname" type="text" id="fname" required />
         </div>
         <div class="input-container">
-          <label for="fname">Last Name*</label>
-          <input class="input-field" v-model.trim="state.lname" name="lname" type="text" id="lname" />
+          <label for="lname">Last Name*</label>
+          <input class="input-field" v-model.trim="state.lname" name="lname" type="text" id="lname" required />
         </div>
         <div class="input-container">
-          <label for="fname">Email*</label>
-          <input class="input-field" v-model.trim="state.email" name="email" type="text" id="email" autocomplete="off" />
+          <label for="email">Email*</label>
+          <input class="input-field" v-model.trim="state.email" name="email" type="text" id="email" autocomplete="off" required />
         </div>
         <div class="input-container">
-          <label for="fname">Password*</label>
+          <label for="password">Password*</label>
           <tippy content="Password must be 8 or more characters long, contain at least 1 number, 1 uppercase letter, and 1 lowercase letter.">
-            <input class="input-field" v-model.trim="state.password" type="password" name="password" autocomplete="new-password" />
+            <input class="input-field" v-model.trim="state.password" type="password" name="password" autocomplete="new-password" required />
           </tippy>
         </div>
         <div class="input-container">
-          <label for="fname">Confirm Password*</label>
+          <label for="password2">Confirm Password*</label>
           <tippy content="Please input the password exactly as above.">
-            <input class="input-field" v-model.trim="state.password2" type="password" name="password2" autocomplete="new-password" />
+            <input class="input-field" v-model.trim="state.password2" type="password" name="password2" autocomplete="new-password" required />
           </tippy>
-        </div>
-        <div class="input-container orcid-container row" v-if="state.orcid">
-            <div class="col-sm-2 align-self-center">
-                <span>ORCID</span>
-            </div>
-            <div class="col-sm-1">
-                <img alt="ORCID logo" src="/ORCIDiD_iconvector.svg" title="ORCID iD" class="orcid-icon"/>
-            </div>
-            <div class="col-sm-5 align-self-center">
-                <span>{{ state.orcid }}</span>
-            </div>
         </div>
         <div class="input-container checkbox-container">
-          <input class="checkbox" v-model="state.accepted_terms_of_use" id="termsOfUseCheckbox" type="checkbox" name="accepted_terms_of_use" value="1" />
+          <input class="checkbox" v-model="state.accepted_terms_of_use" id="termsOfUseCheckbox" type="checkbox" name="accepted_terms_of_use" value="1" required />
           <b>I have read and accepted the <router-link to="/terms">Morphobank Terms of Use &amp; Privacy Policy</router-link></b>
         </div>
         <div v-if="state.errorMessage" class="alert alert-danger">
@@ -122,36 +111,6 @@ onMounted(() => {
     state.refreshToken = authStore.orcid.refreshToken
   }
 })
-
-const validateInputFields = () => {
-  if (!state.fname || !state.lname || !state.email || !state.password || !state.password2 || !state.accepted_terms_of_use) {
-    state.errorMessage = 'Please fill all required fields.';
-    return false;
-  }
-
-  const emailValidation = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailValidation.test(state.email)) {
-    state.errorMessage = 'Please enter a valid email address.';
-    return false;
-  }
-
-  return true;
-}
-
-const validatePasswords = () => {
-  if (state.password !== state.password2) {
-    state.errorMessage = 'Passwords do not match.';
-    return false;
-  }
-  
-  const passwordValidation = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
-  if (!passwordValidation.test(state.password)) {
-    state.errorMessage = 'Password must be 8 or more characters long, have at least 1 number, 1 uppercase letter, and 1 lowercase letter.';
-    return false;
-  }
-  
-  return true;
-}
 
 const submitForm = () => {
   
