@@ -7,6 +7,7 @@ export const useAuthStore = defineStore({
     err: null,
     user: {
       authToken: null,
+      authTokenExpiry: null,
       userId: null,
       userEmail: null,
       name: null,
@@ -27,6 +28,7 @@ export const useAuthStore = defineStore({
     invalidate() {
       this.user = {
         authToken: null,
+        authTokenExpiry: null,
         userId: null,
         userEmail: null,
         name: null,
@@ -48,12 +50,22 @@ export const useAuthStore = defineStore({
       })
     },
 
+    hasValidAuthToken() {
+      if (!this.user?.authToken || !this.user?.authTokenExpiry) return false
+      return Math.floor(new Date().getTime() / 1000) < this.user.authTokenExpiry
+    },
+
     fetchLocalStore() {
       let lsUser = localStorage.getItem('mb-user')
       if (!lsUser) return
 
       lsUser = JSON.parse(lsUser)
       this.user = lsUser
+
+      let orcidUser = localStorage.getItem('orcid-user')
+      if (!orcidUser) return
+
+      this.orcid = JSON.parse(orcidUser)
     },
 
     async getOrcidLoginUrl() {
@@ -81,6 +93,7 @@ export const useAuthStore = defineStore({
         const res = await axios.post(url, userObj)
         const uObj = {
           authToken: res.data.accessToken,
+          authTokenExpiry: res.data.accessTokenExpiry,
           userId: res.data.user.user_id,
           userEmail: res.data.user.email,
           name: res.data.user.name,
@@ -119,6 +132,7 @@ export const useAuthStore = defineStore({
         if (res.data.user) {
           const uObj = {
             authToken: res.data.accessToken,
+            authTokenExpiry: res.data.accessTokenExpiry,
             userId: res.data.user.user_id,
             userEmail: res.data.user.email,
             name: res.data.user.name,

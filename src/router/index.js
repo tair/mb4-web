@@ -79,7 +79,7 @@ const router = createRouter({
           component: UserProfileView,
           beforeEnter: (to, from) => {
             const authStore = useAuthStore()
-            if (!authStore.user?.authToken && to.name !== 'UserLogin') {
+            if (!authStore.hasValidAuthToken() && to.name !== 'UserLogin') {
               return { name: 'UserLogin' }
             }
           },
@@ -98,7 +98,7 @@ const router = createRouter({
       component: AdminView,
       beforeEnter: (to, from) => {
         const authStore = useAuthStore()
-        if (!authStore.user?.authToken && to.name !== 'UserLogin') {
+        if (!authStore.hasValidAuthToken() && to.name !== 'UserLogin') {
           return { name: 'UserLogin' }
         }
       },
@@ -122,7 +122,7 @@ const router = createRouter({
           component: CuratorHomeView,
           beforeEnter: (to, from) => {
             const authStore = useAuthStore()
-            if (!authStore.user?.authToken && to.name !== 'UserLogin') {
+            if (!authStore.hasValidAuthToken() && to.name !== 'UserLogin') {
               return { name: 'UserLogin' }
             }
           },
@@ -137,7 +137,7 @@ const router = createRouter({
       component: MyProjectsView,
       beforeEnter: (to, from) => {
         const authStore = useAuthStore()
-        if (!authStore.user?.authToken && to.name !== 'UserLogin') {
+        if (!authStore.hasValidAuthToken() && to.name !== 'UserLogin') {
           return { name: 'UserLogin' }
         }
       },

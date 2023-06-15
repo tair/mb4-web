@@ -31,6 +31,7 @@ npm run dev
 
 
 ### Compile and Hot-Reload for Development on Local with Shared Network Container
+Before launching the application, make sure you've created a shared network as instructed in mb4-proxy project
 The container is accessible on http://localhost:81/ and http://localhost:3000/
 
 #### Start the container
