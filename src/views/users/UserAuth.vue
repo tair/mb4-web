@@ -67,7 +67,7 @@ onMounted(async() => {
 <template>
   <div class="container">
     <div v-if="loading" class="margin-l-top" >
-      <img class="spinner-img" alt="ORCID logo" src="/Loading_spinner.svg" title="Loading Spinner"/> 
+      <img class="spinner-img" alt="Loading spinner" src="/Loading_spinner.svg" title="Loading Spinner"/> 
       Authenticating User Profile
     </div>
     <div class="margin-l-top" v-else>

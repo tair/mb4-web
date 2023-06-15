@@ -1,4 +1,5 @@
 <script setup>
+import axios from 'axios';
 import { reactive, ref, onMounted } from "vue";
 import { useUserStore } from '@/stores/UserStore.js'
 import { useAuthStore } from '@/stores/AuthStore.js'
@@ -11,6 +12,9 @@ const error = reactive({});
 const orcidLoginUrl = ref(null);
 const emailTooltipText='The e-mail address of this user. The address will be used for all mail-based system notifications and alerts to this user'
 const insititutionalTootipText = 'Scientists on MorphoBank are often affiliated with more than one institution and those can be entered here. When you change institutions, your older, published projects will remain credited to the institution you belonged to at the time the paper was published on MorphoBank'
+const searchTerm = ref(null)
+const institutionList = ref([])
+const searchLoading = ref(false)
 
 onMounted(async () => {
   try {
@@ -24,12 +28,32 @@ onMounted(async () => {
 const submitForm = async() => {
 
 }
+
+const searchInstitutions = async() => {
+  console.log(searchTerm.value)
+  if (searchTerm.value.trim() === '') {
+    institutionList.value = [];
+    return;
+  }
+
+  try {
+    searchLoading.value = true
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/users/search-institutions`, {
+      params: {
+        searchTerm: searchTerm.value
+      }
+    });
+    institutionList.value = response.data;
+    searchLoading.value = false
+  } catch (error) {
+    console.error(error);
+  }
+}
 </script>
 
 <template>
   <form @submit.prevent="submitForm" v-if="user" class="form-profile">
     <h3 class="mb-3 fw-normal">User Profile</h3>
-    <p>All fields are required</p>
     <div class="form-group">
       <label for="firstName">First Name</label>
       <input id="firstName" type="text" class="form-control" v-model="user.firstName" required>
@@ -61,7 +85,18 @@ const submitForm = async() => {
       <ul>
         <li v-for="institution in user.institutions" :key="institution.institution_id">{{ institution.name }}</li>
       </ul>
-
+    </div>
+    <div class="form-group">
+      <label for="newInstitution">Add Affiliated Institution</label>
+      <div class="search-container">
+        <input id="newInstitution" type="text" v-model="searchTerm" @input="searchInstitutions" class="form-control"/>
+        <img class="loading-icon" alt="Loading spinner" src="/Loading_spinner.svg" title="Loading Spinner" v-if="searchLoading"/> 
+      </div>
+      <select v-if="institutionList.length" :size=10 class="form-control">
+        <option v-for="institution in institutionList" :key="institution.institution_id" :value="institution.institution_id">
+            {{ institution.name }}
+        </option>
+      </select>
     </div>
     <div class="form-group row text-vert-center">
       <div class="col-sm-2" style="">ORCID</div>
@@ -111,5 +146,15 @@ const submitForm = async() => {
 .data-error {
   color: red;
   font-weight: bold;
+}
+.search-container {
+    position: relative;
+}
+.loading-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 50px;
 }
 </style>
