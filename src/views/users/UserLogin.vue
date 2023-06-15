@@ -1,12 +1,15 @@
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/AuthStore.js'
 import router from '../../router'
+import { useMessageStore } from '@/stores/MessageStore.js'
 
 const authStore = useAuthStore()
 const route = useRoute()
 const state = reactive({})
+const messageStore = useMessageStore()
+const message = messageStore.getMessage()
 
 const submitForm = async () => {
   const loggedIn = await authStore.login(state.email, state.password)
@@ -24,13 +27,22 @@ const orcidLoginUrl = ref(null)
 onMounted(async () => {
   orcidLoginUrl.value = await authStore.getOrcidLoginUrl()
 });
+//clears the message if you change page
+onBeforeUnmount(() => {
+  messageStore.clearMessage()
+})
+
 </script>
 
 <template>
   <div class="form-signin">
     <form @submit.prevent="submitForm()">
+      <div class="alert alert-success d-flex align-items-center" role="alert" v-if="message">
+        <div>
+          {{ message }}
+        </div>
+      </div>
       <h3 class="mb-3 fw-normal">Please sign in</h3>
-
       <div class="form-floating margin-s-top">
         <input
           v-model.trim="state.email"
