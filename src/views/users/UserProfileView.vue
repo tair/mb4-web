@@ -49,6 +49,48 @@ const searchInstitutions = async() => {
     console.error(error);
   }
 }
+
+const removeInstitution = function(institutionId) {
+  if (user.value.institutions?.length <= 1) {
+    error.removeInstitution = "The user must have at least one affiliated institutions"  
+  } else {
+    for (let i = 0; i < user.value.institutions.length; i++) {
+      const institution = user.value.institutions[i];
+
+      if (institution.institution_id === institutionId) {
+        // Remove the institution from the array
+        user.value.institutions.splice(i, 1);
+        break; // Exit the loop after removing the element
+      }
+    }
+  }
+}
+
+const dismissRemoveInstitutionAlert = function() {
+  error.removeInstitution = ''
+}
+
+const addInstitution = function(institutionId, institutionName) {
+  // check if the institution already exists
+  for (let i = 0; i < user.value.institutions.length; i++) {
+    const institution = user.value.institutions[i];
+
+    if (institution.institution_id === institutionId) {
+      // Remove the institution from the array
+      error.addInstitution = "The user already belongs to " + institutionName
+      return; // Exit the loop after removing the element
+    }
+  }
+  // add the institution
+  user.value.institutions.push({institution_id: institutionId, name: institutionName})
+  // clear search box
+  searchTerm.value = ''
+  institutionList.value = []
+}
+
+const dismissAddInstitutionAlert = function() {
+  error.addInstitution = ''
+}
 </script>
 
 <template>
@@ -77,23 +119,40 @@ const searchInstitutions = async() => {
       <input id="newPasswordConfirm" type="password" class="form-control" v-model="user.newPasswordConfirm">
     </div>
     <div class="form-group">
-      <div class="data-error" id="institution-error" v-if="error.institutions">{{ error.institutions }}</div>
+      
       <label>
         Institutional Affiliation(s) 
         <Tooltip :content="insititutionalTootipText"></Tooltip>
       </label> 
+      <div v-if="error.institutions" class="alert alert-danger" role="alert">
+        {{ error.institutions }}
+      </div>
       <ul>
-        <li v-for="institution in user.institutions" :key="institution.institution_id">{{ institution.name }}</li>
+        <li v-for="institution in user.institutions" :key="institution.institution_id">
+          {{ institution.name }} <a href="#" class="removeLink" @click.prevent="removeInstitution(institution.institution_id)">>> Remove</a>
+        </li>
       </ul>
+      <div v-if="error.removeInstitution" class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ error.removeInstitution }}
+        <button type="button" class="btn-close" @click="dismissRemoveInstitutionAlert" aria-label="Close"></button>
+      </div>
     </div>
     <div class="form-group">
       <label for="newInstitution">Add Affiliated Institution</label>
+      <div v-if="error.addInstitution" class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ error.addInstitution }}
+        <button type="button" class="btn-close" @click="dismissAddInstitutionAlert" aria-label="Close"></button>
+      </div>
       <div class="search-container">
         <input id="newInstitution" type="text" v-model="searchTerm" @input="searchInstitutions" class="form-control"/>
         <img class="loading-icon" alt="Loading spinner" src="/Loading_spinner.svg" title="Loading Spinner" v-if="searchLoading"/> 
       </div>
       <select v-if="institutionList.length" :size=10 class="form-control">
-        <option v-for="institution in institutionList" :key="institution.institution_id" :value="institution.institution_id">
+        <option v-for="institution in institutionList" 
+          :key="institution.institution_id" 
+          :value="institution.institution_id" 
+          @click="addInstitution(institution.institution_id, institution.name)
+        ">
             {{ institution.name }}
         </option>
       </select>
@@ -143,10 +202,6 @@ const searchInstitutions = async() => {
 .text-vert-center {
   display: flex; align-items: center;
 }
-.data-error {
-  color: red;
-  font-weight: bold;
-}
 .search-container {
     position: relative;
 }
@@ -156,5 +211,9 @@ const searchInstitutions = async() => {
     top: 50%;
     transform: translateY(-50%);
     height: 50px;
+}
+a.removeLink {
+  color: #ef782f;
+  margin-left: 5px;
 }
 </style>
