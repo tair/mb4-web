@@ -84,6 +84,7 @@ import router from '../../router'
 import { useAuthStore } from '@/stores/AuthStore.js'
 import axios from 'axios'
 import { useMessageStore } from '@/stores/MessageStore.js'
+import { getPasswordPattern, getPasswordValidationErrMsg } from '@/utils/util.js'
 
 const authStore = useAuthStore()
 const messageStore = useMessageStore()
@@ -102,9 +103,9 @@ const state = reactive({
 })
 //adding check while typing
 watch(() => state.password, (newPassword) => {
-  const passwordValidation = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+  const passwordValidation = getPasswordPattern()
   if (!passwordValidation.test(newPassword)) {
-    state.errorMessage = 'Password must be 8 or more characters long, have at least 1 number, 1 uppercase letter, 1 lowercase letter, and 1 special character.';
+    state.errorMessage = getPasswordValidationErrMsg()
   } else {
     state.errorMessage = null;
   }

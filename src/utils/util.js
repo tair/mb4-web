@@ -17,6 +17,16 @@ function buildImageProps(mediaObj, type) {
   }
 }
 
-module.exports = {
+function getPasswordPattern() {
+  return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+}
+
+function getPasswordValidationErrMsg() {
+  return 'Password must be 8 or more characters long, have at least 1 number, 1 uppercase letter, 1 lowercase letter, and 1 special character.'
+}
+
+export {
   buildImageProps,
+  getPasswordPattern,
+  getPasswordValidationErrMsg
 }
