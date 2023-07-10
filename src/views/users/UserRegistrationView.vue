@@ -26,16 +26,12 @@
               <input class="input-field" v-model.trim="state.email" name="email" type="text" id="email" autocomplete="off" required />
             </div>
             <div class="input-container">
-              <label for="password">Password*</label>
-              <tippy content="Password must be 8 or more characters long, contain at least 1 number, 1 uppercase letter, and 1 lowercase letter.">
-                <input class="input-field" v-model.trim="state.password" type="password" name="password" autocomplete="new-password" required />
-              </tippy>
+              <label for="password">Password* <Tooltip :content="passwordTooltipText"></Tooltip></label>
+              <input class="input-field" v-model.trim="state.password" type="password" name="password" autocomplete="new-password" required />
             </div>
             <div class="input-container">
-              <label for="password2">Confirm Password*</label>
-              <tippy content="Please input the password exactly as above.">
-                <input class="input-field" v-model.trim="state.password2" type="password" name="password2" autocomplete="new-password" required />
-              </tippy>
+              <label for="password2">Confirm Password* <Tooltip :content="confirmPasswordText"></Tooltip></label>
+              <input class="input-field" v-model.trim="state.password2" type="password" name="password2" autocomplete="new-password" required />
             </div>
             <div class="input-container orcid-container row" v-if="state.orcid">
                 <div class="col-sm-2 align-self-center">
@@ -85,9 +81,12 @@ import { useAuthStore } from '@/stores/AuthStore.js'
 import axios from 'axios'
 import { useMessageStore } from '@/stores/MessageStore.js'
 import { getPasswordPattern, getPasswordValidationErrMsg } from '@/utils/util.js'
+import Tooltip from '@/components/main/Tooltip.vue'
 
 const authStore = useAuthStore()
 const messageStore = useMessageStore()
+const passwordTooltipText = "Password must be 8 or more characters long, contain at least 1 number, 1 uppercase letter, and 1 lowercase letter."
+const confirmPasswordText = "Please enter the password exactly as above."
 
 const state = reactive({
   fname: '',
