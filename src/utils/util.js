@@ -25,8 +25,4 @@ function getPasswordRule() {
   return 'Password must be 8 or more characters long, have at least 1 number, 1 uppercase letter, 1 lowercase letter, and 1 special character.'
 }
 
-export {
-  buildImageProps,
-  getPasswordPattern,
-  getPasswordRule
-}
+export { buildImageProps, getPasswordPattern, getPasswordRule }

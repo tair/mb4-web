@@ -11,14 +11,14 @@ const route = useRoute()
 const state = reactive({})
 const messageStore = useMessageStore()
 const message = reactive({
-  'message': messageStore.getMessage()
+  message: messageStore.getMessage(),
 })
 const error = reactive({})
 
 const submitForm = async () => {
   const loggedIn = await authStore.login(state.email, state.password)
   if (authStore.err) {
-    error.login = "Login failed. " + authStore.err
+    error.login = 'Login failed. ' + authStore.err
   }
   if (loggedIn) {
     if (route.query.redirect) {
@@ -33,18 +33,21 @@ const orcidLoginUrl = ref(null)
 
 onMounted(async () => {
   orcidLoginUrl.value = await authStore.getOrcidLoginUrl()
-});
+})
 //clears the message if you change page
 onBeforeUnmount(() => {
   messageStore.clearMessage()
 })
-
 </script>
 
 <template>
   <div class="form-signin">
     <form @submit.prevent="submitForm()">
-      <Alert :message="message" messageName="message" :alertType="messageStore.getMessageType()"></Alert>
+      <Alert
+        :message="message"
+        messageName="message"
+        :alertType="messageStore.getMessageType()"
+      ></Alert>
       <h3 class="mb-3 fw-normal">Please sign in</h3>
       <div class="form-floating margin-s-top">
         <input
@@ -72,7 +75,16 @@ onBeforeUnmount(() => {
       <button class="w-100 btn btn-lg btn-primary margin-s-top" type="submit">
         Sign in
       </button>
-      <a :href="orcidLoginUrl" class="w-100 btn btn-lg btn-primary btn-white margin-s-top"><img alt="ORCID logo" src="/ORCIDiD_iconvector.svg" class="orcid-icon"/>  Sign in with ORCID</a>
+      <a
+        :href="orcidLoginUrl"
+        class="w-100 btn btn-lg btn-primary btn-white margin-s-top"
+        ><img
+          alt="ORCID logo"
+          src="/ORCIDiD_iconvector.svg"
+          class="orcid-icon"
+        />
+        Sign in with ORCID</a
+      >
     </form>
     <br />
   </div>

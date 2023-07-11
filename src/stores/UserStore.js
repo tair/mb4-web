@@ -22,8 +22,7 @@ export const useUserStore = defineStore({
       institutions: null,
     },
   }),
-  getters: {
-  },
+  getters: {},
   actions: {
     reset() {
       this.initUserFormValue()
@@ -32,14 +31,15 @@ export const useUserStore = defineStore({
       this.err = {}
     },
 
-    
     async fetchCurrentUser() {
       const authStore = useAuthStore()
       const userObj = authStore.user
       if (userObj) {
         try {
           // get user profile
-          const response = await axios.get(`${import.meta.env.VITE_API_URL}/users/get-profile`);
+          const response = await axios.get(
+            `${import.meta.env.VITE_API_URL}/users/get-profile`
+          )
           this.setUserValue(response.data)
           this.initUserFormValue()
         } catch (e) {
@@ -54,7 +54,10 @@ export const useUserStore = defineStore({
     async updateUser() {
       try {
         // get user profile
-        const response = await axios.put(`${import.meta.env.VITE_API_URL}/users/update-profile`, this.userForm);
+        const response = await axios.put(
+          `${import.meta.env.VITE_API_URL}/users/update-profile`,
+          this.userForm
+        )
         this.setUserValue(response.data.user)
         this.reset()
       } catch (e) {
@@ -79,10 +82,9 @@ export const useUserStore = defineStore({
       this.userForm.email = this.originalUser.email
       this.userForm.institutions = this.originalUser.institutions
     },
-
   },
 })
 
 export default {
-  useUserStore
+  useUserStore,
 }
