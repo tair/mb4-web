@@ -13,6 +13,10 @@ export const useMessageStore = defineStore({
     setMessageType(type) {
       this.messageType = type
     },
+    setSessionTimeOutMessage() {
+      this.message = 'Your session has timed out. Please login again.'
+      this.messageType = 'danger'
+    },
     getMessage() {
       return this.message  // use 'this' to reference the state
     },

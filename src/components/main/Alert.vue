@@ -1,7 +1,7 @@
 <template>
     <div v-if="message[messageName]" :class="'alert alert-dismissible fade show margin-top-s alert-' + alertType" role="alert">
-      {{ message[messageName] }}
-      <button type="button" class="btn-close" @click="dissmissAlert" aria-label="Close"></button>
+      <span v-html="message[messageName]"></span>
+      <button type="button" class="btn-close" @click="dismissAlert" aria-label="Close"></button>
     </div>
 </template>
 
@@ -20,7 +20,7 @@ const props = defineProps({
   }
 })
 
-const dissmissAlert = function() {
+const dismissAlert = function() {
   props.message[props.messageName] = ''
 }
 </script>

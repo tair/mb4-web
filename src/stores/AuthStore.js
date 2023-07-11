@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { defineStore } from 'pinia'
+import { useMessageStore } from './MessageStore'
 
 export const useAuthStore = defineStore({
   id: 'auth',
@@ -52,7 +53,13 @@ export const useAuthStore = defineStore({
 
     hasValidAuthToken() {
       if (!this.user?.authToken || !this.user?.authTokenExpiry) return false
-      return Math.floor(new Date().getTime() / 1000) < this.user.authTokenExpiry
+      if (Math.floor(new Date().getTime() / 1000) >= this.user.authTokenExpiry) {
+      // set message when the user token expires
+        const message =  useMessageStore()
+        message.setSessionTimeOutMessage()
+        return false
+      }
+      return true
     },
 
     fetchLocalStore() {
