@@ -45,13 +45,13 @@ export const useUserStore = defineStore({
         } catch (e) {
           // TODO: display user fetch error
           console.log(e)
-          this.err.fetchErr = e
+          this.err.fetchErr = e.response.data.message
+          throw e
         }
       }
     },
 
     async updateUser() {
-      console.log(this.userForm)
       try {
         // get user profile
         const response = await axios.put(`${import.meta.env.VITE_API_URL}/users/update-profile`, this.userForm);
@@ -60,7 +60,8 @@ export const useUserStore = defineStore({
       } catch (e) {
         // TODO: display user fetch error
         console.log(e)
-        this.err.updateErr = e
+        this.err.updateErr = e.response.data.message
+        throw e
       }
     },
 

@@ -27,11 +27,13 @@
             </div>
             <div class="input-container">
               <label for="password">Password* <Tooltip :content="passwordTooltipText"></Tooltip></label>
-              <input class="input-field" v-model.trim="state.password" type="password" name="password" autocomplete="new-password" required />
+              <input class="input-field" v-model.trim="state.password" type="password" name="password" autocomplete="new-password" @blur="validatePassword" required />
+              <Alert :message="error" messageName="passwordValidation" alertType="danger"></Alert>
             </div>
             <div class="input-container">
               <label for="password2">Confirm Password* <Tooltip :content="confirmPasswordText"></Tooltip></label>
-              <input class="input-field" v-model.trim="state.password2" type="password" name="password2" autocomplete="new-password" required />
+              <input class="input-field" v-model.trim="state.password2" type="password" name="password2" autocomplete="new-password" @blur="confirmPassword" required />
+              <Alert :message="error" messageName="passwordConfirm" alertType="danger"></Alert>
             </div>
             <div class="input-container orcid-container row" v-if="state.orcid">
                 <div class="col-sm-2 align-self-center">
@@ -48,9 +50,7 @@
               <input class="checkbox" v-model="state.accepted_terms_of_use" id="termsOfUseCheckbox" type="checkbox" name="accepted_terms_of_use" value="1" required />
               <b>I have read and accepted the <router-link to="/terms">Morphobank Terms of Use &amp; Privacy Policy</router-link></b>
             </div>
-            <div v-if="state.errorMessage" class="alert alert-danger">
-              {{ state.errorMessage }}
-            </div>
+            <Alert :message="error" messageName="signup" alertType="danger"></Alert>
             <div>
               <button class="w-100 btn btn-lg btn-primary form-group" type="submit">
                 Register
@@ -75,17 +75,18 @@
 
 
 <script setup>
-import { reactive, onMounted, watch } from 'vue'
-import router from '../../router'
+import { reactive, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/AuthStore.js'
-import axios from 'axios'
 import { useMessageStore } from '@/stores/MessageStore.js'
-import { getPasswordPattern, getPasswordValidationErrMsg } from '@/utils/util.js'
+import { getPasswordPattern, getPasswordRule } from '@/utils/util.js'
+import router from '../../router'
+import axios from 'axios'
 import Tooltip from '@/components/main/Tooltip.vue'
+import Alert from '@/components/main/Alert.vue'
 
 const authStore = useAuthStore()
 const messageStore = useMessageStore()
-const passwordTooltipText = "Password must be 8 or more characters long, contain at least 1 number, 1 uppercase letter, and 1 lowercase letter."
+const passwordTooltipText = getPasswordRule()
 const confirmPasswordText = "Please enter the password exactly as above."
 
 const state = reactive({
@@ -98,25 +99,30 @@ const state = reactive({
   orcid: '',
   accessToken: '',
   refreshToken: '',
-  errorMessage: null,  // Added new property for error message
 })
+const error = reactive({})
 //adding check while typing
-watch(() => state.password, (newPassword) => {
-  const passwordValidation = getPasswordPattern()
-  if (!passwordValidation.test(newPassword)) {
-    state.errorMessage = getPasswordValidationErrMsg()
-  } else {
-    state.errorMessage = null;
-  }
-});
 
-watch(() => state.password2, (newConfirmPassword) => {
-  if (newConfirmPassword !== state.password) {
-    state.errorMessage = 'Passwords do not match.';
+const validatePassword = function() {
+  const passwordValidation = getPasswordPattern()
+  if (!passwordValidation.test(state.password)) {
+    error.passwordValidation = getPasswordRule()
+    return false
   } else {
-    state.errorMessage = null;
+    error.passwordValidation = null;
+    return true
   }
-});
+}
+
+const confirmPassword = function() {
+  if ((state.password || state.password2) && state.password != state.password2) {
+    error.passwordConfirm = 'Passwords do not match.';
+    return false
+  } else {
+    error.passwordConfirm = null;
+    return true
+  }
+}
 
 onMounted(() => {
   if (authStore.orcid.name) {
@@ -130,7 +136,7 @@ onMounted(() => {
 })
 
 const submitForm = () => {
-  
+  if (!validatePassword() || !confirmPassword()) return
   // Object to send to backend and also to contain all the inputs based on whether there is a cached token for ORCID
   let formObject = {};
   if(state.orcid){
@@ -157,17 +163,17 @@ const submitForm = () => {
   .then(function (response) {
     // handle success
     if(response.status === 201) {
-      state.errorMessage = null  // Clear the error message
       messageStore.setMessage('User was created successfully!')
+      messageStore.setMessageType('success')
       router.push({ path: '/users/login'})
     } else {
       // handle error
-      state.errorMessage = 'An error occurred while creating user.'
+      error.signup = 'An error occurred while creating user.'
     }
   })
-  .catch(function (error) {
+  .catch(function (e) {
     // handle error
-    state.errorMessage = 'An error occurred while creating user.'
+    error.signup = 'An error occurred while creating user: ' + e.response.data.message
   })
 }
 </script>

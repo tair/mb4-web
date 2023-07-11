@@ -2,17 +2,24 @@
 import { reactive, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/AuthStore.js'
-import router from '../../router'
 import { useMessageStore } from '@/stores/MessageStore.js'
+import router from '../../router'
+import Alert from '@/components/main/Alert.vue'
 
 const authStore = useAuthStore()
 const route = useRoute()
 const state = reactive({})
 const messageStore = useMessageStore()
-const message = messageStore.getMessage()
+const message = reactive({
+  'message': messageStore.getMessage()
+})
+const error = reactive({})
 
 const submitForm = async () => {
   const loggedIn = await authStore.login(state.email, state.password)
+  if (authStore.err) {
+    error.login = "Login failed. " + authStore.err
+  }
   if (loggedIn) {
     if (route.query.redirect) {
       router.push({ name: `${route.query.redirect}` })
@@ -37,11 +44,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="form-signin">
     <form @submit.prevent="submitForm()">
-      <div class="alert alert-success d-flex align-items-center" role="alert" v-if="message">
-        <div>
-          {{ message }}
-        </div>
-      </div>
+      <Alert :message="message" messageName="message" :alertType="messageStore.getMessageType()"></Alert>
       <h3 class="mb-3 fw-normal">Please sign in</h3>
       <div class="form-floating margin-s-top">
         <input
@@ -65,17 +68,11 @@ onBeforeUnmount(() => {
         />
         <label for="password">Password</label>
       </div>
+      <Alert :message="error" messageName="login" alertType="danger"></Alert>
       <button class="w-100 btn btn-lg btn-primary margin-s-top" type="submit">
         Sign in
       </button>
       <a :href="orcidLoginUrl" class="w-100 btn btn-lg btn-primary btn-white margin-s-top"><img alt="ORCID logo" src="/ORCIDiD_iconvector.svg" class="orcid-icon"/>  Sign in with ORCID</a>
-
-      <div
-        v-if="authStore.err"
-        class="border border-danger rounded text-danger p-3 my-3"
-      >
-        <div class="fw-bold">Login failed. Please try again!</div>
-      </div>
     </form>
     <br />
   </div>
