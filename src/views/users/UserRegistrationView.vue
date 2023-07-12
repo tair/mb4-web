@@ -6,57 +6,131 @@
           <h1>Register</h1>
           <div>
             New to Morphobank? Register to create your own projects.
-            <router-link to="/users/login" id="loginLink">Click here to Login.</router-link>
+            <router-link to="/users/login" id="loginLink"
+              >Click here to Login.</router-link
+            >
           </div>
-          <div><br><i>* indicates required fields.</i></div>
+          <div><br /><i>* indicates required fields.</i></div>
         </div>
         <form @submit.prevent="submitForm">
           <div class="form-section">
             <div class="input-container">
-              <br>
+              <br />
               <label for="fname">First Name*</label>
-              <input class="input-field" v-model.trim="state.fname" name="fname" type="text" id="fname" required />
+              <input
+                class="input-field"
+                v-model.trim="state.fname"
+                name="fname"
+                type="text"
+                id="fname"
+                required
+              />
             </div>
             <div class="input-container">
               <label for="lname">Last Name*</label>
-              <input class="input-field" v-model.trim="state.lname" name="lname" type="text" id="lname" required />
+              <input
+                class="input-field"
+                v-model.trim="state.lname"
+                name="lname"
+                type="text"
+                id="lname"
+                required
+              />
             </div>
             <div class="input-container">
               <label for="email">Email*</label>
-              <input class="input-field" v-model.trim="state.email" name="email" type="text" id="email" autocomplete="off" required />
+              <input
+                class="input-field"
+                v-model.trim="state.email"
+                name="email"
+                type="text"
+                id="email"
+                autocomplete="off"
+                required
+              />
             </div>
             <div class="input-container">
-              <label for="password">Password*</label>
-              <tippy content="Password must be 8 or more characters long, contain at least 1 number, 1 uppercase letter, and 1 lowercase letter.">
-                <input class="input-field" v-model.trim="state.password" type="password" name="password" autocomplete="new-password" required />
-              </tippy>
+              <label for="password"
+                >Password* <Tooltip :content="passwordTooltipText"></Tooltip
+              ></label>
+              <input
+                class="input-field"
+                v-model.trim="state.password"
+                type="password"
+                name="password"
+                autocomplete="new-password"
+                @blur="validatePassword"
+                required
+              />
+              <Alert
+                :message="error"
+                messageName="passwordValidation"
+                alertType="danger"
+              ></Alert>
             </div>
             <div class="input-container">
-              <label for="password2">Confirm Password*</label>
-              <tippy content="Please input the password exactly as above.">
-                <input class="input-field" v-model.trim="state.password2" type="password" name="password2" autocomplete="new-password" required />
-              </tippy>
+              <label for="password2"
+                >Confirm Password*
+                <Tooltip :content="confirmPasswordText"></Tooltip
+              ></label>
+              <input
+                class="input-field"
+                v-model.trim="state.password2"
+                type="password"
+                name="password2"
+                autocomplete="new-password"
+                @blur="confirmPassword"
+                required
+              />
+              <Alert
+                :message="error"
+                messageName="passwordConfirm"
+                alertType="danger"
+              ></Alert>
             </div>
             <div class="input-container orcid-container row" v-if="state.orcid">
-                <div class="col-sm-2 align-self-center">
-                    <span>ORCID</span>
-                </div>
-                <div class="col-sm-1">
-                    <img alt="ORCID logo" src="/ORCIDiD_iconvector.svg" title="ORCID iD" class="orcid-icon"/>
-                </div>
-                <div class="col-sm-5 align-self-center">
-                    <span>{{ state.orcid }}</span>
-                </div>
+              <div class="col-sm-2 align-self-center">
+                <span>ORCID</span>
+              </div>
+              <div class="col-sm-1">
+                <img
+                  alt="ORCID logo"
+                  src="/ORCIDiD_iconvector.svg"
+                  title="ORCID iD"
+                  class="orcid-icon"
+                />
+              </div>
+              <div class="col-sm-5 align-self-center">
+                <span>{{ state.orcid }}</span>
+              </div>
             </div>
             <div class="input-container checkbox-container">
-              <input class="checkbox" v-model="state.accepted_terms_of_use" id="termsOfUseCheckbox" type="checkbox" name="accepted_terms_of_use" value="1" required />
-              <b>I have read and accepted the <router-link to="/terms">Morphobank Terms of Use &amp; Privacy Policy</router-link></b>
+              <input
+                class="checkbox"
+                v-model="state.accepted_terms_of_use"
+                id="termsOfUseCheckbox"
+                type="checkbox"
+                name="accepted_terms_of_use"
+                value="1"
+                required
+              />
+              <b
+                >I have read and accepted the
+                <router-link to="/terms"
+                  >Morphobank Terms of Use &amp; Privacy Policy</router-link
+                ></b
+              >
             </div>
-            <div v-if="state.errorMessage" class="alert alert-danger">
-              {{ state.errorMessage }}
-            </div>
+            <Alert
+              :message="error"
+              messageName="signup"
+              alertType="danger"
+            ></Alert>
             <div>
-              <button class="w-100 btn btn-lg btn-primary form-group" type="submit">
+              <button
+                class="w-100 btn btn-lg btn-primary form-group"
+                type="submit"
+              >
                 Register
               </button>
             </div>
@@ -67,9 +141,12 @@
       <div class="col-md-6 d-flex align-items-center">
         <div class="registration-instructions">
           <h5>
-              Registration is not required to view published projects. If you are interested in only viewing a project, please<br><br>
-              <router-link to="/project/pub_date">click to BROWSE published projects</router-link><br><br><em>OR</em><br><br>
-              SEARCH published projects in the search box at the top of the page
+            Registration is not required to view published projects. If you are
+            interested in only viewing a project, please<br /><br />
+            <router-link to="/project/pub_date"
+              >click to BROWSE published projects</router-link
+            ><br /><br /><em>OR</em><br /><br />
+            SEARCH published projects in the search box at the top of the page
           </h5>
         </div>
       </div>
@@ -77,16 +154,20 @@
   </div>
 </template>
 
-
 <script setup>
-import { reactive, onMounted, watch } from 'vue'
-import router from '../../router'
+import { reactive, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/AuthStore.js'
-import axios from 'axios'
 import { useMessageStore } from '@/stores/MessageStore.js'
+import { getPasswordPattern, getPasswordRule } from '@/utils/util.js'
+import router from '../../router'
+import axios from 'axios'
+import Tooltip from '@/components/main/Tooltip.vue'
+import Alert from '@/components/main/Alert.vue'
 
 const authStore = useAuthStore()
 const messageStore = useMessageStore()
+const passwordTooltipText = getPasswordRule()
+const confirmPasswordText = 'Please enter the password exactly as above.'
 
 const state = reactive({
   fname: '',
@@ -98,25 +179,33 @@ const state = reactive({
   orcid: '',
   accessToken: '',
   refreshToken: '',
-  errorMessage: null,  // Added new property for error message
 })
+const error = reactive({})
 //adding check while typing
-watch(() => state.password, (newPassword) => {
-  const passwordValidation = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
-  if (!passwordValidation.test(newPassword)) {
-    state.errorMessage = 'Password must be 8 or more characters long, have at least 1 number, 1 uppercase letter, 1 lowercase letter, and 1 special character.';
-  } else {
-    state.errorMessage = null;
-  }
-});
 
-watch(() => state.password2, (newConfirmPassword) => {
-  if (newConfirmPassword !== state.password) {
-    state.errorMessage = 'Passwords do not match.';
+const validatePassword = function () {
+  const passwordValidation = getPasswordPattern()
+  if (!passwordValidation.test(state.password)) {
+    error.passwordValidation = getPasswordRule()
+    return false
   } else {
-    state.errorMessage = null;
+    error.passwordValidation = null
+    return true
   }
-});
+}
+
+const confirmPassword = function () {
+  if (
+    (state.password || state.password2) &&
+    state.password != state.password2
+  ) {
+    error.passwordConfirm = 'Passwords do not match.'
+    return false
+  } else {
+    error.passwordConfirm = null
+    return true
+  }
+}
 
 onMounted(() => {
   if (authStore.orcid.name) {
@@ -130,10 +219,10 @@ onMounted(() => {
 })
 
 const submitForm = () => {
-  
+  if (!validatePassword() || !confirmPassword()) return
   // Object to send to backend and also to contain all the inputs based on whether there is a cached token for ORCID
-  let formObject = {};
-  if(state.orcid){
+  let formObject = {}
+  if (state.orcid) {
     formObject = {
       fname: state.fname,
       lname: state.lname,
@@ -141,34 +230,36 @@ const submitForm = () => {
       password: state.password,
       orcid: state.orcid,
       accessToken: state.accessToken,
-      refreshToken: state.refreshToken
+      refreshToken: state.refreshToken,
     }
-  }else{
+  } else {
     formObject = {
       fname: state.fname,
       lname: state.lname,
       email: state.email,
-      password: state.password
+      password: state.password,
     }
   }
 
   // Make a request for a user with a given ID
-  axios.post('/services/auth/signup', formObject)
-  .then(function (response) {
-    // handle success
-    if(response.status === 201) {
-      state.errorMessage = null  // Clear the error message
-      messageStore.setMessage('User was created successfully!')
-      router.push({ path: '/users/login'})
-    } else {
+  axios
+    .post('/services/auth/signup', formObject)
+    .then(function (response) {
+      // handle success
+      if (response.status === 201) {
+        messageStore.setMessage('User was created successfully!')
+        messageStore.setMessageType('success')
+        router.push({ path: '/users/login' })
+      } else {
+        // handle error
+        error.signup = 'An error occurred while creating user.'
+      }
+    })
+    .catch(function (e) {
       // handle error
-      state.errorMessage = 'An error occurred while creating user.'
-    }
-  })
-  .catch(function (error) {
-    // handle error
-    state.errorMessage = 'An error occurred while creating user.'
-  })
+      error.signup =
+        'An error occurred while creating user: ' + e.response.data.message
+    })
 }
 </script>
 
@@ -192,7 +283,7 @@ const submitForm = () => {
   margin-bottom: 10px;
 }
 .space-container {
-  height: 100px;  /* adjust this value as needed */
+  height: 100px; /* adjust this value as needed */
 }
 
 .input-field {
@@ -209,16 +300,16 @@ const submitForm = () => {
 }
 
 .checkbox-container {
-  display: flex; 
+  display: flex;
   align-items: center;
 }
 
 .checkbox {
-  margin-right: 10px;  /* adjust this value as needed */
+  margin-right: 10px; /* adjust this value as needed */
 }
 
 .orcid-icon {
-  width: 30px; 
+  width: 30px;
   height: 30px;
 }
 
@@ -234,5 +325,4 @@ const submitForm = () => {
   background-color: #f2dede;
   border-color: #ebccd1;
 }
-
 </style>

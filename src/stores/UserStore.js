@@ -1,4 +1,3 @@
-import { reactive, ref } from 'vue'
 import axios from 'axios'
 import { defineStore } from 'pinia'
 import { useAuthStore } from '@/stores/AuthStore.js'
@@ -6,53 +5,86 @@ import { useAuthStore } from '@/stores/AuthStore.js'
 export const useUserStore = defineStore({
   id: 'user',
   state: () => ({
-    err: ref(null),
-    user: reactive({
+    err: {},
+    originalUser: {
       firstName: null,
       lastName: null,
       email: null,
       orcid: null,
+      institutions: null,
+    },
+    userForm: {
+      firstName: null,
+      lastName: null,
+      email: null,
       newPassword: null,
       newPasswordConfirm: null,
       institutions: null,
-    }),
+    },
   }),
-  getters: {
-  },
+  getters: {},
   actions: {
-    invalidate() {
-        // this.user.firstName = null
-        // this.user.lastName = null
-        // this.user.email = null
-        // this.user.newPassword = null
-        // this.user.newPasswordConfirm = null
-        // this.err = null
+    reset() {
+      this.initUserFormValue()
+      this.userForm.newPassword = null
+      this.userForm.newPasswordConfirm = null
+      this.err = {}
     },
 
-    async getCurrentUser() {
+    async fetchCurrentUser() {
       const authStore = useAuthStore()
       const userObj = authStore.user
       if (userObj) {
-          try {
-            // get user profile
-            const response = await axios.get(`${import.meta.env.VITE_API_URL}/users/get-profile`);
-            this.user.firstName = response.data.fname
-            this.user.lastName = response.data.lname
-            this.user.email = response.data.email
-            this.user.orcid = response.data.orcid
-            this.user.institutions = response.data.institutions
-            return this.user
-          } catch (e) {
-            // TODO: display user fetch error
-            this.err = e
-          }
+        try {
+          // get user profile
+          const response = await axios.get(
+            `${import.meta.env.VITE_API_URL}/users/get-profile`
+          )
+          this.setUserValue(response.data)
+          this.initUserFormValue()
+        } catch (e) {
+          // TODO: display user fetch error
+          console.log(e)
+          this.err.fetchErr = e.response.data.message
+          throw e
+        }
       }
-      return null
     },
 
+    async updateUser() {
+      try {
+        // get user profile
+        const response = await axios.put(
+          `${import.meta.env.VITE_API_URL}/users/update-profile`,
+          this.userForm
+        )
+        this.setUserValue(response.data.user)
+        this.reset()
+      } catch (e) {
+        // TODO: display user fetch error
+        console.log(e)
+        this.err.updateErr = e.response.data.message
+        throw e
+      }
+    },
+
+    setUserValue(responseData) {
+      this.originalUser.firstName = responseData.fname
+      this.originalUser.lastName = responseData.lname
+      this.originalUser.email = responseData.email
+      this.originalUser.orcid = responseData.orcid
+      this.originalUser.institutions = responseData.institutions
+    },
+
+    initUserFormValue() {
+      this.userForm.firstName = this.originalUser.firstName
+      this.userForm.lastName = this.originalUser.lastName
+      this.userForm.email = this.originalUser.email
+      this.userForm.institutions = this.originalUser.institutions
+    },
   },
 })
 
 export default {
-    useUserStore
+  useUserStore,
 }

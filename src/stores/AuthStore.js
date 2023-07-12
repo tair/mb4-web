@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { defineStore } from 'pinia'
+import { useMessageStore } from './MessageStore'
 
 export const useAuthStore = defineStore({
   id: 'auth',
@@ -42,17 +43,27 @@ export const useAuthStore = defineStore({
       this.err = null
       localStorage.removeItem('mb-user')
       localStorage.removeItem('orcid-user')
-      axios.post(`${import.meta.env.VITE_API_URL}/auth/logout`)
-      .then(res => {
-        //do nothing
-      }).catch(e => {
-        //do nothing
-      })
+      axios
+        .post(`${import.meta.env.VITE_API_URL}/auth/logout`)
+        .then((res) => {
+          //do nothing
+        })
+        .catch((e) => {
+          //do nothing
+        })
     },
 
     hasValidAuthToken() {
       if (!this.user?.authToken || !this.user?.authTokenExpiry) return false
-      return Math.floor(new Date().getTime() / 1000) < this.user.authTokenExpiry
+      if (
+        Math.floor(new Date().getTime() / 1000) >= this.user.authTokenExpiry
+      ) {
+        // set message when the user token expires
+        const message = useMessageStore()
+        message.setSessionTimeOutMessage()
+        return false
+      }
+      return true
     },
 
     fetchLocalStore() {
@@ -70,10 +81,12 @@ export const useAuthStore = defineStore({
 
     async getOrcidLoginUrl() {
       try {
-        const response =  await axios.get(`${import.meta.env.VITE_API_URL}/auth/get-orcid-login-url`)
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL}/auth/get-orcid-login-url`
+        )
         return response.data.url
       } catch (e) {
-        console.error('Error getting Orcid login URL', e);
+        console.error('Error getting Orcid login URL', e)
       }
     },
 
@@ -111,20 +124,20 @@ export const useAuthStore = defineStore({
         this.loading = false
       }
     },
-    
+
     async setORCIDProfile(authCode) {
       try {
         const url = `${import.meta.env.VITE_API_URL}/auth/authenticate-orcid`
         const body = {
-          authCode: authCode
+          authCode: authCode,
         }
         const res = await axios.post(url, body)
-        
+
         const orcidObj = {
           orcid: res.data.orcidProfile.orcid,
           name: res.data.orcidProfile.name,
           accessToken: res.data.orcidProfile.access_token,
-          refreshToken: res.data.orcidProfile.refresh_token
+          refreshToken: res.data.orcidProfile.refresh_token,
         }
         this.orcid = orcidObj
         localStorage.setItem('orcid-user', JSON.stringify(orcidObj))
@@ -142,26 +155,29 @@ export const useAuthStore = defineStore({
           // the user is authenticated, the handler should redirect the user to destination page
           // depending on the redirect flag
           return {
-            redirectToProfile: res.data.redirectToProfile
+            redirectToProfile: res.data.redirectToProfile,
           }
         } else if (res.data.potentialUserByEmail) {
           return {
             messages: {
               msg: `We find your email address <b>${res.data.potentialUserByEmail.email}</b> in our database.`,
-              signinMsg: 'Please sign in to MorphoBank to link with your ORCID account.'
+              signinMsg:
+                'Please sign in to MorphoBank to link with your ORCID account.',
             },
             showSignin: true,
-            showRegister: false
+            showRegister: false,
           }
         } else if (res.data.potentialUsersByName) {
           return {
             messages: {
               msg: `We find user <b>${res.data.potentialUsersByName[0].name}</b> in our database.`,
-              signinMsg: "If it's you, please sign in to MorphoBank to link with your ORCID account.",
-              registerMsg: "Otherwise, please proceed to create an account with your ORCID record."
+              signinMsg:
+                "If it's you, please sign in to MorphoBank to link with your ORCID account.",
+              registerMsg:
+                'Otherwise, please proceed to create an account with your ORCID record.',
             },
             showSignin: true,
-            showRegister: true
+            showRegister: true,
           }
         } else {
           return {
@@ -169,21 +185,20 @@ export const useAuthStore = defineStore({
               msg: 'Please proceed to create an account with your ORCID record.',
             },
             showSignin: false,
-            showRegister: true
+            showRegister: true,
           }
         }
-
       } catch (e) {
         console.error(`store:auth:setORCIDProfile(): ${e}`)
         this.err = e
         return {
           messages: {
-            msg: "We've experienced unexpected error when authenticating your profile.<br>Please try again or come back later."
+            msg: "We've experienced unexpected error when authenticating your profile.<br>Please try again or come back later.",
           },
           showSignin: true,
-          showRegister: false
+          showRegister: false,
         }
       }
-    }
+    },
   },
 })

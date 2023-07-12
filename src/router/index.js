@@ -71,7 +71,7 @@ const router = createRouter({
             if (!to.query.code) {
               return { name: 'UserLogin' }
             }
-          }
+          },
         },
         {
           path: 'myprofile',
