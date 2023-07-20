@@ -1,14 +1,19 @@
 <script setup>
 import axios from 'axios'
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useUserStore } from '@/stores/UserStore.js'
 import { useAuthStore } from '@/stores/AuthStore.js'
+import { useMessageStore } from '@/stores/MessageStore.js'
 import { getPasswordPattern, getPasswordRule } from '@/utils/util.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import Alert from '@/components/main/Alert.vue'
 
 const userStore = useUserStore()
 const authStore = useAuthStore()
+const messageStore = useMessageStore()
+const errorMsg = reactive({
+  message: messageStore.getMessage(),
+})
 const user = reactive({})
 const userForm = reactive({})
 const userData = reactive({
@@ -37,6 +42,10 @@ onMounted(async () => {
     error.fetchUser = 'Error fetching user profile. Please try again later.'
     console.error('Error fetching current user:', e)
   }
+})
+
+onBeforeUnmount(() => {
+  messageStore.clearMessage()
 })
 
 const submitForm = async () => {
@@ -145,6 +154,11 @@ const confirmPassword = function () {
   <h3 class="mb-3 fw-normal">User Profile</h3>
   <div v-if="!error.fetchUser && userForm">
     <form @submit.prevent="submitForm" class="form-profile">
+    <Alert
+      :message="errorMsg"
+      messageName="message"
+      :alertType="messageStore.getMessageType()"
+    ></Alert>
       <div class="form-group">
         <label for="firstName">First Name</label>
         <input

@@ -247,8 +247,7 @@ const submitForm = () => {
     .then(function (response) {
       // handle success
       if (response.status === 201) {
-        messageStore.setMessage('User was created successfully!')
-        messageStore.setMessageType('success')
+        messageStore.setSuccessMessage('User was created successfully!')
         router.push({ path: '/users/login' })
       } else {
         // handle error

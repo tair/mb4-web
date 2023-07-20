@@ -5,6 +5,7 @@ import { useMessageStore } from './MessageStore'
 export const useAuthStore = defineStore({
   id: 'auth',
   state: () => ({
+    loading: false,
     err: null,
     user: {
       authToken: null,
@@ -101,6 +102,8 @@ export const useAuthStore = defineStore({
           password: password,
         }
         if (this.orcid.orcid) {
+          // submit the user's orcid profile so it can be linked with
+          // the user's MorphoBank account
           userObj.orcid = this.orcid
         }
         const res = await axios.post(url, userObj)
@@ -112,7 +115,7 @@ export const useAuthStore = defineStore({
           name: res.data.user.name,
         }
         this.user = uObj
-
+        
         localStorage.setItem('mb-user', JSON.stringify(uObj))
         console.log('Login successful')
         return true
@@ -189,14 +192,34 @@ export const useAuthStore = defineStore({
           }
         }
       } catch (e) {
-        console.error(`store:auth:setORCIDProfile(): ${e}`)
         this.err = e
+        let message = "We've experienced unexpected error when authenticating your profile.<br>"
+
+        if (e.response) {
+          // The server returned an error response with status code and data
+          console.log(`store:auth:setORCIDProfile(): error status code: ${e.response.status}`, );
+          console.log(`store:auth:setORCIDProfile(): error data: ${e.response.data}`, );
+          if (e.response.data && e.response.data.message) {
+            message += (e.response.data.message + "<br>")
+          }
+          console.log("Error Data:", e.response.data);
+        } else {
+          // Other errors occurred (e.g., network error, request timeout, etc.)
+          console.log(`store:auth:setORCIDProfile(): ${e.message}`);
+          if (e.message) {
+            message += (e.message + "<br>")
+          }
+        }
+        message += "Please try again or come back later."
+
         return {
           messages: {
-            msg: "We've experienced unexpected error when authenticating your profile.<br>Please try again or come back later.",
+            msg: message,
           },
+          errorMsg: message,
           showSignin: true,
           showRegister: false,
+          redirectToProfile: true, // redirect to profile page to re-link in case the user is logged in
         }
       }
     },

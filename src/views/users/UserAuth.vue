@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/AuthStore.js'
+import { useMessageStore } from '@/stores/MessageStore.js'
 import router from '../../router'
 
 const route = useRoute()
@@ -17,6 +18,10 @@ onMounted(async () => {
     const setProfileMsg = await authStore.setORCIDProfile(authCode)
     if (authStore.user && authStore.user.authToken) {
       if (setProfileMsg.redirectToProfile) {
+        if (setProfileMsg.errorMsg) {
+          const messageStore = useMessageStore()
+          messageStore.setErrorMessage(setProfileMsg.errorMsg)
+        }
         router.push('myprofile')
       } else {
         router.push('/myprojects')

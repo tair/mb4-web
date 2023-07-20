@@ -8,11 +8,13 @@ export const useMessageStore = defineStore({
     messageType: null,
   }),
   actions: {
-    setMessage(message) {
-      this.message = message // use 'this' to reference the state
+    setErrorMessage(message) {
+      this.message = message
+      this.messageType = 'danger'
     },
-    setMessageType(type) {
-      this.messageType = type
+    setSuccessMessage(message) {
+      this.message = message
+      this.messageType = 'success'
     },
     setSessionTimeOutMessage() {
       this.message = 'Your session has timed out. Please login again.'
