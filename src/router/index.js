@@ -56,7 +56,7 @@ const router = createRouter({
     {
       path: '/terms',
       name: 'terms',
-      component: Terms
+      component: Terms,
     },
 
     // users

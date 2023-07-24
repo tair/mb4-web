@@ -115,7 +115,7 @@ export const useAuthStore = defineStore({
           name: res.data.user.name,
         }
         this.user = uObj
-        
+
         localStorage.setItem('mb-user', JSON.stringify(uObj))
         console.log('Login successful')
         return true
@@ -193,24 +193,29 @@ export const useAuthStore = defineStore({
         }
       } catch (e) {
         this.err = e
-        let message = "We've experienced unexpected error when authenticating your profile.<br>"
+        let message =
+          "We've experienced unexpected error when authenticating your profile.<br>"
 
         if (e.response) {
           // The server returned an error response with status code and data
-          console.log(`store:auth:setORCIDProfile(): error status code: ${e.response.status}`, );
-          console.log(`store:auth:setORCIDProfile(): error data: ${e.response.data}`, );
+          console.log(
+            `store:auth:setORCIDProfile(): error status code: ${e.response.status}`
+          )
+          console.log(
+            `store:auth:setORCIDProfile(): error data: ${e.response.data}`
+          )
           if (e.response.data && e.response.data.message) {
-            message += (e.response.data.message + "<br>")
+            message += e.response.data.message + '<br>'
           }
-          console.log("Error Data:", e.response.data);
+          console.log('Error Data:', e.response.data)
         } else {
           // Other errors occurred (e.g., network error, request timeout, etc.)
-          console.log(`store:auth:setORCIDProfile(): ${e.message}`);
+          console.log(`store:auth:setORCIDProfile(): ${e.message}`)
           if (e.message) {
-            message += (e.message + "<br>")
+            message += e.message + '<br>'
           }
         }
-        message += "Please try again or come back later."
+        message += 'Please try again or come back later.'
 
         return {
           messages: {

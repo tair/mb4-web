@@ -7,7 +7,9 @@
             <a class="nav-link p-1 me-3" href="#">About Morphobank</a>
           </li>
           <li class="nav-item">
-            <router-link class="nav-link p-1 me-3" to="/terms">Terms of use & Privacy Policy</router-link>
+            <router-link class="nav-link p-1 me-3" to="/terms"
+              >Terms of use & Privacy Policy</router-link
+            >
           </li>
           <li class="nav-item">
             <a class="nav-link p-1 me-3" href="#">API Documentation</a>
