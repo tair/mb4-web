@@ -26,6 +26,7 @@ import ProjectTaxaView from '@/views/project/ProjectTaxaView.vue'
 import ProjectTitleView from '@/views/project/ProjectTitleView.vue'
 import ProjectView from '@/views/project/ProjectView.vue'
 import ProjectsHomeView from '@/views/project/ProjectsHomeView.vue'
+import Terms from '@/views/misc/Terms.vue'
 import UserLogin from '@/views/users/UserLogin.vue'
 import UserAuth from '@/views/users/UserAuth.vue'
 import UserProfileView from '@/views/users/UserProfileView.vue'
@@ -51,6 +52,11 @@ const router = createRouter({
       path: '/news',
       name: 'MewsView',
       component: NewsView,
+    },
+    {
+      path: '/terms',
+      name: 'terms',
+      component: Terms
     },
 
     // users
