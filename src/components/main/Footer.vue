@@ -4,7 +4,7 @@
       <div>
         <ul class="nav justify-content-center">
           <li class="nav-item">
-            <a class="nav-link p-1 me-3" href="#">About Morphobank</a>
+            <a class="nav-link p-1 me-3" href="https://conf.phoenixbioinformatics.org/display/MD/About+MorphoBank" target="_blank">About Morphobank</a>
           </li>
           <li class="nav-item">
             <router-link class="nav-link p-1 me-3" to="/terms"
