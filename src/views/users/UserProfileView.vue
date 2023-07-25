@@ -154,11 +154,11 @@ const confirmPassword = function () {
   <h3 class="mb-3 fw-normal">User Profile</h3>
   <div v-if="!error.fetchUser && userForm">
     <form @submit.prevent="submitForm" class="form-profile">
-    <Alert
-      :message="errorMsg"
-      messageName="message"
-      :alertType="messageStore.getMessageType()"
-    ></Alert>
+      <Alert
+        :message="errorMsg"
+        messageName="message"
+        :alertType="messageStore.getMessageType()"
+      ></Alert>
       <div class="form-group">
         <label for="firstName">First Name</label>
         <input
