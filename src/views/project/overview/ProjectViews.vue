@@ -4,7 +4,7 @@ const projectStore = usePublicProjectDetailsStore()
 </script>
 
 <template>
-  <div>
+  <div id="project-view">
     <h3>Project Views</h3>
     <!-- {{ projectStore.overview.project_views[0]["hit_type"] }} -->
     <table class="table table-bordered table-striped">

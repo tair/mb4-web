@@ -5,6 +5,7 @@ export const usePublicProjectDetailsStore = defineStore({
   id: 'publicProjectDetails',
   state: () => ({
     loading: false,
+    loaded: false,
     err: null,
 
     // this will NOT be null if we already fetched a project.
@@ -32,6 +33,7 @@ export const usePublicProjectDetailsStore = defineStore({
       if (this.project_id && this.project_id == id) return
 
       this.loading = true
+      this.loaded = false
       this.err = null
 
       try {
@@ -52,12 +54,17 @@ export const usePublicProjectDetailsStore = defineStore({
         this.specimen_details = res.data.specimen_details
 
         this.project_id = id
+        this.loaded = true
       } catch (e) {
         console.error(`store:projectDetails:fetchProject(): ${e}`)
         this.err = 'Error fetching project list.'
       } finally {
         this.loading = false
       }
+    },
+    isDownloadValid(id) {
+      // hardcoded value to prevent download from extra large project
+      return id != 773
     },
   },
 })

@@ -1,10 +1,5 @@
 <script setup>
 import { onMounted } from 'vue'
-import ProjectDownloads from './overview/ProjectDownloads.vue'
-import ProjectMembers from './overview/ProjectMembers.vue'
-import ProjectSummary from './overview/ProjectSummary.vue'
-import ProjectViews from './overview/ProjectViews.vue'
-import ProjectTaxa from './overview/ProjectTaxa.vue'
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 import ProjectLoaderComp from '../../components/project/ProjectLoaderComp.vue'
 import { useRoute } from 'vue-router'
@@ -28,12 +23,14 @@ onMounted(() => {
     basePath="project"
     itemName="overview"
   >
-    <div class="pb-5 border-bottom"><ProjectSummary></ProjectSummary></div>
+    <p>This tool downloads the entire project, all media, matrices and documents, as a zipped file. Please click on the menu to the left, if you only want a Matrix, certain Media or Documents.</p>
+    <p>Media that have been released for 'one time use on MorphoBank only' will not be part of the download packet.</p>
+    <p class="minor-text">The zipped archive has most project data formatted in an XML-format file conforming to the Structure of Descriptive Data (SDD) standard (<a href="http://wiki.tdwg.org/twiki/bin/view/SDD/WebHome" target="_blank">http://wiki.tdwg.org/twiki/bin/view/SDD/WebHome</a>). See the MorphoBank manual for more information.</p>
   </ProjectLoaderComp>
-  <div v-if="projectStore.loaded">
-    <div class="py-5 border-bottom"><ProjectMembers></ProjectMembers></div>
-    <div class="py-5 border-bottom"><ProjectTaxa></ProjectTaxa></div>
-    <div class="py-5 border-bottom"><ProjectViews></ProjectViews></div>
-    <div class="py-5"><ProjectDownloads></ProjectDownloads></div>
-  </div>
 </template>
+<style>
+.minor-text {
+  color:#828282;
+  font-size: 0.8rem;
+}
+</style>

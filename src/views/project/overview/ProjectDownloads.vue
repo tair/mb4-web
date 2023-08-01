@@ -4,7 +4,7 @@ const projectStore = usePublicProjectDetailsStore()
 </script>
 
 <template>
-  <div>
+  <div id="project-download">
     <h3>Project Downloads</h3>
 
     <table class="table table-bordered table-striped">

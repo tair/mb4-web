@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/stores/AuthStore.js'
+import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 import { createRouter, createWebHistory } from 'vue-router'
 import { MY_PROJECT_VIEWS } from '@/router/projects.js'
 
@@ -14,6 +15,7 @@ import NotFoundView from '@/views/NotFoundView.vue'
 import ProjectAuthorView from '@/views/project/ProjectAuthorView.vue'
 import ProjectBibliographyView from '@/views/project/ProjectBibliographyView.vue'
 import ProjectDocumentView from '@/views/project/ProjectDocumentView.vue'
+import ProjectDownloadView from '@/views/project/ProjectDownloadView.vue'
 import ProjectInstitutionView from '@/views/project/ProjectInstitutionView.vue'
 import ProjectJournalView from '@/views/project/ProjectJournalView.vue'
 import ProjectMatrixView from '@/views/project/ProjectMatrixView.vue'
@@ -237,6 +239,18 @@ const router = createRouter({
           name: 'ProjectDocumentView',
           component: ProjectDocumentView,
         },
+        {
+          path: ':id/download',
+          name: 'ProjectDownloadView',
+          component: ProjectDownloadView,
+          beforeEnter: (to, from) => {
+            const projectDetailStore = usePublicProjectDetailsStore()
+            const id = to.params.id
+            if (!projectDetailStore.isDownloadValid(id)) {
+              return {name: 'ProjectOverviewView', params:{id}}
+            }
+          },
+        },
       ],
     },
     {
@@ -244,6 +258,15 @@ const router = createRouter({
       component: NotFoundView,
     },
   ],
+  scrollBehavior(to, from, savedPosition) {
+    if (to.hash) {
+      return { el: to.hash, behavior: 'auto' };
+    } else if (savedPosition) {
+      return savedPosition;
+    } else {
+      return { top: 0 };
+    }
+  },
 })
 
 export default router

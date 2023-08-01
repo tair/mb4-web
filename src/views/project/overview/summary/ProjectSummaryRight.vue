@@ -1,29 +1,10 @@
 <script setup>
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
-const projectStore = usePublicProjectDetailsStore()
+import Tooltip from '@/components/main/Tooltip.vue'
+import { toDMYDate } from '@/utils/date';
 
-function timeConverter(UNIX_timestamp) {
-  var a = new Date(UNIX_timestamp * 1000)
-  var months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ]
-  var year = a.getFullYear()
-  var month = months[a.getMonth()]
-  var date = a.getDate()
-  var time = date + ' ' + month + ' ' + year
-  return time
-}
+const projectStore = usePublicProjectDetailsStore()
+const viewTooltipText = "Project download and view statistics are available since August 2012.  Views and downloads pre August 2012 are not reflected in the statistics."
 </script>
 
 <template>
@@ -36,24 +17,24 @@ function timeConverter(UNIX_timestamp) {
         <ul class="list-group list-group-flush">
           <li class="list-group-item">
             <span class="fw-bold">Created on: </span
-            >{{ timeConverter(projectStore.overview.created_on) }}
+            >{{ toDMYDate(projectStore.overview.created_on) }}
           </li>
           <li class="list-group-item">
             <span class="fw-bold">Published on: </span
-            >{{ timeConverter(projectStore.overview.published_on) }}
+            >{{ toDMYDate(projectStore.overview.published_on) }}
+          </li>
+          <li v-if="projectStore.overview.partition_published_on" class="list-group-item">
+            <span class="fw-bold">Date of Last Publication of Partition: </span
+            >{{ toDMYDate(projectStore.overview.partition_published_on) }}
           </li>
           <li class="list-group-item">
-            <span class="fw-bold">Last Publication of Partition: </span
-            >12/12/2002
+            <router-link class="fw-bold" to="#project-view">Project Views </router-link><Tooltip :content="viewTooltipText"></Tooltip>: {{ projectStore.overview.project_views.total }}
           </li>
-          <li class="list-group-item">
-            <span class="fw-bold">Project Views: </span>12
+          <li class="list-group-item" v-if="projectStore.overview.project_downloads.M">
+            <router-link class="fw-bold" to="#project-download">Media downloads</router-link> <Tooltip :content="viewTooltipText"></Tooltip>: {{ projectStore.overview.project_downloads.M }}
           </li>
-          <li class="list-group-item">
-            <span class="fw-bold">Media Downloads: </span>333
-          </li>
-          <li class="list-group-item small">
-            <span class="fw-bold">Matrix downloads: </span>888
+          <li class="list-group-item" v-if="projectStore.overview.project_downloads.X">
+            <router-link class="fw-bold" to="#project-download">Matrix downloads</router-link> <Tooltip :content="viewTooltipText"></Tooltip>: {{ projectStore.overview.project_downloads.X }}
           </li>
         </ul>
       </div>
