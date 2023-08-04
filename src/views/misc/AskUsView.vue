@@ -39,12 +39,20 @@
               <input id="attachment" type="file" multiple @change="onFileChange">
               <p class="warning-message">Attachments must not exceed a total size of 9MB.</p> <!-- Static warning message -->
           </div>
+          <Alert
+            :alertType="alert.type"
+            :message="alert"
+            messageName="customMessage"
+          />
+          <div v-if="errorMessage" class="alert alert-danger" role="alert">
+            {{ errorMessage }}
+          </div>
+          <div v-if="loading" class="loading-indicator">
+            <div class="spinner"></div>
+          </div>
           <div class="form-group action-buttons">
               <button type="submit">Submit</button>
               <button type="reset">Reset</button>
-          </div>
-          <div v-if="errorMessage" class="alert alert-danger" role="alert">
-            {{ errorMessage }}
           </div>
       </form>
   </div>
@@ -53,8 +61,12 @@
 <script>
 import { reactive, ref } from 'vue'
 import axios from 'axios'
+import Alert from '../../components/main/Alert.vue'
 
 export default {
+  components: {
+    Alert,
+  },
   setup() {
     const form = reactive({
       name: '',
@@ -68,7 +80,13 @@ export default {
       attachmentError: '',
     })
 
+    const loading = ref(false);
+
     const errorMessage = ref(''); // Ref to store error message
+    const alert = reactive({
+      customMessage: '',
+      type: 'success' // You can set 'success' or 'danger' based on your requirement
+    })
 
     let firstNumber = ref(Math.floor(Math.random() * 10))
     let secondNumber = ref(Math.floor(Math.random() * 10))
@@ -135,19 +153,30 @@ export default {
         published: form.published,
         attachments: attachments
       };
-
+      
+      loading.value = true;
       try {
         const response = await axios.post(`${import.meta.env.VITE_API_URL}/email/contact-us-submit`, formData, {
           headers: {
             'Content-Type': 'application/json',
           },
         });
-        alert('Form submitted successfully.');
+        alert.customMessage = 'Form submitted successfully.';
+        alert.type = 'success';
         console.log(response.data);
-        location.reload(); // Refresh the page
+        // Delay the page reload by two seconds to give use opportunity to know its successful
+        setTimeout(() => {
+          location.reload();
+        }, 2000);
       } catch (error) {
-        errorMessage.value = 'Failed to submit form.';
+        if (error.response && error.response.status === 413) {
+          errorMessage.value = 'Failed to submit form. The total attachment size is too large.';
+        } else {
+          errorMessage.value = 'Failed to submit form.';
+        }
         console.error(error);
+      } finally {
+        loading.value = false;
       }
 
     }
@@ -159,6 +188,8 @@ export default {
       onFileChange,
       submitForm,
       errorMessage,
+      alert,
+      loading,
     }
   }
 }
@@ -238,9 +269,28 @@ p {
   font-size: 0.8rem;
   margin-top: 0.5rem;
 }
-.error-message {
-  color: red;
-  font-size: 0.8rem;
-  margin-top: 0.5rem;
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed; /* Fixed position */
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
+  z-index: 1000; /* Put it on top of everything else */
+}
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border-left: 4px solid #000;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>
