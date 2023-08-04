@@ -44,9 +44,6 @@
             :message="alert"
             messageName="customMessage"
           />
-          <div v-if="errorMessage" class="alert alert-danger" role="alert">
-            {{ errorMessage }}
-          </div>
           <div v-if="loading" class="loading-indicator">
             <div class="spinner"></div>
           </div>
@@ -82,7 +79,6 @@ export default {
 
     const loading = ref(false);
 
-    const errorMessage = ref(''); // Ref to store error message
     const alert = reactive({
       customMessage: '',
       type: 'success' // You can set 'success' or 'danger' based on your requirement
@@ -98,7 +94,7 @@ export default {
         totalSize += files[i].size; // Add the size of each file
       }
       if (totalSize > 9 * 1024 * 1024) { // Check if total size exceeds 9MB
-        form.attachmentError = 'Total attachment size exceeds 9MB. Please select smaller files.';
+        form.attachmentError = 'Failed to submit form. The total attachment size is too large.'; //Making messaging uniform for this
         return; // Return without updating form.attachments
       }
       form.attachmentError = '';
@@ -109,23 +105,25 @@ export default {
     }
 
     const submitForm = async () => {
-      errorMessage.value = ''; // Reset error message
+      // Reset previous alert
+      alert.customMessage = '';
+      alert.type = 'danger'; // Default error type
       const securityAnswer = parseInt(form.security, 10);
       // Check for required fields
       if (!form.name.trim() || !form.email.trim() || !form.question.trim()) {
-        errorMessage.value = 'Please fill out all required fields (Name, E-mail Address, and Question).';
+        alert.customMessage = 'Please fill out all required fields (Name, E-mail Address, and Question).';
         return;
       }
 
       if (isNaN(securityAnswer) || securityAnswer !== firstNumber.value + secondNumber.value) {
-        errorMessage.value = 'Incorrect security answer. Please try again.';
+        alert.customMessage = 'Incorrect security answer. Please try again.';
         form.security = '';
         return;
       }
 
       // Check if attachment error is present
       if (form.attachmentError) {
-        errorMessage.value = form.attachmentError;
+        alert.customMessage = form.attachmentError;
         return; // Return without proceeding to submit
       }
 
@@ -170,9 +168,9 @@ export default {
         }, 2000);
       } catch (error) {
         if (error.response && error.response.status === 413) {
-          errorMessage.value = 'Failed to submit form. The total attachment size is too large.';
+          alert.customMessage = 'Failed to submit form. The total attachment size is too large.';
         } else {
-          errorMessage.value = 'Failed to submit form.';
+          alert.customMessage = 'Failed to submit form.';
         }
         console.error(error);
       } finally {
@@ -187,7 +185,6 @@ export default {
       secondNumber,
       onFileChange,
       submitForm,
-      errorMessage,
       alert,
       loading,
     }
