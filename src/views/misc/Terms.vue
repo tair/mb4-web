@@ -134,7 +134,7 @@
         Take any action or
       </li>
       <li>
-        <div style="margin-bottom: 10px;">
+        <div class="mt-3">
             Upload, download, post, submit or otherwise distribute or facilitate
             distribution of any Data or other content on or through MorphoBank or
             the Services that:

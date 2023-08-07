@@ -54,15 +54,6 @@ onMounted(async () => {
   border: 1px solid #ced4da !important;
   color: #333333;
 }
-.margin-l-top {
-  margin-top: 50px;
-}
-.margin-m-top {
-  margin-top: 30px;
-}
-.margin-s-top {
-  margin-top: 10px;
-}
 .spinner-img {
   height: 50px;
 }
@@ -70,7 +61,7 @@ onMounted(async () => {
 
 <template>
   <div class="container">
-    <div v-if="loading" class="margin-l-top">
+    <div v-if="loading" class="mt-5">
       <img
         class="spinner-img"
         alt="Loading spinner"
@@ -79,23 +70,23 @@ onMounted(async () => {
       />
       Authenticating User Profile
     </div>
-    <div class="margin-l-top" v-else>
+    <div class="mt-5" v-else>
       <div v-if="messages.msg" v-html="messages.msg"></div>
-      <div class="margin-m-top">
+      <div class="mt-4">
         <div v-if="messages.signinMsg" v-html="messages.signinMsg"></div>
         <RouterLink
           :to="{ path: 'login', query: { redirect: 'myprofile' } }"
           v-if="showSignin"
         >
-          <button class="margin-s-top w-100 btn btn-lg btn-primary">
+          <button class="mt-3 w-100 btn btn-lg btn-primary">
             Sign in to MorphoBank
           </button>
         </RouterLink>
       </div>
-      <div class="margin-m-top">
+      <div class="mt-4">
         <div v-if="messages.registerMsg" v-html="messages.registerMsg"></div>
         <RouterLink to="register" v-if="showRegister">
-          <button class="margin-s-top w-100 btn btn-lg btn-white">
+          <button class="mt-3 w-100 btn btn-lg btn-white">
             Create an Account
           </button>
         </RouterLink>

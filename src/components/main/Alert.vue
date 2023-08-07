@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="message[messageName]"
-    :class="'alert alert-dismissible fade show margin-top-s alert-' + alertType"
+    :class="'alert alert-dismissible fade show mt-2 alert-' + alertType"
     role="alert"
   >
     <span v-html="message[messageName]"></span>
@@ -35,7 +35,4 @@ const dismissAlert = function () {
 </script>
 
 <style>
-.margin-top-s {
-  margin-top: 10px;
-}
 </style>

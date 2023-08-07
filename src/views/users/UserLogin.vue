@@ -49,7 +49,7 @@ onBeforeUnmount(() => {
         :alertType="messageStore.getMessageType()"
       ></Alert>
       <h3 class="mb-3 fw-normal">Please sign in</h3>
-      <div class="form-floating margin-s-top">
+      <div class="form-floating mt-3">
         <input
           v-model.trim="state.email"
           type="text"
@@ -60,7 +60,7 @@ onBeforeUnmount(() => {
         />
         <label for="email">Email address</label>
       </div>
-      <div class="form-floating margin-s-top">
+      <div class="form-floating mt-2">
         <input
           v-model.trim="state.password"
           type="password"
@@ -72,12 +72,12 @@ onBeforeUnmount(() => {
         <label for="password">Password</label>
       </div>
       <Alert :message="error" messageName="login" alertType="danger"></Alert>
-      <button class="w-100 btn btn-lg btn-primary margin-s-top" type="submit">
+      <button class="w-100 btn btn-lg btn-primary mt-3" type="submit">
         Sign in
       </button>
       <a
         :href="orcidLoginUrl"
-        class="w-100 btn btn-lg btn-primary btn-white margin-s-top"
+        class="w-100 btn btn-lg btn-primary btn-white mt-3"
         ><img
           alt="ORCID logo"
           src="/ORCIDiD_iconvector.svg"
@@ -101,9 +101,6 @@ onBeforeUnmount(() => {
   background-color: #ffffff !important;
   border: 1px solid #ced4da !important;
   color: #333333;
-}
-.margin-s-top {
-  margin-top: 10px;
 }
 .orcid-icon {
   width: 24px;

@@ -1,8 +1,9 @@
 <script setup>
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
+import Tooltip from '@/components/main/Tooltip.vue'
 
 const projectStore = usePublicProjectDetailsStore()
-
+const downloadTooltipText = "This tool downloads the entire project, all media, matrices and documents, as a zipped file. Please click on the menu to the left, if you only want a Matrix, certain Media or Documents."
 function buildImageProps(mediaObj, type) {
   try {
     let media = mediaObj
@@ -29,6 +30,10 @@ function formatBytes(bytes, decimals = 2) {
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
 }
+
+function popDownloadAlert() {
+  alert("You are downloading data from MorphoBank. If you plan to reuse these items you must check the copyright reuse policies for the individual media, matrix, document or character list. Note - policies are often different for different media. By downloading from MorphoBank, you agree to the site's Terms of Use & Privacy Policy.")
+}
 </script>
 
 <template>
@@ -48,13 +53,15 @@ function formatBytes(bytes, decimals = 2) {
       />
 
       <h4>Abstract</h4>
-      <p>
-        {{ projectStore.overview.description }}
+      <p v-html="projectStore.overview.description">
       </p>
 
-      <div>
-        <span class="fw-bold">Article DOI:</span>
+      <div class="mt-5">
+        <span class="fw-bold ">Article DOI:</span>
         {{ projectStore.overview.article_doi }}
+        <a v-if="projectStore.overview.journal_url" :href="projectStore.overview.journal_url" target="_blank">
+          <button class="btn btn-primary btn-ml">Read the article</button>
+        </a>
       </div>
 
       <div>
@@ -80,8 +87,16 @@ function formatBytes(bytes, decimals = 2) {
             <li>{{ projectStore.overview.stats.specimens }} Specimens</li>
             <li>{{ projectStore.overview.stats.characters }} Characters</li>
           </ul>
-          Total size of project's media files:
-          {{ formatBytes(projectStore.overview.stats.media_size) }}
+          <div>
+            Total size of project's media files:
+            {{ formatBytes(projectStore.overview.stats.media_size) }}
+          </div>
+          <div class="mt-3" v-if="projectStore.isDownloadValid(projectStore.project_id)">
+              <router-link to="download">
+                <button class="btn btn-primary margin-right" @click="popDownloadAlert()">Download Project SDD file</button>
+              </router-link>
+              <Tooltip :content="downloadTooltipText"></Tooltip>
+          </div>
         </div>
       </div>
     </div>
@@ -149,4 +164,11 @@ function formatBytes(bytes, decimals = 2) {
   </div>
 </template>
 
-<style></style>
+<style>
+.btn-ml {
+  margin-left: 10px;
+}
+.margin-right {
+  margin-right: 10px;
+}
+</style>
