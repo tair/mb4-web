@@ -290,4 +290,7 @@ p {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+textarea {
+  height: 200px
+}
 </style>
