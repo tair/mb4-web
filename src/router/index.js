@@ -247,7 +247,7 @@ const router = createRouter({
             const projectDetailStore = usePublicProjectDetailsStore()
             const id = to.params.id
             if (!projectDetailStore.isDownloadValid(id)) {
-              return {name: 'ProjectOverviewView', params:{id}}
+              return { name: 'ProjectOverviewView', params: { id } }
             }
           },
         },
@@ -260,11 +260,11 @@ const router = createRouter({
   ],
   scrollBehavior(to, from, savedPosition) {
     if (to.hash) {
-      return { el: to.hash, behavior: 'auto' };
+      return { el: to.hash, behavior: 'auto' }
     } else if (savedPosition) {
-      return savedPosition;
+      return savedPosition
     } else {
-      return { top: 0 };
+      return { top: 0 }
     }
   },
 })

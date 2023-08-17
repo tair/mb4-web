@@ -36,15 +36,15 @@ export function toDMYDate(epochTimeSecs: number): string {
 }
 
 export function toISODate(epochTimeSecs: number): string {
-  const date = new Date(epochTimeSecs * 1000);
+  const date = new Date(epochTimeSecs * 1000)
 
   // Get the year, month, and day components
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
 
   // Assemble the date components into ISO 8601 format (YYYY-MM-DD)
-  const isoDate = `${year}-${month}-${day}`;
+  const isoDate = `${year}-${month}-${day}`
 
-  return isoDate;
+  return isoDate
 }

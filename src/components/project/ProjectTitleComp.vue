@@ -11,8 +11,11 @@ const projectStore = usePublicProjectDetailsStore()
       {{ projectStore.overview.journal_year }}.
       {{ projectStore.overview.article_title }}.
       {{ projectStore.overview.journal_title }}.
-      {{ projectStore.overview.journal_volume }} 
-      {{ projectStore.overview.journal_number && '(' + projectStore.overview.journal_number + ')' }}
+      {{ projectStore.overview.journal_volume }}
+      {{
+        projectStore.overview.journal_number &&
+        '(' + projectStore.overview.journal_number + ')'
+      }}
       : {{ projectStore.overview.article_pp }}.
     </div>
   </div>

@@ -130,33 +130,31 @@
     </p>
     <p>You shall not (and shall not permit any third party to) either:</p>
     <ol type="1">
-      <li>
-        Take any action or
-      </li>
+      <li>Take any action or</li>
       <li>
         <div class="mt-3">
-            Upload, download, post, submit or otherwise distribute or facilitate
-            distribution of any Data or other content on or through MorphoBank or
-            the Services that:
+          Upload, download, post, submit or otherwise distribute or facilitate
+          distribution of any Data or other content on or through MorphoBank or
+          the Services that:
         </div>
         <ol type="i">
           <li>
             Infringes any patent, trademark, trade secret, copyright, right of
-            publicity or other right of any other person or entity or violates any
-            law or contractual duty;
+            publicity or other right of any other person or entity or violates
+            any law or contractual duty;
           </li>
           <li>You know is false, misleading, untruthful or inaccurate;</li>
           <li>
             Is unlawful, threatening, abusive, harassing, defamatory, libelous,
-            deceptive, fraudulent, invasive of another's privacy, tortious, obscene,
-            offensive, or profane;
+            deceptive, fraudulent, invasive of another's privacy, tortious,
+            obscene, offensive, or profane;
           </li>
           <li>
             Contains software viruses or any other computer codes, files, or
             programs that are designed or intended to disrupt, damage, limit or
             interfere with the proper function of any software, hardware, or
-            telecommunications equipment or to damage or obtain unauthorized access
-            to any system, data, password or other information of Phoenix
+            telecommunications equipment or to damage or obtain unauthorized
+            access to any system, data, password or other information of Phoenix
             Bioinformatics, any other users of MorphoBank, or any third party;
           </li>
           <li>
@@ -269,27 +267,26 @@
       Services:
     </p>
     <ol type="1">
+      <li>If required by court order or applicable law;</li>
+      <li>If necessary to perform or enforce these Terms of Use;</li>
       <li>
-        If required by court order or applicable law;
-      </li>
-      <li>
-        If necessary to perform or enforce these Terms of Use;
-      </li>
-      <li>
-        In order to detect, prevent, or otherwise address fraud, security or technical issues;
+        In order to detect, prevent, or otherwise address fraud, security or
+        technical issues;
       </li>
       <li>
         In order to respond to your support requests and improve services;
       </li>
       <li>
-        In order to protect the rights, property or safety of Phoenix, its
-        users and the public;
+        In order to protect the rights, property or safety of Phoenix, its users
+        and the public;
       </li>
       <li>
-        As necessary to enable third parties such as contractors to facilitate assistance in maintaining, improving or operating MorphoBank or the Services, provided all such third parties agree in writing to keep such information confidential.
+        As necessary to enable third parties such as contractors to facilitate
+        assistance in maintaining, improving or operating MorphoBank or the
+        Services, provided all such third parties agree in writing to keep such
+        information confidential.
       </li>
     </ol>
-
 
     <h2>8. No Warranties, Limitations on Liability</h2>
     <p><strong>YOU EXPRESSLY UNDERSTAND AND AGREE THAT:</strong></p>
@@ -415,14 +412,14 @@
     </p>
     <ol type="1">
       <li>
-        Use of MorphoBank, the Services or the Materials, including without 
-        limitation the upload of any Data, by you or any person acting by or 
-        through you (including, without limitation, by utilizing your login 
+        Use of MorphoBank, the Services or the Materials, including without
+        limitation the upload of any Data, by you or any person acting by or
+        through you (including, without limitation, by utilizing your login
         information);
       </li>
       <li>
-        The breach of these Terms of Use by you or any person acting by or 
-        through you (including, without limitation, by utilizing your login 
+        The breach of these Terms of Use by you or any person acting by or
+        through you (including, without limitation, by utilizing your login
         information).
       </li>
     </ol>

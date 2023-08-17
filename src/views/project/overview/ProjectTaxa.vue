@@ -1,7 +1,7 @@
 <script setup>
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 import Tooltip from '@/components/main/Tooltip.vue'
-import { toISODate } from '@/utils/date';
+import { toISODate } from '@/utils/date'
 const projectStore = usePublicProjectDetailsStore()
 </script>
 
@@ -21,7 +21,12 @@ const projectStore = usePublicProjectDetailsStore()
             <th scope="col">Taxon</th>
             <th scope="col">Unscored cells</th>
             <th scope="col">Scored cells</th>
-            <th scope="col">No cell support <Tooltip content="Cells that are scored (i.e., 0, 1, 2...etc... but not ?, -, NPA) that are without documentation, i.e., those that do not have any of the following notes, citations, or media."></Tooltip></th>
+            <th scope="col">
+              No cell support
+              <Tooltip
+                content="Cells that are scored (i.e., 0, 1, 2...etc... but not ?, -, NPA) that are without documentation, i.e., those that do not have any of the following notes, citations, or media."
+              ></Tooltip>
+            </th>
             <th scope="col">NPA cells</th>
             <th scope="col">"-" cells"</th>
             <th scope="col">Cell images</th>
@@ -42,7 +47,14 @@ const projectStore = usePublicProjectDetailsStore()
             <td>{{ taxa.not_cells }}</td>
             <td>{{ taxa.cell_images }}</td>
             <td>{{ taxa.cell_image_labels }}</td>
-            <td>{{ taxa.members.length }} <Tooltip :content="'Project member with access: '  + taxa.members.join(', ')"></Tooltip></td>
+            <td>
+              {{ taxa.members.length }}
+              <Tooltip
+                :content="
+                  'Project member with access: ' + taxa.members.join(', ')
+                "
+              ></Tooltip>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -50,8 +62,6 @@ const projectStore = usePublicProjectDetailsStore()
     </div>
   </div>
   <div v-else>
-    <span class="h4">
-      Project has no matrices defined.
-    </span>
+    <span class="h4"> Project has no matrices defined. </span>
   </div>
 </template>
