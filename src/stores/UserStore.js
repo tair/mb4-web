@@ -80,7 +80,7 @@ export const useUserStore = defineStore({
       this.userForm.firstName = this.originalUser.firstName
       this.userForm.lastName = this.originalUser.lastName
       this.userForm.email = this.originalUser.email
-      this.userForm.institutions = this.originalUser.institutions
+      this.userForm.institutions = [...this.originalUser.institutions]
     },
   },
 })

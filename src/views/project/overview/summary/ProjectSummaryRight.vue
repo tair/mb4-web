@@ -1,10 +1,11 @@
 <script setup>
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 import Tooltip from '@/components/main/Tooltip.vue'
-import { toDMYDate } from '@/utils/date';
+import { toDMYDate } from '@/utils/date'
 
 const projectStore = usePublicProjectDetailsStore()
-const viewTooltipText = "Project download and view statistics are available since August 2012.  Views and downloads pre August 2012 are not reflected in the statistics."
+const viewTooltipText =
+  'Project download and view statistics are available since August 2012.  Views and downloads pre August 2012 are not reflected in the statistics.'
 </script>
 
 <template>
@@ -23,25 +24,55 @@ const viewTooltipText = "Project download and view statistics are available sinc
             <span class="fw-bold">Published on: </span
             >{{ toDMYDate(projectStore.overview.published_on) }}
           </li>
-          <li v-if="projectStore.overview.partition_published_on" class="list-group-item">
+          <li
+            v-if="projectStore.overview.partition_published_on"
+            class="list-group-item"
+          >
             <span class="fw-bold">Date of Last Publication of Partition: </span
             >{{ toDMYDate(projectStore.overview.partition_published_on) }}
           </li>
           <li class="list-group-item">
-            <router-link class="fw-bold" to="#project-view">Project Views </router-link><Tooltip :content="viewTooltipText"></Tooltip>: {{ projectStore.overview.project_views.total }}
+            <router-link class="fw-bold" to="#project-view"
+              >Project Views </router-link
+            ><Tooltip :content="viewTooltipText"></Tooltip>:
+            {{ projectStore.overview.project_views.total }}
           </li>
-          <li class="list-group-item" v-if="projectStore.overview.project_downloads.M">
-            <router-link class="fw-bold" to="#project-download">Media downloads</router-link> <Tooltip :content="viewTooltipText"></Tooltip>: {{ projectStore.overview.project_downloads.M }}
+          <li
+            class="list-group-item"
+            v-if="projectStore.overview.project_downloads.M"
+          >
+            <router-link class="fw-bold" to="#project-download"
+              >Media downloads</router-link
+            >
+            <Tooltip :content="viewTooltipText"></Tooltip>:
+            {{ projectStore.overview.project_downloads.M }}
           </li>
-          <li class="list-group-item" v-if="projectStore.overview.project_downloads.X">
-            <router-link class="fw-bold" to="#project-download">Matrix downloads</router-link> <Tooltip :content="viewTooltipText"></Tooltip>: {{ projectStore.overview.project_downloads.X }}
+          <li
+            class="list-group-item"
+            v-if="projectStore.overview.project_downloads.X"
+          >
+            <router-link class="fw-bold" to="#project-download"
+              >Matrix downloads</router-link
+            >
+            <Tooltip :content="viewTooltipText"></Tooltip>:
+            {{ projectStore.overview.project_downloads.X }}
           </li>
         </ul>
       </div>
     </div>
   </div>
 
-  <div>
+  <div v-if="projectStore.overview.nsf_funded" class="text-center mb-2">
+    <span class="sm-font">This research is supported by</span>
+    <img src="/nsf.jpg" />
+  </div>
+
+  <div
+    v-if="
+      projectStore.overview.institutions &&
+      projectStore.overview.institutions.length > 0
+    "
+  >
     <div class="card shadow">
       <div class="card-header fw-bold">Authors' Institutions</div>
       <div class="card-body m-0 p-0 small">
@@ -58,3 +89,9 @@ const viewTooltipText = "Project download and view statistics are available sinc
     </div>
   </div>
 </template>
+
+<style>
+.sm-font {
+  font-size: 80%;
+}
+</style>

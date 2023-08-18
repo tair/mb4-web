@@ -199,6 +199,7 @@ const confirmPassword = function () {
         <input
           id="newPassword"
           type="password"
+          autocomplete="new-password"
           class="form-control"
           v-model="userData.userForm.newPassword"
           @blur="validatePassword"
@@ -215,6 +216,7 @@ const confirmPassword = function () {
         <input
           id="newPasswordConfirm"
           type="password"
+          autocomplete="new-password-confirm"
           class="form-control"
           v-model="userData.userForm.newPasswordConfirm"
           @blur="confirmPassword"

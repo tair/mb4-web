@@ -2,11 +2,11 @@
 import { reactive } from 'vue'
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 const projectStore = usePublicProjectDetailsStore()
-const folded = reactive({ 
+const folded = reactive({
   mediaViews: true,
   folioViews: true,
-  matrixViews: true
- })
+  matrixViews: true,
+})
 
 // Define the toggleFold method
 const toggleFold = (section) => {
@@ -44,10 +44,28 @@ const foldThreshold = 20
           <td>{{ projectStore.overview.project_views['M'] }}</td>
           <td>
             <div v-if="projectStore.overview.project_views.details['M']">
-              <span v-for="(item, index) in projectStore.overview.project_views.details['M']" 
-                :class="{'badge': true, 'rounded-pill': true, 'bg-secondary': true, 'spaced-span': true, 'folded': index > foldThreshold && folded.mediaViews}"
-              >{{ item.name }} ({{ item.val }})</span>
-              <button v-if="projectStore.overview.project_views.details['M'].length > foldThreshold" class="btn btn-link" @click="toggleFold('mediaViews')">{{ folded.mediaViews ? 'Show more' : 'Show less'  }}</button>
+              <span
+                v-for="(item, index) in projectStore.overview.project_views
+                  .details['M']"
+                :class="{
+                  badge: true,
+                  'rounded-pill': true,
+                  'bg-secondary': true,
+                  'spaced-span': true,
+                  folded: index > foldThreshold && folded.mediaViews,
+                }"
+                >{{ item.name }} ({{ item.val }})</span
+              >
+              <button
+                v-if="
+                  projectStore.overview.project_views.details['M'].length >
+                  foldThreshold
+                "
+                class="btn btn-link"
+                @click="toggleFold('mediaViews')"
+              >
+                {{ folded.mediaViews ? 'Show more' : 'Show less' }}
+              </button>
             </div>
           </td>
         </tr>
@@ -66,10 +84,28 @@ const foldThreshold = 20
           <td>{{ projectStore.overview.project_views['F'] }}</td>
           <td>
             <div v-if="projectStore.overview.project_views.details['F']">
-              <span v-for="(item, index) in projectStore.overview.project_views.details['F']" 
-                :class="{'badge': true, 'rounded-pill': true, 'bg-secondary': true, 'spaced-span': true, 'folded': index > 20 && folded.folioViews}"
-              >{{ item.name }} ({{ item.val }})</span>
-              <button v-if="projectStore.overview.project_views.details['F'].length > foldThreshold" class="btn btn-link" @click="toggleFold('folioViews')">{{ folded.folioViews ? 'Show more' : 'Show less' }}</button>
+              <span
+                v-for="(item, index) in projectStore.overview.project_views
+                  .details['F']"
+                :class="{
+                  badge: true,
+                  'rounded-pill': true,
+                  'bg-secondary': true,
+                  'spaced-span': true,
+                  folded: index > 20 && folded.folioViews,
+                }"
+                >{{ item.name }} ({{ item.val }})</span
+              >
+              <button
+                v-if="
+                  projectStore.overview.project_views.details['F'].length >
+                  foldThreshold
+                "
+                class="btn btn-link"
+                @click="toggleFold('folioViews')"
+              >
+                {{ folded.folioViews ? 'Show more' : 'Show less' }}
+              </button>
             </div>
           </td>
         </tr>
@@ -93,10 +129,28 @@ const foldThreshold = 20
           <td>{{ projectStore.overview.project_views['X'] }}</td>
           <td>
             <div v-if="projectStore.overview.project_views.details['X']">
-              <span v-for="(item, index) in projectStore.overview.project_views.details['X']" 
-                :class="{'badge': true, 'rounded-pill': true, 'bg-secondary': true, 'spaced-span': true, 'folded': index > 20 && folded.matrixViews}"
-              >{{ item.name }} ({{ item.val }})</span>
-              <button v-if="projectStore.overview.project_views.details['X'].length > foldThreshold" class="btn btn-link" @click="toggleFold('matrixViews')">{{ folded.matrixViews ? 'Show more' : 'Show less' }}</button>
+              <span
+                v-for="(item, index) in projectStore.overview.project_views
+                  .details['X']"
+                :class="{
+                  badge: true,
+                  'rounded-pill': true,
+                  'bg-secondary': true,
+                  'spaced-span': true,
+                  folded: index > 20 && folded.matrixViews,
+                }"
+                >{{ item.name }} ({{ item.val }})</span
+              >
+              <button
+                v-if="
+                  projectStore.overview.project_views.details['X'].length >
+                  foldThreshold
+                "
+                class="btn btn-link"
+                @click="toggleFold('matrixViews')"
+              >
+                {{ folded.matrixViews ? 'Show more' : 'Show less' }}
+              </button>
             </div>
           </td>
         </tr>
@@ -107,14 +161,14 @@ const foldThreshold = 20
 
 <style>
 .spaced-span {
-  margin-right: 5px
+  margin-right: 5px;
 }
 
 .spaced-span.folded {
-display: none;
+  display: none;
 }
 
 .btn-link {
-padding: 0;
+  padding: 0;
 }
 </style>

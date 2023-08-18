@@ -34,5 +34,4 @@ const dismissAlert = function () {
 }
 </script>
 
-<style>
-</style>
+<style></style>
