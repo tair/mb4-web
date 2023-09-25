@@ -95,9 +95,9 @@ async function toggleMatrixStreaming() {
         >)
       </div>
       <div class="buttons">
-        <a :href="baseUrl + '/edit'" target="_blank"
-          ><button type="button" class="btn btn-sm btn-primary">Open</button></a
-        >
+        <RouterLink :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/edit`" target="_blank">
+          <button type="button" class="btn btn-sm btn-primary">Open</button>
+        </RouterLink>
         <button
           v-if="canEditMatrix"
           type="button"

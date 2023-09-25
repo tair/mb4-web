@@ -7,6 +7,7 @@ import MyProjectDocumentsView from '@/views/project/MyProjectDocumentsView.vue'
 import MyProjectHomeView from '@/views/project/MyProjectHomeView.vue'
 import MyProjectMatrixChooseView from '@/views/project/MyProjectMatrixChooseView.vue'
 import MyProjectMatrixCreateView from '@/views/project/MyProjectMatrixCreateView.vue'
+import MyProjectMatrixEditView from '@/views/project/MyProjectMatrixEditView.vue'
 import MyProjectMatrixView from '@/views/project/MyProjectMatrixView.vue'
 import MyProjectMediaView from '@/views/project/MyProjectMediaView.vue'
 import MyProjectMediaViewsView from '@/views/project/MyProjectMediaViewsView.vue'
@@ -43,6 +44,11 @@ export const MY_PROJECT_VIEWS = [
     path: ':id/matrices/create',
     name: 'MyProjectMatrixCreateView',
     component: MyProjectMatrixCreateView,
+  },
+  {
+    path: ':id/matrices/:matrixId/edit',
+    name: 'MyProjectMatrixEditView',
+    component: MyProjectMatrixEditView,
   },
   {
     path: ':id/media',
