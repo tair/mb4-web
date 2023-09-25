@@ -44,11 +44,9 @@ export class Select extends Component {
     super.enterDocument()
     const element = this.getElement()
     this.getHandler()
-      .listen(element, EventType.CLICK, (e:MouseEvent) => this.handleClick(e))
-      .listen(
-        element,
-        MobileFriendlyClickEventType,
-        (e: Event) => this.handleDoubleClick(e)
+      .listen(element, EventType.CLICK, (e: MouseEvent) => this.handleClick(e))
+      .listen(element, MobileFriendlyClickEventType, (e: Event) =>
+        this.handleDoubleClick(e)
       )
   }
 

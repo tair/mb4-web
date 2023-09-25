@@ -63,9 +63,8 @@ export class ImageRenderer extends Component {
       this.updateImage(imageUrl)
     }
     if (this.imageUrls.length > 1) {
-      const downArrowElement = this.getElementByClass<HTMLElement>(
-        'imageArrowDown'
-      )
+      const downArrowElement =
+        this.getElementByClass<HTMLElement>('imageArrowDown')
       downArrowElement.title = ImageRenderer.ARROW_DOWN_TEXT
       const upArrowElement =
         this.getElementByClass<HTMLDivElement>('imageArrowUp')
@@ -92,15 +91,11 @@ export class ImageRenderer extends Component {
     const downArrowElement = this.getElementByClass('imageArrowDown')
     const upArrowElement = this.getElementByClass('imageArrowUp')
     handler
-      .listen(
-        upArrowElement,
-        EventType.MOUSEDOWN,
-        (e:Event) => this.onHandleUpClick(e)
+      .listen(upArrowElement, EventType.MOUSEDOWN, (e: Event) =>
+        this.onHandleUpClick(e)
       )
-      .listen(
-        downArrowElement,
-        EventType.MOUSEDOWN,
-        (e: Event) => this.onHandleDownClick(e)
+      .listen(downArrowElement, EventType.MOUSEDOWN, (e: Event) =>
+        this.onHandleDownClick(e)
       )
   }
 

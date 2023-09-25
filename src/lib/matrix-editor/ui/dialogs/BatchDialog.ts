@@ -83,10 +83,8 @@ export class BatchDialog extends Dialog {
   override enterDocument() {
     super.enterDocument()
     const handler = this.getHandler()
-    handler.listen(
-      this.tabNavigator,
-      EventType.SELECT,
-      () => this.updateLastSelectedTabIndex()
+    handler.listen(this.tabNavigator, EventType.SELECT, () =>
+      this.updateLastSelectedTabIndex()
     )
   }
 
@@ -318,10 +316,8 @@ class BatchRowPane extends BasePane {
     super.enterDocument()
     this.getHandler()
       .listen(this.taxaSelect, EventType.CHANGE, () => this.onHandleChange())
-      .listen(
-        this.characterSelect,
-        EventType.SELECT,
-        () => this.onHandleChange()
+      .listen(this.characterSelect, EventType.SELECT, () =>
+        this.onHandleChange()
       )
       .listen(
         this.matrixModel,
@@ -767,15 +763,11 @@ class BatchColumnPane extends BasePane {
   override enterDocument() {
     super.enterDocument()
     this.getHandler()
-      .listen(
-        this.characterSelect,
-        EventType.CHANGE,
-        () => this.onHandleSelectionChange()
+      .listen(this.characterSelect, EventType.CHANGE, () =>
+        this.onHandleSelectionChange()
       )
-      .listen(
-        this.taxaSelect,
-        EventType.SELECT,
-        () => this.onHandleSelectionChange()
+      .listen(this.taxaSelect, EventType.SELECT, () =>
+        this.onHandleSelectionChange()
       )
       .listen(
         this.matrixModel,
@@ -1181,20 +1173,14 @@ class BatchCopyPane extends BasePane {
   override enterDocument() {
     super.enterDocument()
     this.getHandler()
-      .listen(
-        this.sourceTaxaSelect,
-        EventType.CHANGE,
-        () => this.onHandleSelectionChange()
+      .listen(this.sourceTaxaSelect, EventType.CHANGE, () =>
+        this.onHandleSelectionChange()
       )
-      .listen(
-        this.destinationTaxaSelect,
-        EventType.CHANGE,
-        () => this.onHandleSelectionChange()
+      .listen(this.destinationTaxaSelect, EventType.CHANGE, () =>
+        this.onHandleSelectionChange()
       )
-      .listen(
-        this.characterSelect,
-        EventType.SELECT,
-        () => this.onHandleSelectionChange()
+      .listen(this.characterSelect, EventType.SELECT, () =>
+        this.onHandleSelectionChange()
       )
       .listen(
         this.matrixModel,

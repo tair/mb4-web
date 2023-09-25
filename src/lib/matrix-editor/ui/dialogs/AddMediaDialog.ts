@@ -75,12 +75,10 @@ export class AddMediaDialog extends Dialog {
     super.enterDocument()
 
     this.getHandler()
-      .listen(this, EventType.SELECT, (e: CustomEvent<any>) => this.onHandleSelect(e))
-      .listen(
-        this.mediaGrid,
-        EventType.SELECT,
-        () => this.onGridSelectChange()
+      .listen(this, EventType.SELECT, (e: CustomEvent<any>) =>
+        this.onHandleSelect(e)
       )
+      .listen(this.mediaGrid, EventType.SELECT, () => this.onGridSelectChange())
       .listen(
         this.mediaGrid,
         EventType.DBLCLICK,

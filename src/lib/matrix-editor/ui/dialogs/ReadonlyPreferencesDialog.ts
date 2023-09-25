@@ -13,7 +13,7 @@ import * as mb from '../../mb'
  * who are not signed into MorphoBank. This will read and write to the same
  * local storage variables so that users who have accounts but are not signed
  * in may continue to keep the same settings.
- * 
+ *
  * @param matrixModel the data associated with the matrix.
  */
 export class ReadOnlyPreferencesDialog extends Dialog {
@@ -33,7 +33,7 @@ export class ReadOnlyPreferencesDialog extends Dialog {
     this.localStorage = mb.isLocalStorageAvailable()
       ? window.localStorage
       : window.sessionStorage
-    
+
     this.setTitle('Preferences')
     this.setHasBackdrop(false)
     this.addButton(ModalDefaultButtons.SAVE)
@@ -71,10 +71,8 @@ export class ReadOnlyPreferencesDialog extends Dialog {
 
   override enterDocument() {
     super.enterDocument()
-    this.getHandler().listen(
-      this,
-      EventType.SELECT,
-      (e: CustomEvent<any>) => this.onHandleSelect(e)
+    this.getHandler().listen(this, EventType.SELECT, (e: CustomEvent<any>) =>
+      this.onHandleSelect(e)
     )
   }
 
@@ -131,8 +129,7 @@ export class ReadOnlyPreferencesDialog extends Dialog {
    * @return The HTML content of the preferences dialog.
    */
   static htmlContent(): string {
-    return (
-      `<section>
+    return `<section>
         <header>Character and taxon numbering mode:</header>
         <div class="mb-numbering-mode"></div>
       </section>
@@ -140,6 +137,5 @@ export class ReadOnlyPreferencesDialog extends Dialog {
         <header>Character name display mode:</header>
         <div class="mb-characterNameMode"></div>
       </section>`
-    )
   }
 }

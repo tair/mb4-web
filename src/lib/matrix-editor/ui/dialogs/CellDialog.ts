@@ -93,13 +93,18 @@ export class CellDialog extends Dialog {
   override enterDocument() {
     super.enterDocument()
     this.getHandler()
-      .listen(
-        this.tabNavigator,
-        EventType.SELECT,
-        () => this.updateLastSelectedTabIndex()
+      .listen(this.tabNavigator, EventType.SELECT, () =>
+        this.updateLastSelectedTabIndex()
       )
-      .listen(window, GoToCellEvents.TYPE, (e: CustomEvent<GoToCellEvents.GoToCellEvent>) => this.onCellSelection(e))
-      .listen(this.getElement(), EventType.KEYDOWN, (e: KeyboardEvent) => this.onKeyDown(e))
+      .listen(
+        window,
+        GoToCellEvents.TYPE,
+        (e: CustomEvent<GoToCellEvents.GoToCellEvent>) =>
+          this.onCellSelection(e)
+      )
+      .listen(this.getElement(), EventType.KEYDOWN, (e: KeyboardEvent) =>
+        this.onKeyDown(e)
+      )
   }
 
   /**
@@ -432,9 +437,8 @@ class ScoringPane extends BasePane {
       }
       this.polymorphicSelect.addItem({ text: name, value: value })
     }
-    const polymorphicControlElement = this.getElementByClass(
-      'polymorphicControl'
-    )
+    const polymorphicControlElement =
+      this.getElementByClass('polymorphicControl')
     this.polymorphicSelect.render(polymorphicControlElement)
     this.polymorphicSelect.setEnabled(this.hasAccess)
     this.updateCellScores()
@@ -443,15 +447,11 @@ class ScoringPane extends BasePane {
   override enterDocument() {
     super.enterDocument()
     this.getHandler()
-      .listen(
-        this.statusSelect,
-        EventType.CHANGE,
-        () => this.handleStatusChange()
+      .listen(this.statusSelect, EventType.CHANGE, () =>
+        this.handleStatusChange()
       )
-      .listen(
-        this.polymorphicSelect,
-        EventType.CHANGE,
-        () => this.handlePolymorphismChange()
+      .listen(this.polymorphicSelect, EventType.CHANGE, () =>
+        this.handlePolymorphismChange()
       )
       .listen(
         this.matrixModel,
@@ -461,22 +461,20 @@ class ScoringPane extends BasePane {
       .listen(
         this.matrixModel,
         CharacterRefreshedEvents.TYPE,
-        (e: CustomEvent<CharacterRefreshedEvent>) => this.handleCharacterRefreshedEvent(e)
+        (e: CustomEvent<CharacterRefreshedEvent>) =>
+          this.handleCharacterRefreshedEvent(e)
       )
       .listen(
         this.matrixModel,
         CharacterChangedEvents.TYPE,
-        (e: CustomEvent<CharacterChangedEvent>) => this.handleCharacterChangedEvent(e)
+        (e: CustomEvent<CharacterChangedEvent>) =>
+          this.handleCharacterChangedEvent(e)
       )
-      .listen(
-        this.scoringGridTable,
-        MobileFriendlyClickEventType,
-        (e:Event) => this.handleGridSelect(e)
+      .listen(this.scoringGridTable, MobileFriendlyClickEventType, (e: Event) =>
+        this.handleGridSelect(e)
       )
-      .listen(
-        this.getElement(),
-        EventType.KEYDOWN,
-       (e: KeyboardEvent) => this.handleKeyDown(e)
+      .listen(this.getElement(), EventType.KEYDOWN, (e: KeyboardEvent) =>
+        this.handleKeyDown(e)
       )
   }
 
@@ -1043,23 +1041,17 @@ class ContinousDataPane extends BasePane {
     const handler = this.getHandler()
     const startInputElement = this.getElementByClass('start-input')
     handler
-      .listen(
-        this.statusSelect,
-        EventType.CHANGE,
-        () => this.handleStatusChange()
+      .listen(this.statusSelect, EventType.CHANGE, () =>
+        this.handleStatusChange()
       )
-      .listen(
-        startInputElement,
-        EventType.CHANGE,
-        () => this.handleValueChange()
+      .listen(startInputElement, EventType.CHANGE, () =>
+        this.handleValueChange()
       )
     const character = this.matrixModel.getCharacters().getById(this.characterId)
     if (character!.getType() == CharacterType.CONTINUOUS) {
       const endInputElement = this.getElementByClass('end-input')
-      handler.listen(
-        endInputElement,
-        EventType.CHANGE,
-        () => this.handleValueChange()
+      handler.listen(endInputElement, EventType.CHANGE, () =>
+        this.handleValueChange()
       )
     }
   }
@@ -1170,7 +1162,9 @@ class NotesPane extends BasePane {
     const notesElement = this.getElementByClass('notesArea')
     this.getHandler()
       .listen(notesElement, EventType.BLUR, () => this.saveNotes())
-      .listen(notesElement, EventType.KEYDOWN, (e: Event) => this.onHandleKeyDown(e))
+      .listen(notesElement, EventType.KEYDOWN, (e: Event) =>
+        this.onHandleKeyDown(e)
+      )
   }
 
   /**
@@ -1214,9 +1208,7 @@ class NotesPane extends BasePane {
    */
   static htmlContent(notes: string): string {
     return (
-      '<textarea class="notesArea" maxlength="65535">' +
-      notes +
-      '</textarea>'
+      '<textarea class="notesArea" maxlength="65535">' + notes + '</textarea>'
     )
   }
 }
@@ -1260,9 +1252,7 @@ class MediaPane extends BasePane {
     this.setMediaInGrid()
     const mediaPane = this.getElementByClass('mediaPane')
     this.mediaGrid.render(mediaPane)
-    const openMediaElement = this.getElementByClass(
-      'openMediaWindowCheckbox'
-    )
+    const openMediaElement = this.getElementByClass('openMediaWindowCheckbox')
     this.openMediaCheckbox.render(openMediaElement)
     const settingsStorage = this.matrixModel.getUserMatrixSettings()
     const isAutoOpenMediaWindowSelected = !!settingsStorage.get(
@@ -1291,17 +1281,15 @@ class MediaPane extends BasePane {
     )
     if (this.hasAccess) {
       this.getHandler()
-        .listen(
-          addTaxonMediaElement,
-          EventType.CLICK,
-          () => this.handleAddCellMedia()
+        .listen(addTaxonMediaElement, EventType.CLICK, () =>
+          this.handleAddCellMedia()
         )
-        .listen(
-          this.openMediaCheckbox,
-          EventType.CHANGE,
-          () => this.handleMediaCheckboxChange()
+        .listen(this.openMediaCheckbox, EventType.CHANGE, () =>
+          this.handleMediaCheckboxChange()
         )
-        .listen(this.mediaGrid, EventType.CUT, (e: CustomEvent<any>) => this.removeMedia(e))
+        .listen(this.mediaGrid, EventType.CUT, (e: CustomEvent<any>) =>
+          this.removeMedia(e)
+        )
     }
   }
 
@@ -1527,25 +1515,19 @@ class CitationsPane extends BasePane {
     const addCitationElement = this.getElementByClass('addCitation')
     const addLastCitationElement = this.getElementByClass('addLastCitation')
     this.getHandler()
-      .listen(
-        this.citationsGridTable,
-        EventType.CUT,
-        (e: CustomEvent<any>) => this.handleRemoveCellCitation(e)
+      .listen(this.citationsGridTable, EventType.CUT, (e: CustomEvent<any>) =>
+        this.handleRemoveCellCitation(e)
       )
       .listen(
         this.citationsGridTable,
         EventType.SELECT,
         (e: CustomEvent<any>) => this.handleSelectCellCitation(e)
       )
-      .listen(
-        addCitationElement,
-        EventType.CLICK,
-        () => this.handleShowAddCellCitationDialog()
+      .listen(addCitationElement, EventType.CLICK, () =>
+        this.handleShowAddCellCitationDialog()
       )
-      .listen(
-        addLastCitationElement,
-        EventType.CLICK,
-        () => this.handleAddLastCellCitationDialog()
+      .listen(addLastCitationElement, EventType.CLICK, () =>
+        this.handleAddLastCellCitationDialog()
       )
   }
 
@@ -1828,10 +1810,8 @@ class CommentsPane extends BasePane {
     super.enterDocument()
     const addCommentElement = this.getElementByClass('addCellComment')
     if (this.hasAccess) {
-      this.getHandler().listen(
-        addCommentElement,
-        EventType.CLICK,
-        () => this.handleShowAddCellCommentDialog()
+      this.getHandler().listen(addCommentElement, EventType.CLICK, () =>
+        this.handleShowAddCellCommentDialog()
       )
     }
   }

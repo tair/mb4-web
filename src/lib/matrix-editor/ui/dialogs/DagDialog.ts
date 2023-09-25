@@ -46,10 +46,8 @@ export class DagDialog extends Modal {
 
   override enterDocument() {
     super.enterDocument()
-    this.getHandler().listen(
-      this.ruleActionComboBox,
-      EventType.CHANGE,
-      () => this.refreshGraph()
+    this.getHandler().listen(this.ruleActionComboBox, EventType.CHANGE, () =>
+      this.refreshGraph()
     )
   }
 

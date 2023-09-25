@@ -110,8 +110,7 @@ export class CharacterListDialog extends Dialog {
     this.viewSelect.addItem({ text: 'Minimal View', value: 2 })
     this.viewSelect.setSelectedIndex(0)
     this.viewSelect.render(contentElement)
-    const characterPane =
-      this.getElementByClass<HTMLElement>('characterPane')
+    const characterPane = this.getElementByClass<HTMLElement>('characterPane')
     this.characterGrid.render(characterPane)
     this.characterGrid.addScrollableContainer(characterPane)
     this.characterGrid.focus()
@@ -134,24 +133,24 @@ export class CharacterListDialog extends Dialog {
     super.enterDocument()
     const handler = this.getHandler()
     handler
-      .listen(this, EventType.SELECT, (e: CustomEvent<any>) => this.onHandleSelect(e))
-      .listen(window, GoToCellEvents.TYPE, (e: CustomEvent<GoToCharacterEvent>) => this.goCharacterIndex(e))
-      .listen(
-        this.viewSelect,
-        EventType.CHANGE,
-        (e:Event) => this.onHandleViewChange(e)
+      .listen(this, EventType.SELECT, (e: CustomEvent<any>) =>
+        this.onHandleSelect(e)
       )
       .listen(
-        this.characterGrid,
-        EventType.SELECT,
-        () => this.onHandleCharacterSelectionChange()
+        window,
+        GoToCellEvents.TYPE,
+        (e: CustomEvent<GoToCharacterEvent>) => this.goCharacterIndex(e)
+      )
+      .listen(this.viewSelect, EventType.CHANGE, (e: Event) =>
+        this.onHandleViewChange(e)
+      )
+      .listen(this.characterGrid, EventType.SELECT, () =>
+        this.onHandleCharacterSelectionChange()
       )
     if (!this.readonly) {
       const addCharacterElement = this.getElementByClass('addCharacter')
-      handler.listen(
-        addCharacterElement,
-        EventType.CLICK,
-        () => this.onHandleAddCharacterClick()
+      handler.listen(addCharacterElement, EventType.CLICK, () =>
+        this.onHandleAddCharacterClick()
       )
     }
   }

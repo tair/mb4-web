@@ -172,12 +172,10 @@ export class Scrollbar extends Component {
         .listen(
           documentElement,
           [EventType.TOUCHMOVE, EventType.MOUSEMOVE],
-          (e:MouseEvent) => this.onHandleThumbMouseMove(e)
+          (e: MouseEvent) => this.onHandleThumbMouseMove(e)
         )
-        .listen(
-          documentElement,
-          [EventType.TOUCHEND, EventType.MOUSEUP],
-          () => this.onHandleThumbDragStartEnd()
+        .listen(documentElement, [EventType.TOUCHEND, EventType.MOUSEUP], () =>
+          this.onHandleThumbDragStartEnd()
         )
     }
   }
@@ -265,15 +263,9 @@ export class Scrollbar extends Component {
         this.valueThumb.offsetLeft + this.valueThumb.offsetWidth
     }
     this.getHandler()
-      .listen(
-        document,
-        EventType.MOUSEUP,
-        () => this.stopBlockIncrementing()
-      )
-      .listen(
-        this.getElement(),
-        EventType.MOUSEMOVE,
-        (e:MouseEvent) => this.storeMousePosition(e)
+      .listen(document, EventType.MOUSEUP, () => this.stopBlockIncrementing())
+      .listen(this.getElement(), EventType.MOUSEMOVE, (e: MouseEvent) =>
+        this.storeMousePosition(e)
       )
     if (this.incTimer == 0) {
       this.incTimer = window.setInterval(

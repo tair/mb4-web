@@ -59,10 +59,8 @@ export class ImageViewerDialog extends Modal {
 
   override enterDocument() {
     super.enterDocument()
-    this.getHandler().listen(
-      window,
-      EventType.RESIZE,
-      () => this.onHandleResize()
+    this.getHandler().listen(window, EventType.RESIZE, () =>
+      this.onHandleResize()
     )
   }
 

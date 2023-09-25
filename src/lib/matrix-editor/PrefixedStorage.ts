@@ -4,10 +4,7 @@
 export class PrefixedStorage {
   private prefix: string
 
-  constructor(
-    private readonly storage: Storage,
-    prefix: string
-  ) {
+  constructor(private readonly storage: Storage, prefix: string) {
     this.prefix = prefix + '::'
   }
 

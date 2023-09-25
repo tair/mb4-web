@@ -52,7 +52,9 @@ export class GoToDialog extends Modal {
     this.getHandler()
       .listen(characterNumberElement, EventType.KEYUP, () => this.updateUI())
       .listen(taxonNumberElement, EventType.KEYUP, () => this.updateUI())
-      .listen(this, EventType.SELECT, (e: CustomEvent<any>) => this.onHandleSelect(e))
+      .listen(this, EventType.SELECT, (e: CustomEvent<any>) =>
+        this.onHandleSelect(e)
+      )
   }
 
   /**

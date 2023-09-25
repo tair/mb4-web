@@ -75,10 +75,8 @@ export class CharacterSearchDialog extends Dialog {
     super.enterDocument()
     const searchButtonElement = this.getElementByClass('searchButton')
     this.getHandler()
-      .listen(
-        this.gridTable,
-        EventType.SELECT,
-        (e: CustomEvent<any>) => this.onHandleGridClick(e)
+      .listen(this.gridTable, EventType.SELECT, (e: CustomEvent<any>) =>
+        this.onHandleGridClick(e)
       )
       .listen(
         this.matrixModel,
@@ -94,10 +92,8 @@ export class CharacterSearchDialog extends Dialog {
       .listen(this.characterSearchSelect, EventType.CHANGE, (e: Event) =>
         this.onHandleSearchChange(e)
       )
-      .listen(
-        searchButtonElement,
-        EventType.CLICK,
-        () => this.onHandleSearchClick()
+      .listen(searchButtonElement, EventType.CLICK, () =>
+        this.onHandleSearchClick()
       )
   }
 

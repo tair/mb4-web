@@ -83,7 +83,7 @@ export class RuleCheckerDialog extends Dialog {
     this.matrixModel = matrixModel
 
     this.loadingElement = this.getLoadingElement()
-    
+
     this.gridTable = new DataGridTable()
     this.registerDisposable(this.gridTable)
 
@@ -105,19 +105,19 @@ export class RuleCheckerDialog extends Dialog {
 
     const element = this.getElement()
     element.classList.add('checkerDialog')
-    
+
     const contentElement = this.getContentElement()
     contentElement.innerHTML = RuleCheckerDialog.htmlContent()
-    
+
     this.gridTable.addColumn(' ')
     this.gridTable.addColumn('Character')
     this.gridTable.addColumn('Taxon')
     this.gridTable.addColumn('Polymorphic')
     this.gridTable.addColumn('Violation')
-    
+
     const checkerElement = this.getElementByClass('violationsGrid')
     this.gridTable.render(checkerElement)
-    
+
     this.setButtonEnabled(
       RuleCheckerDialog.Buttons.FIX_SELECTED_VIOLATIONS,
       false
@@ -127,8 +127,12 @@ export class RuleCheckerDialog extends Dialog {
   override enterDocument() {
     super.enterDocument()
     this.getHandler()
-      .listen(this, EventType.SELECT, (e: CustomEvent<any>) => this.onHandleSelect(e))
-      .listen(this.gridTable, EventType.SELECT, (e: CustomEvent<any>) => this.handleGridClick(e))
+      .listen(this, EventType.SELECT, (e: CustomEvent<any>) =>
+        this.onHandleSelect(e)
+      )
+      .listen(this.gridTable, EventType.SELECT, (e: CustomEvent<any>) =>
+        this.handleGridClick(e)
+      )
       .listen(
         this.matrixModel,
         [

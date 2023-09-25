@@ -116,27 +116,17 @@ export class AddCharacterMediaDialog extends Dialog {
     const searchInputElement = this.getElementByClass('mediaInput')
     const findButtonElement = this.getElementByClass('media-find-button')
     this.getHandler()
-      .listen(this, EventType.SELECT, (e: CustomEvent<any>) => this.onHandleSelect(e))
-      .listen(
-        searchInputElement,
-        EventType.KEYDOWN,
-        (e: KeyboardEvent) => this.onSearchInputKeyDown(e)
+      .listen(this, EventType.SELECT, (e: CustomEvent<any>) =>
+        this.onHandleSelect(e)
       )
-      .listen(
-        searchInputElement,
-        EventType.KEYUP,
-        () => this.onSearchInputKeyUp()
+      .listen(searchInputElement, EventType.KEYDOWN, (e: KeyboardEvent) =>
+        this.onSearchInputKeyDown(e)
       )
-      .listen(
-        findButtonElement,
-        EventType.CLICK,
-        () => this.handleFindClick()
+      .listen(searchInputElement, EventType.KEYUP, () =>
+        this.onSearchInputKeyUp()
       )
-      .listen(
-        this.mediaGrid,
-        EventType.SELECT,
-        () => this.onGridSelectChange()
-      )
+      .listen(findButtonElement, EventType.CLICK, () => this.handleFindClick())
+      .listen(this.mediaGrid, EventType.SELECT, () => this.onGridSelectChange())
   }
 
   /**

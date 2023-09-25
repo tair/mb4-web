@@ -173,7 +173,8 @@ class MediaPane extends Component {
     this.getHandler().listen(
       this.mediaGrid,
       MobileFriendlyClickEventType,
-      (e: CustomEvent<MediaGridItemEvent>) => this.onHandleDoubleClickCellMedia(e)
+      (e: CustomEvent<MediaGridItemEvent>) =>
+        this.onHandleDoubleClickCellMedia(e)
     )
   }
 

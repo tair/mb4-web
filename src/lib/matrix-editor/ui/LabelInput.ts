@@ -28,12 +28,7 @@ export class LabelInput extends Component {
 
     const handler = this.getHandler()
     const element = this.getElement()
-    handler
-      .listen(
-        element,
-        EventType.BLUR,
-        () =>  this.handleChangedEvent()
-      )
+    handler.listen(element, EventType.BLUR, () => this.handleChangedEvent())
   }
 
   /**

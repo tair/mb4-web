@@ -42,17 +42,19 @@ export class DraggableSelect extends Component {
 
     const element = this.getElement()
     this.getHandler()
-      .listen(element, EventType.MOUSEDOWN, (e: MouseEvent) => this.handleMouseDown(e))
-      .listen(element, EventType.DROP, (e:DragEvent) => this.handleDrop(e))
+      .listen(element, EventType.MOUSEDOWN, (e: MouseEvent) =>
+        this.handleMouseDown(e)
+      )
+      .listen(element, EventType.DROP, (e: DragEvent) => this.handleDrop(e))
       .listen(
         element,
         [EventType.DRAGOVER, EventType.DRAGENTER],
-        (e:DragEvent) => this.handleDragEnter(e)
+        (e: DragEvent) => this.handleDragEnter(e)
       )
       .listen(
         element,
         [EventType.DRAGOUT, EventType.DRAGLEAVE],
-        (e:DragEvent) => this.handleDragLeave(e)
+        (e: DragEvent) => this.handleDragLeave(e)
       )
   }
 
@@ -93,7 +95,9 @@ export class DraggableSelect extends Component {
     li.draggable = true
     this.items.push(li)
     this.getHandler()
-      .listen(li, EventType.DRAGSTART, (e:DragEvent) => this.handleDragStart(e))
+      .listen(li, EventType.DRAGSTART, (e: DragEvent) =>
+        this.handleDragStart(e)
+      )
       .listen(li, EventType.DRAGEND, () => this.handleDragEnd())
   }
 

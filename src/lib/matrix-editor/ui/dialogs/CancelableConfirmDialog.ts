@@ -34,7 +34,9 @@ export class CancelableConfirmDialog extends Modal {
   override enterDocument() {
     super.enterDocument()
     const handler = this.getHandler()
-    handler.listen(this, EventType.SELECT, (e: CustomEvent<any>) => this.onHandleSelect(e))
+    handler.listen(this, EventType.SELECT, (e: CustomEvent<any>) =>
+      this.onHandleSelect(e)
+    )
   }
 
   /**

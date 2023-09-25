@@ -10,7 +10,10 @@ export class EventHandler implements Disposable {
    * This is a map of all of the registered targets and their event name to the
    * callback to be invoked.
    */
-  private registeredCallbacks: Map<EventTarget, Map<string, (...p: any[]) => any>>
+  private registeredCallbacks: Map<
+    EventTarget,
+    Map<string, (...p: any[]) => any>
+  >
 
   constructor() {
     this.registeredCallbacks = new Map()
@@ -22,7 +25,11 @@ export class EventHandler implements Disposable {
    * @param types The name of the events to listen.
    * @param callback The function to call for the event.
    */
-  listen(src: EventTarget, types: string | string[], callback: (...p: any[]) => any): EventHandler {
+  listen(
+    src: EventTarget,
+    types: string | string[],
+    callback: (...p: any[]) => any
+  ): EventHandler {
     if (!Array.isArray(types)) {
       return this.listen(src, [types], callback)
     }
@@ -39,10 +46,7 @@ export class EventHandler implements Disposable {
    * @param src The EventTarget to be listened to.
    * @param  types The name of the events to stop listening for.
    */
-  unlisten(
-    src: EventTarget,
-    types: string | string[]
-  ): EventHandler {
+  unlisten(src: EventTarget, types: string | string[]): EventHandler {
     if (!Array.isArray(types)) {
       return this.unlisten(src, [types])
     }

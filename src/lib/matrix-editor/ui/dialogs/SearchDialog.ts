@@ -121,16 +121,16 @@ abstract class SearchPane extends Component {
       TaxaRemovedEvents.TYPE,
     ]
     this.getHandler()
-      .listen(this.gridTable, EventType.SELECT, (e: CustomEvent<any>) => this.handleGridClick(e))
+      .listen(this.gridTable, EventType.SELECT, (e: CustomEvent<any>) =>
+        this.handleGridClick(e)
+      )
       .listen(
         this.matrixModel,
         CellsChangedEvents.TYPE,
         (e: CustomEvent<CellsChangedEvent>) => this.handleCellChange(e)
       )
-      .listen(
-        this.matrixModel,
-        searchChangeEvents,
-        () => this.handleModelChange()
+      .listen(this.matrixModel, searchChangeEvents, () =>
+        this.handleModelChange()
       )
   }
 
@@ -290,15 +290,11 @@ class CharacterPane extends SearchPane {
       .listen(searchInputElement, EventType.KEYDOWN, (e) =>
         this.handleEnterPress(() => this.handleSearchClick(), e)
       )
-      .listen(
-        this.characterSearchSelect,
-        EventType.CHANGE,
-        () => this.handleSearchChange()
+      .listen(this.characterSearchSelect, EventType.CHANGE, () =>
+        this.handleSearchChange()
       )
-      .listen(
-        searchButtonElement,
-        EventType.CLICK,
-        () => this.handleSearchClick()
+      .listen(searchButtonElement, EventType.CLICK, () =>
+        this.handleSearchClick()
       )
   }
 
@@ -419,15 +415,11 @@ class TaxaPane extends SearchPane {
       .listen(searchInputElement, EventType.KEYDOWN, (e) =>
         this.handleEnterPress(() => this.handleSearchClick(), e)
       )
-      .listen(
-        this.taxaSearchSelect,
-        EventType.CHANGE,
-        () => this.handleSearchChange()
+      .listen(this.taxaSearchSelect, EventType.CHANGE, () =>
+        this.handleSearchChange()
       )
-      .listen(
-        searchButtonElement,
-        EventType.CLICK,
-        () => this.handleSearchClick()
+      .listen(searchButtonElement, EventType.CLICK, () =>
+        this.handleSearchClick()
       )
   }
 
@@ -541,20 +533,14 @@ class CellPane extends SearchPane {
     super.enterDocument()
     const handler = this.getHandler()
     const searchButtonElement = this.getElementByClass('searchButton')
-    handler.listen(
-      this.taxaSelect,
-      EventType.CHANGE,
-      () => this.handleSearchChange()
+    handler.listen(this.taxaSelect, EventType.CHANGE, () =>
+      this.handleSearchChange()
     )
-    handler.listen(
-      this.searchSelect,
-      EventType.CHANGE,
-      () => this.handleSearchChange()
+    handler.listen(this.searchSelect, EventType.CHANGE, () =>
+      this.handleSearchChange()
     )
-    handler.listen(
-      searchButtonElement,
-      EventType.CLICK,
-      () => this.handleSearchClick()
+    handler.listen(searchButtonElement, EventType.CLICK, () =>
+      this.handleSearchClick()
     )
   }
 

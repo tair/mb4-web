@@ -88,10 +88,8 @@ export class ReadonlyCellDialog extends Dialog {
   override enterDocument() {
     super.enterDocument()
     const handler = this.getHandler()
-    handler.listen(
-      this.tabNavigator,
-      EventType.SELECT,
-      () => this.updateLastSelectedTabIndex()
+    handler.listen(this.tabNavigator, EventType.SELECT, () =>
+      this.updateLastSelectedTabIndex()
     )
   }
 
@@ -349,9 +347,7 @@ class NotesPane extends Component {
    * @return HTML content
    */
   htmlContent(): string {
-    return (
-      '<textarea class="notesArea" disabled>' + this.notes + '</textarea>'
-    )
+    return '<textarea class="notesArea" disabled>' + this.notes + '</textarea>'
   }
 }
 
@@ -395,7 +391,8 @@ class MediaPane extends Component {
     this.getHandler().listen(
       this.mediaGrid,
       MobileFriendlyClickEventType,
-      (e: CustomEvent<MediaGridItemEvent>) => this.onHandleDoubleClickCellMedia(e)
+      (e: CustomEvent<MediaGridItemEvent>) =>
+        this.onHandleDoubleClickCellMedia(e)
     )
   }
 

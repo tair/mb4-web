@@ -70,7 +70,9 @@ export class AddRuleDialog extends Modal {
   override enterDocument() {
     super.enterDocument()
     const handler = this.getHandler()
-    handler.listen(this, EventType.SELECT, (e: CustomEvent<any>) => this.onHandleSelect(e))
+    handler.listen(this, EventType.SELECT, (e: CustomEvent<any>) =>
+      this.onHandleSelect(e)
+    )
   }
 
   /**
@@ -144,10 +146,7 @@ class AddScoringPane extends Component implements CharacterRuleAdder {
   private actionCharacterSelect: Select
   private actionCharacterStateSelect: Select
 
-  constructor(
-    private matrixModel: MatrixModel,
-    private dialog: AddRuleDialog
-  ) {
+  constructor(private matrixModel: MatrixModel, private dialog: AddRuleDialog) {
     super()
     this.characterSelect = new Select()
     this.registerDisposable(this.characterSelect)
@@ -186,25 +185,17 @@ class AddScoringPane extends Component implements CharacterRuleAdder {
   override enterDocument() {
     super.enterDocument()
     this.getHandler()
-      .listen(
-        this.matrixModel,
-        CharacterChangedEvents.TYPE,
-        () => this.handleCharacterChange()
+      .listen(this.matrixModel, CharacterChangedEvents.TYPE, () =>
+        this.handleCharacterChange()
       )
-      .listen(
-        this.characterSelect,
-        EventType.SELECT,
-        () => this.handleCharacterSelect()
+      .listen(this.characterSelect, EventType.SELECT, () =>
+        this.handleCharacterSelect()
       )
-      .listen(
-        this.actionCharacterSelect,
-        EventType.SELECT,
-        () => this.handleActionCharacterSelect()
+      .listen(this.actionCharacterSelect, EventType.SELECT, () =>
+        this.handleActionCharacterSelect()
       )
-      .listen(
-        this.actionCharacterStateSelect,
-        EventType.SELECT,
-        () => this.handleActionCharacterStateSelect()
+      .listen(this.actionCharacterStateSelect, EventType.SELECT, () =>
+        this.handleActionCharacterStateSelect()
       )
     this.characterSelect.setSelectedIndex(0)
   }
@@ -370,10 +361,7 @@ class AddMediaPane extends Component implements CharacterRuleAdder {
   private characterSelect: Select
   private actionCharacterSelect: Select
 
-  constructor(
-    private matrixModel: MatrixModel,
-    private dialog: AddRuleDialog
-  ) {
+  constructor(private matrixModel: MatrixModel, private dialog: AddRuleDialog) {
     super()
     this.characterSelect = new Select()
     this.registerDisposable(this.characterSelect)

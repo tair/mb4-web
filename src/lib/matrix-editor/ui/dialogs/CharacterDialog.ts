@@ -79,25 +79,17 @@ export class CharacterDialog extends Dialog {
   override enterDocument() {
     super.enterDocument()
     this.getHandler()
-      .listen(
-        this.tabNavigator,
-        EventType.SELECT,
-        () => this.updateLastSelectedTabIndex()
+      .listen(this.tabNavigator, EventType.SELECT, () =>
+        this.updateLastSelectedTabIndex()
       )
-      .listen(
-        this.getElement(),
-        EventType.KEYDOWN,
-        (e: KeyboardEvent) => this.checkPendingChangesOnKeyDown(e)
+      .listen(this.getElement(), EventType.KEYDOWN, (e: KeyboardEvent) =>
+        this.checkPendingChangesOnKeyDown(e)
       )
-      .listen(
-        this.matrixModel,
-        CharacterChangedEvents.TYPE,
-        () => this.updateCharacterName()
+      .listen(this.matrixModel, CharacterChangedEvents.TYPE, () =>
+        this.updateCharacterName()
       )
-      .listen(
-        this.matrixModel,
-        CharacterRefreshedEvents.TYPE,
-        () => this.updateCharacterName()
+      .listen(this.matrixModel, CharacterRefreshedEvents.TYPE, () =>
+        this.updateCharacterName()
       )
   }
 
@@ -276,7 +268,8 @@ class BasePane extends Component {
     this.getHandler().listen(
       this.matrixModel,
       CharacterRefreshedEvents.TYPE,
-      (e: CustomEvent<CharacterRefreshedEvent>) => this.handleCharacterRefreshedEvent(e)
+      (e: CustomEvent<CharacterRefreshedEvent>) =>
+        this.handleCharacterRefreshedEvent(e)
     )
   }
 
@@ -356,19 +349,17 @@ class ContinuousCharacterPane extends BasePane {
     const descriptionElement = this.getElementByClass('descriptionInput')
     const hasCharacterChangedCheck = () => this.hasCharacterChanged(false)
     this.getHandler()
-      .listen(
-        nameInputElement,
-        EventType.KEYDOWN,
-        (e: KeyboardEvent) => this.handleEnterPress(e)
+      .listen(nameInputElement, EventType.KEYDOWN, (e: KeyboardEvent) =>
+        this.handleEnterPress(e)
       )
       .listen(nameInputElement, EventType.KEYUP, hasCharacterChangedCheck)
       .listen(descriptionElement, EventType.KEYUP, hasCharacterChangedCheck)
-      .listen(
-        descriptionElement,
-        [EventType.KEYDOWN],
-        (e: KeyboardEvent) => this.handleEnterPress(e)
+      .listen(descriptionElement, [EventType.KEYDOWN], (e: KeyboardEvent) =>
+        this.handleEnterPress(e)
       )
-      .listen(this.dialog, EventType.SELECT, (e: CustomEvent<any>) => this.onHandleSelect(e))
+      .listen(this.dialog, EventType.SELECT, (e: CustomEvent<any>) =>
+        this.onHandleSelect(e)
+      )
   }
 
   override setDialogButtons() {
@@ -593,10 +584,8 @@ class CharacterPane extends BasePane {
     const descriptionElement = this.getElementByClass('descriptionInput')
     const addStateElement = this.getElementByClass('addCharacterState')
     this.getHandler()
-      .listen(
-        nameInputElement,
-        EventType.KEYDOWN,
-        (e: KeyboardEvent) => this.handleEnterPress(e)
+      .listen(nameInputElement, EventType.KEYDOWN, (e: KeyboardEvent) =>
+        this.handleEnterPress(e)
       )
       .listen(nameInputElement, EventType.KEYUP, () =>
         this.hasCharacterChanged(false)
@@ -607,34 +596,28 @@ class CharacterPane extends BasePane {
       .listen(descriptionElement, EventType.KEYUP, () =>
         this.hasCharacterChanged(false)
       )
-      .listen(
-        descriptionElement,
-        EventType.KEYDOWN,
-        (e: KeyboardEvent) => this.handleEnterPress(e)
+      .listen(descriptionElement, EventType.KEYDOWN, (e: KeyboardEvent) =>
+        this.handleEnterPress(e)
       )
       .listen(descriptionElement, [EventType.PASTE, EventType.CUT], () =>
         this.hasCharacterChanged(true)
       )
-      .listen(this.dialog, EventType.SELECT, (e: CustomEvent<any>) => this.onHandleSelect(e))
-      .listen(
-        this.statesGridTable,
-        EventType.CUT,
-        (e:Event) => this.handleRemoveCharacterState(e)
+      .listen(this.dialog, EventType.SELECT, (e: CustomEvent<any>) =>
+        this.onHandleSelect(e)
+      )
+      .listen(this.statesGridTable, EventType.CUT, (e: Event) =>
+        this.handleRemoveCharacterState(e)
       )
       .listen(
         this.statesGridTable,
         ReorderEvents.TYPE,
         (e: CustomEvent<ReorderEvent>) => this.handleReorderCharacterState(e)
       )
-      .listen(
-        this.orderingSelect,
-        EventType.CHANGE,
-        () => this.hasCharacterChanged(true)
+      .listen(this.orderingSelect, EventType.CHANGE, () =>
+        this.hasCharacterChanged(true)
       )
-      .listen(
-        addStateElement,
-        EventType.CLICK,
-        () => this.handleAddCharacterState()
+      .listen(addStateElement, EventType.CLICK, () =>
+        this.handleAddCharacterState()
       )
   }
 
@@ -714,10 +697,8 @@ class CharacterPane extends BasePane {
       const stateNameInput = this.stateNameInputs[x]
       const characterState = this.modifiedCharacterStates[x]
       const characterStateId = characterState.getId()
-      handler.listen(
-        stateNameInput,
-        EventType.KEYDOWN,
-        (e: KeyboardEvent) => this.handleEnterPress(e)
+      handler.listen(stateNameInput, EventType.KEYDOWN, (e: KeyboardEvent) =>
+        this.handleEnterPress(e)
       )
       handler.listen(stateNameInput, EventType.CHANGE, () =>
         this.handleCharacterStateNameChanged(characterStateId, stateNameInput)
@@ -1027,10 +1008,8 @@ class MediaPane extends BasePane {
     super.enterDocument()
     const addCharacterMedia = this.getElementByClass('addCharacterMedia')
     this.getHandler()
-      .listen(
-        addCharacterMedia,
-        EventType.CLICK,
-        (e: CustomEvent<any>) => this.handleShowAddCharacterMediaDialog(e)
+      .listen(addCharacterMedia, EventType.CLICK, (e: CustomEvent<any>) =>
+        this.handleShowAddCharacterMediaDialog(e)
       )
       .listen(
         this.mediaGridTable,
@@ -1112,8 +1091,7 @@ class MediaPane extends BasePane {
     })
 
     // Attach the scrollable container after the element has been rendered.
-    const scrollableContainer =
-      this.mediaGridTable.getElementByClass('topGrid')
+    const scrollableContainer = this.mediaGridTable.getElementByClass('topGrid')
     characterStateMedia.forEach(function (firstMediaGrid) {
       firstMediaGrid.addScrollableContainer(scrollableContainer)
     })
@@ -1129,7 +1107,8 @@ class MediaPane extends BasePane {
       handler.listen(
         grid,
         MobileFriendlyClickEventType,
-        (e: CustomEvent<MediaGridItemEvent>) => this.handleDoubleClickCharacterMedia(e)
+        (e: CustomEvent<MediaGridItemEvent>) =>
+          this.handleDoubleClickCharacterMedia(e)
       )
     }
   }
@@ -1319,12 +1298,12 @@ class CommentsPane extends BasePane {
     super.enterDocument()
     const addCommentElement = this.getElementByClass('addCellComment')
     this.getHandler()
-      .listen(
-        addCommentElement,
-        EventType.CLICK,
-        () => this.handleShowAddCharacterCommentDialog()
+      .listen(addCommentElement, EventType.CLICK, () =>
+        this.handleShowAddCharacterCommentDialog()
       )
-      .listen(this.dialog, EventType.SELECT, (e: KeyboardEvent) => this.onHandleSelect(e))
+      .listen(this.dialog, EventType.SELECT, (e: KeyboardEvent) =>
+        this.onHandleSelect(e)
+      )
   }
 
   override setDialogButtons() {
@@ -1511,25 +1490,19 @@ class CitationsPane extends BasePane {
     const addCitationElement = this.getElementByClass('addCitation')
     const addLastCitationElement = this.getElementByClass('addLastCitation')
     this.getHandler()
-      .listen(
-        this.citationsGridTable,
-        EventType.CUT,
-        (e: CustomEvent<any>) => this.handleRemoveCharacterCitation(e)
+      .listen(this.citationsGridTable, EventType.CUT, (e: CustomEvent<any>) =>
+        this.handleRemoveCharacterCitation(e)
       )
       .listen(
         this.citationsGridTable,
         EventType.SELECT,
         (e: CustomEvent<any>) => this.handleSelectCharacterCitation(e)
       )
-      .listen(
-        addCitationElement,
-        EventType.CLICK,
-        () => this.handleShowAddCharacterCitationDialog()
+      .listen(addCitationElement, EventType.CLICK, () =>
+        this.handleShowAddCharacterCitationDialog()
       )
-      .listen(
-        addLastCitationElement,
-        EventType.CLICK,
-        () => this.handleAddLastCharacterCitationClick()
+      .listen(addLastCitationElement, EventType.CLICK, () =>
+        this.handleAddLastCharacterCitationClick()
       )
   }
 

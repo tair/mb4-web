@@ -19,7 +19,7 @@ export class TaxaListDialog extends Dialog {
   private static readonly removeTaxaConfirmText =
     'You have just attempted to remove a taxon that has already been scored ' +
     'in this matrix. Carrying this action forward will permanently erase ' +
-    'that taxon\'s scores and any associated comments and media from the ' +
+    "that taxon's scores and any associated comments and media from the " +
     'cells in this matrix (it will not erase the taxon or media from the ' +
     'database). If you do not wish to remove this row and its data ' +
     'permanently we suggest you investigate the Partitions tool.'
@@ -42,7 +42,7 @@ export class TaxaListDialog extends Dialog {
     this.taxaNotInMatrixSelect = new DraggableSelect()
     this.registerDisposable(this.taxaNotInMatrixSelect)
   }
-  
+
   protected override initialize(): void {
     super.initialize()
     this.setTitle('Matrix Taxa List Editor')
@@ -60,7 +60,7 @@ export class TaxaListDialog extends Dialog {
     const currentTaxaSelect = this.getElementByClass('currentTaxaSelect')
     this.taxaInMatrixSelect.render(currentTaxaSelect)
     this.setTaxaInMatrixSelect()
-    
+
     const availableTaxaSelect = this.getElementByClass('availableTaxaSelect')
     this.taxaNotInMatrixSelect.setEnabled(false)
     this.taxaNotInMatrixSelect.render(availableTaxaSelect)

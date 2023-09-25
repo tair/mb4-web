@@ -27,7 +27,9 @@ export class AddCommentDialog extends Modal {
   override enterDocument() {
     this.enterDocument()
     const handler = this.getHandler()
-    handler.listen(this, EventType.SELECT, (e: CustomEvent<any>) => this.onHandleSelect(e))
+    handler.listen(this, EventType.SELECT, (e: CustomEvent<any>) =>
+      this.onHandleSelect(e)
+    )
   }
 
   /**

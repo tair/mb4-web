@@ -31,7 +31,7 @@ export class Component extends DelegatingEventTarget implements Disposable {
     super()
 
     this.inDocument = false
-    this.disposed = false;
+    this.disposed = false
     this.children = []
     this.disposableCallbacks = []
   }
@@ -67,7 +67,6 @@ export class Component extends DelegatingEventTarget implements Disposable {
     this.disposableCallbacks.push(callback)
   }
 
-  
   /**
    * Adds a disposable object to this component.
    */
@@ -135,9 +134,9 @@ export class Component extends DelegatingEventTarget implements Disposable {
     if (this.inDocument) {
       throw new Error('This component was already rendered')
     }
-    
+
     this.initialize()
-    
+
     if (!this.element) {
       this.createDom()
     }
@@ -178,7 +177,7 @@ export class Component extends DelegatingEventTarget implements Disposable {
   /**
    * Complete Render
    */
-  protected finalizeDom():void {}
+  protected finalizeDom(): void {}
 
   /**
    * Called by dispose to clean up the elements and listeners created by a
@@ -287,7 +286,7 @@ export class Component extends DelegatingEventTarget implements Disposable {
    * Propagate an event using this component as an event target.
    * @param e The event to propagate.
    */
-  protected propagateEvent(e:Event) {
+  protected propagateEvent(e: Event) {
     this.dispatchEvent(new Event(e.type))
   }
 

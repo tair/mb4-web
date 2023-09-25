@@ -22,8 +22,9 @@ export class Radio extends Component {
     super.enterDocument()
 
     const element = this.getElement()
-    this.getHandler()
-      .listen(element, EventType.CHANGE, (e) => this.propagateEvent(e))
+    this.getHandler().listen(element, EventType.CHANGE, (e) =>
+      this.propagateEvent(e)
+    )
   }
 
   /**

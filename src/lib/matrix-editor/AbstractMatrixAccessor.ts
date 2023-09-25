@@ -71,8 +71,10 @@ export abstract class AbstractMatrixAccessor {
    * Sets the cell media. This is done after loading cell notes.
    */
   protected loadCellMedia() {
-    const request = new Request('getCellMedia')
-      .addParameter('id', this.matrixId)
+    const request = new Request('getCellMedia').addParameter(
+      'id',
+      this.matrixId
+    )
     this.matrixLoader
       .send(request)
       .then((data: { [key: string]: any }) => {
@@ -108,8 +110,10 @@ export abstract class AbstractMatrixAccessor {
    * Load the cell notes.
    */
   protected loadCellNotes() {
-    const request = new Request('getAllCellNotes')
-      .addParameter('id', this.matrixId)
+    const request = new Request('getAllCellNotes').addParameter(
+      'id',
+      this.matrixId
+    )
     this.matrixLoader
       .send(request)
       .then((data: { [key: string]: any }) => {

@@ -34,9 +34,10 @@ export class Checkbox extends Component {
   protected override enterDocument(): void {
     super.enterDocument()
     const element = this.getElement()
-    this.getHandler()
-      .listen(element, EventType.CHANGE, (e) => this.propagateEvent(e))
-  } 
+    this.getHandler().listen(element, EventType.CHANGE, (e) =>
+      this.propagateEvent(e)
+    )
+  }
 
   /** @return Whether the value of the checkbox. */
   getValue(): number {

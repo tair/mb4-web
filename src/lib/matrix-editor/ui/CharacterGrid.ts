@@ -80,12 +80,12 @@ export class CharacterGrid extends Component {
     const element = this.getElement()
     const handler = this.getHandler()
     handler
-      .listen(
-        element,
-        MobileFriendlyClickEventType,
-        (e:Event) => this.onHandleCharacterDoubleClick(e)
+      .listen(element, MobileFriendlyClickEventType, (e: Event) =>
+        this.onHandleCharacterDoubleClick(e)
       )
-      .listen(element, EventType.MOUSEDOWN, (e: MouseEvent) => this.onHandleMouseDown(e))
+      .listen(element, EventType.MOUSEDOWN, (e: MouseEvent) =>
+        this.onHandleMouseDown(e)
+      )
       .listen(
         element,
         [EventType.KEYDOWN, EventType.KEYPRESS],
@@ -96,12 +96,14 @@ export class CharacterGrid extends Component {
         .listen(
           this.matrixModel,
           CharacterChangedEvents.TYPE,
-          (e: CustomEvent<CharacterChangedEvent>) => this.onHandleCharacterChanged(e)
+          (e: CustomEvent<CharacterChangedEvent>) =>
+            this.onHandleCharacterChanged(e)
         )
         .listen(
           this.matrixModel,
           CharacterRefreshedEvents.TYPE,
-          (e: CustomEvent<CharacterRefreshedEvent>) => this.onHandleCharacterRefreshed(e)
+          (e: CustomEvent<CharacterRefreshedEvent>) =>
+            this.onHandleCharacterRefreshed(e)
         )
     }
   }
@@ -281,12 +283,14 @@ export class CharacterGrid extends Component {
     handler.listen(
       this.matrixModel,
       CharacterChangedEvents.TYPE,
-      (e: CustomEvent<CharacterChangedEvent>) => this.onHandleCharacterChanged(e)
+      (e: CustomEvent<CharacterChangedEvent>) =>
+        this.onHandleCharacterChanged(e)
     )
     handler.listen(
       this.matrixModel,
       CharacterRefreshedEvents.TYPE,
-      (e: CustomEvent<CharacterRefreshedEvent>) => this.onHandleCharacterRefreshed(e)
+      (e: CustomEvent<CharacterRefreshedEvent>) =>
+        this.onHandleCharacterRefreshed(e)
     )
   }
 

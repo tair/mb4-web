@@ -60,26 +60,20 @@ export class AddCitationDialog extends Dialog {
     const citationInputElement = this.getElementByClass('citationInput')
     const citationFindElement = this.getElementByClass('citationFindButton')
     this.getHandler()
-      .listen(
-        citationInputElement,
-        EventType.KEYDOWN,
-        (e: KeyboardEvent) => this.onHandlerSearchInputKeyDown(e)
+      .listen(citationInputElement, EventType.KEYDOWN, (e: KeyboardEvent) =>
+        this.onHandlerSearchInputKeyDown(e)
       )
-      .listen(
-        citationInputElement,
-        [EventType.INPUT, EventType.CHANGE],
-        () => this.onHandleSearchInputChange()
+      .listen(citationInputElement, [EventType.INPUT, EventType.CHANGE], () =>
+        this.onHandleSearchInputChange()
       )
-      .listen(
-        citationFindElement,
-        EventType.CLICK,
-        () => this.handleFindClick()
+      .listen(citationFindElement, EventType.CLICK, () =>
+        this.handleFindClick()
       )
-      .listen(this, EventType.SELECT, (e: CustomEvent<any>) => this.onHandleSelect(e))
-      .listen(
-        this.citationSelect,
-        EventType.SELECT,
-        () => this.enableSaveButton()
+      .listen(this, EventType.SELECT, (e: CustomEvent<any>) =>
+        this.onHandleSelect(e)
+      )
+      .listen(this.citationSelect, EventType.SELECT, () =>
+        this.enableSaveButton()
       )
 
     // disable save button

@@ -37,10 +37,10 @@ export class Modal extends Component {
     super()
 
     this.title = ''
-    this.hasTitleCloseButton = true;
-    this.buttons= []
-    this.hasBackdrop = true;
-    this.disposeOnHide = false;
+    this.hasTitleCloseButton = true
+    this.buttons = []
+    this.hasBackdrop = true
+    this.disposeOnHide = false
   }
 
   override dispose() {

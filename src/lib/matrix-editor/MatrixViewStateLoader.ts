@@ -98,7 +98,8 @@ export class MatrixViewStateLoader {
     handler.listen(
       this.matrixContainer,
       CellHighlightModeChangeEvents.TYPE,
-      (e: CustomEvent<CellHighlightModeChangeEvent>) => this.onCellHighlightModeChange(e)
+      (e: CustomEvent<CellHighlightModeChangeEvent>) =>
+        this.onCellHighlightModeChange(e)
     )
     handler.listen(
       this.matrixContainer,
@@ -109,11 +110,7 @@ export class MatrixViewStateLoader {
     // Saving the view state on the browser unload is not gauranteed to complete. Since the transactions are
     // asynchronous, they may be aborted before they can complete. Some browsers (e.g. Chrome) is fast enough so that
     // the indexDb is written but this is does not always complete for Firefox.
-    handler.listen(
-      window,
-      EventType.BEFOREUNLOAD,
-      () => this.saveViewState()
-    )
+    handler.listen(window, EventType.BEFOREUNLOAD, () => this.saveViewState())
   }
 
   /**

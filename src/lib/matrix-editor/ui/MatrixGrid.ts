@@ -97,13 +97,13 @@ export class MatrixGrid extends Component {
     this.cellRenderer = new CellStateNameImageRenderer()
 
     this.taxaRenderer = new TaxaNameImageRenderer()
-    
+
     this.taxaRenderer.setTaxaPreferences(
       this.matrixModel.getProjectProperties()
     )
-    
+
     this.taxaRenderer.setReadonly(this.matrixModel.isReadonly())
-    
+
     this.characterRenderer = new CharacterNameNumberRenderer()
     this.characterRenderer.setCharacterRules(
       this.matrixModel.getCharacterRules()
@@ -114,7 +114,7 @@ export class MatrixGrid extends Component {
     this.characterRenderer.setShouldDisplayWarnings(
       this.matrixModel.hasAccessToAtleastOneTaxon()
     )
-    
+
     this.horizontalScrollBar = new Scrollbar()
     this.horizontalScrollBar.setOrientation(Orientation.HORIZONTAL)
     this.registerDisposable(this.horizontalScrollBar)
@@ -122,13 +122,13 @@ export class MatrixGrid extends Component {
     this.verticalScrollBar = new Scrollbar()
     this.verticalScrollBar.setOrientation(Orientation.VERTICAL)
     this.registerDisposable(this.verticalScrollBar)
-    
+
     this.currentCellTooltip = new CellTooltip(matrixModel)
-    
+
     this.characterTooltipManager = new CharacterTooltipManager(matrixModel)
-    
+
     this.windowDimensionHeight = document.documentElement.clientHeight
-    
+
     this.windowDimensionWidth = document.documentElement.clientWidth
   }
 
@@ -248,10 +248,8 @@ export class MatrixGrid extends Component {
           this.onHandleCharacterMouseLeave(e)
         )
     } else {
-      handler.listen(
-        document.body,
-        EventType.TOUCHSTART,
-        (e: TouchEvent) => this.onHandleDoubleTap(e)
+      handler.listen(document.body, EventType.TOUCHSTART, (e: TouchEvent) =>
+        this.onHandleDoubleTap(e)
       )
     }
 
@@ -305,10 +303,7 @@ export class MatrixGrid extends Component {
    */
   getCurrentTaxonId(): number {
     if (this.lastClickedCell) {
-      return parseInt(
-        this.lastClickedCell.dataset['taxonId'] as string,
-        10
-      )
+      return parseInt(this.lastClickedCell.dataset['taxonId'] as string, 10)
     }
     const taxa = this.matrixModel.getPartitionTaxa()
 
@@ -542,8 +537,7 @@ export class MatrixGrid extends Component {
     const gridEmptyCorner = this.getElementByClass<HTMLElement>(
       'mb-grid-empty-header'
     )
-    const gridCharacters =
-      this.getElementByClass<HTMLElement>('gridCharacters')
+    const gridCharacters = this.getElementByClass<HTMLElement>('gridCharacters')
 
     // Firefox uses the height with calculating the borderboxsize so unset the height to get the minimum possible value.
     mb.setElementStyle(gridCharacters, 'height', '')
@@ -558,9 +552,8 @@ export class MatrixGrid extends Component {
       'height',
       gridCharacterBoxSize.height + 'px'
     )
-    const tableHeaderHeight = this.getElementByClass(
-      'matrixgridHeader'
-    ).getBoundingClientRect().height
+    const tableHeaderHeight =
+      this.getElementByClass('matrixgridHeader').getBoundingClientRect().height
     const topButtonBarHeight = document
       .getElementsByClassName('topButtonBar')[0]
       .getBoundingClientRect().height
@@ -576,13 +569,9 @@ export class MatrixGrid extends Component {
     const fixedHeight = remainingHeight - mb.getScrollbarWidth()
     const gridCells = this.getElementByClass<HTMLElement>('gridCells')
     mb.setElementStyle(gridCells, 'width', gridCellsWidth + 'px')
-    const gridTable = document.getElementById(
-      'matrixgridTable'
-    ) as HTMLElement
+    const gridTable = document.getElementById('matrixgridTable') as HTMLElement
     mb.setElementStyle(gridTable, 'width', this.windowDimensionWidth + 'px')
-    const tableFixed = this.getElementByClass<HTMLElement>(
-      'matrixgridFixed'
-    )
+    const tableFixed = this.getElementByClass<HTMLElement>('matrixgridFixed')
     mb.setElementStyle(tableFixed, 'height', fixedHeight + 'px')
     const characterColumns = gridCharacters.getElementsByTagName('th')
     const currentColumnElement = characterColumns[this.currentColumn]
@@ -641,9 +630,8 @@ export class MatrixGrid extends Component {
     }
 
     // Recalculate the empty spacer so that it can be used to scale the scroll bar.
-    const rightBottomSpacer = this.getElementByClass<HTMLElement>(
-      'rightBottomSpacer'
-    )
+    const rightBottomSpacer =
+      this.getElementByClass<HTMLElement>('rightBottomSpacer')
     const taxaHeight = gridTaxa.scrollHeight - this.rowHeight / 2
     const charactersWidth =
       this.getElementByClass('mb-grid-empty-header').clientWidth +
@@ -664,8 +652,7 @@ export class MatrixGrid extends Component {
 
     /* scroll bar border */
     const gridTaxa = this.getElementByClass<HTMLElement>('gridTaxa')
-    const gridCharacters =
-      this.getElementByClass<HTMLElement>('gridCharacters')
+    const gridCharacters = this.getElementByClass<HTMLElement>('gridCharacters')
     const charactersWidth =
       this.getElementByClass<HTMLElement>('mb-grid-empty-header').clientWidth +
       gridCharacters.scrollWidth
@@ -838,9 +825,7 @@ export class MatrixGrid extends Component {
    *
    */
   protected onHandleTableScroll() {
-    const gridTable = document.getElementById(
-      'matrixgridTable'
-    ) as HTMLElement
+    const gridTable = document.getElementById('matrixgridTable') as HTMLElement
     gridTable.scrollLeft = 0
     gridTable.scrollTop = 0
   }
@@ -971,10 +956,7 @@ export class MatrixGrid extends Component {
     for (let x = 0; x < rows.length; x++) {
       const row = rows[x]
       const taxonElement = row.getElementsByTagName('td')[0]
-      if (
-        taxonElement &&
-        taxonId === taxonElement.dataset['taxonId']
-      ) {
+      if (taxonElement && taxonId === taxonElement.dataset['taxonId']) {
         row.classList.remove('hover')
         const tr = mb.getElementParent(cell, 'TR')
         tr.classList.remove('hover')
@@ -1284,8 +1266,14 @@ export class MatrixGrid extends Component {
       this.onHandleCellsDoubleclick(null)
       return true
     }
-    const taxonId = parseInt(this.lastClickedCell.dataset['taxonId'] as string, 10)
-    const characterId = parseInt(this.lastClickedCell.dataset['characterId'] as string, 10)
+    const taxonId = parseInt(
+      this.lastClickedCell.dataset['taxonId'] as string,
+      10
+    )
+    const characterId = parseInt(
+      this.lastClickedCell.dataset['characterId'] as string,
+      10
+    )
     let nextCharacter
     switch (e.code) {
       case KeyCodes.DOWN:

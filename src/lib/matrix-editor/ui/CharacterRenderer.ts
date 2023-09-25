@@ -173,11 +173,11 @@ export class CharacterNumberRenderer extends CharacterRenderer {
 }
 
 type ContentData = {
-  id?: number,
-  name?: string,
-  displayMode?: number,
-  num: number,
-  hasRules: boolean,
-  hasParentRules: boolean,
+  id?: number
+  name?: string
+  displayMode?: number
+  num: number
+  hasRules: boolean
+  hasParentRules: boolean
   hasWarnings: boolean
 }

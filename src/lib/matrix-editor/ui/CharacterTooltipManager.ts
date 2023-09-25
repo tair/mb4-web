@@ -24,9 +24,7 @@ export class CharacterTooltipManager {
     let tooltip = bootstrap.Popover.getInstance(element)
     if (!tooltip) {
       const characterId = CharacterTooltipManager.getCharacterId(element)
-      const character = this.matrixModel
-        .getCharacters()
-        .getById(characterId)
+      const character = this.matrixModel.getCharacters().getById(characterId)
       const content = this.tooltipForCharacter(character)
       tooltip = CharacterTooltipManager.createToolTip(
         element,
@@ -40,12 +38,13 @@ export class CharacterTooltipManager {
       this.hideAll()
       tooltip.show()
 
-      const contentElement = element.getElementsByClassName('characterTooltip')[0]
+      const contentElement =
+        element.getElementsByClassName('characterTooltip')[0]
       const mediaElements = contentElement.getElementsByClassName('media')
       contentElement.addEventListener('mouseenter', () => {
         window.clearTimeout(this.hideTimeout)
-        Array.from(mediaElements).forEach(
-          (mediaElement) => bootstrap.Popover.getOrCreateInstance(mediaElement, {
+        Array.from(mediaElements).forEach((mediaElement) =>
+          bootstrap.Popover.getOrCreateInstance(mediaElement, {
             html: true,
             container: mediaElement,
           })
@@ -66,9 +65,7 @@ export class CharacterTooltipManager {
   showRulesForCharacter(element: HTMLElement, characterId: number) {
     let tooltip = bootstrap.Popover.getInstance(element)
     if (!tooltip) {
-      const character = this.matrixModel
-        .getCharacters()
-        .getById(characterId)
+      const character = this.matrixModel.getCharacters().getById(characterId)
       const contentElement = this.tooltipForCharacterRules(character)
       tooltip = CharacterTooltipManager.createToolTip(
         element,
@@ -82,8 +79,11 @@ export class CharacterTooltipManager {
       this.hideAll()
       tooltip.show()
 
-      const contentElement = element.getElementsByClassName('characterTooltip')[0]
-      contentElement.addEventListener('mouseenter', () => window.clearTimeout(this.hideRulesTimeout))
+      const contentElement =
+        element.getElementsByClassName('characterTooltip')[0]
+      contentElement.addEventListener('mouseenter', () =>
+        window.clearTimeout(this.hideRulesTimeout)
+      )
       contentElement.addEventListener('mouseleave', () => {
         this.hideRulesTimeout = window.setTimeout(() => this.hide(tooltip), 750)
       })
@@ -102,8 +102,8 @@ export class CharacterTooltipManager {
     }
   }
 
-  hide(tooltip:bootstrap.Popover) {
-    tooltip.hide();
+  hide(tooltip: bootstrap.Popover) {
+    tooltip.hide()
   }
 
   hideAll() {

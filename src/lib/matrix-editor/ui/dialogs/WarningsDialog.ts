@@ -51,10 +51,8 @@ export class WarningsDialog extends Dialog {
       ],
       () => this.resetWarningRows()
     )
-    handler.listen(
-      this.gridTable,
-      EventType.SELECT,
-      (e:any) => this.handleGridClick(e)
+    handler.listen(this.gridTable, EventType.SELECT, (e: any) =>
+      this.handleGridClick(e)
     )
   }
 

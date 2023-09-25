@@ -12,7 +12,7 @@ import { MatrixOptions } from './data/MatrixOption'
 import { Partition, Partitions } from './data/Partitions'
 import { ProjectProperties } from './data/ProjectProperties'
 import { Taxa, Taxon, TaxonMedia } from './data/Taxa'
-import { DelegatingEventTarget} from './DelegatingEventTarget'
+import { DelegatingEventTarget } from './DelegatingEventTarget'
 import * as CellsChangedEvents from './events/CellsChangedEvent'
 import * as CellsRefreshedEvent from './events/CellsRefreshedEvent'
 import * as CharacterChangedEvents from './events/CharacterChangedEvent'
@@ -54,10 +54,7 @@ export class MatrixModel extends DelegatingEventTarget {
   private clientId: string | null = null
   private targetEvent: EventTarget
 
-  constructor(
-    private matrixId: number,
-    private loader: MatrixLoader
-  ) {
+  constructor(private matrixId: number, private loader: MatrixLoader) {
     super()
 
     this.characters = new Characters()

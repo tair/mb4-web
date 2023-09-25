@@ -65,9 +65,7 @@ export class PartitionsDialog extends Dialog {
     const element = this.getElement()
     element.classList.add('partitionDialog', 'modal-lg')
 
-    const taxaInPartitionElement = this.getElementByClass(
-      'partitionTaxaSelect'
-    )
+    const taxaInPartitionElement = this.getElementByClass('partitionTaxaSelect')
     this.taxaInPartitionSelect.render(taxaInPartitionElement)
     const characterInPartitionElement = this.getElementByClass(
       'partitionCharactersSelect'
@@ -135,40 +133,26 @@ export class PartitionsDialog extends Dialog {
         DraggableSelect.DroppedEventType,
         () => this.handleRemoveCharactersFromPartition()
       )
-      .listen(
-        this.partitionSelect,
-        EventType.CUT,
-        () => this.handlePartitionCut()
+      .listen(this.partitionSelect, EventType.CUT, () =>
+        this.handlePartitionCut()
       )
-      .listen(
-        this.partitionSelect,
-        EventType.SELECT,
-        () => this.handlePartitionSelect()
+      .listen(this.partitionSelect, EventType.SELECT, () =>
+        this.handlePartitionSelect()
       )
-      .listen(
-        this.partitionSelect,
-        MobileFriendlyClickEventType,
-        () => this.handlePartitionDoubleClick()
+      .listen(this.partitionSelect, MobileFriendlyClickEventType, () =>
+        this.handlePartitionDoubleClick()
       )
-      .listen(
-        this.partitionDropdown,
-        EventType.CHANGE,
-        () => this.handlePartitionSet()
+      .listen(this.partitionDropdown, EventType.CHANGE, () =>
+        this.handlePartitionSet()
       )
-      .listen(
-        addPartitionElement,
-        EventType.CLICK,
-        () => this.handleAddPartition()
+      .listen(addPartitionElement, EventType.CLICK, () =>
+        this.handleAddPartition()
       )
-      .listen(
-        copyPartitonElement,
-        EventType.CLICK,
-        () => this.handleCopyPartition()
+      .listen(copyPartitonElement, EventType.CLICK, () =>
+        this.handleCopyPartition()
       )
-      .listen(
-        this.matrixModel,
-        PartitionRefreshedEvent.TYPE,
-        () => this.handlePartitionRefresh()
+      .listen(this.matrixModel, PartitionRefreshedEvent.TYPE, () =>
+        this.handlePartitionRefresh()
       )
   }
 

@@ -112,9 +112,8 @@ export class CharacterEditorContainer extends Component {
           false
         )
         this.registerDisposable(this.characterGrid)
-        const characterGridElement = this.getElementByClass<HTMLElement>(
-          'characterContainer'
-        )
+        const characterGridElement =
+          this.getElementByClass<HTMLElement>('characterContainer')
         this.characterGrid.addScrollableContainer(characterGridElement)
         this.characterGrid.render(characterGridElement)
         this.onHandleResize()
@@ -131,10 +130,7 @@ export class CharacterEditorContainer extends Component {
     const addButton = this.getElementByClass('mb-add-btn')
     const deleteElement = this.getElementByClass('mb-delete-btn')
     this.getHandler()
-      .listen(
-        window, 
-        EventType.SCROLL,
-        (e) => this.onHandleWindowScroll(e))
+      .listen(window, EventType.SCROLL, (e) => this.onHandleWindowScroll(e))
       .listen(
         window,
         GoToCharacterEvents.TYPE,
@@ -279,13 +275,10 @@ export class CharacterEditorContainer extends Component {
    * Handles events from resizing the window.
    */
   protected onHandleResize() {
-    const topButtonBar =
-      this.getElementByClass<HTMLElement>('topButtonBar')
+    const topButtonBar = this.getElementByClass<HTMLElement>('topButtonBar')
     const remainingHeight =
       document.documentElement.clientHeight - topButtonBar.offsetHeight
-    const container = this.getElementByClass<HTMLElement>(
-      'characterContainer'
-    )
+    const container = this.getElementByClass<HTMLElement>('characterContainer')
     mb.setElementStyle(container, 'height', remainingHeight + 'px')
     this.characterGrid.resizeWindow()
   }

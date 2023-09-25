@@ -62,12 +62,12 @@ export class TaxonDialog extends Dialog {
   override enterDocument() {
     super.enterDocument()
     this.getHandler()
-      .listen(
-        this.tabNavigator,
-        EventType.SELECT,
-        () => this.updateLastSelectedTabIndex()
+      .listen(this.tabNavigator, EventType.SELECT, () =>
+        this.updateLastSelectedTabIndex()
       )
-      .listen(this.getElement(), EventType.KEYDOWN, (e: KeyboardEvent) => this.onKeyDown(e))
+      .listen(this.getElement(), EventType.KEYDOWN, (e: KeyboardEvent) =>
+        this.onKeyDown(e)
+      )
   }
 
   /**
@@ -190,10 +190,8 @@ class NotesPane extends Component {
     const textAreaElement = this.getElementByClass('notesArea')
     this.getHandler()
       .listen(textAreaElement, EventType.BLUR, () => this.saveNotes())
-      .listen(
-        textAreaElement,
-        EventType.KEYDOWN,
-        (e: KeyboardEvent) => this.onHandleNotesKeyDown(e)
+      .listen(textAreaElement, EventType.KEYDOWN, (e: KeyboardEvent) =>
+        this.onHandleNotesKeyDown(e)
       )
   }
 
@@ -276,9 +274,7 @@ class MediaPane extends Component {
     this.setMediaInGrid()
     const mediaPane = this.getElementByClass('mediaPane')
     this.mediaGrid.render(mediaPane)
-    const openMediaElement = this.getElementByClass(
-      'openMediaWindowCheckbox'
-    )
+    const openMediaElement = this.getElementByClass('openMediaWindowCheckbox')
     this.openMediaCheckbox.render(openMediaElement)
     const settingsStorage = this.matrixModel.getUserMatrixSettings()
     const isAutoOpenMediaWindowSelected = !!settingsStorage.get(
@@ -295,7 +291,8 @@ class MediaPane extends Component {
     this.getHandler().listen(
       this.mediaGrid,
       MobileFriendlyClickEventType,
-      (e: CustomEvent<MediaGridItemEvent>) => this.handleDoubleClickTaxonMedia(e)
+      (e: CustomEvent<MediaGridItemEvent>) =>
+        this.handleDoubleClickTaxonMedia(e)
     )
     const addTaxonMediaElement = this.getElementByClass('addTaxonMedia')
     if (!this.taxon.hasAccess(this.matrixModel.getProjectProperties())) {
@@ -304,16 +301,14 @@ class MediaPane extends Component {
       return
     }
     this.getHandler()
-      .listen(this.mediaGrid, EventType.CUT, (e: CustomEvent<any>) => this.removeMedia(e))
-      .listen(
-        this.openMediaCheckbox,
-        EventType.CHANGE,
-        () => this.handleMediaCheckboxChange()
+      .listen(this.mediaGrid, EventType.CUT, (e: CustomEvent<any>) =>
+        this.removeMedia(e)
       )
-      .listen(
-        addTaxonMediaElement,
-        EventType.CLICK,
-        () => this.handleAddTaxonMedia()
+      .listen(this.openMediaCheckbox, EventType.CHANGE, () =>
+        this.handleMediaCheckboxChange()
+      )
+      .listen(addTaxonMediaElement, EventType.CLICK, () =>
+        this.handleAddTaxonMedia()
       )
   }
 
@@ -630,15 +625,8 @@ class AccessPane extends Component {
     super.enterDocument()
     const handler = this.getHandler()
     handler
-      .listen(
-        this.groupSelect,
-        EventType.CHANGE,
-        () => this.onAccessChange()
-      )
-      .listen(
-        this.userSelect,
-        EventType.CHANGE,
-        () => this.onAccessChange())
+      .listen(this.groupSelect, EventType.CHANGE, () => this.onAccessChange())
+      .listen(this.userSelect, EventType.CHANGE, () => this.onAccessChange())
   }
 
   /** Change the access of the taxon */

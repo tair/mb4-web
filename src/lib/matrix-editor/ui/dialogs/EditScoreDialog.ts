@@ -103,11 +103,11 @@ export class EditScoreDialog extends Modal {
     super.enterDocument()
     const handler = this.getHandler()
     handler
-      .listen(this, EventType.SELECT, (e: CustomEvent<any>) => this.onHandleSelect(e))
-      .listen(
-        this.statesGridTable,
-        MobileFriendlyClickEventType,
-        (e: Event) => this.handleGridSelect(e)
+      .listen(this, EventType.SELECT, (e: CustomEvent<any>) =>
+        this.onHandleSelect(e)
+      )
+      .listen(this.statesGridTable, MobileFriendlyClickEventType, (e: Event) =>
+        this.handleGridSelect(e)
       )
     for (let x = 0; x < this.checkboxes.length; x++) {
       const checkbox = this.checkboxes[x]

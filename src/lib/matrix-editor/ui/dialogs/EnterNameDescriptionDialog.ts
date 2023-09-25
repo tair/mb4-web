@@ -37,9 +37,13 @@ export class EnterNameDescriptionDialog extends Modal {
     super.enterDocument()
     const nameElement = this.getElementByClass('name')
     this.getHandler()
-      .listen(nameElement, EventType.KEYDOWN, (e: KeyboardEvent) => this.handleEnterPress(e))
+      .listen(nameElement, EventType.KEYDOWN, (e: KeyboardEvent) =>
+        this.handleEnterPress(e)
+      )
       .listen(nameElement, EventType.INPUT, () => this.handleOnNameInput())
-      .listen(this, EventType.SELECT, (e: CustomEvent<any>) => this.onHandleSelect(e))
+      .listen(this, EventType.SELECT, (e: CustomEvent<any>) =>
+        this.onHandleSelect(e)
+      )
     this.handleOnNameInput()
   }
 

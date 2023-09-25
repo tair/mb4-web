@@ -40,10 +40,8 @@ export class EditContinuousScoreDialog extends Modal {
 
   override enterDocument() {
     super.enterDocument()
-    this.getHandler().listen(
-      this,
-      EventType.SELECT,
-      (e: CustomEvent<any>) => this.onHandleSelect(e)
+    this.getHandler().listen(this, EventType.SELECT, (e: CustomEvent<any>) =>
+      this.onHandleSelect(e)
     )
   }
 
