@@ -77,7 +77,7 @@ export class ReadonlyCellDialog extends Dialog {
         new CitationsPane(this.matrixModel, this.taxonId, this.characterId)
       )
     }
-    this.tabNavigator.setHeight(325)
+
     this.tabNavigator.setSelectedTabIndex(
       ReadonlyCellDialog.LAST_SELECTED_TAB_INDEX
     )

@@ -12,7 +12,6 @@ import { MatrixOptions } from './data/MatrixOption'
 import { Partition, Partitions } from './data/Partitions'
 import { ProjectProperties } from './data/ProjectProperties'
 import { Taxa, Taxon, TaxonMedia } from './data/Taxa'
-import { DelegatingEventTarget } from './DelegatingEventTarget'
 import * as CellsChangedEvents from './events/CellsChangedEvent'
 import * as CellsRefreshedEvent from './events/CellsRefreshedEvent'
 import * as CharacterChangedEvents from './events/CharacterChangedEvent'
@@ -32,7 +31,7 @@ import * as mb from './mb'
  * @param matrixId The id of the matrix
  * @param loader The xhr object to read and wrie the matrix data
  */
-export class MatrixModel extends DelegatingEventTarget {
+export class MatrixModel extends EventTarget {
   private currentPartitionId: number | null = null
   private readonly: boolean = false
   private streaming: boolean = false
@@ -52,7 +51,6 @@ export class MatrixModel extends DelegatingEventTarget {
   private matrixOptions: MatrixOptions
   private projectProperties: ProjectProperties
   private clientId: string | null = null
-  private targetEvent: EventTarget
 
   constructor(private matrixId: number, private loader: MatrixLoader) {
     super()
@@ -65,12 +63,6 @@ export class MatrixModel extends DelegatingEventTarget {
     this.matrix = new Matrix({})
     this.matrixOptions = new MatrixOptions({})
     this.projectProperties = new ProjectProperties({})
-
-    this.targetEvent = new EventTarget()
-  }
-
-  protected override getDelegate(): EventTarget {
-    return this.targetEvent
   }
 
   /** @return the id of the matrix */

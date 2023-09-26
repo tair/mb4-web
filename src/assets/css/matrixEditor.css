@@ -99,13 +99,7 @@ html, body {
 	border: 1px solid #6b90da;
 }
 
-.tabBarContent {
-	border: 1px solid #bec0c2;
-	border-top: none;
-	padding: 10px 5px 5px 15px;
-}
-
-.tabBarContent .tab-content {
+.tab-content {
   width: 100%;
 }
 
@@ -137,6 +131,7 @@ matrixeditor {
 
 #matrixgridTable * {
   box-sizing: content-box !important;
+  user-select: none;
 }
 
 #matrixgridTable *::after {
@@ -484,6 +479,7 @@ div.matrixgridCells table {
 }
 
 .loadingModal {
+  font-size: 13px;
 	left: 50%;
 	margin-top: -75px;
 	position: absolute;
@@ -1493,7 +1489,7 @@ ol.selectList li:hover span.remove {
 }
 
 .cellDialog .citationsPane .dataGrid table tr:hover td span.remove {
-	background-image: url(images/x.png);
+	background-image: url(/images/x.png);
 	background-repeat: no-repeat;
 	background-size: 14px 14px;
 	padding: 7px 11px 7px 7px;
@@ -1779,7 +1775,7 @@ div.loadingMessage > div,
 }
 
 .characterDialog .citationsPane .dataGrid table tr:hover td span.remove {
-	background-image: url(images/x.png);
+	background-image: url(/images/x.png);
 	background-repeat: no-repeat;
 	background-size: 14px 14px;
 	padding: 7px 11px 7px 7px;
@@ -1854,7 +1850,7 @@ div.loadingMessage > div,
 }
 
 .characterDialog .characterPane .statesPane .dataGrid table tr:hover td span.remove {
-	background-image: url(images/x.png);
+	background-image: url(/images/x.png);
 	background-repeat: no-repeat;
 	background-size: 14px 14px;
 	padding: 7px 17px 7px 7px;

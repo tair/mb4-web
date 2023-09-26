@@ -21,12 +21,7 @@ export abstract class AbstractMatrixAccessor {
    * Starts the matrix editor
    * @param properties The properties used by this matrix.
    */
-  constructor(properties: { [key: string]: string }) {
-    const projectId = parseInt(properties['p'], 10)
-    const matrixId = parseInt(properties['m'], 10)
-    const streaming = !!properties['s']
-    const location = properties['l'] || ''
-
+  constructor(projectId: number, matrixId: number, streaming: boolean, location: string) {
     this.matrixLoader = new MatrixLoader(projectId, location)
     this.matrixLoader.setMatrixId(matrixId)
 

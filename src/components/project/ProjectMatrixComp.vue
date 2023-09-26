@@ -192,10 +192,14 @@ async function toggleMatrixStreaming() {
           {{ matrix.counts.media_label ?? 0 }} labels attached to cell images;
           {{ matrix.counts.character_media ?? 0 }} character images;
         </div>
-
-        <button type="button" class="btn btn-sm btn-secondary">
-          Edit Characters
-        </button>
+        <RouterLink
+          :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/characters`"
+          target="_blank"
+        >
+          <button type="button" class="btn btn-sm btn-secondary">
+            Edit Characters
+          </button>
+        </RouterLink>
       </div>
       <div
         class="tab-pane fade"

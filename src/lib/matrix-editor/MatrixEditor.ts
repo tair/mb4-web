@@ -12,8 +12,8 @@ import * as LastViewStatePreferenceChangedEvents from './events/LastViewStatePre
 export class MatrixEditor extends AbstractMatrixAccessor {
   private matrixViewStateLoader: MatrixViewStateLoader | null
 
-  constructor(properties: { [key: string]: string }) {
-    super(properties)
+  constructor(projectId: number, matrixId: number, streaming: boolean, location: string) {
+    super(projectId, matrixId, streaming, location)
   }
 
   override start() {

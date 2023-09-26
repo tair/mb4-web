@@ -9,8 +9,8 @@ import * as mb from './mb'
  * @param properties The properties used by this matrix.
  */
 export class MatrixViewer extends AbstractMatrixAccessor {
-  constructor(properties: { [key: string]: string }) {
-    super(properties)
+  constructor(projectId: number, matrixId: number, streaming: boolean, location: string) {
+    super(projectId, matrixId, streaming, location)
     this.matrixModel.setReadonly(true)
   }
 

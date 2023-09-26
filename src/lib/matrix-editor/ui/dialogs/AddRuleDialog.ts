@@ -61,7 +61,7 @@ export class AddRuleDialog extends Modal {
       'Add media',
       new AddMediaPane(this.matrixModel, this)
     )
-    this.tabNavigator.setHeight(400)
+
     this.tabNavigator.render(contentElement)
     const titleElement = this.getTitleElement()
     this.savingLabel.render(titleElement)

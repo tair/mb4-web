@@ -4,7 +4,7 @@ import { MatrixViewer } from './MatrixViewer'
  * Start the matrix editor.
  * @param properties The properties used by this matrix.
  */
-export function startMatrixViewer(properties: { [key: string]: string }) {
-  const viewer = new MatrixViewer(properties)
+export default function startMatrixViewer(projectId: number, matrixId: number, streaming: boolean, location: string) {
+  const viewer = new MatrixViewer(projectId, matrixId, streaming, location)
   viewer.start()
 }

@@ -9,7 +9,6 @@ import AskUsView from '@/views/misc/AskUsView.vue'
 import CuratorHomeView from '@/views/curator/CuratorHomeView.vue'
 import CuratorView from '@/views/curator/CuratorView.vue'
 import HomeView from '@/views/HomeView.vue'
-import MyProjectMatrixEditView from '@/views/project/MyProjectMatrixEditView.vue'
 import MyProjectsView from '@/views/project/MyProjectsView.vue'
 import NewsView from '@/views/misc/NewsView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
@@ -270,7 +269,17 @@ const router = createRouter({
     {
       path: '/myprojects/:projectId/matrices/:matrixId/edit',
       name: 'MyProjectMatrixEditView',
-      component: MyProjectMatrixEditView,
+      component: () => import('@/views/project/MyProjectMatrixEditView.vue'),
+    },
+    {
+      path: '/myprojects/:projectId/matrices/:matrixId/characters',
+      name: 'MyProjectCharacterEditorView',
+      component: () => import('@/views/project/MyProjectCharacterEditorView.vue'),
+    },
+    {
+      path: '/project/:projectId/matrices/:matrixId/view',
+      name: 'ProjectMatrixViewerView',
+      component: () => import('@/views/project/ProjectMatrixViewerView.vue'),
     },
   ],
   scrollBehavior(to, from, savedPosition) {

@@ -98,7 +98,7 @@ export class OntologyDialog extends Dialog {
       'Media rules',
       new MediaRulesPane(this.matrixModel, this)
     )
-    this.tabNavigator.setHeight(350)
+
     this.tabNavigator.render(contentElement)
   }
 

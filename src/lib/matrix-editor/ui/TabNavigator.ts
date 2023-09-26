@@ -35,7 +35,6 @@ export class TabNavigator extends Component {
   override createDom() {
     super.createDom()
     const element = this.getElement()
-    element.classList.add('tabBarContent')
     element.innerHTML = this.htmlContent()
   }
 
@@ -109,19 +108,6 @@ export class TabNavigator extends Component {
     this.names = []
     const handler = this.getHandler()
     handler.removeAll()
-  }
-
-  /**
-   * Sets the height of the tab navigator
-   *
-   * @param height the new height of the tab
-   */
-  setHeight(height: number) {
-    if (this.isInDocument()) {
-      const tabContentElement =
-        this.getElementByClass<HTMLDivElement>('tabBarContent')
-      mb.setElementStyle(tabContentElement, 'height', height + 'px')
-    }
   }
 
   /**

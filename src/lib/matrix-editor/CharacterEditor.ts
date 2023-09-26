@@ -12,11 +12,7 @@ export class CharacterEditor {
   /**
    * Starts the character editor.
    */
-  constructor(properties: { [key: string]: string }) {
-    const projectId = parseInt(properties['p'], 10)
-    const matrixId = parseInt(properties['m'], 10)
-    const location = properties['l']
-
+  constructor(projectId: number, matrixId: number, location: string) {
     this.matrixId = matrixId
 
     this.matrixLoader = new MatrixLoader(projectId, location)

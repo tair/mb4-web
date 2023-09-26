@@ -3,16 +3,17 @@
  * @param host The location of the server.
  */
 export class MatrixLoader {
-  private projectId: number
-  private host: string
-  private readonly: boolean
+  private readonly projectId: number
+  private readonly host: string
+
+  private readOnly: boolean
   private isAborted: boolean
   private url: string
 
   constructor(projectId: number, host: string) {
     this.projectId = projectId
     this.host = host
-    this.readonly = false
+    this.readOnly = false
     this.isAborted = false
   }
 
@@ -39,7 +40,7 @@ export class MatrixLoader {
     let sendRetries = 0
     let sendDelay = 1000
     const query = request.getParameters()
-    if (this.readonly) {
+    if (this.readOnly) {
       query['ro'] = 1
     }
     const options = {
@@ -53,7 +54,7 @@ export class MatrixLoader {
     }
     const url = this.url + request.getMethod()
     return new Promise((resolve, reject) => {
-      ;(function retry_fetch() {
+      (function fetchWithRequest() {
         fetch(url, options)
           .then((response) => {
             if (response.status == 401) {
@@ -80,7 +81,7 @@ export class MatrixLoader {
             if (++sendRetries < request.getRetries()) {
               console.log("Damn... let's retry", e)
               const randomDelay = MatrixLoader.getRandomInt(0, sendDelay >> 1)
-              setTimeout(() => retry_fetch(), sendDelay + randomDelay)
+              setTimeout(() => fetchWithRequest(), sendDelay + randomDelay)
               sendDelay = Math.min(20000, sendDelay << 2)
             } else {
               console.log('Simply just fail the request', e)
@@ -110,7 +111,7 @@ export class MatrixLoader {
    * @param readonly whether the matrix should be readonly.
    */
   setReadonly(readonly: boolean) {
-    this.readonly = readonly
+    this.readOnly = readonly
   }
 
   /**
@@ -119,7 +120,7 @@ export class MatrixLoader {
    * @param max The maximum number
    * @return A random number in between
    */
-  protected static getRandomInt(min: number, max: number): number {
+  private static getRandomInt(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min)) + min
   }
 }

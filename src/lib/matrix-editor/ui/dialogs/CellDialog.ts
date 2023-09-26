@@ -82,7 +82,7 @@ export class CellDialog extends Dialog {
     const contentElement = this.getContentElement()
     contentElement.innerHTML = CellDialog.htmlContent()
     this.redraw()
-    this.tabNavigator.setHeight(360)
+
     this.tabNavigator.render(contentElement)
     const summaryElement = document.createElement('span')
     summaryElement.className = 'summary'

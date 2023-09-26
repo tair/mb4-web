@@ -1,6 +1,5 @@
 import { EventHandler } from '../EventHandler'
 import { Disposable } from './Disposable'
-import { DelegatingEventTarget } from '../DelegatingEventTarget'
 import * as mb from '../mb'
 
 /**
@@ -8,7 +7,7 @@ import * as mb from '../mb'
  * elements on the page. This manages component creation and lifecycle since all
  * event listeners are registered within a component.
  */
-export class Component extends DelegatingEventTarget implements Disposable {
+export class Component extends EventTarget implements Disposable {
   /**
    * Whether this component is in the document.
    */
@@ -203,10 +202,6 @@ export class Component extends DelegatingEventTarget implements Disposable {
       throw new Error('This element is not defined')
     }
     return this.element as T
-  }
-
-  protected override getDelegate(): EventTarget {
-    return this.element
   }
 
   /**

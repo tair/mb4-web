@@ -4,7 +4,7 @@ import { CharacterEditor } from './CharacterEditor'
  * Start the character editor.
  * @param properties The properties used by this matrix.
  */
-export function startCharacterEditor(properties: { [key: string]: string }) {
-  const editor = new CharacterEditor(properties)
+export default function startCharacterEditor(projectId: number, matrixId: number, location: string) {
+  const editor = new CharacterEditor(projectId, matrixId, location)
   editor.loadCharacterData()
 }

@@ -18,7 +18,7 @@ export class MatrixModelServerEventSyncer {
   /**
    * Values of object keys in a shared snapshot.
    */
-  private static FIELDS: { [key: string]: string } = {
+  private static FIELDS = {
     CHARACTER_ID: 'character_id',
     TAXON_ID: 'taxon_id',
     USER_ID: 'user_id',
@@ -30,9 +30,10 @@ export class MatrixModelServerEventSyncer {
   /**
    * Values of object keys in a shared snapshot.
    */
-  private static EVENT_TYPES: { [key: string]: string } = {
+  private static EVENT_TYPES = {
     EDIT_CELL_EVENT: 'EDIT_CELL',
   }
+
   private url: string
   private throttledSync: Throttle
 
@@ -56,9 +57,11 @@ export class MatrixModelServerEventSyncer {
     if (userId == null) {
       return
     }
-    window.addEventListener(CellEditEvents.TYPE, (e) =>
-      this.onHandleMatrixCellClick(e as CustomEvent<CellEditEvent>)
-    )
+
+    window.addEventListener(
+      CellEditEvents.TYPE,
+      (e: CustomEvent<CellEditEvent>) => this.onHandleMatrixCellClick(e))
+
     const userLocation = this.url + userId + '/sync'
     const serverEvents = new EventSource(userLocation)
     serverEvents.addEventListener('sync', () => this.onHandleEventSourceSync())

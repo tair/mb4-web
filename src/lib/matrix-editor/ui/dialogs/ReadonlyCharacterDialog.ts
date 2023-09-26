@@ -39,7 +39,7 @@ export class ReadonlyCharacterDialog extends Dialog {
     const contentElement = this.getContentElement()
     contentElement.innerHTML = ReadonlyCharacterDialog.htmlContent()
     this.redraw()
-    this.tabNavigator.setHeight(390)
+
     this.tabNavigator.render(contentElement)
   }
 
