@@ -1,6 +1,5 @@
 <script setup>
 import { RouterLink } from 'vue-router'
-import { onUpdated, onMounted } from 'vue'
 import { Icon } from '@iconify/vue'
 
 const props = defineProps({
@@ -32,10 +31,10 @@ function buildImageProps(mediaObj, type) {
   width: 100px;
   height: 140px;
   overflow: hidden;
-  backgroundsize: '25px';
-  backgroundrepeat: 'no-repeat';
-  backgroundimage: 'url(/images/loader.png)';
-  backgroundposition: '10px 10px';
+  background-size: '25px';
+  background-repeat: 'no-repeat';
+  background-image: 'url(/images/loader.png)';
+  background-position: '10px 10px';
 }
 .thumb-row {
   height: 160px;
