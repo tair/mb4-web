@@ -1,14 +1,14 @@
 html, body {
-	height: 100%;
-	margin: 0;
-	padding: 0;
-	overflow: hidden;
-	position: fixed;
-	width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
 }
 
 .body {
-	background-color: #d6e9f8;
+  background-color: #d6e9f8;
 }
 
 .nonSelectable {
@@ -22,70 +22,70 @@ html, body {
 
 .sliderHorizontal,
 .sliderVertical {
-	background-color: #f8f8f8;
-	background-image: -webkit-linear-gradient(top, #f8f8f8, #fafafa);
-	border: 1px solid #e7e7e7;
-	position: absolute;
-	outline: none;
-	overflow: hidden;
-	z-index: 42; /* below the wash but above the grid */
+  background-color: #f8f8f8;
+  background-image: -webkit-linear-gradient(top, #f8f8f8, #fafafa);
+  border: 1px solid #e7e7e7;
+  position: absolute;
+  outline: none;
+  overflow: hidden;
+  z-index: 42; /* below the wash but above the grid */
 }
 
 .sliderArrow {
-	background-color: #d9d9d9;
-	border: 1px solid #bdbdbd;
-	cursor: pointer;
-	outline: none;
-	position: absolute;
-	text-align: center;
-	vertical-align: middle;
+  background-color: #d9d9d9;
+  border: 1px solid #bdbdbd;
+  cursor: pointer;
+  outline: none;
+  position: absolute;
+  text-align: center;
+  vertical-align: middle;
 }
 
 .sliderVertical .sliderArrowEnd {
-	bottom: 0;
-	position: absolute;
+  bottom: 0;
+  position: absolute;
 }
 
 .sliderHorizontal .sliderArrowEnd {
-	position: absolute;
-	right: 0;
+  position: absolute;
+  right: 0;
 }
 
 .sliderHorizontal {
-	bottom: 0;
-	height: 15px;
-	width: 100%;
+  bottom: 0;
+  height: 15px;
+  width: 100%;
 }
 .sliderVertical {
-	right: 0;
-	width: 15px;
-	height: 200px;
+  right: 0;
+  width: 15px;
+  height: 200px;
 }
 
 .sliderThumb {
-	background-color: #d9d9d9;
-	border: 1px solid #bdbdbd;
-	overflow: hidden;
-	position: absolute;
+  background-color: #d9d9d9;
+  border: 1px solid #bdbdbd;
+  overflow: hidden;
+  position: absolute;
 }
 
 .sliderArrow.disabled,
 .sliderThumb.disabled {
-	opacity: 0.3;
-	-moz-opacity: 0.3;
-	filter: alpha(opacity=30);
+  opacity: 0.3;
+  -moz-opacity: 0.3;
+  filter: alpha(opacity=30);
 }
 
 .sliderVertical .sliderThumb {
-	top: 0;
-	height: 20px;
-	width: 100%;
+  top: 0;
+  height: 20px;
+  width: 100%;
 }
 
 .sliderHorizontal .sliderThumb {
-	left: 0;
-	width: 20px;
-	height: 100%;
+  left: 0;
+  width: 20px;
+  height: 100%;
 }
 
 .sliderArrow:hover,
@@ -96,37 +96,38 @@ html, body {
 .sliderArrow:active,
 .sliderThumbDragging {
   background-color: #787878;
-	border: 1px solid #6b90da;
+  border: 1px solid #6b90da;
 }
 
 .tab-content {
+  padding-top: 10px;
   width: 100%;
 }
 
 .topButtonBar {
   background-color: rgb(248, 249, 250);
-	height: 38px;
-	padding: 0;
+  height: 38px;
+  padding: 0;
   position: relative;
   z-index: 40;
 }
 
 .topButtonBar > button,
 .topButtonBar > span {
-	margin-left: 5px;
+  margin-left: 5px;
 }
 
 matrixeditor {
-	user-select: none;
+  user-select: none;
     -khtml-user-select: none;
     -ms-user-select: none;
     -moz-user-select: none;
-	-webkit-user-select: none;
+  -webkit-user-select: none;
 }
 
 #matrixgridTable {
-	overflow: hidden;
-	z-index: 10;
+  overflow: hidden;
+  z-index: 10;
 }
 
 #matrixgridTable * {
@@ -142,143 +143,143 @@ matrixeditor {
   box-sizing: content-box !important;
 }
 .matrixgridCharacters {
-	position: relative;
+  position: relative;
 }
 
 .matrixgridBody {
-	overflow: auto;
-	position: relative;
-	z-index: 30;
+  overflow: auto;
+  position: relative;
+  z-index: 30;
 }
 
 .matrixgridBody div.rightBottomSpacer {
-	filter: alpha(opacity=0);
-	height: 1px;
-	opacity: 0;
-	-moz-opacity: 0;
-	position: absolute;
-	width: 1px;
+  filter: alpha(opacity=0);
+  height: 1px;
+  opacity: 0;
+  -moz-opacity: 0;
+  position: absolute;
+  width: 1px;
 }
 
 .matrixgridTaxa {
-	position: relative;
+  position: relative;
 }
 
 .matrixgridAbsolute {
-	display: inline-block;
-	position: absolute;
-	z-index: 40;
+  display: inline-block;
+  position: absolute;
+  z-index: 40;
 }
 
 .matrixgridFixed {
-	display: inline-block;
-	overflow: hidden;
-	position: fixed;
-	z-index: 1;
+  display: inline-block;
+  overflow: hidden;
+  position: fixed;
+  z-index: 1;
 }
 
 .matrixgridCells {
-	overflow: hidden;
-	z-index: 0;
+  overflow: hidden;
+  z-index: 0;
 }
 
 div.matrixgridCells table {
-	table-layout: fixed;
+  table-layout: fixed;
 }
 
 .matrixgrid {
-	background: white;
-	border: 1px solid #ddd;
-	border-spacing: 0;
-	border-collapse: collapse;
-	color: #133A42;
-	cursor: default;
-	font-family: "Times New Roman", Times, serif;
-	font-size: 13px;
-	text-overflow: ellipsis;
-	vertical-align: middle;
+  background: white;
+  border: 1px solid #ddd;
+  border-spacing: 0;
+  border-collapse: collapse;
+  color: #133A42;
+  cursor: default;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  vertical-align: middle;
 }
 
 .matrixgrid tbody {
-	background: transparent;
-	margin: 0;
-	overflow: hidden;
-	padding: 2px;
-	vertical-align: middle;
+  background: transparent;
+  margin: 0;
+  overflow: hidden;
+  padding: 2px;
+  vertical-align: middle;
 }
 
 .matrixgrid td {
-	text-align: center;
-	text-overflow: ellipsis;
-	vertical-align: middle;
-	white-space: nowrap;
+  text-align: center;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
 .matrixgrid td,
 .matrixgrid th {
-	border: 1px solid #ddd;
-	cursor: pointer;
-	margin: 0;
-	overflow: hidden;
-	padding: 1px 2px;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  margin: 0;
+  overflow: hidden;
+  padding: 1px 2px;
 }
 
 .matrixgrid tr th {
-	background: -webkit-linear-gradient(to bottom,
-		rgba(255, 255, 255, 1) 0%,
-		rgba(249, 250, 253, 1) 30%,
-		rgba(238, 242, 247, 1) 60%,
-		rgba(228, 233, 244, 1) 100%);
-	background: -o-linear-gradient(to bottom,
-		rgba(255, 255, 255, 1) 0%,
-		rgba(249, 250, 253, 1) 30%,
-		rgba(238, 242, 247, 1) 60%,
-		rgba(228, 233, 244, 1) 100%);
-	background: -moz-linear-gradient(to bottom,
-		rgba(255, 255, 255, 1) 0%,
-		rgba(249, 250, 253, 1) 30%,
-		rgba(238, 242, 247, 1) 60%,
-		rgba(228, 233, 244, 1) 100%);
-	background: linear-gradient(to bottom,
-		rgba(255, 255, 255, 1) 0%,
-		rgba(249, 250, 253, 1) 30%,
-		rgba(238, 242, 247, 1) 60%,
-		rgba(228, 233, 244, 1) 100%);
-	cursor: pointer;
-	font-weight: normal;
-	overflow: hidden;
-	padding-top: 4px;
-	text-align: center;
-	vertical-align: top;
+  background: -webkit-linear-gradient(to bottom,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(249, 250, 253, 1) 30%,
+    rgba(238, 242, 247, 1) 60%,
+    rgba(228, 233, 244, 1) 100%);
+  background: -o-linear-gradient(to bottom,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(249, 250, 253, 1) 30%,
+    rgba(238, 242, 247, 1) 60%,
+    rgba(228, 233, 244, 1) 100%);
+  background: -moz-linear-gradient(to bottom,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(249, 250, 253, 1) 30%,
+    rgba(238, 242, 247, 1) 60%,
+    rgba(228, 233, 244, 1) 100%);
+  background: linear-gradient(to bottom,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(249, 250, 253, 1) 30%,
+    rgba(238, 242, 247, 1) 60%,
+    rgba(228, 233, 244, 1) 100%);
+  cursor: pointer;
+  font-weight: normal;
+  overflow: hidden;
+  padding-top: 4px;
+  text-align: center;
+  vertical-align: top;
 }
 
 .matrixgrid tr th .name {
-	text-overflow: ellipsis;
+  text-overflow: ellipsis;
 }
 
 .matrixgrid tr th .characterModifier {
-	color: #c00;
-	font-weight: bold;
+  color: #c00;
+  font-weight: bold;
 }
 
 .matrixgridTaxa .matrixgrid tr td:first-child {
-	border-right: 1px solid black;
-	overflow: hidden;
-	text-align: left;
-	white-space: nowrap;
+  border-right: 1px solid black;
+  overflow: hidden;
+  text-align: left;
+  white-space: nowrap;
 }
 
 .matrixgrid tr.hover td {
-	background-color: #e7e9f9;
+  background-color: #e7e9f9;
 }
 
 .matrixgrid tr td.active {
-	background-color: rgba(85, 85, 205, 0.4) !important;
+  background-color: rgba(85, 85, 205, 0.4) !important;
   color: #000;
 }
 
 .matrixgrid tr td.collaborate {
-	animation: slide 2s linear infinite;
+  animation: slide 2s linear infinite;
 }
 
 .matrixgrid tr:nth-child(even) td.collaborate {
@@ -305,247 +306,247 @@ div.matrixgridCells table {
 }
 
 .matrixgrid tr:nth-child(even) {
-	background-color: #fff;
+  background-color: #fff;
 }
 
 .matrixgrid tr:nth-child(odd) {
-	background-color: #f7f7f7;
+  background-color: #f7f7f7;
 }
 
 .matrixgridHeader {
-	position: relative;
-	z-index: 40;
+  position: relative;
+  z-index: 40;
 }
 
 .gridCharacters,
 .gridCells,
 .gridTaxa {
-	outline: none;
+  outline: none;
 }
 
 .gridCells {
-	overflow: hidden;
-	position: fixed;
-	z-index: 1;
+  overflow: hidden;
+  position: fixed;
+  z-index: 1;
 }
 
 /** cell state number CSS */
 .cellStateNumber.characterNumber .matrixgridCharacters .matrixgrid tr th,
 .cellStateNumber.characterNumber .matrixgridCells .matrixgrid tr td {
-	max-width: 45px;
-	min-width: 45px;
+  max-width: 45px;
+  min-width: 45px;
 }
 
 .cellStateNumber.characterNumber .matrixgridCharacters .matrixgrid thead tr {
-	min-height: 40px;
-	max-height: 40px;
-	height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  height: 40px;
 }
 
 /** cell state number CSS */
 .cellStateNumber .matrixgridCharacters .matrixgrid tr th,
 .cellStateNumber .matrixgridCells .matrixgrid tr td {
-	max-width: 75px;
-	min-width: 75px;
+  max-width: 75px;
+  min-width: 75px;
 }
 
 .cellStateNumber .matrixgridCharacters .matrixgrid thead tr {
-	min-height: 40px;
-	max-height: 40px;
-	height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  height: 40px;
 }
 
 .cellStateNumber .matrixgridTaxa .matrixgrid tr,
 .cellStateNumber .matrixgridCells .matrixgrid tr {
-	min-height: 32px;
-	max-height: 32px;
-	height: 32px;
+  min-height: 32px;
+  max-height: 32px;
+  height: 32px;
 }
 
 .cellStateNumber .matrixgridEmpty .matrixgrid tr th,
 .cellStateNumber .matrixgridTaxa .matrixgrid tr td {
-	max-width: 150px;
-	min-width: 150px;
-	padding-left: 15px;
-	padding-right: 25px;
+  max-width: 150px;
+  min-width: 150px;
+  padding-left: 15px;
+  padding-right: 25px;
 }
 
 .matrixgridCharacters .matrixgrid,
 .matrixgridCells .matrixgrid {
-	margin-left: 191px;
+  margin-left: 191px;
 }
 
 /** cell state name + number CSS */
 .cellStateNumberName .matrixgridCharacters .matrixgrid tr th,
 .cellStateNumberName .matrixgridCells .matrixgrid tr td {
-	max-width: 140px;
-	min-width: 140px;
+  max-width: 140px;
+  min-width: 140px;
 }
 
 .cellStateNumberName .matrixgridCharacters .matrixgrid thead tr {
-	min-height: 40px;
-	max-height: 40px;
-	height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  height: 40px;
 }
 
 .cellStateNumberName .matrixgridTaxa .matrixgrid tr,
 .cellStateNumberName .matrixgridCells .matrixgrid tr {
-	min-height: 70px;
-	max-height: 70px;
-	height: 70px;
+  min-height: 70px;
+  max-height: 70px;
+  height: 70px;
 }
 
 .cellStateNumberName .matrixgridEmpty .matrixgrid tr th,
 .cellStateNumberName .matrixgridTaxa .matrixgrid tr td {
-	max-width: 150px;
-	min-width: 150px;
-	padding-left: 15px;
-	padding-right: 25px;
+  max-width: 150px;
+  min-width: 150px;
+  padding-left: 15px;
+  padding-right: 25px;
 }
 
 .cellStateNumberName .matrixgrid tr th,
 .cellStateNumberName .matrixgrid tr td {
-	max-width: 140px;
-	min-width: 140px;
+  max-width: 140px;
+  min-width: 140px;
 }
 
 /** cell state name CSS */
 .cellStateName .matrixgridCharacters .matrixgrid tr th,
 .cellStateName .matrixgridCells .matrixgrid tr td {
-	max-width: 116px;
-	min-width: 116px;
+  max-width: 116px;
+  min-width: 116px;
 }
 
 .cellStateName .matrixgridCharacters .matrixgrid thead tr {
-	min-height: 40px;
-	max-height: 40px;
-	height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  height: 40px;
 }
 
 .cellStateName .matrixgridTaxa .matrixgrid tr,
 .cellStateName .matrixgridCells .matrixgrid tr {
-	min-height: 60px;
-	max-height: 60px;
-	height: 60px;
+  min-height: 60px;
+  max-height: 60px;
+  height: 60px;
 }
 
 .cellStateName .matrixgridEmpty .matrixgrid tr th,
 .cellStateName .matrixgridTaxa .matrixgrid tr td {
-	max-width: 150px;
-	min-width: 150px;
-	padding-left: 15px;
-	padding-right: 25px;
+  max-width: 150px;
+  min-width: 150px;
+  padding-left: 15px;
+  padding-right: 25px;
 }
 
 .cellStateName .matrixgrid tr th,
 .cellStateName .matrixgrid tr td {
-	max-width: 115px;
-	min-width: 115px;
+  max-width: 115px;
+  min-width: 115px;
 }
 
 /** cell images CSS */
 .cellStateImages .matrixgridCharacters .matrixgrid tr th,
 .cellStateImages .matrixgridCells .matrixgrid tr td {
-	max-width: 166px;
-	min-width: 166px;
-	width: 166px;
+  max-width: 166px;
+  min-width: 166px;
+  width: 166px;
 }
 
 .cellStateImages .matrixgridCharacters .matrixgrid thead tr {
-	min-height: 40px;
-	max-height: 40px;
-	height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  height: 40px;
 }
 
 .cellStateImages .matrixgridTaxa .matrixgrid tr,
 .cellStateImages .matrixgridCells .matrixgrid tr {
-	min-height: 166px;
-	max-height: 166px;
-	height: 166px;
+  min-height: 166px;
+  max-height: 166px;
+  height: 166px;
 }
 
 .cellStateImages .matrixgridEmpty .matrixgrid tr th,
 .cellStateImages .matrixgridTaxa .matrixgrid tr td {
-	max-width: 150px;
-	min-width: 150px;
-	padding-left: 15px;
-	padding-right: 25px;
+  max-width: 150px;
+  min-width: 150px;
+  padding-left: 15px;
+  padding-right: 25px;
 }
 
 .cellStateImages .matrixgrid tr th,
 .cellStateImages .matrixgrid tr td {
-	max-width: 166px;
-	min-width: 166px;
+  max-width: 166px;
+  min-width: 166px;
 }
 
 .loadingModal {
   font-size: 13px;
-	left: 50%;
-	margin-top: -75px;
-	position: absolute;
-	top: 50%;
-	z-index: 1001;
+  left: 50%;
+  margin-top: -75px;
+  position: absolute;
+  top: 50%;
+  z-index: 1001;
 }
 
 .loadingModal ul {
-	background-color: #fff;
-	border: 1px solid #ddd;
-	box-shadow: 1px 1px 5px #fafafa;
-	color: #133A42;
-	font-weight: bold;
-	list-style-type: none;
-	margin: 0;
-	padding: 15px;
-	position: relative;
-	right: 50%;
-	width: 255px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  box-shadow: 1px 1px 5px #fafafa;
+  color: #133A42;
+  font-weight: bold;
+  list-style-type: none;
+  margin: 0;
+  padding: 15px;
+  position: relative;
+  right: 50%;
+  width: 255px;
 }
 
 .loadingModal ul li {
-	background: url(/images/indicator.gif) no-repeat left top;
-	padding-left: 20px;
+  background: url(/images/indicator.gif) no-repeat left top;
+  padding-left: 20px;
 }
 
 .loadingModal ul li.done {
-	background: url(/images/checkmark.png) no-repeat -2% top;
+  background: url(/images/checkmark.png) no-repeat -2% top;
 }
 
 .loadingModal ul li.error {
-	background: url(/images/delete.gif) no-repeat left top;
+  background: url(/images/delete.gif) no-repeat left top;
 }
 
 .messageBar {
-	left: 50%;
-	min-width: 124px;
-	position: absolute;
-	top: 50%;
+  left: 50%;
+  min-width: 124px;
+  position: absolute;
+  top: 50%;
   transform: translate(-50%, -50%);
-	z-index: 1001;
+  z-index: 1001;
 }
 
 .imageThumbnail {
-	background-color: #f7f7f7 !important;
-	border: 1px solid #ddd;
-	height: 120px;
-	margin-left: auto;
-	margin-right: auto;
-	margin-top: 10px;
-	position: relative;
-	width: 150px;
+  background-color: #f7f7f7 !important;
+  border: 1px solid #ddd;
+  height: 120px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 10px;
+  position: relative;
+  width: 150px;
 }
 
 .imageThumbnail img {
-	margin: auto;
+  margin: auto;
 }
 
 .imageThumbnail .imageArrowDown,
 .imageThumbnail .imageArrowUp {
-	position: absolute;
-	left: 45%;
+  position: absolute;
+  left: 45%;
 }
 
 .imageThumbnail .imageArrowDown {
-	top: 88%;
+  top: 88%;
 }
 
 .imageThumbnail .imageArrowDim {
@@ -567,98 +568,98 @@ div.matrixgridCells table {
 .taxaListDialog .taxaSelect,
 .taxaListDialog .availableTaxaSelect,
 .taxaListDialog .currentTaxaSelect {
-	display: inline-block;
+  display: inline-block;
 }
 
 .characterOrderingDialog .orderingSelect,
 .taxaListDialog .taxaSelect {
-	width: 100%;
-	height: 220px;
+  width: 100%;
+  height: 220px;
 }
 
 .characterOrderingDialog .unorderedCharacterSelect,
 .characterOrderingDialog .orderedCharacterSelect,
 .taxaListDialog .availableTaxaSelect,
 .taxaListDialog .currentTaxaSelect {
-	font-weight: bold;
-	height: 200px;
-	vertical-align: top;
-	width: 47%;
+  font-weight: bold;
+  height: 200px;
+  vertical-align: top;
+  width: 47%;
 }
 
 .characterOrderingDialog .unorderedCharacterSelect,
 .taxaListDialog .currentTaxaSelect {
-	padding-right: 10px;
+  padding-right: 10px;
 }
 
 ol.draggableSelect {
-	border: 1px solid #ddd;
-	height: 100%;
-	font-weight: normal;
-	margin: 0;
+  border: 1px solid #ddd;
+  height: 100%;
+  font-weight: normal;
+  margin: 0;
   outline: none;
-	overflow-x: hidden;
-	overflow-y: auto;
-	padding: 0;
-	width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0;
+  width: 100%;
 }
 
 ol.draggableSelect li {
-	border-top: 2px solid #fff;
-	padding: 2px 8px;
+  border-top: 2px solid #fff;
+  padding: 2px 8px;
 }
 
 ol.draggableSelect li:hover,
 ol.draggableSelect li.select {
-	background-color: #7fceff;
-	border-top: 2px solid #7fceff;
+  background-color: #7fceff;
+  border-top: 2px solid #7fceff;
 }
 
 ol.draggableSelect li.dead,
 ol.draggableSelect li.dead:hover {
-	background-color: #fff;
-	border-top: 2px solid #fff;
+  background-color: #fff;
+  border-top: 2px solid #fff;
 }
 
 ol.draggableSelect li.dead.onlyElement {
-	height: 90% !important;
+  height: 90% !important;
 }
 
 ol.draggableSelect li.droppable {
-	border-top: 2px solid #000;
+  border-top: 2px solid #000;
 }
 
 .savingLabel {
-	color: #133A42;
-	display: none;
-	font: bold 12px arial, sans-serif;
-	height: 17px;
-	margin: 0;
-	padding: 0px 0px 0px 20px;
-	position: absolute;
-	right: 0;
-	top: 0;
-	vertical-align: middle;
+  color: #133A42;
+  display: none;
+  font: bold 12px arial, sans-serif;
+  height: 17px;
+  margin: 0;
+  padding: 0px 0px 0px 20px;
+  position: absolute;
+  right: 0;
+  top: 0;
+  vertical-align: middle;
 }
 
 .savingLabel.saving {
-	background: url(/images/indicator.gif) no-repeat left top;
-	display: inline-block;
+  background: url(/images/indicator.gif) no-repeat left top;
+  display: inline-block;
 }
 
 .savingLabel.saved {
-	background: transparent url(/images/green_checkmark.png) no-repeat left top;
-	display: inline-block;
+  background: transparent url(/images/green_checkmark.png) no-repeat left top;
+  display: inline-block;
 }
 
 .savingLabel.info {
-	background: transparent url(/images/infoicon.png) no-repeat left top;
-	display: inline-block;
+  background: transparent url(/images/infoicon.png) no-repeat left top;
+  display: inline-block;
 }
 
 .savingLabel.error {
-	background: transparent url(/images/delete.gif) no-repeat left top;
-	display: inline-block;
+  background: transparent url(/images/delete.gif) no-repeat left top;
+  display: inline-block;
 }
 
 .streamingModalBackground {
@@ -673,169 +674,169 @@ ol.draggableSelect li.droppable {
 }
 
 .streamingModalBackground.show {
-	display: block;
+  display: block;
 }
 
 .streamingModal {
-	background: url(//images/indicator.gif) no-repeat left top;
-	color: #000;
-	font-weight: bold;
-	left: 50%;
-	padding-left: 20px;
-	position: fixed;
-	right: 50%;
-	top: 50%;
-	width: 110px;
+  background: url(//images/indicator.gif) no-repeat left top;
+  color: #000;
+  font-weight: bold;
+  left: 50%;
+  padding-left: 20px;
+  position: fixed;
+  right: 50%;
+  top: 50%;
+  width: 110px;
 }
 ol.selectList {
-	border: 1px solid #ddd;
-	height: 100%;
-	font-weight: normal;
-	margin: 0;
+  border: 1px solid #ddd;
+  height: 100%;
+  font-weight: normal;
+  margin: 0;
   outline: none;
-	overflow-x: hidden;
-	overflow-y: auto;
-	padding: 0;
-	width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0;
+  width: 100%;
 }
 
 ol.selectList li {
-	background-color: #fff;
-	display: inline-block;
-	padding: 2px 8px;
-	width: 100%;
+  background-color: #fff;
+  display: inline-block;
+  padding: 2px 8px;
+  width: 100%;
 }
 
 ol.selectList:not(.tablet) li:hover,
 ol.selectList li.select {
-	background-color: #7fceff;
+  background-color: #7fceff;
 }
 
 ol.selectList li div.name {
-	display: inline-block;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	width: 85%;
-	white-space: nowrap;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 85%;
+  white-space: nowrap;
 }
 
 ol.selectList li:hover span.remove {
-	background-image: url(/images/x.png);
-	background-repeat: no-repeat;
-	background-size: 14px 14px;
-	float: right;
-	padding: 7px 17px 7px 7px;
+  background-image: url(/images/x.png);
+  background-repeat: no-repeat;
+  background-size: 14px 14px;
+  float: right;
+  padding: 7px 17px 7px 7px;
 }
 
 .partitionDialog .selectPartition {
-	display: inline-block;
-	font-weight: bold;
-	height: 303px;
-	padding-right: 30px;
-	vertical-align: top;
-	width: 165px;
+  display: inline-block;
+  font-weight: bold;
+  height: 303px;
+  padding-right: 30px;
+  vertical-align: top;
+  width: 165px;
 }
 
 .partitionDialog .editPartition {
-	display: inline-block;
+  display: inline-block;
 }
 
 .partitionDialog .editPartition .characters,
 .partitionDialog .editPartition .taxa {
-	height: 150px;
+  height: 150px;
 }
 
 .partitionDialog .editPartition .taxa {
-	margin-top: 10px;
+  margin-top: 10px;
 }
 
 .partitionDialog .availableCharactersSelect,
 .partitionDialog .partitionCharactersSelect,
 .partitionDialog .availableTaxaSelect,
 .partitionDialog .partitionTaxaSelect {
-	display: inline-block;
-	font-weight: bold;
-	height: 130px;
-	vertical-align: top;
-	width: 220px;
+  display: inline-block;
+  font-weight: bold;
+  height: 130px;
+  vertical-align: top;
+  width: 220px;
 }
 
 .partitionDialog .partitionCharactersSelect,
 .partitionDialog .partitionTaxaSelect {
-	padding-left: 20px;
+  padding-left: 20px;
 }
 
 .partitionDialog .addPartition {
-	color: #15c;
-	cursor: pointer;
-	float: right;
-	font-weight: normal;
+  color: #15c;
+  cursor: pointer;
+  float: right;
+  font-weight: normal;
 }
 
 .partitionDialog .copyPartition {
-	color: #15c;
-	cursor: pointer;
-	float: right;
-	font-weight: normal;
-	padding-right: 5px;
+  color: #15c;
+  cursor: pointer;
+  float: right;
+  font-weight: normal;
+  padding-right: 5px;
 }
 
 .partitionDialog .switchParitionLabel {
-	display: inline-block;
-	font-weight: bold;
-	padding-left: 10px;
-	padding-right: 10px;
+  display: inline-block;
+  font-weight: bold;
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
 .ontologyDialog tr.ruleAction td:first-child {
-	padding-left: 35px;
+  padding-left: 35px;
 }
 
 .ontologyDialog div.message {
-	left: 50%;
-	margin-top: -35px;
-	position: absolute;
-	top: 50%;
-	z-index: 1001;
+  left: 50%;
+  margin-top: -35px;
+  position: absolute;
+  top: 50%;
+  z-index: 1001;
 }
 
 .ontologyDialog div.message > div {
-	height: 20px;
-	font-weight: bold;
-	padding-left: 20px;
-	position: relative;
-	right: 50%;
+  height: 20px;
+  font-weight: bold;
+  padding-left: 20px;
+  position: relative;
+  right: 50%;
 }
 
 .enterNameDescriptionDialog .label {
-	font-weight: bold;
+  font-weight: bold;
 }
 
 .enterNameDescriptionDialog .label ~ .label {
-	margin-top: 20px;
+  margin-top: 20px;
 }
 
 .enterNameDescriptionDialog .name {
-	width: 270px
+  width: 270px
 }
 
 .enterNameDescriptionDialog .description {
-	height: 120px !important;
-	resize: none;
-	width: 270px
+  height: 120px !important;
+  resize: none;
+  width: 270px
 }
 
 .goToDialog .label {
-	font-weight: bold;
+  font-weight: bold;
 }
 
 .goToDialog .label ~ .label {
-	margin-top: 20px;
+  margin-top: 20px;
 }
 
 .goToDialog .characterNumber,
 .goToDialog .taxonNumber {
-	width: 270px
+  width: 270px
 }
 
 .goToDialog input.error {
@@ -844,115 +845,114 @@ ol.selectList li:hover span.remove {
 }
 
 .addCharacterDialog .label {
-	font-weight: bold;
+  font-weight: bold;
 }
 
 .addCharacterDialog .control {
-	margin-bottom: 10px;
-	margin-top: 15px;
+  margin-bottom: 10px;
+  margin-top: 15px;
 }
 
 .addCharacterDialog .name {
-	width: 228px;
+  width: 228px;
 }
 
 .addCharacterDialog .description {
-	height: 120px !important;
-	resize: none;
-	width: 270px
+  height: 120px !important;
+  resize: none;
+  width: 270px
 }
 
 .tabBar {
-	display: block;
+  display: block;
 }
 
 .dataGrid {
-	height: 100%;
-	overflow-y: auto;
-	position: relative;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .dataGrid table {
-	background-color: transparent;
-	border-spacing: 0;
-	border-collapse: collapse;
-	color: #133A42;
-	cursor: default;
-	font-family: "Times New Roman", Times, serif;
-	font-size: 13px;
+  background-color: transparent;
+  border-spacing: 0;
+  border-collapse: collapse;
+  color: #133A42;
+  cursor: default;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 13px;
   outline: none;
-	width: 100%;
+  width: 100%;
 }
 
 .dataGrid table td,
 .dataGrid table th {
-	border-bottom: 1px solid #ddd;
-	border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  border-right: 1px solid #ddd;
 }
 
 .dataGrid table td:last-child,
 .dataGrid table th:last-child {
-	border-right: none;
+  border-right: none;
 }
 
 .dataGrid table tr td {
-	font-weight: normal;
-	padding: 6px;
-	text-align: left;
+  font-weight: normal;
+  padding: 6px;
+  text-align: left;
 }
 
 .dataGrid table tr th {
-	background: -webkit-linear-gradient(to bottom,
-		rgba(255, 255, 255, 1) 0%,
-		rgba(249, 250, 253, 1) 30%,
-		rgba(238, 242, 247, 1) 60%,
-		rgba(228, 233, 244, 1) 100%);
-	background: -o-linear-gradient(to bottom,
-		rgba(255, 255, 255, 1) 0%,
-		rgba(249, 250, 253, 1) 30%,
-		rgba(238, 242, 247, 1) 60%,
-		rgba(228, 233, 244, 1) 100%);
-	background: -moz-linear-gradient(to bottom,
-		rgba(255, 255, 255, 1) 0%,
-		rgba(249, 250, 253, 1) 30%,
-		rgba(238, 242, 247, 1) 60%,
-		rgba(228, 233, 244, 1) 100%);
-	background: linear-gradient(to bottom,
-		rgba(255, 255, 255, 1) 0%,
-		rgba(249, 250, 253, 1) 30%,
-		rgba(238, 242, 247, 1) 60%,
-		rgba(228, 233, 244, 1) 100%);
-	font-weight: bold;
-	text-align: center;
-	padding: 4px 2px;
-	vertical-align: top;
+  background: -webkit-linear-gradient(to bottom,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(249, 250, 253, 1) 30%,
+    rgba(238, 242, 247, 1) 60%,
+    rgba(228, 233, 244, 1) 100%);
+  background: -o-linear-gradient(to bottom,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(249, 250, 253, 1) 30%,
+    rgba(238, 242, 247, 1) 60%,
+    rgba(228, 233, 244, 1) 100%);
+  background: -moz-linear-gradient(to bottom,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(249, 250, 253, 1) 30%,
+    rgba(238, 242, 247, 1) 60%,
+    rgba(228, 233, 244, 1) 100%);
+  background: linear-gradient(to bottom,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(249, 250, 253, 1) 30%,
+    rgba(238, 242, 247, 1) 60%,
+    rgba(228, 233, 244, 1) 100%);
+  font-weight: bold;
+  text-align: center;
+  padding: 4px 2px;
+  vertical-align: top;
 }
 
 .dataGrid table tr {
-	height: 30px;
-	min-height: 30px;
-	max-height: 30px;
+  height: 30px;
+  min-height: 30px;
+  max-height: 30px;
 }
 
 .dataGrid table tr:not(.empty):hover td {
-	background-color: #e7e9f9;
+  background-color: #e7e9f9;
 }
 
 .dataGrid table tr:nth-child(even) {
-	background-color: #fff;
+  background-color: #fff;
 }
 
 .dataGrid table tr:nth-child(odd) {
-	background-color: #fafafa;
+  background-color: #fafafa;
 }
 
 .dataGrid table tr.selected,
 .dataGrid table tr.selected:hover td {
-	background-color: #7fceff;
+  background-color: #7fceff;
 }
 
 .dataGrid table tr.droppable {
-	border-top: 2px solid #000;
+  border-top: 2px solid #000;
 }
 
 .dataGrid table tr.disabled {
@@ -960,82 +960,82 @@ ol.selectList li:hover span.remove {
 }
 
 .dataGrid div.topGrid {
-	height: 100%;
-	overflow: auto;
-	position: relative;
-	width: 100%;
+  height: 100%;
+  overflow: auto;
+  position: relative;
+  width: 100%;
 }
 
 .dataGrid div.fixedHeader {
-	height: 100%;
-	left: 0;
-	overflow: hidden;
-	position: absolute;
-	top: 0;
-	width: 100%;
+  height: 100%;
+  left: 0;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  width: 100%;
 }
 
 .dataGrid div.fixedHeader table {
-	background-image: none !important;
-	background-color: transparent !important;
-	border-color: transparent !important;
+  background-image: none !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
 }
 
 .dataGrid div.fixedHeader table tbody {
-	visibility: hidden;
+  visibility: hidden;
 }
 
 .stateRulesPane {
-	border: 1px solid #ddd;
-	height: 100%;
-	overflow: hidden;
-	position: relative;
+  border: 1px solid #ddd;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
 }
 
 .stateRulesPane .dataGrid table td:first-child,
 .stateRulesPane .dataGrid table th:first-child {
-	width: 65%;
+  width: 65%;
 }
 
 .stateRulesPane .dataGrid table tr {
-	background-color: #f7f7f7;
+  background-color: #f7f7f7;
 }
 
 .stateRulesPane .dataGrid table tr.empty,
 .stateRulesPane .dataGrid table tr.characterRuleAction {
-	background-color: #fff;
+  background-color: #fff;
 }
 
 .stateRulesPane .dataGrid table tr.characterRuleAction:hover td {
-	background-color: #e7e9f9;
+  background-color: #e7e9f9;
 }
 
 .stateRulesPane .dataGrid table tr.characterRuleAction:hover td span.remove {
-	background-image: url(/images/x.png);
-	background-repeat: no-repeat;
-	background-size: 14px 14px;
-	padding: 7px 17px 7px 7px;
-	position: absolute;
-	right: 0px;
+  background-image: url(/images/x.png);
+  background-repeat: no-repeat;
+  background-size: 14px 14px;
+  padding: 7px 17px 7px 7px;
+  position: absolute;
+  right: 0px;
 }
 
 .stateRulesPane .dataGrid table tr.characterRuleAction td:first-child {
-	padding-left: 30px;
+  padding-left: 30px;
 }
 
 
 .addRuleDialog div.header {
-	font: normal 15px arial, sans-serif;
-	padding: 10px 0px;
+  font: normal 15px arial, sans-serif;
+  padding: 10px 0px;
 }
 
 .addRuleDialog .actionCharacters {
-	margin-top: 10px;
+  margin-top: 10px;
 }
 
 .addRuleDialog .characters,
 .addRuleDialog .actionCharacters {
-	height: 150px;
+  height: 150px;
 }
 
 .addRuleDialog .charactersSelect,
@@ -1043,30 +1043,30 @@ ol.selectList li:hover span.remove {
 .addRuleDialog .actionCharactersSelect,
 .addRuleDialog .actionCharacterstatesSelect {
   display: inline-block;
-	font-weight: bold;
-	height: 130px;
-	vertical-align: top;
+  font-weight: bold;
+  height: 130px;
+  vertical-align: top;
   width: 50%;
 }
 
 .addRuleDialog .addStateRule .characterstatesSelect,
 .addRuleDialog .addStateRule .actionCharacterstatesSelect {
-	padding-left: 20px;
+  padding-left: 20px;
 }
 
 
 .dagDialog div.action {
-	padding: 3px;
-	position: relative;
+  padding: 3px;
+  position: relative;
 }
 
 .dagDialog div.action div {
-	display: inline-block;
+  display: inline-block;
 }
 
 .dagDialog div.action .loading {
-	position: absolute;
-	right: 0;
+  position: absolute;
+  right: 0;
 }
 
 .dagDialog .container {
@@ -1081,26 +1081,26 @@ ol.selectList li:hover span.remove {
     height: 100%;
     margin: auto;
     overflow: hidden;
-	position: relative;
-	width: 100%;
+  position: relative;
+  width: 100%;
 }
 
 .tip {
-	background-color: white;
-	border: 1px solid #ccc;
-	-moz-box-shadow: #555 2px 2px 8px;
-	-webkit-box-shadow: #555 2px 2px 8px;
-	-o-box-shadow: #555 2px 2px 8px;
-	box-shadow: #555 2px 2px 8px;
-	color: #111;
-	filter: alpha(opacity=90);
-	font-size: 10px;
-	font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
-	max-width:500px;
-	opacity:0.9;
-	padding: 7px;
-	text-align: left;
-	width: auto;
+  background-color: white;
+  border: 1px solid #ccc;
+  -moz-box-shadow: #555 2px 2px 8px;
+  -webkit-box-shadow: #555 2px 2px 8px;
+  -o-box-shadow: #555 2px 2px 8px;
+  box-shadow: #555 2px 2px 8px;
+  color: #111;
+  filter: alpha(opacity=90);
+  font-size: 10px;
+  font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
+  max-width:500px;
+  opacity:0.9;
+  padding: 7px;
+  text-align: left;
+  width: auto;
 }
 
 .tipTitle {
@@ -1110,275 +1110,273 @@ ol.selectList li:hover span.remove {
 }
 
 .searchDialog .searchControls {
-	display: inline-block;
-	position: relative;
-	width: 100%;
+  display: inline-block;
+  position: relative;
+  width: 100%;
 }
 
 .searchDialog .searchControls div {
-	display: inline-block;
+  display: inline-block;
 }
 
 .searchDialog .searchControls input {
   display: inline-block;
-	height: 19px;
-	width: 250px
+  height: 19px;
+  width: 250px
 }
 
 .searchDialog .searchControls .form-select {
   display: inline-block;
-	width: 300px;
+  width: 300px;
 }
 
 .searchDialog .searchButton {
   display: inline-block;
-	position: absolute;
-	right: 0;
+  position: absolute;
+  right: 0;
 }
 
 .searchDialog .searchStats {
-	font-style: italic;
-	margin-top: 10px;
+  font-style: italic;
+  margin-top: 10px;
 }
 
 .searchDialog .searchResults {
-	border: 1px solid #ddd;
-	height: 215px;
-	overflow: hidden;
-	position: relative;
+  border: 1px solid #ddd;
+  height: 215px;
+  overflow: hidden;
+  position: relative;
 
 }
 
 .searchDialog .searchResults .dataGrid table tr {
-	height: 28px;
-	min-height: 28px;
-	max-height: 28px;
+  height: 28px;
+  min-height: 28px;
+  max-height: 28px;
 }
 
 .warningDialog .warningRules {
-	border: 1px solid #ddd;
-	height: 275px;
-	overflow: hidden;
-	padding: 0;
-	position: relative;
+  border: 1px solid #ddd;
+  height: 275px;
+  overflow: hidden;
+  padding: 0;
+  position: relative;
 }
 
 .preferencesDialog .modal-dialog-buttons.dialogButtons button + button {
-	float: none !important;
+  float: none !important;
 }
 
 .preferencesDialog section {
-	font-weight: bold;
-	padding: 11px 0px;
+  font-weight: bold;
+  padding: 11px 0px;
 }
 
 .preferencesDialog section header {
-	font-weight: bold;
-	margin-bottom: 5px;
+  font-weight: bold;
+  margin-bottom: 5px;
 }
 
 .preferencesDialog section > div {
-	margin: 0px 5px;
+  margin: 0px 5px;
 }
 
 .preferencesDialog .streamingMode {
-	font-weight: normal;
+  font-weight: normal;
 }
 
 .taxaDialog .notesPane .label {
-	font-weight: bold;
-	margin-bottom: 5px;
+  font-weight: bold;
+  margin-bottom: 5px;
 }
 
 .taxaDialog .modal-dialog-buttons.dialogButtons button + button {
-	float: none !important;
+  float: none !important;
 }
 
 .taxaDialog .notesArea {
-	height: 320px !important;
-	resize: none;
-	width: 100%;
+  height: 320px !important;
+  resize: none;
+  width: 100%;
 }
 
 .taxaDialog .partitionPane {
-	border: 1px solid #ddd;
-	height: 320px;
-	overflow: hidden;
-	position: relative;
-	width: 100%;
+  border: 1px solid #ddd;
+  height: 320px;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
 }
 
 .taxaDialog .partitionPane .dataGrid table td:first-child,
 .taxaDialog .partitionPane .dataGrid table th:first-child {
-	width: 25px !important;
+  width: 25px !important;
 }
 
 .taxaDialog .partitionPane .dataGrid table th {
-	text-align: left;
-	padding: 6px;
-	vertical-align: middle;
+  text-align: left;
+  padding: 6px;
+  vertical-align: middle;
 }
 
 .taxaDialog .header {
-	font: bold 15px arial, sans-serif;
-	padding: 10px 0px;
+  font: bold 15px arial, sans-serif;
+  padding: 10px 0px;
 }
 
 .taxaDialog .message {
-	font: italic 13px arial, sans-serif;
-	padding: 10px 0px;
-	margin-bottom: 10px;
+  font: italic 13px arial, sans-serif;
+  padding: 10px 0px;
+  margin-bottom: 10px;
 }
 
 .taxaDialog .fields {
-	display: inline-block;
+  display: inline-block;
 }
 
 .taxaDialog .field {
-	font-weight: bold;
+  font-weight: bold;
 }
 
 .taxaDialog .mediaPane {
-	border: 1px solid #ddd;
-	height: 305px;
-	overflow: hidden;
-	position: relative;
-	width: 605px;
+  border: 1px solid #ddd;
+  height: 305px;
+  overflow: hidden;
+  position: relative;
 }
 
 .taxaDialog .addTaxonMedia {
-	color: #15c;
-	cursor: pointer;
-	font-weight: normal;
+  color: #15c;
+  cursor: pointer;
+  font-weight: normal;
 }
 
 .addMediaDialog .addMedia {
-	border: 1px solid #ddd;
-	height: 305px;
-	overflow: hidden;
-	position: relative;
+  border: 1px solid #ddd;
+  height: 305px;
+  overflow: hidden;
+  position: relative;
 }
 
 .addMediaDialog div.loadingMedia {
-	left: 50%;
-	margin-top: -35px;
-	position: absolute;
-	top: 50%;
-	z-index: 1001;
+  left: 50%;
+  margin-top: -35px;
+  position: absolute;
+  top: 50%;
+  z-index: 1001;
 }
 
 .addMediaDialog div.loadingMedia > div {
-	background: url(//images/indicator.gif) no-repeat left top;
-	height: 20px;
-	font-weight: bold;
-	padding-left: 20px;
-	position: relative;
-	right: 50%;
+  background: url(//images/indicator.gif) no-repeat left top;
+  height: 20px;
+  font-weight: bold;
+  padding-left: 20px;
+  position: relative;
+  right: 50%;
 }
 
 .addMediaDialog .searchControls {
-	margin-bottom: 5px;
+  margin-bottom: 5px;
 }
 
 .addMediaDialog .searchControls .mediaInput {
-	height: 19px;
-	margin-left: 5px;
-	margin-right: 7px;
-	vertical-align: middle;
-	width: 300px;
+  height: 19px;
+  margin-left: 5px;
+  margin-right: 7px;
+  vertical-align: middle;
+  width: 300px;
 }
 
 .addMediaDialog .attachMediaLabel {
-	display: inline-block;
-	font-weight: bold;
-	padding-left: 30px;
-	padding-right: 10px;
+  display: inline-block;
+  font-weight: bold;
+  padding-left: 30px;
+  padding-right: 10px;
 }
 
 .mediaGrid {
-	display: inline-block;
-	height: 100%;
-	overflow-y: auto;
-	position: relative;
-	width: 100%;
+  display: inline-block;
+  height: 100%;
+  overflow-y: auto;
+  position: relative;
+  width: 100%;
 }
 
 .mediaGrid.highlighted {
-	background-color: #b2e1ff;
+  background-color: #b2e1ff;
 }
 
 .mediaGrid .media-label {
-	font: bold 20px arial, sans-serif;
-	position: absolute;
-	right: 37%;
-	top: 46%;
+  font: bold 20px arial, sans-serif;
+  position: absolute;
+  right: 37%;
+  top: 46%;
 }
 
 .mediaGrid .mediaItem {
-	display: inline-block;
-	height: 100px;
-	margin: 5px;
+  display: inline-block;
+  height: 100px;
+  margin: 5px;
   overflow: hidden;
-	padding: 5px;
-	position: relative;
+  padding: 5px;
+  position: relative;
   text-overflow: ellipsis;
-	vertical-align: middle;
-	width: 120px;
+  vertical-align: middle;
+  width: 120px;
 }
 
 .mediaGrid .mediaItem:hover {
-	background-color: #b2e1ff;
+  background-color: #b2e1ff;
 }
 
 .mediaGrid .mediaItem span.remove {
-	position: absolute;
-	right: 0px;
-	top: 0px;
-	visibility: hidden;
+  position: absolute;
+  right: 0px;
+  top: 0px;
+  visibility: hidden;
 }
 
 .mediaGrid .mediaItem:hover span.remove {
-	background-image: url(/images/x.png);
-	background-repeat: no-repeat;
-	background-size: 14px 14px;
-	padding: 7px 17px 7px 7px;
-	visibility: visible;
+  background-image: url(/images/x.png);
+  background-repeat: no-repeat;
+  background-size: 14px 14px;
+  padding: 7px 17px 7px 7px;
+  visibility: visible;
 }
 
 .mediaGrid .mediaItem.selected {
-	background-color: #7fceff;
+  background-color: #7fceff;
 }
 
 .draggable {
-	display: block;
-	z-index: 50;
+  display: block;
+  z-index: 50;
 }
 
 .cellDialog .summary {
   font-size: 13px;
   font-style: italic;
-	font-weight: bold;
+  font-weight: bold;
   padding: 5px;
 }
 
 .cellDialog .taxonName {
   color: blue;
-	font-weight: bold;
-	padding-left: 10px;
+  font-weight: bold;
+  padding-left: 10px;
 }
 
 .cellDialog .characterName {
   color: blue;
-	font-weight: bold;
-	padding-left: 10px;
+  font-weight: bold;
+  padding-left: 10px;
 }
 
 .cellDialog .scoringPane .scoringGrid {
-	border: 1px solid #ddd;
-	height: 270px;
-	overflow: hidden;
-	position: relative;
-	width: 605px;
+  border: 1px solid #ddd;
+  height: 270px;
+  overflow: hidden;
+  position: relative;
 }
 
 .cellDialog .scoringPane .scoringWarning span {
@@ -1388,44 +1386,42 @@ ol.selectList li:hover span.remove {
 
 .cellDialog .scoringPane .polymorphicControl,
 .cellDialog .scoringPane .statusControl {
-	display: inline-block;
-	padding-top: 10px;
+  display: inline-block;
+  padding-top: 10px;
 }
 
 .cellDialog .scoringPane .polymorphicControl .field,
 .cellDialog .scoringPane .statusControl .field {
-	display: inline-block;
-	font-weight: bold;
-	padding-right: 10px;
-	width: 90px;
+  display: inline-block;
+  font-weight: bold;
+  padding-right: 10px;
+  width: 90px;
 }
 
 .cellDialog .scoringPane .dataGrid table td:first-child,
 .cellDialog .scoringPane .dataGrid table th:first-child,
 .cellDialog .scoringPane .dataGrid table th:nth-child(2),
 .cellDialog .scoringPane .dataGrid table td:nth-child(2) {
-	text-align: center;
-	width: 25px !important;
+  text-align: center;
+  width: 25px !important;
 }
 
 .cellDialog .scoringPane .dataGrid table th {
-	text-align: left;
-	padding: 6px;
-	vertical-align: middle;
+  text-align: left;
+  padding: 6px;
+  vertical-align: middle;
 }
 
 .cellDialog .notesArea {
-	height: 320px !important;
-	resize: none;
-	width: 605px;
+  height: 320px !important;
+  resize: none;
 }
 
 .cellDialog .mediaPane {
-	border: 1px solid #ddd;
-	height: 305px;
-	overflow: hidden;
-	position: relative;
-	width: 605px;
+  border: 1px solid #ddd;
+  height: 305px;
+  overflow: hidden;
+  position: relative;
 }
 
 .taxaDialog .openMediaWindow,
@@ -1436,79 +1432,78 @@ ol.selectList li:hover span.remove {
 }
 
 .cellDialog .addCellMedia {
-	color: #15c;
-	cursor: pointer;
-	font-weight: normal;
+  color: #15c;
+  cursor: pointer;
+  font-weight: normal;
 }
 
 .cellDialog div.loadingCitation {
-	left: 50%;
-	margin-top: -35px;
-	position: absolute;
-	top: 50%;
-	z-index: 1001;
+  left: 50%;
+  margin-top: -35px;
+  position: absolute;
+  top: 50%;
+  z-index: 1001;
 }
 
 .cellDialog div.loadingCitation > div {
-	background: url(/images/indicator.gif) no-repeat left top;
-	height: 20px;
-	font-weight: bold;
-	padding-left: 20px;
-	position: relative;
-	right: 50%;
+  background: url(/images/indicator.gif) no-repeat left top;
+  height: 20px;
+  font-weight: bold;
+  padding-left: 20px;
+  position: relative;
+  right: 50%;
 }
 
 .cellDialog .citationsPane {
-	border: 1px solid #ddd;
-	height: 300px;
-	overflow: hidden;
-	position: relative;
-	width: 605px;
+  border: 1px solid #ddd;
+  height: 300px;
+  overflow: hidden;
+  position: relative;
 }
 
 .cellDialog .citationsPane .dataGrid table {
-	table-layout: fixed;
+  table-layout: fixed;
 }
 
 .cellDialog .citationsPane .dataGrid table td {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	vertical-align: middle;
-	white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
 .cellDialog .citationsPane .dataGrid table th:first-child,
 .cellDialog .citationsPane .dataGrid table td:first-child {
-	padding-right: 15px;
-	width: 315px;
+  padding-right: 15px;
+  width: 315px;
 }
 
 .cellDialog .citationsPane .dataGrid table th:nth-child(2),
 .cellDialog .citationsPane .dataGrid table td:nth-child(2) {
-	width: 75px;
+  width: 75px;
 }
 
 .cellDialog .citationsPane .dataGrid table tr:hover td span.remove {
-	background-image: url(/images/x.png);
-	background-repeat: no-repeat;
-	background-size: 14px 14px;
-	padding: 7px 11px 7px 7px;
-	position: absolute;
-	right: 0px;
+  background-image: url(/images/x.png);
+  background-repeat: no-repeat;
+  background-size: 14px 14px;
+  padding: 7px 11px 7px 7px;
+  position: absolute;
+  right: 0px;
 }
 
 .characterDialog .addCitation,
 .characterDialog .addLastCitation,
 .cellDialog .addCitation,
 .cellDialog .addLastCitation {
-	color: #15c;
-	cursor: pointer;
-	font-weight: normal;
+  color: #15c;
+  cursor: pointer;
+  font-weight: normal;
 }
 
 .characterDialog .addLastCitation,
 .cellDialog .addLastCitation {
-	margin-left: 20px;
+  margin-left: 20px;
 }
 
 .taxaDialog .addTaxonMedia.disabled,
@@ -1516,70 +1511,70 @@ ol.selectList li:hover span.remove {
 .cellDialog .addCitation.disabled,
 .characterDialog .addLastCitation.disabled,
 .cellDialog .addLastCitation.disabled {
-	color: grey;
-	cursor: not-allowed;
+  color: grey;
+  cursor: not-allowed;
 }
 
 .editCitationDialog {
-	width: 300px;
+  width: 300px;
 }
 
 .editCitationDialog .label {
-	font-weight: bold;
+  font-weight: bold;
 }
 
 .editCitationDialog .label ~ .label {
-	margin-top: 20px;
+  margin-top: 20px;
 }
 
 .editCitationDialog .reference {
-	height: 120px;
-	resize: none;
-	width: 270px
+  height: 120px;
+  resize: none;
+  width: 270px
 }
 
 .editCitationDialog .pages {
-	width: 270px
+  width: 270px
 }
 
 .editCitationDialog .notes {
-	height: 70px !important;
-	resize: none;
-	width: 270px
+  height: 70px !important;
+  resize: none;
+  width: 270px
 }
 
 .addCitationDialog .modal-dialog-buttons.dialogButtons button + button {
-	float: none !important;
+  float: none !important;
 }
 
 .addCitationDialog .searchControls {
-	padding-bottom: 15px;
-	width: 100%;
+  padding-bottom: 15px;
+  width: 100%;
 }
 
 .addCitationDialog .citationInput {
-	height: 19px;
-	width: 250px
+  height: 19px;
+  width: 250px
 }
 
 .addCitationDialog .label {
-	font-weight: bold;
+  font-weight: bold;
 }
 
 .addCitationDialog .label {
-	margin-top: 20px;
+  margin-top: 20px;
 }
 
 .addCitationDialog .citationFindButton {
-	float: right;
+  float: right;
 }
 
 .addCitationDialog .selectCitation {
-	height: 120px;
+  height: 120px;
 }
 
 .addCitationDialog .pageInput {
-	width: 100%;
+  width: 100%;
 }
 
 .addCitationDialog hr {
@@ -1589,260 +1584,261 @@ ol.selectList li:hover span.remove {
  }
 
 .addCitationDialog .notesInput {
-	box-sizing: inherit !important;
-	height: 100px !important;
-	resize: none;
-	width: 100%;
+  box-sizing: inherit !important;
+  height: 100px !important;
+  resize: none;
+  width: 100%;
 }
 
 .addCitationDialog ol.selectList li div.name {
-	overflow: visible;
-	text-overflow: string;
-	white-space: normal;
+  overflow: visible;
+  text-overflow: string;
+  white-space: normal;
 }
 
 .cellDialog .changePane,
 .cellDialog .commentsPane {
-	border: 1px solid #ddd;
-	height: 300px;
-	overflow: hidden;
-	position: relative;
-	width: 605px;
+  border: 1px solid #ddd;
+  height: 300px;
+  overflow: hidden;
+  position: relative;
 }
 
 .cellDialog .addCellComment {
-	color: #15c;
-	cursor: pointer;
-	font-weight: normal;
+  color: #15c;
+  cursor: pointer;
+  font-weight: normal;
 }
 
 .cellDialog .addCellComment.disabled {
-	color: grey;
-	cursor: not-allowed;
+  color: grey;
+  cursor: not-allowed;
 }
 
 .cellDialog .changePane .dataGrid table,
 .cellDialog .commentsPane .dataGrid table {
-	table-layout: fixed;
+  table-layout: fixed;
 }
 
 .cellDialog .changePane .dataGrid table td,
 .cellDialog .commentsPane .dataGrid table td {
-	vertical-align: top;
-	word-wrap: break-word;
+  vertical-align: top;
+  word-wrap: break-word;
 }
 
 .cellDialog .changePane .dataGrid table th:first-child,
 .cellDialog .changePane .dataGrid table td:first-child,
 .cellDialog .commentsPane .dataGrid table th:first-child,
 .cellDialog .commentsPane .dataGrid table td:first-child {
-	padding-right: 15px;
-	width: 100px;
+  padding-right: 15px;
+  width: 100px;
 }
 
 .cellDialog .changePane .dataGrid table th:nth-child(2),
 .cellDialog .changePane .dataGrid table td:nth-child(2),
 .cellDialog .commentsPane .dataGrid table th:nth-child(2),
 .cellDialog .commentsPane .dataGrid table td:nth-child(2) {
-	width: 180px;
+  width: 180px;
 }
 
 div.loadingMessage,
 .characterDialog div.loadingComments,
 .cellDialog div.loadingComments {
-	left: 50%;
-	margin-top: -35px;
-	position: absolute;
-	top: 50%;
-	z-index: 1001;
+  left: 50%;
+  margin-top: -35px;
+  position: absolute;
+  top: 50%;
+  z-index: 1001;
 }
 
 div.loadingMessage > div,
 .characterDialog div.loadingComments > div,
 .cellDialog div.loadingComments > div {
-	background: url(/images/indicator.gif) no-repeat left top;
-	height: 20px;
-	font-weight: bold;
-	padding-left: 20px;
-	position: relative;
-	right: 50%;
+  background: url(/images/indicator.gif) no-repeat left top;
+  height: 20px;
+  font-weight: bold;
+  padding-left: 20px;
+  position: relative;
+  right: 50%;
 }
 
 .addCommentDialog textarea.comment {
-	height: 120px !important;
-	resize: none;
-	width: 270px
+  height: 120px !important;
+  resize: none;
+  width: 270px
 }
 
 .addCommentDialog .control {
-	padding-bottom: 10px;
-	padding-top: 15px;
-	vertical-align: middle;
+  padding-bottom: 10px;
+  padding-top: 15px;
+  vertical-align: middle;
 }
 
 .addCommentDialog .field {
-	display: inline-block;
-	font-weight: bold;
-	padding-right: 5px;
-	vertical-align: middle;
+  display: inline-block;
+  font-weight: bold;
+  padding-right: 5px;
+  vertical-align: middle;
 }
 
 .characterDialog .partitionPane {
-	border: 1px solid #ddd;
-	height: 380px;
-	overflow: hidden;
-	position: relative;
+  border: 1px solid #ddd;
+  height: 380px;
+  overflow: hidden;
+  position: relative;
 
 }
 
 .characterDialog .partitionPane .dataGrid table td:first-child,
 .characterDialog .partitionPane .dataGrid table th:first-child {
-	width: 25px !important;
+  width: 25px !important;
 }
 
 .characterDialog .partitionPane .dataGrid table th {
-	text-align: left;
-	padding: 6px;
-	vertical-align: middle;
+  text-align: left;
+  padding: 6px;
+  vertical-align: middle;
 }
 
 .characterDialog .changePane,
 .characterDialog .commentsPane {
-	border: 1px solid #ddd;
-	height: 365px;
-	overflow: hidden;
-	position: relative;
-	width: 605px;
+  border: 1px solid #ddd;
+  height: 365px;
+  overflow: hidden;
+  position: relative;
 }
 
 .characterDialog .changePane {
-	height: 380px;
+  height: 380px;
 }
 
 .characterDialog .addCellComment {
-	color: #15c;
-	cursor: pointer;
-	font-weight: normal;
+  color: #15c;
+  cursor: pointer;
+  font-weight: normal;
 }
 
 .characterDialog .changePane .dataGrid table,
 .characterDialog .commentsPane .dataGrid table {
-	table-layout: fixed;
+  table-layout: fixed;
 }
 
 .characterDialog .changePane .dataGrid table td,
 .characterDialog .commentsPane .dataGrid table td {
-	vertical-align: top;
-	word-wrap: break-word;
+  vertical-align: top;
+  word-wrap: break-word;
 }
 
 .characterDialog .changePane .dataGrid table th:first-child,
 .characterDialog .changePane .dataGrid table td:first-child,
 .characterDialog .commentsPane .dataGrid table th:first-child,
 .characterDialog .commentsPane .dataGrid table td:first-child {
-	padding-right: 15px;
-	width: 100px;
+  padding-right: 15px;
+  width: 100px;
 }
 
 .characterDialog .citationsPane {
-	border: 1px solid #ddd;
-	height: 365px;
-	overflow: hidden;
-	position: relative;
-	width: 605px;
+  border: 1px solid #ddd;
+  height: 365px;
+  overflow: hidden;
+  position: relative;
 }
 
 .characterDialog .citationsPane .dataGrid table {
-	table-layout: fixed;
+  table-layout: fixed;
 }
 
 .characterDialog .citationsPane .dataGrid table td {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	vertical-align: middle;
-	white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
 .characterDialog .citationsPane .dataGrid table th:first-child,
 .characterDialog .citationsPane .dataGrid table td:first-child {
-	padding-right: 15px;
-	width: 315px;
+  padding-right: 15px;
+  width: 315px;
 }
 
 .characterDialog .citationsPane .dataGrid table th:nth-child(2),
 .characterDialog .citationsPane .dataGrid table td:nth-child(2) {
-	width: 75px;
+  width: 75px;
 }
 
 .characterDialog .citationsPane .dataGrid table tr:hover td span.remove {
-	background-image: url(/images/x.png);
-	background-repeat: no-repeat;
-	background-size: 14px 14px;
-	padding: 7px 11px 7px 7px;
-	position: absolute;
-	right: 0px;
+  background-image: url(/images/x.png);
+  background-repeat: no-repeat;
+  background-size: 14px 14px;
+  padding: 7px 11px 7px 7px;
+  position: absolute;
+  right: 0px;
 }
 
 .characterDialog .addCharacterMedia {
-	color: #15c;
-	cursor: pointer;
-	font-weight: normal;
+  color: #15c;
+  cursor: pointer;
+  font-weight: normal;
 }
 
 .characterDialog .characterPane p {
-	margin-top: 20px;
+  margin-top: 20px;
+}
+
+.characterDialog .characterPane .characterName {
+  padding: 10px 0;
 }
 
 .characterDialog .characterPane .addCharacterState {
-	color: #15c;
-	cursor: pointer;
-	font-weight: normal;
+  color: #15c;
+  cursor: pointer;
+  font-weight: normal;
 }
 
 .characterDialog .characterPane .label {
-	font-weight: bold;
-	margin-bottom: 5px;
+  font-weight: bold;
+  margin-bottom: 5px;
 }
 
 .characterDialog .characterPane .nameInput {
-	width: 600px;
+  width: 100%;
 }
 
 .characterDialog .characterPane .descriptionInput {
-	box-sizing: inherit !important;
-	height: 50px !important;
-	resize: none;
-	width: 600px;
+  box-sizing: inherit !important;
+  height: 50px !important;
+  resize: none;
+  width: 100%;
 }
 
 .characterDialog .characterPane .statesPane {
-	border: 1px solid #ddd;
-	height: 150px;
-	overflow: hidden;
-	position: relative;
-	width: 605px;
+  border: 1px solid #ddd;
+  height: 150px;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
 }
 
 .characterDialog .characterPane .statesPane .dataGrid table {
-	table-layout: fixed;
+  table-layout: fixed;
 }
 
 .characterDialog .characterPane .statesPane .dataGrid table td {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	vertical-align: middle;
-	white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
 .characterDialog .characterPane .statesPane .dataGrid table th:first-child,
 .characterDialog .characterPane .statesPane .dataGrid table td:first-child {
-	width: 25px !important;
+  width: 25px !important;
 }
 
 .characterDialog .characterPane .statesPane td input {
-	background-color: transparent;
-	border: 0px;
-	width: 100%;
+  background-color: transparent;
+  border: 0px;
+  width: 100%;
 }
 
 .characterDialog .characterPane .statesPane td.removeable input {
@@ -1850,47 +1846,46 @@ div.loadingMessage > div,
 }
 
 .characterDialog .characterPane .statesPane .dataGrid table tr:hover td span.remove {
-	background-image: url(/images/x.png);
-	background-repeat: no-repeat;
-	background-size: 14px 14px;
-	padding: 7px 17px 7px 7px;
-	position: absolute;
-	right: 0px;
+  background-image: url(/images/x.png);
+  background-repeat: no-repeat;
+  background-size: 14px 14px;
+  padding: 7px 17px 7px 7px;
+  position: absolute;
+  right: 0px;
 }
 
 .characterDialog .mediaPane {
-	border: 1px solid #ddd;
-	height: 365px;
-	overflow: hidden;
-	position: relative;
-	width: 605px;
+  border: 1px solid #ddd;
+  height: 365px;
+  overflow: hidden;
+  position: relative;
 }
 
 .characterDialog .mediaPane .dataGrid table {
-	table-layout: fixed;
+  table-layout: fixed;
 }
 
 .characterDialog .mediaPane .dataGrid table td {
-	height: 120px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	vertical-align: middle;
-	white-space: nowrap;
+  height: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
 .characterDialog .mediaPane .dataGrid table th:first-child,
 .characterDialog .mediaPane .dataGrid table td:first-child {
-	text-align: center;
-	width: 25px !important;
+  text-align: center;
+  width: 25px !important;
 }
 
 .characterDialog .mediaPane .dataGrid table th:nth-child(2),
 .characterDialog .mediaPane .dataGrid table td:nth-child(2) {
-	width: 75px;
+  width: 75px;
 }
 
 .characterDialog .mediaPane .dataGrid table .mediaGrid {
-	overflow-y: hidden;
+  overflow-y: hidden;
 }
 
 .characterDialog .mediaPane .mediaGrid .mediaItem b {
@@ -1898,144 +1893,144 @@ div.loadingMessage > div,
 }
 
 .characterListDialog .characterPane {
-	border: 1px solid #ddd;
+  border: 1px solid #ddd;
   height: 350px;
-	overflow: auto;
+  overflow: auto;
 }
 
 .characterListDialog .addCharacter {
-	color: #15c;
-	cursor: pointer;
-	font-weight: normal;
+  color: #15c;
+  cursor: pointer;
+  font-weight: normal;
 }
 
 /** Character Editor styles **/
 
 .characterEditor {
-	user-select: none;
-	-khtml-user-select: none;
-	-ms-user-select: none;
-	-moz-user-select: none;
-	-webkit-user-select: none;
+  user-select: none;
+  -khtml-user-select: none;
+  -ms-user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
 }
 
 .characterContainer {
-	border: 1px solid #ddd;
-	overflow-x: hidden;
-	overflow-y: auto;
+  border: 1px solid #ddd;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .characterGrid {
-	background: white;
-	border-spacing: 0;
-	border-collapse: collapse;
-	color: #133A42;
-	cursor: default;
-	font-family: "Times New Roman", Times, serif;
-	font-size: 13px;
-	outline: none;
-	overflow-y: auto;
-	overflow-x: visible;
-	text-overflow: ellipsis;
-	vertical-align: middle;
+  background: white;
+  border-spacing: 0;
+  border-collapse: collapse;
+  color: #133A42;
+  cursor: default;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 13px;
+  outline: none;
+  overflow-y: auto;
+  overflow-x: visible;
+  text-overflow: ellipsis;
+  vertical-align: middle;
 }
 
 .characterGrid table {
-	background-color: transparent;
-	border-spacing: 0;
-	border-collapse: collapse;
-	color: #133A42;
-	cursor: default;
-	font-family: "Times New Roman", Times, serif;
-	font-size: 13px;
-	width: 100%;
+  background-color: transparent;
+  border-spacing: 0;
+  border-collapse: collapse;
+  color: #133A42;
+  cursor: default;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 13px;
+  width: 100%;
 }
 
 .characterGrid table td,
 .characterGrid table th {
-	border-bottom: 1px solid #ddd;
-	border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  border-right: 1px solid #ddd;
 }
 
 .characterGrid table td:last-child,
 .characterGrid table th:last-child {
-	border-right: none;
-	text-align: center;
-	width: 160px !important;
+  border-right: none;
+  text-align: center;
+  width: 160px !important;
 }
 
 .characterGrid table tr {
-	max-width: 140px !important;
+  max-width: 140px !important;
 }
 
 .characterGrid table tr td {
-	font-weight: normal;
-	max-height: 140px !important;
-	padding: 6px;
-	position: relative;
-	text-align: left;
-	vertical-align: top;
+  font-weight: normal;
+  max-height: 140px !important;
+  padding: 6px;
+  position: relative;
+  text-align: left;
+  vertical-align: top;
 }
 
 .characterGrid table tr th {
-	background: -webkit-linear-gradient(to bottom,
-		rgba(255, 255, 255, 1) 0%,
-		rgba(249, 250, 253, 1) 30%,
-		rgba(238, 242, 247, 1) 60%,
-		rgba(228, 233, 244, 1) 100%);
-	background: -o-linear-gradient(to bottom,
-		rgba(255, 255, 255, 1) 0%,
-		rgba(249, 250, 253, 1) 30%,
-		rgba(238, 242, 247, 1) 60%,
-		rgba(228, 233, 244, 1) 100%);
-	background: -moz-linear-gradient(to bottom,
-		rgba(255, 255, 255, 1) 0%,
-		rgba(249, 250, 253, 1) 30%,
-		rgba(238, 242, 247, 1) 60%,
-		rgba(228, 233, 244, 1) 100%);
-	background: linear-gradient(to bottom,
-		rgba(255, 255, 255, 1) 0%,
-		rgba(249, 250, 253, 1) 30%,
-		rgba(238, 242, 247, 1) 60%,
-		rgba(228, 233, 244, 1) 100%);
-	font-weight: bold;
-	text-align: center;
-	padding: 4px 2px;
-	vertical-align: top;
+  background: -webkit-linear-gradient(to bottom,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(249, 250, 253, 1) 30%,
+    rgba(238, 242, 247, 1) 60%,
+    rgba(228, 233, 244, 1) 100%);
+  background: -o-linear-gradient(to bottom,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(249, 250, 253, 1) 30%,
+    rgba(238, 242, 247, 1) 60%,
+    rgba(228, 233, 244, 1) 100%);
+  background: -moz-linear-gradient(to bottom,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(249, 250, 253, 1) 30%,
+    rgba(238, 242, 247, 1) 60%,
+    rgba(228, 233, 244, 1) 100%);
+  background: linear-gradient(to bottom,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(249, 250, 253, 1) 30%,
+    rgba(238, 242, 247, 1) 60%,
+    rgba(228, 233, 244, 1) 100%);
+  font-weight: bold;
+  text-align: center;
+  padding: 4px 2px;
+  vertical-align: top;
 }
 
 .characterGrid table tr:not(.empty):hover td {
-	background-color: #e7e9f9;
+  background-color: #e7e9f9;
 }
 
 .characterGrid table tr:nth-child(even) {
-	background-color: #fff;
+  background-color: #fff;
 }
 
 .characterGrid table tr:nth-child(odd) {
-	background-color: #f7f7f7;
+  background-color: #f7f7f7;
 }
 
 .characterGrid table tr.empty td {
-	height: 100px;
+  height: 100px;
 }
 
 .characterGrid table tr.selected,
 .characterGrid table tr.selected:hover td {
-	background-color: #7fceff;
+  background-color: #7fceff;
 }
 
 .characterGrid table tr.droppable {
-	border-top: 2px solid #000;
+  border-top: 2px solid #000;
 }
 
 .characterGrid table tr td div.name p {
-	color: #d43030;
-	margin-bottom: 0px;
+  color: #d43030;
+  margin-bottom: 0px;
 }
 
 .characterGrid table tr td div.name i {
-	display: block;
+  display: block;
     height: 95px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2043,86 +2038,86 @@ div.loadingMessage > div,
 
 .characterGrid table th:nth-child(1),
 .characterGrid table td:nth-child(1) {
-	width: 5%;
+  width: 5%;
 }
 
 .characterGrid table th:nth-child(3),
 .characterGrid table td:nth-child(3) {
-	min-width: 250px;
+  min-width: 250px;
 }
 
 .characterGrid table tr.selected td span.remove,
 .characterGrid table tr:hover td span.remove {
-	background-image: url(/images/x.png);
-	background-repeat: no-repeat;
-	background-size: 14px 14px;
-	padding: 7px 17px 7px 7px;
-	position: absolute;
-	right: 0px;
-	top: 5px;
+  background-image: url(/images/x.png);
+  background-repeat: no-repeat;
+  background-size: 14px 14px;
+  padding: 7px 17px 7px 7px;
+  position: absolute;
+  right: 0px;
+  top: 5px;
 }
 
 .characterGrid table tr.fixedHeader {
-	position: absolute;
-	z-index: 45;
+  position: absolute;
+  z-index: 45;
 }
 .imageViewer {
-	padding: 0;
+  padding: 0;
 }
 
 .imageViewer iframe {
-	border: none;
-	overflow: hidden;
-	width: 800px;
+  border: none;
+  overflow: hidden;
+  width: 800px;
 }
 
 .batchDialog section header {
-	font-weight: bold;
-	margin-bottom: 5px;
-	margin-top: 15px;
+  font-weight: bold;
+  margin-bottom: 5px;
+  margin-top: 15px;
 }
 
 .batchDialog .batchRowPane .characterSelect,
 .batchDialog .batchColumnPane .taxaSelect {
-	height: 215px;
+  height: 215px;
 }
 
 .batchDialog .batchCopyPane .characterSelect {
-	height: 155px;
+  height: 155px;
 }
 
 .batchDialog .batchCopyPane header span {
-	float: right;
+  float: right;
 }
 
 .batchDialog .gridPane {
-	border: 1px solid #ddd;
-	height: 350px;
-	overflow: hidden;
-	position: relative;
+  border: 1px solid #ddd;
+  height: 350px;
+  overflow: hidden;
+  position: relative;
 }
 
 .batchDialog .gridPane .dataGrid table {
-	table-layout: fixed;
+  table-layout: fixed;
 }
 
 .batchDialog .gridPane .dataGrid table td {
-	vertical-align: top;
-	word-wrap: break-word;
+  vertical-align: top;
+  word-wrap: break-word;
 }
 
 .batchDialog .gridPane .dataGrid table th:first-child,
 .batchDialog .gridPane .dataGrid table th:nth-child(2),
 .batchDialog .gridPane .dataGrid table td:first-child,
 .batchDialog .gridPane .dataGrid table td:nth-child(2) {
-	width: 85px;
+  width: 85px;
 }
 
 .editScoreDialog .scoringGrid {
-	border: 1px solid #ddd;
-	height: 250px;
-	overflow: hidden;
-	position: relative;
+  border: 1px solid #ddd;
+  height: 250px;
+  overflow: hidden;
+  position: relative;
 }
 
 .characterTooltip {
@@ -2138,56 +2133,56 @@ div.loadingMessage > div,
 }
 
 .characterTooltip header {
-	font-weight: bold;
-	margin-bottom: 15px;
-	overflow: hidden;
+  font-weight: bold;
+  margin-bottom: 15px;
+  overflow: hidden;
   word-wrap: normal;
   line-height: 16px;
   max-height: 32px;
 }
 
 .characterTooltip p {
-	max-height: 200px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: pre-line;
+  max-height: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre-line;
 }
 
 .characterTooltip div.media {
-	display: inline-block;
-	height: 85px;
-	margin-bottom: 20px;
-	padding: 5px;
-	position: relative;
-	vertical-align: top;
-	width: 85px;
+  display: inline-block;
+  height: 85px;
+  margin-bottom: 20px;
+  padding: 5px;
+  position: relative;
+  vertical-align: top;
+  width: 85px;
 }
 
 .characterTooltip div.media:hover {
-	background-color: #7fceff;
+  background-color: #7fceff;
 }
 
 .characterTooltip div.media img {
-	display: block;
-	margin: auto;
+  display: block;
+  margin: auto;
 }
 
 .characterTooltip div.state {
-	display: inline-block;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	width: 100%;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
 }
 
 .characterTooltip div.media div.title {
-	bottom: 0;
-	position: absolute;
-	overflow: hidden;
-	text-align: center;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	width: 90px;
+  bottom: 0;
+  position: absolute;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 90px;
 }
 
 .characterTooltip .popover-arrow {
@@ -2195,66 +2190,65 @@ div.loadingMessage > div,
 }
 
 .characterRulesTooltip {
-	max-width: 650px;
-	min-width: 400px;
-	width: auto;
-	word-wrap: break-word;
+  max-width: 650px;
+  min-width: 400px;
+  width: auto;
+  word-wrap: break-word;
 }
 
 .characterRulesTooltip .rule {
-	color: #c00;
-	font-weight: bold;
+  color: #c00;
+  font-weight: bold;
 }
 
 .characterMediaTooltip {
-	background: white;
+  background: white;
   max-width: fit-content;
-	z-index: 30000;
+  z-index: 30000;
 }
 
 .checkerDialog header {
-	font-weight: bold;
-	margin-bottom: 10px;
+  font-weight: bold;
+  margin-bottom: 10px;
 }
 
 .checkerDialog .violationsGrid {
-	border: 1px solid #ddd;
-	height: 300px;
-	overflow: hidden;
-	padding: 0;
-	position: relative;
+  border: 1px solid #ddd;
+  height: 300px;
+  overflow: hidden;
+  padding: 0;
+  position: relative;
 }
 
 .checkerDialog .violationsGrid .dataGrid table {
-	table-layout: fixed;
+  table-layout: fixed;
 }
 
 .checkerDialog .violationsGrid .dataGrid table td:first-child,
 .checkerDialog .violationsGrid .dataGrid table th:first-child {
-	text-align: center;
-	width: 25px !important;
+  text-align: center;
+  width: 25px !important;
 }
 
 .checkerDialog .violationsGrid .dataGrid table tr.disabled {
-	opacity: 0.8;
-	-moz-opacity: 0.8;
-	filter: alpha(opacity=80);
+  opacity: 0.8;
+  -moz-opacity: 0.8;
+  filter: alpha(opacity=80);
 }
 
 .cellDialog .cellDataPane .scoringGrid {
-	border: 1px solid #ddd;
-	height: 270px;
-	overflow: hidden;
-	position: relative;
-	width: 605px;
+  border: 1px solid #ddd;
+  height: 270px;
+  overflow: hidden;
+  position: relative;
 }
 
 .cellDialog .cellDataPane .dataGrid table td:first-child,
 .cellDialog .cellDataPane .dataGrid table th:first-child {
-	text-align: center;
-	width: 25px !important;
+  text-align: center;
+  width: 25px !important;
 }
 
 .cellDialog .cellDataPane .scoringGrid .activeStateRow {
-	color: red;
+  color: red;
 }

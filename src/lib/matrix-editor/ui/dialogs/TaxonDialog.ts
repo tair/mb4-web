@@ -55,7 +55,7 @@ export class TaxonDialog extends Dialog {
     const contentElement = this.getContentElement()
     contentElement.innerHTML = TaxonDialog.htmlContent()
     this.redraw()
-    this.tabNavigator.setHeight(325)
+
     this.tabNavigator.render(contentElement)
   }
 

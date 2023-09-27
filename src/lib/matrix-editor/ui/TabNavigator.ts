@@ -1,5 +1,4 @@
 import { Component, EventType } from './Component'
-import * as mb from '../mb'
 import * as bootstrap from 'bootstrap'
 
 /**
@@ -173,8 +172,10 @@ export class TabNavigator extends Component {
         `<div class="tab-pane" id="${id}-pane" role="tabpanel" aria-labelledby="${id}-tab" tabindex="0"></div>`
       )
     }
+
     let html = '<nav><div class="nav nav-tabs" role="tablist">'
     html += tabButtons.join('')
+    html += '</div></nav>'
     html += '<div class="tab-content" id="nav-tab-content">'
     html += tabPanes.join('')
     html += '</div>'

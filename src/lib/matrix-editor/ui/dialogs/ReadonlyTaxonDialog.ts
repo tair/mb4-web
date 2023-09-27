@@ -40,7 +40,7 @@ export class ReadonlyTaxonDialog extends Dialog {
     const contentElement = this.getContentElement()
     contentElement.innerHTML = ReadonlyTaxonDialog.htmlContent()
     this.redraw()
-    this.tabNavigator.setHeight(325)
+
     this.tabNavigator.render(contentElement)
   }
 
