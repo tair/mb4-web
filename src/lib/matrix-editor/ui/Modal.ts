@@ -3,7 +3,6 @@ import * as bootstrap from 'bootstrap'
 
 /**
  * A general Modal for the Matrix Editor
- *
  */
 export class Modal extends Component {
   /**
@@ -208,8 +207,8 @@ export class Modal extends Component {
    * Gets the component's element.
    * @return The element for the component.
    */
-  getTitleElement(): HTMLElement {
-    return this.getElementByClass<HTMLElement>('modal-title')
+  getHeaderElement(): HTMLElement {
+    return this.getElementByClass<HTMLElement>('modal-header')
   }
 
   /**

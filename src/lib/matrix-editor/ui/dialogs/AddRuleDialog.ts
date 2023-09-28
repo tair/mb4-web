@@ -1,8 +1,8 @@
 import { TabNavigator } from '../TabNavigator'
-import { SavingLabel } from '../SavingLabel'
 import { MatrixModel } from '../../MatrixModel'
 import { Component, EventType } from '../Component'
-import { Modal, ModalDefaultButtons } from '../Modal'
+import { Dialog } from '../Dialog'
+import { ModalDefaultButtons } from '../Modal'
 import { Select } from '../Select'
 import { CharacterRules } from '../../data/CharacterRules'
 import * as CharacterChangedEvents from '../../events/CharacterChangedEvent'
@@ -13,7 +13,7 @@ import * as mb from '../../mb'
  *
  * @param matrixModel the data associated with the matrix.
  */
-export class AddRuleDialog extends Modal {
+export class AddRuleDialog extends Dialog {
   /**
    * The keys used to label additional buttons in dialog.
    */
@@ -35,14 +35,17 @@ export class AddRuleDialog extends Modal {
     },
   }
   private tabNavigator: TabNavigator
-  private savingLabel: SavingLabel
 
   constructor(private matrixModel: MatrixModel) {
     super()
+  
     this.tabNavigator = new TabNavigator()
     this.registerDisposable(this.tabNavigator)
-    this.savingLabel = new SavingLabel('Adding...')
-    this.registerDisposable(this.savingLabel)
+  }
+
+  protected override initialize() {
+    this.savingLabel.setText('Adding...')
+
     this.setTitle('Add ontology')
     this.setHasTitleCloseButton(false)
     this.addButton(AddRuleDialog.Buttons.ADD)
@@ -63,8 +66,6 @@ export class AddRuleDialog extends Modal {
     )
 
     this.tabNavigator.render(contentElement)
-    const titleElement = this.getTitleElement()
-    this.savingLabel.render(titleElement)
   }
 
   override enterDocument() {

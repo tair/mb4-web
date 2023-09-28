@@ -50,7 +50,7 @@ export class SavingLabel extends Component {
     this.removeStyles()
     const element = this.getElement()
     element.textContent = text
-    element.classList.add('info')
+    element.classList.add('show', 'info')
   }
 
   /**
@@ -67,7 +67,7 @@ export class SavingLabel extends Component {
     if (++this.numberOfPendingOperations > 0) {
       this.removeStyles()
       const element = this.getElement()
-      element.classList.add('saving')
+      element.classList.add('show', 'saving')
     }
   }
 
@@ -81,7 +81,7 @@ export class SavingLabel extends Component {
     if (--this.numberOfPendingOperations <= 0) {
       this.removeStyles()
       const element = this.getElement()
-      element.classList.add('saved')
+      element.classList.add('show', 'saved')
       this.hide()
     }
   }
@@ -96,7 +96,7 @@ export class SavingLabel extends Component {
     if (--this.numberOfPendingOperations <= 0) {
       this.removeStyles()
       const element = this.getElement()
-      element.classList.add('error')
+      element.classList.add('show', 'error')
       this.hide()
     }
   }
@@ -119,10 +119,7 @@ export class SavingLabel extends Component {
    */
   private removeStyles() {
     const element = this.getElement()
-    element.classList.remove('saving')
-    element.classList.remove('error')
-    element.classList.remove('saved')
-    element.classList.remove('info')
+    element.classList.remove('show', 'saving', 'error', 'saved', 'info')
   }
 
   /**

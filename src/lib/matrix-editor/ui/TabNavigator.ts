@@ -73,9 +73,9 @@ export class TabNavigator extends Component {
     })
   }
 
-  override finalizeDom() {
-    const firstTab = this.tabs[0]
-    firstTab.show()
+  protected override finalizeDom() {
+    const selectedTab = this.tabs[this.selectedTabIndex]
+    selectedTab.show()
   }
 
   /**

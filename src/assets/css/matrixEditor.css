@@ -633,33 +633,34 @@ ol.draggableSelect li.droppable {
   color: #133A42;
   display: none;
   font: bold 12px arial, sans-serif;
-  height: 17px;
-  margin: 0;
-  padding: 0px 0px 0px 20px;
-  position: absolute;
-  right: 0;
-  top: 0;
-  vertical-align: middle;
+  height: 20px;
+  margin: auto 0;
+  padding: 0 20px
+}
+
+.savingLabel.show {
+  background-color: transparent;
+  background-position: left center;
+  background-repeat: no-repeat;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .savingLabel.saving {
-  background: url(/images/indicator.gif) no-repeat left top;
-  display: inline-block;
+  background-image: url(/images/indicator.gif);
 }
 
 .savingLabel.saved {
-  background: transparent url(/images/green_checkmark.png) no-repeat left top;
-  display: inline-block;
+  background-image: url(/images/green_checkmark.png);
 }
 
 .savingLabel.info {
-  background: transparent url(/images/infoicon.png) no-repeat left top;
-  display: inline-block;
+  background-image: url(/images/infoicon.png);
 }
 
 .savingLabel.error {
-  background: transparent url(/images/delete.gif) no-repeat left top;
-  display: inline-block;
+  background-image: url(/images/delete.gif);
 }
 
 .streamingModalBackground {

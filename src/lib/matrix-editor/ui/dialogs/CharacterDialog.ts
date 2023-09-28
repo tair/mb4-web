@@ -55,10 +55,15 @@ export class CharacterDialog extends Dialog {
     super()
     this.matrixModel = matrixModel
     this.characterId = characterId
+
     this.tabNavigator = new TabNavigator()
     this.registerDisposable(this.tabNavigator)
+  }
+
+  protected override initialize(): void {
     this.setTitle('Character Editor')
     this.setDisposeOnHide(true)
+
     this.addButton(ModalDefaultButtons.DONE)
     this.addButton(Buttons.SAVE_CHANGES)
     this.addButton(Buttons.SAVE_CONTINOUS_CHANGES)
@@ -67,10 +72,13 @@ export class CharacterDialog extends Dialog {
 
   override createDom() {
     super.createDom()
+
     const element = this.getElement()
     element.classList.add('characterDialog', 'modal-lg')
+  
     const contentElement = this.getContentElement()
     contentElement.innerHTML = CharacterDialog.htmlContent()
+
     this.redraw()
     this.tabNavigator.render(contentElement)
     this.updateLastSelectedTabIndex()

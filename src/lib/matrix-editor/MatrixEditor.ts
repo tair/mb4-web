@@ -52,9 +52,12 @@ export class MatrixEditor extends AbstractMatrixAccessor {
         this.matrixModel.setMatrix(data['matrix'])
         this.matrixModel.setMatrixOptions(data['matrix_options'])
         this.matrixModel.setProjectProperties(data['user'])
+
+        const appElement = document.getElementById('app')
         this.matrixContainer = new MatrixEditorContainer(this.matrixModel)
-        this.matrixContainer.render()
+        this.matrixContainer.render(appElement)
         this.matrixContainer.redraw()
+
         this.loadingModal.loadedCharactersAndTaxa()
         if (MatrixIndexDb.isSupported()) {
           window.addEventListener(

@@ -24,6 +24,7 @@ export class DataGridTable extends Component {
 
   protected columns: DataColumn[]
   protected rows: DataRow[]
+  private resizeObserver: ResizeObserver
   private remainingHeight: number
   private trHeight: number
   private focusable: boolean
@@ -35,7 +36,6 @@ export class DataGridTable extends Component {
 
   constructor() {
     super()
-
     this.columns = []
     this.rows = []
     this.remainingHeight = 0
@@ -45,15 +45,16 @@ export class DataGridTable extends Component {
     this.draggable = false
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
     const element = this.getElement()
     element.classList.add('dataGrid')
     element.classList.add('nonSelectable')
+
     this.redraw()
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     const element = this.getElement()
     const handler = this.getHandler()
@@ -62,6 +63,13 @@ export class DataGridTable extends Component {
       .listen(element, MobileFriendlyClickEventType, (e: Event) =>
         this.handleDoubleClick(e)
       )
+  }
+
+  override dispose() {
+    super.dispose()
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect()
+    }
   }
 
   /**
@@ -106,8 +114,8 @@ export class DataGridTable extends Component {
       this.scrollableContainer.scrollTop = oldScrollTop
     }
 
-    // Render with we calculate the height and width
-    setTimeout(() => {
+    // Redaw the grid when the height changes.
+    this.resizeObserver = new ResizeObserver(() => {
       // create fixed header if one exists
       const thead = table.getElementsByTagName('thead')[0]
       if (thead) {
@@ -123,6 +131,7 @@ export class DataGridTable extends Component {
         const oldFixedHeaderPane = this.getElementByClass('fixedHeader')
         mb.replaceOrAppendChild(element, pane, oldFixedHeaderPane)
       }
+
       const tbody = table.getElementsByTagName('tbody')[0]
       let remainingHeight =
         this.scrollableContainer.clientHeight - table.clientHeight
@@ -135,6 +144,7 @@ export class DataGridTable extends Component {
         'overflow',
         this.remainingHeight > 0 ? 'hidden' : 'auto'
       )
+
       if (this.remainingHeight > 0) {
         const firstEmptyTr = this.createEmptyTr()
         tbody.appendChild(firstEmptyTr)
@@ -149,6 +159,7 @@ export class DataGridTable extends Component {
         }
       }
     })
+    this.resizeObserver.observe(element)
   }
 
   /**

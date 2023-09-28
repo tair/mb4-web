@@ -24,7 +24,7 @@ export class Dialog extends Modal {
     // nothing should be highlightable
     const element = this.getElement()
     element.classList.add('nonSelectable')
-    const titleElement = this.getTitleElement()
+    const titleElement = this.getHeaderElement()
     this.savingLabel.render(titleElement)
   }
 }
