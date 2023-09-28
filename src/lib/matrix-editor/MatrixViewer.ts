@@ -9,15 +9,21 @@ import * as mb from './mb'
  * @param properties The properties used by this matrix.
  */
 export class MatrixViewer extends AbstractMatrixAccessor {
-  constructor(projectId: number, matrixId: number, streaming: boolean, location: string) {
+  constructor(
+    projectId: number,
+    matrixId: number,
+    streaming: boolean,
+    location: string
+  ) {
     super(projectId, matrixId, streaming, location)
     this.matrixModel.setReadonly(true)
   }
 
   override start() {
     this.loadMatrixData(() => {
+      // The streaming is enabled, we will set the cells, notes, and media as
+      // loaded since they are loaded on-demand.
       if (this.matrixModel.isStreaming()) {
-        // we will load these sparingly
         this.loadingModal.loadedCells()
         this.loadingModal.loadedNotes()
         this.loadingModal.loadedMedia()
@@ -67,9 +73,12 @@ export class MatrixViewer extends AbstractMatrixAccessor {
         this.matrixModel
           .getProjectProperties()
           .setUserPreferences(userPreferences)
+        
+        const appElement = document.getElementById('app')
         this.matrixContainer = new MatrixViewerContainer(this.matrixModel)
-        this.matrixContainer.render()
+        this.matrixContainer.render(appElement)
         this.matrixContainer.redraw()
+
         this.loadingModal.loadedCharactersAndTaxa()
         callback()
       })

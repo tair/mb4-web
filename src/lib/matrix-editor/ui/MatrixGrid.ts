@@ -136,8 +136,10 @@ export class MatrixGrid extends Component {
     super.createDom()
     const element = this.getElement()
     element.innerHTML = MatrixGridContent()
-    this.horizontalScrollBar.render(document.body)
-    this.verticalScrollBar.render(document.body)
+
+    const appElement = document.getElementById('app')
+    this.horizontalScrollBar.render(appElement)
+    this.verticalScrollBar.render(appElement)
   }
 
   override enterDocument() {

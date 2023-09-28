@@ -38,7 +38,7 @@ export class AddRuleDialog extends Dialog {
 
   constructor(private matrixModel: MatrixModel) {
     super()
-  
+
     this.tabNavigator = new TabNavigator()
     this.registerDisposable(this.tabNavigator)
   }

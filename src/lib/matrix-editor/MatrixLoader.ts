@@ -54,7 +54,7 @@ export class MatrixLoader {
     }
     const url = this.url + request.getMethod()
     return new Promise((resolve, reject) => {
-      (function fetchWithRequest() {
+      ;(function fetchWithRequest() {
         fetch(url, options)
           .then((response) => {
             if (response.status == 401) {

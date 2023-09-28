@@ -51,13 +51,15 @@ export class CharacterEditor {
     matrixModels.set(this.matrixId, Promise.resolve(matrixModel))
 
     const matrices = Matrix.createMatrices(data['matrices'])
+
+    const appElement = document.getElementById('app')
     const characterContainer = new CharacterEditorContainer(
       this.matrixId,
       matrices,
       matrixModels,
       this.matrixLoader
     )
-    characterContainer.render()
+    characterContainer.render(appElement)
   }
 
   /**

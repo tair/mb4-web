@@ -25,7 +25,7 @@ export class DataGridTable extends Component {
   protected columns: DataColumn[]
   protected rows: DataRow[]
   private resizeObserver: ResizeObserver
-  private remainingHeight: number
+
   private trHeight: number
   private focusable: boolean
   private selectable: boolean
@@ -38,7 +38,6 @@ export class DataGridTable extends Component {
     super()
     this.columns = []
     this.rows = []
-    this.remainingHeight = 0
     this.trHeight = 10
     this.focusable = true
     this.selectable = false
@@ -108,14 +107,14 @@ export class DataGridTable extends Component {
     this.scrollableContainer.appendChild(table)
     const element = this.getElement()
 
-    // We replace instead of remove/insert so that we don't have a lag effect when scrolling and redrawing.
+    // We replace instead of remove/insert so that we don't have a lag effect
+    // when scrolling and redrawing.
     mb.replaceOrAppendChild(element, this.scrollableContainer, oldScrollingPane)
     if (oldScrollTop) {
       this.scrollableContainer.scrollTop = oldScrollTop
     }
 
-    // Redaw the grid when the height changes.
-    this.resizeObserver = new ResizeObserver(() => {
+    const redrawItems = () => {
       // create fixed header if one exists
       const thead = table.getElementsByTagName('thead')[0]
       if (thead) {
@@ -132,33 +131,38 @@ export class DataGridTable extends Component {
         mb.replaceOrAppendChild(element, pane, oldFixedHeaderPane)
       }
 
-      const tbody = table.getElementsByTagName('tbody')[0]
-      let remainingHeight =
+      const remainingHeight =
         this.scrollableContainer.clientHeight - table.clientHeight
-      if (remainingHeight === 0 && table.clientHeight === 0) {
-        remainingHeight = this.remainingHeight
-      }
-      this.remainingHeight = remainingHeight
+
       mb.setElementStyle(
         this.scrollableContainer,
         'overflow',
-        this.remainingHeight > 0 ? 'hidden' : 'auto'
+        remainingHeight > 0 ? 'hidden' : 'auto'
       )
 
-      if (this.remainingHeight > 0) {
+      if (remainingHeight > 0) {
+        const tbody = table.getElementsByTagName('tbody')[0]
         const firstEmptyTr = this.createEmptyTr()
         tbody.appendChild(firstEmptyTr)
 
-        // get the hieght of the newly added empty row and use that hieght to calculate how much rows we should add.
+        // get the hieght of the newly added empty row and use that hieght to
+        // calculate how much rows we should add.
         const trElements = tbody.getElementsByTagName('tr')
         this.trHeight =
           trElements[trElements.length - 1].clientHeight || this.trHeight
-        const rowsToAdd = Math.ceil(this.remainingHeight / this.trHeight) + 1
+        const rowsToAdd = Math.ceil(remainingHeight / this.trHeight) + 1
         for (let x = 0; x < rowsToAdd; x++) {
           tbody.appendChild(this.createEmptyTr())
         }
       }
-    })
+    }
+
+    // Redraw on the next animation frame so that we can get updated height and
+    // width.
+    requestAnimationFrame(redrawItems)
+
+    // Redaw the grid when the height changes.
+    this.resizeObserver = new ResizeObserver(redrawItems)
     this.resizeObserver.observe(element)
   }
 
@@ -204,9 +208,9 @@ export class DataGridTable extends Component {
         tr.title = row.tooltip
       }
       if (row.data) {
-        for (let key in row.data) {
+        for (const key in row.data) {
           const value = String(row.data[key])
-          tr.dataset['key'] = value
+          tr.dataset[key] = value
         }
       }
       for (let y = 0; y < columnSize; y++) {

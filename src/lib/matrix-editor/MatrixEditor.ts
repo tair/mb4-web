@@ -12,7 +12,12 @@ import * as LastViewStatePreferenceChangedEvents from './events/LastViewStatePre
 export class MatrixEditor extends AbstractMatrixAccessor {
   private matrixViewStateLoader: MatrixViewStateLoader | null
 
-  constructor(projectId: number, matrixId: number, streaming: boolean, location: string) {
+  constructor(
+    projectId: number,
+    matrixId: number,
+    streaming: boolean,
+    location: string
+  ) {
     super(projectId, matrixId, streaming, location)
   }
 

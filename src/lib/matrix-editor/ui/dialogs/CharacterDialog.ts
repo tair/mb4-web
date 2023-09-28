@@ -75,7 +75,7 @@ export class CharacterDialog extends Dialog {
 
     const element = this.getElement()
     element.classList.add('characterDialog', 'modal-lg')
-  
+
     const contentElement = this.getContentElement()
     contentElement.innerHTML = CharacterDialog.htmlContent()
 
@@ -613,7 +613,7 @@ class CharacterPane extends BasePane {
       .listen(this.dialog, EventType.SELECT, (e: CustomEvent<any>) =>
         this.onHandleSelect(e)
       )
-      .listen(this.statesGridTable, EventType.CUT, (e: Event) =>
+      .listen(this.statesGridTable, EventType.CUT, (e: CustomEvent) =>
         this.handleRemoveCharacterState(e)
       )
       .listen(
@@ -762,10 +762,9 @@ class CharacterPane extends BasePane {
    * Handlers events when for user clicks on the remove icon for the character
    * @param e The event that triggered this callback.
    */
-  private handleRemoveCharacterState(e: Event) {
+  private handleRemoveCharacterState(e: CustomEvent) {
     // if the number of states is less than one don't remove the last state
-    const target = <any>e.target
-    const stateId = parseInt(target.id, 10)
+    const stateId = parseInt(e.detail.id, 10)
     let x = 0
     for (; x < this.modifiedCharacterStates.length; ++x) {
       const characterState = this.modifiedCharacterStates[x]

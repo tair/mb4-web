@@ -60,7 +60,8 @@ export class MatrixModelServerEventSyncer {
 
     window.addEventListener(
       CellEditEvents.TYPE,
-      (e: CustomEvent<CellEditEvent>) => this.onHandleMatrixCellClick(e))
+      (e: CustomEvent<CellEditEvent>) => this.onHandleMatrixCellClick(e)
+    )
 
     const userLocation = this.url + userId + '/sync'
     const serverEvents = new EventSource(userLocation)

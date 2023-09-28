@@ -497,10 +497,9 @@ export function isEmpty(obj: Object): boolean {
  * @param varArgs The objects from which values will be copied.
  */
 export function extend(target: { [key: string]: any }, ...args: any[]) {
-  let key, source
-  for (let i = 1; i < args.length; i++) {
-    source = args[i]
-    for (key in source) {
+  for (let i = 0; i < args.length; i++) {
+    const source = args[i]
+    for (const key in source) {
       target[key] = source[key]
     }
   }

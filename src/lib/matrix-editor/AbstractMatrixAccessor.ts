@@ -21,7 +21,12 @@ export abstract class AbstractMatrixAccessor {
    * Starts the matrix editor
    * @param properties The properties used by this matrix.
    */
-  constructor(projectId: number, matrixId: number, streaming: boolean, location: string) {
+  constructor(
+    projectId: number,
+    matrixId: number,
+    streaming: boolean,
+    location: string
+  ) {
     this.matrixLoader = new MatrixLoader(projectId, location)
     this.matrixLoader.setMatrixId(matrixId)
 

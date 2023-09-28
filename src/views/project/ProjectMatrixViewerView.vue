@@ -8,6 +8,11 @@ const projectId = parseInt(route.params.projectId, 10)
 const matrixId = parseInt(route.params.matrixId, 10)
 const isStreaming = false
 
-startMatrixViewer(projectId, matrixId, isStreaming, import.meta.env.VITE_API_URL)
+startMatrixViewer(
+  projectId,
+  matrixId,
+  isStreaming,
+  import.meta.env.VITE_API_URL
+)
 </script>
 <template></template>

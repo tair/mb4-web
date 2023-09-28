@@ -1847,12 +1847,9 @@ div.loadingMessage > div,
 }
 
 .characterDialog .characterPane .statesPane .dataGrid table tr:hover td span.remove {
-  background-image: url(/images/x.png);
-  background-repeat: no-repeat;
+  background: url(/images/x.png) center no-repeat transparent;
   background-size: 14px 14px;
-  padding: 7px 17px 7px 7px;
-  position: absolute;
-  right: 0px;
+  padding: 10px;
 }
 
 .characterDialog .mediaPane {
