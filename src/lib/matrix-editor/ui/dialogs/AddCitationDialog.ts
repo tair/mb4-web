@@ -180,20 +180,19 @@ export class AddCitationDialog extends Dialog {
    * @return The HTML content of the add citation dialog
    */
   static htmlContent(): string {
-    return (
-      '' +
-      '<div class="searchControls">' +
-      '<input type="text" class="citationInput" />' +
-      '<button class="citationFindButton">Find</button>' +
-      '</div>' +
-      '<span class="search-status">&nbsp;</span>' +
-      '<hr />' +
-      '<div class="label">Bibliographic reference</div>' +
-      '<div class="selectCitation"></div>' +
-      '<div class="label">Pages</div>' +
-      '<input class="pageInput" />' +
-      '<div class="label">Citation notes</div>' +
-      '<textarea class="notesInput" />'
+    return (`\
+      <div class="input-group mb-3">\
+        <input type="text" class="citationInput form-control" placeholder="Search">\
+        <button class="citationFindButton btn btn-primary" type="button" id=>Find</button>\
+      </div>\
+      <span class="search-status">&nbsp;</span>
+      <hr />
+      <div class="label">Bibliographic reference</div>
+      <div class="selectCitation"></div>
+      <div class="label">Pages</div>
+      <input class="pageInput" />
+      <div class="label">Citation notes</div>
+      <textarea class="notesInput" />`
     )
   }
 }

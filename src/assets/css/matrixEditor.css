@@ -679,7 +679,7 @@ ol.draggableSelect li.droppable {
 }
 
 .streamingModal {
-  background: url(//images/indicator.gif) no-repeat left top;
+  background: url(/images/indicator.gif) no-repeat left top;
   color: #000;
   font-weight: bold;
   left: 50%;
@@ -1254,6 +1254,7 @@ ol.selectList li:hover span.remove {
 
 .addMediaDialog .addMedia {
   border: 1px solid #ddd;
+  border-radius: var(--bs-border-radius);
   height: 305px;
   overflow: hidden;
   position: relative;
@@ -1268,7 +1269,7 @@ ol.selectList li:hover span.remove {
 }
 
 .addMediaDialog div.loadingMedia > div {
-  background: url(//images/indicator.gif) no-repeat left top;
+  background: url(/images/indicator.gif) no-repeat left top;
   height: 20px;
   font-weight: bold;
   padding-left: 20px;
@@ -1281,18 +1282,20 @@ ol.selectList li:hover span.remove {
 }
 
 .addMediaDialog .searchControls .mediaInput {
-  height: 19px;
-  margin-left: 5px;
-  margin-right: 7px;
-  vertical-align: middle;
-  width: 300px;
+  outline: none;
+}
+
+.addMediaDialog .searchControls .mediaInput:focus {
+  border-color: #ef782f;
+  box-shadow: none;
 }
 
 .addMediaDialog .attachMediaLabel {
-  display: inline-block;
-  font-weight: bold;
-  padding-left: 30px;
-  padding-right: 10px;
+  font-weight: 600;
+}
+
+.addMediaDialog .characterSelect {
+  margin-top: 10px;
 }
 
 .mediaGrid {
@@ -1554,8 +1557,12 @@ ol.selectList li:hover span.remove {
 }
 
 .addCitationDialog .citationInput {
-  height: 19px;
-  width: 250px
+  outline: none;
+}
+
+.addCitationDialog .citationInput:focus {
+  border-color: #ef782f;
+  box-shadow: none;
 }
 
 .addCitationDialog .label {
@@ -1582,6 +1589,7 @@ ol.selectList li:hover span.remove {
   background: #888;
   border: 0;
   height: 1px;
+  margin: 0;
  }
 
 .addCitationDialog .notesInput {
@@ -1664,9 +1672,8 @@ div.loadingMessage > div,
 }
 
 .addCommentDialog textarea.comment {
-  height: 120px !important;
-  resize: none;
-  width: 270px
+  min-height: 120px;
+  width: 100%
 }
 
 .addCommentDialog .control {
@@ -1676,10 +1683,8 @@ div.loadingMessage > div,
 }
 
 .addCommentDialog .field {
-  display: inline-block;
-  font-weight: bold;
-  padding-right: 5px;
-  vertical-align: middle;
+  display: block;
+  font-weight: 600;
 }
 
 .characterDialog .partitionPane {

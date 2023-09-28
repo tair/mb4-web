@@ -3,14 +3,12 @@ import { Dropdown } from '../Dropdown'
 import { Dialog } from '../Dialog'
 import { MediaGrid, MediaGridItem } from '../MediaGrid'
 import { ModalDefaultButtons } from '../Modal'
-import { Component, EventType, KeyCodes } from '../Component'
+import { EventType, KeyCodes } from '../Component'
 
 /**
- * The add media dialog which adds media to a given source
- * @param character the character in which to add the media
- * @param mediaFindFunction function to invoke when searching for a media
- * @param mediaSelectFunction function to invoke with selected media
- * @param characterStateId The id of the character state
+ * Dialog that adds media to a character. This dialog provides a search box so
+ * that the user can find and a grid of images so that the user can select the
+ * media to add to the character or one of its states.
  */
 export class AddCharacterMediaDialog extends Dialog {
   /**
@@ -52,6 +50,13 @@ export class AddCharacterMediaDialog extends Dialog {
   private mediaGrid: MediaGrid
   private loadingElement: Element
 
+  /**
+   * The add media dialog which adds media to a given source
+   * @param character the character in which to add the media
+   * @param mediaFindFunction function to invoke when searching for a media
+   * @param mediaSelectFunction function to invoke with selected media
+   * @param characterStateId The id of the character state
+   */
   constructor(
     private readonly character: Character,
     private readonly mediaFindFunction: (p1: string) => Promise<Object[]>,
@@ -64,11 +69,16 @@ export class AddCharacterMediaDialog extends Dialog {
     super()
     this.characterStateSelect = new Dropdown()
     this.registerDisposable(this.characterStateSelect)
+
     this.mediaGrid = new MediaGrid()
     this.mediaGrid.setEmptyMediaLabel('No media available')
     this.mediaGrid.setSelectable(true)
     this.registerDisposable(this.mediaGrid)
+
     this.loadingElement = this.getLoadingElement()
+  }
+
+  protected override initialize() {
     this.setTitle('Add Character Media')
     this.setDisposeOnHide(true)
     this.addButton(ModalDefaultButtons.DONE)
@@ -76,18 +86,23 @@ export class AddCharacterMediaDialog extends Dialog {
     this.addButton(AddCharacterMediaDialog.Buttons.REFRESH)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
+    
     const element = this.getElement()
     element.classList.add('addMediaDialog')
+    
     const contentElement = this.getContentElement()
     contentElement.innerHTML = AddCharacterMediaDialog.htmlContent()
+    
     const mediaInputElement =
       this.getElementByClass<HTMLInputElement>('mediaInput')
     mediaInputElement.value = AddCharacterMediaDialog.lastSearchText
+    
     const mediaPane = this.getElementByClass('addMedia')
     this.mediaGrid.render(mediaPane)
     this.redrawMatrixGrid()
+
     this.characterStateSelect.addItem({ text: 'character', value: 0 })
     const characterStates = this.character.getStates()
     for (let x = 0; x < characterStates.length; x++) {
@@ -101,7 +116,8 @@ export class AddCharacterMediaDialog extends Dialog {
         this.characterStateSelect.setSelectedIndex(x)
       }
     }
-    const buttonBarElement = this.getElementByClass('mb-characterSelect')
+  
+    const buttonBarElement = this.getElementByClass('characterSelect')
     const textElement = document.createElement('div')
     textElement.classList.add('attachMediaLabel')
     textElement.textContent = 'Attach media to '
@@ -111,7 +127,7 @@ export class AddCharacterMediaDialog extends Dialog {
     this.onSearchInputKeyUp()
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     const searchInputElement = this.getElementByClass('mediaInput')
     const findButtonElement = this.getElementByClass('media-find-button')
@@ -165,7 +181,7 @@ export class AddCharacterMediaDialog extends Dialog {
    * @param e The event that triggerd this callback.
    * @return Whether the event was handled by this method.
    */
-  protected onSearchInputKeyDown(e: KeyboardEvent): boolean {
+  private onSearchInputKeyDown(e: KeyboardEvent): boolean {
     // Prevent the dialog from receiving the enter keycode which will close it and instead call the given function.
     if (e && e.code === KeyCodes.ENTER) {
       e.preventDefault()
@@ -179,7 +195,7 @@ export class AddCharacterMediaDialog extends Dialog {
    * Handlers events when for user key down events for the search input field.
    * @return Always true, that the event was handled by this method.
    */
-  protected onSearchInputKeyUp(): boolean {
+  private onSearchInputKeyUp(): boolean {
     const mediaInputElement =
       this.getElementByClass<HTMLInputElement>('mediaInput')
     const searchInputValue = mediaInputElement.value
@@ -193,7 +209,7 @@ export class AddCharacterMediaDialog extends Dialog {
    * Handles the find button click event.
    *
    */
-  protected handleFindClick() {
+  private handleFindClick() {
     const mediaInputElement =
       this.getElementByClass<HTMLInputElement>('mediaInput')
     AddCharacterMediaDialog.lastSearchText = mediaInputElement.value
@@ -203,13 +219,13 @@ export class AddCharacterMediaDialog extends Dialog {
   /**
    * Handles when the grid selection was changed
    */
-  protected onGridSelectChange() {
+  private onGridSelectChange() {
     const shouldEnable = !!this.mediaGrid.getSelectedIds().length
     this.setButtonEnabled(AddCharacterMediaDialog.Buttons.ADD, shouldEnable)
   }
 
   /** Refresh the media grid */
-  refreshGrid() {
+  private refreshGrid() {
     // if the text is empty, don't search for anything
     if (!AddCharacterMediaDialog.lastSearchText) {
       return
@@ -230,7 +246,7 @@ export class AddCharacterMediaDialog extends Dialog {
   /**
    * @return an element which shows a loading indicator.
    */
-  getLoadingElement(): Element {
+  private getLoadingElement(): Element {
     const loadingElement = document.createElement('div')
     loadingElement.classList.add('loadingMedia')
     const messageElement = document.createElement('div')
@@ -242,7 +258,7 @@ export class AddCharacterMediaDialog extends Dialog {
   /**
    * Redraws the matrix grid.
    */
-  protected redrawMatrixGrid() {
+  private redrawMatrixGrid() {
     const mediaItems = AddCharacterMediaDialog.mediaItems
     for (let x = 0; x < mediaItems.length; x++) {
       const mediaItem = mediaItems[x]
@@ -265,16 +281,16 @@ export class AddCharacterMediaDialog extends Dialog {
   /**
    * @return The HTML content of the add media dialog
    */
-  static htmlContent(): string {
+  private static htmlContent(): string {
     return (
-      '' +
-      '<div class="searchControls">' +
-      'Search for ' +
-      '<input type="text" class="mediaInput" />' +
-      '<button class="media-find-button">Find</button>' +
-      '</div>' +
-      '<div class="addMedia"></div>' +
-      '<div class="mb-characterSelect"></div>'
+      `<div class="searchControls">\
+        <div class="input-group mb-3">\
+          <input type="text" class="mediaInput form-control" placeholder="Search for Character Media">\
+          <button class="media-find-button btn btn-primary" type="button" id=>Find</button>\
+        </div>\
+      </div>\
+      <div class="addMedia"></div>\
+      <div class="characterSelect"></div>`
     )
   }
 }

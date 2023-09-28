@@ -69,8 +69,8 @@ export class MatrixModelServerEventSyncer {
     serverEvents.addEventListener('init', (e) =>
       this.onHandleEventSourceInitialize(e)
     )
-    serverEvents.addEventListener('error', () =>
-      this.onHandleEventSourceError(serverEvents)
+    serverEvents.addEventListener('error', (e) =>
+      this.onHandleEventSourceError(e, serverEvents)
     )
     serverEvents.addEventListener('cell', (e) =>
       this.onHandleEventSourceEditCell(e)
@@ -90,7 +90,8 @@ export class MatrixModelServerEventSyncer {
   /**
    * Handles events from server-side events which indicate the connection received an error.
    */
-  protected onHandleEventSourceError(serverEvents: EventSource) {
+  protected onHandleEventSourceError(e: Event, serverEvents: EventSource) {
+    console.log('Source error', e)
     serverEvents.close()
   }
 
