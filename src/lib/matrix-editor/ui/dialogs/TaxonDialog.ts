@@ -176,7 +176,7 @@ class NotesPane extends Component {
 
   override createDom() {
     super.createDom()
-  
+
     const textAreaElement = document.createElement('textarea')
     textAreaElement.classList.add('notesArea', 'form-control')
     textAreaElement.value = this.taxon.getNotes()
@@ -280,7 +280,7 @@ class MediaPane extends Component {
 
     this.setMediaInGrid()
     this.mediaGrid.render(element)
-  
+
     const openMediaElement = this.getElementByClass('openMediaWindowCheckbox')
     this.openMediaCheckbox.render(openMediaElement)
 

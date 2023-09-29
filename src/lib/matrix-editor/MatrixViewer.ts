@@ -73,7 +73,7 @@ export class MatrixViewer extends AbstractMatrixAccessor {
         this.matrixModel
           .getProjectProperties()
           .setUserPreferences(userPreferences)
-        
+
         const appElement = document.getElementById('app')
         this.matrixContainer = new MatrixViewerContainer(this.matrixModel)
         this.matrixContainer.render(appElement)

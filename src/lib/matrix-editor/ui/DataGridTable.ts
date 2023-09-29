@@ -132,7 +132,7 @@ export class DataGridTable extends Component {
         // wait until the next render.
         const trHeight = firstEmptyTr.clientHeight
         if (trHeight == 0) {
-          return;
+          return
         }
 
         const rowsToAdd = remainingHeight / trHeight

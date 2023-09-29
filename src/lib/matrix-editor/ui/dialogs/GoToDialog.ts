@@ -116,10 +116,10 @@ export class GoToDialog extends Modal {
       taxonNumberElement.classList.toggle('error', !valid)
     }
 
-    const valid = 
-        !characterNumberElement.classList.contains('error') &&
-        !taxonNumberElement.classList.contains('error')
-    this.setButtonEnabled(GoToDialog.Buttons.GO,  valid)
+    const valid =
+      !characterNumberElement.classList.contains('error') &&
+      !taxonNumberElement.classList.contains('error')
+    this.setButtonEnabled(GoToDialog.Buttons.GO, valid)
   }
 
   /**

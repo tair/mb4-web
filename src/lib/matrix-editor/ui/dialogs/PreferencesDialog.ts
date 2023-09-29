@@ -68,23 +68,23 @@ export class PreferencesDialog extends Dialog {
 
     this.characterNameDisplayModeSelect = new Dropdown()
     this.registerDisposable(this.characterNameDisplayModeSelect)
-    
+
     this.characterRulesApplySelect = new Dropdown()
     this.registerDisposable(this.characterRulesApplySelect)
-    
+
     this.characterRulesOverwriteScoresSelect = new Dropdown()
     this.registerDisposable(this.characterRulesOverwriteScoresSelect)
-    
+
     this.loadLastSavedViewStateSelect = new Dropdown()
     this.registerDisposable(this.loadLastSavedViewStateSelect)
-    
+
     this.multiStateTaxaDefaultSelect = new Dropdown()
     this.registerDisposable(this.multiStateTaxaDefaultSelect)
-    
+
     this.enableMatrixStreamingRadio = new Radio('streaming-radio')
     this.registerDisposable(this.enableMatrixStreamingRadio)
   }
-  
+
   protected override initialize() {
     this.setTitle('Preferences')
     this.setHasBackdrop(false)
@@ -243,7 +243,7 @@ export class PreferencesDialog extends Dialog {
    * @return whether to close the dialog
    */
   private onHandleSelect(e: CustomEvent): boolean {
-    debugger;
+    debugger
     if (e.detail.key === ModalDefaultButtonKeys.SAVE) {
       const matrixOptions = this.matrixModel.getMatrixOptions()
       const userPreferences = this.matrixModel.getUserPreferences()

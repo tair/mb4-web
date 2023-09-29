@@ -29,8 +29,9 @@ export class Dropdown extends Component {
     super.enterDocument()
 
     const element = this.getElement()
-    this.getHandler()
-      .listen(element, EventType.CHANGE, () => this.onHandleChange())
+    this.getHandler().listen(element, EventType.CHANGE, () =>
+      this.onHandleChange()
+    )
   }
 
   /** Redraw */

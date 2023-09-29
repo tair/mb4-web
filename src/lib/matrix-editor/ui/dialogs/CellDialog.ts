@@ -1146,9 +1146,9 @@ class NotesPane extends BasePane {
 
   override createDom() {
     super.createDom()
-  
+
     const cells = this.matrixModel.getCells()
-    const cellInfo =  cells.getCellInfo(this.taxonId, this.characterId)
+    const cellInfo = cells.getCellInfo(this.taxonId, this.characterId)
     const notesElement = document.createElement('textarea')
     notesElement.classList.add('notesArea')
     notesElement.value = cellInfo.getNotes()
@@ -1243,7 +1243,7 @@ class MediaPane extends BasePane {
     const element = this.getElement()
     element.classList.add('mediaPane')
     element.innerHTML = MediaPane.htmlContent()
-  
+
     this.setMediaInGrid()
     this.mediaGrid.render(element)
 

@@ -10,7 +10,6 @@ import { EventType } from '../Component'
  * @param selectedNoCallback the callback when the user presses no
  */
 export class ConfirmDialog extends Modal {
-
   constructor(
     title: string,
     content: string,

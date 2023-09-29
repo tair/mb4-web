@@ -180,7 +180,7 @@ export class AddCitationDialog extends Dialog {
    * @return The HTML content of the add citation dialog
    */
   static htmlContent(): string {
-    return (`\
+    return `\
       <div class="input-group mb-3">\
         <input type="text" class="citationInput form-control" placeholder="Search">\
         <button class="citationFindButton btn btn-primary" type="button" id=>Find</button>\
@@ -193,6 +193,5 @@ export class AddCitationDialog extends Dialog {
       <input class="pageInput" />
       <div class="label">Citation notes</div>
       <textarea class="notesInput" />`
-    )
   }
 }

@@ -88,17 +88,17 @@ export class AddCharacterMediaDialog extends Dialog {
 
   protected override createDom() {
     super.createDom()
-    
+
     const element = this.getElement()
     element.classList.add('addMediaDialog')
-    
+
     const contentElement = this.getContentElement()
     contentElement.innerHTML = AddCharacterMediaDialog.htmlContent()
-    
+
     const mediaInputElement =
       this.getElementByClass<HTMLInputElement>('mediaInput')
     mediaInputElement.value = AddCharacterMediaDialog.lastSearchText
-    
+
     const mediaPane = this.getElementByClass('addMedia')
     this.mediaGrid.render(mediaPane)
     this.redrawMatrixGrid()
@@ -116,7 +116,7 @@ export class AddCharacterMediaDialog extends Dialog {
         this.characterStateSelect.setSelectedIndex(x)
       }
     }
-  
+
     const buttonBarElement = this.getElementByClass('characterSelect')
     const textElement = document.createElement('div')
     textElement.classList.add('attachMediaLabel')
@@ -282,8 +282,7 @@ export class AddCharacterMediaDialog extends Dialog {
    * @return The HTML content of the add media dialog
    */
   private static htmlContent(): string {
-    return (
-      `<div class="searchControls">\
+    return `<div class="searchControls">\
         <div class="input-group mb-3">\
           <input type="text" class="mediaInput form-control" placeholder="Search for Character Media">\
           <button class="media-find-button btn btn-primary" type="button" id=>Find</button>\
@@ -291,6 +290,5 @@ export class AddCharacterMediaDialog extends Dialog {
       </div>\
       <div class="addMedia"></div>\
       <div class="characterSelect"></div>`
-    )
   }
 }

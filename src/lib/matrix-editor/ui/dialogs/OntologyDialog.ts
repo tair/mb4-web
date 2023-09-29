@@ -92,7 +92,7 @@ export class OntologyDialog extends Dialog {
 
   protected override createDom() {
     super.createDom()
-    
+
     const element = this.getElement()
     element.classList.add('ontologyDialog', 'modal-lg')
 

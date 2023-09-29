@@ -155,10 +155,10 @@ class AddScoringPane extends Component implements CharacterRuleAdder {
 
     this.characterSelect = new Select()
     this.registerDisposable(this.characterSelect)
-    
+
     this.characterStateSelect = new Select()
     this.registerDisposable(this.characterStateSelect)
-    
+
     this.actionCharacterSelect = new Select()
     this.actionCharacterSelect.setAllowMultipleSelection(true)
     this.registerDisposable(this.actionCharacterSelect)
@@ -256,7 +256,7 @@ class AddScoringPane extends Component implements CharacterRuleAdder {
    */
   private handleCharacterSelect() {
     const selectedValue = this.characterSelect.getSelectedValue()
-    const characterId = selectedValue ? parseInt(selectedValue, 10)  : 0
+    const characterId = selectedValue ? parseInt(selectedValue, 10) : 0
     this.setCharacterStateSelect(this.characterStateSelect, characterId)
 
     const characterSelectIndex = this.characterSelect.getLastSelectedIndex()
@@ -323,7 +323,10 @@ class AddScoringPane extends Component implements CharacterRuleAdder {
    * @param characterStateSelect The character state select
    * @param characterId The character id to retrieve the states.
    */
-  private setCharacterStateSelect(characterStateSelect: Select, characterId: number) {
+  private setCharacterStateSelect(
+    characterStateSelect: Select,
+    characterId: number
+  ) {
     const character = this.matrixModel.getCharacters().getById(characterId)
     if (!character) {
       return
@@ -390,10 +393,10 @@ class AddMediaPane extends Component implements CharacterRuleAdder {
     const element = this.getElement()
     element.classList.add('addMediaRule')
     element.innerHTML = AddMediaPane.htmlContent()
-    
+
     setCharacterSelect(this.matrixModel, this.characterSelect)
     setCharacterSelect(this.matrixModel, this.actionCharacterSelect)
-    
+
     const characterElement = this.getElementByClass('charactersSelect')
     this.characterSelect.render(characterElement)
     const actionCharacterElement = this.getElementByClass(
@@ -410,15 +413,11 @@ class AddMediaPane extends Component implements CharacterRuleAdder {
         CharacterChangedEvents.TYPE,
         this.handleCharacterChange
       )
-      .listen(
-        this.characterSelect,
-        EventType.SELECT,
-        () => this.handleCharacterSelect()
+      .listen(this.characterSelect, EventType.SELECT, () =>
+        this.handleCharacterSelect()
       )
-      .listen(
-        this.actionCharacterSelect,
-        EventType.SELECT,
-        () => this.handleCharacterSelect()
+      .listen(this.actionCharacterSelect, EventType.SELECT, () =>
+        this.handleCharacterSelect()
       )
     this.characterSelect.setSelectedIndex(0)
     this.actionCharacterSelect.setSelectedIndex(0)
