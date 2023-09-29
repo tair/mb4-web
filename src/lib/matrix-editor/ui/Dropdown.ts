@@ -1,8 +1,7 @@
-import { Component } from './Component'
+import { Component, EventType } from './Component'
 
 /**
- * A general Modal for the Matrix Editor
- *
+ * Component that uses a dropdown select element for the Matrix Editor.
  */
 export class Dropdown extends Component {
   private options: DropdownItem[]
@@ -17,13 +16,21 @@ export class Dropdown extends Component {
     this.selectedIndex = 0
   }
 
-  override createDom() {
+  protected override createDom() {
     const element = document.createElement('select')
     this.setElementInternal(element)
     element.classList.add('form-select')
     element.innerHTML = this.createOptions()
     element.disabled = !this.enabled
     element.selectedIndex = this.selectedIndex
+  }
+
+  protected override enterDocument(): void {
+    super.enterDocument()
+
+    const element = this.getElement()
+    this.getHandler()
+      .listen(element, EventType.CHANGE, () => this.onHandleChange())
   }
 
   /** Redraw */
@@ -99,7 +106,12 @@ export class Dropdown extends Component {
     element.title = text
   }
 
-  createOptions() {
+  private onHandleChange() {
+    const element = this.getElement<HTMLSelectElement>()
+    this.selectedIndex = element.selectedIndex
+  }
+
+  private createOptions() {
     let html = ''
     for (const option of this.options) {
       html += `<option value="${option.value}" ${

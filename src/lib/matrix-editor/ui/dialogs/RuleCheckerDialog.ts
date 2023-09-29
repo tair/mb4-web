@@ -104,7 +104,7 @@ export class RuleCheckerDialog extends Dialog {
     super.createDom()
 
     const element = this.getElement()
-    element.classList.add('checkerDialog')
+    element.classList.add('checkerDialog', 'modal-lg')
 
     const contentElement = this.getContentElement()
     contentElement.innerHTML = RuleCheckerDialog.htmlContent()
@@ -124,7 +124,7 @@ export class RuleCheckerDialog extends Dialog {
     )
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     this.getHandler()
       .listen(this, EventType.SELECT, (e: CustomEvent<any>) =>
@@ -156,7 +156,7 @@ export class RuleCheckerDialog extends Dialog {
   /**
    * Invalides the grid
    */
-  invalidateRules() {
+  private invalidateRules() {
     this.hasCharacterRulesChanged = true
   }
 
@@ -165,7 +165,7 @@ export class RuleCheckerDialog extends Dialog {
    *
    * @param e The event that triggered this callback.
    */
-  protected onHandleSelect(e: CustomEvent) {
+  private onHandleSelect(e: CustomEvent) {
     switch (e.detail.key) {
       case RuleCheckerDialog.ButtonKeys.AUTO_FIX_ALL_VIOLATIONS:
         this.confirmFixVioliations(() => this.fixAllViolations())
@@ -184,7 +184,7 @@ export class RuleCheckerDialog extends Dialog {
   /**
    * Load character rule violations and draw it on the data grid
    */
-  loadCharacterRuleViolations() {
+  private loadCharacterRuleViolations() {
     const contentElement = this.getContentElement()
     contentElement.appendChild(this.loadingElement)
     this.matrixModel
@@ -202,7 +202,7 @@ export class RuleCheckerDialog extends Dialog {
    * Redraws the character rule violations within the comment grid.
    * @param violations the violations that will be used to redraw the grid
    */
-  redrawRules(violations: Object[]) {
+  private redrawRules(violations: Object[]) {
     const rows: DataRow[] = []
     const characters = this.matrixModel.getCharacters()
     const characterRules = this.matrixModel.getCharacterRules()
@@ -317,7 +317,7 @@ export class RuleCheckerDialog extends Dialog {
    * @param targetCheckbox The checkbox that was checked.
    * @param e The event that triggerd this callback.
    */
-  onActionSelectionChanged(
+  private onActionSelectionChanged(
     isPolymorphic: boolean,
     targetCheckbox: Checkbox,
     e: Event
@@ -351,7 +351,7 @@ export class RuleCheckerDialog extends Dialog {
    * Handles events when grid row is clicked
    * @param e The event that triggerd this callback.
    */
-  handleGridClick(e: CustomEvent<any>) {
+  private handleGridClick(e: CustomEvent<any>) {
     const taxonId = parseInt(e.detail.taxonId, 10)
     const characterId = parseInt(e.detail.characterId, 10)
     const row = taxonId ? this.matrixModel.getTaxonIndexById(taxonId) : -1
@@ -365,7 +365,7 @@ export class RuleCheckerDialog extends Dialog {
    * Determines which violations where selected and display a warning to the user to confirm their
    * choice.
    */
-  protected fixSelectedViolations() {
+  private fixSelectedViolations() {
     const violations: Object[] = []
     for (let x = 0; x < this.checkboxes.length; x++) {
       const checkbox = this.checkboxes[x]
@@ -390,7 +390,7 @@ export class RuleCheckerDialog extends Dialog {
    * Fixes the selected violations
    * @param violations The violations to fix
    */
-  protected fixSelectedViolationsInternal(violations: Object[]) {
+  private fixSelectedViolationsInternal(violations: Object[]) {
     this.savingLabel.saving()
     this.matrixModel
       .fixSelectedCharacterRuleViolations(violations)
@@ -408,7 +408,7 @@ export class RuleCheckerDialog extends Dialog {
   /**
    * Fixes the all the violations
    */
-  protected fixAllViolations() {
+  private fixAllViolations() {
     this.savingLabel.saving()
     this.matrixModel
       .fixAllCharacterRuleViolations()
@@ -426,7 +426,7 @@ export class RuleCheckerDialog extends Dialog {
   /**
    * @return an element which shows a loading indicator.
    */
-  getLoadingElement(): Element {
+  private getLoadingElement(): Element {
     const loadingElement = document.createElement('div')
     loadingElement.classList.add('loadingMessage')
     const messageElement = document.createElement('div')
@@ -439,7 +439,7 @@ export class RuleCheckerDialog extends Dialog {
    * Display a confirmation dialog to fix violations
    * @param func The function to run when when the user confirms
    */
-  confirmFixVioliations(func: () => any) {
+  private confirmFixVioliations(func: () => void) {
     const confirmDialog = new ConfirmDialog(
       'Confirm',
       RuleCheckerDialog.CONFIRM_TEXT,
@@ -451,7 +451,7 @@ export class RuleCheckerDialog extends Dialog {
   /**
    * @return The HTML content for the rule checker dialog
    */
-  static htmlContent(): string {
+  private static htmlContent(): string {
     return (
       '<header>Number of violations found:&nbsp;&nbsp;' +
       '<span class="mb-violations-length"></span>' +

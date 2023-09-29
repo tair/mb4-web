@@ -176,12 +176,16 @@ class NotesPane extends Component {
 
   override createDom() {
     super.createDom()
+  
     const textAreaElement = document.createElement('textarea')
-    textAreaElement.classList.add('notesArea')
+    textAreaElement.classList.add('notesArea', 'form-control')
     textAreaElement.value = this.taxon.getNotes()
+
     const projectProperties = this.matrixModel.getProjectProperties()
     textAreaElement.disabled = !this.taxon.hasAccess(projectProperties)
+
     const element = this.getElement()
+    element.classList.add('notesPane')
     element.appendChild(textAreaElement)
   }
 
@@ -269,13 +273,17 @@ class MediaPane extends Component {
 
   override createDom() {
     super.createDom()
+
     const element = this.getElement()
+    element.classList.add('mediaPane')
     element.innerHTML = MediaPane.htmlContent()
+
     this.setMediaInGrid()
-    const mediaPane = this.getElementByClass('mediaPane')
-    this.mediaGrid.render(mediaPane)
+    this.mediaGrid.render(element)
+  
     const openMediaElement = this.getElementByClass('openMediaWindowCheckbox')
     this.openMediaCheckbox.render(openMediaElement)
+
     const settingsStorage = this.matrixModel.getUserMatrixSettings()
     const isAutoOpenMediaWindowSelected = !!settingsStorage.get(
       MediaPane.AUTO_OPEN_MEDIA_WINDOW
@@ -432,8 +440,7 @@ class MediaPane extends Component {
       '<span class="openMediaWindow">' +
       '<span class="openMediaWindowCheckbox"></span>' +
       'Automatically open media browser when editing' +
-      '</span>' +
-      '<div class="mediaPane"></div>'
+      '</span>'
     )
   }
 }

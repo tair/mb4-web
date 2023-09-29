@@ -65,28 +65,38 @@ export class PreferencesDialog extends Dialog {
 
     this.numberingModeSelect = new Dropdown()
     this.registerDisposable(this.numberingModeSelect)
+
     this.characterNameDisplayModeSelect = new Dropdown()
     this.registerDisposable(this.characterNameDisplayModeSelect)
+    
     this.characterRulesApplySelect = new Dropdown()
     this.registerDisposable(this.characterRulesApplySelect)
+    
     this.characterRulesOverwriteScoresSelect = new Dropdown()
     this.registerDisposable(this.characterRulesOverwriteScoresSelect)
+    
     this.loadLastSavedViewStateSelect = new Dropdown()
     this.registerDisposable(this.loadLastSavedViewStateSelect)
+    
     this.multiStateTaxaDefaultSelect = new Dropdown()
     this.registerDisposable(this.multiStateTaxaDefaultSelect)
+    
     this.enableMatrixStreamingRadio = new Radio('streaming-radio')
     this.registerDisposable(this.enableMatrixStreamingRadio)
+  }
+  
+  protected override initialize() {
     this.setTitle('Preferences')
     this.setHasBackdrop(false)
     this.addButton(ModalDefaultButtons.SAVE)
     this.addButton(ModalDefaultButtons.CANCEL)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
     const element = this.getElement()
     element.classList.add('preferencesDialog')
+
     const contentElement = this.getContentElement()
     contentElement.innerHTML = PreferencesDialog.htmlContent()
 
@@ -159,7 +169,7 @@ export class PreferencesDialog extends Dialog {
     this.resetEnabledInputs()
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     this.getHandler().listen(this, EventType.SELECT, (e: CustomEvent<any>) =>
       this.onHandleSelect(e)
@@ -167,7 +177,7 @@ export class PreferencesDialog extends Dialog {
   }
 
   /** Reset the indices for the dialogs */
-  reselectIndices() {
+  private reselectIndices() {
     const matrixOptions = this.matrixModel.getMatrixOptions()
     const userPreferences = this.matrixModel.getUserPreferences()
     this.numberingModeSelect.setSelectedIndex(
@@ -199,7 +209,7 @@ export class PreferencesDialog extends Dialog {
   /**
    * Sets whether the selects, checkboxes, and buttons are enabled
    */
-  resetEnabledInputs() {
+  private resetEnabledInputs() {
     const projectProperties = this.matrixModel.getProjectProperties()
     const enabled = projectProperties.isActionAllowed('setMatrixOptions')
 
@@ -233,18 +243,22 @@ export class PreferencesDialog extends Dialog {
    * @return whether to close the dialog
    */
   private onHandleSelect(e: CustomEvent): boolean {
+    debugger;
     if (e.detail.key === ModalDefaultButtonKeys.SAVE) {
       const matrixOptions = this.matrixModel.getMatrixOptions()
       const userPreferences = this.matrixModel.getUserPreferences()
+
       const oldStreamingValue = userPreferences.getEnableStreaming()
       const newStreamingValue =
         !!this.enableMatrixStreamingRadio.getSelectedIndex()
       userPreferences.setEnableStreaming(newStreamingValue)
+
       const oldAllowOverwritingByRulesIndex =
         matrixOptions.getAllowOverwritingByRules()
       const newAllowOverwritingByRulesIndex =
         this.characterRulesOverwriteScoresSelect.getSelectedIndex()
       matrixOptions.setAllowOverwritingByRules(newAllowOverwritingByRulesIndex)
+
       const oldApplyCharacterRulesWhileScoringIndex =
         matrixOptions.getApplyCharacterRulesWhileScoring()
       const newApplyCharacterRulesWhileScoringIndex =
@@ -252,6 +266,7 @@ export class PreferencesDialog extends Dialog {
       matrixOptions.setApplyCharacterRulesWhileScoring(
         newApplyCharacterRulesWhileScoringIndex
       )
+
       const oldCharacterNameDisplayModeIndex =
         userPreferences.getCharacterNameDisplayMode()
       const newCharacterNameDisplayModeIndex =
@@ -259,21 +274,25 @@ export class PreferencesDialog extends Dialog {
       userPreferences.setCharacterNameDisplayMode(
         newCharacterNameDisplayModeIndex
       )
+
       const oldMultistateTaxaIndex =
         matrixOptions.getDefaultMultiStateTaxaMode()
       const newMultistateTaxaIndex =
         this.multiStateTaxaDefaultSelect.getSelectedIndex()
       matrixOptions.setDefaultMultiStateTaxaMode(newMultistateTaxaIndex)
+
       const oldDefaultNumberingModeIndex =
         userPreferences.getDefaultNumberingMode()
       const newDefaultNumberingModeIndex =
         this.numberingModeSelect.getSelectedIndex()
       userPreferences.setDefaultNumberingMode(newDefaultNumberingModeIndex)
+
       const oldLoadSavedViewStateIndex =
         userPreferences.getEnableLoadSavedViewState()
       const newLoadSavedViewStateIndex =
         !!this.loadLastSavedViewStateSelect.getSelectedIndex()
       userPreferences.setEnableLoadSavedViewState(newLoadSavedViewStateIndex)
+
       this.savingLabel.saving()
       this.matrixModel
         .setUserPreference()
@@ -317,7 +336,7 @@ export class PreferencesDialog extends Dialog {
   /**
    * @return The HTML content of the preferences dialog.
    */
-  static htmlContent(): string {
+  private static htmlContent(): string {
     return `
     <section>
       <header>Character and taxon numbering mode:</header>

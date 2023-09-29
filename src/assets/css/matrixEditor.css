@@ -104,6 +104,10 @@ html, body {
   width: 100%;
 }
 
+.tab-pane {
+  height: 100%;
+}
+
 .topButtonBar {
   background-color: rgb(248, 249, 250);
   height: 38px;
@@ -789,6 +793,10 @@ ol.selectList li:hover span.remove {
   padding-right: 10px;
 }
 
+.ontologyDialog .tab-content {
+  height: 350px;
+}
+
 .ontologyDialog tr.ruleAction td:first-child {
   padding-left: 35px;
 }
@@ -833,11 +841,6 @@ ol.selectList li:hover span.remove {
 
 .goToDialog .label ~ .label {
   margin-top: 20px;
-}
-
-.goToDialog .characterNumber,
-.goToDialog .taxonNumber {
-  width: 270px
 }
 
 .goToDialog input.error {
@@ -926,6 +929,8 @@ ol.selectList li:hover span.remove {
   font-weight: bold;
   text-align: center;
   padding: 4px 2px;
+  position: sticky;
+  top: 0;
   vertical-align: top;
 }
 
@@ -967,25 +972,6 @@ ol.selectList li:hover span.remove {
   width: 100%;
 }
 
-.dataGrid div.fixedHeader {
-  height: 100%;
-  left: 0;
-  overflow: hidden;
-  position: absolute;
-  top: 0;
-  width: 100%;
-}
-
-.dataGrid div.fixedHeader table {
-  background-image: none !important;
-  background-color: transparent !important;
-  border-color: transparent !important;
-}
-
-.dataGrid div.fixedHeader table tbody {
-  visibility: hidden;
-}
-
 .stateRulesPane {
   border: 1px solid #ddd;
   height: 100%;
@@ -1015,7 +1001,7 @@ ol.selectList li:hover span.remove {
   background-image: url(/images/x.png);
   background-repeat: no-repeat;
   background-size: 14px 14px;
-  padding: 7px 17px 7px 7px;
+  padding: 8px;
   position: absolute;
   right: 0px;
 }
@@ -1023,7 +1009,6 @@ ol.selectList li:hover span.remove {
 .stateRulesPane .dataGrid table tr.characterRuleAction td:first-child {
   padding-left: 30px;
 }
-
 
 .addRuleDialog div.header {
   font: normal 15px arial, sans-serif;
@@ -1039,10 +1024,10 @@ ol.selectList li:hover span.remove {
   height: 150px;
 }
 
-.addRuleDialog .charactersSelect,
-.addRuleDialog .characterstatesSelect,
-.addRuleDialog .actionCharactersSelect,
-.addRuleDialog .actionCharacterstatesSelect {
+.addRuleDialog .addStateRule .charactersSelect,
+.addRuleDialog .addStateRule .characterstatesSelect,
+.addRuleDialog .addStateRule .actionCharactersSelect,
+.addRuleDialog .addStateRule .actionCharacterstatesSelect {
   display: inline-block;
   font-weight: bold;
   height: 130px;
@@ -1053,6 +1038,12 @@ ol.selectList li:hover span.remove {
 .addRuleDialog .addStateRule .characterstatesSelect,
 .addRuleDialog .addStateRule .actionCharacterstatesSelect {
   padding-left: 20px;
+}
+
+.addRuleDialog .addMediaRule .charactersSelect,
+.addRuleDialog .addMediaRule .actionCharactersSelect {
+  height: 130px;
+  width: 100%;
 }
 
 
@@ -1186,6 +1177,14 @@ ol.selectList li:hover span.remove {
   font-weight: normal;
 }
 
+.taxaDialog .tab-content {
+  height: 350px;
+}
+
+.taxaDialog .notesPane {
+  height: 100%;
+}
+
 .taxaDialog .notesPane .label {
   font-weight: bold;
   margin-bottom: 5px;
@@ -1196,14 +1195,14 @@ ol.selectList li:hover span.remove {
 }
 
 .taxaDialog .notesArea {
-  height: 320px !important;
+  height: 100%;
   resize: none;
   width: 100%;
 }
 
 .taxaDialog .partitionPane {
   border: 1px solid #ddd;
-  height: 320px;
+  height: 100%;
   overflow: hidden;
   position: relative;
   width: 100%;
@@ -1240,10 +1239,12 @@ ol.selectList li:hover span.remove {
 }
 
 .taxaDialog .mediaPane {
+  height: 92%;
+}
+
+.taxaDialog .mediaPane .mediaGrid {
   border: 1px solid #ddd;
-  height: 305px;
-  overflow: hidden;
-  position: relative;
+  border-radius: var(--bs-border-radius);
 }
 
 .taxaDialog .addTaxonMedia {
@@ -1344,7 +1345,8 @@ ol.selectList li:hover span.remove {
   background-image: url(/images/x.png);
   background-repeat: no-repeat;
   background-size: 14px 14px;
-  padding: 7px 17px 7px 7px;
+  margin: 2px;
+  padding: 7px;
   visibility: visible;
 }
 
@@ -1374,6 +1376,10 @@ ol.selectList li:hover span.remove {
   color: blue;
   font-weight: bold;
   padding-left: 10px;
+}
+
+.cellDialog .tab-content {
+  height: 400px;
 }
 
 .cellDialog .scoringPane .scoringGrid {
@@ -1417,22 +1423,30 @@ ol.selectList li:hover span.remove {
 }
 
 .cellDialog .notesArea {
-  height: 320px !important;
+  height: 100%;
   resize: none;
+  width: 100%;
 }
 
 .cellDialog .mediaPane {
+  height: 92%;
+}
+
+.cellDialog .mediaPane .mediaGrid {
   border: 1px solid #ddd;
-  height: 305px;
-  overflow: hidden;
-  position: relative;
+  border-radius: var(--bs-border-radius);
 }
 
 .taxaDialog .openMediaWindow,
 .cellDialog .openMediaWindow {
   float: right;
+  font-size: 13px;
   font-style: italic;
-  padding-right: 10px;
+}
+
+.taxaDialog .openMediaWindowCheckbox,
+.cellDialog .openMediaWindowCheckbox {
+  padding: 0 5px;
 }
 
 .cellDialog .addCellMedia {
@@ -1460,7 +1474,7 @@ ol.selectList li:hover span.remove {
 
 .cellDialog .citationsPane {
   border: 1px solid #ddd;
-  height: 300px;
+  height: 100%;
   overflow: hidden;
   position: relative;
 }
@@ -1608,7 +1622,7 @@ ol.selectList li:hover span.remove {
 .cellDialog .changePane,
 .cellDialog .commentsPane {
   border: 1px solid #ddd;
-  height: 300px;
+  height: 100%;
   overflow: hidden;
   position: relative;
 }
@@ -2060,10 +2074,6 @@ div.loadingMessage > div,
   top: 5px;
 }
 
-.characterGrid table tr.fixedHeader {
-  position: absolute;
-  z-index: 45;
-}
 .imageViewer {
   padding: 0;
 }

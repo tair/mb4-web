@@ -26,7 +26,6 @@ export class DataGridTable extends Component {
   protected rows: DataRow[]
   private resizeObserver: ResizeObserver
 
-  private trHeight: number
   private focusable: boolean
   private selectable: boolean
   private draggable: boolean
@@ -38,7 +37,6 @@ export class DataGridTable extends Component {
     super()
     this.columns = []
     this.rows = []
-    this.trHeight = 10
     this.focusable = true
     this.selectable = false
     this.draggable = false
@@ -115,43 +113,30 @@ export class DataGridTable extends Component {
     }
 
     const redrawItems = () => {
-      // create fixed header if one exists
-      const thead = table.getElementsByTagName('thead')[0]
-      if (thead) {
-        const pane = document.createElement('div')
-        pane.appendChild(table.cloneNode(true))
-        pane.classList.add('fixedHeader')
-        mb.setElementStyle(pane, 'height', thead.clientHeight + 'px')
-        mb.setElementStyle(
-          pane,
-          'width',
-          this.scrollableContainer.clientWidth + 'px'
-        )
-        const oldFixedHeaderPane = this.getElementByClass('fixedHeader')
-        mb.replaceOrAppendChild(element, pane, oldFixedHeaderPane)
+      if (table.clientHeight == 0) {
+        return
       }
 
       const remainingHeight =
         this.scrollableContainer.clientHeight - table.clientHeight
 
-      mb.setElementStyle(
-        this.scrollableContainer,
-        'overflow',
-        remainingHeight > 0 ? 'hidden' : 'auto'
-      )
-
       if (remainingHeight > 0) {
+        mb.setElementStyle(this.scrollableContainer, 'overflow', 'hidden')
+
         const tbody = table.getElementsByTagName('tbody')[0]
         const firstEmptyTr = this.createEmptyTr()
         tbody.appendChild(firstEmptyTr)
 
-        // get the hieght of the newly added empty row and use that hieght to
-        // calculate how much rows we should add.
-        const trElements = tbody.getElementsByTagName('tr')
-        this.trHeight =
-          trElements[trElements.length - 1].clientHeight || this.trHeight
-        const rowsToAdd = Math.ceil(remainingHeight / this.trHeight) + 1
-        for (let x = 0; x < rowsToAdd; x++) {
+        // Get the height of the newly added empty row and use it to calculate
+        // how many rows to add. If the height isn't calculated yet, we will
+        // wait until the next render.
+        const trHeight = firstEmptyTr.clientHeight
+        if (trHeight == 0) {
+          return;
+        }
+
+        const rowsToAdd = remainingHeight / trHeight
+        for (let x = 0; x <= rowsToAdd; x++) {
           tbody.appendChild(this.createEmptyTr())
         }
       }

@@ -1146,15 +1146,17 @@ class NotesPane extends BasePane {
 
   override createDom() {
     super.createDom()
-    const cellInfo = this.matrixModel
-      .getCells()
-      .getCellInfo(this.taxonId, this.characterId)
-    const notes = cellInfo.getNotes() || ''
-    const element = this.getElement()
-    element.innerHTML = NotesPane.htmlContent(notes)
-    const notesElement =
-      this.getElementByClass<HTMLTextAreaElement>('notesArea')
+  
+    const cells = this.matrixModel.getCells()
+    const cellInfo =  cells.getCellInfo(this.taxonId, this.characterId)
+    const notesElement = document.createElement('textarea')
+    notesElement.classList.add('notesArea')
+    notesElement.value = cellInfo.getNotes()
     notesElement.disabled = !this.hasAccess
+
+    const element = this.getElement()
+    element.classList.add('h-100')
+    element.appendChild(notesElement)
   }
 
   override enterDocument() {
@@ -1201,16 +1203,6 @@ class NotesPane extends BasePane {
     // Don't propagate events and only stay in the text area.
     e.stopPropagation()
   }
-
-  /**
-   * The pane's HTML Content
-   * @return HTML content
-   */
-  static htmlContent(notes: string): string {
-    return (
-      '<textarea class="notesArea" maxlength="65535">' + notes + '</textarea>'
-    )
-  }
 }
 
 /**
@@ -1247,13 +1239,17 @@ class MediaPane extends BasePane {
 
   override createDom() {
     super.createDom()
+
     const element = this.getElement()
+    element.classList.add('mediaPane')
     element.innerHTML = MediaPane.htmlContent()
+  
     this.setMediaInGrid()
-    const mediaPane = this.getElementByClass('mediaPane')
-    this.mediaGrid.render(mediaPane)
+    this.mediaGrid.render(element)
+
     const openMediaElement = this.getElementByClass('openMediaWindowCheckbox')
     this.openMediaCheckbox.render(openMediaElement)
+
     const settingsStorage = this.matrixModel.getUserMatrixSettings()
     const isAutoOpenMediaWindowSelected = !!settingsStorage.get(
       MediaPane.AUTO_OPEN_MEDIA_WINDOW
@@ -1262,6 +1258,7 @@ class MediaPane extends BasePane {
     if (isAutoOpenMediaWindowSelected) {
       setTimeout(() => this.handleAddCellMedia, 350)
     }
+
     if (!this.hasAccess) {
       const addTaxonMediaElement =
         this.getElementByClass<HTMLElement>('addCellMedia')
@@ -1448,8 +1445,7 @@ class MediaPane extends BasePane {
       '<span class="openMediaWindow">' +
       '<span class="openMediaWindowCheckbox"></span>' +
       'Automatically open media browser when editing' +
-      '</span>' +
-      '<div class="mediaPane"></div>'
+      '</span>'
     )
   }
 }
@@ -1491,19 +1487,24 @@ class CitationsPane extends BasePane {
 
   override createDom() {
     super.createDom()
+
     const element = this.getElement()
+    element.classList.add('h-100')
     element.innerHTML = CitationsPane.htmlContent()
+
     this.citationsGridTable.addColumn('Reference')
     this.citationsGridTable.addColumn('Pages')
     this.citationsGridTable.addColumn('Notes')
     const citationsPane = this.getElementByClass('citationsPane')
     this.citationsGridTable.render(citationsPane)
+
     if (!this.hasAccess) {
       const addCitationElement =
         this.getElementByClass<HTMLElement>('addCitation')
       addCitationElement.title = CellDialog.LOCKED_MESSAGE
       addCitationElement.classList.add('disabled')
     }
+
     this.loadCellCitations()
   }
 
@@ -1790,13 +1791,17 @@ class CommentsPane extends BasePane {
 
   override createDom() {
     super.createDom()
+
     const element = this.getElement()
+    element.classList.add('h-100')
     element.innerHTML = CommentsPane.htmlContent()
+
     this.commentsGridTable.addColumn('Date/time')
     this.commentsGridTable.addColumn('User')
     this.commentsGridTable.addColumn('Comment')
     const commentsPane = this.getElementByClass('commentsPane')
     this.commentsGridTable.render(commentsPane)
+
     if (!this.hasAccess) {
       const addCommentElement =
         this.getElementByClass<HTMLElement>('addCellComment')
@@ -1949,6 +1954,7 @@ class ChangelogPane extends BasePane {
 
   override createDom() {
     super.createDom()
+
     const element = this.getElement()
     element.classList.add('changePane')
     this.changelogGridTable.addColumn('Date/time')

@@ -52,10 +52,11 @@ export class AddRuleDialog extends Dialog {
     this.addButton(ModalDefaultButtons.DONE)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
-    const contentElement = this.getContentElement()
-    contentElement.classList.add('addRuleDialog')
+    const element = this.getContentElement()
+    element.classList.add('addRuleDialog')
+
     this.tabNavigator.addTab(
       'Scoring',
       new AddScoringPane(this.matrixModel, this)
@@ -65,11 +66,13 @@ export class AddRuleDialog extends Dialog {
       new AddMediaPane(this.matrixModel, this)
     )
 
+    const contentElement = this.getContentElement()
     this.tabNavigator.render(contentElement)
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
+
     const handler = this.getHandler()
     handler.listen(this, EventType.SELECT, (e: CustomEvent<any>) =>
       this.onHandleSelect(e)
@@ -142,48 +145,58 @@ interface CharacterRuleAdder {
  * @param dialog The owning dialog
  */
 class AddScoringPane extends Component implements CharacterRuleAdder {
-  private characterSelect: Select
-  private characterStateSelect: Select
-  private actionCharacterSelect: Select
-  private actionCharacterStateSelect: Select
+  private readonly characterSelect: Select
+  private readonly characterStateSelect: Select
+  private readonly actionCharacterSelect: Select
+  private readonly actionCharacterStateSelect: Select
 
   constructor(private matrixModel: MatrixModel, private dialog: AddRuleDialog) {
     super()
+
     this.characterSelect = new Select()
     this.registerDisposable(this.characterSelect)
+    
     this.characterStateSelect = new Select()
     this.registerDisposable(this.characterStateSelect)
+    
     this.actionCharacterSelect = new Select()
     this.actionCharacterSelect.setAllowMultipleSelection(true)
     this.registerDisposable(this.actionCharacterSelect)
+
     this.actionCharacterStateSelect = new Select()
     this.registerDisposable(this.actionCharacterStateSelect)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
+
     const element = this.getElement()
     element.classList.add('addStateRule')
     element.innerHTML = AddScoringPane.htmlContent()
+
     setCharacterSelect(this.matrixModel, this.characterSelect)
     setCharacterSelect(this.matrixModel, this.actionCharacterSelect)
+
     const characterElement = this.getElementByClass('charactersSelect')
     this.characterSelect.render(characterElement)
+
     const characterStatesElement = this.getElementByClass(
       'characterstatesSelect'
     )
     this.characterStateSelect.render(characterStatesElement)
+
     const actionCharacterElement = this.getElementByClass(
       'actionCharactersSelect'
     )
     this.actionCharacterSelect.render(actionCharacterElement)
+
     const actionCharacterStatesElement = this.getElementByClass(
       'actionCharacterstatesSelect'
     )
     this.actionCharacterStateSelect.render(actionCharacterStatesElement)
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     this.getHandler()
       .listen(this.matrixModel, CharacterChangedEvents.TYPE, () =>
@@ -242,13 +255,13 @@ class AddScoringPane extends Component implements CharacterRuleAdder {
    * Handles the select event on the character select.
    */
   private handleCharacterSelect() {
-    const characterSelectValue = this.characterSelect.getSelectedValue()
-    const characterId = characterSelectValue
-      ? parseInt(characterSelectValue, 10)
-      : 0
+    const selectedValue = this.characterSelect.getSelectedValue()
+    const characterId = selectedValue ? parseInt(selectedValue, 10)  : 0
     this.setCharacterStateSelect(this.characterStateSelect, characterId)
+
     const characterSelectIndex = this.characterSelect.getLastSelectedIndex()
     this.actionCharacterSelect.setSelectedIndex(characterSelectIndex + 1)
+
     this.characterStateSelect.setSelectedIndex(0)
     this.dialog.enableAddButton(
       isDistinctCharacterSelect(
@@ -262,11 +275,10 @@ class AddScoringPane extends Component implements CharacterRuleAdder {
    * Handles the select event on the action character select.
    */
   private handleActionCharacterSelect() {
-    const characterSelectValue = this.characterSelect.getSelectedValue()
-    const characterId = characterSelectValue
-      ? parseInt(characterSelectValue, 10)
-      : 0
+    const selectedValue = this.actionCharacterSelect.getSelectedValue()
+    const characterId = selectedValue ? parseInt(selectedValue, 10) : 0
     this.setCharacterStateSelect(this.actionCharacterStateSelect, characterId)
+
     this.actionCharacterStateSelect.setSelectedIndex(0)
     this.dialog.enableAddButton(
       isDistinctCharacterSelect(
@@ -311,7 +323,7 @@ class AddScoringPane extends Component implements CharacterRuleAdder {
    * @param characterStateSelect The character state select
    * @param characterId The character id to retrieve the states.
    */
-  setCharacterStateSelect(characterStateSelect: Select, characterId: number) {
+  private setCharacterStateSelect(characterStateSelect: Select, characterId: number) {
     const character = this.matrixModel.getCharacters().getById(characterId)
     if (!character) {
       return
@@ -334,9 +346,8 @@ class AddScoringPane extends Component implements CharacterRuleAdder {
   /**
    * @return The HTML content of the Add Scoring pane
    */
-  static htmlContent(): string {
+  private static htmlContent(): string {
     return (
-      '' +
       '<div class="header">When setting this character to this state...</div>' +
       '<div class="characters nonSelectable">' +
       '<div class="charactersSelect">Character</div>' +
@@ -364,20 +375,25 @@ class AddMediaPane extends Component implements CharacterRuleAdder {
 
   constructor(private matrixModel: MatrixModel, private dialog: AddRuleDialog) {
     super()
+
     this.characterSelect = new Select()
     this.registerDisposable(this.characterSelect)
+
     this.actionCharacterSelect = new Select()
     this.actionCharacterSelect.setAllowMultipleSelection(true)
     this.registerDisposable(this.actionCharacterSelect)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
+
     const element = this.getElement()
-    element.classList.add('add-media-rule')
+    element.classList.add('addMediaRule')
     element.innerHTML = AddMediaPane.htmlContent()
+    
     setCharacterSelect(this.matrixModel, this.characterSelect)
     setCharacterSelect(this.matrixModel, this.actionCharacterSelect)
+    
     const characterElement = this.getElementByClass('charactersSelect')
     this.characterSelect.render(characterElement)
     const actionCharacterElement = this.getElementByClass(
@@ -386,7 +402,7 @@ class AddMediaPane extends Component implements CharacterRuleAdder {
     this.actionCharacterSelect.render(actionCharacterElement)
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     this.getHandler()
       .listen(
@@ -397,12 +413,12 @@ class AddMediaPane extends Component implements CharacterRuleAdder {
       .listen(
         this.characterSelect,
         EventType.SELECT,
-        this.handleCharacterSelect
+        () => this.handleCharacterSelect()
       )
       .listen(
         this.actionCharacterSelect,
         EventType.SELECT,
-        this.handleCharacterSelect
+        () => this.handleCharacterSelect()
       )
     this.characterSelect.setSelectedIndex(0)
     this.actionCharacterSelect.setSelectedIndex(0)
@@ -448,9 +464,8 @@ class AddMediaPane extends Component implements CharacterRuleAdder {
   /**
    * @return The HTML content of the Add Scoring pane
    */
-  static htmlContent(): string {
+  private static htmlContent(): string {
     return (
-      '' +
       '<div class="header">When adding media to this character...</div>' +
       '<div class="characters nonSelectable">' +
       '<div class="charactersSelect">Character</div>' +

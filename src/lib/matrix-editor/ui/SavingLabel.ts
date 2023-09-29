@@ -12,11 +12,13 @@ export class SavingLabel extends Component {
 
   constructor(text?: string) {
     super()
+
     this.text = text || 'Saving...'
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
+
     const element = this.getElement()
     element.classList.add('savingLabel')
     element.textContent = this.text
@@ -35,8 +37,10 @@ export class SavingLabel extends Component {
    */
   setText(text: string) {
     this.text = text
-    const element = this.getElement()
-    element.textContent = this.text
+    if (this.isInDocument()) {
+      const element = this.getElement()
+      element.textContent = this.text
+    }
   }
 
   /**

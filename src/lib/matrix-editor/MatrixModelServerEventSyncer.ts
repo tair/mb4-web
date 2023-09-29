@@ -91,7 +91,6 @@ export class MatrixModelServerEventSyncer {
    * Handles events from server-side events which indicate the connection received an error.
    */
   protected onHandleEventSourceError(e: Event, serverEvents: EventSource) {
-    console.log('Source error', e)
     serverEvents.close()
   }
 

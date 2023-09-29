@@ -10,31 +10,32 @@ import { EventType } from '../Component'
  * @param selectedNoCallback the callback when the user presses no
  */
 export class ConfirmDialog extends Modal {
-  private selectedNoCallback: (() => any) | null
 
   constructor(
     title: string,
     content: string,
-    private selectedYesCallback: () => any,
-    selectedNoCallback?: (() => any) | null
+    private readonly selectedYesCallback: () => void,
+    private readonly selectedNoCallback?: (() => void) | null
   ) {
     super()
-    this.selectedNoCallback = selectedNoCallback || null
     this.setTitle(title)
     this.setContent(content)
+  }
+
+  protected override initialize() {
     this.setDisposeOnHide(true)
     this.setHasTitleCloseButton(false)
     this.addButton(ModalDefaultButtons.YES)
     this.addButton(ModalDefaultButtons.NO)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
     const element = this.getElement()
     element.classList.add('mb-confirm-dialog', 'nonSelectable')
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     const handler = this.getHandler()
     handler.listen(this, EventType.SELECT, (e: CustomEvent<any>) =>

@@ -35,7 +35,7 @@ export class DagDialog extends Modal {
   override createDom() {
     super.createDom()
     const element = this.getElement()
-    element.classList.add('dagDialog')
+    element.classList.add('dagDialog', 'modal-xl')
     for (const key in DagDialog.DROPDOWN_VALUES) {
       const value = DagDialog.DROPDOWN_VALUES[key]
       this.ruleActionComboBox.addItem({ text: key, value })

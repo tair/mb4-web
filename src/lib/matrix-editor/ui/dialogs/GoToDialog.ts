@@ -5,7 +5,7 @@ import { Modal, ModalDefaultButtons } from '../Modal'
 import * as GoToCellEvents from '../../events/GoToCellEvent'
 
 /**
- * The Go To dialog which moves the matrix editor to a particular point.
+ * Dialog that moves the matrix editor to a particular character and taxon.
  * @param matrixModel The data associated with the matrix.
  */
 export class GoToDialog extends Modal {
@@ -29,7 +29,9 @@ export class GoToDialog extends Modal {
     super()
 
     this.matrixModel = matrixModel
+  }
 
+  protected override initialize(): void {
     this.setTitle('Go To')
     this.setHasBackdrop(false)
     this.setDisposeOnHide(true)
@@ -39,16 +41,19 @@ export class GoToDialog extends Modal {
     this.addButton(ModalDefaultButtons.CANCEL)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
+
     const element = this.getElement()
-    element.classList.add('goToDialog')
+    element.classList.add('goToDialog', 'modal-sm')
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
+
     const characterNumberElement = this.getElementByClass('characterNumber')
     const taxonNumberElement = this.getElementByClass('taxonNumber')
+
     this.getHandler()
       .listen(characterNumberElement, EventType.KEYUP, () => this.updateUI())
       .listen(taxonNumberElement, EventType.KEYUP, () => this.updateUI())
@@ -62,7 +67,7 @@ export class GoToDialog extends Modal {
    *
    * @param e The event that triggered this callback.
    */
-  protected onHandleSelect(e: CustomEvent) {
+  private onHandleSelect(e: CustomEvent) {
     switch (e.detail.key) {
       case GoToDialog.ButtonKeys.GO:
         const characterNumberElement =
@@ -90,41 +95,42 @@ export class GoToDialog extends Modal {
   /**
    * Update the UI based on user's input.
    */
-  protected updateUI() {
+  private updateUI() {
     if (!this.isInDocument()) {
       return
     }
+
     const characterNumberElement =
       this.getElementByClass<HTMLInputElement>('characterNumber')
+    if (characterNumberElement.value) {
+      const characterNumber = this.convertNumber(characterNumberElement.value)
+      const valid = characterNumber <= this.matrixModel.getNumberOfCharacters()
+      characterNumberElement.classList.toggle('error', !valid)
+    }
+
     const taxonNumberElement =
       this.getElementByClass<HTMLInputElement>('taxonNumber')
-    const characterNumber = this.convertNumber(characterNumberElement.value)
-    const taxonNumber = this.convertNumber(taxonNumberElement.value)
-    const characterValid =
-      characterNumber <= this.matrixModel.getNumberOfCharacters()
-    const taxonValid = taxonNumber <= this.matrixModel.getNumberOfTaxa()
-    if (characterValid) {
-      characterNumberElement.classList.remove('error')
-    } else {
-      characterNumberElement.classList.add('error')
+    if (taxonNumberElement.value) {
+      const taxonNumber = this.convertNumber(taxonNumberElement.value)
+      const valid = taxonNumber <= this.matrixModel.getNumberOfTaxa()
+      taxonNumberElement.classList.toggle('error', !valid)
     }
-    if (taxonValid) {
-      taxonNumberElement.classList.remove('error')
-    } else {
-      taxonNumberElement.classList.add('error')
-    }
-    this.setButtonEnabled(GoToDialog.Buttons.GO, characterValid && taxonValid)
+
+    const valid = 
+        !characterNumberElement.classList.contains('error') &&
+        !taxonNumberElement.classList.contains('error')
+    this.setButtonEnabled(GoToDialog.Buttons.GO,  valid)
   }
 
   /**
    * The dialog's HTML Content
    */
-  static htmlContent() {
+  private static htmlContent() {
     return (
       '<div class="label">Character Number</div>' +
-      '<input class="characterNumber" type="text" />' +
+      '<input class="characterNumber form-control" type="text" />' +
       '<div class="label">Taxon Number</div>' +
-      '<input class="taxonNumber type="text" />'
+      '<input class="taxonNumber form-control" type="text" />'
     )
   }
 
@@ -133,7 +139,7 @@ export class GoToDialog extends Modal {
    * @param value The user-specified number.
    * @returns The converted number.
    */
-  convertNumber(value: string): number {
+  private convertNumber(value: string): number {
     const userPreferences = this.matrixModel.getUserPreferences()
     const numberingMode = userPreferences.getDefaultNumberingMode()
     return parseInt(value, 10) + numberingMode
@@ -144,7 +150,7 @@ export class GoToDialog extends Modal {
    * @param number The targeted number.
    * @returns The closest number from the array of items.
    */
-  static getClosestIndexFromNumber(
+  private static getClosestIndexFromNumber(
     items: AbstractItem[],
     number: number
   ): number {

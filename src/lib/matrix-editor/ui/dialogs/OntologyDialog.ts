@@ -73,10 +73,15 @@ export class OntologyDialog extends Dialog {
 
     this.tabNavigator = new TabNavigator()
     this.registerDisposable(this.tabNavigator)
+
     this.addRuleDialog = new AddRuleDialog(this.matrixModel)
     this.registerDisposable(this.addRuleDialog)
+
     this.dagDialog = new DagDialog(this.matrixModel)
     this.registerDisposable(this.dagDialog)
+  }
+
+  protected override initialize() {
     this.setTitle('Character ontology')
     this.addButton(ModalDefaultButtons.DONE)
     this.addButton(OntologyDialog.Buttons.VIEW_RULES_AS_GRAPH)
@@ -85,11 +90,12 @@ export class OntologyDialog extends Dialog {
     }
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
+    
     const element = this.getElement()
-    element.classList.add('ontologyDialog')
-    const contentElement = this.getContentElement()
+    element.classList.add('ontologyDialog', 'modal-lg')
+
     this.tabNavigator.addTab(
       "'Set State' rules",
       new SetStateRulesPane(this.matrixModel, this)
@@ -99,10 +105,11 @@ export class OntologyDialog extends Dialog {
       new MediaRulesPane(this.matrixModel, this)
     )
 
+    const contentElement = this.getContentElement()
     this.tabNavigator.render(contentElement)
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     const handler = this.getHandler()
     handler.listen(this, EventType.SELECT, (e: CustomEvent<any>) =>
@@ -180,7 +187,7 @@ class MediaRulesPane extends Component {
     this.registerDisposable(this.gridTable)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
     const element = this.getElement()
     element.classList.add('stateRulesPane')
@@ -190,7 +197,7 @@ class MediaRulesPane extends Component {
     this.gridTable.render(element)
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     const handler = this.getHandler()
     handler.listen(
@@ -213,7 +220,7 @@ class MediaRulesPane extends Component {
    * Handles events when character rules are added.
    *
    */
-  protected onCharacterRuleModified() {
+  private onCharacterRuleModified() {
     this.gridTable.clearRows()
     this.gridTable.addRows(this.getGridRows())
     this.gridTable.redraw()
@@ -222,7 +229,7 @@ class MediaRulesPane extends Component {
   /**
    * @return the HTML content of the set state grid as an array of arrays
    */
-  getGridRows(): DataRow[] {
+  private getGridRows(): DataRow[] {
     const rows: DataRow[] = []
     const userPreferences = this.matrixModel.getUserPreferences()
     const numberingMode = userPreferences.getDefaultNumberingMode()
@@ -314,7 +321,7 @@ class SetStateRulesPane extends Component {
     this.registerDisposable(this.gridTable)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
     const element = this.getElement()
     element.classList.add('stateRulesPane')
@@ -324,7 +331,7 @@ class SetStateRulesPane extends Component {
     this.gridTable.render(element)
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     const handler = this.getHandler()
     handler.listen(
@@ -347,7 +354,7 @@ class SetStateRulesPane extends Component {
    * Handles events when character rules are added.
    *
    */
-  protected onCharacterRuleModified() {
+  private onCharacterRuleModified() {
     this.gridTable.clearRows()
     this.gridTable.addRows(this.getGridRows())
     this.gridTable.redraw()
@@ -356,7 +363,7 @@ class SetStateRulesPane extends Component {
   /**
    * @return the HTML content of the set state grid as an array of arrays
    */
-  getGridRows(): DataRow[] {
+  private getGridRows(): DataRow[] {
     const rows: DataRow[] = []
     const userPreferences = this.matrixModel.getUserPreferences()
     const numberingMode = userPreferences.getDefaultNumberingMode()

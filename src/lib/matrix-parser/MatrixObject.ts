@@ -274,9 +274,6 @@ export class Cell {
   note?: string
 
   constructor(score: string) {
-    if (score == '') {
-      debugger
-    }
     this.score = score
   }
 
