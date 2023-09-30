@@ -17,7 +17,7 @@ export class DraggableSelect extends Component {
   private droppedIndex: number
   private items: HTMLElement[]
   private selectedItems: HTMLElement[]
-  private targets: Element[]
+  private allowedSources: string[]
   private uniqueId: string
 
   constructor() {
@@ -26,7 +26,7 @@ export class DraggableSelect extends Component {
     this.droppedIndex = -1
     this.items = []
     this.selectedItems = []
-    this.targets = []
+    this.allowedSources = []
     this.uniqueId = Component.makeNewId()
   }
 
@@ -70,8 +70,8 @@ export class DraggableSelect extends Component {
    * Sets a target
    * @param draggableSelect Another component
    */
-  addTarget(draggableSelect: DraggableSelect) {
-    this.targets.push(draggableSelect.getElement())
+  allowFrom(draggableSelect: DraggableSelect) {
+    this.allowedSources.push(draggableSelect.uniqueId)
   }
 
   /**
@@ -208,6 +208,7 @@ export class DraggableSelect extends Component {
     this.droppedIndex = -1
     e.dataTransfer?.clearData()
     e.dataTransfer?.setData('text/plain', this.uniqueId)
+    e.dataTransfer?.setData(this.uniqueId, this.uniqueId)
   }
 
   /**
@@ -223,16 +224,17 @@ export class DraggableSelect extends Component {
    * @param e The event that triggered this callback.
    */
   private handleDragEnter(e: DragEvent) {
-    const element = e.currentTarget as Element
-    const isTarget = this.targets.includes(element)
-    if (!isTarget) {
+    if (!this.isDropAllowed(e.dataTransfer?.types)) {
       return
     }
+
     e.preventDefault()
+
     const li = this.getParentLIElement(e.target)
     if (!li) {
       return
     }
+
     li.classList.add('droppable')
     const draggableSelect = this.getElement()
     const lis = draggableSelect.getElementsByTagName('li')
@@ -278,6 +280,15 @@ export class DraggableSelect extends Component {
       const isTargetSelf = this.uniqueId === e.dataTransfer?.getData('text')
       this.dispatchEvent(DraggableSelect.createDropEvent(isTargetSelf))
     }
+  }
+
+  private isDropAllowed(sourceIds: readonly string[]): boolean {
+    for (const sourceId of sourceIds) {
+      if (this.allowedSources.includes(sourceId)) {
+        return true
+      }
+    }
+    return false
   }
 
   /**

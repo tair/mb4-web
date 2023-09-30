@@ -326,7 +326,7 @@ export class CharacterGrid extends Component {
    * @param e The event that triggered this callback.
    */
   protected onHandleMouseDown(e: MouseEvent) {
-    const targetElement = mb.toElement(e.target)
+    const targetElement = e.target as Element
     const tr = this.getParentTrElement(targetElement)
     if (tr === null) {
       return

@@ -8,6 +8,7 @@ import {
 import { ConfirmDialog } from './ConfirmDialog'
 import * as mb from '../../mb'
 import { ModalDefaultButtons } from '../Modal'
+import { AlertDialog } from './Alert'
 
 /**
  * The Taxon list dialog which adds and removes taxa within this matrix.
@@ -55,7 +56,7 @@ export class TaxaListDialog extends Dialog {
 
     element.classList.add('taxaListDialog', 'modal-lg')
     const contentElement = this.getContentElement()
-    contentElement.innerHTML = this.htmlContent()
+    contentElement.innerHTML = TaxaListDialog.htmlContent()
 
     const currentTaxaSelect = this.getElementByClass('currentTaxaSelect')
     this.taxaInMatrixSelect.render(currentTaxaSelect)
@@ -89,16 +90,15 @@ export class TaxaListDialog extends Dialog {
   protected override finalizeDom(): void {
     super.finalizeDom()
 
-    this.taxaInMatrixSelect.addTarget(this.taxaInMatrixSelect)
-    this.taxaInMatrixSelect.addTarget(this.taxaNotInMatrixSelect)
-    this.taxaNotInMatrixSelect.addTarget(this.taxaInMatrixSelect)
-    this.taxaNotInMatrixSelect.addTarget(this.taxaNotInMatrixSelect)
+    this.taxaInMatrixSelect.allowFrom(this.taxaInMatrixSelect)
+    this.taxaInMatrixSelect.allowFrom(this.taxaNotInMatrixSelect)
+    this.taxaNotInMatrixSelect.allowFrom(this.taxaInMatrixSelect)
   }
 
   /**
    * Sets the taxa to the Taxa in Matrix select component.
    */
-  protected setTaxaInMatrixSelect() {
+  private setTaxaInMatrixSelect() {
     const taxa = this.matrixModel.getTaxa()
     this.taxaInMatrixSelect.clearItems()
     const numOfTaxa = taxa.size()
@@ -118,7 +118,7 @@ export class TaxaListDialog extends Dialog {
   /**
    * Sets the taxa to the Taxa in Matrix select component.
    */
-  protected setAvailableTaxaInMatrixSelect() {
+  private setAvailableTaxaInMatrixSelect() {
     this.savingLabel.saving('Loading...')
     return this.matrixModel
       .getAvailableTaxa()
@@ -145,7 +145,7 @@ export class TaxaListDialog extends Dialog {
   /**
    * Handles when taxa within this matrix has been changed.
    */
-  protected handleTaxaChange() {
+  private handleTaxaChange() {
     this.setAvailableTaxaInMatrixSelect()
     this.setTaxaInMatrixSelect()
   }
@@ -219,6 +219,12 @@ export class TaxaListDialog extends Dialog {
     const taxaIdsToRemove = mb.convertToNumberArray(
       this.taxaInMatrixSelect.getSelectedValues()
     )
+
+    if (taxaIdsToRemove.length == 0) {
+      alert('Please select taxa to remove from matrix')
+      return
+    }
+
     if (cells.isTaxaScored(taxaIdsToRemove)) {
       const confirmDialog = new ConfirmDialog(
         'Warning(!)',
@@ -236,7 +242,10 @@ export class TaxaListDialog extends Dialog {
    * @param taxaIdsToRemove the taxa to remove from the matrix.
    * @param consentToDelete True if the user was given a dialog and consented to deleting the taxa.
    */
-  removeTaxaFromMatrix(taxaIdsToRemove: number[], consentToDelete: boolean) {
+  private removeTaxaFromMatrix(
+    taxaIdsToRemove: number[],
+    consentToDelete: boolean
+  ) {
     this.savingLabel.saving()
     this.matrixModel
       .removeTaxaFromMatrix(taxaIdsToRemove, consentToDelete)
@@ -258,7 +267,7 @@ export class TaxaListDialog extends Dialog {
   /**
    * @return The HTML content of the dialog.
    */
-  htmlContent(): string {
+  private static htmlContent(): string {
     return `
       <div style="margin-bottom: 10px">
         <i>

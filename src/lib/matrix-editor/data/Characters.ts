@@ -23,7 +23,7 @@ export class Characters extends AbstractItems<Character> {
  * @param obj the json object notation representing the character.
  * @struct
  */
-export class Character implements AbstractItem {
+export class Character extends AbstractItem {
   private characterObject: { [key: string]: any }
   private characterState: Map<number, CharacterState>
 
@@ -37,6 +37,8 @@ export class Character implements AbstractItem {
   private characterMedia: Map<number, CharacterMedia> | null
 
   constructor(obj: { [key: string]: any }) {
+    super()
+
     this.characterObject = obj
     this.characterState = new Map()
     this.citations = null
@@ -49,11 +51,11 @@ export class Character implements AbstractItem {
     }
   }
 
-  getId(): number {
+  override getId(): number {
     return this.characterObject['id']
   }
 
-  getName(): string {
+  override getName(): string {
     return this.characterObject['n']
   }
 
@@ -65,7 +67,7 @@ export class Character implements AbstractItem {
     this.characterObject['n'] = name
   }
 
-  getNumber(): number {
+  override getNumber(): number {
     return this.characterObject['r']
   }
 
@@ -395,18 +397,20 @@ export enum CharacterType {
  * @param stateObj the json object notation representing the character.
  * @struct
  */
-export class CharacterState implements AbstractItem {
+export class CharacterState extends AbstractItem {
   private readonly stateObj: {[key:string]: any }
 
   constructor(stateObj: Object) {
+    super()
+
     this.stateObj = stateObj
   }
 
-  getId(): number {
+  override getId(): number {
     return this.stateObj['id']
   }
 
-  getNumber(): number {
+  override getNumber(): number {
     return this.stateObj['r']
   }
 
@@ -414,7 +418,7 @@ export class CharacterState implements AbstractItem {
     this.stateObj['r'] = num
   }
 
-  getName(): string {
+  override getName(): string {
     return this.stateObj['n']
   }
 

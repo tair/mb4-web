@@ -109,7 +109,7 @@ export class Component extends EventTarget implements Disposable {
    * @param sibling Node to render the component before.
    */
   renderBefore(sibling: Node) {
-    this.renderInternal(mb.toElement(sibling.parentNode), sibling)
+    this.renderInternal(sibling.parentElement, sibling)
   }
 
   /**

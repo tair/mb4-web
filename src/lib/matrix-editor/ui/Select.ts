@@ -216,11 +216,12 @@ export class Select extends Component {
    */
   protected handleClickWithSingleSelection(e: MouseEvent) {
     this.removeSelectedItems()
-    const selectedItem = this.getParentLIElement(e.target)
+    const element = e.target as Element
+    const selectedItem = this.getParentLIElement(element)
     if (selectedItem) {
       this.addSelectedItems(selectedItem)
       if (this.isRemovable) {
-        mb.toElement(e.target).classList.remove(Select.CSS.REMOVE)
+        element.classList.remove(Select.CSS.REMOVE)
       }
       const eventType = this.isRemovable ? EventType.CUT : EventType.SELECT
       this.dispatchEvent(new Event(eventType))
@@ -272,15 +273,14 @@ export class Select extends Component {
    * @param e The event that triggered this callback.
    */
   protected handleDoubleClick(e: Event) {
-    if (
-      this.isRemovable &&
-      mb.toElement(e.target).classList.contains(Select.CSS.REMOVE)
-    ) {
+    const element = e.target as Element
+    if (this.isRemovable && element.classList.contains(Select.CSS.REMOVE)) {
       this.dispatchEvent(new Event(EventType.CUT))
       return
     }
+
     this.removeSelectedItems()
-    const selectedItem = this.getParentLIElement(e.target)
+    const selectedItem = this.getParentLIElement(element)
     if (selectedItem) {
       this.addSelectedItems(selectedItem)
       this.dispatchEvent(e)

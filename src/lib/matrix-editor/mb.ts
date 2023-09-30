@@ -1,22 +1,4 @@
 /**
- * Converts an element to a node
- * @param element the element to convert
- * @return the node version of the element
- */
-export function toNode(element: Element): Node {
-  return element as Node
-}
-
-/**
- * Converts an object to an element
- * @param object the object to convert
- * @return the element version of the object
- */
-export function toElement(object: any): Element {
-  return object as Element
-}
-
-/**
  * Determines whether an element is entirely displayed on the screen.
  *
  * @param el the element to test
@@ -45,7 +27,7 @@ export function isFullyOnScreen(el: Element, badElements?: Element[]): boolean {
  *
  * @returns Whether the DOMRects intersect.
  */
-export function intersects(rect1: DOMRect, rect2: DOMRect): boolean {
+function intersects(rect1: DOMRect, rect2: DOMRect): boolean {
   return (
     rect1.bottom > rect2.top &&
     rect1.right > rect2.left &&
@@ -78,18 +60,6 @@ export function getElementParent<T extends HTMLElement>(
  */
 export function convertToNumberArray(array: string[]): number[] {
   return array.map((element) => parseInt(element, 10))
-}
-
-/**
- * Gets the index of the element based on its parent.
- * @param element The element of the node to get the index
- * @return The index of the element
- */
-export function getNodeIndex(element: Element): number {
-  return Array.prototype.indexOf.call(
-    element.parentElement?.childNodes,
-    element
-  )
 }
 
 export type SearchOptions = {
@@ -376,14 +346,14 @@ export function getContainerOffsetToScrollInto(
     parseFloat(containerBorderStyles.getPropertyValue('borderTopWidth')) || 0
 
   // Relative pos. of the element's border box to the container's content box.
-  let relX = elementPos.x - containerPos.x - containerBorderLeft
-  let relY = elementPos.y - containerPos.y - containerBorderTop
+  const relX = elementPos.x - containerPos.x - containerBorderLeft
+  const relY = elementPos.y - containerPos.y - containerBorderTop
 
   // How much the element can move in the container, i.e. the difference between
   // the element's bottom-right-most and top-left-most position where it's
   // fully visible.
-  let spaceX = container.clientWidth - element.offsetWidth
-  let spaceY = container.clientHeight - element.offsetHeight
+  const spaceX = container.clientWidth - element.offsetWidth
+  const spaceY = container.clientHeight - element.offsetHeight
   let scrollLeft = container.scrollLeft
   let scrollTop = container.scrollTop
   if (opt_center) {

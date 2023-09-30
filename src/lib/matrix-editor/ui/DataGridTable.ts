@@ -327,7 +327,7 @@ export class DataGridTable extends Component {
    * @param e The event that triggerd this callback.
    */
   protected handleClick(e: Event) {
-    const targetElement = mb.toElement(e.target)
+    const targetElement = e.target as Element
     const tr = this.getParentTrElement<HTMLDivElement>(targetElement)
     if (
       !tr ||
@@ -359,7 +359,7 @@ export class DataGridTable extends Component {
    * @param e The event that triggerd this callback.
    */
   protected handleDoubleClick(e: Event) {
-    const targetElement = mb.toElement(e.target)
+    const targetElement = e.target as Element
     const tr = this.getParentTrElement<HTMLDivElement>(targetElement)
     if (
       !tr ||

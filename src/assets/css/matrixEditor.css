@@ -1648,8 +1648,11 @@ div.loadingMessage,
 div.loadingMessage > div,
 .characterDialog div.loadingComments > div,
 .cellDialog div.loadingComments > div {
-  background: url(/images/indicator.gif) no-repeat left top;
+  align-items: center;
+  background: url(/images/indicator.gif) no-repeat left center;
+  display: flex;
   height: 20px;
+  justify-content: center;
   font-weight: bold;
   padding-left: 20px;
   position: relative;

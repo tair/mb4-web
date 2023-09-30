@@ -37,7 +37,7 @@ export class Taxa extends AbstractItems<Taxon> {
  * @param obj the json object notation representing the taxon.
  * @struct
  */
-export class Taxon implements AbstractItem {
+export class Taxon extends  AbstractItem {
   private taxonObject: { [key: string]: any }
 
   /**
@@ -46,15 +46,17 @@ export class Taxon implements AbstractItem {
   private taxonMedia: Map<number, TaxonMedia> | null
 
   constructor(obj: Object) {
+    super()
+
     this.taxonObject = obj
     this.taxonMedia = null
   }
 
-  getId():number {
+  override getId():number {
     return this.taxonObject['id']
   }
 
-  getNumber():number {
+  override getNumber():number {
     return this.taxonObject['r']
   }
 
@@ -77,8 +79,13 @@ export class Taxon implements AbstractItem {
     )
   }
 
-  getName():string {
+  override getName():string {
     return this.taxonObject['on']
+  }
+
+  override getNormalizedName(): string {
+    const name = this.getName().toLowerCase().trim()
+    return name[0] == '†' ? name.substring(1).trim() : name
   }
 
   /**

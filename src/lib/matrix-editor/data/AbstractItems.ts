@@ -278,8 +278,8 @@ export abstract class AbstractItems<T extends AbstractItem> {
     a: AbstractItem,
     b: AbstractItem
   ): number {
-    const aName = a.getName()
-    const bName = b.getName()
+    const aName = a.getNormalizedName()
+    const bName = b.getNormalizedName()
     if (aName < bName) {
       return -1
     }
@@ -311,29 +311,35 @@ export abstract class AbstractItems<T extends AbstractItem> {
  * includes a character, taxon, etc. These are common properties across the
  * ojects.
  */
-export interface AbstractItem {
+export abstract class AbstractItem {
   /**
    * @return The unqiue identifier for this item.
    */
-  getId(): number
+  abstract getId(): number
 
   /**
-   * 
    * @return the items's name.
    */
-  getName(): string
+  abstract getName(): string
 
   /**
    * Gets the position of the item in relation to other items in this matrix.
    * Currently, the 
    * @return A positive integer for this item.
    */
-  getNumber(): number
+  abstract getNumber(): number
 
   /**
    * Updates the position for this item. This solely sets the value. The caller
    * must reorder the items.
    * @param position The new position of this item.
    */
-  setNumber(position: number): void
+  abstract setNumber(position: number): void
+
+  /**
+   * @return the item's name normalized for sorting or searching.
+   */
+  getNormalizedName(): string {
+    return this.getName()
+  }
 }
