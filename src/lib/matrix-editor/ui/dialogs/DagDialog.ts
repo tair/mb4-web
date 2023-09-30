@@ -12,7 +12,6 @@ import { CharacterRules } from '../../data/CharacterRules'
 export class DagDialog extends Modal {
   /**
    * Values of the combobox as indices to the types of actions
-   *
    */
   private static readonly DROPDOWN_VALUES: { [key: string]: number } = {
     'character states': 0,
@@ -56,8 +55,7 @@ export class DagDialog extends Modal {
    * Refreshes the matrix DAG.
    * This may be delayed based on whether the script was downloaded.
    */
-  refreshGraph() {
-    console.log('refresh graph')
+  private refreshGraph() {
     const graphElement = this.getElementByClass('graph')
     mb.removeChildren(graphElement)
 
@@ -118,7 +116,6 @@ export class DagDialog extends Modal {
    */
   private static htmlContent(): string {
     return (
-      '' +
       '<div class="action">' +
       '<div class="action-control">View <div class="action-combobox"></div> rules</div>' +
       '<div class="loading"></div>' +
@@ -148,8 +145,7 @@ function createGraph(root: Element, nodes: Node[], links: Link[]) {
   // Specify the dimensions of the chart.
   const width = 800
   const height = 400
-
-  const color = d3.scaleLinear(d3.schemeCategory10)
+  const nodeTypes = ['mother', 'daugther']
 
   // Create a simulation with several forces.
   const simulation = d3
@@ -160,9 +156,14 @@ function createGraph(root: Element, nodes: Node[], links: Link[]) {
         .forceLink(links)
         .id((d) => d.index)
         .distance(75)
+        .strength(0.5)
     )
     .force('charge', d3.forceManyBody())
     .force('center', d3.forceCenter(width / 2, height / 2))
+    .force(
+      'collide',
+      d3.forceCollide((d) => 25)
+    )
 
   // Create the SVG container.
   const svg = d3
@@ -170,15 +171,33 @@ function createGraph(root: Element, nodes: Node[], links: Link[]) {
     .attr('viewBox', [0, 0, width, height])
     .attr('style', 'width: 100%; height: 100%;')
 
+  // Per-type markers, as they don't inherit styles.
+  svg
+    .append('defs')
+    .selectAll('marker')
+    .data(nodeTypes)
+    .join('marker')
+    .attr('id', (d) => `arrow-${d}`)
+    .attr('viewBox', '0 -5 10 10')
+    .attr('refX', (d) => (d == 'mother' ? 27 : 21))
+    .attr('refY', 0)
+    .attr('markerWidth', 6)
+    .attr('markerHeight', 6)
+    .attr('orient', 'auto')
+    .append('path')
+    .attr('fill', '#999')
+    .attr('d', 'M0,-5L10,0L0,5')
+
   // Add a line for each link, and a circle for each node.
   const link = svg
     .append('g')
-    .attr('stroke', '#999')
-    .attr('stroke-opacity', 0.6)
-    .selectAll('line')
+    .attr('fill', 'none')
+    .attr('stroke-width', 1.5)
+    .selectAll('path')
     .data(links)
-    .join('line')
-    .attr('stroke-width', 3)
+    .join('path')
+    .attr('stroke', '#999')
+    .attr('marker-end', (d) => `url("#arrow-${getSourceType(d)}")`)
 
   const node = svg
     .append('g')
@@ -192,7 +211,7 @@ function createGraph(root: Element, nodes: Node[], links: Link[]) {
   node
     .append('circle')
     .attr('r', (d) => (d.type == NodeType.MOTHER ? 15 : 10))
-    .attr('fill', (d) => color(d.type))
+    .attr('fill', (d) => (d.type == NodeType.MOTHER ? 'red' : 'grey'))
 
   node
     .append('text')
@@ -213,14 +232,20 @@ function createGraph(root: Element, nodes: Node[], links: Link[]) {
 
   // Set the position attributes of links and nodes each time the simulation ticks.
   simulation.on('tick', () => {
-    link
-      .attr('x1', (d) => (<Node>d.source).x)
-      .attr('y1', (d) => (<Node>d.source).y)
-      .attr('x2', (d) => (<Node>d.target).x)
-      .attr('y2', (d) => (<Node>d.target).y)
-
+    link.attr('d', linkArc)
     node.attr('transform', (d) => `translate(${d.x}, ${d.y})`)
   })
+
+  function getSourceType(d: Link) {
+    const target = <Node>d.target
+    return nodeTypes[target.type]
+  }
+
+  function linkArc(d: Link) {
+    const source = <Node>d.source
+    const target = <Node>d.target
+    return `M${source.x},${source.y}A0,0 0 0,1 ${target.x},${target.y}`
+  }
 
   // Reheat the simulation when drag starts, and fix the subject position.
   function dragstarted(event: any) {

@@ -1,7 +1,7 @@
 import { Component, EventType } from './Component'
 
 /**
- * Component that uses a dropdown select element for the Matrix Editor.
+ * Component for a dropdown select with defined values.
  */
 export class Dropdown extends Component {
   private options: DropdownItem[]
@@ -18,11 +18,11 @@ export class Dropdown extends Component {
 
   protected override createDom() {
     const element = document.createElement('select')
-    this.setElementInternal(element)
     element.classList.add('form-select')
     element.innerHTML = this.createOptions()
     element.disabled = !this.enabled
     element.selectedIndex = this.selectedIndex
+    this.setElementInternal(element)
   }
 
   protected override enterDocument(): void {
@@ -110,6 +110,7 @@ export class Dropdown extends Component {
   private onHandleChange() {
     const element = this.getElement<HTMLSelectElement>()
     this.selectedIndex = element.selectedIndex
+
     this.dispatchEvent(new Event(EventType.CHANGE))
   }
 
