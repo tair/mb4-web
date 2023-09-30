@@ -280,7 +280,6 @@ export class CharacterEditorContainer extends Component {
       document.documentElement.clientHeight - topButtonBar.offsetHeight
     const container = this.getElementByClass<HTMLElement>('characterContainer')
     mb.setElementStyle(container, 'height', remainingHeight + 'px')
-    this.characterGrid.resizeWindow()
   }
 
   /**

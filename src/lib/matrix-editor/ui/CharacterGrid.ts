@@ -181,31 +181,6 @@ export class CharacterGrid extends Component {
   }
 
   /**
-   * Fixes the broken styles in the window.
-   */
-  resizeWindow() {
-    const fixedHeader = this.getElementByClass<HTMLElement>('fixedHeader')
-    if (fixedHeader === null) {
-      return
-    }
-    const element = this.getElement()
-    const thead = element.getElementsByTagName('thead')[0]
-    const tr = thead.getElementsByTagName('tr')[0]
-    mb.setElementStyle(fixedHeader, 'width', tr.clientWidth + 'px')
-
-    // Ensure that all the headers are the exact size
-    const fixedHeaderElements = fixedHeader.childNodes
-    const headerElements = tr.childNodes
-    for (let x = 0; x < headerElements.length; x++) {
-      const fixedHeaderElement = fixedHeaderElements[x] as HTMLElement
-      const newStyle = fixedHeaderElement.style
-      const headerElement = headerElements[x] as HTMLElement
-      newStyle.minWidth = newStyle.maxWidth =
-        headerElement.clientWidth - 4 + 'px'
-    }
-  }
-
-  /**
    * Go to the character
    * @param index The index to go to
    */

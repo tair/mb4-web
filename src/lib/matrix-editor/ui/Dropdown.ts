@@ -110,6 +110,7 @@ export class Dropdown extends Component {
   private onHandleChange() {
     const element = this.getElement<HTMLSelectElement>()
     this.selectedIndex = element.selectedIndex
+    this.dispatchEvent(new Event(EventType.CHANGE))
   }
 
   private createOptions() {

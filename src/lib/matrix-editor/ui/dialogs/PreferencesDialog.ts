@@ -243,7 +243,6 @@ export class PreferencesDialog extends Dialog {
    * @return whether to close the dialog
    */
   private onHandleSelect(e: CustomEvent): boolean {
-    debugger
     if (e.detail.key === ModalDefaultButtonKeys.SAVE) {
       const matrixOptions = this.matrixModel.getMatrixOptions()
       const userPreferences = this.matrixModel.getUserPreferences()

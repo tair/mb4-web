@@ -23,7 +23,7 @@ html, body {
 .sliderHorizontal,
 .sliderVertical {
   background-color: #f8f8f8;
-  background-image: -webkit-linear-gradient(top, #f8f8f8, #fafafa);
+  background-image: linear-gradient(top, #f8f8f8, #fafafa);
   border: 1px solid #e7e7e7;
   position: absolute;
   outline: none;
@@ -229,21 +229,6 @@ div.matrixgridCells table {
 }
 
 .matrixgrid tr th {
-  background: -webkit-linear-gradient(to bottom,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(249, 250, 253, 1) 30%,
-    rgba(238, 242, 247, 1) 60%,
-    rgba(228, 233, 244, 1) 100%);
-  background: -o-linear-gradient(to bottom,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(249, 250, 253, 1) 30%,
-    rgba(238, 242, 247, 1) 60%,
-    rgba(228, 233, 244, 1) 100%);
-  background: -moz-linear-gradient(to bottom,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(249, 250, 253, 1) 30%,
-    rgba(238, 242, 247, 1) 60%,
-    rgba(228, 233, 244, 1) 100%);
   background: linear-gradient(to bottom,
     rgba(255, 255, 255, 1) 0%,
     rgba(249, 250, 253, 1) 30%,
@@ -693,6 +678,7 @@ ol.draggableSelect li.droppable {
   top: 50%;
   width: 110px;
 }
+
 ol.selectList {
   border: 1px solid #ddd;
   height: 100%;
@@ -906,21 +892,6 @@ ol.selectList li:hover span.remove {
 }
 
 .dataGrid table tr th {
-  background: -webkit-linear-gradient(to bottom,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(249, 250, 253, 1) 30%,
-    rgba(238, 242, 247, 1) 60%,
-    rgba(228, 233, 244, 1) 100%);
-  background: -o-linear-gradient(to bottom,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(249, 250, 253, 1) 30%,
-    rgba(238, 242, 247, 1) 60%,
-    rgba(228, 233, 244, 1) 100%);
-  background: -moz-linear-gradient(to bottom,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(249, 250, 253, 1) 30%,
-    rgba(238, 242, 247, 1) 60%,
-    rgba(228, 233, 244, 1) 100%);
   background: linear-gradient(to bottom,
     rgba(255, 255, 255, 1) 0%,
     rgba(249, 250, 253, 1) 30%,
@@ -1945,6 +1916,7 @@ div.loadingMessage > div,
   cursor: default;
   font-family: "Times New Roman", Times, serif;
   font-size: 13px;
+  height: 100%;
   outline: none;
   overflow-y: auto;
   overflow-x: visible;
@@ -1990,21 +1962,6 @@ div.loadingMessage > div,
 }
 
 .characterGrid table tr th {
-  background: -webkit-linear-gradient(to bottom,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(249, 250, 253, 1) 30%,
-    rgba(238, 242, 247, 1) 60%,
-    rgba(228, 233, 244, 1) 100%);
-  background: -o-linear-gradient(to bottom,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(249, 250, 253, 1) 30%,
-    rgba(238, 242, 247, 1) 60%,
-    rgba(228, 233, 244, 1) 100%);
-  background: -moz-linear-gradient(to bottom,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(249, 250, 253, 1) 30%,
-    rgba(238, 242, 247, 1) 60%,
-    rgba(228, 233, 244, 1) 100%);
   background: linear-gradient(to bottom,
     rgba(255, 255, 255, 1) 0%,
     rgba(249, 250, 253, 1) 30%,
@@ -2013,7 +1970,10 @@ div.loadingMessage > div,
   font-weight: bold;
   text-align: center;
   padding: 4px 2px;
+  position: sticky;
+  top: 0;
   vertical-align: top;
+  z-index: 1;
 }
 
 .characterGrid table tr:not(.empty):hover td {

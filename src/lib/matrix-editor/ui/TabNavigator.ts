@@ -74,8 +74,7 @@ export class TabNavigator extends Component {
   }
 
   protected override finalizeDom() {
-    const selectedTab = this.tabs[this.selectedTabIndex]
-    selectedTab.show()
+    this.updateSelectedTab()
   }
 
   /**
@@ -127,6 +126,7 @@ export class TabNavigator extends Component {
       index = tabCount - 1
     }
     this.selectedTabIndex = index
+    this.updateSelectedTab()
   }
 
   /**
@@ -142,6 +142,11 @@ export class TabNavigator extends Component {
   getSelectedTabComponent<T extends Component>(): T {
     const name = this.names[this.selectedTabIndex]
     return this.tabComponents.get(name) as T
+  }
+
+  private updateSelectedTab() {
+    const selectedTab = this.tabs[this.selectedTabIndex]
+    selectedTab.show()
   }
 
   /**
@@ -160,7 +165,7 @@ export class TabNavigator extends Component {
   /**
    * @return The HTML content of the container
    */
-  htmlContent(): string {
+  private htmlContent(): string {
     const tabButtons: string[] = []
     const tabPanes: string[] = []
     for (const key of this.names) {

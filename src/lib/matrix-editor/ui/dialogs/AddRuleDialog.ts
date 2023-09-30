@@ -115,7 +115,7 @@ export class AddRuleDialog extends Dialog {
    */
   private addCharacterRule() {
     this.savingLabel.saving()
-    const pane: any = this.tabNavigator.getSelectedTabComponent()
+    const pane = this.tabNavigator.getSelectedTabComponent<AddRuleComponent>()
     pane
       .addCharacterRule()
       .then(() => {
@@ -129,13 +129,13 @@ export class AddRuleDialog extends Dialog {
   }
 }
 
-interface CharacterRuleAdder {
+abstract class AddRuleComponent extends Component {
   /**
    * Adds a character rule to the matrix.
    *
    * @return The promise that the character rule was added
    */
-  addCharacterRule(): Promise<void>
+  abstract addCharacterRule(): Promise<void>
 }
 
 /**
@@ -144,7 +144,7 @@ interface CharacterRuleAdder {
  * @param matrixModel the data associated with the matrix.
  * @param dialog The owning dialog
  */
-class AddScoringPane extends Component implements CharacterRuleAdder {
+class AddScoringPane extends AddRuleComponent {
   private readonly characterSelect: Select
   private readonly characterStateSelect: Select
   private readonly actionCharacterSelect: Select
@@ -372,7 +372,7 @@ class AddScoringPane extends Component implements CharacterRuleAdder {
  * @param dialog The owning dialog
  */
 
-class AddMediaPane extends Component implements CharacterRuleAdder {
+class AddMediaPane extends AddRuleComponent {
   private characterSelect: Select
   private actionCharacterSelect: Select
 

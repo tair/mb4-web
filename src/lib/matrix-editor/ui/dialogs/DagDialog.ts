@@ -1,3 +1,4 @@
+import * as d3 from 'd3'
 import * as mb from '../../mb'
 import { MatrixModel } from '../../MatrixModel'
 import { Dropdown } from '../Dropdown'
@@ -7,35 +8,35 @@ import { CharacterRules } from '../../data/CharacterRules'
 
 /**
  * Character rule DAG dialog.
- *
- * @param matrixModel the data associated with the matrix.
  */
 export class DagDialog extends Modal {
   /**
    * Values of the combobox as indices to the types of actions
    *
    */
-  private static DROPDOWN_VALUES: { [key: string]: number } = {
+  private static readonly DROPDOWN_VALUES: { [key: string]: number } = {
     'character states': 0,
     media: 1,
   }
 
-  private ruleActionComboBox: Dropdown
-  private loader: Promise<void>
+  private readonly ruleActionComboBox: Dropdown
 
   constructor(private readonly matrixModel: MatrixModel) {
     super()
+
     this.ruleActionComboBox = new Dropdown()
     this.registerDisposable(this.ruleActionComboBox)
-    this.loader = mb.loadScript('http://dev.morphobank.org/js/Jit/jit-yc.js')
+
     this.setTitle('Character ontologies as graph')
     this.setContent(DagDialog.htmlContent())
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
+
     const element = this.getElement()
     element.classList.add('dagDialog', 'modal-xl')
+
     for (const key in DagDialog.DROPDOWN_VALUES) {
       const value = DagDialog.DROPDOWN_VALUES[key]
       this.ruleActionComboBox.addItem({ text: key, value })
@@ -44,7 +45,7 @@ export class DagDialog extends Modal {
     this.ruleActionComboBox.render(actionComboBoxElement)
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     this.getHandler().listen(this.ruleActionComboBox, EventType.CHANGE, () =>
       this.refreshGraph()
@@ -56,196 +57,66 @@ export class DagDialog extends Modal {
    * This may be delayed based on whether the script was downloaded.
    */
   refreshGraph() {
-    this.loader.then(() => this.refreshGraphReally())
-  }
-
-  /**
-   * Really refreshes the graph.
-   */
-  private refreshGraphReally() {
+    console.log('refresh graph')
     const graphElement = this.getElementByClass('graph')
     mb.removeChildren(graphElement)
+
     const actionIndex = this.ruleActionComboBox.getSelectedIndex()
     const allowedAction = CharacterRules.ACTIONS[actionIndex]
+
     const userPreferences = this.matrixModel.getUserPreferences()
     const numberingMode = userPreferences.getDefaultNumberingMode()
-    const loadingElement = this.getElementByClass('loading')
-    const characterRules = this.matrixModel.getCharacterRules()
+
     const characters = this.matrixModel.getCharacters()
+    const characterNames: Map<number, Node> = new Map()
+    const addNodeFunction = (id: number, type: NodeType) => {
+      if (characterNames.has(id)) {
+        const node = characterNames.get(id)
+        if (type == NodeType.MOTHER) {
+          node.type = NodeType.MOTHER
+        }
+      } else {
+        const character = characters.getById(id)
+        const num = character.getNumber() - numberingMode
+        const name = `[${num}] ${character.getName()}`
+        const node: Node = {
+          id: name,
+          type: type,
+        }
+        characterNames.set(id, node)
+      }
+    }
+
+    const characterRules = this.matrixModel.getCharacterRules()
     const rules = characterRules.getRules()
-    const data: { [key: number]: any } = {}
-    const targetCharacters: { [key: number]: any } = {}
+    const links: Link[] = []
     for (let x = 0; x < rules.length; x++) {
       const rule = rules[x]
-      const actionCharacterId = rule.getActionCharacterId()
       if (!rule.isAction(allowedAction)) {
         continue
       }
-      const edgeColor = rule.isAction('SET_STATE') ? '#FF7F00' : '#9AE161'
+
       const characterId = rule.getCharacterId()
-      const character = characters.getById(characterId)
-      if (character == null) {
-        continue
-      }
-      targetCharacters[actionCharacterId] = {
-        character_name: character.getName(),
-        character_num: character.getNumber() - numberingMode,
-        id: character.getId(),
-      }
-      if (!(characterId in data)) {
-        data[characterId] = {
-          name:
-            '[' +
-            (character.getNumber() - numberingMode) +
-            '] ' +
-            character.getName(),
-          id: character.getId(),
-          data: { $color: '#cc0000', $type: 'circle', $dim: 15 },
-          adjacencies: [],
-        }
-      }
-      data[characterId]['adjacencies'].push({
-        nodeTo: actionCharacterId,
-        nodeFrom: characterId,
-        data: { $color: edgeColor, $type: 'arrow', $lineWidth: 2 },
+      const actionCharacterId = rule.getActionCharacterId()
+      addNodeFunction(characterId, NodeType.MOTHER)
+      addNodeFunction(actionCharacterId, NodeType.DAUGTHER)
+
+      links.push({
+        source: characterNames.get(characterId),
+        target: characterNames.get(actionCharacterId),
+        value: 2,
       })
     }
-    for (let value in targetCharacters) {
-      if (!(value in data)) {
-        const characterId = parseInt(value, 10)
-        const character = characters.getById(characterId)
-        if (character) {
-          data[characterId] = {
-            name:
-              '[' +
-              (character.getNumber() - numberingMode) +
-              '] ' +
-              character.getName(),
-            id: character.getId(),
-            data: { $color: '#999999', $type: 'circle', $dim: 8 },
-          }
-        }
-      }
-    }
-    const json = Object.values(data)
-    if (json.length == 0) {
-      return
-    }
-    const fd = new $jit.ForceDirected({
-      //id of the visualization container
-      injectInto: 'infovis',
-      //Enable zooming and panning
-      //by scrolling and DnD
-      Navigation: {
-        enable: true,
-        //Enable panning events only if we're dragging the empty
-        //canvas (and not a node).
-        panning: 'avoid nodes',
-        zooming: 10,
-      },
-      //zoom speed. higher is more sensible
-      // Change node and edge styles such as
-      // color and width.
-      // These properties are also set per node
-      // with dollar prefixed data-properties in the
-      // JSON structure.
-      Node: { overridable: true },
-      Edge: { overridable: true, color: '#23A4FF', lineWidth: 0.4 },
-      //Native canvas text styling
-      Label: { type: 'HTML', size: 10, style: 'bold' },
-      //Add Tips
-      Tips: {
-        enable: true,
-        onShow: function (tip: Element, node: $jit.Obj) {
-          //count connections
-          let count = 0
-          node.eachAdjacency(function () {
-            count++
-          })
 
-          //display node info in tooltip
-          tip.innerHTML =
-            '<div class="tipTitle">' +
-            node.name +
-            '</div>' +
-            '<div class="tip-text"><b>connections:</b> ' +
-            count +
-            '</div>'
-        },
-      },
-      // Add node events
-      Events: {
-        enable: true,
-        //Change cursor style when hovering a node
-        onMouseEnter: function () {
-          fd.canvas.getElement().style.cursor = 'move'
-        },
-        onMouseLeave: function () {
-          fd.canvas.getElement().style.cursor = ''
-        },
-        //Update node positions when dragged
-        onDragMove: function (node: $jit.Obj, eventInfo: $jit.Obj) {
-          const pos = eventInfo.getPos()
-          node.pos.setc(pos.x, pos.y)
-          fd.plot()
-        },
-        //Implement the same handler for touchscreens
-        onTouchMove: function (node: $jit.Obj, eventInfo: $jit.Obj, e: Object) {
-          //stop default touchmove event
-          $jit.util.event.stop(e)
-          this['onDragMove'](node, eventInfo, e)
-        },
-      },
-      //Number of iterations for the FD algorithm
-      iterations: 200,
-      //Edge length
-      levelDistance: 130,
-      // Add text to the labels. This method is only triggered
-      // on label creation and only for DOM labels (not native canvas ones).
-      onCreateLabel: function (domElement: HTMLElement, node: $jit.Obj) {
-        domElement.innerHTML = node.name
-        const style = domElement.style
-        style.fontSize = '0.8em'
-        style.color = '#fff'
-      },
-      // Change node styles when DOM labels are placed
-      // or moved.
-      onPlaceLabel: function (domElement: HTMLElement) {
-        const style = domElement.style
-        const left = parseInt(style.left, 10)
-        const top = parseInt(style.top, 10)
-        const w = domElement.offsetWidth
-        style.left = left - w / 2 + 'px'
-        style.top = top + 10 + 'px'
-        style.display = ''
-      },
-    })
+    const nodes: Node[] = Array.from(characterNames.values())
 
-    // load JSON data.
-    fd.loadJSON(json)
-
-    // compute positions incrementally and animate.
-    fd.computeIncremental({
-      iter: 40,
-      property: 'end',
-      onStep: function (perc: string) {
-        loadingElement.textContent = perc + '% loaded...'
-      },
-      onComplete: function () {
-        loadingElement.textContent = ''
-        fd.animate({
-          modes: ['linear'],
-          transition: $jit.Trans.Elastic.easeOut,
-          duration: 2500,
-        })
-      },
-    })
+    createGraph(graphElement, nodes, links)
   }
 
   /**
    * @return the HTML content
    */
-  static htmlContent(): string {
+  private static htmlContent(): string {
     return (
       '' +
       '<div class="action">' +
@@ -257,4 +128,124 @@ export class DagDialog extends Modal {
       '</div>'
     )
   }
+}
+
+interface Node extends d3.SimulationNodeDatum {
+  id: string
+  type: NodeType
+}
+
+interface Link extends d3.SimulationLinkDatum<Node> {
+  value: number
+}
+
+enum NodeType {
+  MOTHER,
+  DAUGTHER,
+}
+
+function createGraph(root: Element, nodes: Node[], links: Link[]) {
+  // Specify the dimensions of the chart.
+  const width = 800
+  const height = 400
+
+  const color = d3.scaleLinear(d3.schemeCategory10)
+
+  // Create a simulation with several forces.
+  const simulation = d3
+    .forceSimulation(nodes)
+    .force(
+      'link',
+      d3
+        .forceLink(links)
+        .id((d) => d.index)
+        .distance(75)
+    )
+    .force('charge', d3.forceManyBody())
+    .force('center', d3.forceCenter(width / 2, height / 2))
+
+  // Create the SVG container.
+  const svg = d3
+    .create('svg')
+    .attr('viewBox', [0, 0, width, height])
+    .attr('style', 'width: 100%; height: 100%;')
+
+  // Add a line for each link, and a circle for each node.
+  const link = svg
+    .append('g')
+    .attr('stroke', '#999')
+    .attr('stroke-opacity', 0.6)
+    .selectAll('line')
+    .data(links)
+    .join('line')
+    .attr('stroke-width', 3)
+
+  const node = svg
+    .append('g')
+    .attr('stroke', '#fff')
+    .attr('stroke-width', 1)
+    .selectAll('.node')
+    .data(nodes)
+    .join('g')
+    .attr('class', 'node')
+
+  node
+    .append('circle')
+    .attr('r', (d) => (d.type == NodeType.MOTHER ? 15 : 10))
+    .attr('fill', (d) => color(d.type))
+
+  node
+    .append('text')
+    .text((d) => d.id)
+    .attr('stroke-width', 0)
+    .style('fill', '#000')
+    .style('font-size', '11px')
+    .attr('x', (d) => (d.type == NodeType.MOTHER ? 17 : 12))
+    .attr('y', 3)
+
+  // Add a drag behavior.
+  const dragHander = d3
+    .drag()
+    .on('start', dragstarted)
+    .on('drag', dragged)
+    .on('end', dragended)
+  dragHander(node as any)
+
+  // Set the position attributes of links and nodes each time the simulation ticks.
+  simulation.on('tick', () => {
+    link
+      .attr('x1', (d) => (<Node>d.source).x)
+      .attr('y1', (d) => (<Node>d.source).y)
+      .attr('x2', (d) => (<Node>d.target).x)
+      .attr('y2', (d) => (<Node>d.target).y)
+
+    node.attr('transform', (d) => `translate(${d.x}, ${d.y})`)
+  })
+
+  // Reheat the simulation when drag starts, and fix the subject position.
+  function dragstarted(event: any) {
+    if (!event.active) {
+      simulation.alphaTarget(0.3).restart()
+    }
+    event.subject.fx = event.subject.x
+    event.subject.fy = event.subject.y
+  }
+
+  // Update the subject (dragged node) position during drag.
+  function dragged(event: any) {
+    event.subject.fx = event.x
+    event.subject.fy = event.y
+  }
+
+  // Restore the target alpha so the simulation cools after dragging ends.
+  // Unfix the subject position now that it’s no longer being dragged.
+  function dragended(event: any) {
+    if (!event.active) {
+      simulation.alphaTarget(0)
+    }
+    event.subject.fx = null
+    event.subject.fy = null
+  }
+
+  root.appendChild(svg.node())
 }

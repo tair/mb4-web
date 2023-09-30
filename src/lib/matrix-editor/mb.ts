@@ -520,20 +520,6 @@ export function htmlEscape(str: string): string {
     .replace(/\x00/g, '&#0;')
 }
 
-export function loadScript(url: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script')
-    script.onload = function () {
-      resolve()
-    }
-    script.onerror = function (e) {
-      reject(e)
-    }
-    script.src = url
-    document.head.appendChild(script)
-  })
-}
-
 /**
  * Normalizes whitespace in a string, replacing all whitespace chars with
  * a space.
