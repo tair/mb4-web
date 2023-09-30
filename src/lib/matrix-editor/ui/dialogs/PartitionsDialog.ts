@@ -80,12 +80,12 @@ export class PartitionsDialog extends Dialog {
     )
     this.charactersNotInPartitionSelect.render(charactersNotInPartition)
 
-    this.taxaInPartitionSelect.addTarget(this.taxaNotInPartitionSelect)
-    this.charactersInPartitionSelect.addTarget(
+    this.taxaInPartitionSelect.allowFrom(this.taxaNotInPartitionSelect)
+    this.charactersInPartitionSelect.allowFrom(
       this.charactersNotInPartitionSelect
     )
-    this.taxaNotInPartitionSelect.addTarget(this.taxaInPartitionSelect)
-    this.charactersNotInPartitionSelect.addTarget(
+    this.taxaNotInPartitionSelect.allowFrom(this.taxaInPartitionSelect)
+    this.charactersNotInPartitionSelect.allowFrom(
       this.charactersInPartitionSelect
     )
 

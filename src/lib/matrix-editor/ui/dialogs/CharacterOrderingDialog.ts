@@ -41,8 +41,8 @@ export class CharacterOrderingDialog extends Dialog {
     )
     this.orderedCharactersSelect.render(orderedCharacterSelectElement)
 
-    this.unorderedCharactersSelect.addTarget(this.orderedCharactersSelect)
-    this.orderedCharactersSelect.addTarget(this.unorderedCharactersSelect)
+    this.unorderedCharactersSelect.allowFrom(this.orderedCharactersSelect)
+    this.orderedCharactersSelect.allowFrom(this.unorderedCharactersSelect)
 
     this.setCharacterOrderingsSelect()
   }

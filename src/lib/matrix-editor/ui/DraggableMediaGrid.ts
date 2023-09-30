@@ -12,19 +12,10 @@ export class DraggableMediaGrid extends MediaGrid {
    * The timer for the scrolling. This is shared across all media grids because there only one scroll.
    */
   private static scrollingTimer: number = 0
-  protected targets: Element[]
   protected scrollableContainer: Element
 
   constructor() {
     super()
-
-    this.targets = []
-  }
-
-  override createDom() {
-    super.createDom()
-    const element = this.getElement()
-    this.targets.push(element)
   }
 
   override enterDocument() {
@@ -71,14 +62,6 @@ export class DraggableMediaGrid extends MediaGrid {
   }
 
   /**
-   * Sets a target
-   * @param draggableMediaGrid Another draggable media grid to drop items
-   */
-  addTarget(draggableMediaGrid: DraggableMediaGrid) {
-    this.targets.push(draggableMediaGrid.getElement())
-  }
-
-  /**
    * Adds a scrollable container to the drag and drop
    * @param element The element to ensure that it can scroll properly
    */
@@ -118,13 +101,12 @@ export class DraggableMediaGrid extends MediaGrid {
    * @param e The event that triggered this callback.
    */
   protected handleDragEnter(e: DragEvent) {
+    e.preventDefault()
+
     const element = <HTMLElement>e.currentTarget
-    const isTarget = this.targets.includes(element)
-    if (isTarget) {
-      e.preventDefault()
-      element.classList.add('highlighted')
-      this.scrollToView()
-    }
+    element.classList.add('highlighted')
+
+    this.scrollToView()
   }
 
   /**

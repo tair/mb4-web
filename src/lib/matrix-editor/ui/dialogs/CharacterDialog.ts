@@ -1089,15 +1089,8 @@ class MediaPane extends BasePane {
     this.mediaGridTable.addRows(rows)
     this.mediaGridTable.redraw()
 
-    // Add draggable targets for all the media.
-    const characterStateMedia = this.characterStateMedia
-    characterStateMedia.forEach(function (firstMediaGrid) {
-      characterStateMedia.forEach(function (secondMediaGrid) {
-        firstMediaGrid.addTarget(secondMediaGrid)
-      })
-    })
-
     // Attach the scrollable container after the element has been rendered.
+    const characterStateMedia = this.characterStateMedia
     const scrollableContainer = this.mediaGridTable.getElementByClass('topGrid')
     characterStateMedia.forEach(function (firstMediaGrid) {
       firstMediaGrid.addScrollableContainer(scrollableContainer)
