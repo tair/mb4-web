@@ -90,7 +90,7 @@ export class Select extends Component {
     li.dataset['value'] = String(value)
     const nameElement = document.createElement('div')
     nameElement.classList.add(Select.CSS.NAME)
-    nameElement.textContent = text
+    nameElement.innerHTML = text
     li.appendChild(nameElement)
     return li
   }

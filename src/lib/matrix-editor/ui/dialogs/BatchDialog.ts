@@ -229,8 +229,9 @@ abstract class BasePane extends Component {
     this.isRedrawing = false
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
+
     this.getHandler().listen(
       this.dialog,
       EventType.SELECT,
@@ -740,27 +741,32 @@ class BatchColumnPane extends BasePane {
 
   constructor(matrixModel: MatrixModel, dialog: BatchDialog) {
     super(matrixModel, dialog)
+
     this.characterSelect = new Dropdown()
     this.registerDisposable(this.characterSelect)
+
     this.taxaSelect = new Select()
     this.taxaSelect.setAllowMultipleSelection(true)
     this.registerDisposable(this.taxaSelect)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
+
     const element = this.getElement()
     element.classList.add('batchColumnPane')
     element.innerHTML = BatchColumnPane.htmlContent()
+
     const taxonSelectElement = this.getElementByClass('taxaSelect')
     this.taxaSelect.render(taxonSelectElement)
     this.updateTaxaSelectUI()
+
     const characterSelectElement = this.getElementByClass('characterSelect')
     this.characterSelect.render(characterSelectElement)
     this.updateCharactersSelectUI()
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     this.getHandler()
       .listen(this.characterSelect, EventType.CHANGE, () =>
@@ -857,7 +863,8 @@ class BatchColumnPane extends BasePane {
     const partitionedCharacters = this.matrixModel.getPartitionCharacters()
     this.isRedrawing = true
 
-    // Get the selected values so that we can restore them when after we redraw the matrix.
+    // Get the selected values so that we can restore them when after we redraw
+    // the matrix.
     const selectedCharacterId = parseInt(
       this.characterSelect.getSelectedValue(),
       10
@@ -898,7 +905,8 @@ class BatchColumnPane extends BasePane {
     const partitionedTaxa = this.matrixModel.getPartitionTaxa()
     this.isRedrawing = true
 
-    // Get the selected values so that we can restore them when after we redraw the matrix.
+    // Get the selected values so that we can restore them when after we redraw
+    // the matrix.
     const selectedValues = this.taxaSelect.getSelectedValues()
     const selectedIndicies: number[] = []
     for (let x = 0, length = selectedValues.length; x < length; ++x) {
@@ -909,6 +917,7 @@ class BatchColumnPane extends BasePane {
       }
     }
     this.taxaSelect.clearItems()
+
     for (let x = 0; x < partitionedTaxa.length; x++) {
       const taxon = partitionedTaxa[x]
       const taxonName =
@@ -1142,10 +1151,13 @@ class BatchCopyPane extends BasePane {
     this.characterSelect = new Select()
     this.characterSelect.setAllowMultipleSelection(true)
     this.registerDisposable(this.characterSelect)
+
     this.sourceTaxaSelect = new Dropdown()
     this.registerDisposable(this.sourceTaxaSelect)
+    
     this.destinationTaxaSelect = new Dropdown()
     this.registerDisposable(this.destinationTaxaSelect)
+    
     this.copyNotesCheckbox = new Checkbox(1)
     this.registerDisposable(this.copyNotesCheckbox)
   }
@@ -1155,16 +1167,20 @@ class BatchCopyPane extends BasePane {
     const element = this.getElement()
     element.classList.add('batchCopyPane')
     element.innerHTML = BatchCopyPane.htmlContent()
+
     const sourceTaxaSelectElement = this.getElementByClass('source-taxaSelect')
     this.sourceTaxaSelect.render(sourceTaxaSelectElement)
+    
     const destinationTaxaSelectElement = this.getElementByClass(
       'destination-taxaSelect'
     )
     this.destinationTaxaSelect.render(destinationTaxaSelectElement)
     this.updateTaxaSelectUI()
+    
     const characterSelectElement = this.getElementByClass('characterSelect')
     this.characterSelect.render(characterSelectElement)
     this.updateCharactersSelectUI()
+    
     const checkboxElement = this.getElementByClass<HTMLLabelElement>('checkbox')
     this.copyNotesCheckbox.setLabel(checkboxElement)
     this.copyNotesCheckbox.render(checkboxElement)
