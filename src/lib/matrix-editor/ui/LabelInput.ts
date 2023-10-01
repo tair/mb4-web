@@ -13,7 +13,7 @@ export class LabelInput extends Component {
     this.value = ''
   }
 
-  override createDom() {
+  protected override createDom() {
     const inputElement = document.createElement('input')
     inputElement.type = 'text'
     inputElement.value = this.value
@@ -23,7 +23,7 @@ export class LabelInput extends Component {
     this.setElementInternal(inputElement)
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
 
     const handler = this.getHandler()

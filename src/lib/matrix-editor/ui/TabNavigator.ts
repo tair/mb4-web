@@ -144,9 +144,14 @@ export class TabNavigator extends Component {
     return this.tabComponents.get(name) as T
   }
 
+  /**
+   * Visually update the selected tab based on the stored selected index.
+   */
   private updateSelectedTab() {
-    const selectedTab = this.tabs[this.selectedTabIndex]
-    selectedTab.show()
+    if (this.selectedTabIndex < this.tabs.length) {
+      const selectedTab = this.tabs[this.selectedTabIndex]
+      selectedTab.show()
+    }
   }
 
   /**

@@ -1073,30 +1073,27 @@ ol.selectList li:hover span.remove {
 }
 
 .searchDialog .searchControls {
-  display: inline-block;
-  position: relative;
-  width: 100%;
+  display: flex;
 }
 
-.searchDialog .searchControls div {
-  display: inline-block;
+.searchDialog .searchControls .searchInput {
+  display: flex;
+  flex-grow: 1;
 }
 
 .searchDialog .searchControls input {
-  display: inline-block;
-  height: 19px;
-  width: 250px
+  border-radius: var(--bs-border-radius);
+  width: 300px
 }
 
 .searchDialog .searchControls .form-select {
-  display: inline-block;
+  margin-right: 10px;
   width: 300px;
 }
 
 .searchDialog .searchButton {
-  display: inline-block;
-  position: absolute;
-  right: 0;
+  align-items: center;
+  display: flex;
 }
 
 .searchDialog .searchStats {

@@ -25,9 +25,8 @@ export class CharacterSearchDialog extends Dialog {
   ]
 
   private readonly matrixModel: MatrixModel
-  protected gridTable: DataGridTable
-  private characterSearchSelect: Dropdown
-  private characterSearchInput: LabelInput
+  private readonly gridTable: DataGridTable
+  private readonly characterSearchSelect: Dropdown
 
   constructor(matrixModel: MatrixModel) {
     super()
@@ -39,23 +38,27 @@ export class CharacterSearchDialog extends Dialog {
 
     this.characterSearchSelect = new Dropdown()
     this.registerDisposable(this.characterSearchSelect)
+  }
 
-    this.characterSearchInput = new LabelInput()
-    this.registerDisposable(this.characterSearchInput)
-
+  protected override initialize(): void {
+    this.savingLabel.setText('Searching...')
+  
     this.setTitle('Search')
     this.setHasBackdrop(false)
     this.addButton(ModalDefaultButtons.DONE)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
     const element = this.getElement()
-    element.classList.add('searchDialog')
+    element.classList.add('searchDialog', 'modal-lg')
+
     const contentElement = this.getContentElement()
     contentElement.innerHTML = CharacterSearchDialog.htmlContent()
+
     const searchResultsElement = this.getElementByClass('searchResults')
     this.gridTable.render(searchResultsElement)
+  
     const searchOptions = CharacterSearchDialog.CHARACTER_SEARCH_OPTIONS
     for (let x = 0; x < searchOptions.length; x++) {
       const searchOption = searchOptions[x]
@@ -64,16 +67,22 @@ export class CharacterSearchDialog extends Dialog {
         value: searchOption,
       })
     }
-    const inputElement = this.getElementByClass('search-input')
-    this.characterSearchSelect.render(inputElement)
-    this.characterSearchInput.render(inputElement)
     this.characterSearchSelect.setSelectedIndex(0)
-    this.savingLabel.setText('Searching...')
+
+    const inputContainerElement = this.getElementByClass('searchInput')
+    this.characterSearchSelect.render(inputContainerElement)
+
+    const inputElement = document.createElement('input')
+    inputElement.type = 'text';
+    inputElement.classList.add('form-control')
+    inputContainerElement.appendChild(inputElement)
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     const searchButtonElement = this.getElementByClass('searchButton')
+    const searchContainerElement = this.getElementByClass('searchInput')
+    const inputElement = searchContainerElement.querySelector('input')
     this.getHandler()
       .listen(this.gridTable, EventType.SELECT, (e: CustomEvent<any>) =>
         this.onHandleGridClick(e)
@@ -84,10 +93,10 @@ export class CharacterSearchDialog extends Dialog {
         (e: Event) => this.onHandleSearchChange(e)
       )
       .listen(
-        this.characterSearchInput.getElement(),
+        inputElement,
         EventType.KEYDOWN,
         (e: KeyboardEvent) =>
-          this.onHandleEnterPress(this.onHandleSearchClick, e)
+          this.onHandleEnterPress(() => this.onHandleSearchClick(), e)
       )
       .listen(this.characterSearchSelect, EventType.CHANGE, (e: Event) =>
         this.onHandleSearchChange(e)
@@ -101,8 +110,8 @@ export class CharacterSearchDialog extends Dialog {
    * Handles events when character rules are removed.
    * @param e The event that triggerd this callback
    */
-  protected onHandleGridClick(e: CustomEvent) {
-    const characterId = parseInt(e.detail['characterId'], 10)
+  private onHandleGridClick(e: CustomEvent<CharacterSearchResult>) {
+    const characterId = parseInt(e.detail.characterId, 10)
     const column = characterId
       ? this.matrixModel.getCharacterIndexById(characterId)
       : -1
@@ -112,7 +121,7 @@ export class CharacterSearchDialog extends Dialog {
   /**
    * Handles the search button click event.
    */
-  protected onHandleSearchChange(e: Event) {
+  private onHandleSearchChange(e: Event) {
     this.gridTable.clearRows()
     this.gridTable.redraw()
 
@@ -121,19 +130,23 @@ export class CharacterSearchDialog extends Dialog {
 
     if (e.type === 'change') {
       const searchSelectedOption = this.characterSearchSelect.getSelectedValue()
-      this.characterSearchInput.setEnabled(searchSelectedOption === 'with text')
-      this.characterSearchInput.clear()
+      const searchContainerElement = this.getElementByClass('searchInput')
+      const inputElement = searchContainerElement.querySelector('input')
+      inputElement!.disabled = searchSelectedOption !== 'with text'
+      inputElement!.value = ''
     }
   }
 
   /**
    * Handles the search button click event.
    */
-  protected onHandleSearchClick() {
+  private async onHandleSearchClick() {
     let searchOptions
     switch (this.characterSearchSelect.getSelectedValue()) {
       case 'with text':
-        searchOptions = { text: this.characterSearchInput.getValue() }
+        const searchElement = this.getElementByClass('searchInput')
+        const searchInputElement = searchElement.querySelector('input')
+        searchOptions = { text: searchInputElement!.value }
         break
       case 'with unread comments':
         searchOptions = { limitToUnreadComments: true }
@@ -144,6 +157,7 @@ export class CharacterSearchDialog extends Dialog {
       default:
         searchOptions = {}
     }
+
     this.savingLabel.saving()
     this.matrixModel
       .searchCharacters(searchOptions)
@@ -151,9 +165,12 @@ export class CharacterSearchDialog extends Dialog {
         const rows: DataRow[] = []
         for (let x = 0; x < results.length; x++) {
           const result = results[x]
+          const data: CharacterSearchResult = {
+            characterId: String(result.id)
+          }
           const row = {
             labels: [result.label],
-            data: { characterId: result.id },
+            data: data,
           }
           rows.push(row)
         }
@@ -176,8 +193,9 @@ export class CharacterSearchDialog extends Dialog {
    * @param enterFunction the function to call when enter is pressed
    * @param e The event that triggerd this callback.
    */
-  protected onHandleEnterPress(enterFunction: () => any, e: KeyboardEvent) {
-    // Prevent the dialog from receiving the enter keycode which will close it and instead call the given function.
+  private onHandleEnterPress(enterFunction: () => any, e: KeyboardEvent) {
+    // Prevent the dialog from receiving the enter keycode which will close it
+    // and instead call the given function.
     if (e.code === KeyCodes.ENTER) {
       e.preventDefault()
       enterFunction()
@@ -188,15 +206,18 @@ export class CharacterSearchDialog extends Dialog {
   /**
    * @return The HTML content for the base pane
    */
-  static htmlContent(): string {
+  private static htmlContent(): string {
     return (
-      '' +
       '<div class="searchControls">' +
-      '<div class="search-input"></div>' +
-      '<button type="button" class="searchButton btn btn-primary">Search</button>' +
+      '<div class="searchInput"></div>' +
+      '<button type="button" class="btn btn-primary searchButton">Search</button>' +
       '</div>' +
       '<div class="searchStats">&nbsp;</div>' +
       '<div class="searchResults"></div>'
     )
   }
+}
+
+type CharacterSearchResult = {
+  characterId: string;
 }

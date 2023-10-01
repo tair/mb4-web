@@ -17,13 +17,12 @@ import * as CellsChangedEvents from '../../events/CellsChangedEvent'
 import * as GoToCellEvents from '../../events/GoToCellEvent'
 
 /**
- * Search dialog.
- *
- * @param matrixModel the data associated with the matrix.
+ * Dialog to provide the user with searching text and attributes for characters,
+ * taxa, and cells.
  */
 export class SearchDialog extends Dialog {
   private readonly matrixModel: MatrixModel
-  private tabNavigator: TabNavigator
+  private readonly tabNavigator: TabNavigator
   private onlyShowCharacterTab: boolean
 
   constructor(matrixModel: MatrixModel) {
@@ -35,16 +34,20 @@ export class SearchDialog extends Dialog {
     this.registerDisposable(this.tabNavigator)
 
     this.onlyShowCharacterTab = false
+  }
 
+  protected initialize(): void {
+    this.savingLabel.setText('Searching...')
     this.setTitle('Search')
     this.setHasBackdrop(false)
     this.addButton(ModalDefaultButtons.DONE)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
     const element = this.getElement()
-    element.classList.add('searchDialog')
+    element.classList.add('searchDialog', 'modal-lg')
+
     const contentElement = this.getContentElement()
     this.tabNavigator.addTab(
       'Characters',
@@ -61,11 +64,11 @@ export class SearchDialog extends Dialog {
       )
     }
     this.tabNavigator.render(contentElement)
-    this.savingLabel.setText('Searching...')
   }
 
   /**
-   * Only display the character tab.
+   * Only display the character tab for the dialog. This is only invoked for
+   * the Character List Dialog to show the characer tab.
    */
   setOnlyShowCharacterTab() {
     this.onlyShowCharacterTab = true
@@ -83,8 +86,7 @@ abstract class SearchPane extends Component {
   protected readonly matrixModel: MatrixModel
   protected readonly dialog: Dialog
   protected readonly savingLabel: SavingLabel
-
-  protected gridTable: DataGridTable
+  protected readonly gridTable: DataGridTable
 
   protected constructor(
     matrixModel: MatrixModel,
@@ -101,17 +103,20 @@ abstract class SearchPane extends Component {
     this.registerDisposable(this.gridTable)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
+
     const element = this.getElement()
     element.innerHTML = SearchPane.htmlContent()
     element.classList.add('mb-search-pane')
+
     const searchResultsElement = this.getElementByClass('searchResults')
     this.gridTable.render(searchResultsElement)
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
+
     const searchChangeEvents = [
       CharacterChangedEvents.TYPE,
       PartitionChangedEvents.TYPE,
@@ -122,7 +127,7 @@ abstract class SearchPane extends Component {
     ]
     this.getHandler()
       .listen(this.gridTable, EventType.SELECT, (e: CustomEvent<any>) =>
-        this.handleGridClick(e)
+        this.onHandleGridClick(e)
       )
       .listen(
         this.matrixModel,
@@ -138,7 +143,7 @@ abstract class SearchPane extends Component {
    * Handles events when character rules are removed.
    * @param e The event that triggerd this callback.
    */
-  handleGridClick(e: CustomEvent) {
+  private onHandleGridClick(e: CustomEvent) {
     const taxonId = parseInt(e.detail['taxonId'], 10)
     const characterId = parseInt(e.detail['characterId'], 10)
     const row = taxonId > 0 ? this.matrixModel.getTaxonIndexById(taxonId) : -1
@@ -216,12 +221,11 @@ abstract class SearchPane extends Component {
   /**
    * @return The HTML content for the base pane
    */
-  static htmlContent(): string {
+  private static htmlContent(): string {
     return (
-      '' +
       '<div class="searchControls">' +
-      '<div class="search-input"></div>' +
-      '<button type="button" class="btn searchButton">Search</button>' +
+      '<div class="searchInput"></div>' +
+      '<button type="button" class="btn btn-primary searchButton">Search</button>' +
       '</div>' +
       '<div class="searchStats">&nbsp;</div>' +
       '<div class="searchResults"></div>'
@@ -240,7 +244,7 @@ class CharacterPane extends SearchPane {
   /**
    * List of available character search options
    */
-  private static CHARACTER_SEARCH_OPTIONS: string[] = [
+  private static readonly CHARACTER_SEARCH_OPTIONS: string[] = [
     'with text',
     'with unread comments',
     'with warnings',
@@ -248,7 +252,7 @@ class CharacterPane extends SearchPane {
     'that have NPA cells',
     'illustrated by media not also in use in cells',
   ]
-  private characterSearchSelect: Dropdown
+  private readonly characterSearchSelect: Dropdown
 
   constructor(
     matrixModel: MatrixModel,
@@ -260,7 +264,7 @@ class CharacterPane extends SearchPane {
     this.registerDisposable(this.characterSearchSelect)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
 
     const searchOptions = CharacterPane.CHARACTER_SEARCH_OPTIONS
@@ -271,21 +275,23 @@ class CharacterPane extends SearchPane {
         value: searchOption,
       })
     }
-    const searchElement = this.getElementByClass('search-input')
+    const searchElement = this.getElementByClass('searchInput')
     this.characterSearchSelect.render(searchElement)
-    const inputElement = document.createElement('input')
-    searchElement.appendChild(inputElement)
     this.characterSearchSelect.setSelectedIndex(0)
+
+    const inputElement = document.createElement('input')
+    inputElement.type = 'text';
+    inputElement.classList.add('form-control')
+    searchElement.appendChild(inputElement)
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
 
     const searchButtonElement = this.getElementByClass('searchButton')
-    const searchElement = this.getElementByClass('search-input')
-    const searchInputElement = searchElement.querySelector(
-      'input'
-    ) as HTMLInputElement
+    const searchElement = this.getElementByClass('searchInput')
+    const searchInputElement = searchElement.querySelector('input')
+
     this.getHandler()
       .listen(searchInputElement, EventType.KEYDOWN, (e) =>
         this.handleEnterPress(() => this.handleSearchClick(), e)
@@ -301,7 +307,7 @@ class CharacterPane extends SearchPane {
   override handleSearchChange() {
     super.handleSearchChange()
     const searchSelectedOption = this.characterSearchSelect.getSelectedValue()
-    const searchElement = this.getElementByClass('search-input')
+    const searchElement = this.getElementByClass('searchInput')
     const searchInputElement = searchElement.querySelector('input')
     if (searchInputElement) {
       searchInputElement.disabled = searchSelectedOption !== 'with text'
@@ -313,7 +319,7 @@ class CharacterPane extends SearchPane {
     let searchOptions
     switch (this.characterSearchSelect.getSelectedValue()) {
       case 'with text':
-        const searchElement = this.getElementByClass('search-input')
+        const searchElement = this.getElementByClass('searchInput')
         const searchInputElement = searchElement.querySelector('input')
         searchOptions = { text: searchInputElement!.value }
         break
@@ -342,9 +348,12 @@ class CharacterPane extends SearchPane {
         const rows: DataRow[] = []
         for (let x = 0; x < results.length; x++) {
           const result = results[x]
+          const data: SearchDialogResult = {
+            characterId: String(result.id) 
+          }
           const row = {
             labels: [result.label],
-            data: { characterId: result.id },
+            data,
           } as DataRow
           rows.push(row)
         }
@@ -373,12 +382,13 @@ class TaxaPane extends SearchPane {
   /**
    * List of available taxa search options
    */
-  private static TAXA_SEARCH_OPTIONS: string[] = [
+  private static readonly TAXA_SEARCH_OPTIONS: string[] = [
     'with text',
     'that have unscored cells',
     'that have NPA cells',
   ]
-  private taxaSearchSelect: Dropdown
+
+  private readonly taxaSearchSelect: Dropdown
 
   constructor(
     matrixModel: MatrixModel,
@@ -390,29 +400,30 @@ class TaxaPane extends SearchPane {
     this.registerDisposable(this.taxaSearchSelect)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
     const searchOptions = TaxaPane.TAXA_SEARCH_OPTIONS
     for (let x = 0; x < searchOptions.length; x++) {
       const searchOption = searchOptions[x]
       this.taxaSearchSelect.addItem({ text: searchOption, value: searchOption })
     }
-    const searchElement = this.getElementByClass('search-input')
+    const searchElement = this.getElementByClass('searchInput')
     this.taxaSearchSelect.render(searchElement)
-    const inputElement = document.createElement('input')
-    searchElement.appendChild(inputElement)
     this.taxaSearchSelect.setSelectedIndex(0)
+
+    const inputElement = document.createElement('input')
+    inputElement.type = 'text';
+    searchElement.appendChild(inputElement)
+    inputElement.classList.add('form-control')
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     const searchButtonElement = this.getElementByClass('searchButton')
-    const searchElement = this.getElementByClass('search-input')
-    const searchInputElement = searchElement.querySelector(
-      'input'
-    ) as HTMLInputElement
+    const searchElement = this.getElementByClass('searchInput')
+    const inputElement = searchElement.querySelector('input')
     this.getHandler()
-      .listen(searchInputElement, EventType.KEYDOWN, (e) =>
+      .listen(inputElement, EventType.KEYDOWN, (e) =>
         this.handleEnterPress(() => this.handleSearchClick(), e)
       )
       .listen(this.taxaSearchSelect, EventType.CHANGE, () =>
@@ -426,17 +437,17 @@ class TaxaPane extends SearchPane {
   override handleSearchChange() {
     super.handleSearchChange()
     const searchSelectedOption = this.taxaSearchSelect.getSelectedValue()
-    const searchElement = this.getElementByClass('search-input')
-    const searchInputElement = searchElement.querySelector('input')
-    searchInputElement!.disabled = searchSelectedOption !== 'with text'
-    searchInputElement!.value = ''
+    const searchElement = this.getElementByClass('searchInput')
+    const inputElement = searchElement.querySelector('input')
+    inputElement!.disabled = searchSelectedOption !== 'with text'
+    inputElement!.value = ''
   }
 
   override handleSearchClick() {
     let searchOptions
     switch (this.taxaSearchSelect.getSelectedValue()) {
       case 'with text':
-        const searchElement = this.getElementByClass('search-input')
+        const searchElement = this.getElementByClass('searchInput')
         const searchInputElement = searchElement.querySelector('input')
         searchOptions = { text: searchInputElement!.value }
         break
@@ -456,10 +467,13 @@ class TaxaPane extends SearchPane {
         const rows: DataRow[] = []
         for (let x = 0; x < results.length; x++) {
           const result = results[x]
-          const row = {
+          const data: SearchDialogResult = {
+            taxonId: String(result.id) 
+          }
+          const row: DataRow = {
             labels: [result.label],
-            data: { taxonId: result.id },
-          } as DataRow
+            data,
+          }
           rows.push(row)
         }
         this.gridTable.clearRows()
@@ -488,7 +502,7 @@ class CellPane extends SearchPane {
   /**
    * List of available cell search options
    */
-  private static CELL_SEARCH_OPTIONS: string[] = [
+  private static readonly  CELL_SEARCH_OPTIONS: string[] = [
     'unscored for',
     'NPA for',
     'Polymorphic for',
@@ -499,8 +513,9 @@ class CellPane extends SearchPane {
     'without media, notes or citations',
     'scored but without media, notes or citations',
   ]
-  private searchSelect: Dropdown
-  private taxaSelect: Dropdown
+
+  private readonly searchSelect: Dropdown
+  private readonly taxaSelect: Dropdown
 
   constructor(
     matrixModel: MatrixModel,
@@ -508,28 +523,31 @@ class CellPane extends SearchPane {
     savingLabel: SavingLabel
   ) {
     super(matrixModel, dialog, savingLabel)
+
     this.searchSelect = new Dropdown()
     this.registerDisposable(this.searchSelect)
+
     this.taxaSelect = new Dropdown()
     this.registerDisposable(this.taxaSelect)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
+
     const searchOptions = CellPane.CELL_SEARCH_OPTIONS
     for (let x = 0; x < searchOptions.length; x++) {
       const searchOption = searchOptions[x]
       this.searchSelect.addItem({ text: searchOption, value: searchOption })
     }
 
-    const inputElement = this.getElementByClass('search-input')
+    const inputElement = this.getElementByClass('searchInput')
     this.searchSelect.render(inputElement)
     this.searchSelect.setSelectedIndex(0)
     this.taxaSelect.render(inputElement)
     this.redrawTaxaSelect()
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     const handler = this.getHandler()
     const searchButtonElement = this.getElementByClass('searchButton')
@@ -647,9 +665,13 @@ class CellPane extends SearchPane {
         const rows: DataRow[] = []
         for (let x = 0; x < results.length; x++) {
           const result = results[x]
+          const data: SearchDialogResult = {
+            characterId: String(result.id),
+            taxonId: String(result.otherId),
+          }
           const row = {
             labels: [result.label],
-            data: { taxonId: result.otherId, characterId: result.id },
+            data,
           }
           rows.push(row)
         }
@@ -665,4 +687,9 @@ class CellPane extends SearchPane {
         this.savingLabel.failed()
       })
   }
+}
+
+type SearchDialogResult = {
+  characterId?: string;
+  taxonId?: string;
 }
