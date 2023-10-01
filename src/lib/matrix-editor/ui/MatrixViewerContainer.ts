@@ -19,11 +19,7 @@ export class MatrixViewerContainer extends MatrixAccessorContainer {
     super(matrixModel, new MatrixViewerGridHandler())
   }
 
-  override decorateInternal(element: HTMLElement) {
-    super.decorateInternal.call(element)
-  }
-
-  override handleCharactersClick() {
+  protected override handleCharactersClick() {
     const characterListDialog = new CharacterListDialog(this.matrixModel, true)
     characterListDialog.setVisible(true)
     characterListDialog.setSelectedCharacterById(
@@ -32,21 +28,19 @@ export class MatrixViewerContainer extends MatrixAccessorContainer {
     return true
   }
 
-  override handlePreferencesClick() {
+  protected override handlePreferencesClick() {
     const preferencesDialog = new ReadOnlyPreferencesDialog(this.matrixModel)
     preferencesDialog.setVisible(true)
     return true
   }
 
-  override handleOntologyClick() {
-    const ontologyDialog = new OntologyDialog(this.matrixModel, true)
-
-    /* readonly */
+  protected override handleOntologyClick() {
+    const ontologyDialog = new OntologyDialog(this.matrixModel, /* readonly */ true)
     ontologyDialog.setVisible(true)
     return true
   }
 
-  override htmlContent() {
+  protected override htmlContent() {
     return `
     <div class="mb-matrixeditor">
       <div class="topButtonBar">

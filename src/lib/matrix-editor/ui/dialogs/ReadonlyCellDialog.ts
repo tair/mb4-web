@@ -43,18 +43,23 @@ export class ReadonlyCellDialog extends Dialog {
 
     this.tabNavigator = new TabNavigator()
     this.registerDisposable(this.tabNavigator)
+  }
 
+  protected override initialize(): void {
     this.setHasBackdrop(false)
     this.setDisposeOnHide(true)
     this.addButton(ModalDefaultButtons.DONE)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
+  
     const element = this.getElement()
-    element.classList.add('cellDialog', 'modal-lg')
+    element.classList.add('cellDialog', 'modal-lg', 'readonly')
+
     const contentElement = this.getContentElement()
     contentElement.innerHTML = ReadonlyCellDialog.htmlContent()
+
     this.tabNavigator.addTab(
       'Scores',
       new ScorePane(this.matrixModel, this.taxonId, this.characterId)
@@ -85,7 +90,7 @@ export class ReadonlyCellDialog extends Dialog {
     this.updateCellName()
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     const handler = this.getHandler()
     handler.listen(this.tabNavigator, EventType.SELECT, () =>
@@ -131,7 +136,7 @@ export class ReadonlyCellDialog extends Dialog {
   /**
    * @return The HTML content of the dialog
    */
-  static htmlContent(): string {
+  private static htmlContent(): string {
     return '<div class="cell-name"></div>'
   }
 }
@@ -163,17 +168,20 @@ class ScorePane extends Component {
   /**
    * @return The HTML content of the cell data grid
    */
-  static htmlContent(): string {
+  private static htmlContent(): string {
     return '<div class="scoringGrid"></div>'
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
+
     const element = this.getElement()
     element.innerHTML = ScorePane.htmlContent()
     element.classList.add('cellDataPane')
+    
     const cellDataGridElement = this.getElementByClass('scoringGrid')
     this.cellDataGridTable.render(cellDataGridElement)
+    
     const characters = this.matrixModel.getCharacters()
     const character = characters.getById(this.characterId)
     const type = character!.getType()
@@ -329,25 +337,21 @@ class ScorePane extends Component {
  * @param notes The notes of the cell
  */
 class NotesPane extends Component {
-  private notes: string
+  private readonly notes: string
 
   constructor(notes: string) {
     super()
+
     this.notes = notes
   }
 
-  override createDom() {
-    super.createDom()
-    const element = this.getElement()
-    element.innerHTML = this.htmlContent()
-  }
+  protected override createDom() {
+    const textElement = document.createElement('textarea')
+    textElement.classList.add('notesArea')
+    textElement.value = this.notes
+    textElement.disabled = true
 
-  /**
-   * The pane's HTML Content
-   * @return HTML content
-   */
-  htmlContent(): string {
-    return '<textarea class="notesArea" disabled>' + this.notes + '</textarea>'
+    this.setElementInternal(textElement)
   }
 }
 

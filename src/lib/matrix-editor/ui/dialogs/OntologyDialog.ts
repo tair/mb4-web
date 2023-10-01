@@ -13,10 +13,7 @@ import { ModalDefaultButtons } from '../Modal'
 import { Component, EventType } from '../Component'
 
 /**
- * Ontology dialog.
- *
- * @param matrixModel the data associated with the matrix.
- * @param opt_readonly Whether the ontology is readonly
+ * Dialog to display the character rules to add states and media.
  */
 export class OntologyDialog extends Dialog {
   /**
@@ -66,6 +63,10 @@ export class OntologyDialog extends Dialog {
   private addRuleDialog: AddRuleDialog
   private dagDialog: DagDialog
 
+  /**
+   * @param matrixModel the data associated with the matrix.
+   * @param opt_readonly Whether the ontology is readonly
+   */
   constructor(matrixModel: MatrixModel, readonly: boolean = false) {
     super()
     this.matrixModel = matrixModel

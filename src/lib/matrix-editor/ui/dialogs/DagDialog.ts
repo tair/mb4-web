@@ -55,7 +55,7 @@ export class DagDialog extends Modal {
    * Refreshes the matrix DAG.
    * This may be delayed based on whether the script was downloaded.
    */
-  private refreshGraph() {
+  refreshGraph() {
     const graphElement = this.getElementByClass('graph')
     mb.removeChildren(graphElement)
 

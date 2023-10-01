@@ -46,8 +46,9 @@ export class MatrixEditorContainer extends MatrixAccessorContainer {
     super(matrixModel, new MatrixEditorGridHandler())
   }
 
-  override decorateInternal(element: HTMLElement) {
+  protected override decorateInternal(element: HTMLElement) {
     super.decorateInternal(element)
+
     const partitionsButtonElement =
       this.getElementByClass<HTMLElement>('mb-partitions-btn')
     partitionsButtonElement.title = MatrixEditorContainer.PARTITIONS_TOOLTIP
@@ -60,8 +61,9 @@ export class MatrixEditorContainer extends MatrixAccessorContainer {
     ruleCheckerButtonElement.title = MatrixEditorContainer.RULES_CHECKER_TOOLTIP
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
+
     const taxaButtonElement = this.getElementByClass('mb-taxa-btn')
     const batchButtonElement = this.getElementByClass('mb-batch-btn')
     const partitionsButtonElement = this.getElementByClass('mb-partitions-btn')
@@ -108,7 +110,7 @@ export class MatrixEditorContainer extends MatrixAccessorContainer {
     return true
   }
 
-  override handleCharactersClick() {
+  protected override handleCharactersClick() {
     const characterListDialog = new CharacterListDialog(this.matrixModel, false)
     characterListDialog.setVisible(true)
     characterListDialog.setSelectedCharacterById(
@@ -117,7 +119,7 @@ export class MatrixEditorContainer extends MatrixAccessorContainer {
     return true
   }
 
-  override handleOntologyClick() {
+  protected override handleOntologyClick() {
     const ontologyDialog = new OntologyDialog(this.matrixModel)
     ontologyDialog.setVisible(true)
     return true
@@ -128,7 +130,7 @@ export class MatrixEditorContainer extends MatrixAccessorContainer {
    *
    * @return whether the handler handled this event.
    */
-  handleBatchClick(): boolean {
+  protected handleBatchClick(): boolean {
     const batchDialog = new BatchDialog(this.matrixModel)
     batchDialog.setVisible(true)
     batchDialog.setSelectedPositions(
@@ -143,7 +145,7 @@ export class MatrixEditorContainer extends MatrixAccessorContainer {
    *
    * @return whether the handler handled this event.
    */
-  handleWarningClick(): boolean {
+  private handleWarningClick(): boolean {
     const warningDialog = new WarningsDialog(this.matrixModel)
     warningDialog.setVisible(true)
     return true
@@ -154,19 +156,19 @@ export class MatrixEditorContainer extends MatrixAccessorContainer {
    *
    * @return whether the handler handled this event.
    */
-  handleRuleCheckerClick(): boolean {
+  private handleRuleCheckerClick(): boolean {
     const ruleCheckerDialog = new RuleCheckerDialog(this.matrixModel)
     ruleCheckerDialog.setVisible(true)
     return true
   }
 
-  override handlePreferencesClick() {
+  protected override handlePreferencesClick() {
     const preferencesDialog = new PreferencesDialog(this.matrixModel)
     preferencesDialog.setVisible(true)
     return true
   }
 
-  override htmlContent() {
+  protected override htmlContent() {
     return `
     <div class="mb-matrixeditor">
       <div class="topButtonBar">

@@ -2209,9 +2209,13 @@ div.loadingMessage > div,
   filter: alpha(opacity=80);
 }
 
+.cellDialog .cellDataPane {
+  height: 100%;
+}
+
 .cellDialog .cellDataPane .scoringGrid {
   border: 1px solid #ddd;
-  height: 270px;
+  height: 100%;
   overflow: hidden;
   position: relative;
 }

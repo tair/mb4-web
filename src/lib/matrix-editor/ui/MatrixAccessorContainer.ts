@@ -103,15 +103,16 @@ export abstract class MatrixAccessorContainer extends Component {
       : new MatrixGrid(matrixModel, gridHanlder)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
     const element = this.getElement()
     element.innerHTML = this.htmlContent()
     this.decorateInternal(element)
   }
 
-  override decorateInternal(element: HTMLElement) {
+  protected override decorateInternal(element: HTMLElement) {
     super.decorateInternal(element)
+
     const ontologyButtonElement =
       this.getElementByClass<HTMLDivElement>('mb-rules-btn')
     ontologyButtonElement.title = MatrixAccessorContainer.ONTOLOGY_TOOLTIP
@@ -131,7 +132,7 @@ export abstract class MatrixAccessorContainer extends Component {
     this.matrixGrid.render(matridGridElement)
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     const charactersButtonElement = this.getElementByClass('mb-characters-btn')
     const ontologyButtonElement = this.getElementByClass('mb-rules-btn')
@@ -317,7 +318,7 @@ export abstract class MatrixAccessorContainer extends Component {
    *
    * @return whether the handler handled this event.
    */
-  handleSearchClick(): boolean {
+  protected handleSearchClick(): boolean {
     const searchDialog = new SearchDialog(this.matrixModel)
     searchDialog.setVisible(true)
     return true
@@ -328,7 +329,7 @@ export abstract class MatrixAccessorContainer extends Component {
    *
    * @return whether the handler handled this event.
    */
-  handleGoToClick(): boolean {
+  protected handleGoToClick(): boolean {
     const goToDialog = new GoToDialog(this.matrixModel)
     goToDialog.setVisible(true)
     return true
@@ -339,7 +340,7 @@ export abstract class MatrixAccessorContainer extends Component {
    *
    * @return whether the handler handled this event.
    */
-  handleReloadClick(): boolean {
+  protected handleReloadClick(): boolean {
     location.reload()
     return true
   }
