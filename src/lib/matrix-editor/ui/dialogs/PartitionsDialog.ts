@@ -45,23 +45,32 @@ export class PartitionsDialog extends Dialog {
     this.partitionSelect = new Select()
     this.partitionSelect.setIsRemovable(true)
     this.registerDisposable(this.partitionSelect)
+
     this.taxaInPartitionSelect = new DraggableSelect()
     this.registerDisposable(this.taxaInPartitionSelect)
+
     this.charactersInPartitionSelect = new DraggableSelect()
     this.registerDisposable(this.charactersInPartitionSelect)
+
     this.taxaNotInPartitionSelect = new DraggableSelect()
     this.registerDisposable(this.taxaNotInPartitionSelect)
+
     this.charactersNotInPartitionSelect = new DraggableSelect()
     this.registerDisposable(this.charactersNotInPartitionSelect)
+
     this.partitionDropdown = new Dropdown()
     this.registerDisposable(this.partitionDropdown)
+  }
+
+  protected override initialize(): void {
     this.setTitle('Partitions')
     this.setContent(PartitionsDialog.htmlContent())
     this.addButton(ModalDefaultButtons.DONE)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
+
     const element = this.getElement()
     element.classList.add('partitionDialog', 'modal-lg')
 
@@ -89,13 +98,8 @@ export class PartitionsDialog extends Dialog {
       this.charactersInPartitionSelect
     )
 
-    const textElement = document.createElement('div')
-    textElement.classList.add('switchParitionLabel')
-    textElement.textContent = 'Show partition in matrix editor'
-
-    const buttonBarElement = this.getButtonsElement()
-    buttonBarElement.appendChild(textElement)
-    this.partitionDropdown.render(buttonBarElement)
+    const changePartitionElement = this.getElementByClass('changePartition')
+    this.partitionDropdown.render(changePartitionElement)
 
     this.setPartitionSelect()
 
@@ -103,8 +107,9 @@ export class PartitionsDialog extends Dialog {
     this.partitionSelect.render(partitionElement)
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
+
     const addPartitionElement = this.getElementByClass('addPartition')
     const copyPartitonElement = this.getElementByClass('copyPartition')
     this.getHandler()
@@ -165,6 +170,7 @@ export class PartitionsDialog extends Dialog {
     if (partitionSeletectedValue == null) {
       return undefined
     }
+
     const partitionId = parseInt(partitionSeletectedValue, 10)
     const partitions = this.matrixModel.getPartitions()
     return partitions.getPartition(partitionId)
@@ -195,6 +201,7 @@ export class PartitionsDialog extends Dialog {
         selectedIndex = x
       }
     }
+
     this.partitionDropdown.redraw()
     this.partitionDropdown.setSelectedIndex(selectedIndex)
   }
@@ -237,11 +244,12 @@ export class PartitionsDialog extends Dialog {
   private handleCopyPartition() {
     const selectedPartition = this.getSelectedPartition()
 
-    // check to see if the user has selected a partition to copy
+    // Check to see if the user has selected a partition to copy
     if (!selectedPartition) {
       alert('Please select a partition to copy.')
       return
     }
+
     const copyPartitionDialog = new EnterNameDescriptionDialog(
       'Copy Partition',
       (name, description) =>
@@ -376,7 +384,7 @@ export class PartitionsDialog extends Dialog {
   }
 
   /** Updates the partitions UI */
-  updatePartitionsUI() {
+  private updatePartitionsUI() {
     // Nothing to do if none of the partitions is selected
     if (!this.selectedPartition) {
       return
@@ -438,7 +446,7 @@ export class PartitionsDialog extends Dialog {
   }
 
   /** Refreshes the partitions UI */
-  handlePartitionRefresh() {
+  private handlePartitionRefresh() {
     // Select and redraw fetched partition
     this.setPartitionSelect()
     this.partitionSelect.redraw()
@@ -449,7 +457,7 @@ export class PartitionsDialog extends Dialog {
    */
   private handleAddTaxaToPartition() {
     const taxaIdsToAdd = mb.convertToNumberArray(
-      this.taxaInPartitionSelect.getSelectedValues()
+      this.taxaNotInPartitionSelect.getSelectedValues()
     )
     const partitionId = this.selectedPartition.getId()
     this.savingLabel.saving()
@@ -540,25 +548,36 @@ export class PartitionsDialog extends Dialog {
   /**
    * @return The HTML Content
    */
-  static htmlContent(): string {
-    return (
-      '' +
-      '<div class="selectPartition">' +
-      '<span>Partitions</span>' +
-      '<span class="addPartition">+ Add new</span>' +
-      '<span class="copyPartition">+ Copy</span>' +
-      '</div>' +
-      '<div class="editPartition">' +
-      '<div class="characters nonSelectable">' +
-      '<div class="availableCharactersSelect">Characters not in partition</div>' +
-      '<div class="partitionCharactersSelect">Characters in partition</div>' +
-      '</div>' +
-      '<div class="taxa nonSelectable">' +
-      '<div class="availableTaxaSelect">Taxa not in partition</div>' +
-      '<div class="partitionTaxaSelect">Taxa in partition</div>' +
-      '</div>' +
-      '<i>Drag and drop characters and taxa to add or remove them from partitions.</i>' +
-      '</div>'
-    )
+  private static htmlContent(): string {
+    return `
+      <div class="editPartition">
+        <div class="selectPartition">
+          <div class="selectPartitionBar">
+            <span class="selectPartitionLabel">Partitions</span>
+            <span class="addPartition">Add</span>
+            <span class="copyPartition">Copy</span>
+          </div>
+        </div>
+        <div class="availableCharactersSelect">
+          Characters not in partition</div>
+        <div class="partitionCharactersSelect">
+          Characters in partition
+        </div>
+        <div class="availableTaxaSelect">
+          Taxa not in partition
+        </div>
+        <div class="partitionTaxaSelect">
+          Taxa in partition
+        </div>
+        <i>
+          Drag and drop characters and taxa to add or remove them from
+          partitions.
+        </i>
+      </div>
+      <div class="changePartition">
+        <div class="switchParitionLabel">
+          Show partition in matrix editor
+        </div>
+      </div>`
   }
 }

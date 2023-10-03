@@ -42,7 +42,7 @@ export class CharacterSearchDialog extends Dialog {
 
   protected override initialize(): void {
     this.savingLabel.setText('Searching...')
-  
+
     this.setTitle('Search')
     this.setHasBackdrop(false)
     this.addButton(ModalDefaultButtons.DONE)
@@ -58,7 +58,7 @@ export class CharacterSearchDialog extends Dialog {
 
     const searchResultsElement = this.getElementByClass('searchResults')
     this.gridTable.render(searchResultsElement)
-  
+
     const searchOptions = CharacterSearchDialog.CHARACTER_SEARCH_OPTIONS
     for (let x = 0; x < searchOptions.length; x++) {
       const searchOption = searchOptions[x]
@@ -73,7 +73,7 @@ export class CharacterSearchDialog extends Dialog {
     this.characterSearchSelect.render(inputContainerElement)
 
     const inputElement = document.createElement('input')
-    inputElement.type = 'text';
+    inputElement.type = 'text'
     inputElement.classList.add('form-control')
     inputContainerElement.appendChild(inputElement)
   }
@@ -92,11 +92,8 @@ export class CharacterSearchDialog extends Dialog {
         [CharacterChangedEvents.TYPE, TaxaChangedEvents.TYPE],
         (e: Event) => this.onHandleSearchChange(e)
       )
-      .listen(
-        inputElement,
-        EventType.KEYDOWN,
-        (e: KeyboardEvent) =>
-          this.onHandleEnterPress(() => this.onHandleSearchClick(), e)
+      .listen(inputElement, EventType.KEYDOWN, (e: KeyboardEvent) =>
+        this.onHandleEnterPress(() => this.onHandleSearchClick(), e)
       )
       .listen(this.characterSearchSelect, EventType.CHANGE, (e: Event) =>
         this.onHandleSearchChange(e)
@@ -166,7 +163,7 @@ export class CharacterSearchDialog extends Dialog {
         for (let x = 0; x < results.length; x++) {
           const result = results[x]
           const data: CharacterSearchResult = {
-            characterId: String(result.id)
+            characterId: String(result.id),
           }
           const row = {
             labels: [result.label],
@@ -219,5 +216,5 @@ export class CharacterSearchDialog extends Dialog {
 }
 
 type CharacterSearchResult = {
-  characterId: string;
+  characterId: string
 }

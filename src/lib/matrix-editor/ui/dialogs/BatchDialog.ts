@@ -1154,10 +1154,10 @@ class BatchCopyPane extends BasePane {
 
     this.sourceTaxaSelect = new Dropdown()
     this.registerDisposable(this.sourceTaxaSelect)
-    
+
     this.destinationTaxaSelect = new Dropdown()
     this.registerDisposable(this.destinationTaxaSelect)
-    
+
     this.copyNotesCheckbox = new Checkbox(1)
     this.registerDisposable(this.copyNotesCheckbox)
   }
@@ -1170,17 +1170,17 @@ class BatchCopyPane extends BasePane {
 
     const sourceTaxaSelectElement = this.getElementByClass('source-taxaSelect')
     this.sourceTaxaSelect.render(sourceTaxaSelectElement)
-    
+
     const destinationTaxaSelectElement = this.getElementByClass(
       'destination-taxaSelect'
     )
     this.destinationTaxaSelect.render(destinationTaxaSelectElement)
     this.updateTaxaSelectUI()
-    
+
     const characterSelectElement = this.getElementByClass('characterSelect')
     this.characterSelect.render(characterSelectElement)
     this.updateCharactersSelectUI()
-    
+
     const checkboxElement = this.getElementByClass<HTMLLabelElement>('checkbox')
     this.copyNotesCheckbox.setLabel(checkboxElement)
     this.copyNotesCheckbox.render(checkboxElement)

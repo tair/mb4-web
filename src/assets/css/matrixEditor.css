@@ -707,7 +707,7 @@ ol.selectList li div.name {
   display: inline-block;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 85%;
+  width: 95%;
   white-space: nowrap;
 }
 
@@ -715,68 +715,74 @@ ol.selectList li:hover span.remove {
   background-image: url(/images/x.png);
   background-repeat: no-repeat;
   background-size: 14px 14px;
-  float: right;
-  padding: 7px 17px 7px 7px;
+  cursor: pointer;
+  padding: 0 7px;
+}
+
+.partitionDialog .selectPartition .selectPartitionLabel {
+  font-weight: bold;
 }
 
 .partitionDialog .selectPartition {
-  display: inline-block;
-  font-weight: bold;
-  height: 303px;
-  padding-right: 30px;
-  vertical-align: top;
-  width: 165px;
+  grid-row-start: 1;
+  grid-row-end: 3;
 }
 
 .partitionDialog .editPartition {
-  display: inline-block;
+  column-gap: 1rem;
+  display: grid;
+  grid-template-columns: 200px 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  height: 100%;
+  min-height: 350px;
+  row-gap: 2rem;
 }
 
-.partitionDialog .editPartition .characters,
-.partitionDialog .editPartition .taxa {
-  height: 150px;
-}
-
-.partitionDialog .editPartition .taxa {
-  margin-top: 10px;
+.partitionDialog .editPartition i {
+  grid-column-start: 1;
+  grid-column-end: 4;
 }
 
 .partitionDialog .availableCharactersSelect,
 .partitionDialog .partitionCharactersSelect,
 .partitionDialog .availableTaxaSelect,
 .partitionDialog .partitionTaxaSelect {
-  display: inline-block;
   font-weight: bold;
-  height: 130px;
-  vertical-align: top;
-  width: 220px;
+  height: 150px;
 }
 
-.partitionDialog .partitionCharactersSelect,
-.partitionDialog .partitionTaxaSelect {
-  padding-left: 20px;
+.partitionDialog .selectPartitionBar {
+  align-items: baseline;
+  display: flex;
 }
 
-.partitionDialog .addPartition {
+.partitionDialog .selectPartitionBar .selectPartitionLabel {
+    flex-grow: 1;
+ }
+
+.partitionDialog .selectPartitionBar .addPartition,
+.partitionDialog .selectPartitionBar .copyPartition {
+  border-radius: 10px;
   color: #15c;
   cursor: pointer;
-  float: right;
   font-weight: normal;
+  font-size: 13px;
+  padding: 1px 5px;
 }
 
-.partitionDialog .copyPartition {
-  color: #15c;
-  cursor: pointer;
-  float: right;
-  font-weight: normal;
-  padding-right: 5px;
+.partitionDialog .selectPartitionBar .addPartition:hover,
+.partitionDialog .selectPartitionBar .copyPartition:hover {
+  background-color: rgba(0, 0, 0, .12);
+}
+
+.partitionDialog .changePartition {
+  border-top: 1px solid #ddd;
+  padding-top: 15px;
+  margin-top: 15px;
 }
 
 .partitionDialog .switchParitionLabel {
-  display: inline-block;
   font-weight: bold;
-  padding-left: 10px;
-  padding-right: 10px;
 }
 
 .ontologyDialog .tab-content {
@@ -2050,6 +2056,10 @@ div.loadingMessage > div,
   margin-top: 15px;
 }
 
+.batchDialog .tab-content {
+  min-height: 450px;
+}
+
 .batchDialog .batchRowPane .characterSelect,
 .batchDialog .batchColumnPane .taxaSelect {
   height: 215px;
@@ -2065,7 +2075,6 @@ div.loadingMessage > div,
 
 .batchDialog .gridPane {
   border: 1px solid #ddd;
-  height: 350px;
   overflow: hidden;
   position: relative;
 }

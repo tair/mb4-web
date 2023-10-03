@@ -220,10 +220,9 @@ export class Select extends Component {
     const selectedItem = this.getParentLIElement(element)
     if (selectedItem) {
       this.addSelectedItems(selectedItem)
-      if (this.isRemovable) {
-        element.classList.remove(Select.CSS.REMOVE)
-      }
-      const eventType = this.isRemovable ? EventType.CUT : EventType.SELECT
+      const isElementRemovable =
+        this.isRemovable && element.classList.contains(Select.CSS.REMOVE)
+      const eventType = isElementRemovable ? EventType.CUT : EventType.SELECT
       this.dispatchEvent(new Event(eventType))
     }
   }
@@ -283,7 +282,7 @@ export class Select extends Component {
     const selectedItem = this.getParentLIElement(element)
     if (selectedItem) {
       this.addSelectedItems(selectedItem)
-      this.dispatchEvent(e)
+      this.dispatchEvent(new Event(MobileFriendlyClickEventType))
     }
   }
 

@@ -29,7 +29,7 @@ export class Partitions {
    * @return an array of partitions
    */
   getPartitions(): Partition[] {
-    return Array.from(this.partitions.values())
+    return Array.from(this.partitions.values()).sort((a, b) => a.getName().localeCompare(b.getName()))
   }
 
   /**

@@ -280,7 +280,7 @@ class CharacterPane extends SearchPane {
     this.characterSearchSelect.setSelectedIndex(0)
 
     const inputElement = document.createElement('input')
-    inputElement.type = 'text';
+    inputElement.type = 'text'
     inputElement.classList.add('form-control')
     searchElement.appendChild(inputElement)
   }
@@ -349,7 +349,7 @@ class CharacterPane extends SearchPane {
         for (let x = 0; x < results.length; x++) {
           const result = results[x]
           const data: SearchDialogResult = {
-            characterId: String(result.id) 
+            characterId: String(result.id),
           }
           const row = {
             labels: [result.label],
@@ -412,7 +412,7 @@ class TaxaPane extends SearchPane {
     this.taxaSearchSelect.setSelectedIndex(0)
 
     const inputElement = document.createElement('input')
-    inputElement.type = 'text';
+    inputElement.type = 'text'
     searchElement.appendChild(inputElement)
     inputElement.classList.add('form-control')
   }
@@ -468,7 +468,7 @@ class TaxaPane extends SearchPane {
         for (let x = 0; x < results.length; x++) {
           const result = results[x]
           const data: SearchDialogResult = {
-            taxonId: String(result.id) 
+            taxonId: String(result.id),
           }
           const row: DataRow = {
             labels: [result.label],
@@ -502,7 +502,7 @@ class CellPane extends SearchPane {
   /**
    * List of available cell search options
    */
-  private static readonly  CELL_SEARCH_OPTIONS: string[] = [
+  private static readonly CELL_SEARCH_OPTIONS: string[] = [
     'unscored for',
     'NPA for',
     'Polymorphic for',
@@ -690,6 +690,6 @@ class CellPane extends SearchPane {
 }
 
 type SearchDialogResult = {
-  characterId?: string;
-  taxonId?: string;
+  characterId?: string
+  taxonId?: string
 }

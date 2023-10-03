@@ -35,7 +35,10 @@ export class MatrixViewerContainer extends MatrixAccessorContainer {
   }
 
   protected override handleOntologyClick() {
-    const ontologyDialog = new OntologyDialog(this.matrixModel, /* readonly */ true)
+    const ontologyDialog = new OntologyDialog(
+      this.matrixModel,
+      /* readonly */ true
+    )
     ontologyDialog.setVisible(true)
     return true
   }

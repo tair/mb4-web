@@ -53,7 +53,7 @@ export class ReadonlyCellDialog extends Dialog {
 
   protected override createDom() {
     super.createDom()
-  
+
     const element = this.getElement()
     element.classList.add('cellDialog', 'modal-lg', 'readonly')
 
@@ -178,10 +178,10 @@ class ScorePane extends Component {
     const element = this.getElement()
     element.innerHTML = ScorePane.htmlContent()
     element.classList.add('cellDataPane')
-    
+
     const cellDataGridElement = this.getElementByClass('scoringGrid')
     this.cellDataGridTable.render(cellDataGridElement)
-    
+
     const characters = this.matrixModel.getCharacters()
     const character = characters.getById(this.characterId)
     const type = character!.getType()
