@@ -16,16 +16,19 @@ export class AddCommentDialog extends Modal {
     this.addButton(ModalDefaultButtons.CANCEL)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
+
     const element = this.getElement()
     element.classList.add('addCommentDialog')
+
     const contentElement = this.getContentElement()
     contentElement.innerHTML = AddCommentDialog.htmlContent()
   }
 
-  override enterDocument() {
-    this.enterDocument()
+  protected override enterDocument() {
+    super.enterDocument()
+
     const handler = this.getHandler()
     handler.listen(this, EventType.SELECT, (e: CustomEvent<any>) =>
       this.onHandleSelect(e)
@@ -49,7 +52,7 @@ export class AddCommentDialog extends Modal {
   /**
    * The dialog's HTML Content
    */
-  static htmlContent() {
-    return '<textarea class="comment" />'
+  private static htmlContent() {
+    return '<textarea class="comment select-form" />'
   }
 }

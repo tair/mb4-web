@@ -1889,6 +1889,7 @@ div.loadingMessage > div,
 .characterListDialog .characterPane {
   border: 1px solid #ddd;
   height: 350px;
+  margin-bottom: 10px;
   overflow: auto;
 }
 
@@ -2012,6 +2013,10 @@ div.loadingMessage > div,
   margin-bottom: 0px;
 }
 
+.characterGrid table tr td div.name {
+  width: 95%;
+}
+
 .characterGrid table tr td div.name i {
   display: block;
     height: 95px;
@@ -2034,7 +2039,7 @@ div.loadingMessage > div,
   background-image: url(/images/x.png);
   background-repeat: no-repeat;
   background-size: 14px 14px;
-  padding: 7px 17px 7px 7px;
+  padding: 7px;
   position: absolute;
   right: 0px;
   top: 5px;
