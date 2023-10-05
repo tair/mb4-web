@@ -77,7 +77,10 @@ export class Dropdown extends Component {
     this.selectedIndex = selectedIndex
     if (this.isInDocument()) {
       const element = this.getElement<HTMLSelectElement>()
-      element.selectedIndex = selectedIndex
+      if (element.selectedIndex != selectedIndex) {
+        element.selectedIndex = selectedIndex
+        this.dispatchEvent(new Event(EventType.CHANGE))
+      }
     }
   }
 

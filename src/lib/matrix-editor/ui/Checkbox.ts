@@ -67,7 +67,9 @@ export class Checkbox extends Component {
     this.checked = checked
     if (this.isInDocument()) {
       const element = this.getElement<HTMLInputElement>()
-      element.checked = checked
+      if (element.checked != checked) {
+        element.checked = checked
+      }
     }
   }
 

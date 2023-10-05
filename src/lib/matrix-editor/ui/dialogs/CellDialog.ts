@@ -1,6 +1,5 @@
 import * as GoToCellEvents from '../../events/GoToCellEvent'
 import { GoToCellEvent } from '../../events/GoToCellEvent'
-import { CellsChangedEvent } from '../../events/CellsChangedEvent'
 import * as CellsChangedEvents from '../../events/CellsChangedEvent'
 import { SavingLabel } from '../SavingLabel'
 import * as mb from '../../mb'
@@ -9,8 +8,6 @@ import { Citation } from '../../data/Citation'
 import { Character, CharacterType } from '../../data/Characters'
 import { CharacterChangedEvent } from '../../events/CharacterChangedEvent'
 import * as CharacterChangedEvents from '../../events/CharacterChangedEvent'
-import { CharacterRefreshedEvent } from '../../events/CharacterRefreshedEvent'
-import * as CharacterRefreshedEvents from '../../events/CharacterRefreshedEvent'
 import { Checkbox } from '../Checkbox'
 import { DataGridTable, DataRow } from '../DataGridTable'
 import { Dialog } from '../Dialog'
@@ -34,10 +31,6 @@ import { CellInfo, type CellInfoStatus } from '../../data/Cells'
 
 /**
  * The cell list dialog which edits cells within this matrix.
- *
- * @param matrixModel the data associated with the matrix. This includes characters, taxon, and cells.
- * @param taxonId the id of the taxon to render for this dialog
- * @param characterId the id of the character to render for this dialog
  */
 export class CellDialog extends Dialog {
   /**
@@ -57,6 +50,11 @@ export class CellDialog extends Dialog {
   private hasAccess: boolean
   private tabNavigator: TabNavigator
 
+  /**
+   * @param matrixModel the data associated with the matrix. This includes characters, taxon, and cells.
+   * @param taxonId the id of the taxon to render for this dialog
+   * @param characterId the id of the character to render for this dialog
+   */
   constructor(matrixModel: MatrixModel, taxonId: number, characterId: number) {
     super()
 
@@ -75,7 +73,7 @@ export class CellDialog extends Dialog {
     this.addButton(ModalDefaultButtons.DONE)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
     const element = this.getElement()
     element.classList.add('cellDialog', 'modal-lg')
@@ -90,7 +88,7 @@ export class CellDialog extends Dialog {
     contentElement.appendChild(summaryElement)
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     this.getHandler()
       .listen(this.tabNavigator, EventType.SELECT, () =>
@@ -171,7 +169,7 @@ export class CellDialog extends Dialog {
   /**
    * Redraws the cell dialog
    */
-  redraw() {
+  private redraw() {
     this.tabNavigator.clearTabs()
     const character = this.matrixModel.getCharacters().getById(this.characterId)
     const type = character!.getType()
@@ -267,14 +265,14 @@ export class CellDialog extends Dialog {
   /**
    * Updates the last selected tab index.
    */
-  updateLastSelectedTabIndex() {
+  private updateLastSelectedTabIndex() {
     CellDialog.LAST_SELECTED_TAB_INDEX = this.tabNavigator.getSelectedTabIndex()
   }
 
   /**
    * Update the cells's name from the model
    */
-  protected updateCellName() {
+  private updateCellName() {
     const taxon = this.matrixModel.getTaxa().getById(this.taxonId)
     const character = this.matrixModel.getCharacters().getById(this.characterId)
     const cellNameElement = this.getElementByClass('cell-name')
@@ -304,7 +302,7 @@ export class CellDialog extends Dialog {
   }
 
   /** @return The HTML content of the dialog */
-  static htmlContent(): string {
+  private static htmlContent(): string {
     return '<div class="cell-name"></div>'
   }
 }
@@ -318,7 +316,7 @@ export class CellDialog extends Dialog {
  * @param hasAccess Whether the user has access to the cell
  * @param savingLabel the saving label associated with this dialog
  */
-class BasePane extends Component {
+abstract class BasePane extends Component {
   protected constructor(
     protected matrixModel: MatrixModel,
     protected taxonId: number,
@@ -349,22 +347,12 @@ class BasePane extends Component {
  * @param savingLabel the saving label associated with this dialog
  */
 class ScoringPane extends BasePane {
-  /**
-   * This represents cells states that should be on the only value.
-   */
-  static SINGLE_CELL_STATES: (number | null)[] = [
-    null,
-    /* ? */
-    -1,
-    /* NPA */
-    0,
-  ]
-  private selectedCellStateIds: (number | null)[]
+  private readonly scoringGridTable: DataGridTable
+  private readonly statusSelect: Dropdown
+  private readonly polymorphicSelect: Dropdown
+
   private cellStateSavingPromise: Promise<void>
-  private scoringGridTable: DataGridTable
   private scoringCheckboxes: Checkbox[]
-  private statusSelect: Dropdown
-  private polymorphicSelect: Dropdown
 
   constructor(
     matrixModel: MatrixModel,
@@ -374,40 +362,24 @@ class ScoringPane extends BasePane {
     savingLabel: SavingLabel
   ) {
     super(matrixModel, taxonId, characterId, hasAccess, savingLabel)
-    this.cellStateSavingPromise = Promise.resolve()
 
     this.scoringGridTable = new DataGridTable()
     this.scoringGridTable.setFocusable(false)
     this.registerDisposable(this.scoringGridTable)
-
-    this.scoringCheckboxes = []
 
     this.statusSelect = new Dropdown()
     this.registerDisposable(this.statusSelect)
 
     this.polymorphicSelect = new Dropdown()
     this.registerDisposable(this.polymorphicSelect)
+
+    this.cellStateSavingPromise = Promise.resolve()
+    this.scoringCheckboxes = []
   }
 
-  /**
-   * @return The HTML content of the scoring pane
-   */
-  static htmlContent(): string {
-    return (
-      '' +
-      '<div class="scoringGrid"></div>' +
-      '<div class="scoringWarning"></div>' +
-      '<div class="polymorphicControl">' +
-      '<div class="field">Multistate Taxa</div>' +
-      '</div>' +
-      '<div class="statusControl">' +
-      '<div class="field">Status</div>' +
-      '</div>'
-    )
-  }
-
-  override createDom() {
+  protected override createDom() {
     super.createDom()
+
     const element = this.getElement()
     element.innerHTML = ScoringPane.htmlContent()
     element.classList.add('scoringPane')
@@ -421,6 +393,7 @@ class ScoringPane extends BasePane {
     if (!this.hasAccess) {
       scoringGridElement.title = CellDialog.LOCKED_MESSAGE
     }
+
     const statusOptions = CellInfo.STATUS_OPTIONS
     for (const name in statusOptions) {
       this.statusSelect.addItem({ text: name, value: statusOptions[name] })
@@ -428,6 +401,7 @@ class ScoringPane extends BasePane {
     const statusControlElement = this.getElementByClass('statusControl')
     this.statusSelect.render(statusControlElement)
     this.statusSelect.setEnabled(this.hasAccess)
+
     const polymorphicOptions = CellInfo.POLYMORPHIC_OPTIONS
     const matrixOptions = this.matrixModel.getMatrixOptions()
     for (let name in polymorphicOptions) {
@@ -441,10 +415,11 @@ class ScoringPane extends BasePane {
       this.getElementByClass('polymorphicControl')
     this.polymorphicSelect.render(polymorphicControlElement)
     this.polymorphicSelect.setEnabled(this.hasAccess)
+
     this.updateCellScores()
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     this.getHandler()
       .listen(this.statusSelect, EventType.CHANGE, () =>
@@ -455,47 +430,35 @@ class ScoringPane extends BasePane {
       )
       .listen(
         this.matrixModel,
-        CellsChangedEvents.TYPE,
-        (e: CustomEvent<CellsChangedEvent>) => this.handleCellsChangeEvent(e)
-      )
-      .listen(
-        this.matrixModel,
-        CharacterRefreshedEvents.TYPE,
-        (e: CustomEvent<CharacterRefreshedEvent>) =>
-          this.handleCharacterRefreshedEvent(e)
-      )
-      .listen(
-        this.matrixModel,
         CharacterChangedEvents.TYPE,
         (e: CustomEvent<CharacterChangedEvent>) =>
           this.handleCharacterChangedEvent(e)
       )
-      .listen(this.scoringGridTable, MobileFriendlyClickEventType, (e: Event) =>
-        this.handleGridSelect(e)
+      .listen(
+        this.scoringGridTable,
+        MobileFriendlyClickEventType,
+        (e: CustomEvent<CellDataGridModel>) => this.handleGridSelect(e)
       )
       .listen(this.getElement(), EventType.KEYDOWN, (e: KeyboardEvent) =>
         this.handleKeyDown(e)
       )
   }
 
-  /** Render the cell's scores */
-  updateCellScores() {
+  /** Render the cell scores */
+  private updateCellScores() {
     this.scoringGridTable.clearRows()
 
-    // clear out the previous checkboxes
-    for (let x = 0; x < this.scoringCheckboxes.length; x++) {
-      const checkbox = this.scoringCheckboxes[x]
-      checkbox.dispose()
-    }
+    // Clear out the previous checkboxes
+    this.scoringCheckboxes.forEach((checkbox) => checkbox.dispose())
     this.scoringCheckboxes = []
-    const cells = this.matrixModel.getCells()
 
-    // get cell status
+    // Get cell status
+    const cells = this.matrixModel.getCells()
     const cellInfo = cells.getCellInfo(this.taxonId, this.characterId)
     const cellStatus = cellInfo.getStatus()
     this.statusSelect.setSelectedIndex(cellStatus / 50)
 
-    // get cell scores
+    // Get cell scores
     const cellStates = cells.getCell(this.taxonId, this.characterId)
     const cellStateIds: number[] = []
     let isNPA = false
@@ -510,8 +473,9 @@ class ScoringPane extends BasePane {
         isNotApplicable || (cellState.getStateId() === 0 && !cellState.isNPA())
     }
 
-    // set the certainty
+    // Set the certainty
     this.updatePolymorphicSelect()
+
     const characters = this.matrixModel.getCharacters()
     const character = characters.getById(this.characterId)
     const characterStates = character!.getStates()
@@ -521,6 +485,7 @@ class ScoringPane extends BasePane {
       const characterState = characterStates[x]
       const characterStateId = characterState.getId()
       const checkbox = this.createCheckBox(
+        characterStateId,
         mb.contains(cellStateIds, characterStateId)
       )
       this.scoringGridTable.registerDisposable(checkbox)
@@ -531,29 +496,32 @@ class ScoringPane extends BasePane {
           characterState.getNumber(),
           mb.htmlEscape(characterState.getName()),
         ],
-        data: { stateid: characterStateId },
+        data: <CellDataGridModel>{ position: x },
       }
       rows.push(row)
     }
 
     // not defined score
-    const notDefinedCheckbox = this.createCheckBox(cellStateIds.length === 0)
+    const notDefinedCheckbox = this.createCheckBox(
+      NaN,
+      cellStateIds.length === 0
+    )
     this.scoringCheckboxes.push(notDefinedCheckbox)
     rows.push({
       labels: [notDefinedCheckbox, '?', '?'],
-      data: { stateid: null },
+      data: <CellDataGridModel>{ position: rows.length },
     })
 
     // not applicable score
-    const notApplicableCheckbox = this.createCheckBox(isNotApplicable)
+    const notApplicableCheckbox = this.createCheckBox(0, isNotApplicable)
     this.scoringCheckboxes.push(notApplicableCheckbox)
     rows.push({
       labels: [notApplicableCheckbox, '-', '-'],
-      data: { stateid: 0 },
+      data: <CellDataGridModel>{ position: rows.length },
     })
 
     // NPA score
-    const NPACheckbox = this.createCheckBox(isNPA)
+    const NPACheckbox = this.createCheckBox(-1, isNPA)
     this.scoringCheckboxes.push(NPACheckbox)
     rows.push({
       labels: [
@@ -561,7 +529,7 @@ class ScoringPane extends BasePane {
         'NPA',
         'Not presently available (= ? in nexus file)',
       ],
-      data: { stateid: -1 },
+      data: <CellDataGridModel>{ position: rows.length },
     })
     this.scoringGridTable.addRows(rows)
     this.scoringGridTable.redraw()
@@ -572,21 +540,23 @@ class ScoringPane extends BasePane {
       const characterStateId = characterState.getId()
       const checkbox = this.scoringCheckboxes[x]
       handler.listen(checkbox, EventType.CHANGE, () =>
-        this.handleCheckboxSelect(characterStateId, checkbox)
+        this.setCellScore(checkbox)
       )
     }
     handler.listen(notDefinedCheckbox, EventType.CHANGE, () =>
-      this.handleCheckboxSelect(null, notDefinedCheckbox)
+      this.setCellScore(notDefinedCheckbox)
     )
     handler.listen(notApplicableCheckbox, EventType.CHANGE, () =>
-      this.handleCheckboxSelect(0, notApplicableCheckbox)
+      this.setCellScore(notApplicableCheckbox)
     )
     handler.listen(NPACheckbox, EventType.CHANGE, () =>
-      this.handleCheckboxSelect(-1, NPACheckbox)
+      this.setCellScore(NPACheckbox)
     )
 
-    // We also have to display a warning to the user to inform that of polymorphic scores which have "-" and another
-    // state. This is usually not the intention of the user so we want to make sure that they are aware of the change.
+    // We also have to display a warning to the user to inform that of
+    // polymorphic scores which have "-" and another state. This is usually not
+    // the intention of the user so we want to make sure that they are aware of
+    // the change.
     const hasPolymorphicScores =
       cellStates.length > 1 &&
       cellStates.some((state) => state.getStateId() === 0)
@@ -607,32 +577,18 @@ class ScoringPane extends BasePane {
   }
 
   /**
-   * Scores the cell.
-   *
-   * @param stateId the id of the state to set in this matrix.
-   * @param targetCheckbox The event that triggered this callback.
-   */
-  handleCheckboxSelect(stateId: number | null, targetCheckbox: Checkbox) {
-    const enableScore = targetCheckbox.isChecked()
-    this.setCellScore(stateId, enableScore, targetCheckbox)
-  }
-
-  /**
    * Handles when the grid has been double-clicked.
    *
    * @param e The event that triggered this callback.
    */
-  private handleGridSelect(e: Event) {
-    const target = <HTMLElement>e.target
-    const tr = mb.getElementParent(target.parentElement, 'TR')
-    if (tr == null) {
+  private handleGridSelect(e: CustomEvent<CellDataGridModel>) {
+    const position = parseInt(e.detail.position as any, 10)
+    if (position === undefined) {
       return
     }
 
-    const table = <HTMLElement>tr.parentElement
-    const index = Array.prototype.indexOf.call(table.children, tr)
-    const targetCheckbox = this.scoringCheckboxes[index]
-    if (!targetCheckbox.isEnabled()) {
+    const targetCheckbox = this.scoringCheckboxes[position]
+    if (targetCheckbox == null || !targetCheckbox.isEnabled()) {
       return
     }
 
@@ -686,7 +642,7 @@ class ScoringPane extends BasePane {
     const options = { uncertain: selectedValue }
 
     // Get existing cells state ids
-    const cellStateIds = this.getSelectedCellStateIds()
+    const cellStateIds = this.getScoredCellStateIds()
     this.savingLabel.saving()
     this.matrixModel
       .setCellStates([this.taxonId], [this.characterId], cellStateIds, options)
@@ -696,30 +652,6 @@ class ScoringPane extends BasePane {
         alert(e)
       })
       .finally(() => this.updatePolymorphicSelect())
-  }
-
-  /**
-   * Handles when cells have been changed. This resets the selected cell state ids.
-   */
-  private handleCellsChangeEvent(e: CustomEvent<CellsChangedEvent>) {
-    if (
-      mb.contains(e.detail.taxaIds, this.taxonId) &&
-      mb.contains(e.detail.characterIds, this.characterId)
-    ) {
-      this.selectedCellStateIds = []
-    }
-  }
-
-  /**
-   * Handles when characters have been refreshed. This will redraw the characters states.
-   */
-  private handleCharacterRefreshedEvent(
-    e: CustomEvent<CharacterRefreshedEvent>
-  ) {
-    const charcterIds = e && e.detail.characterIds
-    if (charcterIds && mb.contains(charcterIds, this.characterId)) {
-      this.updateCellScores()
-    }
   }
 
   /**
@@ -767,87 +699,94 @@ class ScoringPane extends BasePane {
   }
 
   /**
-   * Updates the cell score based on whether the user enabled or disabled a given state.
+   * Updates the cell score based on whether the user enabled or disabled a
+   * given state.
    *
-   * @param stateId The state id to add or remove based on the enableScore parameter.
-   * @param enableScore Whether to insert or remove the stateId
-   * @param checkbox The checkbox of the state to update
+   * @param stateId The state id that should be added or removed.
+   * @param checkbox The checkbox of the state to update.
    */
-  setCellScore(
-    stateId: number | null,
-    enableScore: boolean,
-    checkbox: Checkbox
-  ) {
-    // Get from the checkboxs rather than the cells.
-    this.selectedCellStateIds = this.getSelectedCellStateIds()
+  private setCellScore(checkbox: Checkbox) {
+    const stateId = checkbox.getValue()
+    const enableScore = checkbox.isChecked()
+
+    // Get from the checkboxs rather than the cells because we want to
+    // determine which states we want to add. Note that there can be pending
+    // save requests so the UI should represent the user's selection rather
+    // than the matrix model.
+    const scoredCellStateIds = this.getCheckedStateIds()
+    mb.remove(scoredCellStateIds, stateId)
+
+    // This determines whether the state should be a single score. This means
+    // that the user selected '?' or 'NPA' as the score. We want to remove all
+    // other scores when this happens.
+    const shouldNextStateBeSingle = isNaN(stateId) || stateId == -1
+
+    // This determines whether the last state was a single score. This means
+    // that the last score was a '?' or 'NPA'. If so, we want to unmark these
+    // in the UI.
+    const wasLastStateSingle =
+      scoredCellStateIds.length === 0 ||
+      isNaN(scoredCellStateIds[0]) ||
+      scoredCellStateIds[0] == -1
+
     let rollback = () => {}
-
-    // This determines whether the next state should be single such that it is the
-    // only seletected state.
-    const shouldNextStateBeSingle =
-      stateId === null ||
-      /* ? */
-      stateId === -1
-
-    /* NPA */
-
-    // This determines whether the new transition should be marked indicates that
-    // the currently selected score be single such that it is the only selected
-    // state. This happens when the previous state was "?" or "NPA".
-    const wasSingleState =
-      this.selectedCellStateIds.length === 1 &&
-      (this.selectedCellStateIds[0] === null ||
-        this.selectedCellStateIds[0] === -1)
-    const shouldSelectSingleState =
-      this.selectedCellStateIds.length == 0 || wasSingleState
-    if (shouldNextStateBeSingle || shouldSelectSingleState) {
-      this.selectedCellStateIds = [stateId]
-      rollback = () => this.setCheckedAll(this.setUnCheckedAll())
-    } else {
-      if (enableScore) {
-        this.selectedCellStateIds.push(stateId)
-      } else {
-        mb.remove(this.selectedCellStateIds, stateId)
-      }
+    if (shouldNextStateBeSingle || wasLastStateSingle) {
+      const previousStateIds = this.setUnCheckedAll(stateId)
+      rollback = () => this.setCheckedAll(previousStateIds)
     }
-    const options: { [key: string]: number } = {}
+
+    checkbox.setChecked(enableScore)
+
+    // If the state is uncertain, it should have and multiple states. A single
+    // state as uncertain is not a correct state combination. If the cell is
+    // uncertain, the only single states that are allowed are '?' and 'NPA'.
     const isUncertain = parseInt(this.polymorphicSelect.getSelectedValue(), 10)
-    if (this.selectedCellStateIds.length > 1 && isUncertain) {
-      options['uncertain'] = isUncertain
-    }
-
-    // If the user selection is a single score which is a valid state and "-", we
-    // don't want to save it since it's not a valid state combination.
     if (
       isUncertain &&
       !shouldNextStateBeSingle &&
-      this.selectedCellStateIds.length === 1
+      this.getCheckedStateIds().length === 1
     ) {
       this.savingLabel.info('Not Saved')
       return
     }
 
-    // Assign the local variable here so that the instance variable can be reassigned and will not be
-    // affected by the later calls to setCellStates.
-    const selectedCellStateIds = this.selectedCellStateIds
     this.savingLabel.saving()
     this.cellStateSavingPromise = this.cellStateSavingPromise
-      .then(() =>
-        this.matrixModel.setCellStates(
+      .then(() => {
+        const cellStateIds =
+          shouldNextStateBeSingle || wasLastStateSingle
+            ? []
+            : this.getScoredCellStateIds()
+        if (enableScore) {
+          cellStateIds.push(stateId)
+        } else {
+          mb.remove(cellStateIds, stateId)
+        }
+
+        const options: { [key: string]: number } = {}
+        if (cellStateIds.length > 1 && isUncertain) {
+          options['uncertain'] = isUncertain
+        }
+
+        return this.matrixModel.setCellStates(
           [this.taxonId],
           [this.characterId],
-          selectedCellStateIds,
+          cellStateIds,
           options
         )
-      )
+      })
       .then(() => {
-        this.ensureAtLeastOneCheckboxIsChecked()
-        this.savingLabel.saved()
+        if (this.isInDocument()) {
+          this.ensureAtLeastOneCheckboxIsChecked()
+          this.savingLabel.saved()
+        }
       })
       .catch((e) => {
-        rollback()
-        checkbox.setChecked(!enableScore)
-        this.savingLabel.failed()
+        if (this.isInDocument()) {
+          rollback()
+          checkbox.setChecked(!enableScore)
+          this.savingLabel.failed()
+        }
         alert(e)
 
         // Return a resolved promise so that future successful calls will not
@@ -864,27 +803,35 @@ class ScoringPane extends BasePane {
   }
 
   /**
-   * @return Returns the selected cell state ids.
+   * @return The state ids for the cells within the Matrix Model.
    */
-  getSelectedCellStateIds(): (number | null)[] {
-    if (!this.selectedCellStateIds) {
-      const cells = this.matrixModel.getCells()
-      const cellStates = cells.getCell(this.taxonId, this.characterId)
-      this.selectedCellStateIds = []
-      for (let x = 0; x < cellStates.length; x++) {
-        const cellState = cellStates[x]
-        this.selectedCellStateIds.push(
-          cellState.isNPA() ? -1 : cellState.getStateId()
-        )
+  private getScoredCellStateIds(): number[] {
+    const cells = this.matrixModel.getCells()
+    const cellStates = cells.getCell(this.taxonId, this.characterId)
+    const cellStateIds = []
+    for (const cellState of cellStates) {
+      cellStateIds.push(cellState.isNPA() ? -1 : cellState.getStateId())
+    }
+    return cellStateIds
+  }
+
+  /**
+   * @Returns The state ids for the checkboxes that were checked.
+   */
+  private getCheckedStateIds(): number[] {
+    const stateIds = []
+    for (const checkbox of this.scoringCheckboxes) {
+      if (checkbox.isChecked()) {
+        stateIds.push(checkbox.getValue())
       }
     }
-    return this.selectedCellStateIds
+    return stateIds
   }
 
   /**
    * Update the polymorphic select based on the cell states.
    */
-  updatePolymorphicSelect() {
+  private updatePolymorphicSelect() {
     const cells = this.matrixModel.getCells()
     const cellStates = cells.getCell(this.taxonId, this.characterId)
     const uncertainIndex =
@@ -898,21 +845,24 @@ class ScoringPane extends BasePane {
    *
    * @param isChecked Whether the checkbox is currently selected.
    */
-  createCheckBox(isChecked: boolean): Checkbox {
-    const checkbox = new Checkbox(1)
+  private createCheckBox(stateId: number, isChecked: boolean): Checkbox {
+    const checkbox = new Checkbox(stateId)
     checkbox.setChecked(isChecked)
     checkbox.setEnabled(this.hasAccess)
     return checkbox
   }
 
   /**
-   * Uncheck all checkboxes
+   * Uncheck all checkboxes except the given stateId
    * @return The indices of the checkboxes which were previously checked.
    */
-  setUnCheckedAll(): number[] {
+  private setUnCheckedAll(stateId: number): number[] {
     const checkedIndices: number[] = []
     for (let x = 0; x < this.scoringCheckboxes.length; x++) {
       const checkbox = this.scoringCheckboxes[x]
+      if (checkbox.getValue() == stateId) {
+        continue
+      }
       if (checkbox.isChecked()) {
         checkedIndices.push(x)
       }
@@ -925,9 +875,9 @@ class ScoringPane extends BasePane {
    * Check the checkboxes in the indices.
    * @param indices the indices to check.
    */
-  setCheckedAll(indices: number[]) {
-    for (let x = 0; x < indices.length; x++) {
-      const checkbox = this.scoringCheckboxes[indices[x]]
+  private setCheckedAll(indices: number[]) {
+    for (const index of indices) {
+      const checkbox = this.scoringCheckboxes[index]
       checkbox.setChecked(true)
     }
   }
@@ -935,7 +885,7 @@ class ScoringPane extends BasePane {
   /**
    * Ensure that at least one checkbox is checked.
    */
-  ensureAtLeastOneCheckboxIsChecked() {
+  private ensureAtLeastOneCheckboxIsChecked() {
     // make sure that at least one checkbox is checked
     const checkBoxLength = this.scoringCheckboxes.length
     for (let x = 0; x < checkBoxLength; x++) {
@@ -947,6 +897,22 @@ class ScoringPane extends BasePane {
 
     // check the "?" checkbox which is the third to last one.
     this.scoringCheckboxes[checkBoxLength - 3].setChecked(true)
+  }
+
+  /**
+   * @return The HTML content of the scoring pane
+   */
+  private static htmlContent(): string {
+    return (
+      '<div class="scoringGrid"></div>' +
+      '<div class="scoringWarning"></div>' +
+      '<div class="polymorphicControl">' +
+      '<div class="field">Multistate Taxa</div>' +
+      '</div>' +
+      '<div class="statusControl">' +
+      '<div class="field">Status</div>' +
+      '</div>'
+    )
   }
 }
 
@@ -974,34 +940,7 @@ class ContinousDataPane extends BasePane {
     this.registerDisposable(this.statusSelect)
   }
 
-  /**
-   * @return The HTML content of the scoring pane
-   */
-  static htmlContent(character: Character): string {
-    const isContinuous = character.getType() === CharacterType.CONTINUOUS
-    let text = '<div class="scoringPane">'
-    if (isContinuous) {
-      text +=
-        '<div class="value-control">' +
-        '<div class="label">Start value: </div><input type="text" class="start-input" size="20"/>' +
-        '</div>' +
-        '<div class="value-control">' +
-        '<div class="label">End value: </div><input type="text" class="end-input" size="20"/>' +
-        '</div>'
-    } else {
-      text +=
-        '<div class="value-control">' +
-        '<div class="label">Value: </div><input type="text" class="start-input" size="20"/>' +
-        '</div>'
-    }
-    text +=
-      '<div class="statusControl">' +
-      '<div class="label">Status</div>' +
-      '</div></div>'
-    return text
-  }
-
-  override createDom() {
+  protected override createDom() {
     super.createDom()
     const element = this.getElement()
     const character = this.matrixModel.getCharacters().getById(this.characterId)
@@ -1036,7 +975,7 @@ class ContinousDataPane extends BasePane {
     }
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     const handler = this.getHandler()
     const startInputElement = this.getElementByClass('start-input')
@@ -1059,7 +998,7 @@ class ContinousDataPane extends BasePane {
   /**
    * Handles when the status select has been changed.
    */
-  handleStatusChange() {
+  private handleStatusChange() {
     const statusSelectValue = parseInt(
       this.statusSelect.getSelectedValue(),
       10
@@ -1084,7 +1023,7 @@ class ContinousDataPane extends BasePane {
   /**
    * Handles when the status select has been changed.
    */
-  handleValueChange() {
+  private handleValueChange() {
     const startInputElement =
       this.getElementByClass<HTMLInputElement>('start-input')
     const start = mb.isEmptyOrWhitespace(startInputElement.value)
@@ -1122,6 +1061,33 @@ class ContinousDataPane extends BasePane {
         alert(e)
       })
   }
+
+  /**
+   * @return The HTML content of the scoring pane
+   */
+  private static htmlContent(character: Character): string {
+    const isContinuous = character.getType() === CharacterType.CONTINUOUS
+    let text = '<div class="scoringPane">'
+    if (isContinuous) {
+      text +=
+        '<div class="value-control">' +
+        '<div class="label">Start value: </div><input type="text" class="start-input" size="20"/>' +
+        '</div>' +
+        '<div class="value-control">' +
+        '<div class="label">End value: </div><input type="text" class="end-input" size="20"/>' +
+        '</div>'
+    } else {
+      text +=
+        '<div class="value-control">' +
+        '<div class="label">Value: </div><input type="text" class="start-input" size="20"/>' +
+        '</div>'
+    }
+    text +=
+      '<div class="statusControl">' +
+      '<div class="label">Status</div>' +
+      '</div></div>'
+    return text
+  }
 }
 
 /**
@@ -1144,7 +1110,7 @@ class NotesPane extends BasePane {
     super(matrixModel, taxonId, characterId, hasAccess, savingLabel)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
 
     const cells = this.matrixModel.getCells()
@@ -1159,7 +1125,7 @@ class NotesPane extends BasePane {
     element.appendChild(notesElement)
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     const notesElement = this.getElementByClass('notesArea')
     this.getHandler()
@@ -1172,7 +1138,7 @@ class NotesPane extends BasePane {
   /**
    * Save the notes if they were changed.
    */
-  saveNotes() {
+  private saveNotes() {
     const notesElement =
       this.getElementByClass<HTMLTextAreaElement>('notesArea')
     const newNotes = notesElement.value
@@ -1199,7 +1165,7 @@ class NotesPane extends BasePane {
    *
    * @param e The event that triggerd this callback.
    */
-  protected onHandleKeyDown(e: Event) {
+  private onHandleKeyDown(e: Event) {
     // Don't propagate events and only stay in the text area.
     e.stopPropagation()
   }
@@ -1207,21 +1173,23 @@ class NotesPane extends BasePane {
 
 /**
  * Media pane
- *
- * @param matrixModel the data associated with the matrix. This includes characters, taxon, and cells.
- * @param taxonId the id of the taxon to render for this dialog
- * @param characterId the id of the character to render for this dialog
- * @param hasAccess Whether the user has access to the cell
- * @param savingLabel the saving label associated with this dialog
  */
 class MediaPane extends BasePane {
   /**
    * Key to use to store in the user settings storage.
    */
   protected static AUTO_OPEN_MEDIA_WINDOW: string = 'autoOpenMediaWindow'
+
   private mediaGrid: MediaGrid
   private openMediaCheckbox: Checkbox
 
+  /*
+   * @param matrixModel the data associated with the matrix. This includes characters, taxon, and cells.
+   * @param taxonId the id of the taxon to render for this dialog
+   * @param characterId the id of the character to render for this dialog
+   * @param hasAccess Whether the user has access to the cell
+   * @param savingLabel the saving label associated with this dialog
+   */
   constructor(
     matrixModel: MatrixModel,
     taxonId: number,
@@ -1237,7 +1205,7 @@ class MediaPane extends BasePane {
     this.registerDisposable(this.openMediaCheckbox)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
 
     const element = this.getElement()
@@ -1268,7 +1236,7 @@ class MediaPane extends BasePane {
     }
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     const addTaxonMediaElement = this.getElementByClass('addCellMedia')
     this.getHandler().listen(
@@ -1295,7 +1263,7 @@ class MediaPane extends BasePane {
    *
    * @param e The event that triggered this callback.
    */
-  protected removeMedia(e: CustomEvent) {
+  private removeMedia(e: CustomEvent) {
     const mediaId = parseInt(e.detail.item.id, 10)
     const cellInfo = this.matrixModel
       .getCells()
@@ -1321,7 +1289,7 @@ class MediaPane extends BasePane {
    * @param mediaId The id of the media to remove
    * @param shouldCopyCitations whether we should copy the media's citations
    */
-  protected removeCellMedia(mediaId: number, shouldCopyCitations: boolean) {
+  private removeCellMedia(mediaId: number, shouldCopyCitations: boolean) {
     this.savingLabel.saving()
     this.matrixModel
       .removeCellMedia(
@@ -1342,7 +1310,7 @@ class MediaPane extends BasePane {
   }
 
   /** Sets the media the in media grid */
-  setMediaInGrid() {
+  private setMediaInGrid() {
     this.mediaGrid.clear()
     const cellInfo = this.matrixModel
       .getCells()
@@ -1373,7 +1341,7 @@ class MediaPane extends BasePane {
    * Handles events when media are selected.
    * @param e The event that triggerd this callback.
    */
-  protected handleDoubleClickCellMedia(e: CustomEvent<MediaGridItemEvent>) {
+  private handleDoubleClickCellMedia(e: CustomEvent<MediaGridItemEvent>) {
     const item = e.detail.item
     const cellInfo = this.matrixModel
       .getCells()
@@ -1387,7 +1355,7 @@ class MediaPane extends BasePane {
   /**
    * Handles events when the open media automatically checkbox is changed.
    */
-  protected handleMediaCheckboxChange() {
+  private handleMediaCheckboxChange() {
     const isChecked = this.openMediaCheckbox.isChecked()
     const settingsStorage = this.matrixModel.getUserMatrixSettings()
     if (isChecked) {
@@ -1439,7 +1407,7 @@ class MediaPane extends BasePane {
   /**
    * @return The HTML content for the media pane
    */
-  static htmlContent(): string {
+  private static htmlContent(): string {
     return (
       '<span class="addCellMedia">+ Add new</span>' +
       '<span class="openMediaWindow">' +
@@ -1485,7 +1453,7 @@ class CitationsPane extends BasePane {
     this.registerDisposable(this.citationsGridTable)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
 
     const element = this.getElement()
@@ -1508,11 +1476,12 @@ class CitationsPane extends BasePane {
     this.loadCellCitations()
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     if (!this.hasAccess) {
       return
     }
+
     const addCitationElement = this.getElementByClass('addCitation')
     const addLastCitationElement = this.getElementByClass('addLastCitation')
     this.getHandler()
@@ -1535,7 +1504,7 @@ class CitationsPane extends BasePane {
   /**
    * @return an element which shows a loading indicator.
    */
-  getLoadingElement(): Element {
+  private getLoadingElement(): Element {
     const loadingElement = document.createElement('div')
     loadingElement.classList.add('loadingCitation')
     const messageElement = document.createElement('div')
@@ -1547,7 +1516,7 @@ class CitationsPane extends BasePane {
   /**
    * Loads the cell citations from the server
    */
-  loadCellCitations() {
+  private loadCellCitations() {
     const element = this.getElement()
     element.appendChild(this.loadingElement)
     this.matrixModel
@@ -1567,7 +1536,7 @@ class CitationsPane extends BasePane {
    * Handles events when citations are selected.
    * @param e The event that triggerd this callback.
    */
-  protected handleSelectCellCitation(e: CustomEvent) {
+  private handleSelectCellCitation(e: CustomEvent) {
     const id = parseInt(e.detail['id'], 10)
     const cellInfo = this.matrixModel
       .getCells()
@@ -1591,7 +1560,7 @@ class CitationsPane extends BasePane {
    * @param pages the pages that this citation refers to
    * @param notes the notes about this citation
    */
-  handleEditCellCitation(
+  private handleEditCellCitation(
     id: number,
     pages: string,
     notes: string
@@ -1637,7 +1606,7 @@ class CitationsPane extends BasePane {
    * @param pages the pages that this citation refers to
    * @param notes the notes about this citation
    */
-  handleAddCellCitation(
+  private handleAddCellCitation(
     citationId: number,
     pages: string,
     notes: string
@@ -1676,7 +1645,7 @@ class CitationsPane extends BasePane {
   /**
    * Adds the last citation used.
    */
-  handleAddLastCellCitationDialog() {
+  private handleAddLastCellCitationDialog() {
     const lastCitation = CitationsPane.lastInsertedCitation
     if (lastCitation) {
       this.handleAddCellCitation(
@@ -1690,7 +1659,7 @@ class CitationsPane extends BasePane {
   /**
    * Shows the add citation dialog
    */
-  handleShowAddCellCitationDialog() {
+  private handleShowAddCellCitationDialog() {
     const addCitationDialog = new AddCitationDialog(
       this.matrixModel,
       (citationId, pages, notes) =>
@@ -1703,7 +1672,7 @@ class CitationsPane extends BasePane {
    * Redraws the cell citations within the citation grid.
    * @param citations the citations that will be used to redraw the grid
    */
-  redrawCellCitations(citations: Citation[]) {
+  private redrawCellCitations(citations: Citation[]) {
     const rows: DataRow[] = []
     for (let x = 0; x < citations.length; x++) {
       const citation = citations[x]
@@ -1734,7 +1703,7 @@ class CitationsPane extends BasePane {
    * Handles events when citations are removed.
    * @param e The event that triggerd this callback.
    */
-  protected handleRemoveCellCitation(e: CustomEvent) {
+  private handleRemoveCellCitation(e: CustomEvent) {
     const id = parseInt(e.detail['id'], 10)
     this.savingLabel.saving()
     return this.matrixModel
@@ -1754,7 +1723,7 @@ class CitationsPane extends BasePane {
   /**
    * @return The HTML content for the citations pane
    */
-  static htmlContent(): string {
+  private static htmlContent(): string {
     return (
       '<span class="addCitation">+ Add new</span>' +
       '<span class="addLastCitation disabled">+ Add last citation used</span>' +
@@ -1789,7 +1758,7 @@ class CommentsPane extends BasePane {
     this.registerDisposable(this.commentsGridTable)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
 
     const element = this.getElement()
@@ -1811,7 +1780,7 @@ class CommentsPane extends BasePane {
     this.loadCellComments()
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     const addCommentElement = this.getElementByClass('addCellComment')
     if (this.hasAccess) {
@@ -1824,7 +1793,7 @@ class CommentsPane extends BasePane {
   /**
    * @return an element which shows a loading indicator.
    */
-  getLoadingElement(): Element {
+  private getLoadingElement(): Element {
     const loadingElement = document.createElement('div')
     loadingElement.classList.add('loadingComments')
     const messageElement = document.createElement('div')
@@ -1836,7 +1805,7 @@ class CommentsPane extends BasePane {
   /**
    * Loads the cell comments from the server
    */
-  loadCellComments() {
+  private loadCellComments() {
     const element = this.getElement()
     element.appendChild(this.loadingElement)
     this.matrixModel
@@ -1869,7 +1838,7 @@ class CommentsPane extends BasePane {
    * Adds a cell comment
    * @param comment the comment to add
    */
-  addCellComments(comment: string) {
+  private addCellComments(comment: string) {
     this.savingLabel.saving()
     return this.matrixModel
       .addCellComment(this.taxonId, this.characterId, comment)
@@ -1889,7 +1858,7 @@ class CommentsPane extends BasePane {
    * Redraws the cell citations within the comment grid.
    * @param comments the comments that will be used to redraw the grid
    */
-  redrawCellComments(comments: { [key: string]: any }[]) {
+  private redrawCellComments(comments: { [key: string]: any }[]) {
     // Ensure that the cell dialog is not disposed when attempting to redaw
     // the comments datagrid.
     if (this.isDisposed()) {
@@ -1911,7 +1880,7 @@ class CommentsPane extends BasePane {
   /**
    * Shows the comment dialog
    */
-  handleShowAddCellCommentDialog() {
+  private handleShowAddCellCommentDialog() {
     const commentDialog = new AddCommentDialog((comment) =>
       this.addCellComments(comment)
     )
@@ -1921,19 +1890,13 @@ class CommentsPane extends BasePane {
   /**
    * @return The HTML content for the comments pane
    */
-  static htmlContent(): string {
+  private static htmlContent(): string {
     return '<span class="addCellComment">+ Add new</span><div class="commentsPane"></div>'
   }
 }
 
 /**
  * Change log pane
- *
- * @param matrixModel the data associated with the matrix. This includes characters, taxon, and cells.
- * @param taxonId the id of the taxon to render for this dialog
- * @param characterId the id of the character to render for this dialog
- * @param hasAccess Whether the user has access to the cell
- * @param savingLabel the saving label associated with this dialog
  */
 class ChangelogPane extends BasePane {
   private loadingElement: Element
@@ -1952,7 +1915,7 @@ class ChangelogPane extends BasePane {
     this.registerDisposable(this.changelogGridTable)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
 
     const element = this.getElement()
@@ -1967,7 +1930,7 @@ class ChangelogPane extends BasePane {
   /**
    * @return an element which shows a loading indicator.
    */
-  getLoadingElement(): Element {
+  private getLoadingElement(): Element {
     const loadingElement = document.createElement('div')
     loadingElement.classList.add('loadingComments')
     const messageElement = document.createElement('div')
@@ -1979,7 +1942,7 @@ class ChangelogPane extends BasePane {
   /**
    * Loads the cell changes from the server
    */
-  loadCellChanges() {
+  private loadCellChanges() {
     const element = this.getElement()
     element.appendChild(this.loadingElement)
     this.matrixModel
@@ -1990,6 +1953,7 @@ class ChangelogPane extends BasePane {
         if (this.isDisposed()) {
           return
         }
+
         const rows: DataRow[] = []
         for (let x = 0; x < changes.length; x++) {
           const change = changes[x]
@@ -2005,4 +1969,8 @@ class ChangelogPane extends BasePane {
       .catch(() => alert('Failed to load cell changes'))
       .finally(() => element.removeChild(this.loadingElement))
   }
+}
+
+type CellDataGridModel = {
+  position: number
 }

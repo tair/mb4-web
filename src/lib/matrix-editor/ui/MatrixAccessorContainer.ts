@@ -142,11 +142,11 @@ export abstract class MatrixAccessorContainer extends Component {
       this.getElementByClass('mb-preferences-btn')
     const reloadButtonElement = this.getElementByClass('mb-reload-btn')
     this.getHandler()
-      .listen(this.highlightComboBox, [EventType.CHANGE], (e) =>
-        this.handleHighlightModeChange(e)
+      .listen(this.highlightComboBox, [EventType.CHANGE], () =>
+        this.handleHighlightModeChange()
       )
-      .listen(this.cellRenderersComboBox, [EventType.CHANGE], (e: Event) =>
-        this.handleCellModeChange(e)
+      .listen(this.cellRenderersComboBox, [EventType.CHANGE], () =>
+        this.handleCellModeChange()
       )
       .listen(charactersButtonElement, EventType.CLICK, () =>
         this.handleCharactersClick()
@@ -202,10 +202,9 @@ export abstract class MatrixAccessorContainer extends Component {
   /**
    * Handles when the highlight mode has changed.
    *
-   * @param e The event that triggerd this callback.
    * @return whether the handler handled this event.
    */
-  protected handleHighlightModeChange(e: Event): boolean {
+  protected handleHighlightModeChange(): boolean {
     const cellRender = this.matrixGrid.getCellRender()
     const highlightIndex = parseInt(
       this.highlightComboBox.getSelectedValue(),
@@ -221,10 +220,9 @@ export abstract class MatrixAccessorContainer extends Component {
   /**
    * Handles when the code mode has changed.
    *
-   * @param e The event that triggered this callback.
    * @return whether the handler handled this event.
    */
-  protected handleCellModeChange(e: Event): boolean {
+  protected handleCellModeChange(): boolean {
     let cellRender, characterRender, taxaRender
     const value = parseInt(this.cellRenderersComboBox.getSelectedValue(), 10)
     switch (value) {
