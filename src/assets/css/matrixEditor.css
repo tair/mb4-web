@@ -109,8 +109,9 @@ html, body {
 }
 
 .topButtonBar {
-  background-color: rgb(248, 249, 250);
-  height: 38px;
+  background-color: #edf2fa;
+  display: flex;
+  height: 30px;
   padding: 0;
   position: relative;
   z-index: 40;
@@ -121,7 +122,30 @@ html, body {
   margin-left: 5px;
 }
 
-matrixeditor {
+.topButtonBar select.form-select,
+.topButtonBar button.btn {
+  background-color: #edf2fa;
+  border: none;
+  color: #1c1c1c;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.topButtonBar select.form-select {
+  margin-left: 10px;
+}
+
+.topButtonBar select.form-select:hover,
+.topButtonBar button.btn:hover {
+  background-color: rgba(68, 70, 71, 0.08);
+}
+
+.topButtonBar select.form-select:focus {
+  border: none;
+  box-shadow: none;
+}
+
+.matrixeditor {
   user-select: none;
     -khtml-user-select: none;
     -ms-user-select: none;
@@ -623,17 +647,17 @@ ol.draggableSelect li.droppable {
   display: none;
   font: bold 12px arial, sans-serif;
   height: 20px;
-  margin: auto 0;
+  margin: auto 0 auto auto;
   padding: 0 20px
 }
 
 .savingLabel.show {
+  align-items: center;
   background-color: transparent;
   background-position: left center;
   background-repeat: no-repeat;
   display: flex;
   justify-content: center;
-  align-items: center;
 }
 
 .savingLabel.saving {

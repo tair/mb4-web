@@ -67,7 +67,7 @@ export class CharacterGrid extends Component {
     )
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
     const element = this.getElement()
     element.classList.add('characterGrid')
@@ -75,7 +75,7 @@ export class CharacterGrid extends Component {
     this.redraw()
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     const element = this.getElement()
     const handler = this.getHandler()

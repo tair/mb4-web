@@ -42,7 +42,7 @@ export class MatrixEditor extends AbstractMatrixAccessor {
     })
   }
 
-  override loadMatrixData(callback: () => void) {
+  protected override loadMatrixData(callback: () => void) {
     const request = new Request('getMatrixData').addParameter(
       'id',
       this.matrixId

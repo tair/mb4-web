@@ -102,6 +102,18 @@ export class CharacterTooltipManager {
     }
   }
 
+  /**
+   * Hides the tooltip for the character rules element.
+   *
+   * @param element The character to show the tooltip for
+   */
+  hideForCharacterRule(element: HTMLElement) {
+    const tooltip = bootstrap.Popover.getInstance(element)
+    if (tooltip) {
+      this.hideRulesTimeout = window.setTimeout(() => this.hide(tooltip), 750)
+    }
+  }
+
   hide(tooltip: bootstrap.Popover) {
     tooltip.hide()
   }

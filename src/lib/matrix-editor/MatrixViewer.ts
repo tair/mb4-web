@@ -36,7 +36,7 @@ export class MatrixViewer extends AbstractMatrixAccessor {
     })
   }
 
-  override loadMatrixData(callback: () => any) {
+  protected override loadMatrixData(callback: () => any) {
     const request = new Request('getMatrixData').addParameter(
       'id',
       this.matrixId

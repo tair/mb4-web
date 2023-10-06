@@ -18,14 +18,8 @@ import { OntologyDialog } from './dialogs/OntologyDialog'
 import * as mb from '../mb'
 
 /**
- * The UI of the character editor, which includes anything that is visible to the user.
- *
- * @param matrixId The current matrix
- * @param matrices The available matrices which we can switch to.
- * @param matrixModels the data associated with the matrix.
- *     This includes characters, taxon, and cells. Since this is only related to the charcter editor we only will
- *     use the characters.
- * @param matrixLoader The matrix loader
+ * The UI of the character editor, which includes anything that is visible to
+ * the user.
  */
 export class CharacterEditorContainer extends Component {
   /**
@@ -46,6 +40,14 @@ export class CharacterEditorContainer extends Component {
   private savingLabel: SavingLabel
   private characterGrid: CharacterGrid
 
+  /**
+   * @param matrixId The current matrix
+   * @param matrices The available matrices which we can switch to.
+   * @param matrixModels The data associated with the matrix. This includes
+   *     characters, taxon, and cells. Since this is only related to the charcter
+   *     editor we only will use the characters.
+   * @param matrixLoader The matrix loader
+   */
   constructor(
     matrixId: number,
     matrices: Matrix[],
@@ -67,7 +69,7 @@ export class CharacterEditorContainer extends Component {
     this.registerDisposable(this.savingLabel)
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
     const element = this.getElement()
     element.innerHTML = CharacterEditorContainer.htmlContent()
@@ -99,6 +101,9 @@ export class CharacterEditorContainer extends Component {
     })
     this.characterRenderersComboBox.render(dropdownElement)
 
+    const topButtonBar = this.getElementByClass('topButtonBar')
+    this.savingLabel.render(topButtonBar)
+
     const matrixPromise = this.matrixModels.get(this.matrixId)
     if (matrixPromise == null) {
       throw 'Failed to check matrix'
@@ -122,7 +127,7 @@ export class CharacterEditorContainer extends Component {
       .catch((e) => this.error(e))
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     const searchElement = this.getElementByClass('mb-search-btn')
     const orderingsElement = this.getElementByClass('mb-orderings-btn')
@@ -183,7 +188,7 @@ export class CharacterEditorContainer extends Component {
    * @param func The callback to invoke
    * @param e The event that triggered this callback
    */
-  protected onAfterMatrixLoad(
+  private onAfterMatrixLoad(
     func: (p1: MatrixModel, p2: Event) => any,
     e: Event
   ) {
@@ -200,7 +205,7 @@ export class CharacterEditorContainer extends Component {
   /**
    * Returns a promise of a matrix
    */
-  protected switchToMatrix(matrixId: number): Promise<MatrixModel> {
+  private switchToMatrix(matrixId: number): Promise<MatrixModel> {
     let matrixModelPromise = this.matrixModels.get(matrixId)
     this.matrixLoader.setMatrixId(matrixId)
     if (!matrixModelPromise) {
@@ -237,7 +242,7 @@ export class CharacterEditorContainer extends Component {
   /**
    * Returns the matrix associated with the matrix id
    */
-  getMatrix(matrixId: number): Matrix {
+  private getMatrix(matrixId: number): Matrix {
     for (let x = 0; x < this.matrices.length; x++) {
       const matrix = this.matrices[x]
       if (matrix.getId() === matrixId) {
@@ -251,7 +256,7 @@ export class CharacterEditorContainer extends Component {
    * Sets the matrixModel of the character grid
    * @param matrixModel the model of the matrix
    */
-  protected setMatrixModel(matrixModel: MatrixModel) {
+  private setMatrixModel(matrixModel: MatrixModel) {
     this.characterGrid.setMatrixModel(matrixModel)
     this.redraw()
   }
@@ -259,7 +264,7 @@ export class CharacterEditorContainer extends Component {
   /**
    * Redraws the character grid.
    */
-  redraw() {
+  private redraw() {
     this.characterGrid.redraw()
   }
 
@@ -267,14 +272,14 @@ export class CharacterEditorContainer extends Component {
    * Go to a particular character.
    * @param e event to go to a character
    */
-  goCharacterIndex(e: CustomEvent<GoToCharacterEvent>) {
+  private goCharacterIndex(e: CustomEvent<GoToCharacterEvent>) {
     this.characterGrid.goToCharacter(e.detail.characterIndex)
   }
 
   /**
    * Handles events from resizing the window.
    */
-  protected onHandleResize() {
+  private onHandleResize() {
     const topButtonBar = this.getElementByClass<HTMLElement>('topButtonBar')
     const remainingHeight =
       document.documentElement.clientHeight - topButtonBar.offsetHeight
@@ -285,7 +290,7 @@ export class CharacterEditorContainer extends Component {
   /**
    * Handles when the users clicks the add character link.
    */
-  protected onHandleAddCharacterClick(matrixModel: MatrixModel) {
+  private onHandleAddCharacterClick(matrixModel: MatrixModel) {
     const index = this.characterGrid.getSelectedIndex()
     const saveCallback = (name: string, index: number, charType: string) =>
       this.addCharacterToGrid(matrixModel, name, index, charType)
@@ -304,7 +309,7 @@ export class CharacterEditorContainer extends Component {
    * @param index The index to add the character to.
    * @param charType The type of character (e.g. continuous, discrete, meristic).
    */
-  protected addCharacterToGrid(
+  private addCharacterToGrid(
     matrixModel: MatrixModel,
     name: string,
     index: number,
@@ -326,7 +331,7 @@ export class CharacterEditorContainer extends Component {
   /**
    * Handles when the users clicks the delete character link.
    */
-  protected onHandleDeleteCharacterClick(matrixModel: MatrixModel) {
+  private onHandleDeleteCharacterClick(matrixModel: MatrixModel) {
     this.characterGrid.deleteSelectedIndices()
   }
 
@@ -334,7 +339,7 @@ export class CharacterEditorContainer extends Component {
    * Handles when the ontology button is clicked.
    * @return whether the handler handled this event.
    */
-  protected onHandleOntologyClick(matrixModel: MatrixModel): boolean {
+  private onHandleOntologyClick(matrixModel: MatrixModel): boolean {
     const ontologyDialog = new OntologyDialog(matrixModel)
     ontologyDialog.setDisposeOnHide(true)
     ontologyDialog.setVisible(true)
@@ -345,7 +350,7 @@ export class CharacterEditorContainer extends Component {
    * Handles when the ordering button is clicked.
    * @return whether the handler handled this event.
    */
-  protected onHandleOrderingClick(matrixModel: MatrixModel): boolean {
+  private onHandleOrderingClick(matrixModel: MatrixModel): boolean {
     const orderingDialog = new CharacterOrderingDialog(matrixModel)
     orderingDialog.setDisposeOnHide(true)
     orderingDialog.setVisible(true)
@@ -356,7 +361,7 @@ export class CharacterEditorContainer extends Component {
    * Handles when the search button is clicked.
    * @return whether the handler handled this event.
    */
-  protected onHandleSearchClick(matrixModel: MatrixModel): boolean {
+  private onHandleSearchClick(matrixModel: MatrixModel): boolean {
     const searchDialog = new CharacterSearchDialog(matrixModel)
     searchDialog.setDisposeOnHide(true)
     searchDialog.setVisible(true)
@@ -369,7 +374,7 @@ export class CharacterEditorContainer extends Component {
    *
    * @param e The event that triggerd this callback.
    */
-  onHandleWindowScroll(e: Event) {
+  private onHandleWindowScroll(e: Event) {
     e.stopPropagation()
     e.preventDefault()
     window.scrollTo(0, 0)
@@ -379,7 +384,7 @@ export class CharacterEditorContainer extends Component {
   /**
    * Handles events from changing the view mode of the character grid
    */
-  protected onHandleViewModeChange(matrixModel: MatrixModel) {
+  private onHandleViewModeChange(matrixModel: MatrixModel) {
     let characterRenderer
     switch (this.characterRenderersComboBox.getSelectedValue()) {
       case '1':
@@ -413,7 +418,7 @@ export class CharacterEditorContainer extends Component {
   /**
    * Character Editor HTML
    */
-  static htmlContent(): string {
+  private static htmlContent(): string {
     return `
     <div class="characterEditor">
       <div class="topButtonBar">

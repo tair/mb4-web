@@ -1,3 +1,4 @@
+import * as bootstrap from 'bootstrap'
 import { MatrixModel } from '../MatrixModel'
 import { MatrixAccessorContainer } from './MatrixAccessorContainer'
 import { MatrixGridHandler } from './MatrixGridHandler'
@@ -176,15 +177,27 @@ export class MatrixEditorContainer extends MatrixAccessorContainer {
         <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
           <button type="button" class="btn btn-primary mb-characters-btn">Characters</button>
           <button type="button" class="btn btn-primary mb-taxa-btn">Taxa</button>
-          <button type="button" class="btn btn-primary mb-search-btn">Search</button>
           <button type="button" class="btn btn-primary mb-batch-btn">Batch</button>
           <button type="button" class="btn btn-primary mb-partitions-btn">Partitions</button>
           <button type="button" class="btn btn-primary mb-rules-btn">Ontology</button>
-          <button type="button" class="btn btn-primary mb-goto-btn">Go To</button>
-          <button type="button" class="btn btn-primary mb-preferences-btn">Preferences</button>
-          <button type="button" class="btn btn-primary mb-warnings-btn icon">(!)</button>
-          <button type="button" class="btn btn-primary mb-rule-checker-btn icon">&#8730;</button>
-          <button type="button" class="btn btn-primary mb-reload-btn icon reload">&#10227;</button>
+          <button type="button" class="btn btn-primary mb-goto-btn">
+            <i class="fa-solid fa-circle-right"></i>
+          </button>
+          <button type="button" class="btn btn-primary mb-search-btn">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
+          <button type="button" class="btn btn-primary mb-warnings-btn icon">
+            <i class="fa-solid fa-circle-exclamation"></i>
+          </button>
+          <button type="button" class="btn btn-primary mb-rule-checker-btn icon">
+            <i class="fa-solid fa-square-root-variable"></i>
+          </button>
+          <button type="button" class="btn btn-primary mb-preferences-btn">
+            <i class="fa-solid fa-gear"></i>
+          </button>
+          <button type="button" class="btn btn-primary mb-reload-btn icon reload">
+            <i class="fa-solid fa-arrow-rotate-right"></i>
+          </button>
         </div>
       </div>
       <div class="mb-matrix-grid"></div>

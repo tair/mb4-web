@@ -51,10 +51,18 @@ export class MatrixViewerContainer extends MatrixAccessorContainer {
         <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
           <button type="button" class="btn btn-primary mb-characters-btn">Characters</button>
           <button type="button" class="btn btn-primary mb-rules-btn">Ontology</button>
-          <button type="button" class="btn btn-primary mb-search-btn">Search</button>
-          <button type="button" class="btn btn-primary mb-goto-btn">Go To</button>
-          <button type="button" class="btn btn-primary mb-preferences-btn">Preferences</button>
-          <button type="button" class="btn btn-primary mb-reload-btn">&#10227;</button>
+          <button type="button" class="btn btn-primary mb-search-btn">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
+          <button type="button" class="btn btn-primary mb-goto-btn">
+            <i class="fa-solid fa-circle-right"></i>
+          </button>
+          <button type="button" class="btn btn-primary mb-preferences-btn">
+            <i class="fa-solid fa-gear"></i>
+          </button>
+          <button type="button" class="btn btn-primary mb-reload-btn">
+            <i class="fa-solid fa-arrow-rotate-right"></i>
+          </button>
         </div>
       </div>
       <div class="mb-matrix-grid"></div>

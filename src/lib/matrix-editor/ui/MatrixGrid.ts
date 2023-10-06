@@ -650,7 +650,6 @@ export class MatrixGrid extends Component {
    */
   redrawScrollbars() {
     const scrollbarWidth = mb.getScrollbarWidth()
-    const scrollbarBorderSize = MatrixGrid.ROW_SPACING + 1
 
     /* scroll bar border */
     const gridTaxa = this.getElementByClass<HTMLElement>('gridTaxa')
@@ -662,12 +661,11 @@ export class MatrixGrid extends Component {
       this.windowDimensionWidth / charactersWidth
     )
     this.horizontalScrollBar.setScrollWidth(scrollbarWidth)
+
     const verticalScrollBarElement = this.verticalScrollBar.getElement()
-    const verticalScrollBarHeight =
-      this.windowDimensionHeight -
-      this.headerHeight -
-      scrollbarWidth -
-      scrollbarBorderSize
+    const verticalScrollBarHeight = Math.ceil(
+      this.windowDimensionHeight - this.headerHeight - scrollbarWidth
+    )
     mb.setElementStyle(
       verticalScrollBarElement,
       'top',
@@ -678,9 +676,9 @@ export class MatrixGrid extends Component {
       'height',
       verticalScrollBarHeight + 'px'
     )
+
     const horizontalScrollBarElement = this.horizontalScrollBar.getElement()
-    const horizontalScrollBarWidth =
-      this.windowDimensionWidth - scrollbarWidth - scrollbarBorderSize
+    const horizontalScrollBarWidth = this.windowDimensionWidth - scrollbarWidth
     mb.setElementStyle(
       horizontalScrollBarElement,
       'width',
@@ -699,6 +697,7 @@ export class MatrixGrid extends Component {
     this.horizontalScrollBar.setMaximum(
       Math.max(characters.length - onScreenCharacters, 0)
     )
+
     const taxa = this.matrixModel.getPartitionTaxa()
     const onScreenTaxa = Math.floor(verticalScrollBarHeight / this.rowHeight)
     this.verticalScrollBar.setMaximum(Math.max(taxa.length - onScreenTaxa, 0))
@@ -1193,7 +1192,7 @@ export class MatrixGrid extends Component {
     if (th && th.dataset['characterId']) {
       const isRule = element.classList.contains('characterModifier')
       if (isRule) {
-        this.characterTooltipManager.hideForCharacter(element)
+        this.characterTooltipManager.hideForCharacterRule(element)
       } else {
         if (element == th) {
           this.characterTooltipManager.hideForCharacter(th)

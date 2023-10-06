@@ -98,8 +98,9 @@ export class Scrollbar extends Component {
       : 'sliderHorizontal'
   }
 
-  override createDom() {
+  protected override createDom() {
     super.createDom()
+
     const element = document.createElement('div')
     element.className = Scrollbar.getCssClass(this.orientation)
     this.decorateInternal(element)
@@ -107,12 +108,15 @@ export class Scrollbar extends Component {
       this.orientation === Orientation.VERTICAL ? '\u25be' : '\u25b8'
     this.firstArrow.innerHTML = arrowSymbol
     this.secondArrow.innerHTML = arrowSymbol
+
     mb.setElementStyle(this.firstArrow, 'transform', 'rotate(180deg)')
     mb.setElementStyle(this.firstArrow, '-webkit-transform', 'rotate(180deg)')
     mb.setElementStyle(this.firstArrow, '-ms-transform', 'rotate(180deg)')
+
     this.firstArrow.classList.add('nonSelectable')
     this.secondArrow.classList.add('sliderArrowEnd')
     this.secondArrow.classList.add('nonSelectable')
+
     element.appendChild(this.valueThumb)
     element.appendChild(this.firstArrow)
     element.appendChild(this.secondArrow)
@@ -124,7 +128,7 @@ export class Scrollbar extends Component {
     element.classList.add(Scrollbar.getCssClass(this.orientation))
   }
 
-  override enterDocument() {
+  protected override enterDocument() {
     super.enterDocument()
     this.getHandler()
       .listen(this, EventType.CHANGE, () => this.handleRangeModelChange())

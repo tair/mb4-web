@@ -129,12 +129,14 @@ export abstract class AbstractMatrixAccessor {
    * An error has occurred while loading data
    * @param errors The list of errors
    */
-  protected setError(errors: any) {
+  protected setError(error: Error) {
     if (!this.matrixLoader.getIsAborted()) {
       this.matrixLoader.abort()
       this.loadingModal.close()
 
-      const messageBar = new MessageBar('Failed to load Matrix: ' + errors)
+      const messageBar = new MessageBar(
+        'Failed to load Matrix: ' + error.message || 'Unknown error'
+      )
       messageBar.render()
     }
   }
@@ -143,9 +145,10 @@ export abstract class AbstractMatrixAccessor {
    * An error has occurred while loading data
    * @param errors The list of errors
    */
-  protected setJavaScriptError(errors: any) {
-    const errorString = JSON.stringify(errors, ['message'])
+  protected setJavaScriptError(error: Error) {
+    this.setError(error)
+
+    const errorString = JSON.stringify(error, ['message'])
     this.matrixModel.sendError(errorString)
-    this.setError('Unknown error occurred with matrix editor')
   }
 }
