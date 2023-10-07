@@ -40,9 +40,6 @@ const matrixId = props.matrix.matrix_id
 const baseUrl = `${
   import.meta.env.VITE_API_URL
 }/projects/${projectId}/matrices/${matrixId}`
-const editorUrl = `${
-  import.meta.env.VITE_MATRIX_EDITOR_HOST
-}/projects/${projectId}/matrices/${matrixId}`
 
 async function onDownloadMatrix() {
   const url = new URL(`${baseUrl}/download`)
@@ -98,9 +95,12 @@ async function toggleMatrixStreaming() {
         >)
       </div>
       <div class="buttons">
-        <a :href="editorUrl + '/edit'" target="_blank"
-          ><button type="button" class="btn btn-sm btn-primary">Open</button></a
+        <RouterLink
+          :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/edit`"
+          target="_blank"
         >
+          <button type="button" class="btn btn-sm btn-primary">Open</button>
+        </RouterLink>
         <button
           v-if="canEditMatrix"
           type="button"
@@ -192,10 +192,14 @@ async function toggleMatrixStreaming() {
           {{ matrix.counts.media_label ?? 0 }} labels attached to cell images;
           {{ matrix.counts.character_media ?? 0 }} character images;
         </div>
-
-        <button type="button" class="btn btn-sm btn-secondary">
-          Edit Characters
-        </button>
+        <RouterLink
+          :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/characters`"
+          target="_blank"
+        >
+          <button type="button" class="btn btn-sm btn-secondary">
+            Edit Characters
+          </button>
+        </RouterLink>
       </div>
       <div
         class="tab-pane fade"

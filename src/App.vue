@@ -1,6 +1,4 @@
 <script setup>
-import Header from '@/components/main/Header.vue'
-import Footer from '@/components/main/Footer.vue'
 import { RouterView } from 'vue-router'
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/AuthStore.js'
@@ -11,15 +9,7 @@ onMounted(() => {
 })
 </script>
 <template>
-  <Header> </Header>
-
-  <main class="flex-shrink-0">
-    <div class="container">
-      <RouterView></RouterView>
-    </div>
-  </main>
-
-  <Footer></Footer>
+  <RouterView></RouterView>
 </template>
 <style>
 html,

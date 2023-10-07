@@ -16,6 +16,7 @@
     "axios": "^0.26.1",
     "bootstrap": "^5.3.2",
     "bootstrap-icons": "^1.10.5",
+    "d3": "^7.8.5",
     "eslint": "^8.14.0",
     "pinia": "^2.0.13",
     "tippy.js": "^6.3.7",
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "@iconify/vue": "^4.1.0",
+    "@types/d3": "^7.4.1",
     "@vitejs/plugin-vue": "^2.3.1",
     "@vue/vue3-jest": "^29.2.2",
     "jest": "^29.4.1",

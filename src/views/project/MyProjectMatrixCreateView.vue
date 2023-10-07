@@ -119,7 +119,7 @@ function saveEditedTaxon() {
 }
 
 async function importMatrix(event) {
-  const parser = await import('@/lib/matrix-parser/index.ts')
+  const parser = await import('@/lib/matrix-parser/parseMatrix.ts')
   const files = event.target?.files
   if (files == null || files.length == 0) {
     return
@@ -129,7 +129,7 @@ async function importMatrix(event) {
   const reader = new FileReader()
 
   reader.onload = function () {
-    Object.assign(importedMatrix, parser.parseMatrixFile(reader.result))
+    Object.assign(importedMatrix, parser.parseMatrix(reader.result))
   }
 
   reader.onerror = function () {

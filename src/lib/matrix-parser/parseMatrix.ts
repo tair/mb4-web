@@ -2,7 +2,7 @@ import { ParserFactory } from './ParserFactory'
 import type { MatrixObject } from './MatrixObject'
 import { validate } from './MatrixValidator'
 
-function parseMatrixFile(file: string): MatrixObject | null {
+export function parseMatrix(file: string): MatrixObject | null {
   const parserFactory = new ParserFactory()
   const parser = parserFactory.getParserForFile(file)
   if (parser == null) {
@@ -14,5 +14,3 @@ function parseMatrixFile(file: string): MatrixObject | null {
 
   return matrixObject
 }
-
-export { parseMatrixFile }
