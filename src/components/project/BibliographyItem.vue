@@ -1,31 +1,22 @@
 <script setup lang="ts">
-const props = defineProps<{
+defineProps<{
   bibliography: any
 }>()
 
-function getText(bibliography: any) {
+function getAuthorAndTitle(bibliography: any) {
   const articleTitle = bibliography.article_title
     ? bibliography.article_title.trim()
     : ''
-  const journalTitle = bibliography.journal_title
-    ? bibliography.journal_title.trim()
-    : ''
-
   const publicationYear = bibliography.pubyear
-  const publisher = bibliography.title ? bibliography.publisher.trim() : ''
-  const placeOfPublication = bibliography.place_of_publication
-    ? bibliography.place_of_publication.trim()
-    : ''
-  const volume = bibliography.vol ? bibliography.vol.trim() : ''
-  const number = bibliography.num ? bibliography.num.trim() : ''
-  const section = bibliography.sect ? bibliography.sect.trim() : ''
-  const edition = bibliography.edition ? bibliography.edition.trim() : ''
-  const collation = bibliography.collation ? bibliography.collation.trim() : ''
-  const referenceType = bibliography.reference_type
-    ? parseInt(bibliography.reference_type)
-    : ''
-  const authorNames = bibliography.authors + bibliography.secondary_authors
-  const editorNames = bibliography.editors
+
+  const authors = []
+  if (bibliography.authors) {
+    authors.push(...bibliography.authors)
+  }
+  if (bibliography.secondary_authors) {
+    authors.push(...bibliography.secondary_authors)
+  }
+  const authorNames = formatAuthors(authors)
 
   let citation = ''
 
@@ -53,18 +44,23 @@ function getText(bibliography: any) {
     citation += '.'
   }
 
-  if (journalTitle) {
-    citation += ' '
-    citation +=
-      referenceType == 5 || referenceType == 3 || referenceType == 5
-        ? 'In '
-        : ''
-    citation += journalTitle
-  }
+  return citation.trim()
+}
 
-  if (!citation.endsWith('.')) {
-    citation += '.'
-  }
+function getSections(bibliography: any) {
+  const publisher = bibliography.title ? bibliography.publisher.trim() : ''
+  const placeOfPublication = bibliography.place_of_publication
+    ? bibliography.place_of_publication.trim()
+    : ''
+  const volume = bibliography.vol ? bibliography.vol.trim() : ''
+  const number = bibliography.num ? bibliography.num.trim() : ''
+  const section = bibliography.sect ? bibliography.sect.trim() : ''
+  const edition = bibliography.edition ? bibliography.edition.trim() : ''
+  const collation = bibliography.collation ? bibliography.collation.trim() : ''
+
+  const editorNames = bibliography.editors ? formatAuthors(bibliography.editors) : ''
+
+  let citation = ' '
 
   if (volume) {
     citation += ' Vol. ' + volume
@@ -108,9 +104,66 @@ function getText(bibliography: any) {
     }
   }
 
-  return citation.trim()
+  return citation
 }
+
+function getTitle(bibliography: any) {
+  const journalTitle = bibliography.journal_title
+    ? bibliography.journal_title.trim()
+    : ''
+  const referenceType = bibliography.reference_type
+    ? parseInt(bibliography.reference_type)
+    : ''
+
+  let citation = ' '
+  if (journalTitle) {
+    citation += ' '
+    citation +=
+      referenceType == 5 || referenceType == 3 || referenceType == 5
+        ? 'In '
+        : ''
+    citation += journalTitle
+    if (!citation.endsWith('.')) {
+      citation += '.'
+    }
+  }
+  return citation
+}
+
+function formatAuthors(authors: {[key: string]: string}[]) {
+  const names = []
+  for (const author of authors) {
+    const name = []
+    if (author.surname) {
+      name.push(author.surname)
+    }
+    if (author.forename || author.middlename) {
+      const startNames = []
+      if (author.forename) {
+        startNames.push(author.forename.length == 1 ? author.forename + '.' : author.forename)
+      }
+      if (author.middlename) {
+        startNames.push(author.middlename.length == 1 ? author.middlename + '.' : author.middlename)
+      }
+      name.push(startNames.join(' '))
+    }
+
+    names.push(name.join(', '))
+  }
+
+  const lastAuthorName = names.pop()
+  let authorNames = names.join(', ')
+  if (names.length) {
+    return authorNames + ' and ' + lastAuthorName
+  }
+  return lastAuthorName
+}
+
 </script>
 <template>
-  <span> {{ getText(bibliography) }} </span>
+  <span>
+    <span>{{ getAuthorAndTitle(bibliography) }}</span>
+    <em>{{ getTitle(bibliography) }}</em>
+    <span>{{ getSections(bibliography) }}</span>
+  </span>
 </template>

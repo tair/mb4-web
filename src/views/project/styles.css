@@ -18,7 +18,21 @@
 
 .alphabet-bar span {
   font-weight: bold;
-  padding-left: 3px;
+  padding-left: 5px;
+}
+
+.alphabet-bar span:hover {
+  color:rgb(238, 122, 25);
+  cursor: pointer;
+}
+
+.alphabet-bar span.selected {
+  color: gray;
+}
+
+.alphabet-bar span.separator {
+  color: inherit !important;
+  vertical-align: text-bottom;
 }
 
 .selection-bar {
@@ -29,7 +43,7 @@
 
 .selection-bar .item {
   padding: 5px 10px;
-  margin: 3px; 
+  margin: 3px;
 }
 
 .selection-bar .item:hover {
@@ -45,14 +59,18 @@
 
 .list-group-item-content {
   display: flex;
+  gap: 15px;
 }
 
 .list-group-item-name {
   display: flex;
   flex-grow: 1;
+  margin-left: 15px;
+  text-indent: -15px;
 }
 
 .list-group-item-buttons {
+  align-items: baseline;
   display: flex;
   gap: 7px;
 }

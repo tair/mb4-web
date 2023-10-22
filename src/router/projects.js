@@ -1,3 +1,4 @@
+import MyProjectBibliographyEditView from '@/views/project/MyProjectBibliographyEditView.vue'
 import MyProjectBibliographyView from '@/views/project/MyProjectBibliographyView.vue'
 import MyProjectDocumentCreateView from '@/views/project/MyProjectDocumentCreateView.vue'
 import MyProjectDocumentEditView from '@/views/project/MyProjectDocumentEditView.vue'
@@ -68,6 +69,11 @@ export const MY_PROJECT_VIEWS = [
     path: ':id/bibliography',
     name: 'MyProjectBibliographyView',
     component: MyProjectBibliographyView,
+  },
+  {
+    path: ':id/bibliography/:referenceId/edit',
+    name: 'MyProjectBibliographyEditView',
+    component: MyProjectBibliographyEditView,
   },
   {
     path: ':id/documents',
