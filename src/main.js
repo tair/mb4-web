@@ -31,15 +31,3 @@ app.use(VueTippy, {
 })
 
 app.mount('#app')
-
-app.directive('tooltip', (el, binding) => {
-  const tooltip = new bootstrap.Tooltip(el, {
-    title: binding.value,
-    placement: binding.arg,
-    trigger: 'hover',
-    delay: { show: 300, hide: 150 },
-  })
-  el.addEventListener('click', () => {
-    tooltip.hide()
-  })
-})
