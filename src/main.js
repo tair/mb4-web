@@ -1,6 +1,5 @@
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap/dist/js/bootstrap.js'
-import * as bootstrap from 'bootstrap'
 
 import '@fortawesome/fontawesome-free/css/all.min.css'
 import '@fortawesome/fontawesome-free/js/all.min.js'
@@ -32,15 +31,3 @@ app.use(VueTippy, {
 })
 
 app.mount('#app')
-
-app.directive('tooltip', (el, binding) => {
-  const tooltip = new bootstrap.Tooltip(el, {
-    title: binding.value,
-    placement: binding.arg,
-    trigger: 'hover',
-    delay: { show: 300, hide: 150 },
-  })
-  el.addEventListener('click', () => {
-    tooltip.hide()
-  })
-})

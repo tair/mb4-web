@@ -1,5 +1,3 @@
-import MyProjectBibliographyEditView from '@/views/project/MyProjectBibliographyEditView.vue'
-import MyProjectBibliographyView from '@/views/project/MyProjectBibliographyView.vue'
 import MyProjectDocumentCreateView from '@/views/project/MyProjectDocumentCreateView.vue'
 import MyProjectDocumentEditView from '@/views/project/MyProjectDocumentEditView.vue'
 import MyProjectDocumentFolderCreateView from '@/views/project/MyProjectDocumentFolderCreateView.vue'
@@ -67,13 +65,18 @@ export const MY_PROJECT_VIEWS = [
   },
   {
     path: ':id/bibliography',
-    name: 'MyProjectBibliographyView',
-    component: MyProjectBibliographyView,
+    name: 'MyProjectBibliographyListView',
+    component: () => import('@/views/project/bibliographies/ListView.vue'),
+  },
+  {
+    path: ':id/bibliography/create',
+    name: 'MyProjectBibliographyCreateView',
+    component: () => import('@/views/project/bibliographies/CreateView.vue'),
   },
   {
     path: ':id/bibliography/:referenceId/edit',
     name: 'MyProjectBibliographyEditView',
-    component: MyProjectBibliographyEditView,
+    component: () => import('@/views/project/bibliographies/EditView.vue'),
   },
   {
     path: ':id/documents',

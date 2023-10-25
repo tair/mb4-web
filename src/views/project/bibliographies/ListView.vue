@@ -36,22 +36,20 @@ function refresh() {
 }
 
 function setPage(event) {
-  const text = event.target.textContent;
+  const text = event.target.textContent
   if (text == 'ALL') {
     bibliographiesStore.clearFilters()
   } else {
     bibliographiesStore.filterByLetter(text)
   }
-
 }
 
 async function deleteBibliographies(referenceIds) {
   const deleted = bibliographiesStore.deleteIds(projectId, referenceIds)
   if (!deleted) {
-    alert("Failed to delete bibliographies")
+    alert('Failed to delete bibliographies')
   }
 }
-
 </script>
 
 <template>
@@ -89,10 +87,7 @@ async function deleteBibliographies(referenceIds) {
           <span> Export </span>
         </button>
         <div class="dropdown-menu">
-          <button
-            type="button"
-            class="dropdown-item"
-          >
+          <button type="button" class="dropdown-item">
             Endnote tab-delimited File
           </button>
         </div>
@@ -102,28 +97,45 @@ async function deleteBibliographies(referenceIds) {
       <div class="alphabet-bar">
         Display bibliographic references beginning with:
         <template v-for="letter in bibliographiesStore.letters">
-          <span :class="{ 'selected': bibliographiesStore.selectedLetter == letter }" @click="setPage" >{{ letter }}</span>
+          <span
+            :class="{ selected: bibliographiesStore.selectedLetter == letter }"
+            @click="setPage"
+            >{{ letter }}</span
+          >
         </template>
         <span class="separator">|</span>
-        <span @click="setPage" :class="{ 'selected': bibliographiesStore.selectedLetter == null }">ALL</span>
+        <span
+          @click="setPage"
+          :class="{ selected: bibliographiesStore.selectedLetter == null }"
+          >ALL</span
+        >
       </div>
       <div class="selection-bar">
-        <label class="item" v-tooltip:bottom="'Select'">
-          <input type="checkbox" class="form-check-input" v-model="allSelected" />
+        <label class="item">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            v-model="allSelected"
+          />
         </label>
-        <span v-if="!someSelected" class="item" v-tooltip:bottom="'Refresh'" @click="refresh">
+        <span v-if="!someSelected" class="item" @click="refresh">
           <i class="bi bi-arrow-clockwise fa-m"></i>
         </span>
-        <span v-if="someSelected" class="item" v-tooltip:bottom="'Edit'">
+        <span v-if="someSelected" class="item">
           <i class="bi bi-pencil-square fa-m"></i>
         </span>
         <span
           v-if="someSelected"
           class="item"
-          v-tooltip:bottom="'Delete'"
           data-bs-toggle="modal"
           data-bs-target="#bibliographyDeleteModal"
-          @click="bibliographiesToDelete = bibliographiesStore.filteredBibliographies.filter((b) => b.selected)">
+          @click="
+            bibliographiesToDelete =
+              bibliographiesStore.filteredBibliographies.filter(
+                (b) => b.selected
+              )
+          "
+        >
           <i class="bi bi-trash fa-m"></i>
         </span>
       </div>
@@ -193,7 +205,11 @@ async function deleteBibliographies(referenceIds) {
               type="button"
               class="btn btn-primary"
               data-bs-dismiss="modal"
-              @click="deleteBibliographies(bibliographiesToDelete.map(b => b.reference_id))"
+              @click="
+                deleteBibliographies(
+                  bibliographiesToDelete.map((b) => b.reference_id)
+                )
+              "
             >
               Delete
             </button>
@@ -204,5 +220,5 @@ async function deleteBibliographies(referenceIds) {
   </ProjectContainerComp>
 </template>
 <style scoped>
-@import 'styles.css';
+@import '../styles.css';
 </style>

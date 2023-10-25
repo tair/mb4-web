@@ -26,30 +26,32 @@ export const useBibliographiesStore = defineStore({
       return [...letters].sort()
     },
     filteredBibliographies() {
-      return this.filters.reduce(
-        (bibliographies, filter) => bibliographies.filter(filter),
-        this.bibliographies
-      ).sort((a, b) => {
-        if (a.authors && b.authors) {
-          const length = Math.min(a.authors.length, b.authors.length)
-          for (let x = 0; x < length; ++x) {
-            const surnameA = a.authors[x].surname
-            if (!surnameA) {
-              return -1
-            }
+      return this.filters
+        .reduce(
+          (bibliographies, filter) => bibliographies.filter(filter),
+          this.bibliographies
+        )
+        .sort((a, b) => {
+          if (a.authors && b.authors) {
+            const length = Math.min(a.authors.length, b.authors.length)
+            for (let x = 0; x < length; ++x) {
+              const surnameA = a.authors[x].surname
+              if (!surnameA) {
+                return -1
+              }
 
-            const surnameB = b.authors[x].surname
-            if (!surnameB) {
-              return -1
-            }
+              const surnameB = b.authors[x].surname
+              if (!surnameB) {
+                return -1
+              }
 
-            const compare = surnameA.localeCompare(surnameB)
-            if (compare) {
-              return compare
+              const compare = surnameA.localeCompare(surnameB)
+              if (compare) {
+                return compare
+              }
             }
           }
-        }
-      })
+        })
     },
   },
   actions: {
@@ -74,24 +76,69 @@ export const useBibliographiesStore = defineStore({
       }
       return false
     },
+    async create(projectId, reference) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/bibliography/create`
+      const response = await axios.post(url, reference)
+      if (response.status == 200) {
+        const bibliography = response.data.bibliography
+        this.bibliographies.push(bibliography)
+        return true
+      }
+      return false
+    },
+    async edit(projectId, referenceId, reference) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/bibliography/${referenceId}/edit`
+      const response = await axios.post(url, reference)
+      if (response.status == 200) {
+        const bibliography = response.data.bibliography
+        this.removeByReferenceIds([bibliography.reference_id])
+        this.bibliographies.push(bibliography)
+        return true
+      }
+      return false
+    },
+    async batchEdit(projectId, referenceIds, changes) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/bibliography/edit`
+      const response = await axios.post(url, {
+        referenceIds: referenceIds,
+        changes: changes,
+      })
+      if (response.status == 200) {
+        const bibliographies = response.data.bibliographies
+        this.removeByReferenceIds(referenceIds)
+        this.bibliographies.push(...bibliographies)
+        return true
+      }
+      return false
+    },
     clearFilters() {
       this.selectedLetter = null
       this.filters = []
     },
     filterByLetter(letter) {
       this.selectedLetter = letter
-      this.filters = [(bibliography) => {
-        if (bibliography.authors && bibliography.authors.length > 0) {
-          const author = bibliography.authors[0]
-          if (author.surname) {
-            const firstLetter = author.surname[0]
-            return firstLetter == letter
+      this.filters = [
+        (bibliography) => {
+          if (bibliography.authors && bibliography.authors.length > 0) {
+            const author = bibliography.authors[0]
+            if (author.surname) {
+              const firstLetter = author.surname[0]
+              return firstLetter == letter
+            }
           }
-        }
-        return false
-      }]
+          return false
+        },
+      ]
     },
     removeByReferenceIds(referenceIds) {
+      debugger
+
       let x = 0
       while (x < this.bibliographies.length) {
         if (referenceIds.includes(this.bibliographies[x].reference_id)) {
@@ -115,3 +162,5 @@ export const useBibliographiesStore = defineStore({
     },
   },
 })
+
+function getUrl() {}

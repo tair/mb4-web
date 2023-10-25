@@ -58,9 +58,11 @@ function getSections(bibliography: any) {
   const edition = bibliography.edition ? bibliography.edition.trim() : ''
   const collation = bibliography.collation ? bibliography.collation.trim() : ''
 
-  const editorNames = bibliography.editors ? formatAuthors(bibliography.editors) : ''
+  const editorNames = bibliography.editors
+    ? formatAuthors(bibliography.editors)
+    : ''
 
-  let citation = ' '
+  let citation = ''
 
   if (volume) {
     citation += ' Vol. ' + volume
@@ -79,7 +81,7 @@ function getSections(bibliography: any) {
   if (editorNames) {
     citation += (collation ? ', ' : ' in ') + editorNames + ' ed'
   }
-  if (!citation.endsWith('.')) {
+  if (citation.length > 0 && citation.endsWith('.')) {
     citation += '.'
   }
 
@@ -115,7 +117,7 @@ function getTitle(bibliography: any) {
     ? parseInt(bibliography.reference_type)
     : ''
 
-  let citation = ' '
+  let citation = ''
   if (journalTitle) {
     citation += ' '
     citation +=
@@ -130,7 +132,7 @@ function getTitle(bibliography: any) {
   return citation
 }
 
-function formatAuthors(authors: {[key: string]: string}[]) {
+function formatAuthors(authors: { [key: string]: string }[]) {
   const names = []
   for (const author of authors) {
     const name = []
@@ -140,10 +142,16 @@ function formatAuthors(authors: {[key: string]: string}[]) {
     if (author.forename || author.middlename) {
       const startNames = []
       if (author.forename) {
-        startNames.push(author.forename.length == 1 ? author.forename + '.' : author.forename)
+        startNames.push(
+          author.forename.length == 1 ? author.forename + '.' : author.forename
+        )
       }
       if (author.middlename) {
-        startNames.push(author.middlename.length == 1 ? author.middlename + '.' : author.middlename)
+        startNames.push(
+          author.middlename.length == 1
+            ? author.middlename + '.'
+            : author.middlename
+        )
       }
       name.push(startNames.join(' '))
     }
@@ -158,7 +166,6 @@ function formatAuthors(authors: {[key: string]: string}[]) {
   }
   return lastAuthorName
 }
-
 </script>
 <template>
   <span>
