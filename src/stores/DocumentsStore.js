@@ -5,8 +5,8 @@ export const useDocumentsStore = defineStore({
   id: 'documents',
   state: () => ({
     isLoaded: false,
-    documents: null,
-    folders: null,
+    documents: [],
+    folders: [],
   }),
   getters: {
     uncategorizedDocuments() {
@@ -66,8 +66,8 @@ export const useDocumentsStore = defineStore({
       return null
     },
     invalidate() {
-      this.documents = null
-      this.folders = null
+      this.documents = []
+      this.folders = []
       this.isLoaded = false
     },
   },

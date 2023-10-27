@@ -1,14 +1,8 @@
-import MyProjectDocumentCreateView from '@/views/project/MyProjectDocumentCreateView.vue'
-import MyProjectDocumentEditView from '@/views/project/MyProjectDocumentEditView.vue'
-import MyProjectDocumentFolderCreateView from '@/views/project/MyProjectDocumentFolderCreateView.vue'
-import MyProjectDocumentFolderEditView from '@/views/project/MyProjectDocumentFolderEditView.vue'
-import MyProjectDocumentsView from '@/views/project/MyProjectDocumentsView.vue'
 import MyProjectHomeView from '@/views/project/MyProjectHomeView.vue'
 import MyProjectMatrixChooseView from '@/views/project/MyProjectMatrixChooseView.vue'
 import MyProjectMatrixCreateView from '@/views/project/MyProjectMatrixCreateView.vue'
 import MyProjectMatrixView from '@/views/project/MyProjectMatrixView.vue'
 import MyProjectMediaView from '@/views/project/MyProjectMediaView.vue'
-import MyProjectMediaViewsView from '@/views/project/MyProjectMediaViewsView.vue'
 import MyProjectOverView from '@/views/project/MyProjectOverView.vue'
 import MyProjectSpecimensView from '@/views/project/MyProjectSpecimensView.vue'
 import MyProjectTaxaView from '@/views/project/MyProjectTaxaView.vue'
@@ -51,7 +45,17 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/views',
     name: 'MyProjectMediaViewsView',
-    component: MyProjectMediaViewsView,
+    component: () => import('@/views/project/views/ListView.vue'),
+  },
+  {
+    path: ':id/views/create',
+    name: 'MyProjectMediaViewsCreateView',
+    component: () => import('@/views/project/views/CreateView.vue'),
+  },
+  {
+    path: ':id/views/:viewId/edit',
+    name: 'MyProjectMediaViewEditView',
+    component: () => import('@/views/project/views/EditView.vue'),
   },
   {
     path: ':id/specimens',
@@ -81,26 +85,26 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/documents',
     name: 'MyProjectDocumentsView',
-    component: MyProjectDocumentsView,
+    component: () => import('@/views/project/documents/ListView.vue'),
   },
   {
     path: ':id/documents/create',
     name: 'MyProjectDocumentCreateView',
-    component: MyProjectDocumentCreateView,
+    component: () => import('@/views/project/documents/CreateView.vue'),
   },
   {
     path: ':id/documents/:documentId/edit',
     name: 'MyProjectDocumentEditView',
-    component: MyProjectDocumentEditView,
+    component: () => import('@/views/project/documents/EditView.vue'),
   },
   {
     path: ':id/documents/folders/create',
     name: 'MyProjectDocumentFolderCreateView',
-    component: MyProjectDocumentFolderCreateView,
+    component: () => import('@/views/project/documents/FolderCreateView.vue'),
   },
   {
     path: ':id/documents/folders/:folderId/edit',
     name: 'MyProjectDocumentFolderEditView',
-    component: MyProjectDocumentFolderEditView,
+    component: () => import('@/views/project/documents/FolderEditView.vue'),
   },
 ]
