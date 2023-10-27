@@ -3,7 +3,6 @@ import MyProjectMatrixChooseView from '@/views/project/MyProjectMatrixChooseView
 import MyProjectMatrixCreateView from '@/views/project/MyProjectMatrixCreateView.vue'
 import MyProjectMatrixView from '@/views/project/MyProjectMatrixView.vue'
 import MyProjectMediaView from '@/views/project/MyProjectMediaView.vue'
-import MyProjectMediaViewsView from '@/views/project/MyProjectMediaViewsView.vue'
 import MyProjectOverView from '@/views/project/MyProjectOverView.vue'
 import MyProjectSpecimensView from '@/views/project/MyProjectSpecimensView.vue'
 import MyProjectTaxaView from '@/views/project/MyProjectTaxaView.vue'
@@ -46,7 +45,17 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/views',
     name: 'MyProjectMediaViewsView',
-    component: MyProjectMediaViewsView,
+    component: () => import('@/views/project/views/ListView.vue'),
+  },
+  {
+    path: ':id/views/create',
+    name: 'MyProjectMediaViewsCreateView',
+    component: () => import('@/views/project/views/CreateView.vue'),
+  },
+  {
+    path: ':id/views/:viewId/edit',
+    name: 'MyProjectMediaViewEditView',
+    component: () => import('@/views/project/views/EditView.vue'),
   },
   {
     path: ':id/specimens',

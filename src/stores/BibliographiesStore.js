@@ -141,8 +141,9 @@ export const useBibliographiesStore = defineStore({
       while (x < this.bibliographies.length) {
         if (referenceIds.includes(this.bibliographies[x].reference_id)) {
           this.bibliographies.splice(x, 1)
+        } else {
+          ++x
         }
-        ++x
       }
     },
     getReferenceById(referenceId) {
@@ -160,5 +161,3 @@ export const useBibliographiesStore = defineStore({
     },
   },
 })
-
-function getUrl() {}
