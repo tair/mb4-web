@@ -137,8 +137,6 @@ export const useBibliographiesStore = defineStore({
       ]
     },
     removeByReferenceIds(referenceIds) {
-      debugger
-
       let x = 0
       while (x < this.bibliographies.length) {
         if (referenceIds.includes(this.bibliographies[x].reference_id)) {
