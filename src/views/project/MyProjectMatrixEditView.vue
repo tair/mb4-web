@@ -1,4 +1,4 @@
-<script setup="ts">
+<script setup>
 import { useRoute } from 'vue-router'
 import { onMounted, onUnmounted } from 'vue'
 import startMatrixEditor from '@/lib/matrix-editor/startMatrixEditor'

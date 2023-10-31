@@ -1,4 +1,4 @@
-<script setup="ts">
+<script setup>
 import { useRoute } from 'vue-router'
 import startCharacterEditor from '@/lib/matrix-editor/startCharacterEditor'
 import '@/assets/css/matrixEditor.css'

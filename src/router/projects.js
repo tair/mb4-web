@@ -5,7 +5,6 @@ import MyProjectMatrixView from '@/views/project/MyProjectMatrixView.vue'
 import MyProjectMediaView from '@/views/project/MyProjectMediaView.vue'
 import MyProjectOverView from '@/views/project/MyProjectOverView.vue'
 import MyProjectSpecimensView from '@/views/project/MyProjectSpecimensView.vue'
-import MyProjectTaxaView from '@/views/project/MyProjectTaxaView.vue'
 
 export const MY_PROJECT_VIEWS = [
   {
@@ -63,11 +62,6 @@ export const MY_PROJECT_VIEWS = [
     component: MyProjectSpecimensView,
   },
   {
-    path: ':id/taxa',
-    name: 'MyProjectTaxaView',
-    component: MyProjectTaxaView,
-  },
-  {
     path: ':id/bibliography',
     name: 'MyProjectBibliographyListView',
     component: () => import('@/views/project/bibliographies/ListView.vue'),
@@ -106,5 +100,10 @@ export const MY_PROJECT_VIEWS = [
     path: ':id/documents/folders/:folderId/edit',
     name: 'MyProjectDocumentFolderEditView',
     component: () => import('@/views/project/documents/FolderEditView.vue'),
+  },
+  {
+    path: ':id/taxa',
+    name: 'MyProjectTaxaView',
+    component: () => import('@/views/project/taxa/ListView.vue'),
   },
 ]
