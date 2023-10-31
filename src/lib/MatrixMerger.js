@@ -1,4 +1,4 @@
-import { TAXA_FIELD_NAMES } from '@/utils/taxa.ts'
+import { TAXA_COLUMN_NAMES } from '@/utils/taxa.ts'
 
 /**
  * Merges the taxa and characters data from the matrix file upload and
@@ -11,7 +11,7 @@ export function mergeMatrix(
   projectTaxa,
   projectCharacters
 ) {
-  if (!TAXA_FIELD_NAMES.includes(otu)) {
+  if (!TAXA_COLUMN_NAMES.includes(otu)) {
     otu = 'genus'
   }
 

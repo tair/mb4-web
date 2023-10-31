@@ -116,6 +116,7 @@ async function deleteBibliographies(referenceIds) {
             type="checkbox"
             class="form-check-input"
             v-model="allSelected"
+            :indeterminate.prop="someSelected && !allSelected"
           />
         </label>
         <span v-if="!someSelected" class="item" @click="refresh">
@@ -220,5 +221,5 @@ async function deleteBibliographies(referenceIds) {
   </ProjectContainerComp>
 </template>
 <style scoped>
-@import '../styles.css';
+@import '@/views/project/styles.css';
 </style>
