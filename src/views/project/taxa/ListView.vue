@@ -4,7 +4,12 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
 import TaxonomicName from '@/components/project/TaxonomicName.vue'
-import { TAXA_COLUMN_NAMES , TaxaColumns, nameColumnMap, getTaxonName } from '@/utils/taxa'
+import {
+  TAXA_COLUMN_NAMES,
+  TaxaColumns,
+  nameColumnMap,
+  getTaxonName,
+} from '@/utils/taxa'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -30,12 +35,9 @@ const letters = computed(() => {
 })
 
 const filters = reactive({})
-const filteredTaxa = computed(() => 
+const filteredTaxa = computed(() =>
   Object.values(filters)
-    .reduce(
-      (taxa, filter) => taxa.filter(filter),
-      taxaStore.taxa
-    )
+    .reduce((taxa, filter) => taxa.filter(filter), taxaStore.taxa)
     .sort((a, b) => {
       const nameA = getTaxonName(a)
       if (!nameA) {
@@ -55,9 +57,9 @@ const availableRanks = computed(() => {
   const ranks = new Set()
   for (const taxon of taxaStore.taxa) {
     for (const columnName of TAXA_COLUMN_NAMES)
-    if (columnName in taxon && taxon[columnName]?.length > 0) {
-      ranks.add(columnName)
-    }
+      if (columnName in taxon && taxon[columnName]?.length > 0) {
+        ranks.add(columnName)
+      }
   }
   return ranks
 })
@@ -73,9 +75,7 @@ const allSelected = computed({
   },
 })
 
-const someSelected = computed(() =>
-  filteredTaxa.value.some((b) => b.selected)
-)
+const someSelected = computed(() => filteredTaxa.value.some((b) => b.selected))
 
 onMounted(() => {
   if (!taxaStore.isLoaded) {
@@ -95,7 +95,7 @@ function setGroup(event) {
   selectedGroup.value = { label, id }
 
   if (label == 'Partition') {
-    const partition = taxaStore.partitions.find(p => p.partition_id == id)
+    const partition = taxaStore.partitions.find((p) => p.partition_id == id)
     if (partition) {
       selectedGroupName.value = 'partition: ' + partition.name
       filters['group'] = (taxon) => {
@@ -103,7 +103,7 @@ function setGroup(event) {
       }
     }
   } else if (label == 'Matrix') {
-    const matrix = taxaStore.matrices.find(m => m.matrix_id == id)
+    const matrix = taxaStore.matrices.find((m) => m.matrix_id == id)
     if (matrix) {
       selectedGroupName.value = 'matrix: ' + matrix.title
       filters['group'] = (taxon) => {
@@ -154,6 +154,12 @@ function clearSearch() {
   selectedGroupName.value = null
 }
 
+function deleteTaxa(taxonIds) {
+  const deleted = taxaStore.deleteIds(projectId, taxonIds)
+  if (!deleted) {
+    alert('Failed to delete views')
+  }
+}
 </script>
 <template>
   <ProjectContainerComp
@@ -191,129 +197,176 @@ function clearSearch() {
       type="button"
       @click="clearSearch"
     >
-        Clear Search
+      Clear Search
     </button>
     <div v-if="availableRanks.size > 0">
-      Browse By: 
+      Browse By:
       <select @change="setRank">
         <template v-for="[column, name] in nameColumnMap">
-          <option v-if="availableRanks.has(column)" :value="column" :selected="rank == column">{{ name }} </option>
+          <option
+            v-if="availableRanks.has(column)"
+            :value="column"
+            :selected="rank == column"
+          >
+            {{ name }}
+          </option>
         </template>
       </select>
     </div>
-      <div v-if="taxaStore.partitions.length > 0 || taxaStore.matrices.length > 0">
-        Show by taxa partition or matrix: 
-        <select @change="setGroup">
-          <option value="0"> - </option>
-          <optgroup label="Partition">
-            <template v-for="partition in taxaStore.partitions">
-              <option :value="partition.partition_id" :selected="selectedGroup.id == partition.partition_id">
-                {{ partition.name }}
-              </option>
-            </template>
-          </optgroup>
-          <optgroup label="Matrix">
-            <template v-for="matrix in taxaStore.matrices">
-              <option :value="matrix.matrix_id" :selected="selectedGroup.id == matrix.matrix_id">
-                {{ matrix.title }}
-              </option>
-            </template>
-          </optgroup>
-        </select>
-      </div>
-      <div v-if="taxaStore.taxa?.length">
-        <div class="alphabet-bar">
-          Display taxa beginning with:
-          <template v-for="letter in letters">
-            <span
-              :class="{ selected: selectedLetter == letter }"
-              @click="setPage"
-              >{{ letter }}</span
+    <div
+      v-if="taxaStore.partitions.length > 0 || taxaStore.matrices.length > 0"
+    >
+      Show by taxa partition or matrix:
+      <select @change="setGroup">
+        <option value="0">-</option>
+        <optgroup label="Partition">
+          <template v-for="partition in taxaStore.partitions">
+            <option
+              :value="partition.partition_id"
+              :selected="selectedGroup.id == partition.partition_id"
             >
+              {{ partition.name }}
+            </option>
           </template>
-          <span class="separator">|</span>
-          <span
-            @click="setPage"
-            :class="{ selected: selectedLetter == null }"
-            >ALL</span
-          >
-        </div>
-        <div v-if="selectedGroupName && selectedLetter != null">
-          Showing {{ filteredTaxa?.length }} taxonomic names from
-          <i>{{ selectedGroupName }}</i> where {{ nameColumnMap.get(rank) }}
-          starts with '{{ selectedLetter }}'.
-        </div>
-        <div v-else-if="selectedGroupName">
-          Showing {{ filteredTaxa?.length }} taxonomic names from <i>{{ selectedGroupName }}</i>.
-        </div>
-        <div v-else-if="selectedLetter != null">
-          Showing {{ filteredTaxa?.length }} taxonomic names where {{ nameColumnMap.get(rank) }} starts with '{{ selectedLetter }}'.
-        </div>
-        <div v-else>
-          Showing all {{ filteredTaxa?.length }} taxonomic names.
-        </div>
-        <div class="selection-bar">
-          <label class="item">
-            <input
-              type="checkbox"
-              class="form-check-input"
-              v-model="allSelected"
-              :indeterminate.prop="someSelected && !allSelected"
-            />
-          </label>
-          <span v-if="!someSelected" class="item" @click="refresh">
-            <i class="bi bi-arrow-clockwise fa-m"></i>
-          </span>
-          <span v-if="someSelected" class="item">
-            <i class="bi bi-pencil-square fa-m"></i>
-          </span>
-          <span
-            v-if="someSelected"
-            class="item"
-            data-bs-toggle="modal"
-            data-bs-target="#taxaDeleteModal"
-            @click="taxaToDelete = filteredTaxa.filter((b) => b.selected)"
-          >
-            <i class="bi bi-trash fa-m"></i>
-          </span>
-        </div>
-        <div class="item-list">
-          <ul class="list-group">
-            <li
-              v-for="taxon in filteredTaxa"
-              :key="taxon.taxon_id"
-              class="list-group-item"
+        </optgroup>
+        <optgroup label="Matrix">
+          <template v-for="matrix in taxaStore.matrices">
+            <option
+              :value="matrix.matrix_id"
+              :selected="selectedGroup.id == matrix.matrix_id"
             >
-              <div class="list-group-item-content">
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  v-model="taxon.selected"
-                />
-                <div class="list-group-item-name">
-                  <TaxonomicName :showExtinctMarker="true" :taxon="taxon" />
-                </div>
-                <div class="list-group-item-buttons">
-                  <RouterLink :to="`/myprojects/${projectId}/taxa/${taxon.taxon_id}/edit`">
-                    <button type="button" class="btn btn-sm btn-secondary">
-                      <i class="bi bi-pencil-square fa-m"></i>
-                    </button>
-                  </RouterLink>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-secondary"
-                    data-bs-toggle="modal"
-                    data-bs-target="#taxaDeleteModal"
-                    @click="taxaToDelete = [taxon]"
-                  >
-                    <i class="bi bi-trash fa-m"></i>
-                  </button>
-                </div>
+              {{ matrix.title }}
+            </option>
+          </template>
+        </optgroup>
+      </select>
+    </div>
+    <div v-if="taxaStore.taxa?.length">
+      <div class="alphabet-bar">
+        Display taxa beginning with:
+        <template v-for="letter in letters">
+          <span
+            :class="{ selected: selectedLetter == letter }"
+            @click="setPage"
+            >{{ letter }}</span
+          >
+        </template>
+        <span class="separator">|</span>
+        <span @click="setPage" :class="{ selected: selectedLetter == null }"
+          >ALL</span
+        >
+      </div>
+      <div v-if="selectedGroupName && selectedLetter != null">
+        Showing {{ filteredTaxa?.length }} taxonomic names from
+        <i>{{ selectedGroupName }}</i> where
+        {{ nameColumnMap.get(rank) }} starts with '{{ selectedLetter }}'.
+      </div>
+      <div v-else-if="selectedGroupName">
+        Showing {{ filteredTaxa?.length }} taxonomic names from
+        <i>{{ selectedGroupName }}</i
+        >.
+      </div>
+      <div v-else-if="selectedLetter != null">
+        Showing {{ filteredTaxa?.length }} taxonomic names where
+        {{ nameColumnMap.get(rank) }} starts with '{{ selectedLetter }}'.
+      </div>
+      <div v-else>Showing all {{ filteredTaxa?.length }} taxonomic names.</div>
+      <div class="selection-bar">
+        <label class="item">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            v-model="allSelected"
+            :indeterminate.prop="someSelected && !allSelected"
+          />
+        </label>
+        <span v-if="!someSelected" class="item" @click="refresh">
+          <i class="bi bi-arrow-clockwise fa-m"></i>
+        </span>
+        <span v-if="someSelected" class="item">
+          <i class="bi bi-pencil-square fa-m"></i>
+        </span>
+        <span
+          v-if="someSelected"
+          class="item"
+          data-bs-toggle="modal"
+          data-bs-target="#taxaDeleteModal"
+          @click="taxaToDelete = filteredTaxa.filter((b) => b.selected)"
+        >
+          <i class="bi bi-trash fa-m"></i>
+        </span>
+      </div>
+      <div class="item-list">
+        <ul class="list-group">
+          <li
+            v-for="taxon in filteredTaxa"
+            :key="taxon.taxon_id"
+            class="list-group-item"
+          >
+            <div class="list-group-item-content">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                v-model="taxon.selected"
+              />
+              <div class="list-group-item-name">
+                <TaxonomicName :showExtinctMarker="true" :taxon="taxon" />
               </div>
-            </li>
-          </ul>
+              <div class="list-group-item-buttons">
+                <RouterLink
+                  :to="`/myprojects/${projectId}/taxa/${taxon.taxon_id}/edit`"
+                >
+                  <button type="button" class="btn btn-sm btn-secondary">
+                    <i class="bi bi-pencil-square fa-m"></i>
+                  </button>
+                </RouterLink>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-secondary"
+                  data-bs-toggle="modal"
+                  data-bs-target="#taxaDeleteModal"
+                  @click="taxaToDelete = [taxon]"
+                >
+                  <i class="bi bi-trash fa-m"></i>
+                </button>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="modal" id="taxaDeleteModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Confirm</h5>
+          </div>
+          <div class="modal-body" v-if="taxaToDelete.length">
+            Really delete taxa:
+            <p v-for="taxon in taxaToDelete" :key="taxon.taxon_id">
+              <TaxonomicName :showExtinctMarker="true" :taxon="taxon" />
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              data-bs-dismiss="modal"
+              @click="deleteTaxa(taxaToDelete.map((taxon) => taxon.taxon_id))"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </div>
+    </div>
   </ProjectContainerComp>
 </template>
 <style scoped>

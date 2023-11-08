@@ -9,8 +9,7 @@ export const useTaxaStore = defineStore({
     partitions: [],
     matrices: [],
   }),
-  getters: {
-  },
+  getters: {},
   actions: {
     async fetchTaxaByProjectId(projectId) {
       const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/taxa`
@@ -21,10 +20,68 @@ export const useTaxaStore = defineStore({
       this.isLoaded = true
     },
     async fetchTaxaUsageByProjectId(projectId) {
-      const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/taxa/usages`
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/taxa/usages`
       const response = await axios.get(url)
       this.partitions = response.data.partitions
       this.matrices = response.data.matrices
-    }
+    },
+    async create(projectId, taxon) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/taxa/create`
+      const response = await axios.post(url, taxon)
+      if (response.status == 200) {
+        const taxon = response.data.taxon
+        this.taxa.push(taxon)
+        return true
+      }
+      return false
+    },
+    async edit(projectId, taxonId, taxon) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/taxa/${taxonId}/edit`
+      const response = await axios.post(url, taxon)
+      if (response.status == 200) {
+        const taxon = response.data.taxon
+        this.removeByTaxonIds([taxon.taxon_id])
+        this.taxa.push(taxon)
+        return true
+      }
+      return false
+    },
+    async deleteIds(projectId, taxonIds) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/taxa/delete`
+      const response = await axios.post(url, {
+        taxon_ids: taxonIds,
+      })
+      if (response.status == 200) {
+        this.removeByTaxonIds(taxonIds)
+        return true
+      }
+      return false
+    },
+    getTaxonById(taxonId) {
+      for (const taxon of this.taxa) {
+        if (taxon.taxon_id == taxonId) {
+          return taxon
+        }
+      }
+      return null
+    },
+    removeByTaxonIds(taxonIds) {
+      let x = 0
+      while (x < this.taxa.length) {
+        if (taxonIds.includes(this.taxa[x].taxon_id)) {
+          this.taxa.splice(x, 1)
+        } else {
+          ++x
+        }
+      }
+    },
   },
 })

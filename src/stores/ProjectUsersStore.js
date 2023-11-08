@@ -16,12 +16,10 @@ export const useProjectUsersStore = defineStore({
     async fetchUsers(projectId) {
       const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/users`
       const response = await axios.get(url)
-      debugger
       this.users = response.data.users
       this.isLoaded = true
     },
     getUserById(userId) {
-      debugger
       for (const user of this.users) {
         if (user.user_id == userId) {
           return user

@@ -1,9 +1,7 @@
 <script setup>
-import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import router from '@/router'
 import { useMediaViewsStore } from '@/stores/MediaViewsStore'
-import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { schema } from '@/views/project/views/schema.js'
 import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
 

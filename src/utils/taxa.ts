@@ -10,7 +10,7 @@ export enum TaxaColumns {
   ORDER = 'higher_taxon_order',
   SUBORDER = 'higher_taxon_suborder',
   INFRAORDER = 'higher_taxon_infraorder',
-  SUPERFAMILY= 'higher_taxon_superfamily',
+  SUPERFAMILY = 'higher_taxon_superfamily',
   FAMILY = 'higher_taxon_family',
   SUBFAMILY = 'higher_taxon_subfamily',
   TRIBE = 'higher_taxon_tribe',
@@ -33,7 +33,7 @@ export enum TaxaFriendlyNames {
   ORDER = 'order',
   SUBORDER = 'suborder',
   INFRAORDER = 'infraorder',
-  SUPERFAMILY= 'superfamily',
+  SUPERFAMILY = 'superfamily',
   FAMILY = 'family',
   SUBFAMILY = 'subfamily',
   TRIBE = 'tribe',
@@ -67,7 +67,10 @@ export const nameColumnMap = new Map([
   [TaxaColumns.SUBSPECIFIC_EPITHET, TaxaFriendlyNames.SUBSPECIFIC_EPITHET],
 ])
 
-export function getTaxonName(taxon: {[key:string]: string}, otu = TaxaColumns.GENUS): string {
+export function getTaxonName(
+  taxon: { [key: string]: string },
+  otu = TaxaColumns.GENUS
+): string {
   let gotOtu = false
   const names = []
   let lastName = ''
@@ -78,8 +81,8 @@ export function getTaxonName(taxon: {[key:string]: string}, otu = TaxaColumns.GE
     const name = taxon[columnName]
     if (name?.length > 0) {
       lastName = name
-      if (gotOtu) { 
-        names.push(name)       
+      if (gotOtu) {
+        names.push(name)
       }
     }
   }
