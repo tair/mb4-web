@@ -3,18 +3,18 @@ import { TAXA_COLUMN_NAMES, TaxaColumns } from '@/utils/taxa'
 import { capitalizeFirstLetter } from '@/utils/string'
 
 const props = defineProps<{
-  taxon: {[key:string]: string},
-  otu?: TaxaColumns,
-  showExtinctMarker?: boolean,
-  showAuthor?: boolean,
-  showSubGenus?:boolean,
+  taxon: { [key: string]: string }
+  otu?: TaxaColumns
+  showExtinctMarker?: boolean
+  showAuthor?: boolean
+  showSubGenus?: boolean
 }>()
 
 const SUB_COLUMN_NAMES = [
-    TaxaColumns.SUBGENUS,
-    TaxaColumns.SPECIFIC_EPITHET,
-    TaxaColumns.SUBSPECIFIC_EPITHET,
-    TaxaColumns.GENUS,
+  TaxaColumns.SUBGENUS,
+  TaxaColumns.SPECIFIC_EPITHET,
+  TaxaColumns.SUBSPECIFIC_EPITHET,
+  TaxaColumns.GENUS,
 ]
 
 function getHigherOrderName(): string {
@@ -33,8 +33,8 @@ function getHigherOrderName(): string {
     const name = props.taxon[columnName]
     if (name?.length > 0) {
       lastName = name
-      if (gotOtu) { 
-        names.push(name)       
+      if (gotOtu) {
+        names.push(name)
       }
     }
   }
@@ -67,25 +67,25 @@ function getOtu() {
 }
 
 function getAuthor() {
-    let author = props.taxon["scientific_name_author"] ?? ''
-    if (props.taxon["scientific_name_year"]) {
-      if (props.taxon["scientific_name_author"]) {
-        author += ", "
-      }
-      author += props.taxon["scientific_name_year"];
+  let author = props.taxon['scientific_name_author'] ?? ''
+  if (props.taxon['scientific_name_year']) {
+    if (props.taxon['scientific_name_author']) {
+      author += ', '
     }
+    author += props.taxon['scientific_name_year']
+  }
 
-    if (props.taxon['use_parens_for_author']) {
-      author = `(${author})`
-    }
-    return author
+  if (props.taxon['use_parens_for_author']) {
+    author = `(${author})`
+  }
+  return author
 }
-
-
 </script>
 <template>
   <span class="taxonName">
-    <template v-if="showExtinctMarker"> {{ taxon['is_extinct'] ? '†' : '' }} </template>
+    <template v-if="showExtinctMarker">
+      {{ taxon['is_extinct'] ? '†' : '' }}
+    </template>
     <span> {{ getHigherOrderName() }}</span>
 
     <i v-if="taxon['genus']">
@@ -103,11 +103,11 @@ function getAuthor() {
     <span v-if="taxon['subspecific_epithet']">
       {{ taxon['subspecific_epithet'] }}
     </span>
-    <template v-if="showAuthor"> {{ getAuthor()}} </template>
+    <template v-if="showAuthor"> {{ getAuthor() }} </template>
   </span>
 </template>
 <style scoped>
-.taxonName *  + *{
+.taxonName * + * {
   margin-left: 5px;
 }
 </style>

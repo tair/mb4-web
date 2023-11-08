@@ -52,7 +52,6 @@ export const useMediaViewsStore = defineStore({
       this.isLoaded = true
     },
     getMediaViewById(viewId) {
-      debugger
       for (const mediaView of this.mediaViews) {
         if (mediaView.view_id == viewId) {
           return mediaView

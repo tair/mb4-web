@@ -106,4 +106,14 @@ export const MY_PROJECT_VIEWS = [
     name: 'MyProjectTaxaView',
     component: () => import('@/views/project/taxa/ListView.vue'),
   },
+  {
+    path: ':id/taxa/create',
+    name: 'MyProjectTaxaCreateView',
+    component: () => import('@/views/project/taxa/CreateView.vue'),
+  },
+  {
+    path: ':id/taxa/:taxonId/edit',
+    name: 'MyProjectTaxaEditView',
+    component: () => import('@/views/project/taxa/EditView.vue'),
+  },
 ]
