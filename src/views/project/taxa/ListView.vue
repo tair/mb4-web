@@ -1,9 +1,11 @@
 <script setup>
+import axios from 'axios'
 import { useRoute } from 'vue-router'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
 import TaxonomicName from '@/components/project/TaxonomicName.vue'
+import DeleteDialog from '@/views/project/taxa/DeleteDialog.vue'
 import {
   TAXA_COLUMN_NAMES,
   TaxaColumns,
@@ -99,7 +101,7 @@ function setGroup(event) {
     if (partition) {
       selectedGroupName.value = 'partition: ' + partition.name
       filters['group'] = (taxon) => {
-        return partition.taxa_ids.includes(taxon.taxon_id)
+        return partition.taxon_ids.includes(taxon.taxon_id)
       }
     }
   } else if (label == 'Matrix') {
@@ -107,7 +109,7 @@ function setGroup(event) {
     if (matrix) {
       selectedGroupName.value = 'matrix: ' + matrix.title
       filters['group'] = (taxon) => {
-        return matrix.taxa_ids.includes(taxon.taxon_id)
+        return matrix.taxon_ids.includes(taxon.taxon_id)
       }
     }
   } else {
@@ -154,12 +156,24 @@ function clearSearch() {
   selectedGroupName.value = null
 }
 
-function deleteTaxa(taxonIds) {
-  const deleted = taxaStore.deleteIds(projectId, taxonIds)
+function deleteTaxa(taxonIds, remappedTaxonMap) {
+  const remappedTaxonIds = Object.fromEntries(remappedTaxonMap.entries());
+  const deleted = taxaStore.deleteIds(projectId, taxonIds, remappedTaxonIds)
   if (!deleted) {
     alert('Failed to delete views')
   }
+  return deleted
 }
+
+async function searchTaxa(text) {
+  const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/taxa/search`
+  const response = await axios.post(url, {
+    text: text,
+  })
+  const taxonIds = response.data.results
+  return taxaStore.taxa.filter(taxon => taxonIds.includes(taxon.taxon_id))
+}
+
 </script>
 <template>
   <ProjectContainerComp
@@ -335,38 +349,7 @@ function deleteTaxa(taxonIds) {
         </ul>
       </div>
     </div>
-    <div class="modal" id="taxaDeleteModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Confirm</h5>
-          </div>
-          <div class="modal-body" v-if="taxaToDelete.length">
-            Really delete taxa:
-            <p v-for="taxon in taxaToDelete" :key="taxon.taxon_id">
-              <TaxonomicName :showExtinctMarker="true" :taxon="taxon" />
-            </p>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              data-bs-dismiss="modal"
-              @click="deleteTaxa(taxaToDelete.map((taxon) => taxon.taxon_id))"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <DeleteDialog :taxa="taxaToDelete" :project-id="projectId" :searchTaxa="searchTaxa" :deleteTaxa="deleteTaxa" />
   </ProjectContainerComp>
 </template>
 <style scoped>
