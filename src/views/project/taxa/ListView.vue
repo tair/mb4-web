@@ -157,7 +157,7 @@ function clearSearch() {
 }
 
 function deleteTaxa(taxonIds, remappedTaxonMap) {
-  const remappedTaxonIds = Object.fromEntries(remappedTaxonMap.entries());
+  const remappedTaxonIds = Object.fromEntries(remappedTaxonMap.entries())
   const deleted = taxaStore.deleteIds(projectId, taxonIds, remappedTaxonIds)
   if (!deleted) {
     alert('Failed to delete views')
@@ -166,14 +166,15 @@ function deleteTaxa(taxonIds, remappedTaxonMap) {
 }
 
 async function searchTaxa(text) {
-  const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/taxa/search`
+  const url = `${
+    import.meta.env.VITE_API_URL
+  }/projects/${projectId}/taxa/search`
   const response = await axios.post(url, {
     text: text,
   })
   const taxonIds = response.data.results
-  return taxaStore.taxa.filter(taxon => taxonIds.includes(taxon.taxon_id))
+  return taxaStore.taxa.filter((taxon) => taxonIds.includes(taxon.taxon_id))
 }
-
 </script>
 <template>
   <ProjectContainerComp
@@ -349,7 +350,12 @@ async function searchTaxa(text) {
         </ul>
       </div>
     </div>
-    <DeleteDialog :taxa="taxaToDelete" :project-id="projectId" :searchTaxa="searchTaxa" :deleteTaxa="deleteTaxa" />
+    <DeleteDialog
+      :taxa="taxaToDelete"
+      :project-id="projectId"
+      :searchTaxa="searchTaxa"
+      :deleteTaxa="deleteTaxa"
+    />
   </ProjectContainerComp>
 </template>
 <style scoped>
