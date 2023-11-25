@@ -1,5 +1,5 @@
 import { Component } from './Component'
-import * as bootstrap from 'bootstrap'
+import { Alert } from 'bootstrap'
 
 /**
  * This is a modal window that informs that user about the loading states of the matrix editor.
@@ -39,7 +39,7 @@ export class MessageBar extends Component {
 
   /** Dismisses the message bar. */
   hide() {
-    const alert = new bootstrap.Alert(this.getElement())
+    const alert = new Alert(this.getElement())
     alert.close()
   }
 

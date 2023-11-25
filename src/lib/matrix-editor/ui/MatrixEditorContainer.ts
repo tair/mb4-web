@@ -1,4 +1,3 @@
-import * as bootstrap from 'bootstrap'
 import { MatrixModel } from '../MatrixModel'
 import { MatrixAccessorContainer } from './MatrixAccessorContainer'
 import { MatrixGridHandler } from './MatrixGridHandler'
