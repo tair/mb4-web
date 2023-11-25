@@ -63,7 +63,7 @@ function setRemappedTaxonId(originalTaxonId: number, remappedTaxonId:number) {
 async function handleDelete() {
   const deleted = props.deleteTaxa(props.taxa.map((taxon) => taxon.taxon_id), remappedTaxonIds)
   if (deleted) {
-    const modal = Modal.getInstance('#taxaDeleteModal')
+    const modal = Modal.getInstance('#nothing')
     modal.hide()
   }
 }

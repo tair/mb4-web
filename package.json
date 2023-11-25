@@ -13,7 +13,7 @@
     "@fortawesome/fontawesome-free": "^6.1.1",
     "@popperjs/core": "^2.11.5",
     "@types/bootstrap": "^5.2.7",
-    "axios": "^0.26.1",
+    "axios": "^1.6.2",
     "bootstrap": "^5.3.2",
     "bootstrap-icons": "^1.10.5",
     "d3": "^7.8.5",
