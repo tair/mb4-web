@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 const props = defineProps<{
-  initialValue?: string,
-  search: (text: string) => Promise<any[]>,
+  initialValue?: string
+  search: (text: string) => Promise<any[]>
 }>()
 
 const emit = defineEmits(['select'])
@@ -28,22 +28,27 @@ function handleSearch(event: Event) {
 
 function handleSelect(event: any, item: any) {
   const target = event.currentTarget as HTMLElement
-  const text:string[] = []
+  const text: string[] = []
   target.childNodes.forEach(function getText(child: HTMLElement) {
     if (child.nodeType === Node.TEXT_NODE) {
-      text.push(child.nodeValue.trim());
+      text.push(child.nodeValue.trim())
     }
-    child.childNodes.forEach(getText);
+    child.childNodes.forEach(getText)
   })
   inputValue.value = text.join(' ').trim()
   items.value = []
   emit('select', item)
 }
-
 </script>
 <template>
   <div class="input-group">
-    <input class="form-control border" type="search" @input="handleInput" @search="handleSearch" v-model="inputValue">
+    <input
+      class="form-control border"
+      type="search"
+      @input="handleInput"
+      @search="handleSearch"
+      v-model="inputValue"
+    />
     <ul v-if="items.length > 0" class="results">
       <template v-for="item in items">
         <li @click="handleSelect($event, item)">
@@ -54,28 +59,28 @@ function handleSelect(event: any, item: any) {
   </div>
 </template>
 <style scoped>
-  ul.results {
-    background-color: white;
-    border: solid 1px #CCC;
-    left: -1px;
-    list-style: none;
-    max-height: 100px;
-    min-height: 50px;
-    overflow-x: hidden;
-    overflow-y: scroll;
-    padding: 10px;
-    position: absolute;
-    right: -1px;
-    top: 36px;
-  }
-  ul.results li {
-    font-size: 13px;
-    margin: 0;
-    padding: 5px;
-  }
+ul.results {
+  background-color: white;
+  border: solid 1px #ccc;
+  left: -1px;
+  list-style: none;
+  max-height: 100px;
+  min-height: 50px;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  padding: 10px;
+  position: absolute;
+  right: -1px;
+  top: 36px;
+}
+ul.results li {
+  font-size: 13px;
+  margin: 0;
+  padding: 5px;
+}
 
-  ul.results li:hover {
-    background: #EEE;
-    cursor: pointer;
-  }
+ul.results li:hover {
+  background: #eee;
+  cursor: pointer;
+}
 </style>
