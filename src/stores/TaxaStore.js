@@ -15,17 +15,19 @@ export const useTaxaStore = defineStore({
       const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/taxa`
       const response = await axios.get(url)
       this.taxa = response.data.taxa
+      this.partitions = response.data.partitions
+      this.matrices = response.data.matrices
 
-      await this.fetchTaxaUsageByProjectId(projectId)
       this.isLoaded = true
     },
-    async fetchTaxaUsageByProjectId(projectId) {
+    async fetchTaxaUsage(projectId, taxonIds) {
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/taxa/usages`
-      const response = await axios.get(url)
-      this.partitions = response.data.partitions
-      this.matrices = response.data.matrices
+      const response = await axios.post(url, {
+        taxon_ids: taxonIds,
+      })
+      return response.data.usages
     },
     async create(projectId, taxon) {
       const url = `${
@@ -52,12 +54,13 @@ export const useTaxaStore = defineStore({
       }
       return false
     },
-    async deleteIds(projectId, taxonIds) {
+    async deleteIds(projectId, taxonIds, remappedTaxonIds) {
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/taxa/delete`
       const response = await axios.post(url, {
         taxon_ids: taxonIds,
+        remapped_taxon_ids: remappedTaxonIds,
       })
       if (response.status == 200) {
         this.removeByTaxonIds(taxonIds)
