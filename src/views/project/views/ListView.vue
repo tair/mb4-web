@@ -75,7 +75,7 @@ async function deleteMediaViews(viewIds) {
     <div class="action-bar">
       <RouterLink :to="`/myprojects/${projectId}/views/create`">
         <button type="button" class="btn btn-m btn-outline-primary">
-          <i class="bi bi-plus-square fa-m"></i>
+          <i class="fa fa-plus"></i>
           <span> Create Media View</span>
         </button>
       </RouterLink>
@@ -106,7 +106,7 @@ async function deleteMediaViews(viewIds) {
           />
         </label>
         <span v-if="!someSelected" class="item" @click="refresh">
-          <i class="bi bi-arrow-clockwise fa-m"></i>
+          <i class="fa-solid fa-arrow-rotate-right"></i>
         </span>
         <span
           v-if="someSelected"
@@ -119,7 +119,7 @@ async function deleteMediaViews(viewIds) {
             )
           "
         >
-          <i class="bi bi-trash fa-m"></i>
+          <i class="fa-regular fa-trash-can"></i>
         </span>
       </div>
       <div class="item-list">
@@ -143,7 +143,7 @@ async function deleteMediaViews(viewIds) {
                   :to="`/myprojects/${projectId}/views/${mediaView.view_id}/edit`"
                 >
                   <button type="button" class="btn btn-sm btn-secondary">
-                    <i class="bi bi-pencil-square fa-m"></i>
+                    <i class="fa-regular fa-pen-to-square"></i>
                   </button>
                 </RouterLink>
                 <button
@@ -153,7 +153,7 @@ async function deleteMediaViews(viewIds) {
                   data-bs-target="#viewDeleteModal"
                   @click="mediaViewsToDelete = [mediaView]"
                 >
-                  <i class="bi bi-trash fa-m"></i>
+                  <i class="fa-regular fa-trash-can"></i>
                 </button>
               </div>
             </div>

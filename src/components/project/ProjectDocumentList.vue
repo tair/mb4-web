@@ -32,13 +32,13 @@ const props = defineProps({
             data-bs-placement="bottom"
             title="Download"
           >
-            <i class="bi bi-download fa-m"></i>
+            <i class="fa fa-file-arrow-down"></i>
           </a>
           <RouterLink
             :to="`/myprojects/${projectId}/documents/${document.document_id}/edit`"
           >
             <button type="button" class="btn btn-sm btn-secondary">
-              <i class="bi bi-pencil-square fa-m"></i>
+              <i class="fa-regular fa-pen-to-square"></i>
             </button>
           </RouterLink>
           <button
@@ -48,7 +48,7 @@ const props = defineProps({
             data-bs-target="#documentDeleteModal"
             @click="$emit('update:deleteDocument', document)"
           >
-            <i class="bi bi-trash fa-m"></i>
+            <i class="fa-regular fa-trash-can"></i>
           </button>
         </div>
       </div>

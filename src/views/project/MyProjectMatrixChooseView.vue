@@ -13,10 +13,10 @@ const projectId = route.params.id
     basePath="myprojects"
     itemName="matrices"
   >
-    <div class="nav-link mb-1 d-flex fw-bold small m-0 p-0 mb-3">
-      <i class="bi bi-chevron-double-left me-1"></i>
+    <div class="nav-link d-flex align-items-center fw-bold small m-0 p-0 mb-3">
+      <i class="fa-solid fa-chevron-left pr-1"></i>
       <RouterLink
-        class="nav-link m-0 p-0"
+        class="nav-link m-0 p-0 pl-1"
         :to="`/myprojects/${projectId}/matrices`"
       >
         <span>Back to list</span>

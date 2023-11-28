@@ -110,7 +110,7 @@ function buildImageProps(mediaObj, type) {
             :to="`/project/${project.project_id}/matrices`"
             class="nav-link p-0"
           >
-            <i class="bi bi-grid-fill"></i>
+            <i class="fa-solid fa-border-all"></i>
             <small class="text-nowrap ms-1">
               {{ project.project_stats.matrices }} matrices
             </small>
@@ -128,7 +128,7 @@ function buildImageProps(mediaObj, type) {
             :to="`/project/${project.project_id}/docs`"
             class="nav-link p-0"
           >
-            <i class="bi bi-files"></i>
+            <i class="fa-solid fa-file"></i>
             <small class="text-nowrap ms-1">
               {{ project.project_stats.docs }}
               {{ project.project_stats.docs > 99 ? 'document' : 'documents' }}
@@ -143,7 +143,7 @@ function buildImageProps(mediaObj, type) {
             :to="`/project/${project.project_id}/media`"
             class="nav-link p-0"
           >
-            <i class="bi bi-camera"></i>
+            <i class="fa-solid fa-camera"></i>
             <small class="text-nowrap ms-1"
               >{{ project.project_stats.media_image }} images</small
             >
@@ -157,7 +157,7 @@ function buildImageProps(mediaObj, type) {
             :to="`/project/${project.project_id}/media`"
             class="nav-link p-0"
           >
-            <i class="bi bi-box"></i>
+            <i class="fa-solid fa-cube"></i>
             <small class="text-nowrap ms-1"
               >{{ project.project_stats.media_3d }} 3D media</small
             >

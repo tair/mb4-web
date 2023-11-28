@@ -1,6 +1,6 @@
 <template>
   <tippy :content="content">
-    <i class="bi bi-question-circle-fill theme-color"></i>
+    <i class="fa-solid fa-circle-question theme-color"></i>
   </tippy>
   <div class="sr-only">{{ content }}</div>
 </template>
@@ -14,7 +14,7 @@ const props = defineProps({
 })
 </script>
 
-<style>
+<style scoped>
 .theme-color {
   color: #ef782f;
 }

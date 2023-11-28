@@ -248,9 +248,9 @@ onMounted(() => {
     basePath="myprojects"
     itemName="matrices"
   >
-    <div class="nav-link mb-1 d-flex fw-bold small m-0 p-0 mb-3">
-      <i class="bi bi-chevron-double-left me-1"></i>
-      <a class="nav-link m-0 p-0" @click="$router.go(-1)">Back</a>
+    <div class="nav-link d-flex align-items-center fw-bold small m-0 p-0 mb-3">
+      <i class="fa-solid fa-chevron-left"></i>
+      <a class="nav-link m-0 p-0 pl-1" @click="$router.go(-1)">Back</a>
     </div>
     <div class="stepwizard">
       <div class="matrix-import-step-row setup-panel">
@@ -537,7 +537,7 @@ onMounted(() => {
                             v-model="state.name"
                           />
                           <i
-                            class="remove-state bi bi-x-lg"
+                            class="fa-solid fa-xmark"
                             @click="
                               removeCharacterState(editingCharacter, index)
                             "

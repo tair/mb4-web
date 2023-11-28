@@ -107,7 +107,7 @@ async function toggleMatrixStreaming() {
           class="btn btn-sm btn-secondary"
           tooltip="Click here to name this matrix, block the scoring, and use various automated features"
         >
-          <i class="bi bi-pencil-square fa-m"></i>
+          <i class="fa-regular fa-pen-to-square"></i>
         </button>
         <div class="btn-group">
           <button
@@ -115,7 +115,7 @@ async function toggleMatrixStreaming() {
             class="btn btn-sm btn-secondary dropdown-toggle"
             data-bs-toggle="dropdown"
           >
-            <i class="bi bi-gear-fill fa-m"></i>
+            <i class="fa-solid fa-gear"></i>
           </button>
           <div class="dropdown-menu">
             <h6 class="dropdown-header">Settings:</h6>
@@ -126,7 +126,7 @@ async function toggleMatrixStreaming() {
               @click="toggleMatrixStreaming"
             >
               <i
-                class="bi bi-check2"
+                class="fa-solid fa-check"
                 :class="{ hidden: !matrix.preferences?.ENABLE_STREAMING }"
               ></i>
               Enable Streaming

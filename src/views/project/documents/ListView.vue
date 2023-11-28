@@ -66,13 +66,13 @@ onMounted(() => {
     <div class="action-bar">
       <RouterLink :to="`/myprojects/${projectId}/documents/create`">
         <button type="button" class="btn btn-m btn-outline-primary">
-          <i class="bi bi-plus-square fa-m"></i>
+          <i class="fa-solid fa-plus"></i>
           <span> Create Document</span>
         </button>
       </RouterLink>
       <RouterLink :to="`/myprojects/${projectId}/documents/folders/create`">
         <button type="button" class="btn btn-m btn-outline-primary">
-          <i class="bi bi-plus-square fa-m"></i>
+          <i class="fa-solid fa-plus"></i>
           <span> Create Folder</span>
         </button>
       </RouterLink>
@@ -82,7 +82,7 @@ onMounted(() => {
           class="btn btn-m btn-outline-primary dropdown-toggle"
           data-bs-toggle="dropdown"
         >
-          <i class="bi bi-gear-fill fa-m"></i>
+          <i class="fa-solid fa-gear"></i>
         </button>
         <div class="dropdown-menu">
           <h6 class="dropdown-header">Settings:</h6>
@@ -119,7 +119,7 @@ onMounted(() => {
               data-bs-toggle="collapse"
               :data-bs-target="`#folder-${folder.folder_id}`"
             >
-              <i class="bi bi-folder"></i>
+              <i class="fa-solid fa-folder"></i>
               <div class="folder-title">
                 <span> {{ folder.title }} </span>
                 <span class="badge bg-primary rounded-pill">
@@ -134,7 +134,7 @@ onMounted(() => {
                   :to="`/myprojects/${projectId}/documents/folders/${folder.folder_id}/edit`"
                 >
                   <button type="button" class="btn btn-sm btn-secondary">
-                    <i class="bi bi-pencil-square fa-m"></i>
+                    <i class="fa-regular fa-pen-to-square"></i>
                   </button>
                 </RouterLink>
                 <button
@@ -144,7 +144,7 @@ onMounted(() => {
                   data-bs-target="#folderDeleteModal"
                   @click="folderToDelete = folder"
                 >
-                  <i class="bi bi-trash fa-m"></i>
+                  <i class="fa-regular fa-trash-can"></i>
                 </button>
               </div>
             </button>

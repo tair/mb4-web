@@ -30,7 +30,7 @@ onMounted(() => {
     <div class="action-bar">
       <RouterLink :to="`/myprojects/${projectId}/matrices/create/choose`">
         <button type="button" class="btn btn-m btn-outline-primary">
-          <i class="bi bi-plus-square fa-m"></i>
+          <i class="fa-solid fa-plus"></i>
           <span> Create</span>
         </button>
       </RouterLink>
