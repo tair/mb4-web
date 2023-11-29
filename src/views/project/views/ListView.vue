@@ -103,6 +103,7 @@ async function deleteMediaViews(viewIds) {
             type="checkbox"
             class="form-check-input"
             v-model="allSelected"
+            :indeterminate.prop="someSelected && !allSelected"
           />
         </label>
         <span v-if="!someSelected" class="item" @click="refresh">
