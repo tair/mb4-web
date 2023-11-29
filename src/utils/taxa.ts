@@ -44,7 +44,7 @@ export enum TaxaFriendlyNames {
   SUBSPECIFIC_EPITHET = 'subspecies',
 }
 
-export const nameColumnMap = new Map([
+export const nameColumnMap: Map<TaxaColumns, TaxaFriendlyNames> = new Map([
   [TaxaColumns.SUPRASPECIFIC_CLADE, TaxaFriendlyNames.SUPRASPECIFIC_CLADE],
   [TaxaColumns.KINGDOM, TaxaFriendlyNames.KINGDOM],
   [TaxaColumns.PHYLUM, TaxaFriendlyNames.PHYLUM],
