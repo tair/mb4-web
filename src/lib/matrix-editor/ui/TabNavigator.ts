@@ -1,5 +1,5 @@
 import { Component, EventType } from './Component'
-import * as bootstrap from 'bootstrap'
+import { Tab } from 'bootstrap'
 
 /**
  * This is tabbed view of a container.
@@ -14,7 +14,7 @@ export class TabNavigator extends Component {
   }
 
   private names: string[]
-  private tabs: bootstrap.Tab[]
+  private tabs: Tab[]
   private tabComponents: Map<string, Component>
   private selectedTabIndex: number
 
@@ -43,7 +43,7 @@ export class TabNavigator extends Component {
     const element = this.getElement()
     const tabButtonElements = element.querySelectorAll('button')
     tabButtonElements.forEach((tabButtonElement) => {
-      const tab = new bootstrap.Tab(tabButtonElement)
+      const tab = new Tab(tabButtonElement)
       this.tabs.push(tab)
       handler.listen(tabButtonElement, EventType.CLICK, (event) => {
         event.preventDefault()
