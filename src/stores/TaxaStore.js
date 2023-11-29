@@ -41,6 +41,18 @@ export const useTaxaStore = defineStore({
       }
       return false
     },
+    async createBatch(projectId, taxa) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/taxa//create/batch`
+      const response = await axios.post(url, taxa)
+      if (response.status == 200) {
+        const taxa = response.data.taxa
+        this.taxa.push(...taxa)
+        return true
+      }
+      return false
+    },
     async edit(projectId, taxonId, taxon) {
       const url = `${
         import.meta.env.VITE_API_URL

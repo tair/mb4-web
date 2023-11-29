@@ -112,6 +112,16 @@ export const MY_PROJECT_VIEWS = [
     component: () => import('@/views/project/taxa/CreateView.vue'),
   },
   {
+    path: ':id/taxa/create/batch',
+    name: 'MyProjectTaxaBatchCreateView',
+    component: () => import('@/views/project/taxa/BatchCreateView.vue'),
+  },
+  {
+    path: ':id/taxa/upload',
+    name: 'MyProjectTaxaUploadView',
+    component: () => import('@/views/project/taxa/UploadView.vue'),
+  },
+  {
     path: ':id/taxa/:taxonId/edit',
     name: 'MyProjectTaxaEditView',
     component: () => import('@/views/project/taxa/EditView.vue'),
