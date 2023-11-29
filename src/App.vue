@@ -47,6 +47,11 @@ a:hover {
   color: #ef782f;
 }
 
+a[role='button']:link,
+a[role='button']:hover {
+  color: white;
+}
+
 .nav-link {
   color: #ef782f !important;
 }
