@@ -269,13 +269,12 @@ const router = createRouter({
     {
       path: '/myprojects/:projectId/matrices/:matrixId/edit',
       name: 'MyProjectMatrixEditView',
-      component: () => import('@/views/project/MyProjectMatrixEditView.vue'),
+      component: () => import('@/views/project/matrices/MatrixEditorView.vue'),
     },
     {
       path: '/myprojects/:projectId/matrices/:matrixId/characters',
       name: 'MyProjectCharacterEditorView',
-      component: () =>
-        import('@/views/project/MyProjectCharacterEditorView.vue'),
+      component: () => import('@/views/project/matrices/CharacterEditorView.vue'),
     },
     {
       path: '/project/:projectId/matrices/:matrixId/view',

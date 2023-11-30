@@ -2,7 +2,6 @@
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMatricesStore } from '@/stores/MatricesStore'
-
 import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
 import ProjectMatrixComp from '@/components/project/ProjectMatrixComp.vue'
 
@@ -48,5 +47,5 @@ onMounted(() => {
   </ProjectContainerComp>
 </template>
 <style scoped>
-@import 'styles.css';
+@import '@/views/project/styles.css';
 </style>

@@ -1,6 +1,5 @@
 <script setup>
 import { useRoute } from 'vue-router'
-
 import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
 
 const route = useRoute()
