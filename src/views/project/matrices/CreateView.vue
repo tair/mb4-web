@@ -9,7 +9,7 @@ import { useTaxaStore } from '@/stores/TaxaStore'
 import { getIncompleteStateText } from '@/lib/matrix-parser/text.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
 import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
-import router from '../../router'
+import router from '@/router'
 
 const route = useRoute()
 const taxaStore = useTaxaStore()

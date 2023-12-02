@@ -58,5 +58,5 @@ async function createReference(event) {
   </ProjectContainerComp>
 </template>
 <style scoped>
-@import '../styles.css';
+@import '@/views/project/styles.css';
 </style>
