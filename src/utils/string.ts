@@ -5,6 +5,6 @@ export function capitalizeFirstLetter(text: string): string {
   return text[0].toLocaleUpperCase() + text.substring(1).toLocaleLowerCase()
 }
 
-export function countOccurences(text: string, reg:RegExp): number {
+export function countOccurences(text: string, reg: RegExp): number {
   return text.match(reg)?.length || 0
 }
