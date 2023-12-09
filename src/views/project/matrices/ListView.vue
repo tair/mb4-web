@@ -11,13 +11,15 @@ const matricesStore = useMatricesStore()
 const projectId = route.params.id
 
 onMounted(() => {
-  matricesStore.fetchMatricesByProjectId(projectId)
+  if (!matricesStore.isLoaded) {
+    matricesStore.fetchMatricesByProjectId(projectId)
+  }
 })
 </script>
 <template>
   <ProjectContainerComp
     :projectId="projectId"
-    :isLoading="matricesStore.isLoading"
+    :isLoading="!matricesStore.isLoaded"
     :errorMessage="null"
     basePath="myprojects"
     itemName="matrices"

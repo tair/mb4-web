@@ -10,7 +10,8 @@ export const schema = {
     view: TextArea,
   },
   nsf_funded: {
-    label: 'Is your research project supported by the U.S. National Science Foundation?',
+    label:
+      'Is your research project supported by the U.S. National Science Foundation?',
     view: SelectInput,
     args: {
       options: {
@@ -28,7 +29,8 @@ export const schema = {
     view: TextInput,
   },
   published: {
-    label: 'Status (To publish your project change its status to "Published" and hit "save")',
+    label:
+      'Status (To publish your project change its status to "Published" and hit "save")',
     view: SelectInput,
     args: {
       options: {
@@ -39,7 +41,8 @@ export const schema = {
   },
   user_id: {
     label: 'Change Project Admin',
-    description: '(Select a user from the list to promote them to Project Administrator)',
+    description:
+      '(Select a user from the list to promote them to Project Administrator)',
     view: NumberInput,
   },
   description: {
@@ -48,13 +51,13 @@ export const schema = {
   },
   article_authors: {
     label: 'Article authors',
-    description: 'separated by commas (example: H.-D. Sues, E. Frey, D. M. Martill, D. M. Scott)',
+    description:
+      'separated by commas (example: H.-D. Sues, E. Frey, D. M. Martill, D. M. Scott)',
     view: TextArea,
   },
   article_title: {
     label: 'Article Title',
     view: TextArea,
-
   },
   journal_url: {
     label: 'Journal url (link to published article)',

@@ -16,7 +16,6 @@ async function createProject(event) {
 
   router.push({ path: `/myprojects/${project.project_id}` })
 }
-
 </script>
 <template>
   <div>
@@ -27,7 +26,12 @@ async function createProject(event) {
             <label :for="index" class="form-label">
               {{ definition.label }}
             </label>
-            <component :key="index" :is="definition.view" :name="index" v-bind="definition.args">
+            <component
+              :key="index"
+              :is="definition.view"
+              :name="index"
+              v-bind="definition.args"
+            >
             </component>
           </div>
         </template>

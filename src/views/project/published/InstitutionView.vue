@@ -1,38 +1,40 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { usePublicProjectsStore } from '@/stores/PublicProjectsStore.js'
-import GenericLoaderComp from '../../components/project/GenericLoaderComp.vue'
-import ProjectMenuComp from '../../components/project/ProjectMenuComp.vue'
 import { RouterLink, useRoute } from 'vue-router'
+import { usePublicProjectsStore } from '@/stores/PublicProjectsStore.js'
+import GenericLoaderComp from '@/components/project/GenericLoaderComp.vue'
+import ProjectMenuComp from '@/components/project/ProjectMenuComp.vue'
 
 const route = useRoute()
 const projectsStore = usePublicProjectsStore()
+
+let sort_field = ref('name')
+let is_asc_name = ref(true)
+let is_asc_count = ref(true)
 let idx = 0
 
 onMounted(() => {
-  projectsStore.fetchProjectJournal()
+  projectsStore.fetchProjectInstitutions('name', 'asc')
 })
 
-// normalize the string (convert diacritics to ascii chars)
-// then return the first char
-function getNormalizedCharAt1(str) {
-  try {
-    return str
-      .charAt(0)
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-  } catch (e) {
-    return str
+function onSorted(field_name, sort) {
+  if (field_name === 'name') {
+    sort_field.value = field_name
+    is_asc_name.value = sort === 'asc' ? true : false
+  } else {
+    sort_field.value = field_name = 'count'
+    is_asc_count.value = sort === 'asc' ? true : false
   }
+  projectsStore.fetchProjectInstitutions(field_name, sort)
 }
-
-let prev_char = ''
 </script>
 
 <template>
   <GenericLoaderComp
     :isLoading="projectsStore.isLoading"
-    :errorMessage="!projectsStore.err ? null : 'No project journals available.'"
+    :errorMessage="
+      !projectsStore.err ? null : 'No project institutions available.'
+    "
   >
     <div class="mb-3">
       There are {{ projectsStore.projects?.length }} publicly accessible
@@ -46,36 +48,62 @@ let prev_char = ''
     </div>
 
     <div class="d-flex justify-content-between">
-      <ProjectMenuComp menuItem="publication"></ProjectMenuComp>
+      <ProjectMenuComp menuItem="institution"></ProjectMenuComp>
+
+      <div class="d-grid gap-1 d-md-flex small">
+        <div class="me-3">
+          Institution
+          <a
+            href="#"
+            @click="onSorted('name', 'asc')"
+            :style="{
+              color: sort_field === 'name' && is_asc_name ? '#ef782f' : 'gray',
+            }"
+            ><i class="fa-solid fa-arrow-up"></i
+          ></a>
+
+          <a
+            href="#"
+            @click="onSorted('name', 'desc')"
+            :style="{
+              color: sort_field === 'name' && !is_asc_name ? '#ef782f' : 'gray',
+            }"
+            ><i class="fa-solid fa-arrow-down"></i
+          ></a>
+        </div>
+
+        <div>
+          Count
+          <a
+            href="#"
+            @click="onSorted('count', 'asc')"
+            :style="{
+              color:
+                sort_field === 'count' && is_asc_count ? '#ef782f' : 'gray',
+            }"
+            ><i class="fa-solid fa-arrow-up"></i
+          ></a>
+
+          <a
+            href="#"
+            @click="onSorted('count', 'desc')"
+            :style="{
+              color:
+                sort_field === 'count' && !is_asc_count ? '#ef782f' : 'gray',
+            }"
+            ><i class="fa-solid fa-arrow-down"></i
+          ></a>
+        </div>
+      </div>
     </div>
 
-    <div v-if="projectsStore.journals != ''">
+    <div v-if="projectsStore.institutions != ''">
       <div class="mb-3 text-black-50 fw-bold">
-        {{ Object.keys(projectsStore.journals['journals']).length }} journals
-        have published data in MorphoBank
+        {{ projectsStore.institutions.length }} institutions have published data
+        in MorphoBank
       </div>
 
-      <div class="d-grid gap-2 d-sm-flex _offset2 mb-4" id="top">
-        <div :key="n" v-for="(char, n) in projectsStore.journals.chars">
-          <a :href="`#${char}`" class="fw-bold">{{ char }}</a>
-        </div>
-      </div>
-
-      <div :key="n" v-for="(author, n) in projectsStore.journals['journals']">
-        <div
-          class="fw-bold mt-3"
-          v-if="
-            /[a-zA-Z]/.test(getNormalizedCharAt1(n)) &&
-            prev_char != getNormalizedCharAt1(n)
-          "
-        >
-          <a :id="`${getNormalizedCharAt1(n)}`" href="#top">
-            <p class="_offset">
-              {{ (prev_char = getNormalizedCharAt1(n)) }}
-            </p>
-          </a>
-        </div>
-
+      <div v-for="(institution, n) in projectsStore.institutions">
         <div class="accordion mb-2" :id="`accordion${idx}`">
           <div class="accordion-item">
             <h2 class="accordion-header" :id="`heading${idx}`">
@@ -87,13 +115,9 @@ let prev_char = ''
                 aria-expanded="true"
                 :aria-controls="`collapse${idx}`"
               >
-                <div class="text-mb fw-bold">{{ n.replace('|', ' ') }}</div>
+                <div class="text-mb fw-bold">{{ institution.name }}</div>
                 <div style="width: 5px"></div>
-                <small>
-                  ({{
-                    projectsStore.journals['journals'][n].length + ` projects`
-                  }})
-                </small>
+                <small> ({{ institution.count + ` projects` }}) </small>
               </button>
             </h2>
             <div
@@ -104,8 +128,7 @@ let prev_char = ''
               <div class="accordion-body p-0">
                 <ul
                   class="list-group list-group-flush"
-                  v-for="(project, n) in projectsStore.journals['journals'][n]"
-                  :key="n"
+                  v-for="project in projectsStore.institutions[n].projects"
                 >
                   <li
                     class="list-group-item py-2"
@@ -133,14 +156,3 @@ let prev_char = ''
     </div>
   </GenericLoaderComp>
 </template>
-
-<style>
-._offset {
-  padding-top: 100px;
-  margin-top: -100px;
-}
-._offset2 {
-  padding-top: 300px;
-  margin-top: -300px;
-}
-</style>

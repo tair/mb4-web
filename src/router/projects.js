@@ -1,5 +1,4 @@
 import MyProjectMediaView from '@/views/project/MyProjectMediaView.vue'
-import MyProjectOverView from '@/views/project/MyProjectOverView.vue'
 import MyProjectSpecimensView from '@/views/project/MyProjectSpecimensView.vue'
 
 export const MY_PROJECT_VIEWS = [
@@ -15,8 +14,8 @@ export const MY_PROJECT_VIEWS = [
   },
   {
     path: ':id/overview',
-    name: 'MyProjectOverView',
-    component: MyProjectOverView,
+    name: 'MyProjectOverviewView',
+    component: () => import('@/views/project/overview/OverviewView.vue'),
   },
   {
     path: ':id/matrices',

@@ -1,4 +1,4 @@
-export function getProjectCitation(project: {[key: string]: any}): string {
+export function getProjectCitation(project: { [key: string]: any }): string {
   let citation = ''
   const articleAuthors = project.article_authors?.trim()
   const journalYear = project.journal_year?.trim()
@@ -42,16 +42,16 @@ export function getProjectCitation(project: {[key: string]: any}): string {
     citation += ' (' + journalNumber + ')'
   }
 
-  if (articlePages){
+  if (articlePages) {
     // If there is no journal vol or number, trim off the period after title.
     if (citation.endsWith('.')) {
       citation = citation.substring(0, citation.length - 1)
     }
-    citation += ':' + articlePages + '.';
+    citation += ':' + articlePages + '.'
   }
 
-  if (journalInPress == 1){
-    citation += ' (In Press)';
+  if (journalInPress == 1) {
+    citation += ' (In Press)'
   }
   return citation
 }

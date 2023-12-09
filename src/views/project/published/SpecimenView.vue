@@ -1,8 +1,8 @@
 <script setup>
 import { onMounted } from 'vue'
-import ProjectLoaderComp from '../../components/project/ProjectLoaderComp.vue'
-import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 import { useRoute } from 'vue-router'
+import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
+import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 
 const route = useRoute()
 const projectId = route.params.id

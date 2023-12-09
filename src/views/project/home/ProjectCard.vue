@@ -4,14 +4,14 @@ import { getProjectCitation } from '@/utils/project'
 import { type Media } from '@/types/media'
 
 type Project = {
-  project_id: number,
-  published: number,
-  name: string,
-  created_on: number,
-  last_accessed_on: number,
-  user_last_accessed_on: number,
-  media: Media,
-  members: {name: string}[],
+  project_id: number
+  published: number
+  name: string
+  created_on: number
+  last_accessed_on: number
+  user_last_accessed_on: number
+  media: Media
+  members: { name: string }[]
 }
 
 const props = defineProps<{
@@ -22,22 +22,21 @@ function getOverviewUrl() {
   if (props.project.published) {
     return `/project/${props.project.project_id}/overview`
   }
-  return `/myproject/${props.project.project_id}/overview`
+  return `/myprojects/${props.project.project_id}/overview`
 }
-
 </script>
 <template>
   <div class="card mb-3">
     <div class="row g-0">
       <div class="col-md-4">
-        <img v-if="project.media"
+        <img
+          v-if="project.media"
           :src="project.media.url"
           :width="project.media.width"
           :height="project.media.height"
-          class="img-fluid rounded-start" />
-        <div v-else>
-          Add your exemplar media
-        </div>
+          class="img-fluid rounded-start"
+        />
+        <div v-else>Add your exemplar media</div>
       </div>
       <div class="col-md-8">
         <div class="card-body">
@@ -48,7 +47,7 @@ function getOverviewUrl() {
           <div class="card-text">
             <b>{{ project.members?.length ?? 0 }} members:</b>
             <small class="text-muted" v-if="project.members">
-              {{ project.members.map(m => m.name).join(', ') }}
+              {{ project.members.map((m) => m.name).join(', ') }}
             </small>
           </div>
           <div class="card-text">
@@ -70,9 +69,7 @@ function getOverviewUrl() {
             </small>
           </div>
           <RouterLink :to="getOverviewUrl()">
-            <button type="button" class="btn btn-primary">
-              View
-            </button>
+            <button type="button" class="btn btn-primary">View</button>
           </RouterLink>
         </div>
       </div>
