@@ -209,7 +209,9 @@ function popDownloadAlert() {
             </li>
             <li>
               Total characters with media with labels:
-              {{ overview.stats.character_media_characters_labels.toLocaleString() }}
+              {{
+                overview.stats.character_media_characters_labels.toLocaleString()
+              }}
             </li>
             <li>
               Total character states:
@@ -226,7 +228,12 @@ function popDownloadAlert() {
             <li>
               Total unordered/ordered characters:
               {{ overview.stats.character_unordered.toLocaleString() }} /
-              {{ (overview.stats.character_characters - overview.stats.character_unordered).toLocaleString() }}
+              {{
+                (
+                  overview.stats.character_characters -
+                  overview.stats.character_unordered
+                ).toLocaleString()
+              }}
             </li>
           </ul>
         </div>

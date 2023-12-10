@@ -1,10 +1,10 @@
 <script setup>
-import axios from 'axios'
-import { reactive, ref, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore'
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
 import ProjectMembers from '@/views/project/overview/ProjectMembers.vue'
+import ProjectRecentChanges from '@/views/project/overview/ProjectRecentChanges.vue'
 import ProjectSummary from '@/views/project/overview/ProjectSummary.vue'
 import ProjectTaxa from '@/views/project/overview/ProjectTaxa.vue'
 
@@ -43,6 +43,14 @@ onMounted(async () => {
     </div>
   </ProjectLoaderComp>
   <div v-if="projectOverviewStore.isLoaded">
+    <div
+      v-if="projectOverviewStore.overview.recent_changes"
+      class="py-5 border-bottom"
+    >
+      <ProjectRecentChanges
+        :recentChanges="projectOverviewStore.overview.recent_changes"
+      ></ProjectRecentChanges>
+    </div>
     <div class="py-5 border-bottom">
       <ProjectMembers
         :members="projectOverviewStore.overview.members"
