@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore'
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
 import ProjectMembers from '@/views/project/overview/ProjectMembers.vue'
+import ProjectOverviewSidePanel from '@/views/project/overview/ProjectOverviewSidePanel.vue'
 import ProjectRecentChanges from '@/views/project/overview/ProjectRecentChanges.vue'
 import ProjectSummary from '@/views/project/overview/ProjectSummary.vue'
 import ProjectTaxa from '@/views/project/overview/ProjectTaxa.vue'
@@ -38,6 +39,11 @@ onMounted(async () => {
           <ProjectSummary
             :overview="projectOverviewStore.overview"
           ></ProjectSummary>
+        </div>
+        <div class="col-3">
+          <ProjectOverviewSidePanel
+            :overview="projectOverviewStore.overview"
+          ></ProjectOverviewSidePanel>
         </div>
       </div>
     </div>
