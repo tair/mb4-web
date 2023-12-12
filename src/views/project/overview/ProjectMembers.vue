@@ -1,13 +1,37 @@
-<script setup>
-import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
+<script setup lang="ts">
 import Tooltip from '@/components/main/Tooltip.vue'
-const projectStore = usePublicProjectDetailsStore()
-</script>
 
+type MemberStats = {
+  fname: string
+  lname: String
+  administrator: string
+  membership_status: string
+  member_role: string
+  taxa: number
+  specimens: number
+  media: number
+  media_notes: number
+  characters: number
+  character_notes: number
+  character_media: number
+  character_media_labels: number
+  cell_scorings: number
+  cell_scorings_scored: number
+  cell_scorings_npa: number
+  cell_scorings_not: number
+  cell_notes: number
+  cell_media: number
+  cell_media_labels: number
+  rules: number
+}
+
+defineProps<{
+  members: MemberStats[]
+}>()
+</script>
 <template>
   <div>
     <h3>Members</h3>
-
     <table class="table table-bordered table-striped">
       <thead>
         <tr>
@@ -56,7 +80,7 @@ const projectStore = usePublicProjectDetailsStore()
         </tr>
       </thead>
       <tbody>
-        <tr :key="idx" v-for="(member, idx) in projectStore.overview.members">
+        <tr :key="idx" v-for="(member, idx) in members">
           <td scope="row">
             <div class="fw-bold">{{ member.fname + ' ' + member.lname }}</div>
 

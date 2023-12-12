@@ -1,22 +1,21 @@
-import MyProjectHomeView from '@/views/project/MyProjectHomeView.vue'
 import MyProjectMediaView from '@/views/project/MyProjectMediaView.vue'
-import MyProjectOverView from '@/views/project/MyProjectOverView.vue'
 import MyProjectSpecimensView from '@/views/project/MyProjectSpecimensView.vue'
 
 export const MY_PROJECT_VIEWS = [
   {
     path: '',
-    name: 'MyProjectHomeView',
-    component: MyProjectHomeView,
+    name: 'MyProjectListView',
+    component: () => import('@/views/project/home/ListView.vue'),
   },
   {
-    path: ':id',
-    component: MyProjectOverView,
+    path: 'create',
+    name: 'MyProjectCreateView',
+    component: () => import('@/views/project/home/CreateView.vue'),
   },
   {
     path: ':id/overview',
-    name: 'MyProjectOverView',
-    component: MyProjectOverView,
+    name: 'MyProjectOverviewView',
+    component: () => import('@/views/project/overview/OverviewView.vue'),
   },
   {
     path: ':id/matrices',

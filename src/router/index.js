@@ -1,7 +1,7 @@
 import { useAuthStore } from '@/stores/AuthStore.js'
-import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 import { createRouter, createWebHistory } from 'vue-router'
 import { MY_PROJECT_VIEWS } from '@/router/projects.js'
+import { PUBLISHED_PROJECT_VIEWS } from '@/router/published.js'
 
 import AdminHomeView from '@/views/admin/AdminHomeView.vue'
 import AdminView from '@/views/admin/AdminView.vue'
@@ -12,22 +12,7 @@ import HomeView from '@/views/HomeView.vue'
 import MyProjectsView from '@/views/project/MyProjectsView.vue'
 import NewsView from '@/views/misc/NewsView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
-import ProjectAuthorView from '@/views/project/ProjectAuthorView.vue'
-import ProjectBibliographyView from '@/views/project/ProjectBibliographyView.vue'
-import ProjectDocumentView from '@/views/project/ProjectDocumentView.vue'
-import ProjectDownloadView from '@/views/project/ProjectDownloadView.vue'
-import ProjectInstitutionView from '@/views/project/ProjectInstitutionView.vue'
-import ProjectJournalView from '@/views/project/ProjectJournalView.vue'
-import ProjectMatrixView from '@/views/project/ProjectMatrixView.vue'
-import ProjectMediaView from '@/views/project/ProjectMediaView.vue'
-import ProjectMediaViewsView from '@/views/project/ProjectMediaViewsView.vue'
-import ProjectOverviewView from '@/views/project/ProjectOverviewView.vue'
-import ProjectPopularView from '@/views/project/ProjectPopularView.vue'
-import ProjectSpecimenView from '@/views/project/ProjectSpecimenView.vue'
-import ProjectTaxaView from '@/views/project/ProjectTaxaView.vue'
-import ProjectTitleView from '@/views/project/ProjectTitleView.vue'
-import ProjectView from '@/views/project/ProjectView.vue'
-import ProjectsHomeView from '@/views/project/ProjectsHomeView.vue'
+import ProjectView from '@/views/project/published/ProjectView.vue'
 import RootView from '@/views/RootView.vue'
 import Terms from '@/views/misc/Terms.vue'
 import UserLogin from '@/views/users/UserLogin.vue'
@@ -165,100 +150,7 @@ const router = createRouter({
           component: ProjectView,
           // add default redirect to /project view
           redirect: '/project/pub_date',
-          children: [
-            {
-              path: 'pub_date',
-              name: 'ProjectPubDateView',
-              component: ProjectsHomeView,
-            },
-            {
-              path: 'prj_no',
-              name: 'ProjectNoView',
-              component: ProjectsHomeView,
-            },
-            {
-              path: 'journal_year',
-              name: 'ProjectJornalYearView',
-              component: ProjectsHomeView,
-            },
-            {
-              path: 'title',
-              name: 'ProjectTitleView',
-              component: ProjectTitleView,
-            },
-            {
-              path: 'popular',
-              name: 'ProjectPopularView',
-              component: ProjectPopularView,
-            },
-            {
-              path: 'author',
-              name: 'ProjectAuthorView',
-              component: ProjectAuthorView,
-            },
-            {
-              path: 'journal',
-              name: 'ProjectJournalView',
-              component: ProjectJournalView,
-            },
-            {
-              path: 'institution',
-              name: 'ProjectInstitutionView',
-              component: ProjectInstitutionView,
-            },
-            {
-              path: ':id/overview',
-              name: 'ProjectOverviewView',
-              component: ProjectOverviewView,
-            },
-            {
-              path: ':id/matrices',
-              name: 'ProjectMatrixView',
-              component: ProjectMatrixView,
-            },
-            {
-              path: ':id/media',
-              name: 'ProjectMediaView',
-              component: ProjectMediaView,
-            },
-            {
-              path: ':id/views',
-              name: 'ProjectMediaViewsView',
-              component: ProjectMediaViewsView,
-            },
-            {
-              path: ':id/specimens',
-              name: 'ProjectSpecimenView',
-              component: ProjectSpecimenView,
-            },
-            {
-              path: ':id/taxa',
-              name: 'ProjectTaxaView',
-              component: ProjectTaxaView,
-            },
-            {
-              path: ':id/bibliography',
-              name: 'ProjectBibliographyView',
-              component: ProjectBibliographyView,
-            },
-            {
-              path: ':id/documents',
-              name: 'ProjectDocumentView',
-              component: ProjectDocumentView,
-            },
-            {
-              path: ':id/download',
-              name: 'ProjectDownloadView',
-              component: ProjectDownloadView,
-              beforeEnter: (to, from) => {
-                const projectDetailStore = usePublicProjectDetailsStore()
-                const id = to.params.id
-                if (!projectDetailStore.isDownloadValid(id)) {
-                  return { name: 'ProjectOverviewView', params: { id } }
-                }
-              },
-            },
-          ],
+          children: PUBLISHED_PROJECT_VIEWS,
         },
         {
           path: '/:catchAll(.*)',
@@ -274,12 +166,13 @@ const router = createRouter({
     {
       path: '/myprojects/:projectId/matrices/:matrixId/characters',
       name: 'MyProjectCharacterEditorView',
-      component: () => import('@/views/project/matrices/CharacterEditorView.vue'),
+      component: () =>
+        import('@/views/project/matrices/CharacterEditorView.vue'),
     },
     {
       path: '/project/:projectId/matrices/:matrixId/view',
       name: 'ProjectMatrixViewerView',
-      component: () => import('@/views/project/ProjectMatrixViewerView.vue'),
+      component: () => import('@/views/project/published/MatrixViewerView.vue'),
     },
   ],
   scrollBehavior(to, from, savedPosition) {

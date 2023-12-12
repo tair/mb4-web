@@ -2,9 +2,9 @@ import fs from 'fs'
 
 import { describe, expect, test } from '@jest/globals'
 
-import { MatrixObject } from 'lib/matrix-parser/MatrixObject'
-import { StringReader } from 'lib/matrix-parser/StringReader'
-import { TNTParser } from 'lib/matrix-parser/TNTParser'
+import { MatrixObject } from '@/lib/matrix-parser/MatrixObject'
+import { StringReader } from '@/lib/matrix-parser/StringReader'
+import { TNTParser } from '@/lib/matrix-parser/TNTParser'
 
 describe('TNTParserTest', () => {
   test('Test Duplicate Characters', async () => {

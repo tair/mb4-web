@@ -1,11 +1,11 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue'
-import { usePublicMediaStore } from '@/stores/PublicMediaStore.js'
-import ProjectLoaderComp from '../../components/project/ProjectLoaderComp.vue'
-import MediaCardComp from '../../components/project/MediaCardComp.vue'
-import MediaDetailsComp from '../../components/project/MediaDetailsComp.vue'
-
 import { useRoute } from 'vue-router'
+import { usePublicMediaStore } from '@/stores/PublicMediaStore.js'
+import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
+import MediaCardComp from '@/components/project/MediaCardComp.vue'
+import MediaDetailsComp from '@/components/project/MediaDetailsComp.vue'
+
 const route = useRoute()
 
 const mediaStore = usePublicMediaStore()

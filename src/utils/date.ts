@@ -12,27 +12,14 @@ export function toDateString(epochTimeSecs: number): string {
   return event.toLocaleString(undefined, DATE_OPTIONS)
 }
 
+export function toDMYDateFromTimestamp(timestamp: string): string {
+  const date = new Date(Date.parse(timestamp))
+  return toDMYDateFromDate(date)
+}
+
 export function toDMYDate(epochTimeSecs: number): string {
-  var a = new Date(epochTimeSecs * 1000)
-  var months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ]
-  var year = a.getFullYear()
-  var month = months[a.getMonth()]
-  var date = a.getDate()
-  var time = date + ' ' + month + ' ' + year
-  return time
+  const date = new Date(epochTimeSecs * 1000)
+  return toDMYDateFromDate(date)
 }
 
 export function toISODate(epochTimeSecs: number): string {
@@ -47,4 +34,26 @@ export function toISODate(epochTimeSecs: number): string {
   const isoDate = `${year}-${month}-${day}`
 
   return isoDate
+}
+
+function toDMYDateFromDate(date: Date): string {
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ]
+  const year = date.getFullYear()
+  const month = months[date.getMonth()]
+  const day = date.getDate()
+  const time = day + ' ' + month + ' ' + year
+  return time
 }
