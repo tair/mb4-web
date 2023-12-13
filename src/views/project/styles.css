@@ -65,8 +65,6 @@
 .list-group-item-name {
   display: flex;
   flex-grow: 1;
-  margin-left: 15px;
-  text-indent: -15px;
 }
 
 .list-group-item-buttons {

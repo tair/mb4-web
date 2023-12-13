@@ -5,7 +5,7 @@ import SelectInput from '@/components/project/SelectInput.vue'
 import TextArea from '@/components/project/TextArea.vue'
 import TextContent from '@/components/project/TextContent.vue'
 import TextInput from '@/components/project/TextInput.vue'
-import { getUserName } from './utils'
+import { getUserName } from '@/views/project/utils'
 
 export const schema = {
   is_extinct: {
@@ -113,7 +113,7 @@ export const schema = {
     },
   },
   access: {
-    label: 'Access granted to this taxo',
+    label: 'Access granted to this taxon',
     view: SelectInput,
     args: {
       options: {

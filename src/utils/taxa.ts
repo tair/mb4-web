@@ -71,6 +71,10 @@ export function getTaxonName(
   taxon: { [key: string]: string },
   otu = TaxaColumns.GENUS
 ): string {
+  if (!taxon) {
+    return ''
+  }
+
   let gotOtu = false
   const names = []
   let lastName = ''

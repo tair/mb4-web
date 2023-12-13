@@ -1,7 +1,6 @@
 import MyProjectHomeView from '@/views/project/MyProjectHomeView.vue'
 import MyProjectMediaView from '@/views/project/MyProjectMediaView.vue'
 import MyProjectOverView from '@/views/project/MyProjectOverView.vue'
-import MyProjectSpecimensView from '@/views/project/MyProjectSpecimensView.vue'
 
 export const MY_PROJECT_VIEWS = [
   {
@@ -55,8 +54,23 @@ export const MY_PROJECT_VIEWS = [
   },
   {
     path: ':id/specimens',
-    name: 'MyProjectSpecimensView',
-    component: MyProjectSpecimensView,
+    name: 'MyProjectSpecimensListView',
+    component: () => import('@/views/project/specimens/ListView.vue'),
+  },
+  {
+    path: ':id/specimens/create',
+    name: 'MyProjectSpecimensCreateView',
+    component: () => import('@/views/project/specimens/CreateView.vue'),
+  },
+  {
+    path: ':id/specimens/:specimenId/edit',
+    name: 'MyProjectSpecimensEditView',
+    component: () => import('@/views/project/specimens/EditView.vue'),
+  },
+  {
+    path: ':id/specimens/upload',
+    name: 'MyProjectSpecimensUploadView',
+    component: () => import('@/views/project/specimens/UploadView.vue'),
   },
   {
     path: ':id/bibliography',
