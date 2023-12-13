@@ -1,6 +1,5 @@
 <script setup>
 import { RouterLink } from 'vue-router'
-import { Icon } from '@iconify/vue'
 
 const props = defineProps({
   project: Object,
@@ -111,13 +110,10 @@ function buildImageProps(mediaObj, type) {
             class="nav-link p-0"
           >
             <i class="fa-solid fa-border-all"></i>
-            <small class="text-nowrap ms-1">
+            <small class="text-nowrap mx-1">
               {{ project.project_stats.matrices }} matrices
             </small>
-            <Icon
-              v-if="project.has_continuous_char"
-              icon="radix-icons:ruler-horizontal"
-            />
+            <i v-if="project.has_continuous_char" class="fa-solid fa-ruler-horizontal"></i>
           </RouterLink>
         </div>
         <div
@@ -163,12 +159,12 @@ function buildImageProps(mediaObj, type) {
             >
           </RouterLink>
         </div>
-      </div>
-      <div class="theme-color-text" v-if="project.has_continuous_char">
-        <Icon icon="radix-icons:ruler-horizontal" />
-        <small class="text-nowrap ms-1">
-          Matrix has continuous characters
-        </small>
+        <div v-if="project.has_continuous_char" class="col d-flex align-items-stretch theme-color-text">
+          <i class="fa-solid fa-ruler-horizontal"></i>
+          <small class="text-nowrap ms-1">
+            Matrix has continuous characters
+          </small>
+        </div>
       </div>
     </div>
   </div>

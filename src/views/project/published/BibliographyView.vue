@@ -1,8 +1,9 @@
 <script setup>
 import { onMounted } from 'vue'
-import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
-import ProjectLoaderComp from '../../components/project/ProjectLoaderComp.vue'
 import { useRoute } from 'vue-router'
+import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
+import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
+
 const route = useRoute()
 
 const projectStore = usePublicProjectDetailsStore()

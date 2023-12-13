@@ -1,5 +1,5 @@
-import { FilePosition } from 'lib/matrix-parser/FilePosition'
-import { StringReader } from 'lib/matrix-parser/StringReader'
+import { FilePosition } from '@/lib/matrix-parser/FilePosition'
+import { StringReader } from '@/lib/matrix-parser/StringReader'
 import { describe, expect, test } from '@jest/globals'
 
 describe('StringReaderTest', () => {

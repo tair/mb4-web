@@ -4,7 +4,7 @@ import { defineStore } from 'pinia'
 export const useMatricesStore = defineStore({
   id: 'matrices',
   state: () => ({
-    isLoading: true,
+    isLoaded: false,
     matrices: null,
     partitions: null,
     canEditMatrix: null,
@@ -12,7 +12,7 @@ export const useMatricesStore = defineStore({
   getters: {},
   actions: {
     invalidate() {
-      this.isLoading = true
+      this.isLoaded = false
       this.matrices = null
       this.partitions = null
       this.canEditMatrix = null
@@ -26,7 +26,7 @@ export const useMatricesStore = defineStore({
       this.matrices = response.data.matrices
       this.partitions = response.data.partitions
       this.canEditMatrix = response.data.canEditMatrix
-      this.isLoading = false
+      this.isLoaded = true
     },
   },
 })

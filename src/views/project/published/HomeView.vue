@@ -1,10 +1,10 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
-import { usePublicProjectsStore } from '@/stores/PublicProjectsStore.js'
-import GenericLoaderComp from '../../components/project/GenericLoaderComp.vue'
-import ProjectMenuComp from '../../components/project/ProjectMenuComp.vue'
-import ProjectCardComp from '../../components/project/ProjectCardComp.vue'
 import { useRoute } from 'vue-router'
+import { usePublicProjectsStore } from '@/stores/PublicProjectsStore.js'
+import GenericLoaderComp from '@/components/project/GenericLoaderComp.vue'
+import ProjectMenuComp from '@/components/project/ProjectMenuComp.vue'
+import ProjectCardComp from '@/components/project/ProjectCardComp.vue'
 
 const route = useRoute()
 const projectsStore = usePublicProjectsStore()
@@ -20,10 +20,6 @@ onMounted(() => {
 
 let selectedPage = ref(projectsStore.currentPage)
 let selectedPageSize = ref(projectsStore.itemsPerPage)
-
-function log(msg) {
-  console.log(msg)
-}
 
 function onSorted(sort) {
   sort_by.value = sort

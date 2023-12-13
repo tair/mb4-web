@@ -1,9 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { usePublicProjectsStore } from '@/stores/PublicProjectsStore.js'
-import GenericLoaderComp from '../../components/project/GenericLoaderComp.vue'
-import ProjectMenuComp from '../../components/project/ProjectMenuComp.vue'
 import { RouterLink, useRoute } from 'vue-router'
+import { usePublicProjectsStore } from '@/stores/PublicProjectsStore.js'
+import GenericLoaderComp from '@/components/project/GenericLoaderComp.vue'
+import ProjectMenuComp from '@/components/project/ProjectMenuComp.vue'
 
 const route = useRoute()
 const projectsStore = usePublicProjectsStore()

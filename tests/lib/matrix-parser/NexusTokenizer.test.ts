@@ -1,6 +1,6 @@
-import { StringReader } from 'lib/matrix-parser/StringReader'
-import { NexusTokenizer } from 'lib/matrix-parser/NexusTokenizer'
-import { Token } from 'lib/matrix-parser/Token'
+import { StringReader } from '@/lib/matrix-parser/StringReader'
+import { NexusTokenizer } from '@/lib/matrix-parser/NexusTokenizer'
+import { Token } from '@/lib/matrix-parser/Token'
 import { describe, expect, test } from '@jest/globals'
 
 describe('NexusTokenizerTest', () => {

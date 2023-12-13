@@ -1,5 +1,5 @@
-import { StringReader } from 'lib/matrix-parser/StringReader'
-import { ContinuousCellTokenizer } from 'lib/matrix-parser/ContinuousCellTokenizer'
+import { StringReader } from '@/lib/matrix-parser/StringReader'
+import { ContinuousCellTokenizer } from '@/lib/matrix-parser/ContinuousCellTokenizer'
 import { describe, expect, test } from '@jest/globals'
 
 describe('ContinuousCellTokenizerTest', () => {

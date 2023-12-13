@@ -1,5 +1,5 @@
-import { StringReader } from 'lib/matrix-parser/StringReader'
-import { NexusParser } from 'lib/matrix-parser/NexusParser'
+import { StringReader } from '@/lib/matrix-parser/StringReader'
+import { NexusParser } from '@/lib/matrix-parser/NexusParser'
 import { describe, test } from '@jest/globals'
 import fs from 'fs'
 
