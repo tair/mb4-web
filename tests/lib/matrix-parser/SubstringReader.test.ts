@@ -1,7 +1,7 @@
-import { FilePosition } from 'lib/matrix-parser/FilePosition'
-import { type Reader } from 'lib/matrix-parser/Reader'
-import { StringReader } from 'lib/matrix-parser/StringReader'
-import { SubstringReader } from 'lib/matrix-parser/SubstringReader'
+import { FilePosition } from '@/lib/matrix-parser/FilePosition'
+import { type Reader } from '@/lib/matrix-parser/Reader'
+import { StringReader } from '@/lib/matrix-parser/StringReader'
+import { SubstringReader } from '@/lib/matrix-parser/SubstringReader'
 import { describe, expect, test } from '@jest/globals'
 
 describe('SubstringReaderTest', () => {

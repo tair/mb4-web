@@ -18,9 +18,9 @@ const props = defineProps({
 </script>
 
 <template>
-  <div class="nav-link mb-1 d-flex fw-bold small m-0 p-0 mb-3">
-    <i class="bi bi-chevron-double-left me-1"></i>
-    <RouterLink class="nav-link m-0 p-0" :to="`/${basePath}`">
+  <div class="nav-link d-flex align-items-center fw-bold small m-0 p-0 mb-3">
+    <i class="fa-solid fa-chevron-left"></i>
+    <RouterLink class="nav-link m-0 p-0 pl-1" :to="`/${basePath}`">
       <span v-if="basePath == 'project'">Browse projects</span>
       <span v-else>My projects</span>
     </RouterLink>

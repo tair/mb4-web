@@ -7,4 +7,7 @@ module.exports = {
     '.*\\.(ts)$': 'ts-jest',
   },
   moduleDirectories: ['node_modules', 'src'],
+  moduleNameMapper: {
+    '@/(.*)': '<rootDir>/src/$1',
+  },
 }

@@ -1,48 +1,36 @@
-import MyProjectBibliographyView from '@/views/project/MyProjectBibliographyView.vue'
-import MyProjectDocumentCreateView from '@/views/project/MyProjectDocumentCreateView.vue'
-import MyProjectDocumentEditView from '@/views/project/MyProjectDocumentEditView.vue'
-import MyProjectDocumentFolderCreateView from '@/views/project/MyProjectDocumentFolderCreateView.vue'
-import MyProjectDocumentFolderEditView from '@/views/project/MyProjectDocumentFolderEditView.vue'
-import MyProjectDocumentsView from '@/views/project/MyProjectDocumentsView.vue'
-import MyProjectHomeView from '@/views/project/MyProjectHomeView.vue'
-import MyProjectMatrixChooseView from '@/views/project/MyProjectMatrixChooseView.vue'
-import MyProjectMatrixCreateView from '@/views/project/MyProjectMatrixCreateView.vue'
-import MyProjectMatrixView from '@/views/project/MyProjectMatrixView.vue'
 import MyProjectMediaView from '@/views/project/MyProjectMediaView.vue'
-import MyProjectMediaViewsView from '@/views/project/MyProjectMediaViewsView.vue'
-import MyProjectOverView from '@/views/project/MyProjectOverView.vue'
 import MyProjectSpecimensView from '@/views/project/MyProjectSpecimensView.vue'
-import MyProjectTaxaView from '@/views/project/MyProjectTaxaView.vue'
 
 export const MY_PROJECT_VIEWS = [
   {
     path: '',
-    name: 'MyProjectHomeView',
-    component: MyProjectHomeView,
+    name: 'MyProjectListView',
+    component: () => import('@/views/project/home/ListView.vue'),
   },
   {
-    path: ':id',
-    component: MyProjectOverView,
+    path: 'create',
+    name: 'MyProjectCreateView',
+    component: () => import('@/views/project/home/CreateView.vue'),
   },
   {
     path: ':id/overview',
-    name: 'MyProjectOverView',
-    component: MyProjectOverView,
+    name: 'MyProjectOverviewView',
+    component: () => import('@/views/project/overview/OverviewView.vue'),
   },
   {
     path: ':id/matrices',
     name: 'MyProjectMatrixView',
-    component: MyProjectMatrixView,
+    component: () => import('@/views/project/matrices/ListView.vue'),
   },
   {
     path: ':id/matrices/create/choose',
     name: 'MyProjectMatrixChooseView',
-    component: MyProjectMatrixChooseView,
+    component: () => import('@/views/project/matrices/ChooseView.vue'),
   },
   {
     path: ':id/matrices/create',
     name: 'MyProjectMatrixCreateView',
-    component: MyProjectMatrixCreateView,
+    component: () => import('@/views/project/matrices/CreateView.vue'),
   },
   {
     path: ':id/media',
@@ -52,7 +40,17 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/views',
     name: 'MyProjectMediaViewsView',
-    component: MyProjectMediaViewsView,
+    component: () => import('@/views/project/views/ListView.vue'),
+  },
+  {
+    path: ':id/views/create',
+    name: 'MyProjectMediaViewsCreateView',
+    component: () => import('@/views/project/views/CreateView.vue'),
+  },
+  {
+    path: ':id/views/:viewId/edit',
+    name: 'MyProjectMediaViewEditView',
+    component: () => import('@/views/project/views/EditView.vue'),
   },
   {
     path: ':id/specimens',
@@ -60,38 +58,68 @@ export const MY_PROJECT_VIEWS = [
     component: MyProjectSpecimensView,
   },
   {
-    path: ':id/taxa',
-    name: 'MyProjectTaxaView',
-    component: MyProjectTaxaView,
+    path: ':id/bibliography',
+    name: 'MyProjectBibliographyListView',
+    component: () => import('@/views/project/bibliographies/ListView.vue'),
   },
   {
-    path: ':id/bibliography',
-    name: 'MyProjectBibliographyView',
-    component: MyProjectBibliographyView,
+    path: ':id/bibliography/create',
+    name: 'MyProjectBibliographyCreateView',
+    component: () => import('@/views/project/bibliographies/CreateView.vue'),
+  },
+  {
+    path: ':id/bibliography/:referenceId/edit',
+    name: 'MyProjectBibliographyEditView',
+    component: () => import('@/views/project/bibliographies/EditView.vue'),
   },
   {
     path: ':id/documents',
     name: 'MyProjectDocumentsView',
-    component: MyProjectDocumentsView,
+    component: () => import('@/views/project/documents/ListView.vue'),
   },
   {
     path: ':id/documents/create',
     name: 'MyProjectDocumentCreateView',
-    component: MyProjectDocumentCreateView,
+    component: () => import('@/views/project/documents/CreateView.vue'),
   },
   {
     path: ':id/documents/:documentId/edit',
     name: 'MyProjectDocumentEditView',
-    component: MyProjectDocumentEditView,
+    component: () => import('@/views/project/documents/EditView.vue'),
   },
   {
     path: ':id/documents/folders/create',
     name: 'MyProjectDocumentFolderCreateView',
-    component: MyProjectDocumentFolderCreateView,
+    component: () => import('@/views/project/documents/FolderCreateView.vue'),
   },
   {
     path: ':id/documents/folders/:folderId/edit',
     name: 'MyProjectDocumentFolderEditView',
-    component: MyProjectDocumentFolderEditView,
+    component: () => import('@/views/project/documents/FolderEditView.vue'),
+  },
+  {
+    path: ':id/taxa',
+    name: 'MyProjectTaxaView',
+    component: () => import('@/views/project/taxa/ListView.vue'),
+  },
+  {
+    path: ':id/taxa/create',
+    name: 'MyProjectTaxaCreateView',
+    component: () => import('@/views/project/taxa/CreateView.vue'),
+  },
+  {
+    path: ':id/taxa/create/batch',
+    name: 'MyProjectTaxaBatchCreateView',
+    component: () => import('@/views/project/taxa/BatchCreateView.vue'),
+  },
+  {
+    path: ':id/taxa/upload',
+    name: 'MyProjectTaxaUploadView',
+    component: () => import('@/views/project/taxa/UploadView.vue'),
+  },
+  {
+    path: ':id/taxa/:taxonId/edit',
+    name: 'MyProjectTaxaEditView',
+    component: () => import('@/views/project/taxa/EditView.vue'),
   },
 ]

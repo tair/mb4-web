@@ -1,6 +1,6 @@
-import { StringReader } from 'lib/matrix-parser/StringReader'
-import { TNTTokenizer } from 'lib/matrix-parser/TNTTokenizer'
-import { Token } from 'lib/matrix-parser/Token'
+import { StringReader } from '@/lib/matrix-parser/StringReader'
+import { TNTTokenizer } from '@/lib/matrix-parser/TNTTokenizer'
+import { Token } from '@/lib/matrix-parser/Token'
 import { describe, expect, test } from '@jest/globals'
 
 describe('TNTTokenizerTest', () => {

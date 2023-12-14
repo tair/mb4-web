@@ -1,7 +1,7 @@
 import { Character, CharacterType } from '../data/Characters'
 import { MatrixModel } from '../MatrixModel'
 import * as MediaExports from '../data/Media'
-import * as bootstrap from 'bootstrap'
+import { Popover } from 'bootstrap'
 import * as mb from '../mb'
 
 /**
@@ -21,7 +21,7 @@ export class CharacterTooltipManager {
    * @param element The character to show the tooltip for
    */
   showForCharacter(element: HTMLElement) {
-    let tooltip = bootstrap.Popover.getInstance(element)
+    let tooltip = Popover.getInstance(element)
     if (!tooltip) {
       const characterId = CharacterTooltipManager.getCharacterId(element)
       const character = this.matrixModel.getCharacters().getById(characterId)
@@ -44,7 +44,7 @@ export class CharacterTooltipManager {
       contentElement.addEventListener('mouseenter', () => {
         window.clearTimeout(this.hideTimeout)
         Array.from(mediaElements).forEach((mediaElement) =>
-          bootstrap.Popover.getOrCreateInstance(mediaElement, {
+          Popover.getOrCreateInstance(mediaElement, {
             html: true,
             container: mediaElement,
           })
@@ -63,7 +63,7 @@ export class CharacterTooltipManager {
    * @param characterId The character ID
    */
   showRulesForCharacter(element: HTMLElement, characterId: number) {
-    let tooltip = bootstrap.Popover.getInstance(element)
+    let tooltip = Popover.getInstance(element)
     if (!tooltip) {
       const character = this.matrixModel.getCharacters().getById(characterId)
       const contentElement = this.tooltipForCharacterRules(character)
@@ -96,7 +96,7 @@ export class CharacterTooltipManager {
    * @param element The character to show the tooltip for
    */
   hideForCharacter(element: HTMLElement) {
-    const tooltip = bootstrap.Popover.getInstance(element)
+    const tooltip = Popover.getInstance(element)
     if (tooltip) {
       this.hideTimeout = window.setTimeout(() => this.hide(tooltip), 750)
     }
@@ -108,13 +108,13 @@ export class CharacterTooltipManager {
    * @param element The character to show the tooltip for
    */
   hideForCharacterRule(element: HTMLElement) {
-    const tooltip = bootstrap.Popover.getInstance(element)
+    const tooltip = Popover.getInstance(element)
     if (tooltip) {
       this.hideRulesTimeout = window.setTimeout(() => this.hide(tooltip), 750)
     }
   }
 
-  hide(tooltip: bootstrap.Popover) {
+  hide(tooltip: Popover) {
     tooltip.hide()
   }
 
@@ -122,7 +122,7 @@ export class CharacterTooltipManager {
     const elements = document.getElementsByClassName('characterTooltip')
     for (let x = 0; x < elements.length; x++) {
       const element = elements[x]
-      const tooltip = bootstrap.Popover.getInstance(element.parentElement)
+      const tooltip = Popover.getInstance(element.parentElement)
       if (tooltip) {
         tooltip.hide()
       }
@@ -316,7 +316,7 @@ export class CharacterTooltipManager {
     content: string,
     classNames: string
   ): bootstrap.Popover {
-    return new bootstrap.Popover(element, {
+    return new Popover(element, {
       trigger: 'manual',
       placement: 'bottom',
       html: true,

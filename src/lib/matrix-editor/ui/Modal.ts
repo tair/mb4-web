@@ -1,5 +1,5 @@
 import { Component, EventType } from './Component'
-import * as bootstrap from 'bootstrap'
+import { Modal as BootstrapModal } from 'bootstrap'
 
 /**
  * A general Modal for the Matrix Editor
@@ -8,7 +8,7 @@ export class Modal extends Component {
   /**
    * The bootstrap modal.
    */
-  private modal: bootstrap.Modal
+  private modal: BootstrapModal
 
   /**
    * Dialog's title.
@@ -75,7 +75,7 @@ export class Modal extends Component {
 
   protected override finalizeDom() {
     const element = this.getElement()
-    this.modal = new bootstrap.Modal(element, { backdrop: this.hasBackdrop })
+    this.modal = new BootstrapModal(element, { backdrop: this.hasBackdrop })
     this.modal.show()
   }
 

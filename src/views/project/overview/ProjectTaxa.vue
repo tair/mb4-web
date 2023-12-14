@@ -1,13 +1,32 @@
-<script setup>
-import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
+<script setup lang="ts">
 import Tooltip from '@/components/main/Tooltip.vue'
 import { toISODate } from '@/utils/date'
-const projectStore = usePublicProjectDetailsStore()
-</script>
 
+type TaxonStat = {
+  taxon_name: string
+  last_modified_on: number
+  unscored_cells: number
+  scored_cells: number
+  cell_warnings: number
+  npa_cells: number
+  not_cells: number
+  cell_images: number
+  cell_image_labels: number
+  members: string[]
+}
+
+type TaxaStats = {
+  matrix_id: number
+  taxonStats: TaxonStat[]
+}
+
+defineProps<{
+  taxa: TaxaStats[]
+}>()
+</script>
 <template>
-  <div v-if="projectStore.overview.taxas?.length > 0">
-    <div class="mb-5" v-for="item in projectStore.overview.taxas">
+  <div v-if="taxa?.length > 0">
+    <div class="mb-5" v-for="item in taxa">
       <span class="h3">
         Taxonomic Overview for Matrix 'M{{ item.matrix_id }}' ({{
           item.taxonStats.length
@@ -58,7 +77,6 @@ const projectStore = usePublicProjectDetailsStore()
           </tr>
         </tbody>
       </table>
-      <!-- </div> -->
     </div>
   </div>
   <div v-else>

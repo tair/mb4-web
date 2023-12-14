@@ -1,6 +1,7 @@
-import { StringReader } from 'lib/matrix-parser/StringReader'
-import { CCodeTokenizer } from 'lib/matrix-parser/CCodeTokenizer'
 import { describe, expect, test } from '@jest/globals'
+
+import { StringReader } from '@/lib/matrix-parser/StringReader'
+import { CCodeTokenizer } from '@/lib/matrix-parser/CCodeTokenizer'
 
 describe('CCodeTokenizerTests', () => {
   test('test codes', () => {
