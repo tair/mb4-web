@@ -58,13 +58,7 @@ async function edit(event) {
   >
     <header>
       <b>Editing: </b>
-      <SpecimenName
-        :referenceSource="specimen.reference_source"
-        :institutionCode="specimen.institution_code"
-        :collectionCode="specimen.collection_code"
-        :catalogNumber="specimen.catalog_number"
-        :taxon="taxon"
-      />
+      <SpecimenName :specimen="specimen" :taxon="taxon"/>
     </header>
     <form @submit.prevent="edit">
       <div v-for="(definition, index) in schema" :key="index" class="mb-3">

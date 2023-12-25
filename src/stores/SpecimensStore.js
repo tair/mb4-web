@@ -7,7 +7,17 @@ export const useSpecimensStore = defineStore({
     isLoaded: false,
     specimens: [],
   }),
-  getters: {},
+  getters: {
+    taxaIds : function() {
+      const taxaIds = new Set()
+      for (const specimen of this.specimens) {
+        if (specimen.taxon_id) {
+          taxaIds.add(specimen.taxon_id)
+          }
+      }
+      return Array.from(taxaIds)
+    }
+  },
   actions: {
     async fetchSpecimens(projectId) {
       const url = `${
@@ -86,6 +96,15 @@ export const useSpecimensStore = defineStore({
       }
       return null
     },
+    getSpecimensByIds(specimenIds) {
+      const map = new Map()
+      for (const specimen of this.specimens) {
+        if (specimenIds.includes(specimen.specimen_id)) {
+          return specimen
+        }
+      }
+      return map
+    },
     removeBySpecimenIds(specimenIds) {
       let x = 0
       while (x < this.specimens.length) {
@@ -95,6 +114,10 @@ export const useSpecimensStore = defineStore({
           ++x
         }
       }
+    },
+    invalidate() {
+      this.specimens = []
+      this.isLoaded = false
     },
   },
 })

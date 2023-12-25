@@ -1,3 +1,11 @@
+export function formatNumber(value: number): string {
+  if (!value) {
+    return '0'
+  }
+
+  return value.toLocaleString()
+}
+
 export function formatBytes(bytes: number, precision: number = 2): string {
   if (!bytes) {
     return '0 Bytes'

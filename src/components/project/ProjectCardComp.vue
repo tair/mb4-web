@@ -113,7 +113,10 @@ function buildImageProps(mediaObj, type) {
             <small class="text-nowrap mx-1">
               {{ project.project_stats.matrices }} matrices
             </small>
-            <i v-if="project.has_continuous_char" class="fa-solid fa-ruler-horizontal"></i>
+            <i
+              v-if="project.has_continuous_char"
+              class="fa-solid fa-ruler-horizontal"
+            ></i>
           </RouterLink>
         </div>
         <div
@@ -159,7 +162,10 @@ function buildImageProps(mediaObj, type) {
             >
           </RouterLink>
         </div>
-        <div v-if="project.has_continuous_char" class="col d-flex align-items-stretch theme-color-text">
+        <div
+          v-if="project.has_continuous_char"
+          class="col d-flex align-items-stretch theme-color-text"
+        >
           <i class="fa-solid fa-ruler-horizontal"></i>
           <small class="text-nowrap ms-1">
             Matrix has continuous characters

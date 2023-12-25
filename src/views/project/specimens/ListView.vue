@@ -1,8 +1,10 @@
 <script setup>
+import axios from 'axios'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import DeleteDialog from '@/views/project/specimens/DeleteDialog.vue'
 import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
 import SpecimenName from '@/components/project/SpecimenName.vue'
 import {
@@ -20,17 +22,6 @@ const taxaStore = useTaxaStore()
 
 const specimensToDelete = ref([])
 
-const taxaMap = computed(() => {
-  const taxaMap = new Map()
-  for (const specimen of specimensStore.specimens) {
-    const taxon = taxaStore.getTaxonById(specimen.taxon_id)
-    if (taxon) {
-      taxaMap.set(specimen.taxon_id, taxon)
-    }
-  }
-  return taxaMap
-})
-
 const filters = reactive({})
 const filteredSpecimens = computed(() =>
   Object.values(filters)
@@ -39,12 +30,12 @@ const filteredSpecimens = computed(() =>
       specimensStore.specimens
     )
     .sort((a, b) => {
-      const nameA = getTaxonName(taxaMap.value.get(a.taxon_id))
+      const nameA = getTaxonName(taxaStore.getTaxonById(a.taxon_id))
       if (!nameA) {
         return -1
       }
 
-      const nameB = getTaxonName(taxaMap.value.get(b.taxon_id))
+      const nameB = getTaxonName(taxaStore.getTaxonById(b.taxon_id))
       if (!nameB) {
         return -1
       }
@@ -56,7 +47,9 @@ const filteredSpecimens = computed(() =>
 const rank = ref(TaxaColumns.GENUS)
 const availableRanks = computed(() => {
   const ranks = new Set()
-  for (const taxon of taxaMap.value.values()) {
+  const taxaIds = specimensStore.taxaIds
+  const taxa = taxaStore.getTaxaByIds(taxaIds)
+  for (const taxon of taxa.values()) {
     for (const columnName of TAXA_COLUMN_NAMES)
       if (columnName in taxon && taxon[columnName]?.length > 0) {
         ranks.add(columnName)
@@ -68,7 +61,9 @@ const availableRanks = computed(() => {
 const selectedLetter = ref(null)
 const letters = computed(() => {
   const letters = new Set()
-  for (const taxon of taxaMap.value.values()) {
+  const taxaIds = specimensStore.taxaIds
+  const taxa = taxaStore.getTaxaByIds(taxaIds)
+  for (const taxon of taxa.values()) {
     const index = rank.value
     if (taxon[index] && taxon[index].length > 0) {
       const firstLetter = taxon[index][0]
@@ -120,7 +115,7 @@ function setPage(event) {
   selectedLetter.value = text
   const index = rank.value
   filters['page'] = (specimen) => {
-    const taxon = taxaMap.value.get(specimen.taxon_id)
+    const taxon = taxaStore.getTaxonById(specimen.taxon_id)
     if (taxon && taxon[index] && taxon[index].length > 0) {
       const firstLetter = taxon[index][0].toUpperCase()
       return firstLetter == text
@@ -137,12 +132,6 @@ function setRank(event) {
   rank.value = text
 }
 
-async function deleteSpecimens(specimenIds) {
-  const deleted = specimensStore.deleteIds(projectId, specimenIds)
-  if (!deleted) {
-    alert('Failed to delete specimens')
-  }
-}
 </script>
 <template>
   <ProjectContainerComp
@@ -216,7 +205,7 @@ async function deleteSpecimens(specimenIds) {
           v-if="someSelected"
           class="item"
           data-bs-toggle="modal"
-          data-bs-target="#specimenDeleteModal"
+          data-bs-target="#specimensDeleteModal"
           @click="
             specimensToDelete = filteredSpecimens.filter((b) => b.selected)
           "
@@ -239,11 +228,8 @@ async function deleteSpecimens(specimenIds) {
               />
               <div class="list-group-item-name">
                 <SpecimenName
-                  :referenceSource="specimen.reference_source"
-                  :institutionCode="specimen.institution_code"
-                  :collectionCode="specimen.collection_code"
-                  :catalogNumber="specimen.catalog_number"
-                  :taxon="taxaMap.get(specimen.taxon_id)"
+                  :specimen="specimen"
+                  :taxon="taxaStore.getTaxonById(specimen.taxon_id)"
                 />
               </div>
               <div class="list-group-item-buttons">
@@ -258,7 +244,7 @@ async function deleteSpecimens(specimenIds) {
                   type="button"
                   class="btn btn-sm btn-secondary"
                   data-bs-toggle="modal"
-                  data-bs-target="#specimenDeleteModal"
+                  data-bs-target="#specimensDeleteModal"
                   @click="specimensToDelete = [specimen]"
                 >
                   <i class="fa-regular fa-trash-can"></i>
@@ -269,49 +255,10 @@ async function deleteSpecimens(specimenIds) {
         </ul>
       </div>
     </div>
-    <div class="modal" id="specimenDeleteModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Confirm</h5>
-          </div>
-          <div class="modal-body" v-if="specimensToDelete.length">
-            Really delete specimen:
-            <p
-              v-for="specimen in specimensToDelete"
-              :key="specimen.specimen_id"
-            >
-              <SpecimenName
-                :referenceSource="specimen.reference_source"
-                :institutionCode="specimen.institution_code"
-                :collectionCode="specimen.collection_code"
-                :catalogNumber="specimen.catalog_number"
-                :taxon="taxaMap.get(specimen.taxon_id)"
-              />
-            </p>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              data-bs-dismiss="modal"
-              @click="
-                deleteSpecimens(specimensToDelete.map((s) => s.specimen_id))
-              "
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <DeleteDialog
+      :specimens="specimensToDelete"
+      :project-id="projectId"
+    />
   </ProjectContainerComp>
 </template>
 <style scoped>

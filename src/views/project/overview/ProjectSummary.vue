@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Tooltip from '@/components/main/Tooltip.vue'
-import { formatBytes } from '@/utils/format'
+import { formatBytes, formatNumber } from '@/utils/format'
 
 type OverviewStat = {
   taxon_name: string
@@ -150,12 +150,12 @@ function popDownloadAlert() {
         <div class="card-header fw-bold">This project contains</div>
         <div class="card-body">
           <ul>
-            <li>{{ overview.stats.media.toLocaleString() }} Media</li>
-            <li>{{ overview.stats.matrices.toLocaleString() }} Matrix</li>
-            <li>{{ overview.stats.docs.toLocaleString() }} Documents</li>
-            <li>{{ overview.stats.taxa.toLocaleString() }} Taxa</li>
-            <li>{{ overview.stats.specimens.toLocaleString() }} Specimens</li>
-            <li>{{ overview.stats.characters.toLocaleString() }} Characters</li>
+            <li>{{ formatNumber(overview.stats.media) }} Media</li>
+            <li>{{ formatNumber(overview.stats.matrices) }} Matrix</li>
+            <li>{{ formatNumber(overview.stats.docs) }} Documents</li>
+            <li>{{ formatNumber(overview.stats.taxa) }} Taxa</li>
+            <li>{{ formatNumber(overview.stats.specimens) }} Specimens</li>
+            <li>{{ formatNumber(overview.stats.characters) }} Characters</li>
           </ul>
           <div>
             Total size of project's media files:
@@ -182,15 +182,15 @@ function popDownloadAlert() {
           <ul>
             <li>
               Total scored cells:
-              {{ overview.stats.matrix_cells_scored.toLocaleString() }}
+              {{ formatNumber(overview.stats.matrix_cells_scored) }}
             </li>
             <li>
               Total media associated with cells:
-              {{ overview.stats.matrix_cell_media.toLocaleString() }}
+              {{ formatNumber(overview.stats.matrix_cell_media) }}
             </li>
             <li>
               Total labels associated with cell media:
-              {{ overview.stats.matrix_cell_media_labels.toLocaleString() }}
+              {{ formatNumber(overview.stats.matrix_cell_media_labels) }}
             </li>
           </ul>
         </div>
@@ -201,38 +201,38 @@ function popDownloadAlert() {
           <ul>
             <li>
               Total characters:
-              {{ overview.stats.character_characters.toLocaleString() }}
+              {{ formatNumber(overview.stats.character_characters) }}
             </li>
             <li>
               Total characters with associated media:
-              {{ overview.stats.character_media_characters.toLocaleString() }}
+              {{ formatNumber(overview.stats.character_media_characters) }}
             </li>
             <li>
               Total characters with media with labels:
               {{
-                overview.stats.character_media_characters_labels.toLocaleString()
+                formatNumber(overview.stats.character_media_characters_labels)
               }}
             </li>
             <li>
               Total character states:
-              {{ overview.stats.character_states.toLocaleString() }}
+              {{ formatNumber(overview.stats.character_states) }}
             </li>
             <li>
               Total character states with associated media:
-              {{ overview.stats.character_state_media.toLocaleString() }}
+              {{ formatNumber(overview.stats.character_state_media) }}
             </li>
             <li>
               Total character states with media with labels:
-              {{ overview.stats.character_state_media_labels.toLocaleString() }}
+              {{ formatNumber(overview.stats.character_state_media_labels) }}
             </li>
             <li>
               Total unordered/ordered characters:
-              {{ overview.stats.character_unordered.toLocaleString() }} /
+              {{ formatNumber(overview.stats.character_unordered) }} /
               {{
-                (
+                formatNumber(
                   overview.stats.character_characters -
-                  overview.stats.character_unordered
-                ).toLocaleString()
+                    overview.stats.character_unordered
+                )
               }}
             </li>
           </ul>

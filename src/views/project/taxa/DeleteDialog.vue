@@ -3,7 +3,7 @@ import { Modal } from 'bootstrap'
 import TaxonomicName from '@/components/project/TaxonomicName.vue'
 import TaxaSearchInput from '@/views/project/taxa/TaxaSearchInput.vue'
 import { useTaxaStore } from '@/stores/TaxaStore'
-import { computed, onMounted, onUpdated, reactive, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 const remappedTaxonIds = new Map()
 const props = defineProps<{

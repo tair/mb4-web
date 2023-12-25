@@ -11,6 +11,12 @@ export const useTaxaStore = defineStore({
   }),
   getters: {},
   actions: {
+    invalidate() {
+      this.isLoaded = false
+      this.taxa = []
+      this.partitions = []
+      this.matrices = []
+    },
     async fetchTaxaByProjectId(projectId) {
       const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/taxa`
       const response = await axios.get(url)
@@ -87,6 +93,15 @@ export const useTaxaStore = defineStore({
         }
       }
       return null
+    },
+    getTaxaByIds(taxaIds) {
+      const map = new Map()
+      for (const taxon of this.taxa) {
+        if (taxaIds.includes(taxon.taxon_id)) {
+          map.set(taxon.taxon_id, taxon)
+        }
+      }
+      return map
     },
     removeByTaxonIds(taxonIds) {
       let x = 0

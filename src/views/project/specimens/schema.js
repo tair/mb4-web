@@ -1,5 +1,6 @@
 import DateText from '@/components/project/DateText.vue'
 import SelectInput from '@/components/project/SelectInput.vue'
+import TaxaSearchInput from '@/views/project/common/TaxaSearchInput.vue'
 import TextArea from '@/components/project/TextArea.vue'
 import TextContent from '@/components/project/TextContent.vue'
 import TextInput from '@/components/project/TextInput.vue'
@@ -9,6 +10,7 @@ export const schema = {
   reference_source: {
     label: 'Type of specimen record',
     view: SelectInput,
+    type: Number,
     args: {
       options: {
         Vouchered: 0,
@@ -18,6 +20,8 @@ export const schema = {
   },
   taxon_id: {
     label: 'Taxonomic name',
+    view: TaxaSearchInput,
+    type: Number,
   },
   institution_code: {
     label: 'Institution code for specimens repository',

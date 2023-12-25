@@ -57,7 +57,10 @@ onMounted(async () => {
         :recentChanges="projectOverviewStore.overview.recent_changes"
       ></ProjectRecentChanges>
     </div>
-    <div class="py-5 border-bottom">
+    <div
+      v-if="projectOverviewStore.overview.members?.length > 0"
+      class="py-5 border-bottom"
+    >
       <ProjectMembers
         :members="projectOverviewStore.overview.members"
       ></ProjectMembers>
