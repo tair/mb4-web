@@ -27,7 +27,9 @@ function getTaxonNumber(taxon) {
 }
 
 async function searchTaxa(text) {
-  const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/taxa/search`
+  const url = `${
+    import.meta.env.VITE_API_URL
+  }/projects/${projectId}/taxa/search`
   const response = await axios.post(url, {
     text: text,
   })
@@ -46,9 +48,10 @@ function getItem(taxonId) {
     :get-text="getTaxonName"
     :get-id="getTaxonNumber"
     :getItem="getItem"
-    :search="searchTaxa">
+    :search="searchTaxa"
+  >
     <template #item="taxon">
-      <TaxonomicName :showExtinctMarker="true" :taxon="taxon"/>
+      <TaxonomicName :showExtinctMarker="true" :taxon="taxon" />
     </template>
   </SearchSelectInput>
 </template>

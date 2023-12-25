@@ -58,7 +58,7 @@ async function edit(event) {
   >
     <header>
       <b>Editing: </b>
-      <SpecimenName :specimen="specimen" :taxon="taxon"/>
+      <SpecimenName :specimen="specimen" :taxon="taxon" />
     </header>
     <form @submit.prevent="edit">
       <div v-for="(definition, index) in schema" :key="index" class="mb-3">

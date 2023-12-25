@@ -131,7 +131,6 @@ function setRank(event) {
   const text = event.target.value
   rank.value = text
 }
-
 </script>
 <template>
   <ProjectContainerComp
@@ -255,10 +254,7 @@ function setRank(event) {
         </ul>
       </div>
     </div>
-    <DeleteDialog
-      :specimens="specimensToDelete"
-      :project-id="projectId"
-    />
+    <DeleteDialog :specimens="specimensToDelete" :project-id="projectId" />
   </ProjectContainerComp>
 </template>
 <style scoped>

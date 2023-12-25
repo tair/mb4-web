@@ -34,18 +34,21 @@ function getText(specimen) {
 }
 
 async function searchSpecimen(text) {
-  const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/specimen/search`
+  const url = `${
+    import.meta.env.VITE_API_URL
+  }/projects/${projectId}/specimen/search`
   const response = await axios.post(url, {
     text: text,
   })
   const specimenIds = response.data.results
-  return specimenStore.specimens.filter((specimen) => specimenIds.includes(specimen.specimen_id))
+  return specimenStore.specimens.filter((specimen) =>
+    specimenIds.includes(specimen.specimen_id)
+  )
 }
 
 function getItem(specimenId) {
   return specimenStore.getSpecimenById(specimenId)
 }
-
 </script>
 <template>
   <SearchSelectInput
@@ -53,11 +56,14 @@ function getItem(specimenId) {
     :initial-value="value"
     :get-text="getText"
     :get-id="getSpecimenNumber"
-    :getItem="getItem" :search="searchSpecimen">
+    :getItem="getItem"
+    :search="searchSpecimen"
+  >
     <template #item="specimen">
       <SpecimenName
         :specimen="specimen"
-        :taxon="taxaStore.getTaxonById(specimen.taxon_id)" />
+        :taxon="taxaStore.getTaxonById(specimen.taxon_id)"
+      />
     </template>
   </SearchSelectInput>
 </template>

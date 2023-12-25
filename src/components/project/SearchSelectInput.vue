@@ -62,7 +62,8 @@ function handleBlur() {
       @blur="handleBlur"
       v-model="text"
       class="form-control border"
-      type="search"/>
+      type="search"
+    />
     <ul v-if="items.length > 0" class="results">
       <template v-for="item in items">
         <li @mousedown="handleSelect(item)">

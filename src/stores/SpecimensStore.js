@@ -8,15 +8,15 @@ export const useSpecimensStore = defineStore({
     specimens: [],
   }),
   getters: {
-    taxaIds : function() {
+    taxaIds: function () {
       const taxaIds = new Set()
       for (const specimen of this.specimens) {
         if (specimen.taxon_id) {
           taxaIds.add(specimen.taxon_id)
-          }
+        }
       }
       return Array.from(taxaIds)
-    }
+    },
   },
   actions: {
     async fetchSpecimens(projectId) {
