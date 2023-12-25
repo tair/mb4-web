@@ -9,11 +9,9 @@ import TaxonomicName from '@/components/project/TaxonomicName.vue'
 defineProps({
   name: {
     type: String,
-    required: true,
   },
   value: {
     type: Number,
-    required: false,
   },
 })
 

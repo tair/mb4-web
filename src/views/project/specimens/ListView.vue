@@ -30,12 +30,20 @@ const filteredSpecimens = computed(() =>
       specimensStore.specimens
     )
     .sort((a, b) => {
-      const nameA = getTaxonName(taxaStore.getTaxonById(a.taxon_id))
+      const nameA = getTaxonName(
+        taxaStore.getTaxonById(a.taxon_id),
+        TaxaColumns.GENUS,
+        false
+      )
       if (!nameA) {
         return -1
       }
 
-      const nameB = getTaxonName(taxaStore.getTaxonById(b.taxon_id))
+      const nameB = getTaxonName(
+        taxaStore.getTaxonById(b.taxon_id),
+        TaxaColumns.GENUS,
+        false
+      )
       if (!nameB) {
         return -1
       }
