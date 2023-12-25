@@ -10,11 +10,9 @@ import SpecimenName from '@/components/project/SpecimenName.vue'
 defineProps({
   name: {
     type: String,
-    required: true,
   },
   value: {
     type: Number,
-    required: false,
   },
 })
 
@@ -29,14 +27,17 @@ function getSpecimenNumber(specimen) {
 }
 
 function getText(specimen) {
-  const taxon = taxaStore.getTaxonById(specimen.taxon_id)
-  return getSpecimenName(specimen, taxon)
+  if (specimen) {
+    const taxon = taxaStore.getTaxonById(specimen.taxon_id)
+    return getSpecimenName(specimen, taxon)
+  }
+  return ''
 }
 
 async function searchSpecimen(text) {
   const url = `${
     import.meta.env.VITE_API_URL
-  }/projects/${projectId}/specimen/search`
+  }/projects/${projectId}/specimens/search`
   const response = await axios.post(url, {
     text: text,
   })
