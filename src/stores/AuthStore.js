@@ -13,6 +13,7 @@ export const useAuthStore = defineStore({
       userId: null,
       userEmail: null,
       name: null,
+      access: null,
     },
     orcid: {
       orcid: null,
@@ -24,6 +25,16 @@ export const useAuthStore = defineStore({
   getters: {
     isLoading(state) {
       return state.loading
+    },
+    isUserCurator(state) {
+      return (
+        state.user && state.user.access && state.user.access.includes('curator')
+      )
+    },
+    isUserAdministrator(state) {
+      return (
+        state.user && state.user.access && state.user.access.includes('admin')
+      )
     },
   },
   actions: {
@@ -55,27 +66,33 @@ export const useAuthStore = defineStore({
     },
 
     hasValidAuthToken() {
-      if (!this.user?.authToken || !this.user?.authTokenExpiry) return false
-      if (
-        Math.floor(new Date().getTime() / 1000) >= this.user.authTokenExpiry
-      ) {
-        // set message when the user token expires
+      if (!this.user?.authToken || !this.user?.authTokenExpiry) {
+        return false
+      }
+
+      // Set message when the user token expires
+      const expiration = Math.floor(new Date().getTime() / 1000)
+      if (this.user.authTokenExpiry < expiration) {
         const message = useMessageStore()
         message.setSessionTimeOutMessage()
         return false
       }
+
       return true
     },
 
     fetchLocalStore() {
-      let lsUser = localStorage.getItem('mb-user')
-      if (!lsUser) return
+      const storedUser = localStorage.getItem('mb-user')
+      if (!storedUser) {
+        return
+      }
 
-      lsUser = JSON.parse(lsUser)
-      this.user = lsUser
+      this.user = JSON.parse(storedUser)
 
-      let orcidUser = localStorage.getItem('orcid-user')
-      if (!orcidUser) return
+      const orcidUser = localStorage.getItem('orcid-user')
+      if (!orcidUser) {
+        return
+      }
 
       this.orcid = JSON.parse(orcidUser)
     },
@@ -97,13 +114,13 @@ export const useAuthStore = defineStore({
 
       try {
         const url = `${import.meta.env.VITE_API_URL}/auth/login`
-        let userObj = {
+        const userObj = {
           email: email,
           password: password,
         }
         if (this.orcid.orcid) {
-          // submit the user's orcid profile so it can be linked with
-          // the user's MorphoBank account
+          // Submit the user's orcid profile so it can be linked with the user's
+          // MorphoBank account
           userObj.orcid = this.orcid
         }
         const res = await axios.post(url, userObj)
@@ -113,6 +130,7 @@ export const useAuthStore = defineStore({
           userId: res.data.user.user_id,
           userEmail: res.data.user.email,
           name: res.data.user.name,
+          access: res.data.user.access,
         }
         this.user = uObj
 

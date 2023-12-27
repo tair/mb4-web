@@ -1,3 +1,14 @@
+<script setup lang="ts">
+const props = defineProps<{
+  alertType: string
+  message: { [key: string]: string }
+  messageName: string
+}>()
+
+const dismissAlert = function () {
+  props.message[props.messageName] = ''
+}
+</script>
 <template>
   <div
     v-if="message[messageName]"
@@ -13,25 +24,3 @@
     ></button>
   </div>
 </template>
-
-<script setup>
-import { reactive } from 'vue'
-
-const props = defineProps({
-  alertType: {
-    type: String,
-  },
-  message: {
-    type: Object,
-  },
-  messageName: {
-    type: String,
-  },
-})
-
-const dismissAlert = function () {
-  props.message[props.messageName] = ''
-}
-</script>
-
-<style></style>

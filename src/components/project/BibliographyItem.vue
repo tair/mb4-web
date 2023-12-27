@@ -74,7 +74,7 @@ function getSections(bibliography: any) {
   if (collation) {
     citation += number ? ', ' : ' '
     citation +=
-      collation.includes('-') || collation.include(',') ? ' pp. ' : ' p. '
+      collation.includes('-') || collation.includes(',') ? ' pp. ' : ' p. '
     citation += collation
   }
 

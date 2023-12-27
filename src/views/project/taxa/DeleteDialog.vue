@@ -8,8 +8,6 @@ import { computed, onMounted, ref, watch } from 'vue'
 const props = defineProps<{
   projectId: number | string
   taxa: any[]
-  deleteTaxa: (taxonIds: number[], map: Map<number, number>) => Promise<boolean>
-  searchTaxa: (text: string) => Promise<any[]>
 }>()
 
 // This outlines all the usages for the given taxon. This is grouped by the
