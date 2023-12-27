@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { Modal } from 'bootstrap'
 import TaxonomicName from '@/components/project/TaxonomicName.vue'
-import TaxaSearchInput from '@/views/project/taxa/TaxaSearchInput.vue'
+import TaxaSearchInput from '@/views/project/common/TaxaSearchInput.vue'
 import { useTaxaStore } from '@/stores/TaxaStore'
-import { computed, onMounted, onUpdated, reactive, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
-const remappedTaxonIds = new Map()
 const props = defineProps<{
   projectId: number | string
   taxa: any[]
@@ -13,7 +12,18 @@ const props = defineProps<{
   searchTaxa: (text: string) => Promise<any[]>
 }>()
 
+// This outlines all the usages for the given taxon. This is grouped by the
+// taxon ID. The usage is outlined by:
+// <taxon_number>: {
+//  <table_number>: <count>
+//  ...
+//}
 const usages = ref(null)
+
+// A old taxon to new taxon map in which all references from the old taxon will
+// be changed to the new taxon.
+const remappedTaxonIds = new Map()
+
 onMounted(() => {
   const modalElement = document.getElementById('taxaDeleteModal')
   modalElement.addEventListener('hidden.bs.modal', () => {
@@ -23,7 +33,7 @@ onMounted(() => {
 })
 
 // Watch the input taxa so that we can fetch their usages when the user changes
-// the taxa.
+// the taxa selected to be deleted.
 const taxaStore = useTaxaStore()
 const taxonIds = computed(() => props.taxa.map((taxon) => taxon.taxon_id))
 watch(taxonIds, async (ids) => {
@@ -60,14 +70,17 @@ function setRemappedTaxonId(originalTaxonId: number, remappedTaxonId: number) {
 }
 
 async function handleDelete() {
-  const deleted = await props.deleteTaxa(
+  const deleted = await taxaStore.deleteIds(
+    props.projectId,
     props.taxa.map((taxon) => taxon.taxon_id),
-    remappedTaxonIds
+    Object.fromEntries(remappedTaxonIds.entries())
   )
   if (deleted) {
     const element = document.getElementById('taxaDeleteModal')
     const modal = Modal.getInstance(element)
     modal.hide()
+  } else {
+    alert('Failed to delete views')
   }
 }
 </script>
@@ -126,9 +139,12 @@ async function handleDelete() {
                         desired taxon from the suggested matches.
                       </p>
                       <TaxaSearchInput
-                        :search="searchTaxa"
                         @select="
-                          (t) => setRemappedTaxonId(taxon.taxon_id, t?.taxon_id)
+                          (selected) =>
+                            setRemappedTaxonId(
+                              taxon.taxon_id,
+                              selected?.taxon_id
+                            )
                         "
                       >
                         <template #item="taxon">

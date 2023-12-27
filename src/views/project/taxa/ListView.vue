@@ -41,12 +41,12 @@ const filteredTaxa = computed(() =>
   Object.values(filters)
     .reduce((taxa, filter) => taxa.filter(filter), taxaStore.taxa)
     .sort((a, b) => {
-      const nameA = getTaxonName(a)
+      const nameA = getTaxonName(a, TaxaColumns.GENUS, false)
       if (!nameA) {
         return -1
       }
 
-      const nameB = getTaxonName(b)
+      const nameB = getTaxonName(b, TaxaColumns.GENUS, false)
       if (!nameB) {
         return -1
       }
@@ -154,26 +154,6 @@ function clearSearch() {
   rank.value = TaxaColumns.GENUS
   selectedGroup.value = {}
   selectedGroupName.value = null
-}
-
-function deleteTaxa(taxonIds, remappedTaxonMap) {
-  const remappedTaxonIds = Object.fromEntries(remappedTaxonMap.entries())
-  const deleted = taxaStore.deleteIds(projectId, taxonIds, remappedTaxonIds)
-  if (!deleted) {
-    alert('Failed to delete views')
-  }
-  return deleted
-}
-
-async function searchTaxa(text) {
-  const url = `${
-    import.meta.env.VITE_API_URL
-  }/projects/${projectId}/taxa/search`
-  const response = await axios.post(url, {
-    text: text,
-  })
-  const taxonIds = response.data.results
-  return taxaStore.taxa.filter((taxon) => taxonIds.includes(taxon.taxon_id))
 }
 </script>
 <template>

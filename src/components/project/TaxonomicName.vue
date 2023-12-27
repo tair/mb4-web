@@ -104,10 +104,12 @@ function getAuthor() {
       {{ taxon['subspecific_epithet'] }}
     </span>
     <template v-if="showAuthor"> {{ getAuthor() }} </template>
+    <slot></slot>
   </span>
 </template>
 <style scoped>
-.taxonName * + * {
-  margin-left: 5px;
+.taxonName span,
+.taxonName i {
+  margin-right: 5px;
 }
 </style>

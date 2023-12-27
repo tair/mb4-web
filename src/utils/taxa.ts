@@ -69,8 +69,13 @@ export const nameColumnMap: Map<TaxaColumns, TaxaFriendlyNames> = new Map([
 
 export function getTaxonName(
   taxon: { [key: string]: string },
-  otu = TaxaColumns.GENUS
+  otu = TaxaColumns.GENUS,
+  showExtinctMarker = true
 ): string {
+  if (!taxon) {
+    return ''
+  }
+
   let gotOtu = false
   const names = []
   let lastName = ''
@@ -86,10 +91,9 @@ export function getTaxonName(
       }
     }
   }
-  if (names.length > 0) {
-    return names.join(' ')
-  }
-  return lastName
+
+  const name = names.length > 0 ? names.join(' ') : lastName
+  return (showExtinctMarker && taxon.is_extinct ? '† ' : ' ') + name
 }
 
 export const TAXA_COLUMN_NAMES: string[] = Object.values(TaxaColumns)

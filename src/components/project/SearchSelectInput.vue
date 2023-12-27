@@ -1,57 +1,72 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 const props = defineProps<{
-  initialValue?: string
-  search: (text: string) => Promise<any[]>
+  name?: string
+  initialValue?: number
+  search: (text: string) => Promise<number[]>
+  getItem: (id: number) => any
+  getText: (item: any) => string
+  getId: (item: any) => number
 }>()
 
 const emit = defineEmits(['select'])
 const items = ref([])
-const inputValue = ref(props.initialValue)
+const item = computed(() => props.getItem(props.initialValue))
+const text = ref(props.getText(item.value))
+const currentValue = ref(props.initialValue)
 
 async function handleInput(event: any) {
   const text = event.target.value
   if (text.length < 3) {
     items.value = []
-    return
+  } else {
+    items.value = await props.search(text)
   }
-  const results = await props.search(text)
-  items.value = results.slice(0, 5)
 }
 
 function handleSearch(event: Event) {
   const element = event.target as HTMLInputElement
   if (element.value == '') {
+    currentValue.value = undefined
     emit('select', null)
+    return
   }
 }
 
-function handleSelect(event: any, item: any) {
-  const target = event.currentTarget as HTMLElement
-  const text: string[] = []
-  target.childNodes.forEach(function getText(child: HTMLElement) {
-    if (child.nodeType === Node.TEXT_NODE) {
-      text.push(child.nodeValue.trim())
-    }
-    child.childNodes.forEach(getText)
-  })
-  inputValue.value = text.join(' ').trim()
+function handleSelect(item: any) {
+  const itemId = props.getId(item)
+  currentValue.value = itemId
+
+  const itemText = props.getText(item)
+  text.value = itemText
+
   items.value = []
   emit('select', item)
+}
+
+function handleBlur() {
+  if (items.value.length) {
+    const item = props.getItem(currentValue.value)
+    const itemText = props.getText(item)
+    text.value = itemText
+    items.value = []
+  }
 }
 </script>
 <template>
   <div class="input-group">
+    <input :name="name" :value="currentValue" v-if="name" type="hidden" />
     <input
-      class="form-control border"
-      type="search"
       @input="handleInput"
       @search="handleSearch"
-      v-model="inputValue"
+      @blur="handleBlur"
+      v-model="text"
+      class="form-control border"
+      type="search"
     />
     <ul v-if="items.length > 0" class="results">
       <template v-for="item in items">
-        <li @click="handleSelect($event, item)">
+        <li @mousedown="handleSelect(item)">
           <slot name="item" v-bind="item"></slot>
         </li>
       </template>
@@ -73,6 +88,7 @@ ul.results {
   right: -1px;
   top: 36px;
 }
+
 ul.results li {
   font-size: 13px;
   margin: 0;
