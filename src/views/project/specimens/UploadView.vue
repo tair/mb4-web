@@ -4,11 +4,15 @@ import { useRoute } from 'vue-router'
 import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { nameColumnMap } from '@/utils/taxa'
-import { countOccurences } from '@/utils/string'
+import { csvToArray } from '@/utils/csv'
+import { sha256 } from '@/utils/digest'
 
 const route = useRoute()
 const projectId = route.params.id as string
 const specimensStore = useSpecimensStore()
+
+const specimens = new Set()
+const taxa = new Map()
 
 function readFile(event: Event) {
   const target = event.target as HTMLInputElement
@@ -22,54 +26,65 @@ function readFile(event: Event) {
   reader.readAsText(file)
 }
 
-const specimens = new Set()
-
-// TODO: Use a library that will convert a .csv file to JSON.
-function parseContent(content: string) {
-  const columnsMap: Map<string, string> = new Map([
+async function parseContent(content: string) {
+  const specimenColumnsMap: Map<string, string> = new Map([
+    ['catalog number', 'catalog_number'],
+    ['institution code', 'institution_code'],
+    ['collection code', 'collection_code'],
+  ])
+  const taxaColumnsMap: Map<string, string> = new Map([
     ['author', 'scientific_name_author'],
     ['year', 'scientific_name_year'],
     ['notes', 'notes'],
-    ['Catalog Number', 'catalog_number'],
-    ['Institution Code', 'institution_code'],
-    ['Collection Code', 'collection_code'],
   ])
   nameColumnMap.forEach((value, key) =>
-    columnsMap.set(value.toLowerCase(), key)
+    taxaColumnsMap.set(value.toLowerCase(), key)
   )
 
-  const rows = content.split(/[\r\n]+/)
-  if (rows.length <= 0) {
-    return
-  }
-
-  const header = rows.shift()
-  const delimiter =
-    countOccurences(header, /\t/) > countOccurences(header, /\,/) ? '\t' : ','
-  const columnLabels = header
-    .split(delimiter)
-    .map((label) => label.toLowerCase())
+  const rows = csvToArray(content)
+  const columnLabels = rows.shift().map((label) => label.toLowerCase())
   for (const columnLabel of columnLabels) {
-    if (!columnsMap.has(columnLabel)) {
-      throw `Invalid column label ${columnLabel} in specimens file.`
+    if (
+      !taxaColumnsMap.has(columnLabel) &&
+      !specimenColumnsMap.has(columnLabel)
+    ) {
+      throw `Invalid column label ${columnLabel} in specimen file.`
     }
   }
 
+  taxa.clear()
   specimens.clear()
   for (const row of rows) {
     const taxon: { [key: string]: string } = {}
-    const currentline = row.split(delimiter)
-    for (let x = 0, l = columnLabels.length; x < l; ++x) {
-      taxon[columnLabels[x]] = currentline[x]
+    const specimen: { [key: string]: string } = {}
+    for (let x = 0, l = row.length; x < l; ++x) {
+      const value = row[x]
+      if (value) {
+        const columnLabel = columnLabels[x]
+        if (taxaColumnsMap.has(columnLabel)) {
+          const fieldName = taxaColumnsMap.get(columnLabel)
+          taxon[fieldName] = value
+        }
+        if (specimenColumnsMap.has(columnLabel)) {
+          const fieldName = specimenColumnsMap.get(columnLabel)
+          specimen[fieldName] = value
+        }
+      }
     }
-    specimens.add(taxon)
+
+    const hash = await sha256(JSON.stringify(taxon))
+    specimen.taxon_hash = hash
+
+    taxa.set(hash, taxon)
+    specimens.add(specimen)
   }
 }
 
 async function createBatch() {
   const created = await specimensStore.createBatch(
     projectId,
-    Array.from(specimens)
+    Array.from(specimens),
+    Object.fromEntries(taxa)
   )
   if (created) {
     await router.replace(`/myprojects/${projectId}/specimens`)
@@ -163,14 +178,16 @@ async function createBatch() {
         Although any text editor may be used to create specimen files, it is
         usually more convenient to employ spreadsheet software such as
         <a href="http://www.OpenOffice.org" target="_ext">OpenOffice</a> or
-        <a href="http://www.microsoft.com/office" target="_ext"
-          >Microsoft Excel</a
-        >
+        <a href="http://www.microsoft.com/office" target="_ext">
+          Microsoft Excel
+        </a>
         and
         <a
-          href="<?php print $this->request->getThemeUrlPath(); ?>/graphics/samples/sample_specimen_file.csv"
-          >a sample file</a
+          href="/samples/sample_specimen_file.csv"
+          download="sample_specimen_file.csv"
         >
+          a sample file
+        </a>
         to get you started.
         <b>Note that you cannot upload Excel files to MorphoBank.</b> You must
         save your Excel files as tab-delimited text or a comma-seperated file

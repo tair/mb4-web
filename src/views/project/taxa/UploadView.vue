@@ -4,11 +4,14 @@ import { useRoute } from 'vue-router'
 import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { nameColumnMap } from '@/utils/taxa'
-import { countOccurences } from '@/utils/string'
+import { csvToArray } from '@/utils/csv'
 
 const route = useRoute()
 const projectId = route.params.id as string
 const taxaStore = useTaxaStore()
+
+// The list of taxa that will be set when the file is uploaded.
+const taxa = new Set()
 
 function readFile(event: Event) {
   const target = event.target as HTMLInputElement
@@ -22,9 +25,6 @@ function readFile(event: Event) {
   reader.readAsText(file)
 }
 
-const taxa = new Set()
-
-// TODO: Use a library that will convert a .csv file to JSON.
 function parseContent(content: string) {
   const columnsMap: Map<string, string> = new Map([
     ['author', 'scientific_name_author'],
@@ -35,17 +35,8 @@ function parseContent(content: string) {
     columnsMap.set(value.toLowerCase(), key)
   )
 
-  const rows = content.split(/[\r\n]+/)
-  if (rows.length <= 0) {
-    return
-  }
-
-  const header = rows.shift()
-  const delimiter =
-    countOccurences(header, /\t/) > countOccurences(header, /\,/) ? '\t' : ','
-  const columnLabels = header
-    .split(delimiter)
-    .map((label) => label.toLowerCase())
+  const rows = csvToArray(content)
+  const columnLabels = rows.shift().map((label) => label.toLowerCase())
   for (const columnLabel of columnLabels) {
     if (!columnsMap.has(columnLabel)) {
       throw `Invalid column label ${columnLabel} in taxa file.`
@@ -55,15 +46,22 @@ function parseContent(content: string) {
   taxa.clear()
   for (const row of rows) {
     const taxon: { [key: string]: string } = {}
-    const currentline = row.split(delimiter)
-    for (let x = 0, l = columnLabels.length; x < l; ++x) {
-      taxon[columnLabels[x]] = currentline[x]
+    for (let x = 0, l = row.length; x < l; ++x) {
+      const value = row[x]
+      if (value) {
+        taxon[columnLabels[x]] = value
+      }
     }
     taxa.add(taxon)
   }
 }
 
 async function createBatch() {
+  if (taxa.size == 0) {
+    alert('There is no taxa specified in the upload file')
+    return
+  }
+
   const created = await taxaStore.createBatch(projectId, Array.from(taxa))
   if (created) {
     await router.replace(`/myprojects/${projectId}/taxa`)
@@ -175,4 +173,3 @@ async function createBatch() {
     </div>
   </ProjectContainerComp>
 </template>
-<style scoped></style>
