@@ -16,11 +16,9 @@ onMounted(() => {
 
 <template>
   <ProjectLoaderComp
-    :projectId="projectId"
     :isLoading="projectStore.isLoading"
     :errorMessage="projectStore.docs ? null : 'No documents data available.'"
     basePath="project"
-    itemName="documents"
   >
     <div :key="n" v-for="(fld, n) in projectStore.docs">
       <div data-bs-toggle="collapse" :href="`#collapse${n}`" role="button">

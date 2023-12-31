@@ -23,6 +23,30 @@ export const useDocumentsStore = defineStore({
       this.folders = response.data.folders
       this.isLoaded = true
     },
+    async deleteDocuments(projectId, documentIds) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/documents/delete`
+      const response = await axios.post(url, {
+        document_ids: documentIds,
+      })
+      if (response.status == 200) {
+        this.removeDocumentById(documentIds)
+        return true
+      }
+      return false
+    },
+    async deleteFolder(projectId, folderId) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/documents/folder/${folderId}/delete`
+      const response = await axios.post(url)
+      if (response.status == 200) {
+        this.removeFolderById(folderId)
+        return true
+      }
+      return false
+    },
     getDocumentById(documentId) {
       for (const document of this.documents) {
         if (document.document_id == documentId) {

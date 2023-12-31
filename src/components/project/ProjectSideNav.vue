@@ -1,20 +1,14 @@
-<script setup>
-import { RouterLink } from 'vue-router'
+<script setup lang="ts">
+import { computed } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
 
-const props = defineProps({
-  projectId: {
-    type: [Number, String],
-    required: true,
-  },
-  item: {
-    type: String,
-    required: true,
-  },
-  basePath: {
-    type: String,
-    required: true,
-  },
-})
+defineProps<{
+  basePath: string
+}>()
+
+const route = useRoute()
+const projectId = route.params.id as string
+const item = computed(() => route.meta.itemName)
 </script>
 
 <template>
@@ -83,7 +77,22 @@ const props = defineProps({
       <RouterLink
         class="nav-link m-0 p-0"
         :to="`/${basePath}/${projectId}/views`"
-        >Views of Media</RouterLink
+        >Views for Media</RouterLink
+      >
+    </li>
+
+    <li
+      :class="[
+        item === 'folios'
+          ? 'list-group-item-warning'
+          : 'list-group-item-action',
+        'list-group-item',
+      ]"
+    >
+      <RouterLink
+        class="nav-link m-0 p-0"
+        :to="`/${basePath}/${projectId}/folios`"
+        >Folios</RouterLink
       >
     </li>
 

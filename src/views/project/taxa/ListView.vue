@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useRoute } from 'vue-router'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useTaxaStore } from '@/stores/TaxaStore'
-import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
+import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import TaxonomicName from '@/components/project/TaxonomicName.vue'
 import DeleteDialog from '@/views/project/taxa/DeleteDialog.vue'
 import {
@@ -19,6 +19,7 @@ const projectId = route.params.id
 const taxaToDelete = ref([])
 
 const taxaStore = useTaxaStore()
+const isLoaded = computed(() => taxaStore.isLoaded)
 
 const rank = ref(TaxaColumns.GENUS)
 const selectedLetter = ref(null)
@@ -157,13 +158,7 @@ function clearSearch() {
 }
 </script>
 <template>
-  <ProjectContainerComp
-    :projectId="projectId"
-    :isLoading="false"
-    :errorMessage="null"
-    basePath="myprojects"
-    itemName="taxa"
-  >
+  <LoadingIndicator :isLoaded="isLoaded">
     <header>
       There are {{ taxaStore.taxa?.length }} taxa associated with this project.
     </header>
@@ -330,8 +325,8 @@ function clearSearch() {
         </ul>
       </div>
     </div>
-    <DeleteDialog :taxa="taxaToDelete" :projectId="projectId" />
-  </ProjectContainerComp>
+  </LoadingIndicator>
+  <DeleteDialog :taxa="taxaToDelete" :projectId="projectId" />
 </template>
 <style scoped>
 @import '@/views/project/styles.css';

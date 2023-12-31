@@ -6,54 +6,8 @@ export const useBibliographiesStore = defineStore({
   state: () => ({
     isLoaded: false,
     bibliographies: [],
-    filters: [],
-    selectedLetter: null,
   }),
-  getters: {
-    letters() {
-      const letters = new Set()
-      for (const bibliography of this.bibliographies) {
-        if (bibliography.authors && bibliography.authors.length > 0) {
-          const author = bibliography.authors[0]
-          if (author.surname) {
-            const firstLetter = author.surname[0]
-            if (firstLetter) {
-              letters.add(firstLetter.toUpperCase())
-            }
-          }
-        }
-      }
-      return [...letters].sort()
-    },
-    filteredBibliographies() {
-      return this.filters
-        .reduce(
-          (bibliographies, filter) => bibliographies.filter(filter),
-          this.bibliographies
-        )
-        .sort((a, b) => {
-          if (a.authors && b.authors) {
-            const length = Math.min(a.authors.length, b.authors.length)
-            for (let x = 0; x < length; ++x) {
-              const surnameA = a.authors[x].surname
-              if (!surnameA) {
-                return -1
-              }
-
-              const surnameB = b.authors[x].surname
-              if (!surnameB) {
-                return -1
-              }
-
-              const compare = surnameA.localeCompare(surnameB)
-              if (compare) {
-                return compare
-              }
-            }
-          }
-        })
-    },
-  },
+  getters: {},
   actions: {
     async fetchBibliographies(projectId) {
       const url = `${
@@ -116,25 +70,6 @@ export const useBibliographiesStore = defineStore({
         return true
       }
       return false
-    },
-    clearFilters() {
-      this.selectedLetter = null
-      this.filters = []
-    },
-    filterByLetter(letter) {
-      this.selectedLetter = letter
-      this.filters = [
-        (bibliography) => {
-          if (bibliography.authors && bibliography.authors.length > 0) {
-            const author = bibliography.authors[0]
-            if (author.surname) {
-              const firstLetter = author.surname[0]
-              return firstLetter == letter
-            }
-          }
-          return false
-        },
-      ]
     },
     removeByReferenceIds(referenceIds) {
       let x = 0

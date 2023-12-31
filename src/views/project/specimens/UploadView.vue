@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import router from '@/router'
 import { useRoute } from 'vue-router'
-import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { nameColumnMap } from '@/utils/taxa'
 import { csvToArray } from '@/utils/csv'
@@ -92,123 +91,111 @@ async function createBatch() {
 }
 </script>
 <template>
-  <ProjectContainerComp
-    :projectId="projectId"
-    basePath="myprojects"
-    itemName="specimens"
-  >
+  <div>
+    You can add a set of specimen data to your project in one go by uploading a
+    properly formatted <i>specimen file</i>
+    to MorphoBank using this form.
+  </div>
+  <div>
+    A specimen file is simply a specially formatted, tab-delimited or
+    comma-separated text file. Each line of a specimen file represents a single
+    specimen and is split into several columns, one for each component of the
+    specimen.. The first line of the file is reserved for column labels.
+    <b>You must label your columns using the following labels:</b>
+  </div>
+  <div>
+    <table>
+      <tr>
+        <td valign="top">
+          <ul>
+            <li>Catalog Number</li>
+            <li>Institution Code</li>
+            <li>Collection Code</li>
+          </ul>
+        </td>
+        <td valign="top">
+          <ul>
+            <li>Supraspecific Clade</li>
+            <li>Kingdom</li>
+            <li>Phylum</li>
+            <li>Class</li>
+            <li>Subclass</li>
+            <li>Infraclass</li>
+          </ul>
+        </td>
+        <td valign="top">
+          <ul>
+            <li>Cohort</li>
+            <li>Superorder</li>
+            <li>Order</li>
+            <li>Suborder</li>
+            <li>Infraorder</li>
+            <li>Superfamily</li>
+          </ul>
+        </td>
+        <td valign="top">
+          <ul>
+            <li>Family</li>
+            <li>Subfamily</li>
+            <li>Tribe</li>
+            <li>Subtribe</li>
+            <li>Genus</li>
+            <li>Subgenus</li>
+          </ul>
+        </td>
+        <td valign="top">
+          <ul>
+            <li>Species</li>
+            <li>Subspecies</li>
+            <li>Author</li>
+            <li>Year</li>
+            <li>Notes</li>
+          </ul>
+        </td>
+      </tr>
+    </table>
+  </div>
+  <div>
+    The labels may be in any order but the labels' text must be entered
+    <b>exactly</b> as displayed above or your file will be rejected. You may
+    omit any column not used by your data - all columns are optional. However,
+    at least one of the name columns must be defined. The "notes" column is
+    intended for specimen-specific notes you wish to associate with the new
+    specimen. You may enter the author with year separated by comma (ex.
+    "Schwartzenegger, 1879"), or you may place the year in the separate "year"
+    column. Surround the author's name with parentheses if you wish it to
+    display that way.
+  </div>
+  <div>
+    Although any text editor may be used to create specimen files, it is usually
+    more convenient to employ spreadsheet software such as
+    <a href="http://www.OpenOffice.org" target="_ext">OpenOffice</a> or
+    <a href="http://www.microsoft.com/office" target="_ext">
+      Microsoft Excel
+    </a>
+    and
+    <a
+      href="/samples/sample_specimen_file.csv"
+      download="sample_specimen_file.csv"
+    >
+      a sample file
+    </a>
+    to get you started.
+    <b>Note that you cannot upload Excel files to MorphoBank.</b> You must save
+    your Excel files as tab-delimited text or a comma-seperated file before
+    uploading them to MorphoBank.
+  </div>
+  <div>
     <div>
-      <div>
-        You can add a set of specimen data to your project in one go by
-        uploading a properly formatted <i>specimen file</i>
-        to MorphoBank using this form.
-      </div>
-      <div>
-        A specimen file is simply a specially formatted, tab-delimited or
-        comma-separated text file. Each line of a specimen file represents a
-        single specimen and is split into several columns, one for each
-        component of the specimen.. The first line of the file is reserved for
-        column labels.
-        <b>You must label your columns using the following labels:</b>
-      </div>
-      <div>
-        <table>
-          <tr>
-            <td valign="top">
-              <ul>
-                <li>Catalog Number</li>
-                <li>Institution Code</li>
-                <li>Collection Code</li>
-              </ul>
-            </td>
-            <td valign="top">
-              <ul>
-                <li>Supraspecific Clade</li>
-                <li>Kingdom</li>
-                <li>Phylum</li>
-                <li>Class</li>
-                <li>Subclass</li>
-                <li>Infraclass</li>
-              </ul>
-            </td>
-            <td valign="top">
-              <ul>
-                <li>Cohort</li>
-                <li>Superorder</li>
-                <li>Order</li>
-                <li>Suborder</li>
-                <li>Infraorder</li>
-                <li>Superfamily</li>
-              </ul>
-            </td>
-            <td valign="top">
-              <ul>
-                <li>Family</li>
-                <li>Subfamily</li>
-                <li>Tribe</li>
-                <li>Subtribe</li>
-                <li>Genus</li>
-                <li>Subgenus</li>
-              </ul>
-            </td>
-            <td valign="top">
-              <ul>
-                <li>Species</li>
-                <li>Subspecies</li>
-                <li>Author</li>
-                <li>Year</li>
-                <li>Notes</li>
-              </ul>
-            </td>
-          </tr>
-        </table>
-      </div>
-      <div>
-        The labels may be in any order but the labels' text must be entered
-        <b>exactly</b> as displayed above or your file will be rejected. You may
-        omit any column not used by your data - all columns are optional.
-        However, at least one of the name columns must be defined. The "notes"
-        column is intended for specimen-specific notes you wish to associate
-        with the new specimen. You may enter the author with year separated by
-        comma (ex. "Schwartzenegger, 1879"), or you may place the year in the
-        separate "year" column. Surround the author's name with parentheses if
-        you wish it to display that way.
-      </div>
-      <div>
-        Although any text editor may be used to create specimen files, it is
-        usually more convenient to employ spreadsheet software such as
-        <a href="http://www.OpenOffice.org" target="_ext">OpenOffice</a> or
-        <a href="http://www.microsoft.com/office" target="_ext">
-          Microsoft Excel
-        </a>
-        and
-        <a
-          href="/samples/sample_specimen_file.csv"
-          download="sample_specimen_file.csv"
-        >
-          a sample file
-        </a>
-        to get you started.
-        <b>Note that you cannot upload Excel files to MorphoBank.</b> You must
-        save your Excel files as tab-delimited text or a comma-seperated file
-        before uploading them to MorphoBank.
-      </div>
-      <div>
-        <div>
-          Choose taxonomy file<br />
-          <input type="file" name="file" @change="readFile" accept=".csv" />
-        </div>
-        <div class="formButtons">
-          <button class="button" @click="createBatch">
-            Upload taxonomy file
-          </button>
-        </div>
-      </div>
-      <div>
-        <b>Note:</b> Large batches can take a few minutes to process. Be
-        patient!
-      </div>
+      Choose taxonomy file<br />
+      <input type="file" name="file" @change="readFile" accept=".csv" />
     </div>
-  </ProjectContainerComp>
+    <div class="formButtons">
+      <button class="button" @click="createBatch">Upload taxonomy file</button>
+    </div>
+  </div>
+  <div>
+    <b>Note:</b> Large batches can take a few minutes to process. Be patient!
+  </div>
 </template>
 <style scoped></style>

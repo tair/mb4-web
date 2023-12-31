@@ -68,6 +68,7 @@ export const PUBLISHED_PROJECT_VIEWS = [
   {
     path: ':id/overview',
     name: 'ProjectOverviewView',
+    meta: { itemName: 'overview' },
     component: () =>
       import(
         /* webpackChunkName: "published" */ '@/views/project/published/OverviewView.vue'
@@ -76,6 +77,7 @@ export const PUBLISHED_PROJECT_VIEWS = [
   {
     path: ':id/matrices',
     name: 'ProjectMatrixView',
+    meta: { itemName: 'matrices' },
     component: () =>
       import(
         /* webpackChunkName: "published" */ '@/views/project/published/MatrixView.vue'
@@ -84,14 +86,25 @@ export const PUBLISHED_PROJECT_VIEWS = [
   {
     path: ':id/media',
     name: 'ProjectMediaView',
+    meta: { itemName: 'media' },
     component: () =>
       import(
         /* webpackChunkName: "published" */ '@/views/project/published/MediaView.vue'
       ),
   },
   {
+    path: ':id/folios',
+    name: 'ProjectFoliosView',
+    meta: { itemName: 'folios' },
+    component: () =>
+      import(
+        /* webpackChunkName: "published" */ '@/views/project/published/FoliosView.vue'
+      ),
+  },
+  {
     path: ':id/views',
     name: 'ProjectMediaViewsView',
+    meta: { itemName: 'media_views' },
     component: () =>
       import(
         /* webpackChunkName: "published" */ '@/views/project/published/MediaViewsView.vue'
@@ -100,6 +113,7 @@ export const PUBLISHED_PROJECT_VIEWS = [
   {
     path: ':id/specimens',
     name: 'ProjectSpecimenView',
+    meta: { itemName: 'specimens' },
     component: () =>
       import(
         /* webpackChunkName: "published" */ '@/views/project/published/SpecimenView.vue'
@@ -108,6 +122,7 @@ export const PUBLISHED_PROJECT_VIEWS = [
   {
     path: ':id/taxa',
     name: 'ProjectTaxaView',
+    meta: { itemName: 'taxa' },
     component: () =>
       import(
         /* webpackChunkName: "published" */ '@/views/project/published/TaxaView.vue'
@@ -116,6 +131,7 @@ export const PUBLISHED_PROJECT_VIEWS = [
   {
     path: ':id/bibliography',
     name: 'ProjectBibliographyView',
+    meta: { itemName: 'bibliography' },
     component: () =>
       import(
         /* webpackChunkName: "published" */ '@/views/project/published/BibliographyView.vue'
@@ -124,6 +140,7 @@ export const PUBLISHED_PROJECT_VIEWS = [
   {
     path: ':id/documents',
     name: 'ProjectDocumentView',
+    meta: { itemName: 'documents' },
     component: () =>
       import(
         /* webpackChunkName: "published" */ '@/views/project/published/DocumentView.vue'

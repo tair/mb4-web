@@ -1,12 +1,12 @@
 <script setup>
-import axios from 'axios'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { setCopyRight } from '@/lib/copyright.js'
 import { useDocumentsStore } from '@/stores/DocumentsStore'
-import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
+import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import ProjectDocumentList from '@/components/project/ProjectDocumentList.vue'
-import DeleteFolderModelComp from '@/components/project/DeleteFolderModelComp.vue'
+import DeleteDocumentDialog from './DeleteDocumentDialog.vue'
+import DeleteFolderDialog from './DeleteFolderDialog.vue'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -17,47 +17,14 @@ const publish_cc0 = ref()
 const documentToDelete = ref({})
 const folderToDelete = ref({})
 
-const baseUrl = `${
-  import.meta.env.VITE_API_URL
-}/projects/${projectId}/documents`
-
-async function deleteDocument(documentId) {
-  const url = `${baseUrl}/delete`
-  const response = await axios.post(url, {
-    document_ids: [documentId],
-  })
-  if (response.status == 200) {
-    documentsStore.removeDocumentById([documentId])
-  } else {
-    alert(response.data?.message || 'Failed to delete document')
-  }
-}
-
-async function deleteFolder(folderId) {
-  const url = `${baseUrl}/folder/${folderId}/delete`
-  const response = await axios.post(url)
-  if (response.status == 200) {
-    documentsStore.removeFolderById(folderId)
-  } else {
-    alert(response.data?.message || 'Failed to delete document')
-  }
-}
-
 onMounted(() => {
   if (!documentsStore.isLoaded) {
     documentsStore.fetchDocuments(projectId)
   }
 })
 </script>
-
 <template>
-  <ProjectContainerComp
-    :projectId="projectId"
-    :isLoading="!documentsStore.isLoaded"
-    :errorMessage="null"
-    basePath="myprojects"
-    itemName="documents"
-  >
+  <LoadingIndicator :isLoaded="documentsStore.isLoaded">
     <header>
       There are {{ documentsStore.documents?.length }} documents and
       {{ documentsStore.folders?.length }} document folders associated with this
@@ -240,71 +207,9 @@ onMounted(() => {
         </div>
       </div>
     </div>
-    <div class="modal" id="documentDeleteModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Confirm</h5>
-          </div>
-          <div class="modal-body">
-            Really delete document: <i>{{ documentToDelete?.title }}</i> ?
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              data-bs-dismiss="modal"
-              @click="deleteDocument(documentToDelete.document_id)"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="modal" id="folderDeleteModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Confirm</h5>
-          </div>
-          <div class="modal-body" v-if="folderToDelete">
-            Really delete folder: <i>{{ folderToDelete?.title }}</i> ?
-            <DeleteFolderModelComp
-              :documents="
-                documentsStore.getDocumentsForFolder(folderToDelete?.folder_id)
-              "
-            >
-            </DeleteFolderModelComp>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              data-bs-dismiss="modal"
-              @click="deleteFolder(folderToDelete.folder_id)"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </ProjectContainerComp>
+  </LoadingIndicator>
+  <DeleteDocumentDialog :document="documentToDelete" :projectId="projectId" />
+  <DeleteFolderDialog :folder="folderToDelete" :projectId="projectId" />
 </template>
 <style scoped>
 @import '@/views/project/styles.css';

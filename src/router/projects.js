@@ -1,17 +1,8 @@
-import MyProjectMediaView from '@/views/project/MyProjectMediaView.vue'
-
 export const MY_PROJECT_VIEWS = [
-  {
-    path: '',
-    name: 'MyProjectListView',
-    component: () =>
-      import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/home/ListView.vue'
-      ),
-  },
   {
     path: 'create',
     name: 'MyProjectCreateView',
+    meta: { itemName: 'overview' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/home/CreateView.vue'
@@ -20,14 +11,22 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/overview',
     name: 'MyProjectOverviewView',
-    component: () =>
-      import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/overview/OverviewView.vue'
-      ),
+    meta: { itemName: 'overview' },
+    components: {
+      default: () =>
+        import(
+          /* webpackChunkName: "unpublished" */ '@/views/project/overview/OverviewView.vue'
+        ),
+      ContentFooter: () =>
+        import(
+          /* webpackChunkName: "unpublished" */ '@/views/project/overview/OverviewStatsView.vue'
+        ),
+    },
   },
   {
     path: ':id/matrices',
     name: 'MyProjectMatrixView',
+    meta: { itemName: 'matrices' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/matrices/ListView.vue'
@@ -36,6 +35,7 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/matrices/create/choose',
     name: 'MyProjectMatrixChooseView',
+    meta: { itemName: 'matrices' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/matrices/ChooseView.vue'
@@ -44,6 +44,7 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/matrices/create',
     name: 'MyProjectMatrixCreateView',
+    meta: { itemName: 'matrices' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/matrices/CreateView.vue'
@@ -52,11 +53,16 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/media',
     name: 'MyProjectMediaView',
-    component: MyProjectMediaView,
+    meta: { itemName: 'media' },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/media/ListView.vue'
+      ),
   },
   {
     path: ':id/views',
     name: 'MyProjectMediaViewsView',
+    meta: { itemName: 'media_views' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/views/ListView.vue'
@@ -65,6 +71,7 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/views/create',
     name: 'MyProjectMediaViewsCreateView',
+    meta: { itemName: 'media_views' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/views/CreateView.vue'
@@ -73,14 +80,25 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/views/:viewId/edit',
     name: 'MyProjectMediaViewEditView',
+    meta: { itemName: 'media_views' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/views/EditView.vue'
       ),
   },
   {
+    path: ':id/folios',
+    name: 'MyProjectFoliosView',
+    meta: { itemName: 'folios' },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/folios/ListView.vue'
+      ),
+  },
+  {
     path: ':id/specimens',
     name: 'MyProjectSpecimensListView',
+    meta: { itemName: 'specimens' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/specimens/ListView.vue'
@@ -89,6 +107,7 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/specimens/create',
     name: 'MyProjectSpecimensCreateView',
+    meta: { itemName: 'specimens' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/specimens/CreateView.vue'
@@ -97,6 +116,7 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/specimens/:specimenId/edit',
     name: 'MyProjectSpecimensEditView',
+    meta: { itemName: 'specimens' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/specimens/EditView.vue'
@@ -105,6 +125,7 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/specimens/upload',
     name: 'MyProjectSpecimensUploadView',
+    meta: { itemName: 'specimens' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/specimens/UploadView.vue'
@@ -113,6 +134,7 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/bibliography',
     name: 'MyProjectBibliographyListView',
+    meta: { itemName: 'bibliography' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/bibliographies/ListView.vue'
@@ -121,6 +143,7 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/bibliography/create',
     name: 'MyProjectBibliographyCreateView',
+    meta: { itemName: 'bibliography' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/bibliographies/CreateView.vue'
@@ -129,6 +152,7 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/bibliography/:referenceId/edit',
     name: 'MyProjectBibliographyEditView',
+    meta: { itemName: 'bibliography' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/bibliographies/EditView.vue'
@@ -137,6 +161,7 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/documents',
     name: 'MyProjectDocumentsView',
+    meta: { itemName: 'documents' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/documents/ListView.vue'
@@ -145,6 +170,7 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/documents/create',
     name: 'MyProjectDocumentCreateView',
+    meta: { itemName: 'documents' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/documents/CreateView.vue'
@@ -153,6 +179,7 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/documents/:documentId/edit',
     name: 'MyProjectDocumentEditView',
+    meta: { itemName: 'documents' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/documents/EditView.vue'
@@ -161,6 +188,7 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/documents/folders/create',
     name: 'MyProjectDocumentFolderCreateView',
+    meta: { itemName: 'documents' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/documents/FolderCreateView.vue'
@@ -169,6 +197,7 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/documents/folders/:folderId/edit',
     name: 'MyProjectDocumentFolderEditView',
+    meta: { itemName: 'documents' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/documents/FolderEditView.vue'
@@ -177,6 +206,7 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/taxa',
     name: 'MyProjectTaxaView',
+    meta: { itemName: 'taxa' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/taxa/ListView.vue'
@@ -185,6 +215,7 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/taxa/create',
     name: 'MyProjectTaxaCreateView',
+    meta: { itemName: 'taxa' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/taxa/CreateView.vue'
@@ -193,6 +224,7 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/taxa/create/batch',
     name: 'MyProjectTaxaBatchCreateView',
+    meta: { itemName: 'taxa' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/taxa/BatchCreateView.vue'
@@ -201,6 +233,7 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/taxa/upload',
     name: 'MyProjectTaxaUploadView',
+    meta: { itemName: 'taxa' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/taxa/UploadView.vue'
@@ -209,6 +242,7 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/taxa/:taxonId/edit',
     name: 'MyProjectTaxaEditView',
+    meta: { itemName: 'taxa' },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/taxa/EditView.vue'

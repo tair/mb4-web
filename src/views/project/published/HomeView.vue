@@ -57,7 +57,7 @@ watch(selectedPage, (currentValue, oldValue) => {
   projectsStore.fetchByPage()
 })
 
-watch(selectedPageSize, (currentValue, oldValue) => {
+watch(selectedPageSize, (currentValue) => {
   projectsStore.itemsPerPage = currentValue
   projectsStore.currentPage = 1
   projectsStore.recalculatePageInfo()

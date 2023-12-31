@@ -15,13 +15,11 @@ onMounted(() => {
 
 <template>
   <ProjectLoaderComp
-    :projectId="projectId"
     :isLoading="projectStore.isLoading"
     :errorMessage="
       projectStore.specimen_details ? null : 'No specimen data available.'
     "
     basePath="project"
-    itemName="specimens"
   >
     <p>
       This project has
