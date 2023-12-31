@@ -71,6 +71,24 @@ export const useBibliographiesStore = defineStore({
       }
       return false
     },
+    getReferenceById(referenceId) {
+      for (let x = 0; x < this.bibliographies.length; ++x) {
+        const bibliography = this.bibliographies[x]
+        if (bibliography.reference_id == referenceId) {
+          return bibliography
+        }
+      }
+      return null
+    },
+    getReferencesByIds(referenceIds) {
+      const map = new Map()
+      for (const bibliography of this.bibliographies) {
+        if (referenceIds.includes(bibliography.reference_id)) {
+          map.set(bibliography.reference_id, bibliography)
+        }
+      }
+      return map
+    },
     removeByReferenceIds(referenceIds) {
       let x = 0
       while (x < this.bibliographies.length) {
@@ -80,15 +98,6 @@ export const useBibliographiesStore = defineStore({
           ++x
         }
       }
-    },
-    getReferenceById(referenceId) {
-      for (let x = 0; x < this.bibliographies.length; ++x) {
-        const bibliography = this.bibliographies[x]
-        if (bibliography.reference_id == referenceId) {
-          return bibliography
-        }
-      }
-      return null
     },
     invalidate() {
       this.bibliographies = []

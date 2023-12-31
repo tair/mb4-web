@@ -64,7 +64,13 @@
 
 .list-group-item-name {
   display: flex;
+  flex-direction: column;
   flex-grow: 1;
+}
+
+.list-group-item-notes {
+  font-style: italic;
+  padding: 20px 10px 0;
 }
 
 .list-group-item-buttons {

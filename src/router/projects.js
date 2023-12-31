@@ -123,6 +123,33 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
+    path: ':id/specimens/:specimenId/citations',
+    name: 'MyProjectSpecimenCitationsListView',
+    meta: { itemName: 'specimens' },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/specimens/citations/ListView.vue'
+      ),
+  },
+  {
+    path: ':id/specimens/:specimenId/citations/create',
+    name: 'MyProjectSpecimenCitationsCreateView',
+    meta: { itemName: 'specimens' },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/specimens/citations/CreateView.vue'
+      ),
+  },
+  {
+    path: ':id/specimens/:specimenId/citations/:citationId/edit',
+    name: 'MyProjectSpecimenCitationsEditView',
+    meta: { itemName: 'specimens' },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/specimens/citations/EditView.vue'
+      ),
+  },
+  {
     path: ':id/specimens/upload',
     name: 'MyProjectSpecimensUploadView',
     meta: { itemName: 'specimens' },
@@ -246,6 +273,33 @@ export const MY_PROJECT_VIEWS = [
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/taxa/EditView.vue'
+      ),
+  },
+  {
+    path: ':id/taxa/:taxonId/citations',
+    name: 'MyProjectTaxaCitationsListView',
+    meta: { itemName: 'taxa' },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/taxa/citations/ListView.vue'
+      ),
+  },
+  {
+    path: ':id/taxa/:taxonId/citations/create',
+    name: 'MyProjectTaxaCitationsCreateView',
+    meta: { itemName: 'taxa' },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/taxa/citations/CreateView.vue'
+      ),
+  },
+  {
+    path: ':id/taxa/:taxonId/citations/:citationId/edit',
+    name: 'MyProjectTaxaCitationsEditView',
+    meta: { itemName: 'taxa' },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/taxa/citations/EditView.vue'
       ),
   },
 ]

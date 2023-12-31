@@ -106,7 +106,7 @@ export const useSpecimensStore = defineStore({
       const map = new Map()
       for (const specimen of this.specimens) {
         if (specimenIds.includes(specimen.specimen_id)) {
-          return specimen
+          map.set(specimen.specimen_id, specimen)
         }
       }
       return map
