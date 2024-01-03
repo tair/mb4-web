@@ -1,5 +1,9 @@
 // custom variables MUST be override before import
-$input-box-shadow: none;
+$primary: #900;
+$enable-shadows: true;
 $warning: #ef782f;
+// Default variable overrides
+$body-bg: #000;
+$body-color: #111;
 
-@import "../../../node_modules/bootstrap/scss/bootstrap.scss";
+@import "../../../node_modules/bootstrap/scss/bootstrap"

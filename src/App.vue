@@ -12,13 +12,19 @@ onMounted(() => {
   <RouterView></RouterView>
 </template>
 <style>
-html,
 body {
+  display: flex;
+  flex: 1 1 0%;
+  flex-direction: column;
   font-family: 'Open Sans', sans-serif;
   font-size: medium;
+  min-height: 100vh;
 }
-main > .container {
-  padding: 130px 10px 60px;
+
+#app {
+  display: flex;
+  flex: 1 1 0%;
+  flex-direction: column;
 }
 
 .text-mb {
@@ -40,10 +46,6 @@ a {
 }
 
 a:link {
-  color: #ef782f;
-}
-
-a:hover {
   color: #ef782f;
 }
 

@@ -1,10 +1,12 @@
-<script setup>
-const props = defineProps({
-  documents: {
-    type: Array,
-    required: true,
-  },
-})
+<script setup lang="ts">
+type Document = {
+  document_id: number
+  title: string
+}
+
+defineProps<{
+  documents: Document[]
+}>()
 </script>
 <template>
   <div v-if="documents.length > 0">

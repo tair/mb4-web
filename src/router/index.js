@@ -5,6 +5,7 @@ import { PUBLISHED_PROJECT_VIEWS } from '@/router/published.js'
 
 import AdminHomeView from '@/views/admin/AdminHomeView.vue'
 import AdminView from '@/views/admin/AdminView.vue'
+import ApiView from '@/views/misc/ApiView.vue'
 import AskUsView from '@/views/misc/AskUsView.vue'
 import CuratorHomeView from '@/views/curator/CuratorHomeView.vue'
 import CuratorView from '@/views/curator/CuratorView.vue'
@@ -14,7 +15,7 @@ import NewsView from '@/views/misc/NewsView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import ProjectView from '@/views/project/published/ProjectView.vue'
 import RootView from '@/views/RootView.vue'
-import Terms from '@/views/misc/Terms.vue'
+import TermsView from '@/views/misc/TermsView.vue'
 import UserLogin from '@/views/users/UserLogin.vue'
 import UserAuth from '@/views/users/UserAuth.vue'
 import UserProfileView from '@/views/users/UserProfileView.vue'
@@ -48,9 +49,14 @@ const router = createRouter({
           component: NewsView,
         },
         {
+          path: '/api',
+          name: 'api',
+          component: ApiView,
+        },
+        {
           path: '/terms',
           name: 'terms',
-          component: Terms,
+          component: TermsView,
         },
 
         // users

@@ -330,12 +330,7 @@ function clearSearch() {
         </ul>
       </div>
     </div>
-    <DeleteDialog
-      :taxa="taxaToDelete"
-      :project-id="projectId"
-      :searchTaxa="searchTaxa"
-      :deleteTaxa="deleteTaxa"
-    />
+    <DeleteDialog :taxa="taxaToDelete" :projectId="projectId" />
   </ProjectContainerComp>
 </template>
 <style scoped>
