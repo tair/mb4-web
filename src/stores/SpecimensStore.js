@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { defineStore } from 'pinia'
+import { useTaxaStore } from '@/stores/TaxaStore'
 
 export const useSpecimensStore = defineStore({
   id: 'specimens',
@@ -49,12 +50,17 @@ export const useSpecimensStore = defineStore({
       }
       return false
     },
-    async createBatch(projectId, specimens) {
+    async createBatch(projectId, specimens, taxa) {
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/specimens/create/batch`
-      const response = await axios.post(url, { specimens })
+      const response = await axios.post(url, { specimens, taxa })
       if (response.status == 200) {
+        const taxaStore = useTaxaStore()
+        // Add newly create taxa to the taxa store.
+        const taxa = response.data.taxa
+        taxaStore.taxa.push(...taxa)
+
         const specimens = response.data.specimens
         this.specimens.push(...specimens)
         return true

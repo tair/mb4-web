@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { defineStore } from 'pinia'
+import { csvToArray } from '@/utils/csv'
 
 export const useTaxaStore = defineStore({
   id: 'taxa',
@@ -51,7 +52,7 @@ export const useTaxaStore = defineStore({
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/taxa//create/batch`
-      const response = await axios.post(url, taxa)
+      const response = await axios.post(url, { taxa: taxa })
       if (response.status == 200) {
         const taxa = response.data.taxa
         this.taxa.push(...taxa)
