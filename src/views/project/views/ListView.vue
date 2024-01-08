@@ -1,28 +1,65 @@
 <script setup>
-import { computed, ref, onMounted } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMediaViewsStore } from '@/stores/MediaViewsStore'
-import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
+import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
+import DeleteDialog from '@/views/project/views/DeleteDialog.vue'
 
 const route = useRoute()
 const projectId = route.params.id
 
 const mediaViewsStore = useMediaViewsStore()
-
 const mediaViewsToDelete = ref([])
+
+const selectedLetter = ref(null)
+const letters = computed(() => {
+  const letters = new Set()
+  for (const mediaView of mediaViewsStore.mediaViews) {
+    if (mediaView?.name?.length > 0) {
+      const firstLetter = mediaView.name[0]
+      letters.add(firstLetter.toUpperCase())
+    }
+  }
+  return [...letters].sort()
+})
+
+const filters = reactive({})
+const filteredMediaViews = computed(() =>
+  Object.values(filters)
+    .reduce(
+      (mediaViews, filter) => mediaViews.filter(filter),
+      mediaViewsStore.mediaViews
+    )
+    .sort((a, b) => {
+      const nameA = a.name
+      if (!nameA) {
+        return -1
+      }
+
+      const nameB = b.name
+      if (!nameB) {
+        return -1
+      }
+
+      const compare = nameA.localeCompare(nameB)
+      if (compare) {
+        return compare
+      }
+    })
+)
 
 const allSelected = computed({
   get: function () {
-    return mediaViewsStore.filteredMediaViews.every((b) => b.selected)
+    return filteredMediaViews.value.every((b) => b.selected)
   },
   set: function (value) {
-    mediaViewsStore.filteredMediaViews.forEach((b) => {
+    filteredMediaViews.value.forEach((b) => {
       b.selected = value
     })
   },
 })
 const someSelected = computed(() =>
-  mediaViewsStore.filteredMediaViews.some((b) => b.selected)
+  filteredMediaViews.value.some((b) => b.selected)
 )
 
 onMounted(() => {
@@ -38,28 +75,31 @@ function refresh() {
 function setPage(event) {
   const text = event.target.textContent
   if (text == 'ALL') {
-    mediaViewsStore.clearFilters()
+    clearFilters()
   } else {
-    mediaViewsStore.filterByLetter(text)
+    filterByLetter(text)
   }
 }
 
-async function deleteMediaViews(viewIds) {
-  const deleted = mediaViewsStore.deleteIds(projectId, viewIds)
-  if (!deleted) {
-    alert('Failed to delete views')
+function clearFilters() {
+  selectedLetter.value = null
+  delete filters['page']
+}
+
+function filterByLetter(letter) {
+  selectedLetter.value = letter
+  filters['page'] = (mediaView) => {
+    if (mediaView?.name.length > 0) {
+      const name = mediaView?.name[0]
+      return name.toUpperCase() == letter
+    }
+    return false
   }
 }
 </script>
 
 <template>
-  <ProjectContainerComp
-    :projectId="projectId"
-    :isLoading="!mediaViewsStore.isLoaded"
-    :errorMessage="null"
-    basePath="myprojects"
-    itemName="media_views"
-  >
+  <LoadingIndicator :isLoaded="mediaViewsStore.isLoaded">
     <header>
       There are {{ mediaViewsStore.mediaViews?.length }} media views associated
       with this project.
@@ -80,20 +120,18 @@ async function deleteMediaViews(viewIds) {
         </button>
       </RouterLink>
     </div>
-    <div v-if="mediaViewsStore.mediaViews?.length">
+    <div v-if="filteredMediaViews.length">
       <div class="alphabet-bar">
         Display media views beginning with:
-        <template v-for="letter in mediaViewsStore.letters">
+        <template v-for="letter in letters">
           <span
-            :class="{ selected: mediaViewsStore.selectedLetter == letter }"
+            :class="{ selected: selectedLetter == letter }"
             @click="setPage"
             >{{ letter }}</span
           >
         </template>
         <span class="separator">|</span>
-        <span
-          @click="setPage"
-          :class="{ selected: mediaViewsStore.selectedLetter == null }"
+        <span @click="setPage" :class="{ selected: selectedLetter == null }"
           >ALL</span
         >
       </div>
@@ -115,9 +153,7 @@ async function deleteMediaViews(viewIds) {
           data-bs-toggle="modal"
           data-bs-target="#viewDeleteModal"
           @click="
-            mediaViewsToDelete = mediaViewsStore.filteredMediaViews.filter(
-              (b) => b.selected
-            )
+            mediaViewsToDelete = filteredMediaViews.filter((b) => b.selected)
           "
         >
           <i class="fa-regular fa-trash-can"></i>
@@ -126,7 +162,7 @@ async function deleteMediaViews(viewIds) {
       <div class="item-list">
         <ul class="list-group">
           <li
-            v-for="mediaView in mediaViewsStore.filteredMediaViews"
+            v-for="mediaView in filteredMediaViews"
             :key="mediaView.view_id"
             class="list-group-item"
           >
@@ -162,41 +198,11 @@ async function deleteMediaViews(viewIds) {
         </ul>
       </div>
     </div>
-    <div class="modal" id="viewDeleteModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Confirm</h5>
-          </div>
-          <div class="modal-body" v-if="mediaViewsToDelete.length">
-            Really delete media views:
-            <p v-for="mediaView in mediaViewsToDelete" :key="mediaView.view_id">
-              {{ mediaView.name }}
-            </p>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              data-bs-dismiss="modal"
-              @click="
-                deleteMediaViews(mediaViewsToDelete.map((v) => v.view_id))
-              "
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </ProjectContainerComp>
+  </LoadingIndicator>
+  <DeleteDialog
+    :mediaViews="mediaViewsToDelete"
+    :projectId="projectId"
+  ></DeleteDialog>
 </template>
 <style scoped>
 @import '@/views/project/styles.css';

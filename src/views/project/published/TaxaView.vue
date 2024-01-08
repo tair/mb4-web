@@ -15,11 +15,9 @@ onMounted(() => {
 
 <template>
   <ProjectLoaderComp
-    :projectId="projectId"
     :isLoading="projectStore.isLoading"
     :errorMessage="projectStore.taxa_details ? null : 'No taxa data available.'"
     basePath="project"
-    itemName="taxa"
   >
     <p>
       This project has

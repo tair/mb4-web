@@ -2,7 +2,6 @@
 import axios from 'axios'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
 import { useCharactersStore } from '@/stores/CharactersStore'
 import { useMatricesStore } from '@/stores/MatricesStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
@@ -243,447 +242,437 @@ onMounted(() => {
 })
 </script>
 <template>
-  <ProjectContainerComp
-    :projectId="projectId"
-    basePath="myprojects"
-    itemName="matrices"
-  >
-    <div class="nav-link d-flex align-items-center fw-bold small m-0 p-0 mb-3">
-      <i class="fa-solid fa-chevron-left"></i>
-      <a class="nav-link m-0 p-0 pl-1" @click="$router.go(-1)">Back</a>
-    </div>
-    <div class="stepwizard">
-      <div class="matrix-import-step-row setup-panel">
-        <hr />
-        <div class="matrix-import-step">
-          <a href="#step-1" type="button" class="btn btn-primary btn-circle">
-            1
-          </a>
-          <p>Import</p>
-        </div>
-        <div class="matrix-import-step">
-          <a
-            href="#step-2"
-            type="button"
-            class="btn btn-default btn-circle"
-            disabled="disabled"
-          >
-            2
-          </a>
-          <p>Characters</p>
-        </div>
-        <div class="matrix-import-step">
-          <a
-            href="#step-3"
-            type="button"
-            class="btn btn-default btn-circle"
-            disabled="disabled"
-          >
-            3
-          </a>
-          <p>Taxa</p>
-        </div>
+  <div class="nav-link d-flex align-items-center fw-bold small m-0 p-0 mb-3">
+    <i class="fa-solid fa-chevron-left"></i>
+    <a class="nav-link m-0 p-0 pl-1" @click="$router.go(-1)">Back</a>
+  </div>
+  <div class="stepwizard">
+    <div class="matrix-import-step-row setup-panel">
+      <hr />
+      <div class="matrix-import-step">
+        <a href="#step-1" type="button" class="btn btn-primary btn-circle">
+          1
+        </a>
+        <p>Import</p>
       </div>
-      <div>
-        <form @submit.prevent="moveToCharacters">
-          <div class="row setup-content" id="step-1">
+      <div class="matrix-import-step">
+        <a
+          href="#step-2"
+          type="button"
+          class="btn btn-default btn-circle"
+          disabled="disabled"
+        >
+          2
+        </a>
+        <p>Characters</p>
+      </div>
+      <div class="matrix-import-step">
+        <a
+          href="#step-3"
+          type="button"
+          class="btn btn-default btn-circle"
+          disabled="disabled"
+        >
+          3
+        </a>
+        <p>Taxa</p>
+      </div>
+    </div>
+    <div>
+      <form @submit.prevent="moveToCharacters">
+        <div class="row setup-content" id="step-1">
+          <div class="form-group">
+            <label for="matrix-title">Title</label>
+            <input
+              type="text"
+              class="form-control"
+              id="matrix-title"
+              ref="matrixTitle"
+              required="required"
+            />
+          </div>
+          <div class="form-group">
+            <label for="matrix-notes">Notes</label>
+            <textarea class="form-control" id="matrix-notes"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="otu">Operational taxonomic unit</label>
+            <select id="otu" name="otu" class="form-control">
+              <option value="supraspecific_clade">Supraspecific Clade</option>
+              <option value="higher_taxon_class">Class</option>
+              <option value="higher_taxon_subclass">Subclass</option>
+              <option value="higher_taxon_order">Order</option>
+              <option value="higher_taxon_superfamily">Superfamily</option>
+              <option value="higher_taxon_family">Family</option>
+              <option value="higher_taxon_subfamily">Subfamily</option>
+              <option value="genus" selected="selected">Genus</option>
+              <option value="specific_epithet">Species</option>
+              <option value="subspecific_epithet">Subspecies</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="matrix-notes">Publishing Status</label>
+            <select id="published" name="published" class="form-control">
+              <option value="0">Publish when project is published</option>
+              <option value="1">Never publish to project</option>
+            </select>
+          </div>
+
+          <fieldset class="form-group border p-3">
+            <legend class="w-auto px-2">
+              Upload an existing NEXUS or TNT file as the basis of your matrix
+            </legend>
+            <p>
+              Note - your matrix must have character names for all the
+              characters and these character names must each be different. If
+              this is a file with combined molecular and morphological data, or
+              molecular data only, it must be submitted to the Documents area.
+            </p>
             <div class="form-group">
-              <label for="matrix-title">Title</label>
+              <label for="matrix-notes"
+                >NEXUS or TNT file to add to matrix</label
+              >
               <input
-                type="text"
+                type="file"
+                id="upload"
+                name="upload"
                 class="form-control"
-                id="matrix-title"
-                ref="matrixTitle"
+                @change="importMatrix"
                 required="required"
               />
             </div>
             <div class="form-group">
-              <label for="matrix-notes">Notes</label>
-              <textarea class="form-control" id="matrix-notes"></textarea>
-            </div>
-            <div class="form-group">
-              <label for="otu">Operational taxonomic unit</label>
-              <select id="otu" name="otu" class="form-control">
-                <option value="supraspecific_clade">Supraspecific Clade</option>
-                <option value="higher_taxon_class">Class</option>
-                <option value="higher_taxon_subclass">Subclass</option>
-                <option value="higher_taxon_order">Order</option>
-                <option value="higher_taxon_superfamily">Superfamily</option>
-                <option value="higher_taxon_family">Family</option>
-                <option value="higher_taxon_subfamily">Subfamily</option>
-                <option value="genus" selected="selected">Genus</option>
-                <option value="specific_epithet">Species</option>
-                <option value="subspecific_epithet">Subspecies</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="matrix-notes">Publishing Status</label>
-              <select id="published" name="published" class="form-control">
-                <option value="0">Publish when project is published</option>
-                <option value="1">Never publish to project</option>
-              </select>
-            </div>
-
-            <fieldset class="form-group border p-3">
-              <legend class="w-auto px-2">
-                Upload an existing NEXUS or TNT file as the basis of your matrix
-              </legend>
-              <p>
-                Note - your matrix must have character names for all the
-                characters and these character names must each be different. If
-                this is a file with combined molecular and morphological data,
-                or molecular data only, it must be submitted to the Documents
-                area.
-              </p>
-              <div class="form-group">
-                <label for="matrix-notes"
-                  >NEXUS or TNT file to add to matrix</label
-                >
-                <input
-                  type="file"
-                  id="upload"
-                  name="upload"
-                  class="form-control"
-                  @change="importMatrix"
-                  required="required"
-                />
-              </div>
-              <div class="form-group">
-                <label for="item-notes"
-                  >Descriptive text to add to each character and taxon added to
-                  the project from this file</label
-                >
-                <textarea class="form-control" id="item-notes"></textarea>
-              </div>
-            </fieldset>
-            <div class="btn-step-group">
-              <button class="btn btn-primary btn-step-prev" type="button">
-                Cancel
-              </button>
-              <button class="btn btn-primary btn-step-next" type="submit">
-                Next
-              </button>
-            </div>
-          </div>
-          <div class="row setup-content" id="step-2">
-            <h5>
-              We found {{ importedMatrix?.characters?.size }} characters in your
-              matrix.
-            </h5>
-
-            <div
-              v-if="Object.keys(duplicatedCharacters).length"
-              class="duplicate-characters"
-            >
-              <span>
-                Duplicate characters have been detected and renamed to
-                distinguish them from the first instance of the following
-                characters:
-              </span>
-              <ul>
-                <li v-for="(characters, key) in duplicatedCharacters">
-                  {{ characters.length }} characters named "{{ key }}".
-                  Duplicate{{ characters.length ? 's have' : ' has' }} been
-                  renamed to "{{
-                    characters.slice(0, -1).join('", "') +
-                    '", and "' +
-                    characters.at(-1)
-                  }}"
-                </li>
-              </ul>
-            </div>
-
-            <p v-if="incompletedCharactersCount > 0">
-              {{
-                incompletedCharactersCount == 1
-                  ? '1 state has'
-                  : `${incompletedCharactersCount} states have`
-              }}
-              been flagged in <b class="flagged">RED</b> for incompleteness.
-              Please review and (1) update the missing character state
-              information on the screen, save your edits and click next or (2)
-              update the data matrix file and reupload.
-            </p>
-            <p v-else>
-              Please confirm that the character and their states are correct.
-            </p>
-            <div
-              class="matrix-loading-screen py-5"
-              v-if="!taxaStore.isLoaded || !charactersStore.isLoaded"
-            >
-              <div class="spinner-border text-success" role="status"></div>
-              Loading...
-            </div>
-            <div class="matrix-confirmation-screen" v-else>
-              <table>
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Name</th>
-                    <th>States</th>
-                    <th>&nbsp;</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="character in importedMatrix?.characters?.values()">
-                    <td :id="`character${character.characterNumber}`">
-                      {{ character.characterNumber + defaultNumbering }}
-                    </td>
-                    <td>
-                      {{ character.name }}
-                      <p class="notes" v-if="character.note">
-                        <b>Notes:</b>
-                        <br />
-                        <i>{{ character.note }}</i>
-                      </p>
-                    </td>
-                    <td>
-                      <b v-if="character.type == 'C'">(continuous character)</b>
-                      <b v-else-if="character.type == 'M'"
-                        >(meristic character)</b
-                      >
-                      <ol v-else-if="character.states">
-                        <li
-                          v-for="state in character.states"
-                          :class="{ flagged: state.incompleteType }"
-                        >
-                          {{ state.name }}
-                        </li>
-                      </ol>
-
-                      <p
-                        class="incomplete-state-warning"
-                        v-for="incompleteState in new Set(
-                          character.states
-                            .map((s) => s.incompleteType)
-                            .filter((w) => !!w)
-                        )"
-                      >
-                        {{ getIncompleteStateText(incompleteState) }}
-                      </p>
-                    </td>
-                    <td>
-                      <a
-                        :href="`#character${character.characterNumber}`"
-                        data-bs-toggle="modal"
-                        data-bs-target="#characterModal"
-                        @click.stop.prevent="editCharacter(character)"
-                      >
-                        Edit
-                      </a>
-
-                      <a
-                        :href="`#character${character.characterNumber}`"
-                        @click.stop.prevent="confirmCharacter(character)"
-                      >
-                        Confirm
-                      </a>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="btn-step-group">
-              <button
-                class="btn btn-primary btn-step-prev"
-                type="button"
-                @click="moveUpload"
+              <label for="item-notes"
+                >Descriptive text to add to each character and taxon added to
+                the project from this file</label
               >
-                Prev
-              </button>
-              <button
-                type="button"
-                class="btn btn-primary btn-step-next"
-                :disabled="incompletedCharactersCount > 0"
-                @click="moveToTaxa"
-              >
-                Next
-              </button>
+              <textarea class="form-control" id="item-notes"></textarea>
             </div>
+          </fieldset>
+          <div class="btn-step-group">
+            <button class="btn btn-primary btn-step-prev" type="button">
+              Cancel
+            </button>
+            <button class="btn btn-primary btn-step-next" type="submit">
+              Next
+            </button>
           </div>
-          <div class="modal" id="characterModal" tabindex="-1">
-            <div class="modal-dialog">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h5 class="modal-title">Edit Character</h5>
-                </div>
-                <form>
-                  <div class="modal-body">
-                    <div class="form-group">
-                      <label>Name</label>
-                      <input
-                        type="text"
-                        class="form-control"
-                        v-model="editingCharacter.name"
-                      />
-                    </div>
-                    <div class="form-group">
-                      <label>Notes</label><br />
-                      <textarea
-                        class="form-control"
-                        v-model="editingCharacter.note"
-                      ></textarea>
-                    </div>
-                    <div class="form-group">
-                      <label>States</label><br />
-                      <div>
-                        <span
-                          class="character-states"
-                          v-for="(state, index) in editingCharacter.states"
-                        >
-                          <input
-                            class="form-control"
-                            type="text"
-                            v-model="state.name"
-                          />
-                          <i
-                            class="fa-solid fa-xmark"
-                            @click="
-                              removeCharacterState(editingCharacter, index)
-                            "
-                          ></i>
-                        </span>
-                      </div>
+        </div>
+        <div class="row setup-content" id="step-2">
+          <h5>
+            We found {{ importedMatrix?.characters?.size }} characters in your
+            matrix.
+          </h5>
+
+          <div
+            v-if="Object.keys(duplicatedCharacters).length"
+            class="duplicate-characters"
+          >
+            <span>
+              Duplicate characters have been detected and renamed to distinguish
+              them from the first instance of the following characters:
+            </span>
+            <ul>
+              <li v-for="(characters, key) in duplicatedCharacters">
+                {{ characters.length }} characters named "{{ key }}".
+                Duplicate{{ characters.length ? 's have' : ' has' }} been
+                renamed to "{{
+                  characters.slice(0, -1).join('", "') +
+                  '", and "' +
+                  characters.at(-1)
+                }}"
+              </li>
+            </ul>
+          </div>
+
+          <p v-if="incompletedCharactersCount > 0">
+            {{
+              incompletedCharactersCount == 1
+                ? '1 state has'
+                : `${incompletedCharactersCount} states have`
+            }}
+            been flagged in <b class="flagged">RED</b> for incompleteness.
+            Please review and (1) update the missing character state information
+            on the screen, save your edits and click next or (2) update the data
+            matrix file and reupload.
+          </p>
+          <p v-else>
+            Please confirm that the character and their states are correct.
+          </p>
+          <div
+            class="matrix-loading-screen py-5"
+            v-if="!taxaStore.isLoaded || !charactersStore.isLoaded"
+          >
+            <div class="spinner-border text-success" role="status"></div>
+            Loading...
+          </div>
+          <div class="matrix-confirmation-screen" v-else>
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>States</th>
+                  <th>&nbsp;</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="character in importedMatrix?.characters?.values()">
+                  <td :id="`character${character.characterNumber}`">
+                    {{ character.characterNumber + defaultNumbering }}
+                  </td>
+                  <td>
+                    {{ character.name }}
+                    <p class="notes" v-if="character.note">
+                      <b>Notes:</b>
+                      <br />
+                      <i>{{ character.note }}</i>
+                    </p>
+                  </td>
+                  <td>
+                    <b v-if="character.type == 'C'">(continuous character)</b>
+                    <b v-else-if="character.type == 'M'"
+                      >(meristic character)</b
+                    >
+                    <ol v-else-if="character.states">
+                      <li
+                        v-for="state in character.states"
+                        :class="{ flagged: state.incompleteType }"
+                      >
+                        {{ state.name }}
+                      </li>
+                    </ol>
+
+                    <p
+                      class="incomplete-state-warning"
+                      v-for="incompleteState in new Set(
+                        character.states
+                          .map((s) => s.incompleteType)
+                          .filter((w) => !!w)
+                      )"
+                    >
+                      {{ getIncompleteStateText(incompleteState) }}
+                    </p>
+                  </td>
+                  <td>
+                    <a
+                      :href="`#character${character.characterNumber}`"
+                      data-bs-toggle="modal"
+                      data-bs-target="#characterModal"
+                      @click.stop.prevent="editCharacter(character)"
+                    >
+                      Edit
+                    </a>
+
+                    <a
+                      :href="`#character${character.characterNumber}`"
+                      @click.stop.prevent="confirmCharacter(character)"
+                    >
+                      Confirm
+                    </a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="btn-step-group">
+            <button
+              class="btn btn-primary btn-step-prev"
+              type="button"
+              @click="moveUpload"
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary btn-step-next"
+              :disabled="incompletedCharactersCount > 0"
+              @click="moveToTaxa"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+        <div class="modal" id="characterModal" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Edit Character</h5>
+              </div>
+              <form>
+                <div class="modal-body">
+                  <div class="form-group">
+                    <label>Name</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      v-model="editingCharacter.name"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label>Notes</label><br />
+                    <textarea
+                      class="form-control"
+                      v-model="editingCharacter.note"
+                    ></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label>States</label><br />
+                    <div>
+                      <span
+                        class="character-states"
+                        v-for="(state, index) in editingCharacter.states"
+                      >
+                        <input
+                          class="form-control"
+                          type="text"
+                          v-model="state.name"
+                        />
+                        <i
+                          class="fa-solid fa-xmark"
+                          @click="removeCharacterState(editingCharacter, index)"
+                        ></i>
+                      </span>
                     </div>
                   </div>
-                </form>
-                <div class="modal-footer">
-                  <button
-                    type="button"
-                    class="btn btn-secondary"
-                    data-bs-dismiss="modal"
-                    @click="cancelEditedCharacter"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-primary"
-                    data-bs-dismiss="modal"
-                    @click="saveEditedCharacter"
-                  >
-                    Save
-                  </button>
                 </div>
+              </form>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                  @click="cancelEditedCharacter"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  data-bs-dismiss="modal"
+                  @click="saveEditedCharacter"
+                >
+                  Save
+                </button>
               </div>
             </div>
           </div>
-          <div class="row setup-content" id="step-3">
-            <h5>
-              We found {{ importedMatrix?.taxa?.size }} taxa in your matrix.
-            </h5>
-            <b>Please confirm that the taxa are correct.</b>
-            <div class="matrix-confirmation-screen">
-              <table>
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Name</th>
-                    <th>&nbsp;</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(taxon, index) in importedMatrix?.taxa?.values()">
-                    <td>{{ index + 1 }}</td>
-                    <td>
-                      {{ taxon.extinct ? '†' : '' }}
-                      {{ taxon.name }}
-                      <p class="notes" v-if="taxon.note">
-                        <b>Notes:</b>
-                        <br />
-                        <i>{{ taxon.note }}</i>
-                      </p>
-                    </td>
-                    <td>
-                      <a
-                        href="javascript:void(0);"
-                        data-bs-toggle="modal"
-                        data-bs-target="#taxonModal"
-                        @click.stop.prevent="editTaxon(taxon)"
-                      >
-                        Edit
-                      </a>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="btn-step-group">
-              <button
-                class="btn btn-primary btn-step-prev"
-                type="button"
-                @click="moveToCharacters"
-              >
-                Prev
-              </button>
-              <button
-                class="btn btn-primary btn-step-next"
-                type="button"
-                :disabled="isUploading"
-                @click="uploadMatrix"
-              >
-                Upload
-              </button>
-            </div>
+        </div>
+        <div class="row setup-content" id="step-3">
+          <h5>
+            We found {{ importedMatrix?.taxa?.size }} taxa in your matrix.
+          </h5>
+          <b>Please confirm that the taxa are correct.</b>
+          <div class="matrix-confirmation-screen">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>&nbsp;</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(taxon, index) in importedMatrix?.taxa?.values()">
+                  <td>{{ index + 1 }}</td>
+                  <td>
+                    {{ taxon.extinct ? '†' : '' }}
+                    {{ taxon.name }}
+                    <p class="notes" v-if="taxon.note">
+                      <b>Notes:</b>
+                      <br />
+                      <i>{{ taxon.note }}</i>
+                    </p>
+                  </td>
+                  <td>
+                    <a
+                      href="javascript:void(0);"
+                      data-bs-toggle="modal"
+                      data-bs-target="#taxonModal"
+                      @click.stop.prevent="editTaxon(taxon)"
+                    >
+                      Edit
+                    </a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div class="modal" id="taxonModal" tabindex="-1">
-            <div class="modal-dialog">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h5 class="modal-title">Edit Taxon</h5>
-                </div>
-                <form>
-                  <div class="modal-body">
-                    <div class="form-group">
-                      <label>Name</label>
-                      <input
-                        type="text"
-                        class="form-control"
-                        v-model="editingTaxon.name"
-                      />
-                    </div>
-                    <div class="form-group">
-                      <label>Is Extinct</label>
-                      <input
-                        type="checkbox"
-                        class="form-check-input form-control"
-                        v-model="editingTaxon.extinct"
-                      />
-                    </div>
-                    <div class="form-group">
-                      <label>Notes</label><br />
-                      <textarea
-                        class="form-control"
-                        v-model="editingTaxon.note"
-                      ></textarea>
-                    </div>
+          <div class="btn-step-group">
+            <button
+              class="btn btn-primary btn-step-prev"
+              type="button"
+              @click="moveToCharacters"
+            >
+              Prev
+            </button>
+            <button
+              class="btn btn-primary btn-step-next"
+              type="button"
+              :disabled="isUploading"
+              @click="uploadMatrix"
+            >
+              Upload
+            </button>
+          </div>
+        </div>
+        <div class="modal" id="taxonModal" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Edit Taxon</h5>
+              </div>
+              <form>
+                <div class="modal-body">
+                  <div class="form-group">
+                    <label>Name</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      v-model="editingTaxon.name"
+                    />
                   </div>
-                </form>
-                <div class="modal-footer">
-                  <button
-                    type="button"
-                    class="btn btn-secondary"
-                    data-bs-dismiss="modal"
-                    @click="cancelEditedTaxon"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-primary"
-                    data-bs-dismiss="modal"
-                    @click="saveEditedTaxon"
-                  >
-                    Save
-                  </button>
+                  <div class="form-group">
+                    <label>Is Extinct</label>
+                    <input
+                      type="checkbox"
+                      class="form-check-input form-control"
+                      v-model="editingTaxon.extinct"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label>Notes</label><br />
+                    <textarea
+                      class="form-control"
+                      v-model="editingTaxon.note"
+                    ></textarea>
+                  </div>
                 </div>
+              </form>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                  @click="cancelEditedTaxon"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  data-bs-dismiss="modal"
+                  @click="saveEditedTaxon"
+                >
+                  Save
+                </button>
               </div>
             </div>
           </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
-  </ProjectContainerComp>
+  </div>
 </template>
 <style scoped>
 .form-group legend {

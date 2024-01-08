@@ -1,9 +1,10 @@
 <script setup>
 import { useRoute } from 'vue-router'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import BibliographyItem from '@/components/project/BibliographyItem.vue'
-import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
+import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
+import DeleteDialog from '@/views/project/bibliographies/DeleteDialog.vue'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -11,18 +12,66 @@ const projectId = route.params.id
 const bibliographiesToDelete = ref([])
 
 const bibliographiesStore = useBibliographiesStore()
+
+const selectedLetter = ref(null)
+const letters = computed(() => {
+  const letters = new Set()
+  for (const bibliography of bibliographiesStore.bibliographies) {
+    if (bibliography.authors && bibliography.authors.length > 0) {
+      const author = bibliography.authors[0]
+      if (author.surname) {
+        const firstLetter = author.surname[0]
+        if (firstLetter) {
+          letters.add(firstLetter.toUpperCase())
+        }
+      }
+    }
+  }
+  return [...letters].sort()
+})
+
+const filters = reactive({})
+const filteredBibliographies = computed(() =>
+  Object.values(filters)
+    .reduce(
+      (bibliographies, filter) => bibliographies.filter(filter),
+      bibliographiesStore.bibliographies
+    )
+    .sort((a, b) => {
+      if (a.authors && b.authors) {
+        const length = Math.min(a.authors.length, b.authors.length)
+        for (let x = 0; x < length; ++x) {
+          const surnameA = a.authors[x].surname
+          if (!surnameA) {
+            return -1
+          }
+
+          const surnameB = b.authors[x].surname
+          if (!surnameB) {
+            return -1
+          }
+
+          const compare = surnameA.localeCompare(surnameB)
+          if (compare) {
+            return compare
+          }
+        }
+      }
+    })
+)
+
 const allSelected = computed({
   get: function () {
-    return bibliographiesStore.filteredBibliographies.every((b) => b.selected)
+    return filteredBibliographies.value.every((b) => b.selected)
   },
   set: function (value) {
-    bibliographiesStore.filteredBibliographies.forEach((b) => {
+    filteredBibliographies.value.forEach((b) => {
       b.selected = value
     })
   },
 })
 const someSelected = computed(() =>
-  bibliographiesStore.filteredBibliographies.some((b) => b.selected)
+  filteredBibliographies.value.some((b) => b.selected)
 )
 
 onMounted(() => {
@@ -38,28 +87,32 @@ function refresh() {
 function setPage(event) {
   const text = event.target.textContent
   if (text == 'ALL') {
-    bibliographiesStore.clearFilters()
+    clearFilters()
   } else {
-    bibliographiesStore.filterByLetter(text)
+    filterByLetter(text)
   }
 }
+function clearFilters() {
+  selectedLetter.value = null
+  delete filters['page']
+}
 
-async function deleteBibliographies(referenceIds) {
-  const deleted = bibliographiesStore.deleteIds(projectId, referenceIds)
-  if (!deleted) {
-    alert('Failed to delete bibliographies')
+function filterByLetter(letter) {
+  selectedLetter.value = letter
+  filters['page'] = (bibliography) => {
+    if (bibliography.authors && bibliography.authors.length > 0) {
+      const author = bibliography.authors[0]
+      if (author.surname) {
+        const firstLetter = author.surname[0]
+        return firstLetter == letter
+      }
+    }
+    return false
   }
 }
 </script>
-
 <template>
-  <ProjectContainerComp
-    :projectId="projectId"
-    :isLoading="!bibliographiesStore.isLoaded"
-    :errorMessage="null"
-    basePath="myprojects"
-    itemName="bibliography"
-  >
+  <LoadingIndicator :isLoaded="bibliographiesStore.isLoaded">
     <header>
       There are {{ bibliographiesStore.bibliographies?.length }} bibliographic
       references associated with this project.
@@ -96,17 +149,15 @@ async function deleteBibliographies(referenceIds) {
     <div v-if="bibliographiesStore.bibliographies?.length">
       <div class="alphabet-bar">
         Display bibliographic references beginning with:
-        <template v-for="letter in bibliographiesStore.letters">
+        <template v-for="letter in letters">
           <span
-            :class="{ selected: bibliographiesStore.selectedLetter == letter }"
+            :class="{ selected: selectedLetter == letter }"
             @click="setPage"
             >{{ letter }}</span
           >
         </template>
         <span class="separator">|</span>
-        <span
-          @click="setPage"
-          :class="{ selected: bibliographiesStore.selectedLetter == null }"
+        <span @click="setPage" :class="{ selected: selectedLetter == null }"
           >ALL</span
         >
       </div>
@@ -131,10 +182,9 @@ async function deleteBibliographies(referenceIds) {
           data-bs-toggle="modal"
           data-bs-target="#bibliographyDeleteModal"
           @click="
-            bibliographiesToDelete =
-              bibliographiesStore.filteredBibliographies.filter(
-                (b) => b.selected
-              )
+            bibliographiesToDelete = filteredBibliographies.filter(
+              (b) => b.selected
+            )
           "
         >
           <i class="fa-regular fa-trash-can"></i>
@@ -143,7 +193,7 @@ async function deleteBibliographies(referenceIds) {
       <div class="item-list">
         <ul class="list-group">
           <li
-            v-for="bibliography in bibliographiesStore.filteredBibliographies"
+            v-for="bibliography in filteredBibliographies"
             :key="bibliography.reference_id"
             class="list-group-item"
           >
@@ -179,46 +229,11 @@ async function deleteBibliographies(referenceIds) {
         </ul>
       </div>
     </div>
-    <div class="modal" id="bibliographyDeleteModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Confirm</h5>
-          </div>
-          <div class="modal-body" v-if="bibliographiesToDelete.length">
-            Really delete Biliographies:
-            <p
-              v-for="bibliography in bibliographiesToDelete"
-              :key="bibliography.reference_id"
-            >
-              <BibliographyItem :bibliography="bibliography" />
-            </p>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              data-bs-dismiss="modal"
-              @click="
-                deleteBibliographies(
-                  bibliographiesToDelete.map((b) => b.reference_id)
-                )
-              "
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </ProjectContainerComp>
+  </LoadingIndicator>
+  <DeleteDialog
+    :bibliographies="bibliographiesToDelete"
+    :projectId="projectId"
+  ></DeleteDialog>
 </template>
 <style scoped>
 @import '@/views/project/styles.css';

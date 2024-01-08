@@ -21,21 +21,25 @@ onMounted(async () => {
 })
 </script>
 <template>
-  <LoadingIndicator :isLoaded="projectOverviewStore.isLoaded">
-    <div class="pb-5 border-bottom">
-      <div class="row">
-        <div class="col border-end">
-          <ProjectSummary
-            :overview="projectOverviewStore.overview"
-          ></ProjectSummary>
-        </div>
-        <div class="col-3">
-          <ProjectOverviewSidePanel
-            :overview="projectOverviewStore.overview"
-          ></ProjectOverviewSidePanel>
-        </div>
-      </div>
+  <div v-if="projectOverviewStore.isLoaded">
+    <div
+      v-if="projectOverviewStore.overview.recent_changes"
+      class="py-5 border-bottom"
+    >
+      <ProjectRecentChanges
+        :recentChanges="projectOverviewStore.overview.recent_changes"
+      ></ProjectRecentChanges>
     </div>
-  </LoadingIndicator>
+    <div
+      v-if="projectOverviewStore.overview.members?.length > 0"
+      class="py-5 border-bottom"
+    >
+      <ProjectMembers
+        :members="projectOverviewStore.overview.members"
+      ></ProjectMembers>
+    </div>
+    <div class="py-5 border-bottom">
+      <ProjectTaxa :taxa="projectOverviewStore.overview.taxa"></ProjectTaxa>
+    </div>
+  </div>
 </template>
-<style scoped></style>

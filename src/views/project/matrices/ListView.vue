@@ -2,7 +2,7 @@
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMatricesStore } from '@/stores/MatricesStore'
-import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
+import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import ProjectMatrixComp from '@/components/project/ProjectMatrixComp.vue'
 
 const route = useRoute()
@@ -17,13 +17,7 @@ onMounted(() => {
 })
 </script>
 <template>
-  <ProjectContainerComp
-    :projectId="projectId"
-    :isLoading="!matricesStore.isLoaded"
-    :errorMessage="null"
-    basePath="myprojects"
-    itemName="matrices"
-  >
+  <LoadingIndicator :isLoaded="matricesStore.isLoaded">
     <header>
       There are {{ matricesStore.matrices?.length }} matrices associated with
       this project.
@@ -46,7 +40,7 @@ onMounted(() => {
       >
       </ProjectMatrixComp>
     </div>
-  </ProjectContainerComp>
+  </LoadingIndicator>
 </template>
 <style scoped>
 @import '@/views/project/styles.css';

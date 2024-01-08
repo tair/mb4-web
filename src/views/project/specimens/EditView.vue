@@ -6,7 +6,7 @@ import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { schema } from '@/views/project/specimens/schema.js'
-import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
+import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import SpecimenName from '@/components/project/SpecimenName.vue'
 
 const route = useRoute()
@@ -49,13 +49,7 @@ async function edit(event) {
 }
 </script>
 <template>
-  <ProjectContainerComp
-    :projectId="projectId"
-    :isLoading="!isLoaded"
-    :errorMessage="null"
-    basePath="myprojects"
-    itemName="specimens"
-  >
+  <LoadingIndicator :isLoaded="isLoaded">
     <header>
       <b>Editing: </b>
       <SpecimenName :specimen="specimen" :taxon="taxon" />
@@ -79,5 +73,5 @@ async function edit(event) {
         <button class="btn btn-primary" type="submit">Save</button>
       </div>
     </form>
-  </ProjectContainerComp>
+  </LoadingIndicator>
 </template>

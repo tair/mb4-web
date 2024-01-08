@@ -135,8 +135,15 @@ const router = createRouter({
             },
           ],
         },
-
         // User's Projects
+        {
+          path: '/myprojects',
+          name: 'MyProjectListView',
+          component: () =>
+            import(
+              /* webpackChunkName: "unpublished" */ '@/views/project/home/ListView.vue'
+            ),
+        },
         {
           path: '/myprojects',
           name: 'MyProjectsView',
@@ -190,6 +197,18 @@ const router = createRouter({
       return { top: 0 }
     }
   },
+})
+
+router.beforeEach((to, from) => {
+  if (to.fullPath != from.fullPath) {
+    console.time(to.fullPath)
+  }
+})
+
+router.afterEach((to, from) => {
+  if (to.fullPath != from.fullPath) {
+    console.timeEnd(to.fullPath)
+  }
 })
 
 export default router

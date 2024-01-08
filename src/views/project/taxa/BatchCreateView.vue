@@ -2,7 +2,6 @@
 import { useRoute } from 'vue-router'
 import { reactive } from 'vue'
 import router from '@/router'
-import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { TaxaColumns, nameColumnMap } from '@/utils/taxa'
 import { capitalizeFirstLetter } from '@/utils/string'
@@ -56,90 +55,80 @@ function removeTaxon(index: number) {
 }
 </script>
 <template>
-  <ProjectContainerComp
-    :projectId="projectId"
-    basePath="myprojects"
-    itemName="taxa"
-  >
-    <div class="nav-link d-flex align-items-center fw-bold small m-0 p-0 mb-3">
-      <i class="fa-solid fa-chevron-left"></i>
-      <RouterLink
-        class="nav-link m-0 p-0 pl-1"
-        :to="`/myprojects/${projectId}/taxa`"
-      >
-        <span>Back to list</span>
-      </RouterLink>
-    </div>
-    <header>
-      This form allows you to add multiple taxa in batch. You can include the
-      high order fields by the select drop down option. Once you are finished,
-      you must press 'Save' to persist all changes.
-    </header>
-    <section>
-      <div v-for="(taxon, index) in taxa" class="taxon-form">
-        <div class="taxon-form-label">Taxon</div>
-        <div class="taxon-form-fields mx-5">
-          <template v-for="(value, column) in taxon" :key="column">
+  <div class="nav-link d-flex align-items-center fw-bold small m-0 p-0 mb-3">
+    <i class="fa-solid fa-chevron-left"></i>
+    <RouterLink
+      class="nav-link m-0 p-0 pl-1"
+      :to="`/myprojects/${projectId}/taxa`"
+    >
+      <span>Back to list</span>
+    </RouterLink>
+  </div>
+  <header>
+    This form allows you to add multiple taxa in batch. You can include the high
+    order fields by the select drop down option. Once you are finished, you must
+    press 'Save' to persist all changes.
+  </header>
+  <section>
+    <div v-for="(taxon, index) in taxa" class="taxon-form">
+      <div class="taxon-form-label">Taxon</div>
+      <div class="taxon-form-fields mx-5">
+        <template v-for="(value, column) in taxon" :key="column">
+          <div
+            v-if="nameColumnMap.has(column as TaxaColumns)"
+            class="taxon-form-field"
+          >
+            <input
+              type="text"
+              :name="column"
+              :placeholder="capitalizeFirstLetter(nameColumnMap.get(column as TaxaColumns))"
+              :value="value"
+              @change="updateColumn($event, taxon, column)"
+            />
             <div
-              v-if="nameColumnMap.has(column as TaxaColumns)"
-              class="taxon-form-field"
+              class="taxon-form-remove-field"
+              @click="deleteColumn(taxon, column)"
+              v-if="
+                column != TaxaColumns.GENUS &&
+                column != TaxaColumns.SPECIFIC_EPITHET
+              "
             >
-              <input
-                type="text"
-                :name="column"
-                :placeholder="capitalizeFirstLetter(nameColumnMap.get(column as TaxaColumns))"
-                :value="value"
-                @change="updateColumn($event, taxon, column)"
-              />
-              <div
-                class="taxon-form-remove-field"
-                @click="deleteColumn(taxon, column)"
-                v-if="
-                  column != TaxaColumns.GENUS &&
-                  column != TaxaColumns.SPECIFIC_EPITHET
-                "
-              >
-                <i class="fa-solid fa-xmark"></i>
-              </div>
+              <i class="fa-solid fa-xmark"></i>
             </div>
-          </template>
-          <div>
-            <select @change="addColumn($event, taxon)">
-              <option>Add field</option>
-              <template v-for="[column, name] in nameColumnMap" :key="column">
-                <option :value="column" :disabled="taxon[column] !== undefined">
-                  {{ name }}
-                </option>
-              </template>
-            </select>
-            <label class="extinct">
-              Extinct
-              <input
-                name="is_extinct"
-                value="1"
-                type="checkbox"
-                v-model="taxon.is_extinct"
-              />
-            </label>
           </div>
+        </template>
+        <div>
+          <select @change="addColumn($event, taxon)">
+            <option>Add field</option>
+            <template v-for="[column, name] in nameColumnMap" :key="column">
+              <option :value="column" :disabled="taxon[column] !== undefined">
+                {{ name }}
+              </option>
+            </template>
+          </select>
+          <label class="extinct">
+            Extinct
+            <input
+              name="is_extinct"
+              value="1"
+              type="checkbox"
+              v-model="taxon.is_extinct"
+            />
+          </label>
         </div>
-        <div class="taxon-form-remove" @click="removeTaxon(index)">Remove</div>
       </div>
-      <p class="taxa-form-add-button">
-        <button
-          type="button"
-          class="btn btn-secondary btn-sm"
-          @click="addTaxon"
-        >
-          Add another taxon
-        </button>
-      </p>
-      <hr />
-      <div class="formButtons">
-        <button class="btn btn-primary" @click="createTaxonBatch">Save</button>
-      </div>
-    </section>
-  </ProjectContainerComp>
+      <div class="taxon-form-remove" @click="removeTaxon(index)">Remove</div>
+    </div>
+    <p class="taxa-form-add-button">
+      <button type="button" class="btn btn-secondary btn-sm" @click="addTaxon">
+        Add another taxon
+      </button>
+    </p>
+    <hr />
+    <div class="formButtons">
+      <button class="btn btn-primary" @click="createTaxonBatch">Save</button>
+    </div>
+  </section>
 </template>
 <style scoped>
 .taxon-form {

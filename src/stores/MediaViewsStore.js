@@ -6,44 +6,8 @@ export const useMediaViewsStore = defineStore({
   state: () => ({
     isLoaded: false,
     mediaViews: [],
-    filters: [],
-    selectedLetter: null,
   }),
-  getters: {
-    letters() {
-      const letters = new Set()
-      for (const mediaView of this.mediaViews) {
-        if (mediaView?.name?.length > 0) {
-          const firstLetter = mediaView.name[0]
-          letters.add(firstLetter.toUpperCase())
-        }
-      }
-      return [...letters].sort()
-    },
-    filteredMediaViews() {
-      return this.filters
-        .reduce(
-          (mediaViews, filter) => mediaViews.filter(filter),
-          this.mediaViews
-        )
-        .sort((a, b) => {
-          const nameA = a.name
-          if (!nameA) {
-            return -1
-          }
-
-          const nameB = b.name
-          if (!nameB) {
-            return -1
-          }
-
-          const compare = nameA.localeCompare(nameB)
-          if (compare) {
-            return compare
-          }
-        })
-    },
-  },
+  getters: {},
   actions: {
     async fetchMediaViews(projectId) {
       const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/views`
@@ -96,22 +60,6 @@ export const useMediaViewsStore = defineStore({
         return true
       }
       return false
-    },
-    clearFilters() {
-      this.selectedLetter = null
-      this.filters = []
-    },
-    filterByLetter(letter) {
-      this.selectedLetter = letter
-      this.filters = [
-        (mediaView) => {
-          if (mediaView?.name.length > 0) {
-            const name = mediaView?.name[0]
-            return name.toUpperCase() == letter
-          }
-          return false
-        },
-      ]
     },
     removeByViewIds(viewIds) {
       let x = 0

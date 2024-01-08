@@ -16,11 +16,9 @@ onMounted(() => {
 
 <template>
   <ProjectLoaderComp
-    :projectId="projectId"
     :isLoading="projectStore.isLoading"
     :errorMessage="projectStore.matrices ? null : 'No matrix data available.'"
     basePath="project"
-    itemName="matrices"
   >
     {{ projectStore.matrices }}
   </ProjectLoaderComp>

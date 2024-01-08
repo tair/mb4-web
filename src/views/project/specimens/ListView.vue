@@ -1,11 +1,10 @@
 <script setup>
-import axios from 'axios'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import DeleteDialog from '@/views/project/specimens/DeleteDialog.vue'
-import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
+import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import SpecimenName from '@/components/project/SpecimenName.vue'
 import {
   TAXA_COLUMN_NAMES,
@@ -19,6 +18,7 @@ const projectId = route.params.id
 
 const specimensStore = useSpecimensStore()
 const taxaStore = useTaxaStore()
+const isLoaded = computed(() => specimensStore.isLoaded && taxaStore.isLoaded)
 
 const specimensToDelete = ref([])
 
@@ -141,13 +141,7 @@ function setRank(event) {
 }
 </script>
 <template>
-  <ProjectContainerComp
-    :projectId="projectId"
-    :isLoading="!specimensStore.isLoaded || !taxaStore.isLoaded"
-    :errorMessage="null"
-    basePath="myprojects"
-    itemName="specimens"
-  >
+  <LoadingIndicator :isLoaded="isLoaded">
     <header>
       There are {{ specimensStore.specimens?.length }} specimens associated with
       this project.
@@ -262,8 +256,8 @@ function setRank(event) {
         </ul>
       </div>
     </div>
-    <DeleteDialog :specimens="specimensToDelete" :project-id="projectId" />
-  </ProjectContainerComp>
+  </LoadingIndicator>
+  <DeleteDialog :specimens="specimensToDelete" :projectId="projectId" />
 </template>
 <style scoped>
 @import '@/views/project/styles.css';

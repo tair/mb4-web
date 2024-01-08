@@ -3,7 +3,7 @@ import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
 import BibliographyItem from '@/components/project/BibliographyItem.vue'
-import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
+import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import router from '@/router'
 import { schema } from '@/views/project/bibliographies/schema.js'
 import { convertAuthors } from '@/views/project/bibliographies/utils.js'
@@ -39,13 +39,7 @@ async function editReference(event) {
 }
 </script>
 <template>
-  <ProjectContainerComp
-    :projectId="projectId"
-    :isLoading="!bibliographiesStore.isLoaded"
-    :errorMessage="null"
-    basePath="myprojects"
-    itemName="bibliography"
-  >
+  <LoadingIndicator :isLoaded="bibliographiesStore.isLoaded">
     <header>
       <b>Editing: </b>
       <BibliographyItem :bibliography="reference" />
@@ -69,7 +63,7 @@ async function editReference(event) {
         <button class="btn btn-primary" type="submit">Save</button>
       </div>
     </form>
-  </ProjectContainerComp>
+  </LoadingIndicator>
 </template>
 <style scoped>
 @import '@/views/project/styles.css';

@@ -40,11 +40,9 @@ watch(selectedPageSize, (currentValue, oldValue) => {
 
 <template>
   <ProjectLoaderComp
-    :projectId="projectId"
     :isLoading="mediaStore.isLoading"
     :errorMessage="mediaStore.media_files ? null : 'No media data available.'"
     basePath="project"
-    itemName="media"
   >
     <p>
       This project has

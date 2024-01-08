@@ -5,7 +5,7 @@ import router from '@/router'
 import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { schema } from '@/views/project/views/schema.js'
-import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
+import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -14,6 +14,9 @@ const viewId = route.params.viewId
 const projectUsersStore = useProjectUsersStore()
 const mediaViewsStore = useMediaViewsStore()
 const mediaView = computed(() => mediaViewsStore.getMediaViewById(viewId))
+const isLoaded = computed(
+  () => mediaViewsStore.isLoaded && projectUsersStore.isLoaded
+)
 
 onMounted(() => {
   if (!mediaViewsStore.isLoaded) {
@@ -36,13 +39,7 @@ async function edit(event) {
 }
 </script>
 <template>
-  <ProjectContainerComp
-    :projectId="projectId"
-    :isLoading="!mediaViewsStore.isLoaded || !projectUsersStore.isLoaded"
-    :errorMessage="null"
-    basePath="myprojects"
-    itemName="media_views"
-  >
+  <LoadingIndicator :isLoaded="isLoaded">
     <header>
       <b>Editing: </b>
       {{ mediaView.name }}
@@ -66,5 +63,5 @@ async function edit(event) {
         <button class="btn btn-primary" type="submit">Save</button>
       </div>
     </form>
-  </ProjectContainerComp>
+  </LoadingIndicator>
 </template>

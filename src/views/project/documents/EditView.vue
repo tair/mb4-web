@@ -4,8 +4,8 @@ import router from '@/router'
 import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDocumentsStore } from '@/stores/DocumentsStore'
-import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
-import { documentSchema } from './schema.js'
+import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
+import { documentSchema } from '@/views/project/documents/schema.js'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -39,12 +39,7 @@ onMounted(() => {
 })
 </script>
 <template>
-  <ProjectContainerComp
-    :projectId="projectId"
-    :isLoading="!documentsStore.isLoaded"
-    basePath="myprojects"
-    itemName="documents"
-  >
+  <LoadingIndicator :isLoaded="documentsStore.isLoaded">
     <div>
       <form @submit.prevent="editDocument">
         <div class="row setup-content">
@@ -78,6 +73,6 @@ onMounted(() => {
         </div>
       </form>
     </div>
-  </ProjectContainerComp>
+  </LoadingIndicator>
 </template>
 <style scoped></style>
