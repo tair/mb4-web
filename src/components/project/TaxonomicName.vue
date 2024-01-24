@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { TAXA_COLUMN_NAMES, TaxaColumns } from '@/utils/taxa'
 import { capitalizeFirstLetter } from '@/utils/string'
 
@@ -17,7 +18,7 @@ const SUB_COLUMN_NAMES = [
   TaxaColumns.GENUS,
 ]
 
-function getHigherOrderName(): string {
+const higherOrderName = computed(() => {
   const otu = getOtu()
   let gotOtu = false
   const names = []
@@ -47,7 +48,7 @@ function getHigherOrderName(): string {
     }
   }
   return lastName
-}
+})
 
 /**
  * Gets the OTU for the rank. This will default to genus if the specified one is not defeind or if it's lower than genus.
@@ -86,20 +87,18 @@ function getAuthor() {
     <template v-if="showExtinctMarker">
       {{ taxon['is_extinct'] ? '†' : '' }}
     </template>
-    <span> {{ getHigherOrderName() }}</span>
-
-    <i v-if="taxon['genus']">
-      {{ capitalizeFirstLetter(taxon['genus']) }}
-    </i>
-
+    <span v-if="higherOrderName">
+      {{ higherOrderName }}
+    </span>
+    <span v-if="taxon['genus']">
+      <i>{{ capitalizeFirstLetter(taxon['genus']) }}</i>
+    </span>
     <span v-if="showSubGenus && taxon['subgenus']">
       {{ taxon['subgenus'] }}
     </span>
-
-    <i v-if="taxon['specific_epithet']">
-      {{ taxon['specific_epithet'].toLocaleLowerCase() }}
-    </i>
-
+    <span v-if="taxon['specific_epithet']">
+      <i>{{ taxon['specific_epithet'].toLocaleLowerCase() }}</i>
+    </span>
     <span v-if="taxon['subspecific_epithet']">
       {{ taxon['subspecific_epithet'] }}
     </span>
@@ -108,8 +107,7 @@ function getAuthor() {
   </span>
 </template>
 <style scoped>
-.taxonName span,
-.taxonName i {
+.taxonName span {
   margin-right: 5px;
 }
 </style>

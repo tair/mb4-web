@@ -60,6 +60,51 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
+    path: ':id/media/create',
+    name: 'MyProjectMediaCreateView',
+    meta: { itemName: 'media' },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/media/CreateView.vue'
+      ),
+  },
+  {
+    path: ':id/media/:mediaId/edit',
+    name: 'MyProjectMediaEditView',
+    meta: { itemName: 'media' },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/media/EditView.vue'
+      ),
+  },
+  {
+    path: ':id/media/:mediaId/citations',
+    name: 'MyProjectMediaCitationsListView',
+    meta: { itemName: 'media' },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/media/citations/ListView.vue'
+      ),
+  },
+  {
+    path: ':id/media/:mediaId/citations/create',
+    name: 'MyProjectMediaCitationsCreateView',
+    meta: { itemName: 'media' },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/media/citations/CreateView.vue'
+      ),
+  },
+  {
+    path: ':id/media/:mediaId/citations/:citationId/edit',
+    name: 'MyProjectMediaCitationsEditView',
+    meta: { itemName: 'media' },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/media/citations/EditView.vue'
+      ),
+  },
+  {
     path: ':id/views',
     name: 'MyProjectMediaViewsView',
     meta: { itemName: 'media_views' },

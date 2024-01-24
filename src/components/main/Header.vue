@@ -47,19 +47,21 @@ function onLogout() {
             </div>
             <div class="row">
               <ul class="navbar-nav p-0 m-0">
-                <li v-if="authStore?.user?.authToken" class="nav-item mx-1">
+                <li v-if="authStore.hasValidAuthToken()" class="nav-item mx-1">
                   <RouterLink
                     class="nav-link p-0 m-1 text-nowrap"
                     to="/myprojects"
-                    >My Projects</RouterLink
                   >
+                    My Projects
+                  </RouterLink>
                 </li>
                 <li class="nav-item mx-1">
                   <RouterLink
                     class="nav-link p-0 m-1 text-nowrap"
                     to="/project/pub_date"
-                    >Browse Projects</RouterLink
                   >
+                    Browse Projects
+                  </RouterLink>
                 </li>
               </ul>
             </div>
