@@ -143,12 +143,18 @@ const router = createRouter({
             import(
               /* webpackChunkName: "unpublished" */ '@/views/project/home/ListView.vue'
             ),
+          beforeEnter: (to) => {
+            const authStore = useAuthStore()
+            if (!authStore.hasValidAuthToken() && to.name !== 'UserLogin') {
+              return { name: 'UserLogin' }
+            }
+          },
         },
         {
           path: '/myprojects',
           name: 'MyProjectsView',
           component: MyProjectsView,
-          beforeEnter: (to, from) => {
+          beforeEnter: (to) => {
             const authStore = useAuthStore()
             if (!authStore.hasValidAuthToken() && to.name !== 'UserLogin') {
               return { name: 'UserLogin' }

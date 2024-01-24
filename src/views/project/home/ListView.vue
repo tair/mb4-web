@@ -36,19 +36,18 @@ const unpublishedProjects = computed(() =>
     </RouterLink>
   </header>
   <main>
-    <a name="unpublished"></a>
-    <h2>Unpublished</h2>
-    <ProjectCard
-      v-for="project in unpublishedProjects"
-      :project="project"
-    ></ProjectCard>
-
-    <a name="published"></a>
-    <h2>Published</h2>
-    <ProjectCard
-      v-for="project in publishedProjects"
-      :project="project"
-    ></ProjectCard>
+    <div v-if="unpublishedProjects.length">
+      <a name="unpublished"></a>
+      <h2>Unpublished</h2>
+      <ProjectCard v-for="project in unpublishedProjects" :project="project">
+      </ProjectCard>
+    </div>
+    <div v-if="publishedProjects.length">
+      <a name="published"></a>
+      <h2>Published</h2>
+      <ProjectCard v-for="project in publishedProjects" :project="project">
+      </ProjectCard>
+    </div>
   </main>
 </template>
 <style></style>
