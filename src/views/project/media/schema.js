@@ -5,7 +5,6 @@ import SelectInput from '@/components/project/SelectInput.vue'
 import SpecimenSearchInput from '@/views/project/common/SpecimenSearchInput.vue'
 import TextArea from '@/components/project/TextArea.vue'
 import TextContent from '@/components/project/TextContent.vue'
-import TextInput from '@/components/project/TextInput.vue'
 import { getUserName } from '@/views/project/utils'
 
 export const schema = {

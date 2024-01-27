@@ -1,4 +1,5 @@
 <script setup>
+import 'bootstrap'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { setCopyRight } from '@/lib/copyright.js'

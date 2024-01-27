@@ -16,6 +16,7 @@ defineProps<{
 </script>
 <template>
   <div class="mediaCard card shadow">
+    <slot name="bar"></slot>
     <div class="card-image">
       <img
         v-if="image"
@@ -48,7 +49,6 @@ defineProps<{
 .card-image {
   height: 120px;
   margin: 5px auto;
-  width: 120px;
 }
 
 .card-text {
