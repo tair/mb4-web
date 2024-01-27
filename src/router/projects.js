@@ -141,6 +141,33 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
+    path: ':id/folios/create',
+    name: 'MyProjectFoliosCreateView',
+    meta: { itemName: 'folios' },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/folios/CreateView.vue'
+      ),
+  },
+  {
+    path: ':id/folios/:folioId/edit',
+    name: 'MyProjectFoliosEditView',
+    meta: { itemName: 'folios' },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/folios/EditView.vue'
+      ),
+  },
+  {
+    path: ':id/folios/:folioId/media',
+    name: 'MyProjectFoliosMediaView',
+    meta: { itemName: 'folios' },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/folios/MediaView.vue'
+      ),
+  },
+  {
     path: ':id/specimens',
     name: 'MyProjectSpecimensListView',
     meta: { itemName: 'specimens' },
