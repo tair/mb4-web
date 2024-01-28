@@ -1,16 +1,9 @@
 <template>
   <footer class="footer bg-light border-top small">
-    <div class="container">
+    <div class="container text-center">
       <div class="nav row">
         <div class="col">
-          <h6>MorphoBank</h6>
-          <p class="text-muted">
-            MorphoBank was originally developed at Stony Brook University and
-            was hosted there from 2001-2021.
-          </p>
-        </div>
-        <div class="col col-8">
-          <section class="row row-cols-4 h-100">
+          <section class="row h-100">
             <div class="col">
               <a
                 class="nav-link p-1 me-3"
@@ -68,6 +61,12 @@
             </div>
           </section>
         </div>
+      </div>
+      <div class="row">
+        <p class="col text-muted text-center">
+          MorphoBank was originally developed at Stony Brook University and was
+          hosted there from 2001-2021.
+        </p>
       </div>
       <div class="text-copyright text-center">
         MorphoBank Version 4.0; &copy; The MorphoBank Project,

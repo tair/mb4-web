@@ -83,12 +83,7 @@ const router = createRouter({
               path: 'myprofile',
               name: 'myprofile',
               component: UserProfileView,
-              beforeEnter: (to, from) => {
-                const authStore = useAuthStore()
-                if (!authStore.hasValidAuthToken() && to.name !== 'UserLogin') {
-                  return { name: 'UserLogin' }
-                }
-              },
+              beforeEnter: requireSignIn,
             },
             {
               path: 'register',
@@ -102,12 +97,7 @@ const router = createRouter({
         {
           path: '/admin',
           component: AdminView,
-          beforeEnter: (to, from) => {
-            const authStore = useAuthStore()
-            if (!authStore.hasValidAuthToken() && to.name !== 'UserLogin') {
-              return { name: 'UserLogin' }
-            }
-          },
+          beforeEnter: requireSignIn,
           children: [
             {
               path: '',
@@ -126,12 +116,7 @@ const router = createRouter({
               path: '',
               name: 'CuratorHomeView',
               component: CuratorHomeView,
-              beforeEnter: (to, from) => {
-                const authStore = useAuthStore()
-                if (!authStore.hasValidAuthToken() && to.name !== 'UserLogin') {
-                  return { name: 'UserLogin' }
-                }
-              },
+              beforeEnter: requireSignIn,
             },
           ],
         },
@@ -143,23 +128,22 @@ const router = createRouter({
             import(
               /* webpackChunkName: "unpublished" */ '@/views/project/home/ListView.vue'
             ),
-          beforeEnter: (to) => {
-            const authStore = useAuthStore()
-            if (!authStore.hasValidAuthToken() && to.name !== 'UserLogin') {
-              return { name: 'UserLogin' }
-            }
-          },
+          beforeEnter: requireSignIn,
+        },
+        {
+          path: '/myprojects/create',
+          name: 'MyProjectCreateView',
+          component: () =>
+            import(
+              /* webpackChunkName: "unpublished" */ '@/views/project/home/CreateView.vue'
+            ),
+          beforeEnter: requireSignIn,
         },
         {
           path: '/myprojects',
           name: 'MyProjectsView',
           component: MyProjectsView,
-          beforeEnter: (to) => {
-            const authStore = useAuthStore()
-            if (!authStore.hasValidAuthToken() && to.name !== 'UserLogin') {
-              return { name: 'UserLogin' }
-            }
-          },
+          beforeEnter: requireSignIn,
           children: MY_PROJECT_VIEWS,
         },
 
@@ -217,4 +201,10 @@ router.afterEach((to, from) => {
   }
 })
 
+function requireSignIn(to) {
+  const authStore = useAuthStore()
+  if (!authStore.hasValidAuthToken() && to.name !== 'UserLogin') {
+    return { name: 'UserLogin' }
+  }
+}
 export default router

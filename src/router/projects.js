@@ -1,17 +1,16 @@
 export const MY_PROJECT_VIEWS = [
   {
-    path: 'create',
-    name: 'MyProjectCreateView',
-    meta: { itemName: 'overview' },
-    component: () =>
-      import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/home/CreateView.vue'
-      ),
-  },
-  {
     path: ':id/overview',
     name: 'MyProjectOverviewView',
-    meta: { itemName: 'overview' },
+    meta: {
+      itemName: 'overview',
+      breadcrumbs: [
+        {
+          label: 'Project Overview',
+          to: 'MyProjectOverviewView',
+        },
+      ],
+    },
     components: {
       default: () =>
         import(
@@ -26,7 +25,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/matrices',
     name: 'MyProjectMatrixView',
-    meta: { itemName: 'matrices' },
+    meta: {
+      itemName: 'matrices',
+      breadcrumbs: [
+        {
+          label: 'Matrices',
+          to: 'MyProjectMatrixView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/matrices/ListView.vue'
@@ -35,7 +42,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/matrices/create/choose',
     name: 'MyProjectMatrixChooseView',
-    meta: { itemName: 'matrices' },
+    meta: {
+      itemName: 'matrices',
+      breadcrumbs: [
+        {
+          label: 'Matrices',
+          to: 'MyProjectMatrixView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/matrices/ChooseView.vue'
@@ -44,7 +59,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/matrices/create',
     name: 'MyProjectMatrixCreateView',
-    meta: { itemName: 'matrices' },
+    meta: {
+      itemName: 'matrices',
+      breadcrumbs: [
+        {
+          label: 'Matrices',
+          to: 'MyProjectMatrixView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/matrices/CreateView.vue'
@@ -53,7 +76,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/media',
     name: 'MyProjectMediaView',
-    meta: { itemName: 'media' },
+    meta: {
+      itemName: 'media',
+      breadcrumbs: [
+        {
+          label: 'Media',
+          to: 'MyProjectMediaView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/media/ListView.vue'
@@ -62,7 +93,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/media/create',
     name: 'MyProjectMediaCreateView',
-    meta: { itemName: 'media' },
+    meta: {
+      itemName: 'media',
+      breadcrumbs: [
+        {
+          label: 'Media',
+          to: 'MyProjectMediaView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/media/CreateView.vue'
@@ -71,7 +110,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/media/:mediaId/edit',
     name: 'MyProjectMediaEditView',
-    meta: { itemName: 'media' },
+    meta: {
+      itemName: 'media',
+      breadcrumbs: [
+        {
+          label: 'Media',
+          to: 'MyProjectMediaView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/media/EditView.vue'
@@ -80,7 +127,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/media/:mediaId/citations',
     name: 'MyProjectMediaCitationsListView',
-    meta: { itemName: 'media' },
+    meta: {
+      itemName: 'media',
+      breadcrumbs: [
+        {
+          label: 'Media',
+          to: 'MyProjectMediaView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/media/citations/ListView.vue'
@@ -89,7 +144,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/media/:mediaId/citations/create',
     name: 'MyProjectMediaCitationsCreateView',
-    meta: { itemName: 'media' },
+    meta: {
+      itemName: 'media',
+      breadcrumbs: [
+        {
+          label: 'Media',
+          to: 'MyProjectMediaView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/media/citations/CreateView.vue'
@@ -98,7 +161,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/media/:mediaId/citations/:citationId/edit',
     name: 'MyProjectMediaCitationsEditView',
-    meta: { itemName: 'media' },
+    meta: {
+      itemName: 'media',
+      breadcrumbs: [
+        {
+          label: 'Media',
+          to: 'MyProjectMediaView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/media/citations/EditView.vue'
@@ -107,7 +178,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/views',
     name: 'MyProjectMediaViewsView',
-    meta: { itemName: 'media_views' },
+    meta: {
+      itemName: 'media_views',
+      breadcrumbs: [
+        {
+          label: 'Media Views',
+          to: 'MyProjectMediaViewsView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/views/ListView.vue'
@@ -116,7 +195,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/views/create',
     name: 'MyProjectMediaViewsCreateView',
-    meta: { itemName: 'media_views' },
+    meta: {
+      itemName: 'media_views',
+      breadcrumbs: [
+        {
+          label: 'Media Views',
+          to: 'MyProjectMediaViewsView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/views/CreateView.vue'
@@ -125,7 +212,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/views/:viewId/edit',
     name: 'MyProjectMediaViewEditView',
-    meta: { itemName: 'media_views' },
+    meta: {
+      itemName: 'media_views',
+      breadcrumbs: [
+        {
+          label: 'Media Views',
+          to: 'MyProjectMediaViewsView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/views/EditView.vue'
@@ -134,7 +229,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/folios',
     name: 'MyProjectFoliosView',
-    meta: { itemName: 'folios' },
+    meta: {
+      itemName: 'folios',
+      breadcrumbs: [
+        {
+          label: 'Folios',
+          to: 'MyProjectFoliosView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/folios/ListView.vue'
@@ -143,7 +246,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/folios/create',
     name: 'MyProjectFoliosCreateView',
-    meta: { itemName: 'folios' },
+    meta: {
+      itemName: 'folios',
+      breadcrumbs: [
+        {
+          label: 'Folios',
+          to: 'MyProjectFoliosView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/folios/CreateView.vue'
@@ -152,7 +263,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/folios/:folioId/edit',
     name: 'MyProjectFoliosEditView',
-    meta: { itemName: 'folios' },
+    meta: {
+      itemName: 'folios',
+      breadcrumbs: [
+        {
+          label: 'Folios',
+          to: 'MyProjectFoliosView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/folios/EditView.vue'
@@ -161,7 +280,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/folios/:folioId/media',
     name: 'MyProjectFoliosMediaView',
-    meta: { itemName: 'folios' },
+    meta: {
+      itemName: 'folios',
+      breadcrumbs: [
+        {
+          label: 'Folios',
+          to: 'MyProjectFoliosView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/folios/MediaView.vue'
@@ -170,7 +297,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/specimens',
     name: 'MyProjectSpecimensListView',
-    meta: { itemName: 'specimens' },
+    meta: {
+      itemName: 'specimens',
+      breadcrumbs: [
+        {
+          label: 'Specimens',
+          to: 'MyProjectSpecimensListView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/specimens/ListView.vue'
@@ -179,7 +314,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/specimens/create',
     name: 'MyProjectSpecimensCreateView',
-    meta: { itemName: 'specimens' },
+    meta: {
+      itemName: 'specimens',
+      breadcrumbs: [
+        {
+          label: 'Specimens',
+          to: 'MyProjectSpecimensListView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/specimens/CreateView.vue'
@@ -188,7 +331,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/specimens/:specimenId/edit',
     name: 'MyProjectSpecimensEditView',
-    meta: { itemName: 'specimens' },
+    meta: {
+      itemName: 'specimens',
+      breadcrumbs: [
+        {
+          label: 'Specimens',
+          to: 'MyProjectSpecimensListView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/specimens/EditView.vue'
@@ -197,7 +348,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/specimens/:specimenId/citations',
     name: 'MyProjectSpecimenCitationsListView',
-    meta: { itemName: 'specimens' },
+    meta: {
+      itemName: 'specimens',
+      breadcrumbs: [
+        {
+          label: 'Specimens',
+          to: 'MyProjectSpecimensListView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/specimens/citations/ListView.vue'
@@ -206,7 +365,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/specimens/:specimenId/citations/create',
     name: 'MyProjectSpecimenCitationsCreateView',
-    meta: { itemName: 'specimens' },
+    meta: {
+      itemName: 'specimens',
+      breadcrumbs: [
+        {
+          label: 'Specimens',
+          to: 'MyProjectSpecimensListView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/specimens/citations/CreateView.vue'
@@ -215,7 +382,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/specimens/:specimenId/citations/:citationId/edit',
     name: 'MyProjectSpecimenCitationsEditView',
-    meta: { itemName: 'specimens' },
+    meta: {
+      itemName: 'specimens',
+      breadcrumbs: [
+        {
+          label: 'Specimens',
+          to: 'MyProjectSpecimensListView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/specimens/citations/EditView.vue'
@@ -224,7 +399,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/specimens/upload',
     name: 'MyProjectSpecimensUploadView',
-    meta: { itemName: 'specimens' },
+    meta: {
+      itemName: 'specimens',
+      breadcrumbs: [
+        {
+          label: 'Specimens',
+          to: 'MyProjectSpecimensListView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/specimens/UploadView.vue'
@@ -233,7 +416,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/bibliography',
     name: 'MyProjectBibliographyListView',
-    meta: { itemName: 'bibliography' },
+    meta: {
+      itemName: 'bibliography',
+      breadcrumbs: [
+        {
+          label: 'Bibliographies',
+          to: 'MyProjectBibliographyListView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/bibliographies/ListView.vue'
@@ -242,7 +433,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/bibliography/create',
     name: 'MyProjectBibliographyCreateView',
-    meta: { itemName: 'bibliography' },
+    meta: {
+      itemName: 'bibliography',
+      breadcrumbs: [
+        {
+          label: 'Bibliographies',
+          to: 'MyProjectBibliographyListView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/bibliographies/CreateView.vue'
@@ -251,7 +450,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/bibliography/:referenceId/edit',
     name: 'MyProjectBibliographyEditView',
-    meta: { itemName: 'bibliography' },
+    meta: {
+      itemName: 'bibliography',
+      breadcrumbs: [
+        {
+          label: 'Bibliographies',
+          to: 'MyProjectBibliographyListView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/bibliographies/EditView.vue'
@@ -260,7 +467,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/documents',
     name: 'MyProjectDocumentsView',
-    meta: { itemName: 'documents' },
+    meta: {
+      itemName: 'documents',
+      breadcrumbs: [
+        {
+          label: 'Documents',
+          to: 'MyProjectDocumentsView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/documents/ListView.vue'
@@ -269,7 +484,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/documents/create',
     name: 'MyProjectDocumentCreateView',
-    meta: { itemName: 'documents' },
+    meta: {
+      itemName: 'documents',
+      breadcrumbs: [
+        {
+          label: 'Documents',
+          to: 'MyProjectDocumentsView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/documents/CreateView.vue'
@@ -278,7 +501,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/documents/:documentId/edit',
     name: 'MyProjectDocumentEditView',
-    meta: { itemName: 'documents' },
+    meta: {
+      itemName: 'documents',
+      breadcrumbs: [
+        {
+          label: 'Documents',
+          to: 'MyProjectDocumentsView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/documents/EditView.vue'
@@ -287,7 +518,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/documents/folders/create',
     name: 'MyProjectDocumentFolderCreateView',
-    meta: { itemName: 'documents' },
+    meta: {
+      itemName: 'documents',
+      breadcrumbs: [
+        {
+          label: 'Documents',
+          to: 'MyProjectDocumentsView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/documents/FolderCreateView.vue'
@@ -296,7 +535,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/documents/folders/:folderId/edit',
     name: 'MyProjectDocumentFolderEditView',
-    meta: { itemName: 'documents' },
+    meta: {
+      itemName: 'documents',
+      breadcrumbs: [
+        {
+          label: 'Documents',
+          to: 'MyProjectDocumentsView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/documents/FolderEditView.vue'
@@ -305,7 +552,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/taxa',
     name: 'MyProjectTaxaView',
-    meta: { itemName: 'taxa' },
+    meta: {
+      itemName: 'taxa',
+      breadcrumbs: [
+        {
+          label: 'Taxa',
+          to: 'MyProjectTaxaView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/taxa/ListView.vue'
@@ -314,7 +569,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/taxa/create',
     name: 'MyProjectTaxaCreateView',
-    meta: { itemName: 'taxa' },
+    meta: {
+      itemName: 'taxa',
+      breadcrumbs: [
+        {
+          label: 'Taxa',
+          to: 'MyProjectTaxaView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/taxa/CreateView.vue'
@@ -323,7 +586,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/taxa/create/batch',
     name: 'MyProjectTaxaBatchCreateView',
-    meta: { itemName: 'taxa' },
+    meta: {
+      itemName: 'taxa',
+      breadcrumbs: [
+        {
+          label: 'Taxa',
+          to: 'MyProjectTaxaView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/taxa/BatchCreateView.vue'
@@ -332,7 +603,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/taxa/upload',
     name: 'MyProjectTaxaUploadView',
-    meta: { itemName: 'taxa' },
+    meta: {
+      itemName: 'taxa',
+      breadcrumbs: [
+        {
+          label: 'Taxa',
+          to: 'MyProjectTaxaView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/taxa/UploadView.vue'
@@ -341,7 +620,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/taxa/:taxonId/edit',
     name: 'MyProjectTaxaEditView',
-    meta: { itemName: 'taxa' },
+    meta: {
+      itemName: 'taxa',
+      breadcrumbs: [
+        {
+          label: 'Taxa',
+          to: 'MyProjectTaxaView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/taxa/EditView.vue'
@@ -350,7 +637,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/taxa/:taxonId/citations',
     name: 'MyProjectTaxaCitationsListView',
-    meta: { itemName: 'taxa' },
+    meta: {
+      itemName: 'taxa',
+      breadcrumbs: [
+        {
+          label: 'Taxa',
+          to: 'MyProjectTaxaView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/taxa/citations/ListView.vue'
@@ -359,7 +654,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/taxa/:taxonId/citations/create',
     name: 'MyProjectTaxaCitationsCreateView',
-    meta: { itemName: 'taxa' },
+    meta: {
+      itemName: 'taxa',
+      breadcrumbs: [
+        {
+          label: 'Taxa',
+          to: 'MyProjectTaxaView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/taxa/citations/CreateView.vue'
@@ -368,7 +671,15 @@ export const MY_PROJECT_VIEWS = [
   {
     path: ':id/taxa/:taxonId/citations/:citationId/edit',
     name: 'MyProjectTaxaCitationsEditView',
-    meta: { itemName: 'taxa' },
+    meta: {
+      itemName: 'taxa',
+      breadcrumbs: [
+        {
+          label: 'Taxa',
+          to: 'MyProjectTaxaView',
+        },
+      ],
+    },
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/taxa/citations/EditView.vue'
