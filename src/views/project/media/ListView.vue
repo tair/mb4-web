@@ -5,6 +5,7 @@ import { useMediaStore } from '@/stores/MediaStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useMediaViewsStore } from '@/stores/MediaViewsStore'
+import { getTaxonForMediaId } from '@/views/project/utils'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaCard from '@/components/project/MediaCard.vue'
 
@@ -66,16 +67,6 @@ function refresh() {
   specimensStore.fetchSpecimens(projectId)
   taxaStore.fetchTaxaByProjectId(projectId)
   mediaViewsStore.fetchMediaViews(projectId)
-}
-
-function getTaxonForMediaId(media) {
-  if (media.specimen_id) {
-    const specimen = specimensStore.getSpecimenById(media.specimen_id)
-    if (specimen && specimen.taxon_id) {
-      return taxaStore.getTaxonById(specimen.taxon_id)
-    }
-  }
-  return null
 }
 </script>
 <template>
