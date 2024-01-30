@@ -2,27 +2,42 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
-import { useMediaCitationsStore } from '@/stores/MediaCitationsStore'
-import DeleteDialog from '@/views/project/media/citations/DeleteDialog.vue'
+import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
+import { useSpecimenCitationsStore } from '@/stores/SpecimenCitationsStore'
+import { useSpecimensStore } from '@/stores/SpecimensStore'
+import { useTaxaStore } from '@/stores/TaxaStore'
+import AddCitationDialog from '@/views/project/common/AddCitationDialog.vue'
+import DeleteDialog from '@/views/project/common/DeleteDialog.vue'
+import EditCitationDialog from '@/views/project/common/EditCitationDialog.vue'
 import BibliographyItem from '@/components/project/BibliographyItem.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
+import SpecimenName from '@/components/project/SpecimenName.vue'
 
 const route = useRoute()
 const projectId = route.params.id
-const mediaId = route.params.mediaId
+const specimenId = route.params.specimenId
 
-const mediaCitationsStore = useMediaCitationsStore()
+const specimenCitationsStore = useSpecimenCitationsStore()
 const bibliographiesStore = useBibliographiesStore()
+const projectUsersStore = useProjectUsersStore()
+const specimensStore = useSpecimensStore()
+const taxaStore = useTaxaStore()
 const isLoaded = computed(
-  () => mediaCitationsStore.isLoaded && bibliographiesStore.isLoaded
+  () =>
+    specimenCitationsStore.isLoaded &&
+    bibliographiesStore.isLoaded &&
+    projectUsersStore.isLoaded &&
+    taxaStore.isLoaded &&
+    specimensStore.isLoaded
 )
 
-const citationToDelete = ref([])
+const specimen = computed(() => specimensStore.getSpecimenById(specimenId))
+const taxon = computed(() => taxaStore.getTaxonById(specimen.value.taxon_id))
 
 const selectedLetter = ref(null)
 const letters = computed(() => {
   const letters = new Set()
-  const bibliographyIds = mediaCitationsStore.bibliographyIds
+  const bibliographyIds = specimenCitationsStore.bibliographyIds
   const bibliographies = bibliographiesStore.getReferencesByIds(bibliographyIds)
   for (const bibliography of bibliographies.values()) {
     if (bibliography.authors && bibliography.authors.length > 0) {
@@ -43,7 +58,7 @@ const filteredCitations = computed(() =>
   Object.values(filters)
     .reduce(
       (citations, filter) => citations.filter(filter),
-      mediaCitationsStore.citations
+      specimenCitationsStore.citations
     )
     .sort((a, b) => {
       const aReference = bibliographiesStore.getReferenceById(a.reference_id)
@@ -95,16 +110,25 @@ const someSelected = computed(() =>
 )
 
 onMounted(() => {
-  if (!mediaCitationsStore.isLoaded) {
-    mediaCitationsStore.fetchCitations(projectId, mediaId)
+  if (!specimenCitationsStore.isLoaded) {
+    specimenCitationsStore.fetchCitations(projectId, specimenId)
   }
   if (!bibliographiesStore.isLoaded) {
     bibliographiesStore.fetchBibliographies(projectId)
   }
+  if (!specimensStore.isLoaded) {
+    specimensStore.fetchSpecimens(projectId)
+  }
+  if (!taxaStore.isLoaded) {
+    taxaStore.fetch(projectId)
+  }
+  if (!projectUsersStore.isLoaded) {
+    projectUsersStore.fetchUsers(projectId)
+  }
 })
 
 function refresh() {
-  mediaCitationsStore.fetchCitations(projectId, mediaId)
+  specimenCitationsStore.fetchCitations(projectId, specimenId)
 }
 
 function setPage(event) {
@@ -136,24 +160,57 @@ function filterByLetter(letter) {
     return false
   }
 }
+
+const citationToDelete = ref([])
+const citationToEdit = ref(null)
+
+async function addCitation(json) {
+  const success = await specimenCitationsStore.create(
+    projectId,
+    specimenId,
+    json
+  )
+  return success
+}
+
+async function deleteCitations() {
+  const linkIds = citationToDelete.value.map((citation) => citation.link_id)
+  const deleted = await specimenCitationsStore.deleteIds(
+    projectId,
+    specimenId,
+    linkIds
+  )
+  return deleted
+}
+
+async function editCitation(linkId, json) {
+  const success = await specimenCitationsStore.edit(
+    projectId,
+    specimenId,
+    linkId,
+    json
+  )
+  return success
+}
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
     <header>
-      There are {{ mediaCitationsStore.citations?.length }} citations associated
-      with M{{ mediaId }}
+      There are {{ specimenCitationsStore.citations?.length }} citations
+      associated with <SpecimenName :specimen="specimen" :taxon="taxon" />.
     </header>
     <div class="action-bar">
-      <RouterLink
-        :to="`/myprojects/${projectId}/media/${mediaId}/citations/create`"
+      <button
+        type="button"
+        class="btn btn-m btn-outline-primary"
+        data-bs-toggle="modal"
+        data-bs-target="#addCitationModal"
       >
-        <button type="button" class="btn btn-m btn-outline-primary">
-          <i class="fa fa-plus"></i>
-          <span> Create Citation</span>
-        </button>
-      </RouterLink>
+        <i class="fa fa-plus"></i>
+        <span> Create Citation</span>
+      </button>
     </div>
-    <div v-if="mediaCitationsStore.citations?.length">
+    <div v-if="specimenCitationsStore.citations?.length">
       <div class="alphabet-bar">
         Display bibliographic references beginning with:
         <template v-for="letter in letters">
@@ -164,9 +221,9 @@ function filterByLetter(letter) {
           >
         </template>
         <span class="separator">|</span>
-        <span @click="setPage" :class="{ selected: selectedLetter == null }"
-          >ALL</span
-        >
+        <span @click="setPage" :class="{ selected: selectedLetter == null }">
+          ALL
+        </span>
       </div>
       <div class="selection-bar">
         <label class="item">
@@ -187,7 +244,7 @@ function filterByLetter(letter) {
           v-if="someSelected"
           class="item"
           data-bs-toggle="modal"
-          data-bs-target="#mediaCitationDeleteModal"
+          data-bs-target="#deleteModal"
           @click="
             citationToDelete = filteredCitations.filter((b) => b.selected)
           "
@@ -221,18 +278,20 @@ function filterByLetter(letter) {
                 </div>
               </div>
               <div class="list-group-item-buttons">
-                <RouterLink
-                  :to="`/myprojects/${projectId}/media/${mediaId}/citations/${citation.link_id}/edit`"
-                >
-                  <button type="button" class="btn btn-sm btn-secondary">
-                    <i class="fa-regular fa-pen-to-square"></i>
-                  </button>
-                </RouterLink>
                 <button
                   type="button"
                   class="btn btn-sm btn-secondary"
                   data-bs-toggle="modal"
-                  data-bs-target="#mediaCitationDeleteModal"
+                  data-bs-target="#editCitationModal"
+                  @click="citationToEdit = citation"
+                >
+                  <i class="fa-regular fa-pen-to-square"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-secondary"
+                  data-bs-toggle="modal"
+                  data-bs-target="#deleteModal"
                   @click="citationToDelete = [citation]"
                 >
                   <i class="fa-regular fa-trash-can"></i>
@@ -244,10 +303,16 @@ function filterByLetter(letter) {
       </div>
     </div>
   </LoadingIndicator>
-  <DeleteDialog
-    :citations="citationToDelete"
-    :projectId="projectId"
-  ></DeleteDialog>
+  <AddCitationDialog :addCitation="addCitation"></AddCitationDialog>
+  <EditCitationDialog
+    :editCitation="editCitation"
+    :citation="citationToEdit"
+  ></EditCitationDialog>
+  <DeleteDialog :delete="deleteCitations">
+    <template #modal-body>
+      Delete selected {{ citationToDelete.length }} Citation(s)
+    </template>
+  </DeleteDialog>
 </template>
 <style scoped>
 @import '@/views/project/styles.css';

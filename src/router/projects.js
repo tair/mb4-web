@@ -108,8 +108,8 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/media/:mediaId/edit',
-    name: 'MyProjectMediaEditView',
+    path: ':id/media/:mediaId',
+    name: 'MyProjectMediaBaseView',
     meta: {
       itemName: 'media',
       breadcrumbs: [
@@ -121,59 +121,26 @@ export const MY_PROJECT_VIEWS = [
     },
     component: () =>
       import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/media/EditView.vue'
+        /* webpackChunkName: "unpublished" */ '@/views/project/media/BaseView.vue'
       ),
-  },
-  {
-    path: ':id/media/:mediaId/citations',
-    name: 'MyProjectMediaCitationsListView',
-    meta: {
-      itemName: 'media',
-      breadcrumbs: [
-        {
-          label: 'Media',
-          to: 'MyProjectMediaView',
-        },
-      ],
-    },
-    component: () =>
-      import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/media/citations/ListView.vue'
-      ),
-  },
-  {
-    path: ':id/media/:mediaId/citations/create',
-    name: 'MyProjectMediaCitationsCreateView',
-    meta: {
-      itemName: 'media',
-      breadcrumbs: [
-        {
-          label: 'Media',
-          to: 'MyProjectMediaView',
-        },
-      ],
-    },
-    component: () =>
-      import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/media/citations/CreateView.vue'
-      ),
-  },
-  {
-    path: ':id/media/:mediaId/citations/:citationId/edit',
-    name: 'MyProjectMediaCitationsEditView',
-    meta: {
-      itemName: 'media',
-      breadcrumbs: [
-        {
-          label: 'Media',
-          to: 'MyProjectMediaView',
-        },
-      ],
-    },
-    component: () =>
-      import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/media/citations/EditView.vue'
-      ),
+    children: [
+      {
+        path: 'edit',
+        name: 'MyProjectMediaEditView',
+        component: () =>
+          import(
+            /* webpackChunkName: "unpublished" */ '@/views/project/media/EditView.vue'
+          ),
+      },
+      {
+        path: 'citations',
+        name: 'MyProjectMediaCitationsView',
+        component: () =>
+          import(
+            /* webpackChunkName: "unpublished" */ '@/views/project/media/CitationsView.vue'
+          ),
+      },
+    ],
   },
   {
     path: ':id/views',
@@ -329,8 +296,8 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/specimens/:specimenId/edit',
-    name: 'MyProjectSpecimensEditView',
+    path: ':id/specimens/:specimenId',
+    name: 'MyProjectSpecimensBaseView',
     meta: {
       itemName: 'specimens',
       breadcrumbs: [
@@ -342,59 +309,26 @@ export const MY_PROJECT_VIEWS = [
     },
     component: () =>
       import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/specimens/EditView.vue'
+        /* webpackChunkName: "unpublished" */ '@/views/project/specimens/BaseView.vue'
       ),
-  },
-  {
-    path: ':id/specimens/:specimenId/citations',
-    name: 'MyProjectSpecimenCitationsListView',
-    meta: {
-      itemName: 'specimens',
-      breadcrumbs: [
-        {
-          label: 'Specimens',
-          to: 'MyProjectSpecimensListView',
-        },
-      ],
-    },
-    component: () =>
-      import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/specimens/citations/ListView.vue'
-      ),
-  },
-  {
-    path: ':id/specimens/:specimenId/citations/create',
-    name: 'MyProjectSpecimenCitationsCreateView',
-    meta: {
-      itemName: 'specimens',
-      breadcrumbs: [
-        {
-          label: 'Specimens',
-          to: 'MyProjectSpecimensListView',
-        },
-      ],
-    },
-    component: () =>
-      import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/specimens/citations/CreateView.vue'
-      ),
-  },
-  {
-    path: ':id/specimens/:specimenId/citations/:citationId/edit',
-    name: 'MyProjectSpecimenCitationsEditView',
-    meta: {
-      itemName: 'specimens',
-      breadcrumbs: [
-        {
-          label: 'Specimens',
-          to: 'MyProjectSpecimensListView',
-        },
-      ],
-    },
-    component: () =>
-      import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/specimens/citations/EditView.vue'
-      ),
+    children: [
+      {
+        path: 'edit',
+        name: 'MyProjectSpecimensEditView',
+        component: () =>
+          import(
+            /* webpackChunkName: "unpublished" */ '@/views/project/specimens/EditView.vue'
+          ),
+      },
+      {
+        path: 'citations',
+        name: 'MyProjectSpecimenCitationsView',
+        component: () =>
+          import(
+            /* webpackChunkName: "unpublished" */ '@/views/project/specimens/CitationsView.vue'
+          ),
+      },
+    ],
   },
   {
     path: ':id/specimens/upload',
@@ -618,8 +552,8 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/taxa/:taxonId/edit',
-    name: 'MyProjectTaxaEditView',
+    path: ':id/taxa/:taxonId/',
+    name: 'MyProjectTaxaBaseEditView',
     meta: {
       itemName: 'taxa',
       breadcrumbs: [
@@ -631,58 +565,25 @@ export const MY_PROJECT_VIEWS = [
     },
     component: () =>
       import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/taxa/EditView.vue'
+        /* webpackChunkName: "unpublished" */ '@/views/project/taxa/BaseView.vue'
       ),
-  },
-  {
-    path: ':id/taxa/:taxonId/citations',
-    name: 'MyProjectTaxaCitationsListView',
-    meta: {
-      itemName: 'taxa',
-      breadcrumbs: [
-        {
-          label: 'Taxa',
-          to: 'MyProjectTaxaView',
-        },
-      ],
-    },
-    component: () =>
-      import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/taxa/citations/ListView.vue'
-      ),
-  },
-  {
-    path: ':id/taxa/:taxonId/citations/create',
-    name: 'MyProjectTaxaCitationsCreateView',
-    meta: {
-      itemName: 'taxa',
-      breadcrumbs: [
-        {
-          label: 'Taxa',
-          to: 'MyProjectTaxaView',
-        },
-      ],
-    },
-    component: () =>
-      import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/taxa/citations/CreateView.vue'
-      ),
-  },
-  {
-    path: ':id/taxa/:taxonId/citations/:citationId/edit',
-    name: 'MyProjectTaxaCitationsEditView',
-    meta: {
-      itemName: 'taxa',
-      breadcrumbs: [
-        {
-          label: 'Taxa',
-          to: 'MyProjectTaxaView',
-        },
-      ],
-    },
-    component: () =>
-      import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/taxa/citations/EditView.vue'
-      ),
+    children: [
+      {
+        path: 'edit',
+        name: 'MyProjectTaxaEditView',
+        component: () =>
+          import(
+            /* webpackChunkName: "unpublished" */ '@/views/project/taxa/EditView.vue'
+          ),
+      },
+      {
+        path: 'citations',
+        name: 'MyProjectTaxaCitationsView',
+        component: () =>
+          import(
+            /* webpackChunkName: "unpublished" */ '@/views/project/taxa/CitationsView.vue'
+          ),
+      },
+    ],
   },
 ]

@@ -55,7 +55,7 @@ onMounted(() => {
     specimensStore.fetchSpecimens(projectId)
   }
   if (!taxaStore.isLoaded) {
-    taxaStore.fetchTaxaByProjectId(projectId)
+    taxaStore.fetch(projectId)
   }
   if (!mediaViewsStore.isLoaded) {
     mediaViewsStore.fetchMediaViews(projectId)
@@ -65,7 +65,7 @@ onMounted(() => {
 function refresh() {
   mediaStore.fetchMedia(projectId)
   specimensStore.fetchSpecimens(projectId)
-  taxaStore.fetchTaxaByProjectId(projectId)
+  taxaStore.fetch(projectId)
   mediaViewsStore.fetchMediaViews(projectId)
 }
 </script>

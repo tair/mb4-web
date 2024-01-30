@@ -82,12 +82,12 @@ const someSelected = computed(() => filteredTaxa.value.some((b) => b.selected))
 
 onMounted(() => {
   if (!taxaStore.isLoaded) {
-    taxaStore.fetchTaxaByProjectId(projectId)
+    taxaStore.fetch(projectId)
   }
 })
 
 function refresh() {
-  taxaStore.fetchTaxaByProjectId(projectId)
+  taxaStore.fetch(projectId)
 }
 
 const selectedGroup = ref({})

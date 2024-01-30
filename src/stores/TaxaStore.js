@@ -18,7 +18,7 @@ export const useTaxaStore = defineStore({
       this.partitions = []
       this.matrices = []
     },
-    async fetchTaxaByProjectId(projectId) {
+    async fetch(projectId) {
       const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/taxa`
       const response = await axios.get(url)
       this.taxa = response.data.taxa

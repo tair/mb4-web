@@ -32,7 +32,7 @@ async function editTaxon(event) {
 
 onMounted(() => {
   if (!taxaStore.isLoaded) {
-    taxaStore.fetchTaxaByProjectId(projectId)
+    taxaStore.fetch(projectId)
   }
   if (!projectUsersStore.isLoaded) {
     projectUsersStore.fetchUsers(projectId)

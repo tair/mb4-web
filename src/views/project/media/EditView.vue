@@ -52,7 +52,7 @@ onMounted(() => {
     specimensStore.fetchSpecimens(projectId)
   }
   if (!taxaStore.isLoaded) {
-    taxaStore.fetchTaxaByProjectId(projectId)
+    taxaStore.fetch(projectId)
   }
   if (!mediaViewsStore.isLoaded) {
     mediaViewsStore.fetchMediaViews(projectId)
