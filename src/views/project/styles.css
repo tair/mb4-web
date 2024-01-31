@@ -80,6 +80,12 @@
 }
 
 .grid-group-items {
-  display: flex;
-  gap: 15px;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.grid-group-items > a,
+.grid-group-items > div {
+  flex: 0 1 8em;
 }

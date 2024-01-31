@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Modal } from 'bootstrap'
-import { computed, reactive, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { useMediaStore } from '@/stores/MediaStore'
 import MediaImage from '@/components/project/MediaImage.vue'
 

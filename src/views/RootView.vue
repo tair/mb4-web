@@ -19,6 +19,6 @@ main {
 }
 
 .main-container {
-  padding: 60px 10px;
+  padding: 20px 10px;
 }
 </style>

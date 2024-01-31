@@ -52,7 +52,7 @@ onMounted(() => {
     specimensStore.fetchSpecimens(projectId)
   }
   if (!taxaStore.isLoaded) {
-    taxaStore.fetchTaxaByProjectId(projectId)
+    taxaStore.fetch(projectId)
   }
   if (!mediaViewsStore.isLoaded) {
     mediaViewsStore.fetchMediaViews(projectId)
@@ -81,9 +81,9 @@ onMounted(() => {
           </component>
         </div>
         <div class="btn-form-group">
-          <button class="btn btn-primary" type="button" @click="$router.go(-1)">
-            Cancel
-          </button>
+          <RouterLink :to="{ name: 'MyProjectMediaView' }">
+            <button class="btn btn-primary" type="button">Cancel</button>
+          </RouterLink>
           <button class="btn btn-primary" type="submit">Save</button>
         </div>
       </div>

@@ -34,7 +34,6 @@ const isLoaded = computed(
     mediaViewsStore.isLoaded
 )
 
-const folio = computed(() => foliosStore.getFolioById(folioId))
 const folioMedia = computed(() => {
   const mediaIds = folioMediaStore.mediaIds
   return Array.from(mediaStore.getMediaByIds(mediaIds).values())
@@ -69,7 +68,7 @@ onMounted(() => {
     specimensStore.fetchSpecimens(projectId)
   }
   if (!taxaStore.isLoaded) {
-    taxaStore.fetchTaxaByProjectId(projectId)
+    taxaStore.fetch(projectId)
   }
   if (!mediaViewsStore.isLoaded) {
     mediaViewsStore.fetchMediaViews(projectId)
@@ -102,19 +101,13 @@ async function refresh() {
     folioMediaStore.fetch(projectId, folioId),
     foliosStore.fetch(projectId),
     mediaStore.fetchMedia(projectId),
-    taxaStore.fetchTaxaByProjectId(projectId),
+    taxaStore.fetch(projectId),
     mediaViewsStore.fetchMediaViews(projectId),
   ])
 }
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
-    <header>
-      <header>
-        <b>Editing: </b>
-        {{ folio.name }}
-      </header>
-    </header>
     <div class="action-bar">
       <button
         type="button"

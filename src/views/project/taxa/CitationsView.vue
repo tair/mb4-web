@@ -2,9 +2,12 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
+import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useTaxaCitationsStore } from '@/stores/TaxaCitationsStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
-import DeleteDialog from '@/views/project/taxa/citations/DeleteDialog.vue'
+import AddCitationDialog from '@/views/project/common/AddCitationDialog.vue'
+import DeleteDialog from '@/views/project/common/DeleteDialog.vue'
+import EditCitationDialog from '@/views/project/common/EditCitationDialog.vue'
 import BibliographyItem from '@/components/project/BibliographyItem.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import TaxonomicName from '@/components/project/TaxonomicName.vue'
@@ -15,17 +18,17 @@ const taxonId = route.params.taxonId
 
 const taxaCitationStore = useTaxaCitationsStore()
 const bibliographiesStore = useBibliographiesStore()
+const projectUsersStore = useProjectUsersStore()
 const taxaStore = useTaxaStore()
 const isLoaded = computed(
   () =>
     taxaCitationStore.isLoaded &&
     bibliographiesStore.isLoaded &&
-    taxaStore.isLoaded
+    taxaStore.isLoaded &&
+    projectUsersStore.isLoaded
 )
 
 const taxon = computed(() => taxaStore.getTaxonById(taxonId))
-
-const citationToDelete = ref([])
 
 const selectedLetter = ref(null)
 const letters = computed(() => {
@@ -110,7 +113,10 @@ onMounted(() => {
     bibliographiesStore.fetchBibliographies(projectId)
   }
   if (!taxaStore.isLoaded) {
-    taxaStore.fetchTaxaByProjectId(projectId)
+    taxaStore.fetch(projectId)
+  }
+  if (!projectUsersStore.isLoaded) {
+    projectUsersStore.fetchUsers(projectId)
   }
 })
 
@@ -147,22 +153,51 @@ function filterByLetter(letter) {
     return false
   }
 }
+
+const citationToDelete = ref([])
+const citationToEdit = ref(null)
+
+async function addCitation(json) {
+  const success = await taxaCitationStore.create(projectId, taxonId, json)
+  return success
+}
+
+async function deleteCitations() {
+  const citationIds = citationToDelete.value.map((citation) => citation.link_id)
+  const deleted = await taxaCitationStore.deleteIds(
+    projectId,
+    taxonId,
+    citationIds
+  )
+  return deleted
+}
+
+async function editCitation(citationId, json) {
+  const success = await taxaCitationStore.edit(
+    projectId,
+    taxonId,
+    citationId,
+    json
+  )
+  return success
+}
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
     <header>
       There are {{ taxaCitationStore.citations?.length }} citations associated
-      with <TaxonomicName :showExtinctMarker="true" :taxon="taxon" />.
+      with <TaxonomicName :showExtinctMarker="true" :taxon="taxon" />
     </header>
     <div class="action-bar">
-      <RouterLink
-        :to="`/myprojects/${projectId}/taxa/${taxonId}/citations/create`"
+      <button
+        type="button"
+        class="btn btn-m btn-outline-primary"
+        data-bs-toggle="modal"
+        data-bs-target="#addCitationModal"
       >
-        <button type="button" class="btn btn-m btn-outline-primary">
-          <i class="fa fa-plus"></i>
-          <span> Create Citation</span>
-        </button>
-      </RouterLink>
+        <i class="fa fa-plus"></i>
+        <span> Create Citation</span>
+      </button>
     </div>
     <div v-if="taxaCitationStore.citations?.length">
       <div class="alphabet-bar">
@@ -198,7 +233,7 @@ function filterByLetter(letter) {
           v-if="someSelected"
           class="item"
           data-bs-toggle="modal"
-          data-bs-target="#citationDeleteModal"
+          data-bs-target="#deleteModal"
           @click="
             citationToDelete = filteredCitations.filter((b) => b.selected)
           "
@@ -232,18 +267,20 @@ function filterByLetter(letter) {
                 </div>
               </div>
               <div class="list-group-item-buttons">
-                <RouterLink
-                  :to="`/myprojects/${projectId}/taxa/${taxonId}/citations/${citation.link_id}/edit`"
-                >
-                  <button type="button" class="btn btn-sm btn-secondary">
-                    <i class="fa-regular fa-pen-to-square"></i>
-                  </button>
-                </RouterLink>
                 <button
                   type="button"
                   class="btn btn-sm btn-secondary"
                   data-bs-toggle="modal"
-                  data-bs-target="#citationDeleteModal"
+                  data-bs-target="#editCitationModal"
+                  @click="citationToEdit = citation"
+                >
+                  <i class="fa-regular fa-pen-to-square"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-secondary"
+                  data-bs-toggle="modal"
+                  data-bs-target="#deleteModal"
                   @click="citationToDelete = [citation]"
                 >
                   <i class="fa-regular fa-trash-can"></i>
@@ -255,10 +292,16 @@ function filterByLetter(letter) {
       </div>
     </div>
   </LoadingIndicator>
-  <DeleteDialog
-    :citations="citationToDelete"
-    :projectId="projectId"
-  ></DeleteDialog>
+  <AddCitationDialog :addCitation="addCitation"></AddCitationDialog>
+  <EditCitationDialog
+    :editCitation="editCitation"
+    :citation="citationToEdit"
+  ></EditCitationDialog>
+  <DeleteDialog :delete="deleteCitations">
+    <template #modal-body>
+      Delete selected {{ citationToDelete.length }} Citation(s)
+    </template>
+  </DeleteDialog>
 </template>
 <style scoped>
 @import '@/views/project/styles.css';

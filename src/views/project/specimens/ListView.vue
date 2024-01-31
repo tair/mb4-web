@@ -103,13 +103,13 @@ onMounted(() => {
     specimensStore.fetchSpecimens(projectId)
   }
   if (!taxaStore.isLoaded) {
-    taxaStore.fetchTaxaByProjectId(projectId)
+    taxaStore.fetch(projectId)
   }
 })
 
 function refresh() {
   specimensStore.fetchSpecimens(projectId)
-  taxaStore.fetchTaxaByProjectId(projectId)
+  taxaStore.fetch(projectId)
 }
 
 function setPage(event) {

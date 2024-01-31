@@ -40,10 +40,6 @@ async function edit(event) {
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
-    <header>
-      <b>Editing: </b>
-      {{ folio.name }}
-    </header>
     <form @submit.prevent="edit">
       <div v-for="(definition, index) in schema" :key="index" class="mb-3">
         <label for="index" class="form-label">{{ definition.label }}</label>
@@ -57,9 +53,9 @@ async function edit(event) {
         </component>
       </div>
       <div class="btn-form-group">
-        <button class="btn btn-primary" type="button" @click="$router.go(-1)">
-          Cancel
-        </button>
+        <RouterLink :to="{ name: 'MyProjectFoliosView' }">
+          <button class="btn btn-primary" type="button">Cancel</button>
+        </RouterLink>
         <button class="btn btn-primary" type="submit">Save</button>
       </div>
     </form>

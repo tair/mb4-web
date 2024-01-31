@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { useAuthStore } from '@/stores/AuthStore.js'
+import 'bootstrap'
 import router from '@/router'
+import { useAuthStore } from '@/stores/AuthStore.js'
 const authStore = useAuthStore()
 
 function onLogout() {

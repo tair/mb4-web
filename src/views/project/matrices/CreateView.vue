@@ -233,7 +233,7 @@ async function uploadMatrix() {
 
 onMounted(() => {
   if (!taxaStore.isLoaded) {
-    taxaStore.fetchTaxaByProjectId(projectId)
+    taxaStore.fetch(projectId)
   }
 
   if (!charactersStore.isLoaded) {
