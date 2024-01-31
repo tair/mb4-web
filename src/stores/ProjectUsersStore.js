@@ -27,5 +27,9 @@ export const useProjectUsersStore = defineStore({
       }
       return null
     },
+    invalidate() {
+      this.isLoaded = false
+      this.users = []
+    },
   },
 })
