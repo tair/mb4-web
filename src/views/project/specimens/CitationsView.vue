@@ -197,7 +197,7 @@ async function editCitation(linkId, json) {
   <LoadingIndicator :isLoaded="isLoaded">
     <header>
       There are {{ specimenCitationsStore.citations?.length }} citations
-      associated with <SpecimenName :specimen="specimen" :taxon="taxon" />.
+      associated with <SpecimenName :specimen="specimen" :taxon="taxon" />
     </header>
     <div class="action-bar">
       <button

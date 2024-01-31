@@ -36,14 +36,20 @@ onMounted(() => {
     <ul class="nav nav-tabs">
       <li class="nav-item">
         <RouterLink
-          class="nav-link active"
+          :class="{
+            'nav-link': true,
+            active: route.name == 'MyProjectSpecimensEditView',
+          }"
           :to="{ name: 'MyProjectSpecimensEditView' }"
           >Info</RouterLink
         >
       </li>
       <li class="nav-item">
         <RouterLink
-          class="nav-link"
+          :class="{
+            'nav-link': true,
+            active: route.name == 'MyProjectSpecimenCitationsView',
+          }"
           :to="{ name: 'MyProjectSpecimenCitationsView' }"
           >Citations</RouterLink
         >

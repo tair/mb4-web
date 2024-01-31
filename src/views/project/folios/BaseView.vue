@@ -1,21 +1,20 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import { useTaxaStore } from '@/stores/TaxaStore'
+import { useFoliosStore } from '@/stores/FoliosStore'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
-import TaxonomicName from '@/components/project/TaxonomicName.vue'
 
 const route = useRoute()
 const projectId = route.params.id as string
-const taxonId = route.params.taxonId as string
+const folioId = route.params.folioId as string
 
-const taxaStore = useTaxaStore()
-const taxon = computed(() => taxaStore.getTaxonById(taxonId))
+const foliosStore = useFoliosStore()
+const folio = computed(() => foliosStore.getFolioById(folioId))
+const isLoaded = computed(() => foliosStore.isLoaded)
 
-const isLoaded = computed(() => taxaStore.isLoaded)
 onMounted(() => {
-  if (!taxaStore.isLoaded) {
-    taxaStore.fetch(projectId)
+  if (!foliosStore.isLoaded) {
+    foliosStore.fetch(projectId)
   }
 })
 </script>
@@ -23,16 +22,16 @@ onMounted(() => {
   <LoadingIndicator :isLoaded="isLoaded">
     <header>
       <b>Editing: </b>
-      <TaxonomicName :showExtinctMarker="true" :taxon="taxon" />
+      {{ folio.name }}
     </header>
     <ul class="nav nav-tabs">
       <li class="nav-item">
         <RouterLink
           :class="{
             'nav-link': true,
-            active: route.name == 'MyProjectTaxaEditView',
+            active: route.name == 'MyProjectFoliosEditView',
           }"
-          :to="{ name: 'MyProjectTaxaEditView' }"
+          :to="{ name: 'MyProjectFoliosEditView' }"
           >Info</RouterLink
         >
       </li>
@@ -40,10 +39,10 @@ onMounted(() => {
         <RouterLink
           :class="{
             'nav-link': true,
-            active: route.name == 'MyProjectTaxaCitationsView',
+            active: route.name == 'MyProjectFoliosMediaView',
           }"
-          :to="{ name: 'MyProjectTaxaCitationsView' }"
-          >Citations</RouterLink
+          :to="{ name: 'MyProjectFoliosMediaView' }"
+          >Media</RouterLink
         >
       </li>
     </ul>

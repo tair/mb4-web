@@ -228,8 +228,8 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/folios/:folioId/edit',
-    name: 'MyProjectFoliosEditView',
+    path: ':id/folios/:folioId',
+    name: 'MyProjectFoliosBaseView',
     meta: {
       itemName: 'folios',
       breadcrumbs: [
@@ -241,25 +241,26 @@ export const MY_PROJECT_VIEWS = [
     },
     component: () =>
       import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/folios/EditView.vue'
+        /* webpackChunkName: "unpublished" */ '@/views/project/folios/BaseView.vue'
       ),
-  },
-  {
-    path: ':id/folios/:folioId/media',
-    name: 'MyProjectFoliosMediaView',
-    meta: {
-      itemName: 'folios',
-      breadcrumbs: [
-        {
-          label: 'Folios',
-          to: 'MyProjectFoliosView',
-        },
-      ],
-    },
-    component: () =>
-      import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/folios/MediaView.vue'
-      ),
+    children: [
+      {
+        path: 'edit',
+        name: 'MyProjectFoliosEditView',
+        component: () =>
+          import(
+            /* webpackChunkName: "unpublished" */ '@/views/project/folios/EditView.vue'
+          ),
+      },
+      {
+        path: 'media',
+        name: 'MyProjectFoliosMediaView',
+        component: () =>
+          import(
+            /* webpackChunkName: "unpublished" */ '@/views/project/folios/MediaView.vue'
+          ),
+      },
+    ],
   },
   {
     path: ':id/specimens',

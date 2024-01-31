@@ -186,7 +186,7 @@ async function editCitation(citationId, json) {
   <LoadingIndicator :isLoaded="isLoaded">
     <header>
       There are {{ taxaCitationStore.citations?.length }} citations associated
-      with <TaxonomicName :showExtinctMarker="true" :taxon="taxon" />.
+      with <TaxonomicName :showExtinctMarker="true" :taxon="taxon" />
     </header>
     <div class="action-bar">
       <button

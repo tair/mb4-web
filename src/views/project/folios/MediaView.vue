@@ -34,7 +34,6 @@ const isLoaded = computed(
     mediaViewsStore.isLoaded
 )
 
-const folio = computed(() => foliosStore.getFolioById(folioId))
 const folioMedia = computed(() => {
   const mediaIds = folioMediaStore.mediaIds
   return Array.from(mediaStore.getMediaByIds(mediaIds).values())
@@ -109,12 +108,6 @@ async function refresh() {
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
-    <header>
-      <header>
-        <b>Editing: </b>
-        {{ folio.name }}
-      </header>
-    </header>
     <div class="action-bar">
       <button
         type="button"

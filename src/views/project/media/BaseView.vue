@@ -12,15 +12,25 @@ const mediaId = route.params.mediaId
   <ul class="nav nav-tabs">
     <li class="nav-item">
       <RouterLink
-        class="nav-link active"
+        :class="{
+          'nav-link': true,
+          active: route.name == 'MyProjectMediaEditView',
+        }"
         :to="{ name: 'MyProjectMediaEditView' }"
-        >Info</RouterLink
       >
+        Info
+      </RouterLink>
     </li>
     <li class="nav-item">
-      <RouterLink class="nav-link" :to="{ name: 'MyProjectMediaCitationsView' }"
-        >Citations</RouterLink
+      <RouterLink
+        :class="{
+          'nav-link': true,
+          active: route.name == 'MyProjectMediaCitationsView',
+        }"
+        :to="{ name: 'MyProjectMediaCitationsView' }"
       >
+        Citations
+      </RouterLink>
     </li>
   </ul>
   <div class="tab-content py-2">
