@@ -31,8 +31,7 @@ const media = computed(() => mediaStore.getMediaById(mediaId))
 
 async function editMedia(event) {
   const formData = new FormData(event.currentTarget)
-  const json = Object.fromEntries(formData)
-  const success = await mediaStore.edit(projectId, mediaId, json)
+  const success = await mediaStore.edit(projectId, mediaId, formData)
   if (!success) {
     alert(response.data?.message || 'Failed to modify media')
     return
