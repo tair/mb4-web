@@ -593,7 +593,7 @@ class AccessPane extends Component {
     const element = this.getElement()
     element.innerHTML = AccessPane.htmlContent()
     element.classList.add('mb-access-pane')
-    this.groupSelect.addItem({ text: 'None specified', value: 0 })
+    this.groupSelect.addItem({ text: 'No restrictions specified', value: 0 })
     this.groupSelect.setSelectedIndex(0)
     const selectedGroupId = this.taxon.getGroupId()
     const groups = this.projectProperties.getGroups()
@@ -606,7 +606,7 @@ class AccessPane extends Component {
     }
     const groupSelectElement = this.getElementByClass('group-select')
     this.groupSelect.render(groupSelectElement)
-    this.userSelect.addItem({ text: 'All project members', value: 0 })
+    this.userSelect.addItem({ text: 'No restrictions specified', value: 0 })
     this.userSelect.setSelectedIndex(0)
     const selectedUserId = this.taxon.getUserId()
     const members = this.projectProperties.getMembers()
@@ -665,8 +665,8 @@ class AccessPane extends Component {
       ' under Edit Member Groups' +
       '</div>' +
       '<div class="fields">' +
-      '<div class="field">Member Group</div><div class="group-select"></div><br/>' +
-      '<div class="field">User</div><div class="user-select"></div><br/>' +
+      '<div class="field">Restrict editing to the following Member Group</div><div class="group-select"></div><br/>' +
+      '<div class="field">Restrict editing to the following User</div><div class="user-select"></div><br/>' +
       '</div>'
     )
   }

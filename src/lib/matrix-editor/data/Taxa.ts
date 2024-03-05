@@ -73,7 +73,6 @@ export class Taxon extends  AbstractItem {
     // Access is always guaranteed to Project Administrators and the Creator of
     // the matrix regardless of the access restrictions.
     if (projectProperties.getIsAdmin()) {
-      console.log(this.getDisplayName(), 'project admin');
       return true;
     }
 
@@ -83,11 +82,9 @@ export class Taxon extends  AbstractItem {
     if (taxonUserId || taxonGroupId) {
       const isUserInGroup = taxonGroupId && projectProperties.isInUserGroup(taxonGroupId);
       const isUserAllowed = taxonUserId && taxonUserId == projectProperties.getUserId();
-      console.log(this.getDisplayName(), 'isUserInGroup', isUserInGroup, 'isUserAllowed', isUserAllowed);
       return isUserInGroup || isUserAllowed;
     }
 
-    console.log(this.getDisplayName(), 'all access');
     return true;
   }
 
