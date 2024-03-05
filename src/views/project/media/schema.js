@@ -1,5 +1,6 @@
 import Checkbox from '@/components/project/Checkbox.vue'
 import DateText from '@/components/project/DateText.vue'
+import FileInput from '@/components/project/FileInput.vue'
 import MediaViewSelect from '@/views/project/common/MediaViewSelect.vue'
 import SelectInput from '@/components/project/SelectInput.vue'
 import SpecimenSearchInput from '@/views/project/common/SpecimenSearchInput.vue'
@@ -8,6 +9,10 @@ import TextContent from '@/components/project/TextContent.vue'
 import { getUserName } from '@/views/project/utils'
 
 export const schema = {
+  file: {
+    label: 'Media file to upload',
+    view: FileInput,
+  },
   is_sided: {
     label: 'Which side is represented',
     view: SelectInput,

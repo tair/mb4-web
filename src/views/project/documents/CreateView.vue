@@ -13,18 +13,12 @@ const documentsStore = useDocumentsStore()
 
 async function createDocument(event) {
   const formData = new FormData(event.currentTarget)
-
-  const url = `${
-    import.meta.env.VITE_API_URL
-  }/projects/${projectId}/documents/create`
-
-  const response = await axios.post(url, formData)
-  if (response.status != 200) {
-    alert(response.data?.message || 'Failed to create document')
+  const success = await documentsStore.create(projectId, formData)
+  if (!success) {
+    alert(response.data?.message || 'Failed to create media')
     return
   }
 
-  documentsStore.invalidate()
   router.push({ path: `/myprojects/${projectId}/documents` })
 }
 
