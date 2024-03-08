@@ -105,7 +105,6 @@ export class DraggableSelect extends Component {
    * Redraws the component
    */
   redraw() {
-    this.addDeadElement()
     const draggableSelect = this.getElement()
     mb.removeChildren(draggableSelect)
 
@@ -113,13 +112,7 @@ export class DraggableSelect extends Component {
       draggableSelect.appendChild(this.items[x])
     }
 
-    // Calculate the remaining height so that the last element could occupy the rest of the container.
-    const deadItem = this.items[this.items.length - 1]
-    const height = this.items.length * deadItem.clientHeight
-    if (height < draggableSelect.clientHeight) {
-      const remainingHeight = draggableSelect.clientHeight - height
-      mb.setElementStyle(deadItem, 'height', remainingHeight + 'px')
-    }
+    draggableSelect.appendChild(this.createDeadElement())
   }
 
   /**
@@ -150,14 +143,11 @@ export class DraggableSelect extends Component {
   /**
    * Adds a dead option. Can't be highlighted or even displayed.
    */
-  private addDeadElement() {
+  private createDeadElement(): HTMLElement {
     const li = document.createElement('li')
     li.dataset['value'] = '0'
     li.classList.add('dead')
-    if (this.items.length === 0) {
-      li.classList.add('onlyElement')
-    }
-    this.items.push(li)
+    return li
   }
 
   /**
