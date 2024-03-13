@@ -44,11 +44,11 @@ export const useMediaStore = defineStore({
       })
       return response.data.usages
     },
-    async create(projectId, media) {
+    async create(projectId, mediaFormData) {
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/media/create`
-      const response = await axios.post(url, { media })
+      const response = await axios.post(url, mediaFormData)
       if (response.status == 200) {
         const media = response.data.media
         this.media.push(media)
@@ -68,11 +68,11 @@ export const useMediaStore = defineStore({
       }
       return false
     },
-    async edit(projectId, mediaId, media) {
+    async edit(projectId, mediaId, mediaFormData) {
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/media/${mediaId}/edit`
-      const response = await axios.post(url, { media })
+      const response = await axios.post(url, mediaFormData)
       if (response.status == 200) {
         const media = response.data.media
         this.removeByMediaIds([media.media_id])

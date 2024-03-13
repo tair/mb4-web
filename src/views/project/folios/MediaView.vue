@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useFoliosStore } from '@/stores/FoliosStore'
 import { useFolioMediaStore } from '@/stores/FolioMediaStore'
@@ -73,6 +73,10 @@ onMounted(() => {
   if (!mediaViewsStore.isLoaded) {
     mediaViewsStore.fetchMediaViews(projectId)
   }
+})
+
+onUnmounted(() => {
+  folioMediaStore.invalidate()
 })
 
 async function addMedia(mediaIds: number[]): Promise<boolean> {

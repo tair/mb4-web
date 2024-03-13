@@ -9,6 +9,9 @@ const props = defineProps({
     required: true,
   },
 })
+const baseUrl = `${import.meta.env.VITE_API_URL}/projects/${
+  props.projectId
+}/documents`
 </script>
 <template>
   <ul class="list-group">
@@ -24,7 +27,7 @@ const props = defineProps({
         <div class="list-group-item-buttons">
           <a
             v-if="document.download_url"
-            :href="document.download_url"
+            :href="`${baseUrl}/${document.document_id}/download`"
             :download="document.file_name"
             role="button"
             class="btn btn-sm btn-secondary"
