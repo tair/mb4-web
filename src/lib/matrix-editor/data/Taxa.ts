@@ -65,18 +65,27 @@ export class Taxon extends  AbstractItem {
   }
 
   /**
-   * Determins whether the user has access to this taxon.
+   * Determines whether the user has access to this taxon.
+   *
    * @return Whether the user has access to this taxon.
    */
   hasAccess(projectProperties: ProjectProperties): boolean {
-    const userId = this.getUserId()
-    const groupId = this.getGroupId()
-    return (
-      !userId ||
-      !groupId ||
-      userId == projectProperties.getUserId() ||
-      projectProperties.isInUserGroup(groupId)
-    )
+    // Access is always guaranteed to Project Administrators and the Creator of
+    // the matrix regardless of the access restrictions.
+    if (projectProperties.getIsAdmin()) {
+      return true;
+    }
+
+    // If any of the access restrictions are set, we must check both.
+    const taxonUserId = this.getUserId();
+    const taxonGroupId = this.getGroupId();
+    if (taxonUserId || taxonGroupId) {
+      const isUserInGroup = taxonGroupId && projectProperties.isInUserGroup(taxonGroupId);
+      const isUserAllowed = taxonUserId && taxonUserId == projectProperties.getUserId();
+      return isUserInGroup || isUserAllowed;
+    }
+
+    return true;
   }
 
   override getName():string {
