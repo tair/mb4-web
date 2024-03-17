@@ -128,7 +128,9 @@ export class TaxaNameImageRenderer extends TaxaRenderer {
     for (let x = 0; x < media.length; x++) {
       const medium = media[x]
       const tiny = medium.getTiny()
-      images.addImage(medium.getId(), tiny['url'])
+      if (tiny) {
+        images.addImage(medium.getId(), tiny['url'])
+      }
     }
     images.render(td)
     tr.appendChild(td)
