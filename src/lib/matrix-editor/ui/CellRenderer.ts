@@ -352,7 +352,9 @@ export class CellStateNameImageRenderer extends CellRenderer {
         ? labelCount + ' label' + (labelCount === 1 ? '' : 's')
         : undefined
       const tinyMedium = media.getTiny()
-      images.addImage(media.getId(), tinyMedium['url'], caption)
+      if (tinyMedium) {
+        images.addImage(media.getId(), tinyMedium['url'], caption)
+      }
     }
     images.render(td)
   }
@@ -381,7 +383,9 @@ export class CellStateNumberImageRenderer extends CellRenderer {
         ? labelCount + ' label' + (labelCount === 1 ? '' : 's')
         : undefined
       const tiny = media.getTiny()
-      images.addImage(media.getId(), tiny['url'], caption)
+      if (tiny) {
+        images.addImage(media.getId(), tiny['url'], caption)
+      }
     }
     images.render(td)
   }
