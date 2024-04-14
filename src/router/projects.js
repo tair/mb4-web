@@ -587,4 +587,47 @@ export const MY_PROJECT_VIEWS = [
       },
     ],
   },
+  {
+    path: ':id//:institutions/',
+    name: 'MyProjectInstitutionsView',
+    meta: {
+      itemName: 'institutions',
+      breadcrumbs: [
+        {
+          label: 'institutions',
+          to: 'MyProjectInstitutionsView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/institutions/InstitutionsView.vue'
+      ),
+    children: [
+      {
+        path: 'list',
+        name: 'MyProjectInstituionsListView',
+        component: () =>
+          import(
+            /* webpackChunkName: "unpublished" */ '@/views/project/taxa/ListView.vue'
+          ),
+      },
+      {
+        path: 'assign',
+        name: 'MyProjectInstitutionsAssignView',
+        component: () =>
+          import(
+            /* webpackChunkName: "unpublished" */ '@/views/project/taxa/AssignView.vue'
+          ),
+      },
+      {
+        path: 'remove',
+        name: 'MyProjectInstitutionsRemoveView',
+        component: () =>
+          import(
+            /* webpackChunkName: "unpublished" */ '@/views/project/taxa/RemoveView.vue'
+          ),
+      },
+    ],
+  },
 ]
