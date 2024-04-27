@@ -94,7 +94,7 @@ import { computed, ref, onMounted} from 'vue'
 import { useRoute } from 'vue-router'
 
 // import functions from stores
-import { useProjectsStore } from '@stores/ProjectsStore'
+import { useProjectsInstitutionStore } from '@stores/ProjectsInstitutionStore'
 
 // import other functions for the dom
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
@@ -104,9 +104,9 @@ const route = useRoute()
 const projectId = route.params.id
 
 // get the project store to extract insitutions
-const projectsStore = useProjectsStore()
+const projectsStore = useProjectsInstitutionStore()
 
-// Attempt to load in
+// Check if loaded in
 const isLoaded = computed(
   () =>
     projectsStore.isLoaded
@@ -116,18 +116,16 @@ const isLoaded = computed(
 onMounted(() => {
   if(!projectsStore.isLoaded)
   {
-    projectsStore.fetchProjects()    
+    projectsStore.fetchInstitutions()    
   }
 })
-
-// get specific project info
-let project  = projectsStore.getProjectById(projectId)
 
 // might need a refresh here
 
 </script>
 
 <template>
+  <LoadingIndicator :isLoaded="isLoaded">
   <h1>Project Institutions</h1>
 
     <h3 style=''>Please list all author institutions affiliated with your peer-reviewed paper</h3>
@@ -135,14 +133,22 @@ let project  = projectsStore.getProjectById(projectId)
     <input name="confirm" type="hidden" value='1'/>
     
   <div class="action-bar">
+
     <RouterLink :to="`/myProjects/${projectId}/institutions/assign`">
       <button type="button" class="btn btn-m btn-outline-primary">
         <span>Add Institutions</span>
       </button>
-    </RouterLink>    
+    </RouterLink>  
+
+    <RouterLink :to="`/myPorjects/${projectId}/instituions/remove`">
+      <button type="button" class="tn btn-m btn-outline-primary">
+        <span>Remove Instituions</span>
+      </button>
+    </RouterLink>
+
   </div>
 
-  
+  </LoadingIndicator :isLoaded="isLoaded">
 </template>
 
 <style scoped>
