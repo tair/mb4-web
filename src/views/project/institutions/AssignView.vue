@@ -1,5 +1,5 @@
 <script>
-
+/*
 $("#newInstitutionClick").on("click", function() {
           if ($('#institution_affiliated_checkbox').is(':checked')) {
             alert('New Institutions cannot be added since you have indicaed that you are not affiliated with an institution.');
@@ -49,5 +49,53 @@ function createInstitution(institutionName, institutionID)
         $('#noInstitutions').remove();
     }
     return true;
+}*/
+
+// import stores and vue libraries
+import {ref, computed, onMounted} from 'vue'
+import {useRoute} from 'vue-router'
+import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore';
+
+// set const values
+const route = useRoute()
+const projectId = route.params.projectId
+const ProjectInstitutionsStore = useProjectInstitutionStore()
+const isLoaded = computed{ 
+    () =>
+    ProjectInstitutionsStore.isLoaded
 }
+
+// fetch institutions once mounted
+onMounted( () => {
+    if(!ProjectInstitutionsStore.isLoaded)
+    {
+        ProjectInstitutionsStore.fetchInstitutions()
+    }
+})
+
+async function assignInstitution() {
+    // attempt to add institution
+    const success = await ProjectInstitutionsStore.addInstitution(projectId, institutionToAdd)
+
+    // check if institution was successfully added
+    if(success)
+    {
+        // push to update data
+        router.push({ path: `/myprojects/${projectId}/institutions` })
+    }
+    else
+    {
+        // alert the error
+        alert('Failed to Assign Institution')
+    }
+}
+
 </script>
+
+<template>
+    <div class="div1"></div>
+    <div class="div2"></div>
+    <div class="div3"></div>
+    <div class="div4"></div>
+    <div class="div5"></div>
+</template>

@@ -140,7 +140,7 @@ onMounted(() => {
       </button>
     </RouterLink>  
 
-    <RouterLink :to="`/myPorjects/${projectId}/instituions/remove`">
+    <RouterLink :to="`/myProjects/${projectId}/instituions/remove`">
       <button type="button" class="tn btn-m btn-outline-primary">
         <span>Remove Instituions</span>
       </button>

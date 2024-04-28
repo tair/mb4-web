@@ -15,15 +15,15 @@ export const useProjectInstitutionStore = defineStore({
 
             // attempt a reponse and update members
             const response = await axios.get(url)
-            this.institutions = response
+            this.institutions = response.data.institutions
             this.isLoaded = true
         },
         
-        async getInstitution(name: string) {
+        async getInstitution(institutionId) {
             // search through obtained list to obtain one of the instituions
             for( const institution in this.institutions )
             {
-                if(institution == name)
+                if(institution.institution_Id == institutionId)
                 {
                     return institution
                 }
@@ -32,20 +32,56 @@ export const useProjectInstitutionStore = defineStore({
             return null
         },
 
-        async removeInstitution(projectId) {
+        async removeInstitution(projectId, institutionId) {
           // get the url 
-          const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/institutions`
+          const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/institutions/remove`
 
           // try to get a response for the action
           const response = await axios.post(url)
 
-          if(reponse.status == 200)
+          if(response.status == 200)
           {
             // remove this instituion from project
-            this.removeByInstituionId()
+            this.removeByInstitutionId(institutionId)
+
+            return true
           }
 
           // return action
+          return false
+        },
+
+        async removeByInstitutionId(institutionId) {
+          // search through list of .length
+          const institution
+
+          for(let x = 0; x < this.institutions.length; x++) {
+            institution = this.institutions[x]
+
+            if( institution.institution_Id == institutionId ) {
+              // if found splice
+              this.institutions.splice(x, 1)
+              break
+            }
+
+          }
+        },
+
+        async addInstitution(projectId, institutionToAdd) {
+          const url =`${import.meta.env.VITE_API_URL}/projects/${projectId}/institutions/add`
+
+          const response = await axios.post(url, {institutionToAdd})
+
+          // check if response was ok
+          if(response.status == 200) {
+            // set variable to store new Institution and push back
+            const institutionToAdd = response.data.institutionToAdd
+            this.institutions.push(institutionToAdd)
+
+            return institutionToAdd
+          }
+
+          return false
         }
     }
 })
