@@ -588,7 +588,7 @@ export const MY_PROJECT_VIEWS = [
     ],
   },
   {
-    path: ':id//:institutions/',
+    path: ':id/institutions/',
     name: 'MyProjectInstitutionsView',
     meta: {
       itemName: 'institutions',
@@ -601,33 +601,41 @@ export const MY_PROJECT_VIEWS = [
     },
     component: () =>
       import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/institutions/InstitutionsView.vue'
+        /* webpackChunkName: "unpublished" */ '@/views/project/institutions/ListView.vue'
       ),
-    children: [
-      {
-        path: 'list',
-        name: 'MyProjectInstituionsListView',
-        component: () =>
-          import(
-            /* webpackChunkName: "unpublished" */ '@/views/project/taxa/ListView.vue'
-          ),
-      },
-      {
-        path: 'assign',
-        name: 'MyProjectInstitutionsAssignView',
-        component: () =>
-          import(
-            /* webpackChunkName: "unpublished" */ '@/views/project/taxa/AssignView.vue'
-          ),
-      },
-      {
-        path: 'remove',
-        name: 'MyProjectInstitutionsRemoveView',
-        component: () =>
-          import(
-            /* webpackChunkName: "unpublished" */ '@/views/project/taxa/RemoveView.vue'
-          ),
-      },
-    ],
+  },
+  {
+    path: ':id/institutions/create',
+    name: 'MyProjectInstitutionsAssignView',
+    meta: {
+      itemName: 'institutions',
+      breadcrumbs: [
+        {
+          label:'institutions',
+          to: 'MyProjectInstitutionsView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+          /* webpackChunkName: "unpublished" */ '@/views/project/institutions/AssignView.vue'
+      ),
+  },
+  {
+    path: ':id/institutions/create',
+    name: 'MyProjectInstitutionsRemoveView',
+    meta: {
+      itemName: 'institutions',
+      breadcrumbs: [
+        {
+          label:'institutions',
+          to: 'MyProjectInstitutionsView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/institutions/RemoveView.vue'
+      ),
   },
 ]

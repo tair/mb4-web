@@ -54,16 +54,20 @@ function createInstitution(institutionName, institutionID)
 // import stores and vue libraries
 import {ref, computed, onMounted} from 'vue'
 import {useRoute} from 'vue-router'
-import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore';
+import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore'
+import { usePublicProjectsStore } from '@/stores/PublicProjectsStore'
+import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 
 // set const values
 const route = useRoute()
 const projectId = route.params.projectId
 const ProjectInstitutionsStore = useProjectInstitutionStore()
-const isLoaded = computed{ 
+const PublicProjectStore = usePublicProjectsStore()
+const isLoaded = computed( 
     () =>
-    ProjectInstitutionsStore.isLoaded
-}
+    ProjectInstitutionsStore.isLoaded &&
+    PublicProjectStore.isLoaded
+)
 
 // fetch institutions once mounted
 onMounted( () => {
@@ -71,9 +75,16 @@ onMounted( () => {
     {
         ProjectInstitutionsStore.fetchInstitutions()
     }
+    if(!PublicProjectStore.isLoaded)
+    {
+        PublicProjectStore.fetchProjectInstitutions()
+    }
 })
 
 async function assignInstitution() {
+    // get ref value from user
+    const institutionToAdd = this.$refs.InstitutionRef
+    
     // attempt to add institution
     const success = await ProjectInstitutionsStore.addInstitution(projectId, institutionToAdd)
 
@@ -90,12 +101,23 @@ async function assignInstitution() {
     }
 }
 
+// user should be able to look at a dropdown of all existing institutions and select which to assign
+
+    // what if their institution is not listed below?
+
+    // Shouldn't be able to show or add an existant institution 
+
 </script>
 
 <template>
-    <div class="div1"></div>
-    <div class="div2"></div>
-    <div class="div3"></div>
-    <div class="div4"></div>
-    <div class="div5"></div>
+    <LoadingIndicator :isLoaded="isLoaded">
+        <form @submit.prevent="assignInstitution">
+            <div class="TBD">
+                <label for="Institution">Select an Institution to Add</label>
+                <select id="Instituion" ref="InstitutionRef">
+                    <option v-for="(instituion, index) in PublicProjectsStore.insitutions" :key="index" :value="instituion"> {{ institution }}</option>
+                </select>
+            </div>              
+        </form>
+    </LoadingIndicator>
 </template>

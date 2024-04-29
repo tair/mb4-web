@@ -14,10 +14,10 @@ import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 const route = useRoute()
 const projectId = route.params.id
 const projectInstitutionsStore = useProjectInstitutionsStore()
-const isLoaded = computed{
+const isLoaded = computed(
     () => 
         projectInstitutionsStore.isLoaded
-}
+)
 
 // get project institutions
 onMounted(() => {
@@ -38,6 +38,11 @@ async function removeInstitution(event)
         alert('Failed to delete Institution')
     }
 }
+
+// User should be able to look at a dropdown or a list of all current institutions attached to this project
+
+    // Should update on the spot 
+
 
 </script>
 

@@ -94,7 +94,7 @@ import { computed, ref, onMounted} from 'vue'
 import { useRoute } from 'vue-router'
 
 // import functions from stores
-import { useProjectsInstitutionStore } from '@stores/ProjectsInstitutionStore'
+import { useProjectInstitutionsStore } from '@stores/ProjectsInstitutionStore'
 
 // import other functions for the dom
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
@@ -104,19 +104,19 @@ const route = useRoute()
 const projectId = route.params.id
 
 // get the project store to extract insitutions
-const projectsStore = useProjectsInstitutionStore()
+const projectInstitutionsStore = useProjectInstitutionsStore()
 
 // Check if loaded in
 const isLoaded = computed(
   () =>
-    projectsStore.isLoaded
+    projectInstitutionsStore.isLoaded
 )
 
 // once mounted get Projects
 onMounted(() => {
-  if(!projectsStore.isLoaded)
+  if(!projectInstitutionsStore.isLoaded)
   {
-    projectsStore.fetchInstitutions()    
+    projectInstitutionsStore.fetchInstitutions()    
   }
 })
 
@@ -126,22 +126,26 @@ onMounted(() => {
 
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
-  <h1>Project Institutions</h1>
 
-    <h3 style=''>Please list all author institutions affiliated with your peer-reviewed paper</h3>
-    <ul id='institutions_list' name='institutions_list' style=''>
-    <input name="confirm" type="hidden" value='1'/>
+  <header>
+    There are {{ ProjectInstitutionsStore.institutions?.length }} institutions
+    associated with this project.
+  </header>
+
+  <h1>Project Institutions</h1>
     
   <div class="action-bar">
 
     <RouterLink :to="`/myProjects/${projectId}/institutions/assign`">
       <button type="button" class="btn btn-m btn-outline-primary">
+        <i class = "fa fa-plus"></i>
         <span>Add Institutions</span>
       </button>
     </RouterLink>  
 
     <RouterLink :to="`/myProjects/${projectId}/instituions/remove`">
       <button type="button" class="tn btn-m btn-outline-primary">
+        <i class = "fa fa-plus"></i>
         <span>Remove Instituions</span>
       </button>
     </RouterLink>

@@ -2,7 +2,7 @@ import axios from 'axios'
 import { defineStore } from 'pinia'
 
 export const useProjectInstitutionStore = defineStore({
-    id: 'project-institutions'
+    id: 'project-institutions',
     state: () => ({
         isLoaded: false,
         institutions: [],
@@ -53,10 +53,10 @@ export const useProjectInstitutionStore = defineStore({
 
         async removeByInstitutionId(institutionId) {
           // search through list of .length
-          const institution
 
           for(let x = 0; x < this.institutions.length; x++) {
-            institution = this.institutions[x]
+            // might be more efficent if loop didn't build variable everytime
+            const institution = this.institutions[x]
 
             if( institution.institution_Id == institutionId ) {
               // if found splice
@@ -67,7 +67,7 @@ export const useProjectInstitutionStore = defineStore({
           }
         },
 
-        async addInstitution(projectId, institutionToAdd) {
+        async assignInstitution(projectId, institutionToAdd) {
           const url =`${import.meta.env.VITE_API_URL}/projects/${projectId}/institutions/add`
 
           const response = await axios.post(url, {institutionToAdd})
