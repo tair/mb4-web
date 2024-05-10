@@ -114,8 +114,8 @@ async function assignInstitution() {
         <form @submit.prevent="assignInstitution">
             <div class="TBD">
                 <label for="Institution">Select an Institution to Add</label>
-                <select id="Instituion" ref="InstitutionRef">
-                    <option v-for="(instituion, index) in PublicProjectsStore.insitutions" :key="index" :value="instituion"> {{ institution }}</option>
+                <select id="Institution" ref="InstitutionRef">
+                    <option v-for="(institution, index) in PublicProjectsStore.insitutions" :key="index" :value="institution"> {{ institution }}</option>
                 </select>
             </div>              
         </form>

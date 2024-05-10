@@ -30,6 +30,8 @@ onMounted(() => {
 // remove said project instituion from list
 async function removeInstitution(event)  
 {
+    const institutionId = this.$refs.InstitutionRef
+
     // try to delete institution
     const deleted = await projectInstitutionsStore.removeInstitution(projectId, institutionId)
 
@@ -47,8 +49,14 @@ async function removeInstitution(event)
 </script>
 
 <template>
-    <div class=""></div>
-    <div class=""></div>
-    <div class=""></div>
-    <div class=""></div>
+    <LoadingIndicator :isLoaded="isLoaded">
+        <form @submit.prevent="removeInstitution">
+            <div class="TBD">
+                <label for="Institution">Select an Institution to Remove</label>
+                <select id="Institution" ref="InstitutionRef">
+                    <option v-for="(institution, index) in ProjectInstitutionsStore.insitutions" :key="index" :value="institution"> {{ institution }}</option>
+                </select>
+            </div>              
+        </form>
+    </LoadingIndicator>
 </template>
