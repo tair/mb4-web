@@ -14,19 +14,19 @@ const route = useRoute()
 const projectId = route.params.id
 
 // get the project store to extract insitutions
-const projectInstitutionsStore = useProjectInstitutionStore()
+const ProjectInstitutionsStore = useProjectInstitutionStore()
 
 // Check if loaded in
 const isLoaded = computed(
   () =>
-    projectInstitutionsStore.isLoaded
+    ProjectInstitutionsStore.isLoaded
 )
 
 // once mounted get Projects
 onMounted(() => {
-  if(!projectInstitutionsStore.isLoaded)
+  if(!ProjectInstitutionsStore.isLoaded)
   {
-    projectInstitutionsStore.fetchInstitutions(projectId)    
+    ProjectInstitutionsStore.fetchInstitutions(projectId)    
   }
 })
 
@@ -38,7 +38,7 @@ onMounted(() => {
   <LoadingIndicator :isLoaded="isLoaded">
 
   <header>
-    There are {{ projectInstitutionsStore.institutions ? projectInstitutionsStore.institutions.length : 'no' }} institutions associated 
+    There are {{ ProjectInstitutionsStore.institutions.length != 0 ? ProjectInstitutionsStore.institutions.length : 'no' }} institutions associated 
     with this project.
 
   </header>
@@ -60,6 +60,18 @@ onMounted(() => {
         <span>Remove Institutions</span>
       </button>
     </RouterLink>
+
+    <div v-if="ProjectInstitutionsStore.institutions.length" :size="10" class="form-control">
+       Current Institutions Associated with this Project
+    </div>
+
+      <label v-for="(institution, index) in ProjectInstitutionsStore.institutions"
+            :key="index"
+            :value="institution"
+            class="grid-group-items"
+      >
+      {{institution}}
+      </label>
 
   </div>
 

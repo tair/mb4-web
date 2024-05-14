@@ -5,7 +5,6 @@ import router from '@/router'
 import {ref, computed, onMounted} from 'vue'
 import {useRoute} from 'vue-router'
 import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore'
-import { usePublicProjectsStore } from '@/stores/PublicProjectsStore'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 
 // set const values
@@ -26,7 +25,7 @@ onMounted( () => {
     }
 })
 
-async function assignInstitution(institutionId) {
+async function assignInstitution(institutionId, index) {
     
     // attempt to add institution
     const success = await ProjectInstitutionsStore.assignInstitution(projectId, institutionId)
@@ -34,8 +33,11 @@ async function assignInstitution(institutionId) {
     // check if institution was successfully added
     if(success)
     {
-        // push to update data
-        router.push({ path: `/myprojects/${projectId}/institutions` })
+        // push to bring back to list page and remove added institution from list
+        ProjectInstitutionsStore.institutionList.splice(index, 1)
+        
+        // doesn't always push there
+        await router.push({ path: `/myprojects/${projectId}/institutions` })
     }
     else
     {
@@ -72,10 +74,10 @@ function searchInstitutions() {
 
                 <select v-if="ProjectInstitutionsStore.institutionList.length" :size="10" class="form-control">
                     <option
-                        v-for="institution in ProjectInstitutionsStore.institutionList"
-                        :key="institution.institution_id"
+                        v-for="(institution, index) in ProjectInstitutionsStore.institutionList"
+                        :key="index"
                         :value="institution.institution_id"
-                        @click="assignInstitution(institution.institution_id)"
+                        @click="assignInstitution(institution.institution_id, index)"
                     >
                     {{ institution.name }}
                     </option>
