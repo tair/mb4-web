@@ -6,17 +6,24 @@ export const useProjectInstitutionStore = defineStore({
     state: () => ({
         isLoaded: false,
         institutions: [],
+        institutionList: [],
      }),
 
     actions: {
         async fetchInstitutions(projectId) {
             // get the url where data is stored
+            try{
             const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/institutions`
 
             // attempt a reponse and update members
             const response = await axios.get(url)
             this.institutions = response.data.institutions
             this.isLoaded = true
+            }catch(e){
+              console.error('Error fetching the Institutions', e)
+              this.isLoaded = false
+            }
+
         },
         
         async getInstitution(institutionId) {
@@ -68,22 +75,37 @@ export const useProjectInstitutionStore = defineStore({
         },
 
         async assignInstitution(projectId, institutionToAdd) {
-          const url =`${import.meta.env.VITE_API_URL}/projects/${projectId}/institutions/add`
+          const url =`${import.meta.env.VITE_API_URL}/projects/${projectId}/institutions/assign`
 
           const response = await axios.post(url, {institutionToAdd})
 
           // check if response was ok
           if(response.status == 200) {
             // set variable to store new Institution and push back
-            const institutionToAdd = response.data.institutionToAdd
+            const institutionToAdd = response.data.institution;
+            
             this.institutions.push(institutionToAdd)
 
             return institutionToAdd
           }
 
           return false
-        }
-    }
+        },
+
+        async seachInstitutionsBySegment(projectId, Seg) {
+          try{
+            const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/institutions/search`
+            const response = await axios.get(url, { params: { searchTerm: Seg.value, },})
+
+            
+            this.institutionList = response.data            
+         } catch(e) {
+          console.error('Error getting Institutions')
+          return false
+         }
+
+        },
+    },
 })
 
 /*

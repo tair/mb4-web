@@ -1,57 +1,7 @@
-<script>
-/*
-$("#newInstitutionClick").on("click", function() {
-          if ($('#institution_affiliated_checkbox').is(':checked')) {
-            alert('New Institutions cannot be added since you have indicaed that you are not affiliated with an institution.');
-            return false;
-          }
-          $("#institutionPanel").dialog("open");
-          return false;
-        });
-
-
-function createInstitution(institutionName, institutionID)
-{
-    if (!institutionName || !institutionName.length || !institutionName.trim().length)
-    {
-        alert('Please enter a valid institution');
-        return false;
-    }
-
-    institutionID = institutionID || false;
-    var newInput = document.createElement("INPUT");
-    if (doesInstitutionExist(institutionName)) 
-    {
-        alert('Institution \"' +  institutionName + '\" has already been added. Please add unique institutions');
-        return false;
-    }
-
-    newInput.name = institutionID ? "institution_id[]": "new_institution[]";
-    newInput.id = institutionID ? "existing_institution" : "new_institution";
-    newInput.type = "hidden";
-    newInput.value = institutionID ? institutionID : institutionName;
-
-    var $newA = $(document.createElement("A"));
-
-    $newA.attr('href', "#").html('&raquo;Remove').click(function()
-    {
-        removeInstitution(this);
-        return false;
-    });
-
-    var $newLi = $(document.createElement("LI"));
-    var $spanText = $('<span style="padding-right:5px" id="institution_text"></span>');
-    $spanText.text(institutionName);
-    $newLi.append($spanText, $newA, newInput);
-    $('#institutions_list').append($newLi).slideDown(200);
-
-    if ($('#noInstitutions').length) {
-        $('#noInstitutions').remove();
-    }
-    return true;
-}*/
+<script setup>
 
 // import stores and vue libraries
+import router from '@/router'
 import {ref, computed, onMounted} from 'vue'
 import {useRoute} from 'vue-router'
 import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore'
@@ -60,33 +10,26 @@ import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 
 // set const values
 const route = useRoute()
-const projectId = route.params.projectId
+const projectId = route.params.id
+const searchTerm = ref(null)
 const ProjectInstitutionsStore = useProjectInstitutionStore()
-const PublicProjectStore = usePublicProjectsStore()
 const isLoaded = computed( 
     () =>
-    ProjectInstitutionsStore.isLoaded &&
-    PublicProjectStore.isLoaded
+    ProjectInstitutionsStore.isLoaded
 )
 
 // fetch institutions once mounted
 onMounted( () => {
     if(!ProjectInstitutionsStore.isLoaded)
     {
-        ProjectInstitutionsStore.fetchInstitutions()
-    }
-    if(!PublicProjectStore.isLoaded)
-    {
-        PublicProjectStore.fetchProjectInstitutions()
+        ProjectInstitutionsStore.fetchInstitutions(projectId)
     }
 })
 
-async function assignInstitution() {
-    // get ref value from user
-    const institutionToAdd = this.$refs.InstitutionRef
+async function assignInstitution(institutionId) {
     
     // attempt to add institution
-    const success = await ProjectInstitutionsStore.addInstitution(projectId, institutionToAdd)
+    const success = await ProjectInstitutionsStore.assignInstitution(projectId, institutionId)
 
     // check if institution was successfully added
     if(success)
@@ -101,6 +44,14 @@ async function assignInstitution() {
     }
 }
 
+function searchInstitutions() {
+    if(!ProjectInstitutionsStore.seachInstitutionsBySegment(projectId, searchTerm))
+    {
+        alert('could not obtain list of institutions')
+    }
+}
+
+
 // user should be able to look at a dropdown of all existing institutions and select which to assign
 
     // what if their institution is not listed below?
@@ -111,13 +62,29 @@ async function assignInstitution() {
 
 <template>
     <LoadingIndicator :isLoaded="isLoaded">
-        <form @submit.prevent="assignInstitution">
-            <div class="TBD">
-                <label for="Institution">Select an Institution to Add</label>
-                <select id="Institution" ref="InstitutionRef">
-                    <option v-for="(institution, index) in PublicProjectsStore.insitutions" :key="index" :value="institution"> {{ institution }}</option>
+        <h1> Select an institution to add </h1>
+        <form >
+            <div class="form-class">
+                <div class="search-container">
+                    <input id="newInstitution" type="text" class="searchTerm" v-model= "searchTerm" @input="searchInstitutions" />
+                    
+                </div> 
+
+                <select v-if="ProjectInstitutionsStore.institutionList.length" :size="10" class="form-control">
+                    <option
+                        v-for="institution in ProjectInstitutionsStore.institutionList"
+                        :key="institution.institution_id"
+                        :value="institution.institution_id"
+                        @click="assignInstitution(institution.institution_id)"
+                    >
+                    {{ institution.name }}
+                    </option>
                 </select>
-            </div>              
+            </div>
         </form>
     </LoadingIndicator>
 </template>
+
+<style scoped>
+@import '@/views/project/styles.css';
+</style>

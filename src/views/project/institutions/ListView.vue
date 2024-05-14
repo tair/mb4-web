@@ -1,100 +1,10 @@
-<script>
-var formChanged = false;
-$(document).ready(function() 
-{
-  $( "#institutionPanel" ).dialog(
-    {
-      autoOpen: false,
-      resizeable: false,
-      width: 700,
-      modal: true,
-      buttons: { "\u00bb Add": function() 
-                {
-                  var institutionName = $('.modal_institution').val();
-                  if (createInstitution(institutionName)) 
-                  {
-                    closeModal();
-                  }
-                },
-
-                Cancel: function() {$(".modal_institution").val(""); closeModal();}
-              }
-    });
-
-    $('.ui-icon-closethick').css({'top': '0px', 'left': '0px'});
-
-    ('.institution_name').autocomplete(
-    {
-      source: function (request, response) 
-      {
-        $.ajax(
-        {
-          url: '/index.php/MyProjects/lookup/Institution/Get',
-          data: { term: request.term, unique: 1 },
-          dataType: 'json',
-          success: response,
-          error: function () 
-          {
-            response([]);
-          }
-        });
-      },
-
-      open: function(event, ui) 
-      {
-        var $this = $(this);
-        $this.autocomplete('widget').outerWidth($this.outerWidth());
-        $this.autocomplete('widget').css("text-align", "left");
-      },
-
-      minLength: 3,
-      scroll: true,
-      select: function(e, ui) 
-      {
-        var institutionName = ui.item.label;
-        var institutionID = ui.item.id;
-        createInstitution(institutionName, institutionID);
-        clearInstitutionInput();
-        closeModal();
-        e.preventDefault();
-      }
-
-    });
-});
-
-function closeModal() 
-{
-  $( "#institutionPanel" ).dialog("close");
-  $(".modal_institution").val("");
-}
-
-function clearInstitutionInput() 
-{
-  $(".institution_name").val("");
-}
-
-function doesInstitutionExist(institutionName) 
-{
-  var institutionExists = false;
-  $("span[id='institution_text']").each(function() 
-  {
-    if (institutionName.trim() === $(this).text().trim()) 
-    {
-      institutionExists = true;
-      return;
-    }
-  });
-  return institutionExists;
-}
-
-</script>
 <script setup>
 // import vue functions
 import { computed, ref, onMounted} from 'vue'
 import { useRoute } from 'vue-router'
 
 // import functions from stores
-import { useProjectInstitutionsStore } from '@stores/ProjectsInstitutionStore'
+import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore'
 
 // import other functions for the dom
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
@@ -104,7 +14,7 @@ const route = useRoute()
 const projectId = route.params.id
 
 // get the project store to extract insitutions
-const projectInstitutionsStore = useProjectInstitutionsStore()
+const projectInstitutionsStore = useProjectInstitutionStore()
 
 // Check if loaded in
 const isLoaded = computed(
@@ -116,7 +26,7 @@ const isLoaded = computed(
 onMounted(() => {
   if(!projectInstitutionsStore.isLoaded)
   {
-    projectInstitutionsStore.fetchInstitutions()    
+    projectInstitutionsStore.fetchInstitutions(projectId)    
   }
 })
 
@@ -128,8 +38,9 @@ onMounted(() => {
   <LoadingIndicator :isLoaded="isLoaded">
 
   <header>
-    There are {{ ProjectInstitutionsStore.institutions?.length }} institutions
-    associated with this project.
+    There are {{ projectInstitutionsStore.institutions ? projectInstitutionsStore.institutions.length : 'no' }} institutions associated 
+    with this project.
+
   </header>
 
   <h1>Project Institutions</h1>
@@ -143,16 +54,16 @@ onMounted(() => {
       </button>
     </RouterLink>  
 
-    <RouterLink :to="`/myProjects/${projectId}/instituions/remove`">
+    <RouterLink :to="`/myProjects/${projectId}/institutions/remove`">
       <button type="button" class="tn btn-m btn-outline-primary">
         <i class = "fa fa-plus"></i>
-        <span>Remove Instituions</span>
+        <span>Remove Institutions</span>
       </button>
     </RouterLink>
 
   </div>
 
-  </LoadingIndicator :isLoaded="isLoaded">
+  </LoadingIndicator>
 </template>
 
 <style scoped>

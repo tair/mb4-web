@@ -605,7 +605,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/institutions/create',
+    path: ':id/institutions/assign',
     name: 'MyProjectInstitutionsAssignView',
     meta: {
       itemName: 'institutions',
@@ -622,7 +622,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/institutions/create',
+    path: ':id/institutions/remove',
     name: 'MyProjectInstitutionsRemoveView',
     meta: {
       itemName: 'institutions',
