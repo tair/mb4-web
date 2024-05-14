@@ -25,19 +25,6 @@ export const useProjectInstitutionStore = defineStore({
             }
 
         },
-        
-        async getInstitution(institutionId) {
-            // search through obtained list to obtain one of the instituions
-            for( const institution in this.institutions )
-            {
-                if(institution.institution_Id == institutionId)
-                {
-                    return institution
-                }
-            }
-
-            return null
-        },
 
         async removeInstitution(projectId, institutionName) {
           // get the url 
