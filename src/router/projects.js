@@ -605,37 +605,37 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/institutions/assign',
-    name: 'MyProjectInstitutionsAssignView',
+    path: ':id/institutions/create',
+    name: 'MyProjectInstitutionsCreateView',
     meta: {
       itemName: 'institutions',
       breadcrumbs: [
         {
-          label:'institutions',
+          label: 'institutions',
           to: 'MyProjectInstitutionsView',
         },
       ],
     },
     component: () =>
       import(
-          /* webpackChunkName: "unpublished" */ '@/views/project/institutions/AssignView.vue'
+        /* webpackChunkName: "unpublished" */ '@/views/project/institutions/CreateView.vue'
       ),
   },
   {
-    path: ':id/institutions/remove',
-    name: 'MyProjectInstitutionsRemoveView',
+    path: ':id/duplication/request',
+    name: 'MyProjectDuplicationRequestView',
     meta: {
-      itemName: 'institutions',
+      itemName: 'duplication',
       breadcrumbs: [
         {
-          label:'institutions',
-          to: 'MyProjectInstitutionsView',
+          label: 'duplication',
+          to: 'MyProjectDuplicationRequestView',
         },
       ],
     },
     component: () =>
       import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/institutions/RemoveView.vue'
+        /* webpackChunkName: "unpublished" */ '@/views/project/duplication/RequestView.vue'
       ),
   },
 ]
