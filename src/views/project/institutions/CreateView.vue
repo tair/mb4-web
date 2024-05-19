@@ -17,8 +17,8 @@ onMounted(() => {
   }
 })
 
-async function assignInstitution(institutionId, index) {
-  const success = await ProjectInstitutionsStore.assignInstitution(
+async function addInstitution(institutionId, index) {
+  const success = await ProjectInstitutionsStore.addInstitution(
     projectId,
     institutionId
   )
@@ -67,7 +67,7 @@ function searchInstitutions() {
             ) in ProjectInstitutionsStore.institutionList"
             :key="index"
             :value="institution.institution_id"
-            @click="assignInstitution(institution.institution_id, index)"
+            @click="addInstitution(institution.institution_id, index)"
           >
             {{ institution.name }}
           </option>
