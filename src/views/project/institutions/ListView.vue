@@ -24,7 +24,7 @@ const allSelected = computed({
   },
 })
 const someSelected = computed(() =>
-projectInstitutionsStore.institutions.some((b) => b.selected)
+  projectInstitutionsStore.institutions.some((b) => b.selected)
 )
 
 onMounted(() => {
@@ -36,7 +36,6 @@ onMounted(() => {
 function refresh() {
   projectInstitutionsStore.fetchInstitutions(projectId)
 }
-
 </script>
 
 <template>
@@ -63,7 +62,6 @@ function refresh() {
     </div>
 
     <div v-if="projectInstitutionsStore.institutions.length">
-      
       <div class="selection-bar">
         <label class="item">
           <input

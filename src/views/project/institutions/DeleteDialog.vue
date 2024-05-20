@@ -15,10 +15,8 @@ async function removeInstitution(institutionIds: number[]) {
   )
 
   if (deleted) {
-    projectInstitutionsStore.fetchInstitutions(props.projectId)    
-  }
-  else
-  {
+    projectInstitutionsStore.fetchInstitutions(props.projectId)
+  } else {
     alert('Failed to delete Institution')
   }
 }

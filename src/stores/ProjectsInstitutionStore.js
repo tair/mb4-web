@@ -35,7 +35,7 @@ export const useProjectInstitutionStore = defineStore({
         this.removeByInstitutionIds(response.data.institutionIds)
 
         return true
-      } 
+      }
 
       return false
     },

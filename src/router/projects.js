@@ -621,5 +621,4 @@ export const MY_PROJECT_VIEWS = [
         /* webpackChunkName: "unpublished" */ '@/views/project/institutions/CreateView.vue'
       ),
   },
-
 ]

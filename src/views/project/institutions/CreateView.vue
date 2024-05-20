@@ -36,17 +36,16 @@ async function addInstitution(institutionId, index) {
 
 async function searchInstitutions() {
   try {
-        const url = `${
-          import.meta.env.VITE_API_URL
-        }/projects/${projectId}/institutions/search`
+    const url = `${
+      import.meta.env.VITE_API_URL
+    }/projects/${projectId}/institutions/search`
 
-        const response = await axios.get(url, {
-          params: { searchTerm: searchTerm.value },
-        })
-        
+    const response = await axios.get(url, {
+      params: { searchTerm: searchTerm.value },
+    })
 
-        searchList.value = response.data
-        console.log('help: ', searchList.value.length)
+    searchList.value = response.data
+    console.log('help: ', searchList.value.length)
   } catch (e) {
     console.error('Error getting Institutions')
     return false
@@ -69,15 +68,9 @@ async function searchInstitutions() {
           />
         </div>
 
-        <select
-          v-if="searchList.length"
-          :size="10"
-          class="form-control"
-        >
+        <select v-if="searchList.length" :size="10" class="form-control">
           <option
-            v-for="(
-              institution, index
-            ) in searchList"
+            v-for="(institution, index) in searchList"
             :key="index"
             :value="institution.institution_id"
             @click="addInstitution(institution.institution_id, index)"
