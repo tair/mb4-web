@@ -6,7 +6,6 @@ export const useProjectInstitutionStore = defineStore({
   state: () => ({
     isLoaded: false,
     institutions: [],
-    institutionList: [],
   }),
 
   actions: {
@@ -68,22 +67,6 @@ export const useProjectInstitutionStore = defineStore({
       }
 
       return false
-    },
-
-    async seachInstitutionsBySegment(projectId, Seg) {
-      try {
-        const url = `${
-          import.meta.env.VITE_API_URL
-        }/projects/${projectId}/institutions/search`
-        const response = await axios.get(url, {
-          params: { searchTerm: Seg.value },
-        })
-
-        this.institutionList = response.data
-      } catch (e) {
-        console.error('Error getting Institutions')
-        return false
-      }
     },
   },
 })

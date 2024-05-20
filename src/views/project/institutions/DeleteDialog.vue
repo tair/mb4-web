@@ -6,16 +6,16 @@ const props = defineProps<{
   institutions: any[]
 }>()
 
-const ProjectInstitutionsStore = useProjectInstitutionStore()
+const projectInstitutionsStore = useProjectInstitutionStore()
 
 async function removeInstitution(institutionIds: number[]) {
-  const deleted = await ProjectInstitutionsStore.removeInstitution(
+  const deleted = await projectInstitutionsStore.removeInstitution(
     props.projectId,
     institutionIds
   )
 
   if (deleted) {
-    ProjectInstitutionsStore.fetchInstitutions(props.projectId)    
+    projectInstitutionsStore.fetchInstitutions(props.projectId)    
   }
   else
   {
@@ -32,7 +32,7 @@ async function removeInstitution(institutionIds: number[]) {
           <h5 class="modal-title">Confirm</h5>
         </div>
         <div class="modal-body" v-if="institutions.length">
-          Really delete media views:
+          Really delete institution from project:
           <p v-for="inst in institutions" :key="inst.institutionId">
             {{ inst.name }}
           </p>

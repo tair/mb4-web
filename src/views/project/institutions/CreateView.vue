@@ -1,4 +1,5 @@
 <script setup>
+import axios from 'axios'
 import router from '@/router'
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
@@ -8,23 +9,24 @@ import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 const route = useRoute()
 const projectId = route.params.id
 const searchTerm = ref(null)
-const ProjectInstitutionsStore = useProjectInstitutionStore()
-const isLoaded = computed(() => ProjectInstitutionsStore.isLoaded)
+let searchList = ref([])
+const projectInstitutionsStore = useProjectInstitutionStore()
+const isLoaded = computed(() => projectInstitutionsStore.isLoaded)
 
 onMounted(() => {
-  if (!ProjectInstitutionsStore.isLoaded) {
-    ProjectInstitutionsStore.fetchInstitutions(projectId)
+  if (!projectInstitutionsStore.isLoaded) {
+    projectInstitutionsStore.fetchInstitutions(projectId)
   }
 })
 
 async function addInstitution(institutionId, index) {
-  const success = await ProjectInstitutionsStore.addInstitution(
+  const success = await projectInstitutionsStore.addInstitution(
     projectId,
     institutionId
   )
 
   if (success) {
-    ProjectInstitutionsStore.institutionList.splice(index, 1)
+    searchList.value.splice(index, 1)
 
     await router.push({ path: `/myprojects/${projectId}/institutions` })
   } else {
@@ -32,11 +34,22 @@ async function addInstitution(institutionId, index) {
   }
 }
 
-function searchInstitutions() {
-  if (
-    !ProjectInstitutionsStore.seachInstitutionsBySegment(projectId, searchTerm)
-  ) {
-    alert('could not obtain list of institutions')
+async function searchInstitutions() {
+  try {
+        const url = `${
+          import.meta.env.VITE_API_URL
+        }/projects/${projectId}/institutions/search`
+
+        const response = await axios.get(url, {
+          params: { searchTerm: searchTerm.value },
+        })
+        
+
+        searchList.value = response.data
+        console.log('help: ', searchList.value.length)
+  } catch (e) {
+    console.error('Error getting Institutions')
+    return false
   }
 }
 </script>
@@ -57,14 +70,14 @@ function searchInstitutions() {
         </div>
 
         <select
-          v-if="ProjectInstitutionsStore.institutionList.length"
+          v-if="searchList.length"
           :size="10"
           class="form-control"
         >
           <option
             v-for="(
               institution, index
-            ) in ProjectInstitutionsStore.institutionList"
+            ) in searchList"
             :key="index"
             :value="institution.institution_id"
             @click="addInstitution(institution.institution_id, index)"

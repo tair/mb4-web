@@ -8,96 +8,35 @@ import DeleteDialog from '@/views/project/institutions/DeleteDialog.vue'
 
 const route = useRoute()
 const projectId = route.params.id
-const ProjectInstitutionsStore = useProjectInstitutionStore()
+const projectInstitutionsStore = useProjectInstitutionStore()
 const institutionsToDelete = ref([])
 
-const isLoaded = computed(() => ProjectInstitutionsStore.isLoaded)
-
-const selectedLetter = ref(null)
-const letters = computed(() => {
-  const letters = new Set()
-  for (const institution of ProjectInstitutionsStore.institutions) {
-    if (institution?.name?.length > 0) {
-      const firstLetter = institution.name[0]
-      letters.add(firstLetter.toUpperCase())
-    }
-  }
-  return [...letters].sort()
-})
-
-const filters = reactive({})
-const filteredInstitutions = computed(() =>
-  Object.values(filters)
-    .reduce(
-      (institutions, filter) => institutions.filter(filter),
-      ProjectInstitutionsStore.institutions
-    )
-    .sort((a, b) => {
-      const nameA = a.name
-      if (!nameA) {
-        return -1
-      }
-
-      const nameB = b.name
-      if (!nameB) {
-        return -1
-      }
-
-      const compare = nameA.localeCompare(nameB)
-      if (compare) {
-        return compare
-      }
-    })
-)
+const isLoaded = computed(() => projectInstitutionsStore.isLoaded)
 
 const allSelected = computed({
   get: function () {
-    return filteredInstitutions.value.every((b) => b.selected)
+    return projectInstitutionsStore.institutions.every((b) => b.selected)
   },
   set: function (value) {
-    filteredInstitutions.value.forEach((b) => {
+    projectInstitutionsStore.institutions.forEach((b) => {
       b.selected = value
     })
   },
 })
 const someSelected = computed(() =>
-  filteredInstitutions.value.some((b) => b.selected)
+projectInstitutionsStore.institutions.some((b) => b.selected)
 )
 
 onMounted(() => {
-  if (!ProjectInstitutionsStore.isLoaded) {
-    ProjectInstitutionsStore.fetchInstitutions(projectId)
+  if (!projectInstitutionsStore.isLoaded) {
+    projectInstitutionsStore.fetchInstitutions(projectId)
   }
 })
 
 function refresh() {
-  ProjectInstitutionsStore.fetchInstitutions(projectId)
+  projectInstitutionsStore.fetchInstitutions(projectId)
 }
 
-function setPage(event) {
-  const text = event.target.textContent
-  if (text == 'ALL') {
-    clearFilters()
-  } else {
-    filterByLetter(text)
-  }
-}
-
-function clearFilters() {
-  selectedLetter.value = null
-  delete filters['page']
-}
-
-function filterByLetter(letter) {
-  selectedLetter.value = letter
-  filters['page'] = (institution) => {
-    if (institution?.name.length > 0) {
-      const name = institution?.name[0]
-      return name.toUpperCase() == letter
-    }
-    return false
-  }
-}
 </script>
 
 <template>
@@ -107,8 +46,8 @@ function filterByLetter(letter) {
     <header>
       There are
       {{
-        ProjectInstitutionsStore.institutions.length != 0
-          ? ProjectInstitutionsStore.institutions.length
+        projectInstitutionsStore.institutions.length != 0
+          ? projectInstitutionsStore.institutions.length
           : 'no'
       }}
       institutions associated with this project.
@@ -123,21 +62,8 @@ function filterByLetter(letter) {
       </RouterLink>
     </div>
 
-    <div v-if="filteredInstitutions.length">
-      <div class="alphabet-bar">
-        Display institutions beginning with:
-        <template v-for="letter in letters">
-          <span
-            :class="{ selected: selectedLetter == letter }"
-            @click="setPage"
-            >{{ letter }}</span
-          >
-        </template>
-        <span class="separator">|</span>
-        <span @click="setPage" :class="{ selected: selectedLetter == null }"
-          >ALL</span
-        >
-      </div>
+    <div v-if="projectInstitutionsStore.institutions.length">
+      
       <div class="selection-bar">
         <label class="item">
           <input
@@ -156,7 +82,7 @@ function filterByLetter(letter) {
           data-bs-toggle="modal"
           data-bs-target="#viewDeleteModal"
           @click="
-            institutionsToDelete = filteredInstitutions.filter(
+            institutionsToDelete = projectInstitutionsStore.institutions.filter(
               (b) => b.selected
             )
           "
@@ -167,7 +93,7 @@ function filterByLetter(letter) {
       <div class="item-list">
         <ul class="list-group">
           <li
-            v-for="institution in filteredInstitutions"
+            v-for="institution in projectInstitutionsStore.institutions"
             :key="institution.institutionId"
             class="list-group-item"
           >
