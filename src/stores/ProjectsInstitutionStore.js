@@ -59,7 +59,7 @@ export const useProjectInstitutionStore = defineStore({
         const institution = response.data.institution
 
         this.institutions.push({
-          institutionId: institution.institution_id,
+          institution_id: institution.institution_id,
           name: institution.name,
         })
 

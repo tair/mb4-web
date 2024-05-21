@@ -45,7 +45,6 @@ async function searchInstitutions() {
     })
 
     searchList.value = response.data
-    console.log('help: ', searchList.value.length)
   } catch (e) {
     console.error('Error getting Institutions')
     return false

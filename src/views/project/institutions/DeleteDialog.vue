@@ -9,6 +9,8 @@ const props = defineProps<{
 const projectInstitutionsStore = useProjectInstitutionStore()
 
 async function removeInstitution(institutionIds: number[]) {
+  console.log(props.institutions)
+  console.log(institutionIds)
   const deleted = await projectInstitutionsStore.removeInstitution(
     props.projectId,
     institutionIds
@@ -31,8 +33,8 @@ async function removeInstitution(institutionIds: number[]) {
         </div>
         <div class="modal-body" v-if="institutions.length">
           Really delete institution from project:
-          <p v-for="inst in institutions" :key="inst.institutionId">
-            {{ inst.name }}
+          <p v-for="institution in institutions" :key="institution.institution_id">
+            {{ institution.name }}
           </p>
         </div>
         <div class="modal-footer">
@@ -47,7 +49,7 @@ async function removeInstitution(institutionIds: number[]) {
             type="button"
             class="btn btn-primary"
             data-bs-dismiss="modal"
-            @click="removeInstitution(institutions.map((v) => v.institutionId))"
+            @click="removeInstitution(institutions.map((v) => v.institution_id))"
           >
             Delete
           </button>
