@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore'
+import { ref } from 'vue'
 
 const props = defineProps<{
   projectId: number | string
@@ -7,11 +8,14 @@ const props = defineProps<{
 }>()
 
 const projectInstitutionsStore = useProjectInstitutionStore()
+const destroyInstitution = ref(false)
 
 async function removeInstitution(institutionIds: number[]) {
+  console.log(institutionIds)
   const deleted = await projectInstitutionsStore.removeInstitution(
     props.projectId,
-    institutionIds
+    institutionIds,
+    destroyInstitution,
   )
 
   if (deleted) {
@@ -34,6 +38,16 @@ async function removeInstitution(institutionIds: number[]) {
           <p v-for="inst in institutions" :key="inst.institutionId">
             {{ inst.name }}
           </p>
+          <p> would you like to remove any institution from our database that is not referenced by another project? </p>
+
+          <label class="item">
+            <input 
+              type="checkbox"
+              class="form-check-input"
+              @click="destroyInstitution()"
+            />
+
+          </label>
         </div>
         <div class="modal-footer">
           <button
