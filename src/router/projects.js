@@ -219,7 +219,7 @@ export const MY_PROJECT_VIEWS = [
       itemName: 'members',
       breadcrumbs: [
         {
-          label: 'Members',
+          label: 'Project Members',
           to: 'MyProjectMembersView',
         },
       ],
