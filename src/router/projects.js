@@ -587,4 +587,38 @@ export const MY_PROJECT_VIEWS = [
       },
     ],
   },
+  {
+    path: ':id/institutions/',
+    name: 'MyProjectInstitutionsView',
+    meta: {
+      itemName: 'institutions',
+      breadcrumbs: [
+        {
+          label: 'institutions',
+          to: 'MyProjectInstitutionsView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/institutions/ListView.vue'
+      ),
+  },
+  {
+    path: ':id/institutions/create',
+    name: 'MyProjectInstitutionsCreateView',
+    meta: {
+      itemName: 'institutions',
+      breadcrumbs: [
+        {
+          label: 'institutions',
+          to: 'MyProjectInstitutionsView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/institutions/CreateView.vue'
+      ),
+  },
 ]
