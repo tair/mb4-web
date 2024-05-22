@@ -35,16 +35,16 @@ async function addInstitution(institutionId, index) {
 }
 
 async function buildInstitution() {
-  const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/institutions/build`
-  const response = await axios.post(url, {name: searchTerm.value})
+  const url = `${
+    import.meta.env.VITE_API_URL
+  }/projects/${projectId}/institutions/build`
+  const response = await axios.post(url, { name: searchTerm.value })
 
-  if(response.status == 200 ) {
-
+  if (response.status == 200) {
     const institution = response.data.newInstitution
     searchList.value.push(institution)
-    
-    addInstitution(institution.institution_id, searchList.value.length - 1)
 
+    addInstitution(institution.institution_id, searchList.value.length - 1)
   } else {
     alert('Could not add institution to the database')
   }
@@ -61,7 +61,6 @@ async function searchInstitutions() {
     })
 
     searchList.value = response.data
-    console.log('help: ', searchList.value.length)
   } catch (e) {
     console.error('Error getting Institutions')
     return false
@@ -74,7 +73,11 @@ async function searchInstitutions() {
     <h1>Select an institution to add</h1>
     <form>
       <div class="form-class">
-        <p>If you don't See Your Institution listed below, Please Add It by filling in the name in the search box and choosing the add institution option</p>
+        <p>
+          If you don't See Your Institution listed below, Please Add It by
+          filling in the name in the search box and choosing the add institution
+          option
+        </p>
         <div class="search-container">
           <input
             id="newInstitution"
@@ -96,11 +99,14 @@ async function searchInstitutions() {
           </option>
         </select>
 
-      <button type="button" class="btn btn-m btn-outline-primary" @click="buildInstitution()">
-      <i class="fa fa-plus"></i>
-      <span>Add Institution</span>
-      </button>
-        
+        <button
+          type="button"
+          class="btn btn-m btn-outline-primary"
+          @click="buildInstitution()"
+        >
+          <i class="fa fa-plus"></i>
+          <span>Add Institution</span>
+        </button>
       </div>
     </form>
   </LoadingIndicator>

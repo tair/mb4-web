@@ -29,7 +29,10 @@ export const useProjectInstitutionStore = defineStore({
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/institutions/remove`
 
-      const response = await axios.post(url, { institutionIds, destroyInstitution })
+      const response = await axios.post(url, {
+        institutionIds,
+        destroyInstitution,
+      })
 
       if (response.status == 200) {
         this.removeByInstitutionIds(response.data.institutionIds)
@@ -59,7 +62,7 @@ export const useProjectInstitutionStore = defineStore({
         const institution = response.data.institution
 
         this.institutions.push({
-          institutionId: institution.institution_id,
+          institution_id: institution.institution_id,
           name: institution.name,
         })
 

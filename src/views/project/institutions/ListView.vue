@@ -92,7 +92,7 @@ function refresh() {
         <ul class="list-group">
           <li
             v-for="institution in projectInstitutionsStore.institutions"
-            :key="institution.institutionId"
+            :key="institution.institution_id"
             class="list-group-item"
           >
             <div class="list-group-item-content">

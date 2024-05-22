@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore'
-import { ref } from 'vue'
+import axios from 'axios'
 
 const props = defineProps<{
   projectId: number | string
@@ -8,20 +8,39 @@ const props = defineProps<{
 }>()
 
 const projectInstitutionsStore = useProjectInstitutionStore()
-const destroyInstitution = ref(false)
+let destroyInstitution = false
 
-async function removeInstitution(institutionIds: number[]) {
-  console.log(institutionIds)
+async function removeInstitution() {
+  const institutionIds = props.institutions.map((v) => v.institution_id)
+
   const deleted = await projectInstitutionsStore.removeInstitution(
     props.projectId,
-    institutionIds,
-    destroyInstitution,
+    institutionIds
   )
+
+  if (destroyInstitution) {
+    const url = `${import.meta.env.VITE_API_URL}/projects/${
+      props.projectId
+    }/institutions/destroy`
+    const response = await axios.post(url, { institutionIds })
+
+    if (response.status != 200) {
+      console.log('Could not remove institution from the database')
+    }
+  }
 
   if (deleted) {
     projectInstitutionsStore.fetchInstitutions(props.projectId)
   } else {
     alert('Failed to delete Institution')
+  }
+}
+
+function toggledestroyInstitution() {
+  if (!destroyInstitution) {
+    destroyInstitution = true
+  } else {
+    destroyInstitution = false
   }
 }
 </script>
@@ -35,18 +54,23 @@ async function removeInstitution(institutionIds: number[]) {
         </div>
         <div class="modal-body" v-if="institutions.length">
           Really delete institution from project:
-          <p v-for="inst in institutions" :key="inst.institutionId">
-            {{ inst.name }}
+          <p
+            v-for="institution in institutions"
+            :key="institution.institution_id"
+          >
+            {{ institution.name }}
           </p>
-          <p> would you like to remove any institution from our database that is not referenced by another project? </p>
+          <p>
+            would you like to remove any institution from our database that is
+            not referenced by another project?
+          </p>
 
           <label class="item">
-            <input 
+            <input
               type="checkbox"
               class="form-check-input"
-              @click="destroyInstitution()"
+              @click="toggledestroyInstitution()"
             />
-
           </label>
         </div>
         <div class="modal-footer">
@@ -61,7 +85,7 @@ async function removeInstitution(institutionIds: number[]) {
             type="button"
             class="btn btn-primary"
             data-bs-dismiss="modal"
-            @click="removeInstitution(institutions.map((v) => v.institutionId))"
+            @click="removeInstitution()"
           >
             Delete
           </button>
