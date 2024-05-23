@@ -8,7 +8,6 @@ const props = defineProps<{
 }>()
 
 const projectInstitutionsStore = useProjectInstitutionStore()
-let destroyInstitution = false
 
 async function removeInstitution() {
   const institutionIds = props.institutions.map((v) => v.institution_id)
@@ -18,29 +17,10 @@ async function removeInstitution() {
     institutionIds
   )
 
-  if (destroyInstitution) {
-    const url = `${import.meta.env.VITE_API_URL}/projects/${
-      props.projectId
-    }/institutions/destroy`
-    const response = await axios.post(url, { institutionIds })
-
-    if (response.status != 200) {
-      console.log('Could not remove institution from the database')
-    }
-  }
-
   if (deleted) {
     projectInstitutionsStore.fetchInstitutions(props.projectId)
   } else {
     alert('Failed to delete Institution')
-  }
-}
-
-function toggledestroyInstitution() {
-  if (!destroyInstitution) {
-    destroyInstitution = true
-  } else {
-    destroyInstitution = false
   }
 }
 </script>
@@ -60,18 +40,6 @@ function toggledestroyInstitution() {
           >
             {{ institution.name }}
           </p>
-          <p>
-            would you like to remove any institution from our database that is
-            not referenced by another project?
-          </p>
-
-          <label class="item">
-            <input
-              type="checkbox"
-              class="form-check-input"
-              @click="toggledestroyInstitution()"
-            />
-          </label>
         </div>
         <div class="modal-footer">
           <button

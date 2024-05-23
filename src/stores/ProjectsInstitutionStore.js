@@ -66,7 +66,7 @@ export const useProjectInstitutionStore = defineStore({
           name: institution.name,
         })
 
-        return institution
+        return true
       }
 
       return false

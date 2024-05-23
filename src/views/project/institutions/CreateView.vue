@@ -19,32 +19,38 @@ onMounted(() => {
   }
 })
 
-async function addInstitution(institutionId, index) {
-  const success = await projectInstitutionsStore.addInstitution(
-    projectId,
-    institutionId
+async function addInstitution(name) {
+  // list of viable institutions from the database
+  let institution = searchList.value.find(
+    (institution) => institution.name == name
   )
 
-  if (success && index != -1) {
-    searchList.value.splice(index, 1)
+  if (institution == undefined) {
+    return createInstitution(name)
+  }
 
+  const success = await projectInstitutionsStore.addInstitution(
+    projectId,
+    institution.institution_id
+  )
+
+  if (success) {
     await router.push({ path: `/myprojects/${projectId}/institutions` })
   } else {
     alert('Failed to Assign Institution')
   }
 }
 
-async function buildInstitution() {
+async function createInstitution(name) {
   const url = `${
     import.meta.env.VITE_API_URL
-  }/projects/${projectId}/institutions/build`
-  const response = await axios.post(url, { name: searchTerm.value })
+  }/projects/${projectId}/institutions/createInstitution`
+  const response = await axios.post(url, { name })
 
   if (response.status == 200) {
     const institution = response.data.newInstitution
-    searchList.value.push(institution)
-
-    addInstitution(institution.institution_id, searchList.value.length - 1)
+    projectInstitutionsStore.institutions.push(institution)
+    await router.push({ path: `/myprojects/${projectId}/institutions` })
   } else {
     alert('Could not add institution to the database')
   }
@@ -61,6 +67,7 @@ async function searchInstitutions() {
     })
 
     searchList.value = response.data
+    return true
   } catch (e) {
     console.error('Error getting Institutions')
     return false
@@ -73,11 +80,7 @@ async function searchInstitutions() {
     <h1>Select an institution to add</h1>
     <form>
       <div class="form-class">
-        <p>
-          If you don't See Your Institution listed below, Please Add It by
-          filling in the name in the search box and choosing the add institution
-          option
-        </p>
+        <p>To add an institution fill out the text field and select save.</p>
         <div class="search-container">
           <input
             id="newInstitution"
@@ -86,6 +89,9 @@ async function searchInstitutions() {
             v-model="searchTerm"
             @input="searchInstitutions"
           />
+          <button type="button" @click="addInstitution(searchTerm)">
+            Save
+          </button>
         </div>
 
         <select v-if="searchList.length" :size="10" class="form-control">
@@ -93,20 +99,11 @@ async function searchInstitutions() {
             v-for="(institution, index) in searchList"
             :key="index"
             :value="institution.institution_id"
-            @click="addInstitution(institution.institution_id, index)"
+            @click="searchTerm = institution.name"
           >
             {{ institution.name }}
           </option>
         </select>
-
-        <button
-          type="button"
-          class="btn btn-m btn-outline-primary"
-          @click="buildInstitution()"
-        >
-          <i class="fa fa-plus"></i>
-          <span>Add Institution</span>
-        </button>
       </div>
     </form>
   </LoadingIndicator>
