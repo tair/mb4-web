@@ -13,15 +13,16 @@ export const useProjectDuplicationStore = defineStore({
         async sendRequest(projectId, message) {
 
             const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/duplication/request`
-            const response = await axios.post(url, { message })
+            await axios.post(url, { message })
 
         },
         async checkForConditions(projectId){
             const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/duplication/request`
             const response = await axios.get(url)
+            console.log('first')
 
-            this.onetimeMedia = response.data.onetimeMedia
-            this.isPublished = response.data.published
+            this.onetimeMedia = response.data.oneTimeMedia
+            this.isPublished = response.data.projectPublished
             this.isLoaded = true
 
         }

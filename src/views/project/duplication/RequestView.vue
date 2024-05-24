@@ -12,7 +12,7 @@ import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 const route = useRoute()
 const projectId = route.params.id
 const message = ref([null])
-const errorMessage = null
+let errorMessage = null
 const ProjectDuplicationStore = useProjectDuplicationStore()
 const ProjectUsersStore = useProjectUsersStore()
 const UserStore = useUserStore()
@@ -25,8 +25,7 @@ const isLoaded = computed(
 // onmounted
 onMounted(() => {
     if(!ProjectDuplicationStore.isLoaded){
-        // insert somethiong here
-        ProjectDuplicationStore.checkForConditions
+        ProjectDuplicationStore.checkForConditions(projectId)
     }
 
     if(!ProjectUsersStore.isLoaded){
@@ -48,6 +47,9 @@ async function makeRequest() {
 
         // check if requestie is not a member of the project and display dif message
         UserStore.fetchCurrentUser()
+        console.log('Project store; ', ProjectUsersStore.users)
+        console.log('User data: ', UserStore.userForm)
+
         if(!ProjectUsersStore.users.includes(UserStore.userForm)){            
             // DO NOT SHOW DROPDOWN IF THIS CASE HAPPENS////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             errorMessage = "As a result, this media can not be copied to the new project during project duplication."
@@ -112,17 +114,35 @@ async function makeRequest() {
             After submission, a MorphoBank administrator will contact you with further information.
         </p>
 
+        
+
+        <div v-if="ProjectDuplicationStore.onetimeMedia.length > 0">
+            <header>
+                There are media licensed for onetime use in this project. This license means that the copyright holder has released the media
+            for use in one MorphoBank project only at present. To honor the copyright holder's wishes MorphoBank only allows the media in
+            question to exist in one project.
+            </header>
+            <div v-if="!ProjectUsersStore.users.includes(UserStore.userForm)">
+                <p>As a result, this media can not be copied to the new project during project duplication.</p>
+            </div>
+            <div v-else>
+                <div v-if="ProjectDuplicationStore.isPublished">
+                    <p>Because this project has already been published, the onetime use media can not be copied to the duplicated project.</p>
+                </div>
+                <div v-else>
+                    <p>During project duplication, the media must be moved to the new project or kept in the original project.</p>
+                </div>
+            </div>
+        </div>
+
+
         <form>
             <label>Enter your remarks here:</label>
             <input type="text" v-model="message">
-            <input type="submit" @click="makeRequest">
-        </form>
-
-        <div class="list-group-item-name" v-if="ProjectDuplicationStore.onetimeMedia.length > 0">
-             
-        </div>
-
-        
+            <button type="button" @click="makeRequest">
+                Submit
+            </button>
+        </form>        
 
     </LoadingIndicator>
 </template>
