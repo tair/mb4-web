@@ -19,40 +19,19 @@ onMounted(() => {
   }
 })
 
-async function addInstitution(name) {
-  // list of viable institutions from the database
-  let institution = searchList.value.find(
+async function createInstitution(name) {
+  const institutionXProject = projectInstitutionsStore.institutions.find(
     (institution) => institution.name == name
   )
 
-  if (institution == undefined) {
-    return createInstitution(name)
-  }
-
-  const success = await projectInstitutionsStore.addInstitution(
-    projectId,
-    institution.institution_id
-  )
-
-  if (success) {
-    await router.push({ path: `/myprojects/${projectId}/institutions` })
+  if (institutionXProject == null) {
+    if (projectInstitutionsStore.addInstitution(projectId, name)) {
+      await router.push({ path: `/myprojects/${projectId}/institutions` })
+    } else {
+      console.error('Could not add Institution to Project')
+    }
   } else {
-    alert('Failed to Assign Institution')
-  }
-}
-
-async function createInstitution(name) {
-  const url = `${
-    import.meta.env.VITE_API_URL
-  }/projects/${projectId}/institutions/createInstitution`
-  const response = await axios.post(url, { name })
-
-  if (response.status == 200) {
-    const institution = response.data.newInstitution
-    projectInstitutionsStore.institutions.push(institution)
-    await router.push({ path: `/myprojects/${projectId}/institutions` })
-  } else {
-    alert('Could not add institution to the database')
+    alert('Institution already associated with this project')
   }
 }
 
@@ -89,7 +68,7 @@ async function searchInstitutions() {
             v-model="searchTerm"
             @input="searchInstitutions"
           />
-          <button type="button" @click="addInstitution(searchTerm)">
+          <button type="button" @click="createInstitution(searchTerm)">
             Save
           </button>
         </div>

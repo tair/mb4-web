@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore'
-import axios from 'axios'
 
 const props = defineProps<{
   projectId: number | string
