@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
 import { useMediaCitationsStore } from '@/stores/MediaCitationsStore'
@@ -101,6 +101,10 @@ onMounted(() => {
   if (!bibliographiesStore.isLoaded) {
     bibliographiesStore.fetchBibliographies(projectId)
   }
+})
+
+onUnmounted(() => {
+  mediaCitationsStore.invalidate()
 })
 
 function refresh() {

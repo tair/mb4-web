@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/stores/AuthStore.js'
+import { invalidateAll } from '@/stores/utils.js'
 import { createRouter, createWebHistory } from 'vue-router'
 import { MY_PROJECT_VIEWS } from '@/router/projects.js'
 import { PUBLISHED_PROJECT_VIEWS } from '@/router/published.js'
@@ -143,7 +144,7 @@ const router = createRouter({
           path: '/myprojects',
           name: 'MyProjectsView',
           component: MyProjectsView,
-          beforeEnter: requireSignIn,
+          beforeEnter: [requireSignIn, invalidateAll],
           children: MY_PROJECT_VIEWS,
         },
 

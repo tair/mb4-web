@@ -54,41 +54,39 @@ export class MatrixLoader {
     }
     const url = this.url + request.getMethod()
     return new Promise((resolve, reject) => {
-      ;(function fetchWithRequest() {
-        fetch(url, options)
-          .then((response) => {
-            if (response.status == 401) {
-              sendRetries = request.getRetries()
-              return { errors: ['User is not signed in'] }
-            }
-            return response.json()
-          })
-          .then((data) => {
-            try {
-              console.log(data)
-              if (data['ok']) {
-                resolve(data)
-              } else {
-                const errorMessage = data['errors'].join(',')
-                reject(errorMessage)
-              }
-            } catch (e) {
-              console.log(e)
-              reject('Unknown error while process request')
-            }
-          })
-          .catch((e) => {
-            if (++sendRetries < request.getRetries()) {
-              console.log("Damn... let's retry", e)
-              const randomDelay = MatrixLoader.getRandomInt(0, sendDelay >> 1)
-              setTimeout(() => fetchWithRequest(), sendDelay + randomDelay)
-              sendDelay = Math.min(20000, sendDelay << 2)
+      const fetchWithRequest = async () => {
+        try {
+          const response = await fetch(url, options)
+          if (response.status == 401) {
+            sendRetries = request.getRetries()
+            return { errors: ['User is not signed in'] }
+          }
+          const data = await response.json()
+          try {
+            console.log(data)
+            if (data['ok']) {
+              resolve(data)
             } else {
-              console.log('Simply just fail the request', e)
-              reject('An unknown error occurred.')
+              const errorMessage = data['errors'].join(',')
+              reject(errorMessage)
             }
-          })
-      })()
+          } catch (e) {
+            console.log(e)
+            reject('Unknown error while process request')
+          }
+        } catch (e) {
+          if (++sendRetries < request.getRetries()) {
+            console.log("Damn... let's retry", e)
+            const randomDelay = MatrixLoader.getRandomInt(0, sendDelay >> 1)
+            setTimeout(() => fetchWithRequest(), sendDelay + randomDelay)
+            sendDelay = Math.min(20000, sendDelay << 2)
+          } else {
+            console.log('Simply just fail the request', e)
+            reject('An unknown error occurred.')
+          }
+        }
+      }
+      fetchWithRequest()
     })
   }
 

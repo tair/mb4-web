@@ -607,7 +607,9 @@ div.matrixgridCells table {
 
 ol.draggableSelect {
   border: 1px solid #ddd;
+  display: flex;
   height: 100%;
+  flex-direction: column;
   font-weight: normal;
   margin: 0;
   outline: none;
@@ -628,14 +630,16 @@ ol.draggableSelect li.select {
   border-top: 2px solid #7fceff;
 }
 
+ol.draggableSelect li.dead {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
 ol.draggableSelect li.dead,
 ol.draggableSelect li.dead:hover {
   background-color: #fff;
   border-top: 2px solid #fff;
-}
-
-ol.draggableSelect li.dead.onlyElement {
-  height: 90% !important;
 }
 
 ol.draggableSelect li.droppable {

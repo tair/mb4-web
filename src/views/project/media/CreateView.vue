@@ -29,8 +29,7 @@ const isLoaded = computed(
 
 async function createMedia(event) {
   const formData = new FormData(event.currentTarget)
-  const json = Object.fromEntries(formData)
-  const success = await mediaStore.create(projectId, json)
+  const success = await mediaStore.create(projectId, formData)
   if (!success) {
     alert(response.data?.message || 'Failed to create media')
     return
