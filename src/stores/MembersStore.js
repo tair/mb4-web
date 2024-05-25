@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { defineStore } from 'pinia'
 
-export const useMediaViewsStore = defineStore({
+export const useMembersStore = defineStore({
     id:"members",
     state: () => ({
         isLoaded: false,
