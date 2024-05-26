@@ -36,7 +36,7 @@ const props = defineProps({
                             class="btn btn-sm btn-secondary"
                             data-bs-toggle="modal"
                             data-bs-target="#memberDeleteModal"
-                            @click="$emit('update:member', member)"
+                            @click="$emit('update:deleteMember', member)"
                         >
                             <i class="fa-regular fa-trash-can"></i>
                         </button>

@@ -44,7 +44,7 @@ const memberToDelete = ref({})
               :projectId="projectId"
               :members="membersStore.members"
               v-model:deleteMember="memberToDelete"
-            >
+    >
     </MembersCard>
 
     
