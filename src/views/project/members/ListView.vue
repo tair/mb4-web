@@ -1,8 +1,9 @@
-<script setup lang="ts">
+<script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMembersStore } from '@/stores/MembersStore'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
+import MembersCard from '@/components/project/MembersCard.vue'
 import DeleteDialog from '@/views/project/views/DeleteDialog.vue'
 
 const route = useRoute()
@@ -20,7 +21,7 @@ onMounted(() => {
   }
 })
 
-const membersToDelete = ref([])
+const memberToDelete = ref({})
 </script>
 
 <template>
@@ -39,9 +40,12 @@ const membersToDelete = ref([])
       </RouterLink>
     </div>
 
-    <div v-for="m in membersStore.members">
-
-    </div>
+    <MembersCard
+              :projectId="projectId"
+              :members="membersStore.members"
+              v-model:deleteMember="memberToDelete"
+            >
+    </MembersCard>
 
     
     </LoadingIndicator>
