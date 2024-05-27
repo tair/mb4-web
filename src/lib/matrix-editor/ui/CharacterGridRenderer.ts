@@ -100,7 +100,9 @@ export class CharacterDetailedGridRenderer extends CharacterGridRenderer {
     for (let x = 0, l = characterMedia.length; x < l; x++) {
       const characterMedium = characterMedia[x]
       const tiny = characterMedium.getTiny()
-      images.addImage(characterMedium.getId(), tiny['url'])
+      if (tiny) {
+        images.addImage(characterMedium.getId(), tiny['url'])
+      }
     }
     const characterMediaElement = document.createElement('td')
     images.render(characterMediaElement)

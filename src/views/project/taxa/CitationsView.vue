@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
@@ -118,6 +118,10 @@ onMounted(() => {
   if (!projectUsersStore.isLoaded) {
     projectUsersStore.fetchUsers(projectId)
   }
+})
+
+onUnmounted(() => {
+  taxaCitationStore.invalidate()
 })
 
 function refresh() {

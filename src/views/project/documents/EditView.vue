@@ -1,5 +1,4 @@
 <script setup>
-import axios from 'axios'
 import router from '@/router'
 import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
@@ -11,24 +10,17 @@ const route = useRoute()
 const projectId = route.params.id
 const documentId = route.params.documentId
 
-const baseUrl = `${
-  import.meta.env.VITE_API_URL
-}/projects/${projectId}/documents`
-
 const documentsStore = useDocumentsStore()
 const document = computed(() => documentsStore.getDocumentById(documentId))
 
 async function editDocument(event) {
   const formData = new FormData(event.currentTarget)
-
-  const url = `${baseUrl}/${documentId}/edit`
-  const response = await axios.post(url, formData)
-  if (response.status != 200) {
-    alert(response.data?.message || 'Failed to modify folder')
+  const success = await documentsStore.edit(projectId, documentId, formData)
+  if (!success) {
+    alert(response.data?.message || 'Failed to modify document')
     return
   }
 
-  documentsStore.invalidate()
   router.push({ path: `/myprojects/${projectId}/documents` })
 }
 
