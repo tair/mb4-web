@@ -48,12 +48,12 @@ export const useProjectInstitutionStore = defineStore({
       }
     },
 
-    async addInstitution(projectId, name) {
+    async addInstitution(projectId, institutionId, name) {
       const url = `${
         import.meta.env.VITE_API_URL
-      }/projects/${projectId}/institutions/create`
+      }/projects/${projectId}/institutions/add`
 
-      const response = await axios.post(url, { name })
+      const response = await axios.post(url, { institutionId, name })
 
       if (response.status == 200) {
         const institution = response.data.institution
@@ -65,7 +65,6 @@ export const useProjectInstitutionStore = defineStore({
 
         return true
       }
-
       return false
     },
   },

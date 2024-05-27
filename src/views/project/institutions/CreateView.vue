@@ -4,6 +4,7 @@ import router from '@/router'
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore'
+import InstitutionSearchInput from '@/components/project/InstitutionSearchInput.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 
 const route = useRoute()
@@ -19,37 +20,37 @@ onMounted(() => {
   }
 })
 
-async function createInstitution(name) {
+async function createInstitution(institutionId, name) {
   const institutionXProject = projectInstitutionsStore.institutions.find(
     (institution) => institution.name == name
   )
 
   if (institutionXProject == null) {
-    if (projectInstitutionsStore.addInstitution(projectId, name)) {
-      await router.push({ path: `/myprojects/${projectId}/institutions` })
+    if (
+      !projectInstitutionsStore.addInstitution(projectId, institutionId, name)
+    ) {
+      alert('Could not add Institution to Project')
     } else {
-      console.error('Could not add Institution to Project')
+      await router.push({ path: `/myprojects/${projectId}/institutions` })
     }
   } else {
     alert('Institution already associated with this project')
   }
 }
 
-async function searchInstitutions() {
+async function searchInstitutions(searchTerm) {
   try {
     const url = `${
       import.meta.env.VITE_API_URL
     }/projects/${projectId}/institutions/search`
 
     const response = await axios.get(url, {
-      params: { searchTerm: searchTerm.value },
+      params: { searchTerm: searchTerm },
     })
 
-    searchList.value = response.data
-    return true
+    return response.data
   } catch (e) {
-    console.error('Error getting Institutions')
-    return false
+    console.error('Error getting Institutions\n', e)
   }
 }
 </script>
@@ -60,30 +61,12 @@ async function searchInstitutions() {
     <form>
       <div class="form-class">
         <p>To add an institution fill out the text field and select save.</p>
-        <div class="search-container">
-          <input
-            id="newInstitution"
-            type="text"
-            class="searchTerm"
-            v-model="searchTerm"
-            @input="searchInstitutions"
-          />
-          <button type="button" @click="createInstitution(searchTerm)">
-            Save
-          </button>
-        </div>
-
-        <select v-if="searchList.length" :size="10" class="form-control">
-          <option
-            v-for="(institution, index) in searchList"
-            :key="index"
-            :value="institution.institution_id"
-            @click="searchTerm = institution.name"
-          >
-            {{ institution.name }}
-          </option>
-        </select>
       </div>
+      <InstitutionSearchInput
+        :search="searchInstitutions"
+        :creation="createInstitution"
+      >
+      </InstitutionSearchInput>
     </form>
   </LoadingIndicator>
 </template>
