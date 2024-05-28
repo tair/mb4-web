@@ -1,5 +1,4 @@
 <script setup>
-import axios from 'axios'
 import { useRoute } from 'vue-router'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useTaxaStore } from '@/stores/TaxaStore'
