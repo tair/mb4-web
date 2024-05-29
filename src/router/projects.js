@@ -621,4 +621,21 @@ export const MY_PROJECT_VIEWS = [
         /* webpackChunkName: "unpublished" */ '@/views/project/institutions/CreateView.vue'
       ),
   },
+  {
+    path: ':id/duplication/request',
+    name: 'MyProjectDuplicationRequestView',
+    meta: {
+      itemName: 'duplication',
+      breadcrumbs: [
+        {
+          label: 'duplication',
+          to: 'MyProjectDuplicationRequestView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/duplication/RequestView.vue'
+      ),
+  },
 ]
