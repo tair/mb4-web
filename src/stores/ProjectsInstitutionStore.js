@@ -40,6 +40,16 @@ export const useProjectInstitutionStore = defineStore({
       return false
     },
 
+    getInstitutionById(institutionId) {
+      for (let institution in this.institutions) {
+        if (institution.institutionId == institutionId) {
+          return institution
+        }
+      }
+
+      return null
+    },
+
     async removeByInstitutionIds(institutionIds) {
       for (let x = 0; x < institutionIds.length; x++) {
         const spliceIndex = this.institutions.indexOf(institutionIds[x])

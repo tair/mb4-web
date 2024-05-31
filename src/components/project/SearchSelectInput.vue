@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 const props = defineProps<{
   name?: string
   initialValue?: number
-  search: (text: string) => Promise<number[]>
+  search: (text: string) => Promise<any[]>
   getItem: (id: number) => any
   getText: (item: any) => string
   getId: (item: any) => number
 }>()
 
-const emit = defineEmits(['select'])
+const emit = defineEmits(['select', 'updateTextboxString'])
 const items = ref([])
 const item = computed(() => props.getItem(props.initialValue))
 const text = ref(props.getText(item.value))
@@ -21,6 +21,7 @@ async function handleInput(event: any) {
     items.value = []
   } else {
     items.value = await props.search(text)
+    emit('updateTextboxString', text)
   }
 }
 
