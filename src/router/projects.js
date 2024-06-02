@@ -108,6 +108,23 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
+    path: 'media/curate',
+    name: 'MyProjectMediaCurateView',
+    meta: {
+      itemName: 'media',
+      breadcrumbs: [
+        {
+          label: 'Media',
+          to: 'MyProjectMediaView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/media/CurateView.vue'
+      ),
+  },
+  {
     path: 'media/import/eol',
     name: 'MyProjectMediaEolImportView',
     meta: {
