@@ -1,37 +1,51 @@
-<script setup>
-const props = defineProps({
-  projectId: {
-    type: String,
-    required: true,
-  },
-  members: {
-    type: Object,
-    required: true,
-  },
-})
+<script setup lang="ts">
+
+type Member = {
+  project_id: number
+  user_id: number
+  administrator: number
+  fname: string
+  lname: string
+  member_email: string
+  member_role: number
+  member_name: string
+}
+
+const props = defineProps<{
+  members: Member[]
+}>()
+
+function convertRole(m: Member): String{
+  switch(m.member_role) {
+    case 0:
+      return "Full membership (can edit everything)"
+    case 1:
+      return "Character annotater (can edit everything but characters and states)"
+    case 2:
+      return "Bibliography maintainer (can edit bibliography only)"
+    case 3:
+      return "Observer (cannot edit)"
+    default:
+      return
+  }
+}
+
 </script>
 
 <template>
     <ul 
-    v-for="member in members"
-    :key="member.id"
-    class="list-group"
+    v-for="member in props.members"
+    :key="member.user_id"
+    class="list-group pt-3"
     >
         <li class="list-group-item">
             <div class="list-group-item-header">
                 <div class="list-group-item-name">
-                    {{ member.first }} {{ member.last }} {{ `(${member.email})` }}
+                    {{ member.member_name }} {{ `(${member.member_email})` }}
                 </div>
                     <div class="list-group-item-buttons"> 
-                       <!-- <RouterLink
-                        :to="`/myprojects/${projectId}/members/${memberId}/edit`"
-                    >
-                        <button type="button" class="btn btn-sm btn-secondary">
-                            <i class="fa-regular fa-pen-to-square"></i>
-                        </button>
-                    </RouterLink>not implemented yet-->
                         <button
-                            v-if="!member.adminstrator"
+                            v-if="!member.administrator"
                             type="button"
                             class="btn btn-sm btn-secondary"
                             data-bs-toggle="modal"
@@ -43,7 +57,7 @@ const props = defineProps({
                     </div>
             </div>
             <div class="list-group-item-description">
-                {{ member.membershipType }}
+                {{ convertRole(member) }}
             </div>
             <div v-if="member.administrator" class="list-group-item-administrator">
                 Project Administrator
@@ -59,7 +73,6 @@ const props = defineProps({
 
 .list-group-item-description {
   font-size: 95%;
-  padding-left: 20px;
   padding-top: 5px;
 }
 
