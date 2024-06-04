@@ -18,12 +18,12 @@ const isLoaded = computed(
 onMounted(() => {
   if (!membersStore.isLoaded) {
     membersStore.fetchMembers(projectId)
+    console.log("fetchmembers")
   }
 })
 
 const memberToDelete = ref({})
 </script>
-
 <template>
     <LoadingIndicator :isLoaded="isLoaded">
     <header>
