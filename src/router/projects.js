@@ -638,4 +638,21 @@ export const MY_PROJECT_VIEWS = [
         /* webpackChunkName: "unpublished" */ '@/views/project/duplication/RequestView.vue'
       ),
   },
+  {
+    path: ':id/publish/partition',
+    name: 'MyProjectPublishPartitionView',
+    meta: {
+      itemName: 'publishPartition',
+      breadcrumbs: [
+        {
+          label: 'publishPartition',
+          to: 'MyProjectPublishPartitionView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/publishPartition/PublishPartitionView.vue'
+      ),
+  },
 ]
