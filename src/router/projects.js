@@ -125,6 +125,23 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
+    path: 'media/upload/batch',
+    name: 'MyProjectMediaBatchUploadView',
+    meta: {
+      itemName: 'media',
+      breadcrumbs: [
+        {
+          label: 'Media',
+          to: 'MyProjectMediaView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/media/BatchUploadView.vue'
+      ),
+  },
+  {
     path: 'media/import/eol',
     name: 'MyProjectMediaEolImportView',
     meta: {
