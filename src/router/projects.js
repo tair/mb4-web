@@ -655,4 +655,21 @@ export const MY_PROJECT_VIEWS = [
         /* webpackChunkName: "unpublished" */ '@/views/project/publishPartition/PublishPartitionView.vue'
       ),
   },
+  {
+    path: ':id/publish/partition/:partitionId',
+    name: 'MyProjectPublishPartitionSummaryView',
+    meta: {
+      itemName: 'publishPartition',
+      breadcrumbs: [
+        {
+          label: 'publishPartition',
+          to: 'MyProjectPublishPartitionView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/publishPartition/SummaryView.vue'
+      ),
+  },
 ]
