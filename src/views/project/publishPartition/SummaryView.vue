@@ -42,11 +42,35 @@ const route = useRoute()
 const projectId = route.params.id
 const partitionId = route.params.partitionId
 
-let onetimeMedia = null
-let taxa = null
-let character = null
+let partition = null
+let taxa = 0
+let characters = 0
+let onetimeMedia = []
+let media = null
+let labels = 0
+let documents = 0
+let bibliographicReferences = 0
+let views = 0
+let specimens = 0
 
-onMounted(() => {})
+onMounted(async () => {
+  const url = `${
+    import.meta.env.VITE_API_URL
+  }/myprojects/${projectId}/publish/partition/${partitionId}`
+
+  const response = await axios.get(url)
+
+  partition = response.data.partition
+  taxa = response.data.taxaLength
+  characters = response.data.characterLength
+  onetimeMedia = response.data.onetimeMedia
+  media = response.data.mediaLength
+  labels = response.data.labels
+  documents = response.data.documents
+  bibliographicReferences = response.data.bibliographicReferences
+  views = response.data.views
+  specimens = response.data.specimens
+})
 
 async function publishPartition(event) {
   const url = `${
@@ -62,5 +86,37 @@ async function publishPartition(event) {
 }
 </script>
 <template>
-  <h1>its alive !</h1>
+  <h1>Partition: {{ partition.name }}</h1>
+  <p>
+    This partition contains {{ characters }} characters, {{ taxa }} taxa,
+    {{ media }} media of which {{ onetimeMedia.length }} are released for
+    onetime use, {{ labels }} media labels, {{ specimens }} specimens,
+    {{ views }} views, {{ documents }} documents that are linked to media
+    explaining copyright and {{ bibliographicReferences }} bibliographic
+    references To edit these, go to the Matrix Editor and make changes
+  </p>
+  <p>
+    When you publish this partition, a new project will be created with the
+    characters and taxa listed above. Any matrices, media, copyright documents
+    and bibliographic citations associated with the characters and taxa will be
+    copied into the new project. The new project will be left in an unpublished
+    state to allow you time to review prior to publication.
+  </p>
+  <p>
+    Note that the new project you create here will be separate from P4091 (Test)
+    and create only the subset of information described above. Changes made to
+    the newly created project will not affect P4091 or vice versa.
+  </p>
+  <p>
+    Note that publishing a partition may consume significant server resources,
+    particularly storage. Please be considerate and only publish when you need
+    to.
+  </p>
+
+  <div v-if="taxa && characters">
+    <p>
+      You cannot publish this partition because it is empty. Please add
+      characters and taxa and try again.
+    </p>
+  </div>
 </template>
