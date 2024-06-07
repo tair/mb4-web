@@ -92,10 +92,10 @@ function refresh() {
           <span> Create Media</span>
         </button>
       </RouterLink>
-      <RouterLink :to="`/myprojects/${projectId}/media/upload/batch`">
+      <RouterLink :to="`/myprojects/${projectId}/media/create/batch`">
         <button type="button" class="btn btn-m btn-outline-primary">
           <i class="fa fa-plus"></i>
-          <span> Upload Media</span>
+          <span> Upload Batch</span>
         </button>
       </RouterLink>
       <RouterLink
