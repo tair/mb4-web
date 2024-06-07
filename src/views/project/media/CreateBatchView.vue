@@ -7,7 +7,7 @@ import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
-import { schema } from '@/views/project/media/schema.js'
+import { batchSchema } from '@/views/project/media/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 
 const route = useRoute()
@@ -27,9 +27,9 @@ const isLoaded = computed(
     mediaViewsStore.isLoaded
 )
 
-async function createMedia(event) {
+async function createBatch(event) {
   const formData = new FormData(event.currentTarget)
-  const success = await mediaStore.create(projectId, formData)
+  const success = await mediaStore.createBatch(projectId, formData)
   if (!success) {
     alert(response.data?.message || 'Failed to create media')
     return
@@ -83,9 +83,9 @@ onMounted(() => {
     </div>
   </header>
   <LoadingIndicator :isLoaded="isLoaded">
-    <form @submit.prevent="createMedia">
+    <form @submit.prevent="createBatch">
       <div class="row setup-content">
-        <template v-for="(definition, index) in schema" :key="index">
+        <template v-for="(definition, index) in batchSchema" :key="index">
           <div v-if="!definition.existed" class="form-group">
             <label :for="index" class="form-label">
               {{ definition.label }}

@@ -108,6 +108,23 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
+    path: 'media/create/batch',
+    name: 'MyProjectMediaCreateBatchView',
+    meta: {
+      itemName: 'media',
+      breadcrumbs: [
+        {
+          label: 'Media',
+          to: 'MyProjectMediaView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/media/CreateBatchView.vue'
+      ),
+  },
+  {
     path: 'media/curate',
     name: 'MyProjectMediaCurateView',
     meta: {
@@ -122,23 +139,6 @@ export const MY_PROJECT_VIEWS = [
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/media/CurateView.vue'
-      ),
-  },
-  {
-    path: 'media/upload/batch',
-    name: 'MyProjectMediaBatchUploadView',
-    meta: {
-      itemName: 'media',
-      breadcrumbs: [
-        {
-          label: 'Media',
-          to: 'MyProjectMediaView',
-        },
-      ],
-    },
-    component: () =>
-      import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/media/BatchUploadView.vue'
       ),
   },
   {

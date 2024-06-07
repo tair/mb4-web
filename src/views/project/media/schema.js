@@ -126,3 +126,11 @@ export const schema = {
     existed: true,
   },
 }
+
+export const batchSchema = {
+  ...schema,
+  file: {
+    label: 'Choose a ZIP, TAR, TAR+gzip, TAR+bzip archive or individual file',
+    view: FileInput,
+  },
+}
