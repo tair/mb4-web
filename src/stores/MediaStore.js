@@ -56,11 +56,11 @@ export const useMediaStore = defineStore({
       }
       return false
     },
-    async createBatch(projectId, media) {
+    async createBatch(projectId, mediaFormData) {
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/media/create/batch`
-      const response = await axios.post(url, { media })
+      const response = await axios.post(url, mediaFormData)
       if (response.status == 200) {
         const media = response.data.media
         this.media.push(...media)
@@ -81,7 +81,23 @@ export const useMediaStore = defineStore({
       }
       return false
     },
-    async deleteIds(projectId, mediaIds, remappedMediaIds) {
+    async editIds(projectId, mediaIds, json) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/media/edit`
+      const response = await axios.post(url, {
+        media_ids: mediaIds,
+        ...json,
+      })
+      if (response.status == 200) {
+        const media = response.data.media
+        this.removeByMediaIds(mediaIds)
+        this.media.push(...media)
+        return true
+      }
+      return false
+    },
+    async deleteIds(projectId, mediaIds, remappedMediaIds = []) {
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/media/delete`
