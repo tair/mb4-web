@@ -56,11 +56,11 @@ export const useMediaStore = defineStore({
       }
       return false
     },
-    async createBatch(projectId, media) {
+    async createBatch(projectId, mediaFormData) {
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/media/create/batch`
-      const response = await axios.post(url, { media })
+      const response = await axios.post(url, mediaFormData)
       if (response.status == 200) {
         const media = response.data.media
         this.media.push(...media)
