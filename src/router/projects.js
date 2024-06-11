@@ -1,6 +1,6 @@
 export const MY_PROJECT_VIEWS = [
   {
-    path: ':id/overview',
+    path: 'overview',
     name: 'MyProjectOverviewView',
     meta: {
       itemName: 'overview',
@@ -23,7 +23,7 @@ export const MY_PROJECT_VIEWS = [
     },
   },
   {
-    path: ':id/matrices',
+    path: 'matrices',
     name: 'MyProjectMatrixView',
     meta: {
       itemName: 'matrices',
@@ -40,7 +40,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/matrices/create/choose',
+    path: 'matrices/create/choose',
     name: 'MyProjectMatrixChooseView',
     meta: {
       itemName: 'matrices',
@@ -57,7 +57,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/matrices/create',
+    path: 'matrices/create',
     name: 'MyProjectMatrixCreateView',
     meta: {
       itemName: 'matrices',
@@ -74,7 +74,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/media',
+    path: 'media',
     name: 'MyProjectMediaView',
     meta: {
       itemName: 'media',
@@ -91,7 +91,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/media/create',
+    path: 'media/create',
     name: 'MyProjectMediaCreateView',
     meta: {
       itemName: 'media',
@@ -108,7 +108,77 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/media/:mediaId',
+    path: 'media/create/batch',
+    name: 'MyProjectMediaCreateBatchView',
+    meta: {
+      itemName: 'media',
+      breadcrumbs: [
+        {
+          label: 'Media',
+          to: 'MyProjectMediaView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/media/CreateBatchView.vue'
+      ),
+  },
+  {
+    path: 'media/curate',
+    name: 'MyProjectMediaCurateView',
+    meta: {
+      itemName: 'media',
+      breadcrumbs: [
+        {
+          label: 'Media',
+          to: 'MyProjectMediaView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/media/CurateView.vue'
+      ),
+  },
+  {
+    path: 'media/import/eol',
+    name: 'MyProjectMediaEolImportView',
+    meta: {
+      itemName: 'media',
+      importType: 'eol',
+      breadcrumbs: [
+        {
+          label: 'Media',
+          to: 'MyProjectMediaView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/media/ImportView.vue'
+      ),
+  },
+  {
+    path: 'media/import/idigbio',
+    name: 'MyProjectMediaiDigBioImportView',
+    meta: {
+      itemName: 'media',
+      importType: 'idigbio',
+      breadcrumbs: [
+        {
+          label: 'Media',
+          to: 'MyProjectMediaView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/media/ImportView.vue'
+      ),
+  },
+  {
+    path: 'media/:mediaId(\\d+)',
     name: 'MyProjectMediaBaseView',
     meta: {
       itemName: 'media',
@@ -143,7 +213,7 @@ export const MY_PROJECT_VIEWS = [
     ],
   },
   {
-    path: ':id/views',
+    path: 'views',
     name: 'MyProjectMediaViewsView',
     meta: {
       itemName: 'media_views',
@@ -160,7 +230,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/views/create',
+    path: 'views/create',
     name: 'MyProjectMediaViewsCreateView',
     meta: {
       itemName: 'media_views',
@@ -177,7 +247,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/views/:viewId/edit',
+    path: 'views/:viewId(\\d+)/edit',
     name: 'MyProjectMediaViewEditView',
     meta: {
       itemName: 'media_views',
@@ -194,7 +264,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/folios',
+    path: 'folios',
     name: 'MyProjectFoliosView',
     meta: {
       itemName: 'folios',
@@ -211,7 +281,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/folios/create',
+    path: 'folios/create',
     name: 'MyProjectFoliosCreateView',
     meta: {
       itemName: 'folios',
@@ -228,7 +298,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/folios/:folioId',
+    path: 'folios/:folioId(\\d+)',
     name: 'MyProjectFoliosBaseView',
     meta: {
       itemName: 'folios',
@@ -263,7 +333,7 @@ export const MY_PROJECT_VIEWS = [
     ],
   },
   {
-    path: ':id/specimens',
+    path: 'specimens',
     name: 'MyProjectSpecimensListView',
     meta: {
       itemName: 'specimens',
@@ -280,7 +350,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/specimens/create',
+    path: 'specimens/create',
     name: 'MyProjectSpecimensCreateView',
     meta: {
       itemName: 'specimens',
@@ -297,7 +367,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/specimens/:specimenId',
+    path: 'specimens/:specimenId(\\d+)',
     name: 'MyProjectSpecimensBaseView',
     meta: {
       itemName: 'specimens',
@@ -332,7 +402,7 @@ export const MY_PROJECT_VIEWS = [
     ],
   },
   {
-    path: ':id/specimens/upload',
+    path: 'specimens/upload',
     name: 'MyProjectSpecimensUploadView',
     meta: {
       itemName: 'specimens',
@@ -349,7 +419,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/bibliography',
+    path: 'bibliography',
     name: 'MyProjectBibliographyListView',
     meta: {
       itemName: 'bibliography',
@@ -366,7 +436,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/bibliography/create',
+    path: 'bibliography/create',
     name: 'MyProjectBibliographyCreateView',
     meta: {
       itemName: 'bibliography',
@@ -383,7 +453,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/bibliography/:referenceId/edit',
+    path: 'bibliography/:referenceId(\\d+)/edit',
     name: 'MyProjectBibliographyEditView',
     meta: {
       itemName: 'bibliography',
@@ -400,7 +470,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/documents',
+    path: 'documents',
     name: 'MyProjectDocumentsView',
     meta: {
       itemName: 'documents',
@@ -417,7 +487,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/documents/create',
+    path: 'documents/create',
     name: 'MyProjectDocumentCreateView',
     meta: {
       itemName: 'documents',
@@ -434,7 +504,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/documents/:documentId/edit',
+    path: 'documents/:documentId(\\d+)/edit',
     name: 'MyProjectDocumentEditView',
     meta: {
       itemName: 'documents',
@@ -451,7 +521,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/documents/folders/create',
+    path: 'documents/folders/create',
     name: 'MyProjectDocumentFolderCreateView',
     meta: {
       itemName: 'documents',
@@ -468,7 +538,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/documents/folders/:folderId/edit',
+    path: 'documents/folders/:folderId(\\d+)/edit',
     name: 'MyProjectDocumentFolderEditView',
     meta: {
       itemName: 'documents',
@@ -485,7 +555,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/taxa',
+    path: 'taxa',
     name: 'MyProjectTaxaView',
     meta: {
       itemName: 'taxa',
@@ -502,7 +572,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/taxa/create',
+    path: 'taxa/create',
     name: 'MyProjectTaxaCreateView',
     meta: {
       itemName: 'taxa',
@@ -519,7 +589,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/taxa/create/batch',
+    path: 'taxa/create/batch',
     name: 'MyProjectTaxaBatchCreateView',
     meta: {
       itemName: 'taxa',
@@ -536,7 +606,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/taxa/upload',
+    path: 'taxa/upload',
     name: 'MyProjectTaxaUploadView',
     meta: {
       itemName: 'taxa',
@@ -553,7 +623,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/taxa/:taxonId/',
+    path: 'taxa/:taxonId(\\d+)/',
     name: 'MyProjectTaxaBaseEditView',
     meta: {
       itemName: 'taxa',
@@ -619,6 +689,23 @@ export const MY_PROJECT_VIEWS = [
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/institutions/CreateView.vue'
+      ),
+  },
+  {
+    path: ':id/duplication/request',
+    name: 'MyProjectDuplicationRequestView',
+    meta: {
+      itemName: 'duplication',
+      breadcrumbs: [
+        {
+          label: 'duplication',
+          to: 'MyProjectDuplicationRequestView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/duplication/RequestView.vue'
       ),
   },
 ]
