@@ -1,28 +1,21 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMembersStore } from '@/stores/MembersStore'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MembersCard from '@/components/project/MembersCard.vue'
-import DeleteDialog from '@/views/project/views/DeleteDialog.vue'
 
 const route = useRoute()
 const projectId = route.params.id
 
 const membersStore = useMembersStore()
-const isLoaded = computed(
-  () =>
-    membersStore.isLoaded
-)
+const isLoaded = computed(() => membersStore.isLoaded)
 
 onMounted(() => {
   if (!membersStore.isLoaded) {
     membersStore.fetchMembers(projectId)
-    console.log("fetchmembers")
   }
 })
-
-const memberToDelete = ref({})
 </script>
 <template>
     <LoadingIndicator :isLoaded="isLoaded">
@@ -39,14 +32,6 @@ const memberToDelete = ref({})
         </button>
       </RouterLink>
     </div>
-
-    <MembersCard
-              :projectId="projectId"
-              :members="membersStore.members"
-              v-model:deleteMember="memberToDelete"
-    >
-    </MembersCard>
-
-    
+    <MembersCard :members="membersStore.members"></MembersCard>
     </LoadingIndicator>
 </template>

@@ -1,14 +1,11 @@
 <script setup lang="ts">
 
 type Member = {
-  project_id: number
   user_id: number
-  administrator: number
   fname: string
   lname: string
-  member_email: string
-  member_role: number
-  member_name: string
+  email: string
+  membership_type: number
 }
 
 const props = defineProps<{
@@ -16,7 +13,7 @@ const props = defineProps<{
 }>()
 
 function convertRole(m: Member): String{
-  switch(m.member_role) {
+  switch(m.membership_type) {
     case 0:
       return "Full membership (can edit everything)"
     case 1:
@@ -25,8 +22,10 @@ function convertRole(m: Member): String{
       return "Bibliography maintainer (can edit bibliography only)"
     case 3:
       return "Observer (cannot edit)"
+    case 4:
+      return "Full membership (can edit everything)"
     default:
-      return
+      return ""
   }
 }
 
@@ -39,27 +38,13 @@ function convertRole(m: Member): String{
     class="list-group pt-3"
     >
         <li class="list-group-item">
-            <div class="list-group-item-header">
-                <div class="list-group-item-name">
-                    {{ member.member_name }} {{ `(${member.member_email})` }}
-                </div>
-                    <div class="list-group-item-buttons"> 
-                        <button
-                            v-if="!member.administrator"
-                            type="button"
-                            class="btn btn-sm btn-secondary"
-                            data-bs-toggle="modal"
-                            data-bs-target="#memberDeleteModal"
-                            @click="$emit('update:deleteMember', member)"
-                        >
-                            <i class="fa-regular fa-trash-can"></i>
-                        </button>
-                    </div>
-            </div>
-            <div class="list-group-item-description">
+              <div class="">
+                  {{ `${member.fname} ${member.lname}` }} {{ `(${member.email})` }}
+              </div>
+            <div class="">
                 {{ convertRole(member) }}
             </div>
-            <div v-if="member.administrator" class="list-group-item-administrator">
+            <div v-if="member.membership_type==4" class="fw-bold">
                 Project Administrator
             </div>
         </li>
@@ -67,28 +52,4 @@ function convertRole(m: Member): String{
 </template>
 
 <style scoped>
-.list-group-item-header {
-  display: flex;
-}
-
-.list-group-item-description {
-  font-size: 95%;
-  padding-top: 5px;
-}
-
-.list-group-item-adminstrator {
-  padding-left: 20px;
-  padding-top: 5px;
-  font-weight: bold;
-}
-
-.list-group-item-name {
-  display: flex;
-  flex-grow: 1;
-}
-
-.list-group-item-buttons {
-  display: flex;
-  gap: 7px;
-}
 </style>
