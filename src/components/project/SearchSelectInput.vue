@@ -87,6 +87,7 @@ ul.results {
   position: absolute;
   right: -1px;
   top: 36px;
+  z-index: 100;
 }
 
 ul.results li {

@@ -6,6 +6,7 @@ import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { getTaxonForMediaId } from '@/views/project/utils'
+import EditDialog from '@/views/project/media/EditDialog.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaCard from '@/components/project/MediaCard.vue'
 
@@ -92,12 +93,6 @@ function refresh() {
           <span> Create Media</span>
         </button>
       </RouterLink>
-      <RouterLink :to="`/myprojects/${projectId}/media/create/batch`">
-        <button type="button" class="btn btn-m btn-outline-primary">
-          <i class="fa fa-plus"></i>
-          <span> Upload Batch</span>
-        </button>
-      </RouterLink>
       <RouterLink
         v-if="uncuratedMediaCount > 0"
         :to="`/myprojects/${projectId}/media/curate`"
@@ -107,7 +102,7 @@ function refresh() {
           <span> Curate Media</span>
         </button>
       </RouterLink>
-      <RouterLink v-else :to="`/myprojects/${projectId}/media/batch`">
+      <RouterLink v-else :to="`/myprojects/${projectId}/media/create/batch`">
         <button type="button" class="btn btn-m btn-outline-primary">
           <i class="fa fa-plus"></i>
           <span> Upload Batch</span>
@@ -158,6 +153,14 @@ function refresh() {
           v-if="someSelected"
           class="item"
           data-bs-toggle="modal"
+          data-bs-target="#mediaEditModal"
+        >
+          <i class="fa-regular fa-pen-to-square"></i>
+        </span>
+        <span
+          v-if="someSelected"
+          class="item"
+          data-bs-toggle="modal"
           data-bs-target="#mediaDeleteModal"
           @click="mediaToDelete = filteredMedia.filter((b) => b.selected)"
         >
@@ -176,11 +179,20 @@ function refresh() {
             :viewName="mediaViewsStore.getMediaViewById(media.view_id)?.name"
             :taxon="getTaxonForMediaId(media)"
           >
+            <template #bar>
+              <input
+                class="form-check-input media-checkbox"
+                type="checkbox"
+                v-model="media.selected"
+                @click.stop=""
+              />
+            </template>
           </MediaCard>
         </RouterLink>
       </div>
     </div>
   </LoadingIndicator>
+  <EditDialog></EditDialog>
 </template>
 <style scoped>
 @import '@/views/project/styles.css';
