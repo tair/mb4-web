@@ -50,6 +50,3 @@ function convertRole(m: Member): String{
         </li>
     </ul>
 </template>
-
-<style scoped>
-</style>
