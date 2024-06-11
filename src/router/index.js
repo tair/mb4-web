@@ -141,7 +141,7 @@ const router = createRouter({
           beforeEnter: requireSignIn,
         },
         {
-          path: '/myprojects',
+          path: '/myprojects/:id(\\d+)',
           name: 'MyProjectsView',
           component: MyProjectsView,
           beforeEnter: [requireSignIn, invalidateAll],
