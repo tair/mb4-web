@@ -36,8 +36,21 @@ function convertRole(m: Member): String {
     class="list-group pt-3"
   >
     <li class="list-group-item">
-      <div class="">
-        {{ `${member.fname} ${member.lname}` }} {{ `(${member.email})` }}
+      <div class="list-group-item-header">
+        <div class="list-group-item-name">
+          {{ `${member.fname} ${member.lname}` }} {{ `(${member.email})` }}
+        </div>
+        <div class="list-group-item-buttons">
+          <button
+            type="button"
+            class="btn btn-sm btn-secondary"
+            data-bs-toggle="modal"
+            data-bs-target="#memberDeleteModal"
+            @click="$emit('update:deleteMember', member)"
+          >
+            <i class="fa-regular fa-trash-can"></i>
+          </button>
+        </div>
       </div>
       <div class="">
         {{ convertRole(member) }}
@@ -48,3 +61,16 @@ function convertRole(m: Member): String {
     </li>
   </ul>
 </template>
+<style scoped>
+.list-group-item-header {
+  display: flex;
+}
+.list-group-item-buttons {
+  display: flex;
+  gap: 7px;
+}
+.list-group-item-name {
+  display: flex;
+  flex-grow: 1;
+}
+</style>
