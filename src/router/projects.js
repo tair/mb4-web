@@ -213,7 +213,7 @@ export const MY_PROJECT_VIEWS = [
     ],
   },
   {
-    path: ':id/members',
+    path: 'members',
     name: 'MyProjectMembersView',
     meta: {
       itemName: 'members',

@@ -18,7 +18,7 @@ onMounted(() => {
 })
 </script>
 <template>
-    <LoadingIndicator :isLoaded="isLoaded">
+  <LoadingIndicator :isLoaded="isLoaded">
     <header>
       There are {{ membersStore.members?.length }} members associated with this
       project.
@@ -33,5 +33,5 @@ onMounted(() => {
       </RouterLink>
     </div>
     <MembersCard :members="membersStore.members"></MembersCard>
-    </LoadingIndicator>
+  </LoadingIndicator>
 </template>
