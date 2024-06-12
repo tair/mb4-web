@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 const props = defineProps<{
   name?: string
   initialValue?: number
-  search: (text: string) => Promise<any[]>
+  search: (text: string) => Promise<number[]>
   getItem: (id: number) => any
   getText: (item: any) => string
   getId: (item: any) => number

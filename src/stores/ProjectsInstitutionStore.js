@@ -40,14 +40,14 @@ export const useProjectInstitutionStore = defineStore({
       return false
     },
 
-    getInstitutionById(institutionId) {
-      for (let institution in this.institutions) {
-        if (institution.institutionId == institutionId) {
-          return institution
-        }
-      }
+    async getInstitutionById(projectId, institutionId) {
+      const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/institutions/add`
 
-      return null
+      const response = await axios.get(url, {
+        params: { institutionId: institutionId },
+      })
+
+      return response.data.institution
     },
 
     async removeByInstitutionIds(institutionIds) {

@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import axios from 'axios'
 import SearchSelectInput from '@/components/project/SearchSelectInput.vue'
+import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore';
 
 const props = defineProps<{
   projectId: number
 }>()
 
 const emit = defineEmits(['updateParent'])
+const ProjectsInstitutionStore = useProjectInstitutionStore()
 
 async function searchInstitutions(searchTerm: string) {
   try {
@@ -32,8 +34,8 @@ function getInstitutionName(institution: any) {
   return institution.name
 }
 
-function getInstitution(institutionId: number) {
-  return {}
+async function getInstitution(institutionId: number) {
+  return await ProjectsInstitutionStore.getInstitutionById(props.projectId, institutionId)
 }
 
 function handleSelect(institution: any) {
