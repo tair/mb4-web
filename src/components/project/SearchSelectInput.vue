@@ -1,11 +1,22 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 const props = defineProps<{
+  // The name of the input field.
   name?: string
+
+  // The ID of the item for the initial value.
   initialValue?: number
-  search: (text: string) => Promise<number[]>
+
+  // The search function that returns items based on the text.
+  search: (text: string) => Promise<any[]>
+
+  // A function that will get the item given its ID.
   getItem: (id: number) => any
+
+  // Get the display text given the item.
   getText: (item: any) => string
+
+  // Get the item's ID.
   getId: (item: any) => number
 }>()
 
