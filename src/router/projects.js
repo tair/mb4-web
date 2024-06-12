@@ -658,7 +658,7 @@ export const MY_PROJECT_VIEWS = [
     ],
   },
   {
-    path: ':id/institutions/',
+    path: 'institutions/',
     name: 'MyProjectInstitutionsView',
     meta: {
       itemName: 'institutions',
@@ -675,7 +675,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/institutions/create',
+    path: 'institutions/create',
     name: 'MyProjectInstitutionsCreateView',
     meta: {
       itemName: 'institutions',
@@ -692,7 +692,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/duplication/request',
+    path: 'duplication/request',
     name: 'MyProjectDuplicationRequestView',
     meta: {
       itemName: 'duplication',
@@ -709,13 +709,13 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/publish/partition',
+    path: 'publish/partition',
     name: 'MyProjectPublishPartitionView',
     meta: {
-      itemName: 'publishPartition',
+      itemName: 'Publish Partition',
       breadcrumbs: [
         {
-          label: 'publishPartition',
+          label: 'Publish Partition',
           to: 'MyProjectPublishPartitionView',
         },
       ],
@@ -726,13 +726,13 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/publish/partition/:partitionId',
+    path: 'publish/partition/:partitionId',
     name: 'MyProjectPublishPartitionSummaryView',
     meta: {
-      itemName: 'publishPartition',
+      itemName: 'Publish Partition',
       breadcrumbs: [
         {
-          label: 'publishPartition',
+          label: 'Publish Partition',
           to: 'MyProjectPublishPartitionView',
         },
       ],
