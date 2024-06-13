@@ -3,7 +3,7 @@ import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMembersStore } from '@/stores/MembersStore'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
-import MembersCard from '@/components/project/MembersCard.vue'
+import MembersCard from '@/components/project/MembersComp.vue'
 
 const route = useRoute()
 const projectId = route.params.id
