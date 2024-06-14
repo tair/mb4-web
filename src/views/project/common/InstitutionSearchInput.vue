@@ -1,26 +1,31 @@
 <script setup lang="ts">
 import axios from 'axios'
+import { useRoute } from 'vue-router'
 import SearchSelectInput from '@/components/project/SearchSelectInput.vue'
-import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore'
 
-const props = defineProps<{
-  projectId: number
-}>()
+const route = useRoute()
+const projectId = route.params.id
+const institutionCache = new Map()
 
 const emit = defineEmits(['updateParent'])
-const ProjectsInstitutionStore = useProjectInstitutionStore()
 
 async function searchInstitutions(searchTerm: string) {
   try {
-    const url = `${import.meta.env.VITE_API_URL}/projects/${
-      props.projectId
-    }/institutions/search`
+    const url = `${
+      import.meta.env.VITE_API_URL
+    }/projects/${projectId}/institutions/search`
 
     const response = await axios.get(url, {
       params: { searchTerm: searchTerm },
     })
 
-    return response.data
+    const institutionsFound = response.data
+
+    institutionsFound.forEach((institution: any) => {
+      institutionCache.set(institution.id, institution)
+    })
+
+    return institutionsFound
   } catch (e) {
     console.error('Error getting Institutions\n', e)
   }
@@ -35,10 +40,7 @@ function getInstitutionName(institution: any) {
 }
 
 async function getInstitution(institutionId: number) {
-  return await ProjectsInstitutionStore.getInstitutionById(
-    props.projectId,
-    institutionId
-  )
+  return institutionCache.get(institutionId)
 }
 
 function handleSelect(institution: any) {

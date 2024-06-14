@@ -1,30 +1,43 @@
 <script setup lang="ts">
 import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore'
+import InstitutionSearchInput from '../common/InstitutionSearchInput.vue'
 
 const props = defineProps<{
   projectId: number | string
   institution: any
 }>()
 
+let institutionId = props.institution.institution_id
+let institutionName = props.institution.name
+
 const projectInstitutionsStore = useProjectInstitutionStore()
 
-async function editInstitution(event: any) {
-  const formData = new FormData(event.target)
-  const formObject = Object.fromEntries(formData.entries())
-
-  const newName = formObject.name
+async function editInstitution() {
+  if (
+    institutionName == props.institution.name ||
+    institutionName.trim().length == 0
+  ) {
+    alert('Please update your desired edits')
+    return
+  }
 
   const response = await projectInstitutionsStore.editInstitution(
     props.projectId,
     props.institution.institution_id,
-    newName
+    institutionName,
+    institutionId
   )
 
-  if (response == 200) {
+  if (response) {
     alert('Success.')
   } else {
     alert('Could not edit the chosen institution.')
   }
+}
+
+function setInstitutionData(name: string, id: number) {
+  institutionName = name
+  institutionId = id
 }
 </script>
 
@@ -36,30 +49,33 @@ async function editInstitution(event: any) {
           <h5 class="modal-title">Edit</h5>
         </div>
         <div class="modal-body" v-if="institution">
-          Please enter your new name:
+          Please make any changes to the institution below:
           <p :key="institution.institution_id">
             {{ institution.name }}
           </p>
         </div>
-        <form @submit.prevent="editInstitution">
-          <input type="text" name="name" />
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              class="btn btn-primary"
-              data-bs-dismiss="modal"
-            >
-              Confirm
-            </button>
-          </div>
-        </form>
+        <InstitutionSearchInput
+          :projectId="Number(projectId)"
+          @updateParent="setInstitutionData"
+        >
+        </InstitutionSearchInput>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            data-bs-dismiss="modal"
+            @click="editInstitution"
+          >
+            Confirm
+          </button>
+        </div>
       </div>
     </div>
   </div>

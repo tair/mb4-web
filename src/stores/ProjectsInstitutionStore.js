@@ -1,6 +1,5 @@
 import axios from 'axios'
 import { defineStore } from 'pinia'
-import { renderSlot } from 'vue'
 
 export const useProjectInstitutionStore = defineStore({
   id: 'project-institutions',
@@ -44,7 +43,7 @@ export const useProjectInstitutionStore = defineStore({
     async getInstitutionById(projectId, institutionId) {
       const url = `${
         import.meta.env.VITE_API_URL
-      }/projects/${projectId}/institutions/add`
+      }/projects/${projectId}/institutions/find`
 
       const response = await axios.get(url, {
         params: { institutionId: institutionId },
@@ -81,14 +80,35 @@ export const useProjectInstitutionStore = defineStore({
       return false
     },
 
-    async editInstitution(projectId, institutionId, name) {
+    async editInstitution(
+      projectId,
+      institutionId,
+      name,
+      selectedInstitutionId
+    ) {
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/institutions/edit`
 
-      const response = await axios.post(url, { institutionId, name })
+      const response = await axios.post(url, {
+        institutionId,
+        name,
+        selectedInstitutionId,
+      })
 
-      return response
+      if (response.status == 200) {
+        this.removeByInstitutionIds([institutionId])
+
+        const institution = response.data.institution
+        this.institutions.push({
+          institution_id: institution.institution_id,
+          name: institution.name,
+        })
+
+        return true
+      }
+
+      return false
     },
   },
 })
