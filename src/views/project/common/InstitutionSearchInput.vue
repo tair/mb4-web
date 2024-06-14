@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import axios from 'axios'
 import SearchSelectInput from '@/components/project/SearchSelectInput.vue'
-import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore';
+import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore'
 
 const props = defineProps<{
   projectId: number
@@ -35,7 +35,10 @@ function getInstitutionName(institution: any) {
 }
 
 async function getInstitution(institutionId: number) {
-  return await ProjectsInstitutionStore.getInstitutionById(props.projectId, institutionId)
+  return await ProjectsInstitutionStore.getInstitutionById(
+    props.projectId,
+    institutionId
+  )
 }
 
 function handleSelect(institution: any) {

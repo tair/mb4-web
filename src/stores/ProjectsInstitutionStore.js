@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { defineStore } from 'pinia'
+import { renderSlot } from 'vue'
 
 export const useProjectInstitutionStore = defineStore({
   id: 'project-institutions',
@@ -41,7 +42,9 @@ export const useProjectInstitutionStore = defineStore({
     },
 
     async getInstitutionById(projectId, institutionId) {
-      const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/institutions/add`
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/institutions/add`
 
       const response = await axios.get(url, {
         params: { institutionId: institutionId },
@@ -76,6 +79,16 @@ export const useProjectInstitutionStore = defineStore({
         return true
       }
       return false
+    },
+
+    async editInstitution(projectId, institutionId, name) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/institutions/edit`
+
+      const response = await axios.post(url, { institutionId, name })
+
+      return response
     },
   },
 })

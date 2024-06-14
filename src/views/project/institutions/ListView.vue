@@ -5,11 +5,13 @@ import { useRoute } from 'vue-router'
 import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import DeleteDialog from '@/views/project/institutions/DeleteDialog.vue'
+import EditDialog from '@/views/project/institutions/EditDialog.vue'
 
 const route = useRoute()
 const projectId = route.params.id
 const projectInstitutionsStore = useProjectInstitutionStore()
 const institutionsToDelete = ref([])
+const institutionToEdit = ref([])
 
 const isLoaded = computed(() => projectInstitutionsStore.isLoaded)
 
@@ -109,6 +111,15 @@ function refresh() {
                   type="button"
                   class="btn btn-sm btn-secondary"
                   data-bs-toggle="modal"
+                  data-bs-target="#viewEditModal"
+                  @click="institutionToEdit = institution"
+                >
+                  <i class="fa-regular fa-pen-to-square"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-secondary"
+                  data-bs-toggle="modal"
                   data-bs-target="#viewDeleteModal"
                   @click="institutionsToDelete = [institution]"
                 >
@@ -121,6 +132,10 @@ function refresh() {
       </div>
     </div>
   </LoadingIndicator>
+  <EditDialog
+    :projectId="projectId"
+    :institution="institutionToEdit"
+  ></EditDialog>
   <DeleteDialog
     :institutions="institutionsToDelete"
     :projectId="projectId"
