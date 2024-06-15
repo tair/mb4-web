@@ -1,4 +1,5 @@
-<script setup lang="ts">
+<script setup>
+import axios from 'axios'
 import router from '@/router'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
@@ -10,7 +11,7 @@ const projectId = route.params.id
 
 const documentsStore = useDocumentsStore()
 
-async function createDocument(event: Event) {
+async function createDocument(event) {
   const formData = new FormData(event.currentTarget)
   const success = await documentsStore.create(projectId, formData)
   if (!success) {

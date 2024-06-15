@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import router from '@/router'
@@ -27,7 +27,7 @@ onMounted(() => {
   }
 })
 
-async function edit(event: Event) {
+async function edit(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
   const success = await mediaViewsStore.edit(projectId, viewId, json)

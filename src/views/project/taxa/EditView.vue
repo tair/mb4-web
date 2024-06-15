@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import router from '@/router'
 import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
@@ -18,7 +18,7 @@ const isLoaded = computed(
 )
 const taxon = computed(() => taxaStore.getTaxonById(taxonId))
 
-async function editTaxon(event: Event) {
+async function editTaxon(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
   const success = await taxaStore.edit(projectId, taxonId, json)
