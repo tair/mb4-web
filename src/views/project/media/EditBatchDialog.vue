@@ -25,7 +25,7 @@ const menuCollapsed = ref({
 })
 
 async function handleSubmitClicked(event: Event) {
-  const target = event.currentTarget
+  const target = event.currentTarget as any
   const formData = new FormData(target)
   const json = Object.fromEntries(formData)
   const success = await props.batchEdit(json)
@@ -50,11 +50,12 @@ onMounted(() => {
     bibliographiesStore.fetchBibliographies(projectId)
   }
 
-  for (const id of Object.keys(menuCollapsed.value)) {
+  const values = menuCollapsed.value as any
+  for (const id of Object.keys(values)) {
+    const element = document.getElementById(id)
     if (element) {
-      const element = document.getElementById(id)
       const listener = () => {
-        menuCollapsed.value[id] = !element.classList.contains('show')
+        values[id] = !element.classList.contains('show')
       }
 
       element.addEventListener('shown.bs.collapse', listener)
