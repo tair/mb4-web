@@ -1,11 +1,11 @@
-<script setup>
+<script setup lang="ts">
 import router from '@/router'
 import { useProjectsStore } from '@/stores/ProjectsStore'
 import { schema } from './schema.js'
 
 const projectsStore = useProjectsStore()
 
-async function createProject(event) {
+async function createProject(event: Event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
   const project = await projectsStore.create(json)

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
@@ -23,7 +23,7 @@ onMounted(() => {
   }
 })
 
-async function editReference(event) {
+async function editReference(event: Event) {
   const formData = new FormData(event.currentTarget)
   const authorFields = ['authors', 'secondary_authors', 'editors']
   const authors = Object.fromEntries(

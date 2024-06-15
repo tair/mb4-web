@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import router from '@/router'
 import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
@@ -13,7 +13,7 @@ const documentId = route.params.documentId
 const documentsStore = useDocumentsStore()
 const document = computed(() => documentsStore.getDocumentById(documentId))
 
-async function editDocument(event) {
+async function editDocument(event: Event) {
   const formData = new FormData(event.currentTarget)
   const success = await documentsStore.edit(projectId, documentId, formData)
   if (!success) {

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import router from '@/router'
 import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
@@ -27,7 +27,7 @@ const isLoaded = computed(
     mediaViewsStore.isLoaded
 )
 
-async function createBatch(event) {
+async function createBatch(event: Event) {
   const formData = new FormData(event.currentTarget)
   const success = await mediaStore.createBatch(projectId, formData)
   if (!success) {

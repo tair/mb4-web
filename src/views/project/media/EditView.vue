@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import router from '@/router'
 import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
@@ -29,7 +29,7 @@ const isLoaded = computed(
 )
 const media = computed(() => mediaStore.getMediaById(mediaId))
 
-async function editMedia(event) {
+async function editMedia(event: Event) {
   const formData = new FormData(event.currentTarget)
   const success = await mediaStore.edit(projectId, mediaId, formData)
   if (!success) {

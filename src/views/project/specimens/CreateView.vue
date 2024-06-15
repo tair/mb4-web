@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { useRoute } from 'vue-router'
 import router from '@/router'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
@@ -8,7 +8,7 @@ const route = useRoute()
 const projectId = route.params.id
 const specimensStore = useSpecimensStore()
 
-async function create(event) {
+async function create(event: Event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
   const success = await specimensStore.create(projectId, json)

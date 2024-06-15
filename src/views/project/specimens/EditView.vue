@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import router from '@/router'
@@ -35,7 +35,7 @@ onMounted(() => {
   }
 })
 
-async function edit(event) {
+async function edit(event: Event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
   const success = await specimensStore.edit(projectId, specimenId, json)

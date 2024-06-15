@@ -6,7 +6,7 @@ import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { getTaxonForMediaId } from '@/views/project/utils'
-import EditDialog from '@/views/project/media/EditDialog.vue'
+import EditBatchDialog from '@/views/project/media/EditBatchDialog.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaCard from '@/components/project/MediaCard.vue'
 
@@ -53,6 +53,13 @@ const allSelected = computed({
 })
 
 const someSelected = computed(() => filteredMedia.value.some((b) => b.selected))
+
+async function batchEdit(json) {
+  const mediaIds = filteredMedia.value
+    .filter((m) => m.selected)
+    .map((m) => m.media_id)
+  return mediaStore.editIds(projectId, mediaIds, json)
+}
 
 onMounted(() => {
   if (!mediaStore.isLoaded) {
@@ -192,7 +199,7 @@ function refresh() {
       </div>
     </div>
   </LoadingIndicator>
-  <EditDialog></EditDialog>
+  <EditBatchDialog :batchEdit="batchEdit"></EditBatchDialog>
 </template>
 <style scoped>
 @import '@/views/project/styles.css';

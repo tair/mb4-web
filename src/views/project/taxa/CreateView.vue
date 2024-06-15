@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import router from '@/router'
 import { useRoute } from 'vue-router'
 import { useTaxaStore } from '@/stores/TaxaStore'
@@ -9,7 +9,7 @@ const projectId = route.params.id
 
 const taxaStore = useTaxaStore()
 
-async function createTaxon(event) {
+async function createTaxon(event: Event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
   const success = await taxaStore.create(projectId, json)

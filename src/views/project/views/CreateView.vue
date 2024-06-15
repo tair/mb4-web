@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { useRoute } from 'vue-router'
 import router from '@/router'
 import { useMediaViewsStore } from '@/stores/MediaViewsStore'
@@ -9,7 +9,7 @@ const projectId = route.params.id
 
 const mediaViewsStore = useMediaViewsStore()
 
-async function create(event) {
+async function create(event: Event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
   const success = await mediaViewsStore.create(projectId, json)
