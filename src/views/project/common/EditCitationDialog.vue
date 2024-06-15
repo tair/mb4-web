@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { Modal } from 'bootstrap'
 import { schema } from '@/views/project/common/citationSchema.js'
 
@@ -7,7 +7,7 @@ const props = defineProps({
   editCitation: Function,
 })
 
-async function createCitation(event: Event) {
+async function createCitation(event) {
   const target = event.currentTarget
   const formData = new FormData(target)
   const json = Object.fromEntries(formData)

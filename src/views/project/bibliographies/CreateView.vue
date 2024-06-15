@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { useRoute } from 'vue-router'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
 import router from '@/router'

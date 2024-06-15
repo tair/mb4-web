@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import router from '@/router'
 import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
@@ -27,7 +27,7 @@ const isLoaded = computed(
     mediaViewsStore.isLoaded
 )
 
-async function createMedia(event: Event) {
+async function createMedia(event) {
   const formData = new FormData(event.currentTarget)
   const success = await mediaStore.create(projectId, formData)
   if (!success) {
