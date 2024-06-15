@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import BibliographySearchInput from '@/views/project/common/BibliographySearchInput.vue'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { Collapse, Modal } from 'bootstrap'
+import { Modal } from 'bootstrap'
 import { schema } from '@/views/project/media/schema.js'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
+import BibliographySearchInput from '@/views/project/common/BibliographySearchInput.vue'
 
 const props = defineProps<{
-  batchEdit: (formData: FormData) => Promise<boolean>
+  batchEdit: (formData: any) => Promise<boolean>
 }>()
 
 const route = useRoute()
@@ -51,13 +51,15 @@ onMounted(() => {
   }
 
   for (const id of Object.keys(menuCollapsed.value)) {
-    const element = document.getElementById(id)
-    const listener = (event) => {
-      menuCollapsed.value[id] = !element.classList.contains('show')
-    }
+    if (element) {
+      const element = document.getElementById(id)
+      const listener = () => {
+        menuCollapsed.value[id] = !element.classList.contains('show')
+      }
 
-    element.addEventListener('shown.bs.collapse', listener)
-    element.addEventListener('hidden.bs.collapse', listener)
+      element.addEventListener('shown.bs.collapse', listener)
+      element.addEventListener('hidden.bs.collapse', listener)
+    }
   }
 })
 </script>
