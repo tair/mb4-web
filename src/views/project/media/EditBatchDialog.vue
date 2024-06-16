@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { Modal } from 'bootstrap'
 import { schema } from '@/views/project/media/schema.js'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
+import { useFoliosStore } from '@/stores/FoliosStore'
 import BibliographySearchInput from '@/views/project/common/BibliographySearchInput.vue'
 
 const props = defineProps<{
@@ -14,10 +15,12 @@ const route = useRoute()
 const projectId = route.params.id
 
 const bibliographiesStore = useBibliographiesStore()
+const foliosStore = useFoliosStore()
 
 const menuCollapsed = ref({
   mediaEditCopyright: true,
   mediaEditView: true,
+  mediaEditFolio: true,
   mediaEditSide: true,
   mediaEditSpecimen: true,
   mediaEditBibliography: true,
@@ -48,6 +51,9 @@ async function handleSubmitClicked(event: Event) {
 onMounted(() => {
   if (!bibliographiesStore.isLoaded) {
     bibliographiesStore.fetchBibliographies(projectId)
+  }
+  if (!foliosStore.isLoaded) {
+    foliosStore.fetch(projectId)
   }
 
   const values = menuCollapsed.value as any
@@ -171,6 +177,39 @@ onMounted(() => {
                         name="view_id"
                       >
                       </component>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button
+                    class="accordion-button collapsed"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#mediaEditFolio"
+                    aria-expanded="false"
+                    aria-controls="mediaEditFolio"
+                  >
+                    Folio Information
+                  </button>
+                </h2>
+                <div id="mediaEditFolio" class="accordion-collapse collapse">
+                  <div class="accordion-body">
+                    <div class="form-group">
+                      <label class="form-label"> Folio </label>
+                      <select
+                        :disabled="menuCollapsed['mediaEditFolio']"
+                        name="folio_id"
+                      >
+                        <option
+                          v-for="folio in foliosStore.folios"
+                          :key="folio.folio_id"
+                          :value="folio.folio_id"
+                        >
+                          {{ folio.name }}
+                        </option>
+                      </select>
                     </div>
                   </div>
                 </div>
