@@ -13,12 +13,7 @@
       "@components/*": ["src/components/*"],
       "@assets/*": ["src/assets/*"]
     },
-    "lib": [
-      "es2017",
-      "dom",
-      "dom.iterable",
-      "esnext.asynciterable"
-    ],
+    "lib": ["es2017", "dom", "dom.iterable", "esnext.asynciterable"],
     "types": ["vite/client"]
   }
 }
