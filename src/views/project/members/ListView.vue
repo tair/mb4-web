@@ -1,15 +1,17 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMembersStore } from '@/stores/MembersStore'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MembersCard from '@/components/project/MembersCard.vue'
+import DeleteMemberDialog from './DeleteMemberDialog.vue'
 
 const route = useRoute()
 const projectId = route.params.id
 
 const membersStore = useMembersStore()
 const isLoaded = computed(() => membersStore.isLoaded)
+const memberToDelete = ref({})
 
 onMounted(() => {
   if (!membersStore.isLoaded) {
@@ -34,4 +36,5 @@ onMounted(() => {
     </div>
     <MembersCard :members="membersStore.members"></MembersCard>
   </LoadingIndicator>
+  <DeleteMemberDialog :document="memberToDelete" :projectId="projectId" />
 </template>
