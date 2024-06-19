@@ -7,16 +7,23 @@ import { defineStore } from 'pinia'
  * available.
  */
 export const useProjectUsersStore = defineStore({
-  id: 'project-users',
+  id: 'members',
   state: () => ({
     isLoaded: false,
     users: [],
+    members: [],
   }),
   actions: {
     async fetchUsers(projectId) {
       const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/users`
       const response = await axios.get(url)
       this.users = response.data.users
+
+      const ur = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/users/members`
+      const res = await axios.get(ur)
+      this.members = res.data.members
       this.isLoaded = true
     },
     getUserById(userId) {
@@ -27,9 +34,31 @@ export const useProjectUsersStore = defineStore({
       }
       return null
     },
+    async deleteMembers(projectId, linkId) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/members/delete`
+      const response = await axios.post(url, {
+        link_id: linkId,
+      })
+      if (response.status == 200) {
+        this.removeMemberById(linkId)
+        return true
+      }
+      return false
+    },
+    removeMemberById(linkId) {
+      for (let x = 0; x < this.members.length; ++x) {
+        if (linkId.includes(this.members[x].link_id)) {
+          this.members.splice(x, 1)
+          break
+        }
+      }
+    },
     invalidate() {
       this.isLoaded = false
       this.users = []
+      this.members = []
     },
   },
 })

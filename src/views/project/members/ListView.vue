@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { useMembersStore } from '@/stores/MembersStore'
+import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MembersCard from '@/components/project/MembersCard.vue'
 import DeleteMemberDialog from './DeleteMemberDialog.vue'
@@ -9,13 +9,13 @@ import DeleteMemberDialog from './DeleteMemberDialog.vue'
 const route = useRoute()
 const projectId = route.params.id
 
-const membersStore = useMembersStore()
+const membersStore = useProjectUsersStore()
 const isLoaded = computed(() => membersStore.isLoaded)
 const memberToDelete = ref({})
-
 onMounted(() => {
   if (!membersStore.isLoaded) {
-    membersStore.fetchMembers(projectId)
+    membersStore.fetchUsers(projectId)
+    console.log(membersStore)
   }
 })
 </script>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 type Member = {
   user_id: number
+  admin: boolean
   fname: string
   lname: string
   email: string
@@ -10,19 +11,17 @@ type Member = {
 const props = defineProps<{
   members: Member[]
 }>()
-
+console.log(props.members)
 function convertRole(m: Member): String {
   switch (m.membership_type) {
     case 0:
       return 'Full membership (can edit everything)'
     case 1:
-      return 'Character annotater (can edit everything but characters and states)'
-    case 2:
-      return 'Bibliography maintainer (can edit bibliography only)'
-    case 3:
       return 'Observer (cannot edit)'
-    case 4:
-      return 'Full membership (can edit everything)'
+    case 2:
+      return 'Character annotater (can edit everything but characters and states)'
+    case 3:
+      return 'Bibliography maintainer (can edit bibliography only)'
     default:
       return ''
   }
@@ -55,7 +54,7 @@ function convertRole(m: Member): String {
       <div class="">
         {{ convertRole(member) }}
       </div>
-      <div v-if="member.membership_type == 4" class="fw-bold">
+      <div v-if="member.admin" class="fw-bold">
         Project Administrator
       </div>
     </li>
