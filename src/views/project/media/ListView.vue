@@ -10,6 +10,7 @@ import { getTaxonForMediaId } from '@/views/project/utils'
 import { TaxaFriendlyNames, nameColumnMap } from '@/utils/taxa'
 import EditBatchDialog from '@/views/project/media/EditBatchDialog.vue'
 import FilterDialog from '@/views/project/media/FilterDialog.vue'
+import EditBatchDialog from '@/views/project/media/EditBatchDialog.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaCard from '@/components/project/MediaCard.vue'
 
