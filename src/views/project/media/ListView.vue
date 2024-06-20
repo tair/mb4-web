@@ -82,6 +82,12 @@ function refresh() {
   taxaStore.fetch(projectId)
   mediaViewsStore.fetchMediaViews(projectId)
 }
+
+const baseUrl = `${import.meta.env.VITE_API_URL}/projects/${projectId}/media`
+function onClickDownloadOriginalFilenames() {
+  const url = `${baseUrl}/download/filenames`
+  window.location.href = url
+}
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
@@ -121,7 +127,7 @@ function refresh() {
           class="btn btn-m btn-outline-primary dropdown-toggle"
           data-bs-toggle="dropdown"
         >
-          <i class="fa fa-file-arrow-down"></i>
+          <i class="fa fa-file-arrow-up"></i>
           <span> Import Media </span>
         </button>
         <div class="dropdown-menu">
@@ -133,6 +139,25 @@ function refresh() {
               Import from iDigBio
             </button>
           </RouterLink>
+        </div>
+      </div>
+      <div class="btn-group">
+        <button
+          type="button"
+          class="btn btn-m btn-outline-primary dropdown-toggle"
+          data-bs-toggle="dropdown"
+        >
+          <i class="fa fa-download"></i>
+          <span> Download </span>
+        </button>
+        <div class="dropdown-menu">
+          <button
+            type="button"
+            class="dropdown-item"
+            @click="onClickDownloadOriginalFilenames"
+          >
+            Original Filenames
+          </button>
         </div>
       </div>
     </div>
