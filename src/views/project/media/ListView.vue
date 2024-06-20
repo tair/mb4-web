@@ -6,6 +6,7 @@ import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { getTaxonForMediaId } from '@/views/project/utils'
+import EditBatchDialog from '@/views/project/media/EditBatchDialog.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaCard from '@/components/project/MediaCard.vue'
 
@@ -53,6 +54,13 @@ const allSelected = computed({
 
 const someSelected = computed(() => filteredMedia.value.some((b) => b.selected))
 
+async function batchEdit(json) {
+  const mediaIds = filteredMedia.value
+    .filter((m) => m.selected)
+    .map((m) => m.media_id)
+  return mediaStore.editIds(projectId, mediaIds, json)
+}
+
 onMounted(() => {
   if (!mediaStore.isLoaded) {
     mediaStore.fetchMedia(projectId)
@@ -92,12 +100,6 @@ function refresh() {
           <span> Create Media</span>
         </button>
       </RouterLink>
-      <RouterLink :to="`/myprojects/${projectId}/media/create/batch`">
-        <button type="button" class="btn btn-m btn-outline-primary">
-          <i class="fa fa-plus"></i>
-          <span> Upload Batch</span>
-        </button>
-      </RouterLink>
       <RouterLink
         v-if="uncuratedMediaCount > 0"
         :to="`/myprojects/${projectId}/media/curate`"
@@ -107,7 +109,7 @@ function refresh() {
           <span> Curate Media</span>
         </button>
       </RouterLink>
-      <RouterLink v-else :to="`/myprojects/${projectId}/media/batch`">
+      <RouterLink v-else :to="`/myprojects/${projectId}/media/create/batch`">
         <button type="button" class="btn btn-m btn-outline-primary">
           <i class="fa fa-plus"></i>
           <span> Upload Batch</span>
@@ -158,6 +160,14 @@ function refresh() {
           v-if="someSelected"
           class="item"
           data-bs-toggle="modal"
+          data-bs-target="#mediaEditModal"
+        >
+          <i class="fa-regular fa-pen-to-square"></i>
+        </span>
+        <span
+          v-if="someSelected"
+          class="item"
+          data-bs-toggle="modal"
           data-bs-target="#mediaDeleteModal"
           @click="mediaToDelete = filteredMedia.filter((b) => b.selected)"
         >
@@ -176,11 +186,20 @@ function refresh() {
             :viewName="mediaViewsStore.getMediaViewById(media.view_id)?.name"
             :taxon="getTaxonForMediaId(media)"
           >
+            <template #bar>
+              <input
+                class="form-check-input media-checkbox"
+                type="checkbox"
+                v-model="media.selected"
+                @click.stop=""
+              />
+            </template>
           </MediaCard>
         </RouterLink>
       </div>
     </div>
   </LoadingIndicator>
+  <EditBatchDialog :batchEdit="batchEdit"></EditBatchDialog>
 </template>
 <style scoped>
 @import '@/views/project/styles.css';

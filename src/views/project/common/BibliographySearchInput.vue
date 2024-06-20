@@ -13,6 +13,9 @@ defineProps({
   value: {
     type: Number,
   },
+  disabled: {
+    type: Boolean,
+  },
 })
 
 const route = useRoute()
@@ -45,6 +48,7 @@ function getItem(referenceId) {
   <SearchSelectInput
     :name="name"
     :initialValue="value"
+    :disabled="disabled"
     :getText="getBibliographyText"
     :getId="getBibliographyNumber"
     :getItem="getItem"
