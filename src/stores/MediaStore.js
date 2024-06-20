@@ -6,6 +6,7 @@ export const useMediaStore = defineStore({
   state: () => ({
     isLoaded: false,
     media: [],
+    filterMediaIds: [],
   }),
   getters: {
     viewIds: function () {
