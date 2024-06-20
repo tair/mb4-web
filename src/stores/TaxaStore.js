@@ -112,13 +112,13 @@ export const useTaxaStore = defineStore({
       return null
     },
     getTaxaByIds(taxaIds) {
-      const map = new Map()
+      const taxa = []
       for (const taxon of this.taxa) {
-        if (taxaIds.includes(taxon.taxon_id)) {
-          map.set(taxon.taxon_id, taxon)
+        if (taxaIds.has(taxon.taxon_id)) {
+          taxa.push(taxon)
         }
       }
-      return map
+      return taxa
     },
     removeByTaxonIds(taxonIds) {
       let x = 0
