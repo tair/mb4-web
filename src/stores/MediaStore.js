@@ -6,7 +6,6 @@ export const useMediaStore = defineStore({
   state: () => ({
     isLoaded: false,
     media: [],
-    filterMediaIds: [],
   }),
   getters: {
     viewIds: function () {
@@ -88,7 +87,7 @@ export const useMediaStore = defineStore({
       }/projects/${projectId}/media/edit`
       const response = await axios.post(url, {
         media_ids: mediaIds,
-        media: json,
+        ...json,
       })
       if (response.status == 200) {
         const media = response.data.media
