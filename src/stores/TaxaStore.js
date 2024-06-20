@@ -73,6 +73,22 @@ export const useTaxaStore = defineStore({
       }
       return false
     },
+    async editIds(projectId, taxaIds, json) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/taxa/edit`
+      const response = await axios.post(url, {
+        taxa_ids: taxaIds,
+        taxa: json,
+      })
+      if (response.status == 200) {
+        const taxa = response.data.taxa
+        this.removeByTaxonIds(taxaIds)
+        this.taxa.push(...taxa)
+        return true
+      }
+      return false
+    },
     async deleteIds(projectId, taxonIds, remappedTaxonIds) {
       const url = `${
         import.meta.env.VITE_API_URL
@@ -96,13 +112,13 @@ export const useTaxaStore = defineStore({
       return null
     },
     getTaxaByIds(taxaIds) {
-      const map = new Map()
+      const taxa = []
       for (const taxon of this.taxa) {
-        if (taxaIds.includes(taxon.taxon_id)) {
-          map.set(taxon.taxon_id, taxon)
+        if (taxaIds.has(taxon.taxon_id)) {
+          taxa.push(taxon)
         }
       }
-      return map
+      return taxa
     },
     removeByTaxonIds(taxonIds) {
       let x = 0
