@@ -27,6 +27,15 @@ export const useProjectUsersStore = defineStore({
       }
       return null
     },
+    getUserByIds(userIds) {
+      const users = []
+      for (const user of this.users) {
+        if (userIds.has(user.user_id)) {
+          users.push(user)
+        }
+      }
+      return users
+    },
     invalidate() {
       this.isLoaded = false
       this.users = []

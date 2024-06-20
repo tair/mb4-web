@@ -2,6 +2,7 @@
 import { useRoute } from 'vue-router'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import EditBatchDialog from '@/views/project/taxa/EditBatchDialog.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import TaxonomicName from '@/components/project/TaxonomicName.vue'
 import DeleteDialog from '@/views/project/taxa/DeleteDialog.vue'
@@ -84,6 +85,13 @@ onMounted(() => {
     taxaStore.fetch(projectId)
   }
 })
+
+async function batchEdit(json) {
+  const taxaIds = filteredTaxa.value
+    .filter((t) => t.selected)
+    .map((t) => t.taxon_id)
+  return taxaStore.editIds(projectId, taxaIds, json)
+}
 
 function refresh() {
   taxaStore.fetch(projectId)
@@ -272,7 +280,12 @@ function clearSearch() {
         <span v-if="!someSelected" class="item" @click="refresh">
           <i class="fa-solid fa-arrow-rotate-right"></i>
         </span>
-        <span v-if="someSelected" class="item">
+        <span
+          v-if="someSelected"
+          class="item"
+          data-bs-toggle="modal"
+          data-bs-target="#taxaEditModal"
+        >
           <i class="fa-regular fa-pen-to-square"></i>
         </span>
         <span
@@ -326,6 +339,7 @@ function clearSearch() {
     </div>
   </LoadingIndicator>
   <DeleteDialog :taxa="taxaToDelete" :projectId="projectId" />
+  <EditBatchDialog :batchEdit="batchEdit"></EditBatchDialog>
 </template>
 <style scoped>
 @import '@/views/project/styles.css';
