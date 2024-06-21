@@ -34,7 +34,10 @@ onMounted(() => {
         </button>
       </RouterLink>
     </div>
-    <MembersCard :members="membersStore.members"></MembersCard>
+    <MembersCard
+      :members="membersStore.members"
+      v-model:deleteMember="memberToDelete"
+    ></MembersCard>
   </LoadingIndicator>
-  <DeleteMemberDialog :document="memberToDelete" :projectId="projectId" />
+  <DeleteMemberDialog :member="memberToDelete" :projectId="projectId" />
 </template>

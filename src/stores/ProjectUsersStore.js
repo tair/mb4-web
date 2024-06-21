@@ -34,10 +34,10 @@ export const useProjectUsersStore = defineStore({
       }
       return null
     },
-    async deleteMembers(projectId, linkId) {
+    async deleteMember(projectId, linkId) {
       const url = `${
         import.meta.env.VITE_API_URL
-      }/projects/${projectId}/members/delete`
+      }/projects/${projectId}/users/delete`
       const response = await axios.post(url, {
         link_id: linkId,
       })
@@ -49,7 +49,7 @@ export const useProjectUsersStore = defineStore({
     },
     removeMemberById(linkId) {
       for (let x = 0; x < this.members.length; ++x) {
-        if (linkId.includes(this.members[x].link_id)) {
+        if (linkId == this.members[x].link_id) {
           this.members.splice(x, 1)
           break
         }

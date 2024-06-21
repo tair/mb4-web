@@ -1,6 +1,7 @@
 <script setup lang="ts">
 type Member = {
   user_id: number
+  link_id: number
   admin: boolean
   fname: string
   lname: string
@@ -10,6 +11,7 @@ type Member = {
 
 const props = defineProps<{
   members: Member[]
+  deleteMember: Member
 }>()
 console.log(props.members)
 function convertRole(m: Member): String {
@@ -41,6 +43,7 @@ function convertRole(m: Member): String {
         </div>
         <div class="list-group-item-buttons">
           <button
+            v-if="!member.admin"
             type="button"
             class="btn btn-sm btn-secondary"
             data-bs-toggle="modal"
@@ -54,9 +57,7 @@ function convertRole(m: Member): String {
       <div class="">
         {{ convertRole(member) }}
       </div>
-      <div v-if="member.admin" class="fw-bold">
-        Project Administrator
-      </div>
+      <div v-if="member.admin" class="fw-bold">Project Administrator</div>
     </li>
   </ul>
 </template>

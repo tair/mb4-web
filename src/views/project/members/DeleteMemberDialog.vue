@@ -1,30 +1,27 @@
 <script setup lang="ts">
-import { useDocumentsStore } from '@/stores/DocumentsStore'
+import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 
 const props = defineProps<{
   projectId: number | string
-  document?: any
+  member?: any
 }>()
-
-const documentsStore = useDocumentsStore()
-async function deleteDocument(documentId: number) {
-  const deleted = documentsStore.deleteDocuments(props.projectId, [documentId])
-  if (deleted) {
-    documentsStore.removeDocumentById([documentId])
-  } else {
-    alert('Failed to delete document')
+const membersStore = useProjectUsersStore()
+async function deleteMember(linkId: number) {
+  const deleted = membersStore.deleteMember(props.projectId, linkId)
+  if (!deleted) {
+    alert('Failed to delete member')
   }
 }
 </script>
 <template>
-  <div class="modal" id="documentDeleteModal" tabindex="-1">
+  <div class="modal" id="memberDeleteModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Confirm</h5>
         </div>
         <div class="modal-body">
-          Really delete document: <i>{{ document.title }}</i> ?
+          Really delete member: <i>{{ `${member.fname} ${member.lname}` }}</i> ?
         </div>
         <div class="modal-footer">
           <button
@@ -38,7 +35,7 @@ async function deleteDocument(documentId: number) {
             type="button"
             class="btn btn-primary"
             data-bs-dismiss="modal"
-            @click="deleteDocument(document.document_id)"
+            @click="deleteMember(member.link_id)"
           >
             Delete
           </button>
