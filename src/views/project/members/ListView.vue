@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
-import MembersCard from '@/components/project/MembersCard.vue'
+import MembersCard from '@/components/project/MembersComp.vue'
 import DeleteMemberDialog from './DeleteMemberDialog.vue'
 
 const route = useRoute()
