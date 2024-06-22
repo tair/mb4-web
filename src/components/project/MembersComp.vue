@@ -13,7 +13,6 @@ const props = defineProps<{
   members: Member[]
   deleteMember: Member
 }>()
-console.log(props.members)
 function convertRole(m: Member): String {
   switch (m.membership_type) {
     case 0:

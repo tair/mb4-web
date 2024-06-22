@@ -230,7 +230,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/views',
+    path: 'views',
     name: 'MyProjectMediaViewsView',
     meta: {
       itemName: 'media_views',

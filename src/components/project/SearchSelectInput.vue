@@ -1,11 +1,25 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 const props = defineProps<{
+  // The name of the input field.
   name?: string
+
+  // The ID of the item for the initial value.
   initialValue?: number
-  search: (text: string) => Promise<number[]>
+
+  // Whether the input field is disabled.
+  disabled?: boolean
+
+  // The search function that returns items based on the text.
+  search: (text: string) => Promise<any[]>
+
+  // A function that will get the item given its ID.
   getItem: (id: number) => any
+
+  // Get the display text given the item.
   getText: (item: any) => string
+
+  // Get the item's ID.
   getId: (item: any) => number
 }>()
 
@@ -55,12 +69,19 @@ function handleBlur() {
 </script>
 <template>
   <div class="input-group">
-    <input :name="name" :value="currentValue" v-if="name" type="hidden" />
+    <input
+      :name="name"
+      :value="currentValue"
+      v-if="name"
+      type="hidden"
+      :disabled="disabled"
+    />
     <input
       @input="handleInput"
       @search="handleSearch"
       @blur="handleBlur"
       v-model="text"
+      :disabled="disabled"
       class="form-control border"
       type="search"
     />
@@ -87,6 +108,7 @@ ul.results {
   position: absolute;
   right: -1px;
   top: 36px;
+  z-index: 100;
 }
 
 ul.results li {
