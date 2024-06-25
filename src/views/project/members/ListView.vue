@@ -3,27 +3,27 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
-import MembersCard from '@/components/project/MembersComp.vue'
-import DeleteMemberDialog from './DeleteMemberDialog.vue'
+import MembersComp from '@/components/project/MembersComp.vue'
+import DeleteUserDialog from '@/views/project/members/DeleteUserDialog.vue'
 
 const route = useRoute()
 const projectId = route.params.id
 
-const membersStore = useProjectUsersStore()
-const isLoaded = computed(() => membersStore.isLoaded)
-const memberToDelete = ref({})
+const projectUsersStore = useProjectUsersStore()
+const isLoaded = computed(() => projectUsersStore.isLoaded)
+const userToDelete = ref({})
 
 onMounted(() => {
-  if (!membersStore.isLoaded) {
-    membersStore.fetchUsers(projectId)
+  if (!projectUsersStore.isLoaded) {
+    projectUsersStore.fetchUsers(projectId)
   }
 })
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
     <header>
-      There are {{ membersStore.members?.length }} members associated with this
-      project.
+      There are {{ projectUsersStore.users?.length }} members associated with
+      this project.
     </header>
     <br />
     <div class="action-bar">
@@ -34,10 +34,10 @@ onMounted(() => {
         </button>
       </RouterLink>
     </div>
-    <MembersCard
-      :members="membersStore.members"
-      v-model:deleteMember="memberToDelete"
-    ></MembersCard>
+    <MembersComp
+      :users="projectUsersStore.users"
+      v-model:deleteUser="userToDelete"
+    ></MembersComp>
   </LoadingIndicator>
-  <DeleteMemberDialog :member="memberToDelete" :projectId="projectId" />
+  <DeleteUserDialog :user="userToDelete" :projectId="projectId" />
 </template>

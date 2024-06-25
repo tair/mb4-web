@@ -1,5 +1,5 @@
 <script setup lang="ts">
-type Member = {
+type User = {
   user_id: number
   link_id: number
   admin: boolean
@@ -10,13 +10,13 @@ type Member = {
 }
 
 const props = defineProps<{
-  members: Member[]
-  deleteMember: Member
+  users: User[]
+  deleteUser: User
 }>()
-function convertRole(m: Member): String {
+function convertRole(m: User): String {
   switch (m.membership_type) {
     case 0:
-      return 'Full membership (can edit everything)'
+      return 'Full usership (can edit everything)'
     case 1:
       return 'Observer (cannot edit)'
     case 2:
@@ -30,33 +30,29 @@ function convertRole(m: Member): String {
 </script>
 
 <template>
-  <ul
-    v-for="member in props.members"
-    :key="member.user_id"
-    class="list-group pt-3"
-  >
+  <ul v-for="user in props.users" :key="user.user_id" class="list-group pt-3">
     <li class="list-group-item">
       <div class="list-group-item-header">
         <div class="list-group-item-name">
-          {{ `${member.fname} ${member.lname}` }} {{ `(${member.email})` }}
+          {{ `${user.fname} ${user.lname}` }} {{ `(${user.email})` }}
         </div>
         <div class="list-group-item-buttons">
           <button
-            v-if="!member.admin"
+            v-if="!user.admin"
             type="button"
             class="btn btn-sm btn-secondary"
             data-bs-toggle="modal"
-            data-bs-target="#memberDeleteModal"
-            @click="$emit('update:deleteMember', member)"
+            data-bs-target="#userDeleteModal"
+            @click="$emit('update:deleteUser', user)"
           >
             <i class="fa-regular fa-trash-can"></i>
           </button>
         </div>
       </div>
-      <div class="">
-        {{ convertRole(member) }}
+      <div>
+        {{ convertRole(user) }}
       </div>
-      <div v-if="member.admin" class="fw-bold">Project Administrator</div>
+      <div v-if="user.admin" class="fw-bold">Project Administrator</div>
     </li>
   </ul>
 </template>

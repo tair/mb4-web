@@ -11,19 +11,12 @@ export const useProjectUsersStore = defineStore({
   state: () => ({
     isLoaded: false,
     users: [],
-    members:[],
   }),
   actions: {
     async fetchUsers(projectId) {
       const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/users`
       const response = await axios.get(url)
       this.users = response.data.users
-
-      const ur = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/users/members`
-      const res = await axios.get(ur)
-      this.members = res.data.members
       this.isLoaded = true
     },
     getUserById(userId) {
@@ -43,7 +36,7 @@ export const useProjectUsersStore = defineStore({
       }
       return users
     },
-    async deleteMember(projectId, linkId) {
+    async deleteUser(projectId, linkId) {
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/users/delete`
@@ -51,15 +44,15 @@ export const useProjectUsersStore = defineStore({
         link_id: linkId,
       })
       if (response.status == 200) {
-        this.removeMemberById(linkId)
+        this.removeUserById(linkId)
         return true
       }
       return false
     },
-    removeMemberById(linkId) {
-      for (let x = 0; x < this.members.length; ++x) {
-        if (linkId == this.members[x].link_id) {
-          this.members.splice(x, 1)
+    removeUserById(linkId) {
+      for (let x = 0; x < this.users.length; ++x) {
+        if (linkId == this.users[x].link_id) {
+          this.users.splice(x, 1)
           break
         }
       }
@@ -67,7 +60,6 @@ export const useProjectUsersStore = defineStore({
     invalidate() {
       this.isLoaded = false
       this.users = []
-      this.members = []
     },
   },
 })
