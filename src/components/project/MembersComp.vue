@@ -16,7 +16,7 @@ const props = defineProps<{
 function convertRole(m: User): String {
   switch (m.membership_type) {
     case 0:
-      return 'Full usership (can edit everything)'
+      return 'Full membership (can edit everything)'
     case 1:
       return 'Observer (cannot edit)'
     case 2:
