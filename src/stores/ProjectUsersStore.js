@@ -36,6 +36,27 @@ export const useProjectUsersStore = defineStore({
       }
       return users
     },
+    async deleteUser(projectId, linkId) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/users/delete`
+      const response = await axios.post(url, {
+        link_id: linkId,
+      })
+      if (response.status == 200) {
+        this.removeUserById(linkId)
+        return true
+      }
+      return false
+    },
+    removeUserById(linkId) {
+      for (let x = 0; x < this.users.length; ++x) {
+        if (linkId == this.users[x].link_id) {
+          this.users.splice(x, 1)
+          break
+        }
+      }
+    },
     invalidate() {
       this.isLoaded = false
       this.users = []
