@@ -12,6 +12,7 @@ type User = {
 const props = defineProps<{
   users: User[]
   deleteUser: User
+  projectId: number
 }>()
 function convertRole(m: User): String {
   switch (m.membership_type) {
@@ -37,6 +38,13 @@ function convertRole(m: User): String {
           {{ `${user.fname} ${user.lname}` }} {{ `(${user.email})` }}
         </div>
         <div class="list-group-item-buttons">
+          <RouterLink
+            :to="`/myprojects/${projectId}/members/edit`"
+          >
+            <button type="button" class="btn btn-sm btn-secondary">
+              <i class="fa-regular fa-pen-to-square"></i>
+            </button>
+          </RouterLink>
           <button
             v-if="!user.admin"
             type="button"
