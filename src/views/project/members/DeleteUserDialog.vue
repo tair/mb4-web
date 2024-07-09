@@ -21,7 +21,7 @@ async function deleteUser(linkId: number) {
           <h5 class="modal-title">Confirm</h5>
         </div>
         <div class="modal-body">
-          Really delete user: <i>{{ `${user.fname} ${user.lname}` }}</i> ?
+          Really delete member: <i>{{ `${user.fname} ${user.lname}` }}</i> ?
         </div>
         <div class="modal-footer">
           <button
