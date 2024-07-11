@@ -12,5 +12,5 @@ export const userSchema = {
         'Bibliography maintainer (can edit bibliography only)': 3,
       },
     },
-  }
+  },
 }

@@ -8,22 +8,21 @@ import { userSchema } from '@/views/project/members/schema.js'
 
 const route = useRoute()
 const projectId = route.params.id
-const userId = route.params.userId
+const linkId = route.params.linkId
 
 const projectUsersStore = useProjectUsersStore()
-const user = computed(() => projectUsersStore.getUserById(userId))
+const user = computed(() => projectUsersStore.getUserByLinkId(linkId))
 const isLoaded = computed(() => projectUsersStore.isLoaded)
 
-async function editUser(event) {
-  console.log(event.currentTarget)
+async function edit(event) {
   const formData = new FormData(event.currentTarget)
-  const success = await projectUsersStore.edit(userId, formData)
-  if (!success) {
-    alert(response.data?.message || 'Failed to modify member')
-    return
+  const json = Object.fromEntries(formData)
+  const success = await projectUsersStore.editUser(projectId, linkId, json)
+  if (success) {
+    router.go(-1)
+  } else {
+    alert('Failed to update member')
   }
-
-  router.push({ path: `/myprojects/${projectId}/members` })
 }
 
 onMounted(() => {
@@ -31,14 +30,16 @@ onMounted(() => {
     projectUsersStore.fetchUsers(projectId)
   }
 })
-
 </script>
 
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
     <div>
-      <p v-if="user">Editing: {{ `${user.fname} ${user.lname}` }} </p>
-      <form @submit.prevent="editUser">
+      <div v-if="user" class="d-flex">
+        <p class="fw-bold">Editing:&nbsp;</p>
+        {{ `${user.fname} ${user.lname}` }}
+      </div>
+      <form @submit.prevent="edit">
         <div class="row setup-content">
           <div
             v-for="(definition, index) in userSchema"
@@ -70,7 +71,5 @@ onMounted(() => {
         </div>
       </form>
     </div>
-
   </LoadingIndicator>
 </template>
-
