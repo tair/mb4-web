@@ -230,7 +230,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: 'members/:userId(\\d+)/edit',
+    path: 'members/:linkId(\\d+)/edit',
     name: 'MyProjectMembersEditView',
     meta: {
       itemName: 'members',
