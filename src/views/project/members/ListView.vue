@@ -36,6 +36,7 @@ onMounted(() => {
     </div>
     <MembersComp
       :users="projectUsersStore.users"
+      :projectId="projectId"
       v-model:deleteUser="userToDelete"
     ></MembersComp>
   </LoadingIndicator>
