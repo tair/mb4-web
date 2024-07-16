@@ -10,7 +10,7 @@ const projectId = route.params.id
 
 const projectMemberGroupsStore = useProjectMemberGroupsStore()
 const isLoaded = computed(() => projectMemberGroupsStore.isLoaded)
-const numOfGroups =  computed(() => projectMemberGroupsStore.groups?.length)
+const numOfGroups = computed(() => projectMemberGroupsStore.groups?.length)
 
 onMounted(() => {
   if (!projectMemberGroupsStore.isLoaded) {
@@ -20,13 +20,11 @@ onMounted(() => {
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
-    <header v-if="numOfGroups==1">
-      There is {{ numOfGroups }} member group associated with
-      this project.
+    <header v-if="numOfGroups == 1">
+      There is {{ numOfGroups }} member group associated with this project.
     </header>
     <header v-else>
-      There are {{ numOfGroups }} member groups associated with
-      this project.
+      There are {{ numOfGroups }} member groups associated with this project.
     </header>
     <br />
     <div class="action-bar">
