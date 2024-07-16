@@ -11,6 +11,7 @@ const projectId = route.params.id
 
 const projectUsersStore = useProjectUsersStore()
 const isLoaded = computed(() => projectUsersStore.isLoaded)
+const numOfUsers = computed(() => projectUsersStore.users?.length)
 const userToDelete = ref({})
 
 onMounted(() => {
@@ -21,9 +22,11 @@ onMounted(() => {
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
-    <header>
-      There are {{ projectUsersStore.users?.length }} members associated with
-      this project.
+    <header v-if="numOfUsers == 1">
+      There is {{ numOfUsers }} member associated with this project.
+    </header>
+    <header v-else>
+      There are {{ numOfUsers }} members associated with this project.
     </header>
     <br />
     <div class="action-bar">
