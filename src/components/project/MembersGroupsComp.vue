@@ -7,6 +7,7 @@ type Group = {
 
 const props = defineProps<{
   groups: Group[]
+  deleteGroup: Group
 }>()
 </script>
 
@@ -21,7 +22,17 @@ const props = defineProps<{
         <div class="list-group-item-name">
           {{ group.group_name }}
         </div>
-        <div class="list-group-item-buttons"></div>
+        <div class="list-group-item-buttons">
+          <button
+            type="button"
+            class="btn btn-sm btn-secondary"
+            data-bs-toggle="modal"
+            data-bs-target="#groupDeleteModal"
+            @click="$emit('update:deleteGroup', group)"
+          >
+            <i class="fa-regular fa-trash-can"></i>
+          </button>
+        </div>
       </div>
       <div>
         {{ group.description }}
@@ -32,6 +43,10 @@ const props = defineProps<{
 <style scoped>
 .list-group-item-header {
   display: flex;
+}
+.list-group-item-buttons {
+  display: flex;
+  gap: 7px;
 }
 .list-group-item-name {
   display: flex;
