@@ -1,9 +1,14 @@
 <script setup>
+import { toDateString } from '@/utils/date'
+import Tooltip from '@/components/main/Tooltip.vue'
+
 const props = defineProps({
   media_file: {
     type: Object,
   },
 })
+
+const viewTooltipText = "Project download and view statistics are available since August 2012.  Views and downloads pre August 2012 are not reflected in the statistics."
 
 function buildImageProps(mediaObj, type) {
   try {
@@ -23,6 +28,29 @@ function buildImageProps(mediaObj, type) {
     console.error(e)
     return null
   }
+}
+
+function getAncestorMessage(mediaObj) {
+  let message = 'This media file was first entered in MorphoBank as M' + mediaObj.ancestor.media_id + ' in P' + mediaObj.ancestor.project_id
+  if (mediaObj.ancestor.deleted) {
+    message += '. This project which the media file was first entered has since been deleted.'
+  }
+  return message
+}
+
+function getSibilingMessage(mediaObj) {
+  let message = "It has also been used in: "
+  message += mediaObj.ancestor.child_siblings.map(obj => `P${obj.project_id} as M${obj.media_id}`).join(', ');
+  message += "."
+  return message
+}
+
+function getHitsMessage(mediaObj) {
+  let message =" This media record has been viewed " + mediaObj.hits + " time" + ((mediaObj.hits == 1) ? "" : "s")
+  if (mediaObj.downloads) {
+    message += " and downloaded " + mediaObj.downloads + " time" + ((mediaObj.downloads == 1) ? "" : "s");
+  }
+  return message
 }
 </script>
 
@@ -59,79 +87,67 @@ function buildImageProps(mediaObj, type) {
     <div class="col">
       <div>
         <strong>Morphobank media number</strong>
-        <p>M681423</p>
+        <p>{{ 'M' + media_file.media_id }}</p>
       </div>
       <div>
         <strong>Taxonomic name</strong>
-        <p>Garypus cf. saxicola</p>
+        <p v-html="media_file.taxa_name"></p>
       </div>
-      <div>
+      <div v-if="media_file.specimen_name">
         <strong>Specimen</strong>
-        <p>Garypus cf. saxicola (InBio/Tg_ra_07.80)</p>
+        <p v-html="media_file.specimen_name"></p>
       </div>
-      <div>
+      <div v-if="media_file.specimen_notes">
         <strong>Specimen notes</strong>
-        <p>
-          Collector: Biosfera I Collection date: 29.07.2016 Location: Cabo
-          Verde, Raso Islet, Chã Branca
-        </p>
+        <p v-html="media_file.specimen_notes"></p>
       </div>
-      <div>
+      <div v-if="media_file.view_name">
         <strong>View</strong>
-        <p>dorsal</p>
+        <p>{{ media_file.view_name }}</p>
       </div>
-      <div>
+      <div v-if="media_file.side_represented">
+        <strong>Side represented</strong>
+        <p>{{ media_file.side_represented }}</p>
+      </div>
+      <div v-if="media_file.user_name">
         <strong>Media loaded by</strong>
-        <p>Raquel Vasconcelos</p>
+        <p>{{ media_file.user_name }}</p>
       </div>
-      <div>
+      <div v-if="media_file.copyright_holder">
         <strong>Copyright holder</strong>
-        <p>Raquel Vasconcelos</p>
+        <p>{{ media_file.copyright_holder }}</p>
       </div>
-      <div>
+      <div v-if="media_file.copyright_permission">
         <strong>Copyright information</strong>
-        <p>
-          Person loading media owns copyright and grants permission for use of
-          media on MorphoBank
-        </p>
+        <p>{{ media_file.copyright_permission }}</p>
       </div>
-      <div>
-        <strong>Media notes</strong>
-        <p>
-          Collector: Biosfera I Collection date: 29.07.2016 Location: Cabo
-          Verde, Raso islet, Chã Branca
-        </p>
+      <div v-if="media_file.references">
+        <strong>{{ media_file.references.length > 1 ? "Bibliographic References" : "Bibliographic Reference" }}</strong>
+        <p v-html="media_file.references.join('<br/>')"></p>
       </div>
-      <div>
+      <div v-if="media_file.notes">
+        <strong>Media Notes</strong>
+        <p v-html="media_file.notes"></p>
+      </div>
+      <div v-if="media_file.url">
+        <strong>Web source of media</strong>
+        <p><a href="media_file.url" target="_blank">View media online &raquo;</a></p>
+      </div>
+      <div v-if="media_file.url_description">
+        <strong>Web source description</strong>
+        <p v-html="media_file.url_description"></p>
+      </div>
+      <div v-if="media_file.created_on">
         <strong>Media loaded on</strong>
-        <p>October 10 2019 at 11:56:07</p>
+        <p>{{ toDateString(media_file.created_on) }}</p>
+      </div>
+      <div v-if="media_file.ancestor">
+        <strong>{{ getAncestorMessage(media_file) }}</strong>
+        <p v-if="media_file.ancestor.child_siblings"><i v-html="getSibilingMessage(media_file)"></i></p>
+      </div>
+      <div class="mb-4">
+        {{ getHitsMessage(media_file) }} <Tooltip :content="viewTooltipText"></Tooltip>
       </div>
     </div>
   </div>
-
-  <!-- 
-  <div class="card shadow">
-
-    <div class="m-1">
-      <img
-        :src="buildImageProps(media_file.media.thumbnail)"
-        :style="{
-          width: media_file.media.thumbnail.WIDTH + 'px',
-          height: media_file.media.thumbnail.HEIGHT + 'px',
-          backgroundSize: '20px',
-          backgroundRepeat: 'no-repeat',
-          backgroundImage: 'url(' + '/images/loader.png' + ')',
-          backgroundPosition: '10px 10px',
-        }"
-        class="card-img-top"
-      />
-    </div>
-
-
-    <div class="card-body">
-      <p class="card-text">
-        {{ media_file.notes }}
-      </p>
-    </div>
-  </div> -->
 </template>
