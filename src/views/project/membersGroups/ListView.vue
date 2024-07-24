@@ -14,6 +14,7 @@ const numOfGroups = computed(() => projectMemberGroupsStore.groups?.length)
 
 onMounted(() => {
   if (!projectMemberGroupsStore.isLoaded) {
+    projectMemberGroupsStore.fetchGroupsMembership(projectId, 28940)
     projectMemberGroupsStore.fetchGroups(projectId)
   }
 })

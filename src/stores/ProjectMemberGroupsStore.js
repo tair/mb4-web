@@ -19,6 +19,12 @@ export const useProjectMemberGroupsStore = defineStore({
       this.groups = response.data.groups
       this.isLoaded = true
     },
+    async fetchGroupsMembership(projectId, linkId) {
+      const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/groups/${linkId}/membership`
+      console.log('in')
+      const response = await axios.get(url)
+      console.log(response.data.groups)
+    },
     getGroupById(groupId) {
       for (const group of this.groups) {
         if (group.group_id == groupId) {

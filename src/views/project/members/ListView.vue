@@ -10,6 +10,7 @@ const route = useRoute()
 const projectId = route.params.id
 
 const projectUsersStore = useProjectUsersStore()
+const users = computed(() => projectUsersStore.users)
 const isLoaded = computed(() => projectUsersStore.isLoaded)
 const numOfUsers = computed(() => projectUsersStore.users?.length)
 const userToDelete = ref({})
@@ -38,7 +39,7 @@ onMounted(() => {
       </RouterLink>
     </div>
     <MembersComp
-      :users="projectUsersStore.users"
+      :users="users"
       :projectId="projectId"
       v-model:deleteUser="userToDelete"
     ></MembersComp>

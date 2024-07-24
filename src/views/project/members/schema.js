@@ -1,4 +1,5 @@
 import SelectInput from '@/components/project/SelectInput.vue'
+import CheckboxList from '@/components/project/CheckboxList.vue'
 
 export const userSchema = {
   membership_type: {
@@ -13,4 +14,8 @@ export const userSchema = {
       },
     },
   },
+  groups_membership: {
+    label: 'Belongs to member group(s):',
+    view: CheckboxList
+  }
 }
