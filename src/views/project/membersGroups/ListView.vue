@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { useProjectMemberGroupsStore } from '@/stores/ProjectMemberGroupsStore'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MembersGroupsComp from '@/components/project/MembersGroupsComp.vue'
+import DeleteGroupDialog from './DeleteGroupDialog.vue'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -11,6 +12,7 @@ const projectId = route.params.id
 const projectMemberGroupsStore = useProjectMemberGroupsStore()
 const isLoaded = computed(() => projectMemberGroupsStore.isLoaded)
 const numOfGroups = computed(() => projectMemberGroupsStore.groups?.length)
+const groupToDelete = ref({})
 
 onMounted(() => {
   if (!projectMemberGroupsStore.isLoaded) {
@@ -37,6 +39,8 @@ onMounted(() => {
     </div>
     <MembersGroupsComp
       :groups="projectMemberGroupsStore.groups"
+      v-model:deleteGroup="groupToDelete"
     ></MembersGroupsComp>
   </LoadingIndicator>
+  <DeleteGroupDialog :group="groupToDelete" :projectId="projectId" />
 </template>

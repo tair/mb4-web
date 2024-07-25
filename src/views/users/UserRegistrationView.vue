@@ -243,7 +243,7 @@ const submitForm = () => {
 
   // Make a request for a user with a given ID
   axios
-    .post('/services/auth/signup', formObject)
+    .post(authStore.getRegisterUrl(), formObject)
     .then(function (response) {
       // handle success
       if (response.status === 201) {
@@ -274,23 +274,8 @@ const submitForm = () => {
   border-radius: 10px;
 }
 
-.input-container {
-  margin-bottom: 20px;
-  padding: 5px;
-}
-.input-container label {
-  margin-bottom: 10px;
-}
 .space-container {
   height: 100px; /* adjust this value as needed */
-}
-
-.input-field {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  margin-bottom: 1px;
-  width: 100%;
 }
 
 .orcid-container .col-sm-2.align-self-center span {

@@ -22,6 +22,27 @@ export const useProjectMemberGroupsStore = defineStore({
       }
       return null
     },
+    async deleteGroup(projectId, groupId) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/groups/delete`
+      const response = await axios.post(url, {
+        group_id: groupId,
+      })
+      if (response.status == 200) {
+        this.removeGroupById(groupId)
+        return true
+      }
+      return false
+    },
+    removeGroupById(groupId) {
+      for (let x = 0; x < this.groups.length; ++x) {
+        if (groupId == this.groups[x].group_id) {
+          this.groups.splice(x, 1)
+          break
+        }
+      }
+    },
     invalidate() {
       this.isLoaded = false
       this.users = []
