@@ -8,7 +8,8 @@ const props = defineProps({
   },
 })
 
-const viewTooltipText = "Project download and view statistics are available since August 2012.  Views and downloads pre August 2012 are not reflected in the statistics."
+const viewTooltipText =
+  'Project download and view statistics are available since August 2012.  Views and downloads pre August 2012 are not reflected in the statistics.'
 
 function buildImageProps(mediaObj, type) {
   try {
@@ -31,24 +32,39 @@ function buildImageProps(mediaObj, type) {
 }
 
 function getAncestorMessage(mediaObj) {
-  let message = 'This media file was first entered in MorphoBank as M' + mediaObj.ancestor.media_id + ' in P' + mediaObj.ancestor.project_id
+  let message =
+    'This media file was first entered in MorphoBank as M' +
+    mediaObj.ancestor.media_id +
+    ' in P' +
+    mediaObj.ancestor.project_id
   if (mediaObj.ancestor.deleted) {
-    message += '. This project which the media file was first entered has since been deleted.'
+    message +=
+      '. This project which the media file was first entered has since been deleted.'
   }
   return message
 }
 
 function getSibilingMessage(mediaObj) {
-  let message = "It has also been used in: "
-  message += mediaObj.ancestor.child_siblings.map(obj => `P${obj.project_id} as M${obj.media_id}`).join(', ');
-  message += "."
+  let message = 'It has also been used in: '
+  message += mediaObj.ancestor.child_siblings
+    .map((obj) => `P${obj.project_id} as M${obj.media_id}`)
+    .join(', ')
+  message += '.'
   return message
 }
 
 function getHitsMessage(mediaObj) {
-  let message =" This media record has been viewed " + mediaObj.hits + " time" + ((mediaObj.hits == 1) ? "" : "s")
+  let message =
+    ' This media record has been viewed ' +
+    mediaObj.hits +
+    ' time' +
+    (mediaObj.hits == 1 ? '' : 's')
   if (mediaObj.downloads) {
-    message += " and downloaded " + mediaObj.downloads + " time" + ((mediaObj.downloads == 1) ? "" : "s");
+    message +=
+      ' and downloaded ' +
+      mediaObj.downloads +
+      ' time' +
+      (mediaObj.downloads == 1 ? '' : 's')
   }
   return message
 }
@@ -122,7 +138,11 @@ function getHitsMessage(mediaObj) {
         <p>{{ media_file.copyright_permission }}</p>
       </div>
       <div v-if="media_file.references">
-        <strong>{{ media_file.references.length > 1 ? "Bibliographic References" : "Bibliographic Reference" }}</strong>
+        <strong>{{
+          media_file.references.length > 1
+            ? 'Bibliographic References'
+            : 'Bibliographic Reference'
+        }}</strong>
         <p v-html="media_file.references.join('<br/>')"></p>
       </div>
       <div v-if="media_file.notes">
@@ -131,7 +151,9 @@ function getHitsMessage(mediaObj) {
       </div>
       <div v-if="media_file.url">
         <strong>Web source of media</strong>
-        <p><a href="media_file.url" target="_blank">View media online &raquo;</a></p>
+        <p>
+          <a href="media_file.url" target="_blank">View media online &raquo;</a>
+        </p>
       </div>
       <div v-if="media_file.url_description">
         <strong>Web source description</strong>
@@ -143,10 +165,13 @@ function getHitsMessage(mediaObj) {
       </div>
       <div v-if="media_file.ancestor">
         <strong>{{ getAncestorMessage(media_file) }}</strong>
-        <p v-if="media_file.ancestor.child_siblings"><i v-html="getSibilingMessage(media_file)"></i></p>
+        <p v-if="media_file.ancestor.child_siblings">
+          <i v-html="getSibilingMessage(media_file)"></i>
+        </p>
       </div>
       <div class="mb-4">
-        {{ getHitsMessage(media_file) }} <Tooltip :content="viewTooltipText"></Tooltip>
+        {{ getHitsMessage(media_file) }}
+        <Tooltip :content="viewTooltipText"></Tooltip>
       </div>
     </div>
   </div>

@@ -16,6 +16,6 @@ export const userSchema = {
   },
   groups_membership: {
     label: 'Belongs to member group(s):',
-    view: GroupCheckboxList
-  }
+    view: GroupCheckboxList,
+  },
 }
