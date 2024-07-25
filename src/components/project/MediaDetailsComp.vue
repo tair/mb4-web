@@ -50,7 +50,6 @@ function getLastElementFromUrl(url) {
 
 function buildImageProps(mediaObj, type) {
   try {
-    // console.log(mediaObj)
     let media = mediaObj
     if (type) media = mediaObj[type]
 
@@ -132,13 +131,13 @@ function getHitsMessage(mediaObj) {
               </CustomModal>
             </div>
           </div>
-          <div v-if="media_file.license.image">
+          <div v-if="media_file.license && media_file.license.image">
             <img
               :src="`/images/${media_file.license.image}`"
               class="cc-icon"
             />
           </div>
-          <div v-if="media_file.license.isOneTimeUse">
+          <div v-if="media_file.license && media_file.license.isOneTimeUse">
             <p>Copyright license for future use: Media released for onetime use, no reuse without permission</p>
           </div>
           <div>
