@@ -23,13 +23,9 @@ export const useProjectUsersStore = defineStore({
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/users/${linkId}/edit`
-      console.log("user in editMethod")
-      console.log(user)
       const response = await axios.post(url, { user })
       if (response.status == 200) {
         const user = response.data.user
-        console.log("returned changes")
-        console.log(user)
         this.updateUser(linkId, user)
         return true
       }

@@ -13,16 +13,19 @@ defineProps<{
 
 </script>
 <template>
-  <div v-for="v in value" :key="v.group_id">
+  <div v-for="group in value" :key="group.group_id">
     <input
       class="form-check-input"
       type="checkbox"
       :name="name"
-      :checked="!!v.joined"
-      @click="(v.joined==0) ? v.joined=1: v.joined=0"
-      :value="JSON.stringify(value)"
+      :checked="!!group.joined"
+      @click="(group.joined==0) ? group.joined=1: group.joined=0"
     />
-    <label> &nbsp{{ v.group_name }}</label>
-    <p>{{ v.joined }}</p>
+    <input
+    type="hidden"
+    :name="name"
+    :value="JSON.stringify(value)"
+    />
+    <label> &nbsp{{ group.group_name }}</label>
   </div>
 </template>

@@ -3,7 +3,6 @@ import router from '@/router'
 import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
-import { useProjectMemberGroupsStore } from '@/stores/ProjectMemberGroupsStore'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { userSchema } from '@/views/project/members/schema.js'
 
@@ -12,19 +11,13 @@ const projectId = route.params.id
 const linkId = route.params.linkId
 
 const projectUsersStore = useProjectUsersStore()
-const projectMemberGroupsStore = useProjectMemberGroupsStore()
 const user = computed(() => projectUsersStore.getUserByLinkId(linkId))
 const isLoaded = computed(() => projectUsersStore.isLoaded)
 
 async function edit(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
-  console.log("json")
   json.groups_membership = JSON.parse(json.groups_membership)
-  //console.log()
-  console.log("after change")
-  console.log(json.groups_membership)
-  console.log(json)
   const success = await projectUsersStore.editUser(projectId, linkId, json)
   if (success) {
     router.go(-1)
@@ -36,7 +29,6 @@ async function edit(event) {
 onMounted(() => {
   if (!projectUsersStore.isLoaded) {
     projectUsersStore.fetchUsers(projectId)
-    //user[groups_membership] = projectMemberGroupsStore.fetchGroupsMembership(projectId, linkId)
   }
 })
 </script>
@@ -44,7 +36,6 @@ onMounted(() => {
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
     <div>
-      <p>{{ user.groups_membership }}</p>
       <div v-if="user" class="d-flex">
         <p class="fw-bold">Editing:&nbsp;</p>
         {{ `${user.fname} ${user.lname}` }}

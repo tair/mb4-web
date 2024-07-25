@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectMemberGroupsStore } from '@/stores/ProjectMemberGroupsStore'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
@@ -14,7 +14,6 @@ const numOfGroups = computed(() => projectMemberGroupsStore.groups?.length)
 
 onMounted(() => {
   if (!projectMemberGroupsStore.isLoaded) {
-    projectMemberGroupsStore.fetchGroupsMembership(projectId, 28940)
     projectMemberGroupsStore.fetchGroups(projectId)
   }
 })

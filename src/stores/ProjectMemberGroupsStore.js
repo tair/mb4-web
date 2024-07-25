@@ -1,11 +1,6 @@
 import axios from 'axios'
 import { defineStore } from 'pinia'
 
-/**
- * Defines a store for the users in the project. This is useful for retrieving
- * user information once but then populating the name whenever the user id is
- * available.
- */
 export const useProjectMemberGroupsStore = defineStore({
   id: 'project-member-groups',
   state: () => ({
@@ -18,12 +13,6 @@ export const useProjectMemberGroupsStore = defineStore({
       const response = await axios.get(url)
       this.groups = response.data.groups
       this.isLoaded = true
-    },
-    async fetchGroupsMembership(projectId, linkId) {
-      const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/groups/${linkId}/membership`
-      console.log('in')
-      const response = await axios.get(url)
-      console.log(response.data.groups)
     },
     getGroupById(groupId) {
       for (const group of this.groups) {
