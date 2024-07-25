@@ -10,6 +10,7 @@ const route = useRoute()
 
 const mediaStore = usePublicMediaStore()
 const projectId = route.params.id
+const thumbnailView = ref(true)
 let mediaDetailsFor = ref(null)
 
 onMounted(() => {
@@ -76,6 +77,22 @@ watch(selectedPageSize, (currentValue, oldValue) => {
           </option>
         </select>
       </div>
+      <div class="ms-1">
+        <button
+          @click="thumbnailView = true"
+          :style="{ backgroundColor: thumbnailView ? '#e0e0e0' : '#fff'}"
+          title="thumbnail-view">
+          <i class="fa-solid fa-border-all"></i>
+        </button>
+      </div>
+      <div class="ms-1">
+        <button
+          @click="thumbnailView = false"
+          :style="{ backgroundColor: thumbnailView ? '#fff' : '#e0e0e0'}"
+          title="mosaic-view">
+          <i class="fa-solid fa-table-cells"></i>
+        </button>
+      </div>
     </div>
 
     <nav>
@@ -116,7 +133,7 @@ watch(selectedPageSize, (currentValue, oldValue) => {
         role="tabpanel"
         aria-labelledby="nav-media-list-tab"
       >
-        <div class="row align-items-stretch g-4 py-5">
+        <div :class="[thumbnailView ? 'row row-cols-auto g-4 py-5' : 'row row-cols-auto g-2 py-3', 'justify-content-start']">
           <div
             class="col d-flex align-items-stretch"
             v-for="(media_file, n) in mediaStore.mediaList"
@@ -126,6 +143,7 @@ watch(selectedPageSize, (currentValue, oldValue) => {
               <MediaCardComp
                 :key="media_file.media_id"
                 :media_file="media_file"
+                :full_view=thumbnailView
               ></MediaCardComp>
             </a>
           </div>

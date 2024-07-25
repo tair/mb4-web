@@ -131,7 +131,7 @@ watch(selectedPageSize, (currentValue) => {
       </div>
     </div>
 
-    <div class="row align-items-stretch g-4 py-5">
+    <div class="row row-cols-auto g-4 py-5">
       <div
         class="col d-flex align-items-stretch"
         v-for="(project, index) in projectsStore.projectList"
