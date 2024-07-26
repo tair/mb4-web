@@ -1,5 +1,4 @@
 <script setup>
-
 const props = defineProps({
   media_file: {
     type: Object,
@@ -28,19 +27,21 @@ function buildImageProps(mediaObj, type) {
 
 <template>
   <div class="card media-card shadow image-container">
-    <div class="d-flex flex-column justify-content-between text-center thumbnail">
+    <div
+      class="d-flex flex-column justify-content-between text-center thumbnail"
+    >
       <div class="align-self-center media-image-top mt-2">
-      <img
-        :src="buildImageProps(media_file.media.thumbnail)"
-        :style="{
-          width: media_file.media.thumbnail.WIDTH + 'px',
-          height: media_file.media.thumbnail.HEIGHT + 'px',
-          backgroundSize: '20px',
-          backgroundRepeat: 'no-repeat',
-          backgroundImage: 'url(' + '/images/loader.png' + ')',
-          backgroundPosition: '10px 10px',
-        }"
-      />
+        <img
+          :src="buildImageProps(media_file.media.thumbnail)"
+          :style="{
+            width: media_file.media.thumbnail.WIDTH + 'px',
+            height: media_file.media.thumbnail.HEIGHT + 'px',
+            backgroundSize: '20px',
+            backgroundRepeat: 'no-repeat',
+            backgroundImage: 'url(' + '/images/loader.png' + ')',
+            backgroundPosition: '10px 10px',
+          }"
+        />
       </div>
       <div class="text-block text-center p-1">
         <div>
@@ -51,10 +52,7 @@ function buildImageProps(mediaObj, type) {
           v-html="media_file.specimen_name"
           class="truncate-multiline mt-1"
         ></div>
-        <div
-          v-if="media_file.view_name"
-          class="mt-1"
-        >
+        <div v-if="media_file.view_name" class="mt-1">
           {{ media_file.view_name }}
         </div>
       </div>
@@ -73,10 +71,7 @@ function buildImageProps(mediaObj, type) {
         alt="Enlarged Image"
       />
       <div class="text-block text-center p-1">
-        <div
-          v-if="media_file.view_name"
-          class="mt-1"
-        >
+        <div v-if="media_file.view_name" class="mt-1">
           {{ media_file.view_name }}
         </div>
         <div
@@ -84,8 +79,12 @@ function buildImageProps(mediaObj, type) {
           v-html="media_file.specimen_name"
           class="mt-1"
         ></div>
-        <div v-if="media_file.copyright_holder">Copyright Holder: {{ media_file.copyright_holder }}</div>
-        <div v-if="media_file.notes" class="truncate-multiline">{{ media_file.notes }}</div>
+        <div v-if="media_file.copyright_holder">
+          Copyright Holder: {{ media_file.copyright_holder }}
+        </div>
+        <div v-if="media_file.notes" class="truncate-multiline">
+          {{ media_file.notes }}
+        </div>
       </div>
     </div>
   </div>
@@ -100,26 +99,26 @@ function buildImageProps(mediaObj, type) {
   height: 8rem;
 }
 .truncate-multiline {
-    display: -webkit-box;
-    -webkit-line-clamp: 2; /* Number of lines to display before truncating */
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Number of lines to display before truncating */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .image-container {
-    position: relative;
-    display: inline-block;
+  position: relative;
+  display: inline-block;
 }
 .enlarged-image {
-    display: none;
-    position: absolute;
-    top: 50%;
-    left: 20%;
-    z-index: 10;
-    border: 2px solid orange;
-    background-color: white;
-    max-width: 500px
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 20%;
+  z-index: 10;
+  border: 2px solid orange;
+  background-color: white;
+  max-width: 500px;
 }
 .thumbnail:hover + .enlarged-image {
-    display: block;
+  display: block;
 }
 </style>

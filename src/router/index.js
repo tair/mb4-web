@@ -102,7 +102,7 @@ const router = createRouter({
               path: 'set-new-password',
               name: 'UserSetNewPassword',
               component: UserSetNewPasswordView,
-            }
+            },
           ],
         },
 
