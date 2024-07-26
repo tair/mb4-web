@@ -163,7 +163,9 @@ export const useAuthStore = defineStore({
 
         return true
       } catch (e) {
-        console.error(`store:auth:resetpassword(): ${e}\n${e.response.data.message}`)
+        console.error(
+          `store:auth:resetpassword(): ${e}\n${e.response.data.message}`
+        )
         this.err = e.response.data.message
         return false
       } finally {
@@ -179,13 +181,15 @@ export const useAuthStore = defineStore({
         const url = `${import.meta.env.VITE_API_URL}/auth/set-new-password`
         let data = {
           resetKey: resetKey,
-          password: password
+          password: password,
         }
         const res = await axios.post(url, data)
 
         return true
       } catch (e) {
-        console.error(`store:auth:resetpassword(): ${e}\n${e.response.data.message}`)
+        console.error(
+          `store:auth:resetpassword(): ${e}\n${e.response.data.message}`
+        )
         this.err = e.response.data.message
         return false
       } finally {

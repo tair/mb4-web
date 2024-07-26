@@ -21,7 +21,7 @@ const state = reactive({
 })
 const message = reactive({
   message: null,
-  messageType: null
+  messageType: null,
 })
 const validResetKey = ref(true)
 //adding check while typing
@@ -55,11 +55,16 @@ const submitForm = async () => {
   if (!validatePassword() || !confirmPassword()) return
 
   try {
-    const resetSuccess = await authStore.setNewPassword(resetKey, state.password)
+    const resetSuccess = await authStore.setNewPassword(
+      resetKey,
+      state.password
+    )
 
     if (resetSuccess) {
       // redirect to login
-      messageStore.setSuccessMessage("Set New Password Succeeded! Please log in.")
+      messageStore.setSuccessMessage(
+        'Set New Password Succeeded! Please log in.'
+      )
       router.push({ path: '/users/login' })
     } else {
       message.messageType = 'danger'
@@ -71,9 +76,9 @@ const submitForm = async () => {
     }
   } catch (error) {
     // Handle any unexpected errors
-    message.message = 'An unexpected error occurred. Please try again.';
-    message.messageType = 'danger';
-    console.error(error); // Log the error for debugging purposes
+    message.message = 'An unexpected error occurred. Please try again.'
+    message.messageType = 'danger'
+    console.error(error) // Log the error for debugging purposes
   }
 }
 
@@ -88,86 +93,90 @@ onMounted(async () => {
       }
     )
   } catch (error) {
-    console.log("Checking reset key failed")
+    console.log('Checking reset key failed')
     console.log(error)
     validResetKey.value = false
   }
 })
-
 </script>
 
 <template>
   <div class="form-reset-password container" v-if="validResetKey">
     <div class="row">
-    <div class="col-md-8">
-      <h3 class="mb-3 fw-normal">Reset Your Password</h3>
-      <p>Please enter your new password.</p>
-      <form @submit.prevent="submitForm()">
-        <div class="form-group">
-          <div class="input-container w-50">
-            <label for="password"
-              >Password* <Tooltip :content="passwordTooltipText"></Tooltip
-            ></label>
-            <input
-              class="input-field"
-              v-model.trim="state.password"
-              type="password"
-              name="password"
-              autocomplete="new-password"
-              @blur="validatePassword"
-              required
-            />
-            <Alert
-              :message="error"
-              messageName="passwordValidation"
-              alertType="danger"
-            ></Alert>
+      <div class="col-md-8">
+        <h3 class="mb-3 fw-normal">Reset Your Password</h3>
+        <p>Please enter your new password.</p>
+        <form @submit.prevent="submitForm()">
+          <div class="form-group">
+            <div class="input-container w-50">
+              <label for="password"
+                >Password* <Tooltip :content="passwordTooltipText"></Tooltip
+              ></label>
+              <input
+                class="input-field"
+                v-model.trim="state.password"
+                type="password"
+                name="password"
+                autocomplete="new-password"
+                @blur="validatePassword"
+                required
+              />
+              <Alert
+                :message="error"
+                messageName="passwordValidation"
+                alertType="danger"
+              ></Alert>
+            </div>
+            <div class="input-container w-50">
+              <label for="password2"
+                >Confirm Password*
+                <Tooltip :content="confirmPasswordText"></Tooltip
+              ></label>
+              <input
+                class="input-field"
+                v-model.trim="state.password2"
+                type="password"
+                name="password2"
+                autocomplete="new-password"
+                @blur="confirmPassword"
+                required
+              />
+              <Alert
+                :message="error"
+                messageName="passwordConfirm"
+                alertType="danger"
+              ></Alert>
+            </div>
           </div>
-          <div class="input-container w-50">
-            <label for="password2"
-              >Confirm Password*
-              <Tooltip :content="confirmPasswordText"></Tooltip
-            ></label>
-            <input
-              class="input-field"
-              v-model.trim="state.password2"
-              type="password"
-              name="password2"
-              autocomplete="new-password"
-              @blur="confirmPassword"
-              required
-            />
-            <Alert
-              :message="error"
-              messageName="passwordConfirm"
-              alertType="danger"
-            ></Alert>
-          </div>
-        </div>
-        <Alert
-          v-if="message.message"
-          :message="message"
-          messageName="message"
-          :alertType="message.messageType"
-          class = "w-50"
-        ></Alert>
-        <button class="w-50 btn btn-lg btn-primary mt-3" type="submit">
-          Reset
-        </button>
-        <br>
-        <router-link to="login"
-          class="w-50 btn btn-lg btn-primary btn-white mt-3"
-        >
-          Back
-        </router-link>
-      </form>
+          <Alert
+            v-if="message.message"
+            :message="message"
+            messageName="message"
+            :alertType="message.messageType"
+            class="w-50"
+          ></Alert>
+          <button class="w-50 btn btn-lg btn-primary mt-3" type="submit">
+            Reset
+          </button>
+          <br />
+          <router-link
+            to="login"
+            class="w-50 btn btn-lg btn-primary btn-white mt-3"
+          >
+            Back
+          </router-link>
+        </form>
+      </div>
+      <div class="col-md-4"></div>
     </div>
-    <div class="col-md-4"></div>
-  </div>
   </div>
   <div v-else>
     <h3 class="mb-3 fw-normal">Invalid Reset Password Key</h3>
-    <p>We cannot reset your password at this time. If you have any question, please contact us via the <router-link to="/askus">Ask Us</router-link> form.</p>
+    <p>
+      We cannot reset your password at this time. If you have any question,
+      please contact us via the
+      <router-link to="/askus">Ask Us</router-link> form.
+    </p>
   </div>
 </template>
 
