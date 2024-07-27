@@ -26,9 +26,13 @@ async function createInstitution(institutionId, name) {
   )
 
   if (institutionXProject == null) {
-    if (
-      !projectInstitutionsStore.addInstitution(projectId, institutionId, name)
-    ) {
+    const result = await projectInstitutionsStore.addInstitution(
+      projectId,
+      institutionId,
+      name
+    )
+
+    if (!result) {
       alert('Could not add Institution to Project')
     } else {
       await router.push({ path: `/myprojects/${projectId}/institutions` })

@@ -40,18 +40,6 @@ export const useProjectInstitutionStore = defineStore({
       return false
     },
 
-    async getInstitutionById(projectId, institutionId) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/institutions/find`
-
-      const response = await axios.get(url, {
-        params: { institutionId: institutionId },
-      })
-
-      return response.data.institution
-    },
-
     async removeByInstitutionIds(institutionIds) {
       for (let x = 0; x < institutionIds.length; x++) {
         const spliceIndex = this.institutions.indexOf(institutionIds[x])
@@ -97,7 +85,7 @@ export const useProjectInstitutionStore = defineStore({
       })
 
       if (response.status == 200) {
-        this.removeByInstitutionIds([institutionId])
+        await this.removeByInstitutionIds([institutionId])
 
         const institution = response.data.institution
         this.institutions.push({
