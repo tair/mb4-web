@@ -46,7 +46,7 @@ watch(selectedPageSize, (currentValue, oldValue) => {
   >
     <p>
       This project has
-      {{ mediaStore.mediaList?.length }} media files.
+      {{ mediaStore.media_files.length }} media files.
     </p>
 
     <div class="d-flex justify-content-end">
@@ -122,7 +122,7 @@ watch(selectedPageSize, (currentValue, oldValue) => {
             v-for="(media_file, n) in mediaStore.mediaList"
             :key="n"
           >
-            <a href="#" @click="onShowDetails(media_file)">
+            <a href="#" @click="onShowDetails(media_file)" class="nav-link">
               <MediaCardComp
                 :key="media_file.media_id"
                 :media_file="media_file"

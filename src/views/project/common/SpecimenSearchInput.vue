@@ -14,6 +14,9 @@ defineProps({
   value: {
     type: Number,
   },
+  disabled: {
+    type: Boolean,
+  },
 })
 
 const route = useRoute()
@@ -55,6 +58,7 @@ function getItem(specimenId) {
   <SearchSelectInput
     :name="name"
     :initial-value="value"
+    :disabled="disabled"
     :get-text="getText"
     :get-id="getSpecimenNumber"
     :getItem="getItem"

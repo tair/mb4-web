@@ -7,6 +7,9 @@ const props = defineProps<{
   // The ID of the item for the initial value.
   initialValue?: number
 
+  // Whether the input field is disabled.
+  disabled?: boolean
+
   // The search function that returns items based on the text.
   search: (text: string) => Promise<any[]>
 
@@ -67,12 +70,19 @@ function handleBlur() {
 </script>
 <template>
   <div class="input-group">
-    <input :name="name" :value="currentValue" v-if="name" type="hidden" />
+    <input
+      :name="name"
+      :value="currentValue"
+      v-if="name"
+      type="hidden"
+      :disabled="disabled"
+    />
     <input
       @input="handleInput"
       @search="handleSearch"
       @blur="handleBlur"
       v-model="text"
+      :disabled="disabled"
       class="form-control border"
       type="search"
     />
@@ -99,6 +109,7 @@ ul.results {
   position: absolute;
   right: -1px;
   top: 36px;
+  z-index: 100;
 }
 
 ul.results li {

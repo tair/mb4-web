@@ -7,6 +7,8 @@ import VueTippy from 'vue-tippy'
 import 'tippy.js/dist/tippy.css'
 import 'tippy.js/themes/light.css'
 
+import './assets/global.css'
+
 import App from './App.vue'
 import { createApp } from 'vue'
 const app = createApp(App)

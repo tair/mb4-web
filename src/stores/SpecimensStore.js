@@ -103,13 +103,13 @@ export const useSpecimensStore = defineStore({
       return null
     },
     getSpecimensByIds(specimenIds) {
-      const map = new Map()
+      const specimens = []
       for (const specimen of this.specimens) {
-        if (specimenIds.includes(specimen.specimen_id)) {
-          map.set(specimen.specimen_id, specimen)
+        if (specimenIds.has(specimen.specimen_id)) {
+          specimens.push(specimen)
         }
       }
-      return map
+      return specimens
     },
     removeBySpecimenIds(specimenIds) {
       let x = 0

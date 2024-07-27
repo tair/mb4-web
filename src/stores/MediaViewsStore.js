@@ -15,14 +15,6 @@ export const useMediaViewsStore = defineStore({
       this.mediaViews = response.data.views
       this.isLoaded = true
     },
-    getMediaViewById(viewId) {
-      for (const mediaView of this.mediaViews) {
-        if (mediaView.view_id == viewId) {
-          return mediaView
-        }
-      }
-      return null
-    },
     async create(projectId, view) {
       const url = `${
         import.meta.env.VITE_API_URL
@@ -60,6 +52,23 @@ export const useMediaViewsStore = defineStore({
         return true
       }
       return false
+    },
+    getMediaViewById(viewId) {
+      for (const mediaView of this.mediaViews) {
+        if (mediaView.view_id == viewId) {
+          return mediaView
+        }
+      }
+      return null
+    },
+    getMediaViewByIds(viewIds) {
+      const views = []
+      for (const mediaView of this.mediaViews) {
+        if (viewIds.has(mediaView.view_id)) {
+          views.push(mediaView)
+        }
+      }
+      return views
     },
     removeByViewIds(viewIds) {
       let x = 0
