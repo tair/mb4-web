@@ -11,7 +11,7 @@ const projectId = route.params.id
 const partitionId = route.params.partitionId
 const isLoaded = ref(false)
 
-const projectStore = useProjectsStore()
+const projectsStore = useProjectsStore()
 const project = ref(null)
 
 let partition = null
@@ -26,8 +26,10 @@ let views = ref([])
 let specimens = ref([])
 
 onMounted(async () => {
-  await projectStore.fetchProjects()
-  project.value = projectStore.getProjectById(projectId)
+  if (!projectsStore.isLoaded) {
+    await projectsStore.fetchProjects()
+  }
+  project.value = projectsStore.getProjectById(projectId)
 
   const url = `${
     import.meta.env.VITE_API_URL
@@ -36,15 +38,15 @@ onMounted(async () => {
   const response = await axios.get(url)
 
   partition = response.data.partition
-  taxa.value = response.data.taxaIds
-  characters.value = response.data.characterIds
+  taxa.value = response.data.taxaCount
+  characters.value = response.data.characterCount
   onetimeMedia.value = response.data.onetimeMedia
-  media.value = response.data.medias
-  labels.value = response.data.labels
-  documents.value = response.data.documents
-  bibliographicReferences.value = response.data.bibliographicReferences
-  views.value = response.data.views
-  specimens.value = response.data.specimens
+  media.value = response.data.mediaCount
+  labels.value = response.data.labelCount
+  documents.value = response.data.documentCount
+  bibliographicReferences.value = response.data.bibliographicReferenceCount
+  views.value = response.data.viewCount
+  specimens.value = response.data.specimenCount
 
   isLoaded.value = true
 })
@@ -55,7 +57,7 @@ async function publishPartition(event) {
 
   const onetimeAction = formObject.onetimeAction || 1
 
-  if (!taxa.value.length || !characters.value.length) {
+  if (!taxa.value || !characters.value) {
     alert(
       'You cannot publish this partition because it is empty. Please add characters and taxa and try again.'
     )
@@ -83,13 +85,12 @@ async function publishPartition(event) {
 
     <h1>Partition: {{ partition.name }}</h1>
     <p>
-      This partition contains {{ characters.length }} characters,
-      {{ taxa.length }} taxa, {{ media.length }} media of which
-      {{ onetimeMedia.length }} are released for onetime use, {{ labels }} media
-      labels, {{ specimens.length }} specimens, {{ views.length }} views,
-      {{ documents }} documents that are linked to media explaining copyright
-      and {{ bibliographicReferences }} bibliographic references To edit these,
-      go to the Matrix Editor and make changes
+      This partition contains {{ characters }} characters, {{ taxa }} taxa,
+      {{ media }} media of which {{ onetimeMedia.length }} are released for
+      onetime use, {{ labels }} media labels, {{ specimens }} specimens,
+      {{ views }} views, {{ documents }} documents that are linked to media
+      explaining copyright and {{ bibliographicReferences }} bibliographic
+      references To edit these, go to the Matrix Editor and make changes
     </p>
     <p>
       When you publish this partition, a new project will be created with the

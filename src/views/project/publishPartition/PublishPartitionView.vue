@@ -10,8 +10,8 @@ const projectId = route.params.id
 const isLoaded = ref(false)
 let partitions = ref([])
 
-onMounted(() => {
-  getPartitions()
+onMounted(async () => {
+  await getPartitions()
   isLoaded.value = true
 })
 
