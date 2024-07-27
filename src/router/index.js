@@ -17,10 +17,12 @@ import NotFoundView from '@/views/NotFoundView.vue'
 import ProjectView from '@/views/project/published/ProjectView.vue'
 import RootView from '@/views/RootView.vue'
 import TermsView from '@/views/misc/TermsView.vue'
-import UserLogin from '@/views/users/UserLogin.vue'
-import UserAuth from '@/views/users/UserAuth.vue'
+import UserLoginView from '@/views/users/UserLoginView.vue'
+import UserAuthView from '@/views/users/UserAuthView.vue'
 import UserProfileView from '@/views/users/UserProfileView.vue'
 import UserRegistrationView from '@/views/users/UserRegistrationView.vue'
+import UserResetPasswordView from '@/views/users/UserResetPasswordView.vue'
+import UserSetNewPasswordView from '@/views/users/UserSetNewPasswordView.vue'
 import UserView from '@/views/users/UserView.vue'
 
 const router = createRouter({
@@ -68,12 +70,12 @@ const router = createRouter({
             {
               path: 'login',
               name: 'UserLogin',
-              component: UserLogin,
+              component: UserLoginView,
             },
             {
               path: 'auth',
               name: 'UserAuth',
-              component: UserAuth,
+              component: UserAuthView,
               beforeEnter: (to, from) => {
                 if (!to.query.code) {
                   return { name: 'UserLogin' }
@@ -90,6 +92,16 @@ const router = createRouter({
               path: 'register',
               name: 'UserRegistrationView',
               component: UserRegistrationView,
+            },
+            {
+              path: 'resetpassword',
+              name: 'UserResetPassword',
+              component: UserResetPasswordView,
+            },
+            {
+              path: 'set-new-password',
+              name: 'UserSetNewPassword',
+              component: UserSetNewPasswordView,
             },
           ],
         },

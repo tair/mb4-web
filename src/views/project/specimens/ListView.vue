@@ -55,9 +55,9 @@ const filteredSpecimens = computed(() =>
 const rank = ref(TaxaColumns.GENUS)
 const availableRanks = computed(() => {
   const ranks = new Set()
-  const taxaIds = specimensStore.taxaIds
+  const taxaIds = new Set(specimensStore.taxaIds)
   const taxa = taxaStore.getTaxaByIds(taxaIds)
-  for (const taxon of taxa.values()) {
+  for (const taxon of taxa) {
     for (const columnName of TAXA_COLUMN_NAMES)
       if (columnName in taxon && taxon[columnName]?.length > 0) {
         ranks.add(columnName)
@@ -69,9 +69,9 @@ const availableRanks = computed(() => {
 const selectedLetter = ref(null)
 const letters = computed(() => {
   const letters = new Set()
-  const taxaIds = specimensStore.taxaIds
+  const taxaIds = new Set(specimensStore.taxaIds)
   const taxa = taxaStore.getTaxaByIds(taxaIds)
-  for (const taxon of taxa.values()) {
+  for (const taxon of taxa) {
     const index = rank.value
     if (taxon[index] && taxon[index].length > 0) {
       const firstLetter = taxon[index][0]

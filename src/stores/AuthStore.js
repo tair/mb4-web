@@ -108,6 +108,10 @@ export const useAuthStore = defineStore({
       }
     },
 
+    getRegisterUrl() {
+      return `${import.meta.env.VITE_API_URL}/auth/signup`
+    },
+
     async login(email, password) {
       this.loading = true
       this.err = null
@@ -139,6 +143,53 @@ export const useAuthStore = defineStore({
         return true
       } catch (e) {
         console.error(`store:auth:login(): ${e}\n${e.response.data.message}`)
+        this.err = e.response.data.message
+        return false
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async resetPassword(email) {
+      this.loading = true
+      this.err = null
+
+      try {
+        const url = `${import.meta.env.VITE_API_URL}/auth/reset-password`
+        let userObj = {
+          email: email,
+        }
+        const res = await axios.post(url, userObj)
+
+        return true
+      } catch (e) {
+        console.error(
+          `store:auth:resetpassword(): ${e}\n${e.response.data.message}`
+        )
+        this.err = e.response.data.message
+        return false
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async setNewPassword(resetKey, password) {
+      this.loading = true
+      this.err = null
+
+      try {
+        const url = `${import.meta.env.VITE_API_URL}/auth/set-new-password`
+        let data = {
+          resetKey: resetKey,
+          password: password,
+        }
+        const res = await axios.post(url, data)
+
+        return true
+      } catch (e) {
+        console.error(
+          `store:auth:resetpassword(): ${e}\n${e.response.data.message}`
+        )
         this.err = e.response.data.message
         return false
       } finally {

@@ -71,6 +71,14 @@ onBeforeUnmount(() => {
         />
         <label for="password">Password</label>
       </div>
+      <div class="form-floating">
+        <RouterLink
+          class="p-0 m-1 text-nowrap float-end"
+          style="text-align: right"
+          to="resetpassword"
+          >Forget your password?</RouterLink
+        >
+      </div>
       <Alert :message="error" messageName="login" alertType="danger"></Alert>
       <button class="w-100 btn btn-lg btn-primary mt-3" type="submit">
         Sign in
@@ -96,11 +104,6 @@ onBeforeUnmount(() => {
   max-width: 330px;
   padding: 15px;
   margin: auto;
-}
-.btn-white {
-  background-color: #ffffff !important;
-  border: 1px solid #ced4da !important;
-  color: #333333;
 }
 .orcid-icon {
   width: 24px;
