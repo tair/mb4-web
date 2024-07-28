@@ -18,11 +18,6 @@ async function removeInstitution() {
 
   if (!deleted) {
     alert('Failed to delete Institution')
-  } else {
-    projectInstitutionsStore.institutions =
-      projectInstitutionsStore.institutions.filter((item) => {
-        return !props.institutions.includes(item)
-      })
   }
 }
 </script>

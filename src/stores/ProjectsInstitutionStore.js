@@ -30,13 +30,10 @@ export const useProjectInstitutionStore = defineStore({
       }/projects/${projectId}/institutions/remove`
 
       const response = await axios.post(url, { institutionIds })
-
       if (response.status == 200) {
         this.removeByInstitutionIds(response.data.institutionIds)
-
         return true
       }
-
       return false
     },
 
@@ -52,12 +49,9 @@ export const useProjectInstitutionStore = defineStore({
       }/projects/${projectId}/institutions/add`
 
       const response = await axios.post(url, { institutionId, name })
-
       if (response.status == 200) {
         const institution = response.data.institution
-
         this.institutions.push(institution)
-
         return true
       }
       return false
@@ -84,7 +78,6 @@ export const useProjectInstitutionStore = defineStore({
 
         const institution = response.data.institution
         this.institutions.push(institution)
-
         return true
       }
 
