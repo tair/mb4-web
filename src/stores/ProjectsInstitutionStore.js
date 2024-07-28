@@ -40,12 +40,10 @@ export const useProjectInstitutionStore = defineStore({
       return false
     },
 
-    async removeByInstitutionIds(institutionIds) {
-      for (let x = 0; x < institutionIds.length; x++) {
-        const spliceIndex = this.institutions.indexOf(institutionIds[x])
-
-        this.institutions.splice(spliceIndex, 1)
-      }
+    removeByInstitutionIds(institutionIds) {
+      this.institutions = this.institutions.filter(
+        (institution) => !institutionIds.includes(institution.institution_id)
+      )
     },
 
     async addInstitution(projectId, institutionId, name) {
@@ -58,10 +56,7 @@ export const useProjectInstitutionStore = defineStore({
       if (response.status == 200) {
         const institution = response.data.institution
 
-        this.institutions.push({
-          institution_id: institution.institution_id,
-          name: institution.name,
-        })
+        this.institutions.push(institution)
 
         return true
       }
@@ -85,13 +80,10 @@ export const useProjectInstitutionStore = defineStore({
       })
 
       if (response.status == 200) {
-        await this.removeByInstitutionIds([institutionId])
+        this.removeByInstitutionIds([institutionId])
 
         const institution = response.data.institution
-        this.institutions.push({
-          institution_id: institution.institution_id,
-          name: institution.name,
-        })
+        this.institutions.push(institution)
 
         return true
       }

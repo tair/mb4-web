@@ -759,4 +759,38 @@ export const MY_PROJECT_VIEWS = [
         /* webpackChunkName: "unpublished" */ '@/views/project/duplication/RequestView.vue'
       ),
   },
+  {
+    path: 'publish/partition',
+    name: 'MyProjectPublishPartitionView',
+    meta: {
+      itemName: 'Publish Partition',
+      breadcrumbs: [
+        {
+          label: 'Publish Partition',
+          to: 'MyProjectPublishPartitionView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/publishPartition/PublishPartitionView.vue'
+      ),
+  },
+  {
+    path: 'publish/partition/:partitionId',
+    name: 'MyProjectPublishPartitionSummaryView',
+    meta: {
+      itemName: 'Publish Partition',
+      breadcrumbs: [
+        {
+          label: 'Publish Partition',
+          to: 'MyProjectPublishPartitionView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/publishPartition/SummaryView.vue'
+      ),
+  },
 ]
