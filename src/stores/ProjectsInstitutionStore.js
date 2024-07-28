@@ -40,30 +40,52 @@ export const useProjectInstitutionStore = defineStore({
       return false
     },
 
-    async removeByInstitutionIds(institutionIds) {
-      for (let x = 0; x < institutionIds.length; x++) {
-        const spliceIndex = this.institutions.indexOf(institutionIds[x])
-
-        this.institutions.splice(spliceIndex, 1)
-      }
+    removeByInstitutionIds(institutionIds) {
+      this.institutions = this.institutions.filter(
+        (institution) => !institutionIds.includes(institution.institution_id)
+      )
     },
 
-    async addInstitution(projectId, institutionId) {
+    async addInstitution(projectId, institutionId, name) {
       const url = `${
         import.meta.env.VITE_API_URL
-      }/projects/${projectId}/institutions/create`
+      }/projects/${projectId}/institutions/add`
 
-      const response = await axios.post(url, { institutionId })
+      const response = await axios.post(url, { institutionId, name })
 
       if (response.status == 200) {
         const institution = response.data.institution
 
-        this.institutions.push({
-          institutionId: institution.institution_id,
-          name: institution.name,
-        })
+        this.institutions.push(institution)
 
-        return institution
+        return true
+      }
+      return false
+    },
+
+    async editInstitution(
+      projectId,
+      institutionId,
+      name,
+      selectedInstitutionId
+    ) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/institutions/edit`
+
+      const response = await axios.post(url, {
+        institutionId,
+        name,
+        selectedInstitutionId,
+      })
+
+      if (response.status == 200) {
+        this.removeByInstitutionIds([institutionId])
+
+        const institution = response.data.institution
+        this.institutions.push(institution)
+
+        return true
       }
 
       return false
