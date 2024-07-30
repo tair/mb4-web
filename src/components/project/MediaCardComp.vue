@@ -140,7 +140,7 @@ function hideEnlargedImage(imgId) {
             class="cc-icon"
           />
         </div>
-        <div v-if="media_file.notes" class="truncate-multiline">{{ truncateNote(media_file.notes) }}</div>
+        <div v-if="media_file.notes" class="truncate-multiline" v-html="truncateNote(media_file.notes)"></div>
       </div>
     </div>
   </div>

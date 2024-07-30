@@ -11,7 +11,10 @@ const route = useRoute()
 const mediaStore = usePublicMediaStore()
 const projectId = route.params.id
 const thumbnailView = ref(true)
-let mediaDetailsFor = ref(null)
+const mediaDetailsFor = ref(null)
+const orderByOptions = mediaStore.getOrderByOptions
+let orderBySelection = ref(mediaStore.getDefaultOrderBy)
+let searchStr = ref(null)
 
 onMounted(() => {
   mediaStore.fetchMediaFiles(projectId)
@@ -25,6 +28,17 @@ function onShowDetails(media_file) {
   isDetailsActive.value = true
   mediaDetailsFor.value = media_file
 }
+
+watch(orderBySelection, (currentValue, oldValue) => {
+  mediaStore.sortByOption(currentValue)
+  mediaStore.fetchByPage()
+})
+
+watch(searchStr, (currentValue, oldValue) => {
+  mediaStore.filterMediaFiles(currentValue)
+  mediaStore.recalculatePageInfo()
+  mediaStore.fetchByPage()
+})
 
 watch(selectedPage, (currentValue, oldValue) => {
   mediaStore.currentPage = currentValue
@@ -47,51 +61,69 @@ watch(selectedPageSize, (currentValue, oldValue) => {
   >
     <p>
       This project has
+      {{ mediaStore.full_media_files.length }} media files. Displaying
       {{ mediaStore.media_files.length }} media files.
     </p>
 
-    <div class="d-flex justify-content-end">
-      <div class="me-5">
-        Showing page
-        <select v-model="selectedPage">
-          <option
-            :selected="idx == 1"
-            v-for="(idx, type) in mediaStore.totalPages"
-            :value="idx"
-          >
-            {{ idx }}
-          </option>
-        </select>
-        of {{ mediaStore.totalPages }} pages.
+    <div class="row mb-3">
+      <div class="col-5">
+        <div class="mb-2">
+          <label for="filter" class="me-2">Search for:</label>
+          <input id="filter" v-model="searchStr" class="me-2"/>
+          <button @click="searchStr=''" class="btn btn-primary btn-white">clear</button>
+        </div>
+        <div>
+          <label for="order-by" class="me-2">Order by:</label>
+          <select id="order-by" v-model="orderBySelection">
+            <option v-for="(label, value) in orderByOptions" :key="value" :value="value">
+              {{ label }}
+            </option>
+          </select>
+        </div>
       </div>
+      <div class="d-flex col-7 justify-content-end">
+        <div class="me-5">
+          Showing page
+          <select v-model="selectedPage">
+            <option
+              :selected="idx == 1"
+              v-for="(idx, type) in mediaStore.totalPages"
+              :value="idx"
+            >
+              {{ idx }}
+            </option>
+          </select>
+          of {{ mediaStore.totalPages }} pages.
+        </div>
 
-      <div>
-        Items per page:
-        <select v-model="selectedPageSize">
-          <option
-            :selected="idx == 10"
-            v-for="(idx, type) in [3, 5, 10, 25, 50, 100]"
-            :value="idx"
-          >
-            {{ idx }}
-          </option>
-        </select>
-      </div>
-      <div class="ms-1">
-        <button
-          @click="thumbnailView = true"
-          :style="{ backgroundColor: thumbnailView ? '#e0e0e0' : '#fff'}"
-          title="thumbnail-view">
-          <i class="fa-solid fa-border-all"></i>
-        </button>
-      </div>
-      <div class="ms-1">
-        <button
-          @click="thumbnailView = false"
-          :style="{ backgroundColor: thumbnailView ? '#fff' : '#e0e0e0'}"
-          title="mosaic-view">
-          <i class="fa-solid fa-table-cells"></i>
-        </button>
+        <div>
+          Items per page:
+          <select v-model="selectedPageSize">
+            <option
+              :selected="idx == 10"
+              v-for="(idx, type) in [3, 5, 10, 25, 50, 100]"
+              :value="idx"
+            >
+              {{ idx }}
+            </option>
+          </select>
+        </div>
+        <div class="ms-1">
+          <button
+            @click="thumbnailView = true"
+            :style="{ backgroundColor: thumbnailView ? '#e0e0e0' : '#fff'}"
+            title="thumbnail-view">
+            <i class="fa-solid fa-border-all"></i>
+          </button>
+        </div>
+        <div class="ms-1">
+          <button
+            @click="thumbnailView = false"
+            :style="{ backgroundColor: thumbnailView ? '#fff' : '#e0e0e0'}"
+            title="mosaic-view">
+            <i class="fa-solid fa-table-cells"></i>
+          </button>
+        </div>
       </div>
     </div>
 
