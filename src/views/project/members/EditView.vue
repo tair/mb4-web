@@ -16,9 +16,13 @@ const isLoaded = computed(() => projectUsersStore.isLoaded)
 
 async function edit(event) {
   const formData = new FormData(event.currentTarget)
-  const json = Object.fromEntries(formData)
-  json.groups_membership = JSON.parse(json.groups_membership)
-  const success = await projectUsersStore.editUser(projectId, linkId, json)
+  const changes = Object.fromEntries(formData)
+  const groupsJoined = JSON.parse(changes.joined_groups)
+  delete changes.joined_groups
+  user.value.membership_type = changes.membership_type
+  console.log(user)
+  
+  const success = await projectUsersStore.editUser(projectId, linkId, user.value, groupsJoined)
   if (success) {
     router.go(-1)
   } else {

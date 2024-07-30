@@ -3,7 +3,7 @@ import GroupCheckboxList from '@/components/project/GroupCheckboxListComp.vue'
 
 export const userSchema = {
   membership_type: {
-    label: 'Membership Type:',
+    label: 'Membership Type',
     view: SelectInput,
     args: {
       options: {
@@ -14,8 +14,8 @@ export const userSchema = {
       },
     },
   },
-  groups_membership: {
-    label: 'Belongs to member group(s):',
+  joined_groups: {
+    label: 'Belongs to member group(s)',
     view: GroupCheckboxList,
   },
 }
