@@ -18,14 +18,14 @@ async function edit(event) {
   const formData = new FormData(event.currentTarget)
   const changes = Object.fromEntries(formData)
   const groupsJoined = JSON.parse(changes.joined_groups)
-  delete changes.joined_groups
+  const oldMembershipType = user.value.membership_type
   user.value.membership_type = changes.membership_type
-  console.log(user)
   
   const success = await projectUsersStore.editUser(projectId, linkId, user.value, groupsJoined)
   if (success) {
     router.go(-1)
   } else {
+    user.value.membership_type = oldMembershipType
     alert('Failed to update member')
   }
 }

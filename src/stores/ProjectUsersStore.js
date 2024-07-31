@@ -23,19 +23,14 @@ export const useProjectUsersStore = defineStore({
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/users/${linkId}/edit`
-      console.log( {user, groupsJoined})
       const response = await axios.post(url, { user, groupsJoined })
       if (response.status == 200) {
         const user = response.data.user
-        this.updateUser(linkId, user)
+        const index = this.removeUserByLinkId(user.link_id)
+        this.users.splice(index, 0, user)
         return true
       }
       return false
-    },
-    updateUser(linkId, user) {
-      const userIndex = this.getUserIndexByLinkId(linkId)
-      this.users[userIndex].membership_type = user.membership_type
-      //this.users[userIndex].joined_groups = user.joined_groups
     },
     getUserIndexByLinkId(linkId) {
       for (let x = 0; x < this.users.length; x++) {
@@ -87,7 +82,7 @@ export const useProjectUsersStore = defineStore({
       for (let x = 0; x < this.users.length; ++x) {
         if (linkId == this.users[x].link_id) {
           this.users.splice(x, 1)
-          break
+          return x
         }
       }
     },
