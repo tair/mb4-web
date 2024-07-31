@@ -7,11 +7,18 @@
       @mouseleave="endDrag"
       @wheel="onWheel">
       <img
+        v-if="isImageFormat(imgSrc)"
         :src="imgSrc"
         :style="{ transform: `scale(${zoom}) translate(${offset.x}px, ${offset.y}px) rotate(${rotation}deg)` }"
         class="media-image"
         ref="image"
       />
+      <canvas
+        v-else
+        ref="canvas"
+        :style="{ transform: `scale(${zoom}) translate(${offset.x}px, ${offset.y}px) rotate(${rotation}deg)` }"
+        class="media-image"
+      ></canvas>
     </div>
     <div class="controls">
       <div class="zoom-controls">
@@ -58,6 +65,8 @@
 </template>
 
 <script>
+import 'tiff.js';
+
 export default {
   props: {
     imgSrc: {
@@ -75,7 +84,35 @@ export default {
       isThumbnailVisible: false,
     };
   },
+  watch: {
+    imgSrc: 'renderImage',
+  },
   methods: {
+    isImageFormat(src) {
+      return /\.(jpe?g|png|gif|bmp|webp)$/i.test(src);
+    },
+    renderImage() {
+      if (!this.isImageFormat(this.imgSrc)) {
+        const canvas = this.$refs.canvas;
+        const ctx = canvas.getContext('2d');
+
+        fetch(this.imgSrc)
+          .then(response => response.arrayBuffer())
+          .then(buffer => {
+            const tiff = new Tiff({
+              buffer: buffer,
+            });
+            const image = tiff.toCanvas();
+
+            canvas.width = image.width;
+            canvas.height = image.height;
+            ctx.drawImage(image, 0, 0);
+          })
+          .catch(error => {
+            console.error('Error loading TIFF image:', error);
+          });
+      }
+    },
     zoomIn() {
       if (this.zoom < 3) this.zoom += 0.1;
     },
@@ -125,6 +162,9 @@ export default {
     flipIsDragging() {
       this.isDragging = !this.isDragging
     },
+  },
+  mounted() {
+    this.renderImage();
   },
 };
 </script>
