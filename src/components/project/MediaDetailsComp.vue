@@ -82,10 +82,18 @@ function getSibilingMessage(mediaObj) {
 }
 
 function getHitsMessage(mediaObj) {
-  let message =" This media record has been viewed " + mediaObj.hits + " time" + ((mediaObj.hits == 1) ? "" : "s")
-  if (mediaObj.downloads) {
-    message += " and downloaded " + mediaObj.downloads + " time" + ((mediaObj.downloads == 1) ? "" : "s");
+  let message = ""
+  if (mediaObj.hits) {
+    message = " This media record has been viewed " + mediaObj.hits + " time" + ((mediaObj.hits == 1) ? "" : "s")
+    if (mediaObj.downloads) {
+      message += " and downloaded " + mediaObj.downloads + " time" + ((mediaObj.downloads == 1) ? "" : "s");
+    }
+  } else {
+    if (mediaObj.downloads) {
+      message = "This media record has been downloaded " + mediaObj.downloads + " time" + ((mediaObj.downloads == 1) ? "" : "s");
+    }
   }
+
   return message
 }
 </script>
@@ -206,7 +214,7 @@ function getHitsMessage(mediaObj) {
         <strong>{{ getAncestorMessage(media_file) }}</strong>
         <p v-if="media_file.ancestor.child_siblings"><i v-html="getSibilingMessage(media_file)"></i></p>
       </div>
-      <div class="mb-4">
+      <div class="mb-4" v-if="getHitsMessage(media_file)">
         {{ getHitsMessage(media_file) }} <Tooltip :content="viewStatsTooltipText"></Tooltip>
       </div>
     </div>
