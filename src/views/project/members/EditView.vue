@@ -20,8 +20,13 @@ async function edit(event) {
   const groupsJoined = JSON.parse(changes.joined_groups)
   const oldMembershipType = user.value.membership_type
   user.value.membership_type = changes.membership_type
-  
-  const success = await projectUsersStore.editUser(projectId, linkId, user.value, groupsJoined)
+
+  const success = await projectUsersStore.editUser(
+    projectId,
+    linkId,
+    user.value,
+    groupsJoined
+  )
   if (success) {
     router.go(-1)
   } else {

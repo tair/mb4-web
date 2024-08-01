@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useProjectMemberGroupsStore } from '@/stores/ProjectMemberGroupsStore';
+import { useProjectMemberGroupsStore } from '@/stores/ProjectMemberGroupsStore'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -19,7 +19,7 @@ function check(group: number) {
 }
 function remove(group: number) {
   const index = props.value.indexOf(group)
-  if(index!==-1) {
+  if (index !== -1) {
     props.value.splice(index, 1)
   }
 }
@@ -40,7 +40,9 @@ onMounted(() => {
       type="checkbox"
       :name="name"
       :checked="!!check(group.group_id)"
-      @click="!check(group.group_id) ? (add(group.group_id)) : (remove(group.group_id))"
+      @click="
+        !check(group.group_id) ? add(group.group_id) : remove(group.group_id)
+      "
     />
     <input type="hidden" :name="name" :value="JSON.stringify(value)" />
     <label> &nbsp{{ group.group_name }}</label>
