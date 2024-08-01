@@ -16,6 +16,7 @@
         }"
         class="media-image"
         ref="image"
+        @load="adjustZoomToFit"
       />
       <canvas
         v-else
@@ -82,6 +83,25 @@
 
 <script>
 import 'tiff.js'
+// for dcm file display
+import cornerstone from 'cornerstone-core'
+import dicomParser from 'dicom-parser'
+import cornerstoneWADOImageLoader from 'cornerstone-wado-image-loader'
+import cornerstoneTools from 'cornerstone-tools'
+import Hammer from 'hammerjs'
+import cornerstoneMath from 'cornerstone-math'
+
+cornerstoneTools.external.cornerstone = cornerstone
+cornerstoneTools.external.Hammer = Hammer
+cornerstoneTools.external.cornerstoneMath = cornerstoneMath
+cornerstoneWADOImageLoader.external.cornerstone = cornerstone
+cornerstoneWADOImageLoader.external.dicomParser = dicomParser
+
+cornerstoneWADOImageLoader.configure({
+  beforeSend: function (xhr) {
+    // Add custom headers here (e.g., Authorization)
+  },
+})
 
 export default {
   props: {
@@ -107,27 +127,74 @@ export default {
     isImageFormat(src) {
       return /\.(jpe?g|png|gif|bmp|webp)$/i.test(src)
     },
+    isDicomFormat(src) {
+      return /\.dcm$/i.test(src)
+    },
     renderImage() {
       if (!this.isImageFormat(this.imgSrc)) {
-        const canvas = this.$refs.canvas
-        const ctx = canvas.getContext('2d')
-
-        fetch(this.imgSrc)
-          .then((response) => response.arrayBuffer())
-          .then((buffer) => {
-            const tiff = new Tiff({
-              buffer: buffer,
-            })
-            const image = tiff.toCanvas()
-
-            canvas.width = image.width
-            canvas.height = image.height
-            ctx.drawImage(image, 0, 0)
-          })
-          .catch((error) => {
-            console.error('Error loading TIFF image:', error)
-          })
+        if (this.isDicomFormat(this.imgSrc)) {
+          // Handle DICOM files
+          this.renderDicomImage()
+        } else {
+          this.renderTiffImage()
+        }
       }
+    },
+    // TODO: image loaded but incorrectly displayed
+    renderDicomImage() {
+      const element = this.$refs.canvas.parentElement
+      cornerstone.enable(element)
+
+      const imageId = `wadouri:${this.imgSrc}`
+      cornerstone
+        .loadImage(imageId)
+        .then((image) => {
+          const viewport = cornerstone.getDefaultViewportForImage(
+            element,
+            image
+          )
+          cornerstone.displayImage(element, image, viewport)
+
+          // Activate mouse input and touch input
+          cornerstoneTools.mouseInput.enable(element)
+          cornerstoneTools.mouseWheelInput.enable(element)
+          cornerstoneTools.touchInput.enable(element)
+
+          // Enable tools
+          const WwwcTool = cornerstoneTools.WwwcTool
+          cornerstoneTools.addTool(WwwcTool)
+          cornerstoneTools.setToolActive('Wwwc', { mouseButtonMask: 1 })
+
+          this.adjustZoomToFit()
+        })
+        .catch((error) => {
+          console.error('Error loading DICOM image:', error)
+        })
+    },
+    renderTiffImage() {
+      const canvas = this.$refs.canvas
+      const ctx = canvas.getContext('2d')
+
+      fetch(this.imgSrc)
+        .then((response) => response.arrayBuffer())
+        .then((buffer) => {
+          const tiff = new Tiff({
+            buffer: buffer,
+          })
+          const image = tiff.toCanvas()
+
+          canvas.width = image.width
+          canvas.height = image.height
+          ctx.drawImage(image, 0, 0)
+
+          this.adjustZoomToFit()
+        })
+        .catch((error) => {
+          console.error('Error loading TIFF image:', error)
+        })
+    },
+    adjustZoomToFit() {
+      // TODO: adjust image zoom and offset to fit the canvas
     },
     zoomIn() {
       if (this.zoom < 3) this.zoom += 0.1
