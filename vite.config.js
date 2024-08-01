@@ -7,7 +7,7 @@ import vue from '@vitejs/plugin-vue'
 export default defineConfig({
   plugins: [vue()],
   optimizeDeps: {
-    include: ['tiff.js']
+    include: ['tiff.js'],
   },
   resolve: {
     alias: {

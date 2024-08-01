@@ -1,7 +1,9 @@
 <template>
   <div v-if="isVisible" class="modal-overlay" @click.self="close">
     <div class="modal-content">
-      <button class="modal-close" @click="close"><i class="fa-regular fa-rectangle-xmark"></i></button>
+      <button class="modal-close" @click="close">
+        <i class="fa-regular fa-rectangle-xmark"></i>
+      </button>
       <slot></slot>
     </div>
   </div>
@@ -17,10 +19,10 @@ export default {
   },
   methods: {
     close() {
-      this.$emit('close');
+      this.$emit('close')
     },
   },
-};
+}
 </script>
 
 <style scoped>

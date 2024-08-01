@@ -74,7 +74,7 @@ onBeforeUnmount(() => {
       <div class="form-floating">
         <RouterLink
           class="p-0 m-1 text-nowrap float-end"
-          style="text-align: right;"
+          style="text-align: right"
           to="resetpassword"
           >Forget your password?</RouterLink
         >

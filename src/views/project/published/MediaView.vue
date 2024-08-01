@@ -69,13 +69,19 @@ watch(selectedPageSize, (currentValue, oldValue) => {
       <div class="col-5">
         <div class="mb-2">
           <label for="filter" class="me-2">Search for:</label>
-          <input id="filter" v-model="searchStr" class="me-2"/>
-          <button @click="searchStr=''" class="btn btn-primary btn-white">clear</button>
+          <input id="filter" v-model="searchStr" class="me-2" />
+          <button @click="searchStr = ''" class="btn btn-primary btn-white">
+            clear
+          </button>
         </div>
         <div>
           <label for="order-by" class="me-2">Order by:</label>
           <select id="order-by" v-model="orderBySelection">
-            <option v-for="(label, value) in orderByOptions" :key="value" :value="value">
+            <option
+              v-for="(label, value) in orderByOptions"
+              :key="value"
+              :value="value"
+            >
               {{ label }}
             </option>
           </select>
@@ -111,16 +117,18 @@ watch(selectedPageSize, (currentValue, oldValue) => {
         <div class="ms-1">
           <button
             @click="thumbnailView = true"
-            :style="{ backgroundColor: thumbnailView ? '#e0e0e0' : '#fff'}"
-            title="thumbnail-view">
+            :style="{ backgroundColor: thumbnailView ? '#e0e0e0' : '#fff' }"
+            title="thumbnail-view"
+          >
             <i class="fa-solid fa-border-all"></i>
           </button>
         </div>
         <div class="ms-1">
           <button
             @click="thumbnailView = false"
-            :style="{ backgroundColor: thumbnailView ? '#fff' : '#e0e0e0'}"
-            title="mosaic-view">
+            :style="{ backgroundColor: thumbnailView ? '#fff' : '#e0e0e0' }"
+            title="mosaic-view"
+          >
             <i class="fa-solid fa-table-cells"></i>
           </button>
         </div>
@@ -165,7 +173,14 @@ watch(selectedPageSize, (currentValue, oldValue) => {
         role="tabpanel"
         aria-labelledby="nav-media-list-tab"
       >
-        <div :class="[thumbnailView ? 'row row-cols-auto g-4 py-5' : 'row row-cols-auto g-2 py-3', 'justify-content-start']">
+        <div
+          :class="[
+            thumbnailView
+              ? 'row row-cols-auto g-4 py-5'
+              : 'row row-cols-auto g-2 py-3',
+            'justify-content-start',
+          ]"
+        >
           <div
             class="col d-flex align-items-stretch"
             v-for="(media_file, n) in mediaStore.mediaList"
@@ -175,7 +190,7 @@ watch(selectedPageSize, (currentValue, oldValue) => {
               <MediaCardComp
                 :key="media_file.media_id"
                 :media_file="media_file"
-                :full_view=thumbnailView
+                :full_view="thumbnailView"
               ></MediaCardComp>
             </a>
           </div>

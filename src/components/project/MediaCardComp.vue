@@ -1,5 +1,4 @@
 <script setup>
-
 const props = defineProps({
   media_file: {
     type: Object,
@@ -8,7 +7,7 @@ const props = defineProps({
   full_view: {
     type: Boolean,
     required: true,
-  }
+  },
 })
 
 function buildImageProps(mediaObj, type) {
@@ -31,9 +30,9 @@ function buildImageProps(mediaObj, type) {
 
 function truncateNote(note) {
   if (note.length > 120) {
-    return note.substring(0, 120) + '...';
+    return note.substring(0, 120) + '...'
   } else {
-    return note;
+    return note
   }
 }
 
@@ -42,49 +41,51 @@ function expandLength(length) {
 }
 
 function showEnlargedImage(event, imgId) {
-  const enlargedImage = document.getElementById(imgId);
-  enlargedImage.style.display = 'block';
+  const enlargedImage = document.getElementById(imgId)
+  enlargedImage.style.display = 'block'
 
-  const viewportWidth = window.innerWidth;
-  const imageRect = enlargedImage.getBoundingClientRect();
-  const imageWidth = imageRect.width;
+  const viewportWidth = window.innerWidth
+  const imageRect = enlargedImage.getBoundingClientRect()
+  const imageWidth = imageRect.width
 
   // Check if the image will be cut off on the right side
   if (event.clientX + imageWidth > viewportWidth) {
     // Position it to the left
-    enlargedImage.style.left = 'auto';
-    enlargedImage.style.right = '20%';
+    enlargedImage.style.left = 'auto'
+    enlargedImage.style.right = '20%'
   } else {
     // Position it to the right as default
-    enlargedImage.style.left = '20%';
-    enlargedImage.style.right = 'auto';
+    enlargedImage.style.left = '20%'
+    enlargedImage.style.right = 'auto'
   }
 
-  enlargedImage.style.top = '50%';
+  enlargedImage.style.top = '50%'
 }
 
 function hideEnlargedImage(imgId) {
-  document.getElementById(imgId).style.display = 'none';
+  document.getElementById(imgId).style.display = 'none'
 }
 </script>
 
 <template>
   <div :class="[full_view ? 'card media-card shadow image-container' : 'card']">
-    <div class="d-flex flex-column justify-content-between text-center thumbnail"
-      @mouseenter="showEnlargedImage($event, media_file.media_id)" @mouseleave="hideEnlargedImage(media_file.media_id)"
+    <div
+      class="d-flex flex-column justify-content-between text-center thumbnail"
+      @mouseenter="showEnlargedImage($event, media_file.media_id)"
+      @mouseleave="hideEnlargedImage(media_file.media_id)"
     >
       <div class="align-self-center media-image-top mt-2">
-      <img
-        :src="buildImageProps(media_file.media.thumbnail)"
-        :style="{
-          width: media_file.media.thumbnail.WIDTH + 'px',
-          height: media_file.media.thumbnail.HEIGHT + 'px',
-          backgroundSize: '20px',
-          backgroundRepeat: 'no-repeat',
-          backgroundImage: 'url(' + '/images/loader.png' + ')',
-          backgroundPosition: '10px 10px',
-        }"
-      />
+        <img
+          :src="buildImageProps(media_file.media.thumbnail)"
+          :style="{
+            width: media_file.media.thumbnail.WIDTH + 'px',
+            height: media_file.media.thumbnail.HEIGHT + 'px',
+            backgroundSize: '20px',
+            backgroundRepeat: 'no-repeat',
+            backgroundImage: 'url(' + '/images/loader.png' + ')',
+            backgroundPosition: '10px 10px',
+          }"
+        />
       </div>
       <div v-if="full_view" class="text-block text-center p-1">
         <div>
@@ -95,15 +96,13 @@ function hideEnlargedImage(imgId) {
           v-html="media_file.specimen_name"
           class="truncate-multiline mt-1"
         ></div>
-        <div
-          v-if="media_file.view_name"
-          class="mt-1"
-        >
+        <div v-if="media_file.view_name" class="mt-1">
           {{ media_file.view_name }}
         </div>
       </div>
     </div>
-    <div class="enlarged-image p-2 text-center"
+    <div
+      class="enlarged-image p-2 text-center"
       :id="media_file.media_id"
       :style="{
         width: expandLength(media_file.media.medium.WIDTH) + 'px',
@@ -122,10 +121,7 @@ function hideEnlargedImage(imgId) {
         alt="Enlarged Image"
       />
       <div class="text-block text-center p-1">
-        <div
-          v-if="media_file.view_name"
-          class="mt-1"
-        >
+        <div v-if="media_file.view_name" class="mt-1">
           {{ media_file.view_name }}
         </div>
         <div
@@ -133,14 +129,17 @@ function hideEnlargedImage(imgId) {
           v-html="media_file.specimen_name"
           class="mt-1"
         ></div>
-        <div v-if="media_file.copyright_holder">Copyright Holder: {{ media_file.copyright_holder }}</div>
-        <div v-if="media_file.license && media_file.license.image">
-          <img
-            :src="`/images/${media_file.license.image}`"
-            class="cc-icon"
-          />
+        <div v-if="media_file.copyright_holder">
+          Copyright Holder: {{ media_file.copyright_holder }}
         </div>
-        <div v-if="media_file.notes" class="truncate-multiline" v-html="truncateNote(media_file.notes)"></div>
+        <div v-if="media_file.license && media_file.license.image">
+          <img :src="`/images/${media_file.license.image}`" class="cc-icon" />
+        </div>
+        <div
+          v-if="media_file.notes"
+          class="truncate-multiline"
+          v-html="truncateNote(media_file.notes)"
+        ></div>
       </div>
     </div>
   </div>
@@ -156,23 +155,23 @@ function hideEnlargedImage(imgId) {
   height: 8rem;
 }
 .truncate-multiline {
-    display: -webkit-box;
-    -webkit-line-clamp: 2; /* Number of lines to display before truncating */
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Number of lines to display before truncating */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .image-container {
-    position: relative;
-    display: inline-block;
+  position: relative;
+  display: inline-block;
 }
 .enlarged-image {
-    display: none;
-    position: absolute;
-    top: 50%;
-    z-index: 10;
-    border: 2px solid orange;
-    background-color: white;
-    max-width: 600px;
+  display: none;
+  position: absolute;
+  top: 50%;
+  z-index: 10;
+  border: 2px solid orange;
+  background-color: white;
+  max-width: 600px;
 }
 .cc-icon {
   width: 88;

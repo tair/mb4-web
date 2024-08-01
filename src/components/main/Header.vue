@@ -123,7 +123,7 @@ function onLogout() {
 </template>
 <style scoped>
 header {
-  z-index: 100
+  z-index: 100;
 }
 
 header.navbar {

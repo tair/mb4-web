@@ -1,22 +1,28 @@
 <template>
   <div class="media-view-panel">
-    <div class="media-container" 
+    <div
+      class="media-container"
       @mousedown="startDrag"
       @mousemove="onDrag"
       @mouseup="endDrag"
       @mouseleave="endDrag"
-      @wheel="onWheel">
+      @wheel="onWheel"
+    >
       <img
         v-if="isImageFormat(imgSrc)"
         :src="imgSrc"
-        :style="{ transform: `scale(${zoom}) translate(${offset.x}px, ${offset.y}px) rotate(${rotation}deg)` }"
+        :style="{
+          transform: `scale(${zoom}) translate(${offset.x}px, ${offset.y}px) rotate(${rotation}deg)`,
+        }"
         class="media-image"
         ref="image"
       />
       <canvas
         v-else
         ref="canvas"
-        :style="{ transform: `scale(${zoom}) translate(${offset.x}px, ${offset.y}px) rotate(${rotation}deg)` }"
+        :style="{
+          transform: `scale(${zoom}) translate(${offset.x}px, ${offset.y}px) rotate(${rotation}deg)`,
+        }"
         class="media-image"
       ></canvas>
     </div>
@@ -25,7 +31,15 @@
         <button @click="zoomIn" title="zoomIn">
           <i class="fa-solid fa-magnifying-glass-plus"></i>
         </button>
-        <input type="range" min="0.1" max="3" step="0.1" v-model="zoom" title="zoomRange" class="vertical-range" />
+        <input
+          type="range"
+          min="0.1"
+          max="3"
+          step="0.1"
+          v-model="zoom"
+          title="zoomRange"
+          class="vertical-range"
+        />
         <button @click="zoomOut" title="zoomOut">
           <i class="fa-solid fa-magnifying-glass-minus"></i>
         </button>
@@ -41,16 +55,18 @@
       <div class="drag-control">
         <button
           @click="flipIsDragging"
-          :style="{ backgroundColor: isDragging ? '#e0e0e0' : '#fff'}"
-          title="drag">
+          :style="{ backgroundColor: isDragging ? '#e0e0e0' : '#fff' }"
+          title="drag"
+        >
           <i class="fa-solid fa-arrows-up-down-left-right"></i>
         </button>
       </div>
       <div class="thumbnail-control">
-        <button 
-            @click="flipThumbnailView"
-            :style="{ backgroundColor: isThumbnailVisible ? '#e0e0e0' : '#fff'}"
-            title="thumbnail">
+        <button
+          @click="flipThumbnailView"
+          :style="{ backgroundColor: isThumbnailVisible ? '#e0e0e0' : '#fff' }"
+          title="thumbnail"
+        >
           <i class="fa-regular fa-image"></i>
         </button>
       </div>
@@ -65,7 +81,7 @@
 </template>
 
 <script>
-import 'tiff.js';
+import 'tiff.js'
 
 export default {
   props: {
@@ -82,91 +98,91 @@ export default {
       isDragging: false,
       startDragOffset: { x: 0, y: 0 },
       isThumbnailVisible: false,
-    };
+    }
   },
   watch: {
     imgSrc: 'renderImage',
   },
   methods: {
     isImageFormat(src) {
-      return /\.(jpe?g|png|gif|bmp|webp)$/i.test(src);
+      return /\.(jpe?g|png|gif|bmp|webp)$/i.test(src)
     },
     renderImage() {
       if (!this.isImageFormat(this.imgSrc)) {
-        const canvas = this.$refs.canvas;
-        const ctx = canvas.getContext('2d');
+        const canvas = this.$refs.canvas
+        const ctx = canvas.getContext('2d')
 
         fetch(this.imgSrc)
-          .then(response => response.arrayBuffer())
-          .then(buffer => {
+          .then((response) => response.arrayBuffer())
+          .then((buffer) => {
             const tiff = new Tiff({
               buffer: buffer,
-            });
-            const image = tiff.toCanvas();
+            })
+            const image = tiff.toCanvas()
 
-            canvas.width = image.width;
-            canvas.height = image.height;
-            ctx.drawImage(image, 0, 0);
+            canvas.width = image.width
+            canvas.height = image.height
+            ctx.drawImage(image, 0, 0)
           })
-          .catch(error => {
-            console.error('Error loading TIFF image:', error);
-          });
+          .catch((error) => {
+            console.error('Error loading TIFF image:', error)
+          })
       }
     },
     zoomIn() {
-      if (this.zoom < 3) this.zoom += 0.1;
+      if (this.zoom < 3) this.zoom += 0.1
     },
     zoomOut() {
-      if (this.zoom > 0.1) this.zoom -= 0.1;
+      if (this.zoom > 0.1) this.zoom -= 0.1
     },
     rotateLeft() {
-      this.rotation -= 15;
+      this.rotation -= 15
     },
     rotateRight() {
-      this.rotation += 15;
+      this.rotation += 15
     },
     resetView() {
-      this.zoom = 1;
-      this.offset = { x: 0, y: 0 };
-      this.rotation = 0;
-      this.isThumbnailVisible = false;
+      this.zoom = 1
+      this.offset = { x: 0, y: 0 }
+      this.rotation = 0
+      this.isThumbnailVisible = false
     },
     startDrag(event) {
-      this.isDragging = true;
+      this.isDragging = true
       this.startDragOffset = {
         x: event.clientX - this.offset.x,
         y: event.clientY - this.offset.y,
-      };
+      }
     },
     onDrag(event) {
       if (this.isDragging) {
         this.offset = {
           x: event.clientX - this.startDragOffset.x,
           y: event.clientY - this.startDragOffset.y,
-        };
+        }
       }
     },
     endDrag() {
-      this.isDragging = false;
+      this.isDragging = false
     },
     onWheel(event) {
       if (event.deltaY > 0) {
-        this.zoomOut();
+        this.zoomOut()
       } else {
-        this.zoomIn();
+        this.zoomIn()
       }
     },
     flipThumbnailView() {
-      this.isThumbnailVisible = !this.isThumbnailVisible;
+      this.isThumbnailVisible = !this.isThumbnailVisible
     },
     flipIsDragging() {
       this.isDragging = !this.isDragging
     },
   },
   mounted() {
-    this.renderImage();
+    this.renderImage()
   },
-};
+}
 </script>
 
 <style scoped>
@@ -210,7 +226,10 @@ export default {
   text-align: left;
 }
 
-.zoom-controls, .rotate-controls, .drag-control, .reset-control {
+.zoom-controls,
+.rotate-controls,
+.drag-control,
+.reset-control {
   margin: 5px 0;
 }
 

@@ -1,9 +1,9 @@
 <script setup>
-import { ref } from 'vue';
+import { ref } from 'vue'
 import { toDateString } from '@/utils/date'
 import Tooltip from '@/components/main/Tooltip.vue'
-import CustomModal from './CustomModal.vue';
-import MediaViewPanel from './MediaViewPanel.vue';
+import CustomModal from './CustomModal.vue'
+import MediaViewPanel from './MediaViewPanel.vue'
 
 const props = defineProps({
   media_file: {
@@ -11,10 +11,12 @@ const props = defineProps({
   },
 })
 
-const showZoomModal = ref(false);
-const showDownloadModal = ref(false);
-const viewStatsTooltipText = "Project download and view statistics are available since August 2012.  Views and downloads pre August 2012 are not reflected in the statistics."
-const downloadTooltipText = "By downloading from MorphoBank, you agree to the site's Terms of Use & Privacy Policy."
+const showZoomModal = ref(false)
+const showDownloadModal = ref(false)
+const viewStatsTooltipText =
+  'Project download and view statistics are available since August 2012.  Views and downloads pre August 2012 are not reflected in the statistics.'
+const downloadTooltipText =
+  "By downloading from MorphoBank, you agree to the site's Terms of Use & Privacy Policy."
 
 async function confirmDownload(mediaObj, fileName) {
   // if (!isCaptchaVerified) {
@@ -22,7 +24,7 @@ async function confirmDownload(mediaObj, fileName) {
   //   return;
   // }
   // CAPTCHA is completed, proceed with the download
-  const imageUrl = buildImageProps(mediaObj);
+  const imageUrl = buildImageProps(mediaObj)
   let downloadFileName = fileName
   if (!downloadFileName) {
     downloadFileName = getLastElementFromUrl(imageUrl)
@@ -31,20 +33,20 @@ async function confirmDownload(mediaObj, fileName) {
   // const response = await fetch(imageUrl);
   // const blob = await response.blob();
   // const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = imageUrl;
-  link.download = downloadFileName;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  const link = document.createElement('a')
+  link.href = imageUrl
+  link.download = downloadFileName
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
   // URL.revokeObjectURL(url);
 
-  showDownloadModal.value = false;
+  showDownloadModal.value = false
 }
 
 function getLastElementFromUrl(url) {
-  const parts = url.split('/');
-  return parts[parts.length - 1];
+  const parts = url.split('/')
+  return parts[parts.length - 1]
 }
 
 function buildImageProps(mediaObj, type) {
@@ -67,30 +69,49 @@ function buildImageProps(mediaObj, type) {
 }
 
 function getAncestorMessage(mediaObj) {
-  let message = 'This media file was first entered in MorphoBank as M' + mediaObj.ancestor.media_id + ' in P' + mediaObj.ancestor.project_id
+  let message =
+    'This media file was first entered in MorphoBank as M' +
+    mediaObj.ancestor.media_id +
+    ' in P' +
+    mediaObj.ancestor.project_id
   if (mediaObj.ancestor.deleted) {
-    message += '. This project which the media file was first entered has since been deleted.'
+    message +=
+      '. This project which the media file was first entered has since been deleted.'
   }
   return message
 }
 
 function getSibilingMessage(mediaObj) {
-  let message = "It has also been used in: "
-  message += mediaObj.ancestor.child_siblings.map(obj => `P${obj.project_id} as M${obj.media_id}`).join(', ');
-  message += "."
+  let message = 'It has also been used in: '
+  message += mediaObj.ancestor.child_siblings
+    .map((obj) => `P${obj.project_id} as M${obj.media_id}`)
+    .join(', ')
+  message += '.'
   return message
 }
 
 function getHitsMessage(mediaObj) {
-  let message = ""
+  let message = ''
   if (mediaObj.hits) {
-    message = " This media record has been viewed " + mediaObj.hits + " time" + ((mediaObj.hits == 1) ? "" : "s")
+    message =
+      ' This media record has been viewed ' +
+      mediaObj.hits +
+      ' time' +
+      (mediaObj.hits == 1 ? '' : 's')
     if (mediaObj.downloads) {
-      message += " and downloaded " + mediaObj.downloads + " time" + ((mediaObj.downloads == 1) ? "" : "s");
+      message +=
+        ' and downloaded ' +
+        mediaObj.downloads +
+        ' time' +
+        (mediaObj.downloads == 1 ? '' : 's')
     }
   } else {
     if (mediaObj.downloads) {
-      message = "This media record has been downloaded " + mediaObj.downloads + " time" + ((mediaObj.downloads == 1) ? "" : "s");
+      message =
+        'This media record has been downloaded ' +
+        mediaObj.downloads +
+        ' time' +
+        (mediaObj.downloads == 1 ? '' : 's')
     }
   }
 
@@ -120,35 +141,61 @@ function getHitsMessage(mediaObj) {
         <div class="card-body">
           <div class="card-text">
             <div class="nav">
-              <a class="nav-link" href="#" @click="showZoomModal = true">>> Zoom</a>
-              <CustomModal :isVisible="showZoomModal" @close="showZoomModal = false">
-                <MediaViewPanel :imgSrc="buildImageProps(media_file.media['original'])" />
+              <a class="nav-link" href="#" @click="showZoomModal = true"
+                >>> Zoom</a
+              >
+              <CustomModal
+                :isVisible="showZoomModal"
+                @close="showZoomModal = false"
+              >
+                <MediaViewPanel
+                  :imgSrc="buildImageProps(media_file.media['original'])"
+                />
               </CustomModal>
-              <a class="nav-link" href="#" @click="showDownloadModal = true">>> Download <Tooltip :content="downloadTooltipText"></Tooltip></a>
-              <CustomModal :isVisible="showDownloadModal" @close="showDownloadModal = false">
+              <a class="nav-link" href="#" @click="showDownloadModal = true"
+                >>> Download <Tooltip :content="downloadTooltipText"></Tooltip
+              ></a>
+              <CustomModal
+                :isVisible="showDownloadModal"
+                @close="showDownloadModal = false"
+              >
                 <div>
                   <h2>Copyright Warning</h2>
                   <p>
-                    You are downloading media from MorphoBank. If you plan to reuse this item you must check the copyright reuse policy in place for this item.<br>
-                    Please acknowledge that you have read and understood the copyright
-                    warning before proceeding with the download.
+                    You are downloading media from MorphoBank. If you plan to
+                    reuse this item you must check the copyright reuse policy in
+                    place for this item.<br />
+                    Please acknowledge that you have read and understood the
+                    copyright warning before proceeding with the download.
                   </p>
-                  <button class="btn btn-primary" @click="confirmDownload(media_file.media['original'], media_file.media['ORIGINAL_FILENAME'])">I Acknowledge and Proceed</button>
+                  <button
+                    class="btn btn-primary"
+                    @click="
+                      confirmDownload(
+                        media_file.media['original'],
+                        media_file.media['ORIGINAL_FILENAME']
+                      )
+                    "
+                  >
+                    I Acknowledge and Proceed
+                  </button>
                 </div>
               </CustomModal>
             </div>
           </div>
           <div v-if="media_file.license && media_file.license.image">
-            <img
-              :src="`/images/${media_file.license.image}`"
-              class="cc-icon"
-            />
+            <img :src="`/images/${media_file.license.image}`" class="cc-icon" />
           </div>
           <div v-if="media_file.license && media_file.license.isOneTimeUse">
-            <p>Copyright license for future use: Media released for onetime use, no reuse without permission</p>
+            <p>
+              Copyright license for future use: Media released for onetime use,
+              no reuse without permission
+            </p>
           </div>
           <div>
-            <p class="card-title" v-if="media_file.media['ORIGINAL_FILENAME']">Original filename: {{ media_file.media['ORIGINAL_FILENAME'] }}</p>
+            <p class="card-title" v-if="media_file.media['ORIGINAL_FILENAME']">
+              Original filename: {{ media_file.media['ORIGINAL_FILENAME'] }}
+            </p>
           </div>
         </div>
       </div>
@@ -191,7 +238,11 @@ function getHitsMessage(mediaObj) {
         <p>{{ media_file.copyright_permission }}</p>
       </div>
       <div v-if="media_file.references">
-        <strong>{{ media_file.references.length > 1 ? "Bibliographic References" : "Bibliographic Reference" }}</strong>
+        <strong>{{
+          media_file.references.length > 1
+            ? 'Bibliographic References'
+            : 'Bibliographic Reference'
+        }}</strong>
         <p v-html="media_file.references.join('<br/>')"></p>
       </div>
       <div v-if="media_file.notes">
@@ -200,7 +251,11 @@ function getHitsMessage(mediaObj) {
       </div>
       <div v-if="media_file.url">
         <strong>Web source of media</strong>
-        <p><a :href="media_file.url" target="_blank">View media online &raquo;</a></p>
+        <p>
+          <a :href="media_file.url" target="_blank"
+            >View media online &raquo;</a
+          >
+        </p>
       </div>
       <div v-if="media_file.url_description">
         <strong>Web source description</strong>
@@ -212,10 +267,13 @@ function getHitsMessage(mediaObj) {
       </div>
       <div v-if="media_file.ancestor">
         <strong>{{ getAncestorMessage(media_file) }}</strong>
-        <p v-if="media_file.ancestor.child_siblings"><i v-html="getSibilingMessage(media_file)"></i></p>
+        <p v-if="media_file.ancestor.child_siblings">
+          <i v-html="getSibilingMessage(media_file)"></i>
+        </p>
       </div>
       <div class="mb-4" v-if="getHitsMessage(media_file)">
-        {{ getHitsMessage(media_file) }} <Tooltip :content="viewStatsTooltipText"></Tooltip>
+        {{ getHitsMessage(media_file) }}
+        <Tooltip :content="viewStatsTooltipText"></Tooltip>
       </div>
     </div>
   </div>
@@ -228,10 +286,10 @@ function getHitsMessage(mediaObj) {
 }
 
 .card {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
 }
 
 .card-img {
@@ -239,35 +297,35 @@ function getHitsMessage(mediaObj) {
 }
 
 .card-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .nav {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
 }
 
 .nav-link {
-    margin: 0 0.5rem;
-    text-decoration: none;
-    color: #007bff;
+  margin: 0 0.5rem;
+  text-decoration: none;
+  color: #007bff;
 }
 
 .nav-link:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
 .cc-icon {
-    max-width: 100px;
-    margin-bottom: 1rem;
+  max-width: 100px;
+  margin-bottom: 1rem;
 }
 
-.card-title, p {
-    margin: 0.5rem 0;
+.card-title,
+p {
+  margin: 0.5rem 0;
 }
-
 </style>
