@@ -709,7 +709,7 @@ export const MY_PROJECT_VIEWS = [
     ],
   },
   {
-    path: ':id/institutions/',
+    path: 'institutions/',
     name: 'MyProjectInstitutionsView',
     meta: {
       itemName: 'institutions',
@@ -726,7 +726,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/institutions/create',
+    path: 'institutions/create',
     name: 'MyProjectInstitutionsCreateView',
     meta: {
       itemName: 'institutions',
@@ -743,7 +743,7 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/duplication/request',
+    path: 'duplication/request',
     name: 'MyProjectDuplicationRequestView',
     meta: {
       itemName: 'duplication',
@@ -757,6 +757,40 @@ export const MY_PROJECT_VIEWS = [
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/duplication/RequestView.vue'
+      ),
+  },
+  {
+    path: 'publish/partition',
+    name: 'MyProjectPublishPartitionView',
+    meta: {
+      itemName: 'Publish Partition',
+      breadcrumbs: [
+        {
+          label: 'Publish Partition',
+          to: 'MyProjectPublishPartitionView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/publishPartition/PublishPartitionView.vue'
+      ),
+  },
+  {
+    path: 'publish/partition/:partitionId',
+    name: 'MyProjectPublishPartitionSummaryView',
+    meta: {
+      itemName: 'Publish Partition',
+      breadcrumbs: [
+        {
+          label: 'Publish Partition',
+          to: 'MyProjectPublishPartitionView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/publishPartition/SummaryView.vue'
       ),
   },
 ]
