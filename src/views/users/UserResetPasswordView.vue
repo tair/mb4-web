@@ -9,7 +9,7 @@ const state = reactive({
 })
 const message = reactive({
   message: null,
-  messageType: null
+  messageType: null,
 })
 
 const submitForm = async () => {
@@ -29,51 +29,55 @@ const submitForm = async () => {
     }
   } catch (error) {
     // Handle any unexpected errors
-    message.message = 'An unexpected error occurred. Please try again.';
-    message.messageType = 'danger';
-    console.error(error); // Log the error for debugging purposes
+    message.message = 'An unexpected error occurred. Please try again.'
+    message.messageType = 'danger'
+    console.error(error) // Log the error for debugging purposes
   }
 }
-
 </script>
 
 <template>
   <div class="form-reset-password container">
     <div class="row">
-    <div class="col-md-8">
-      <h3 class="mb-3 fw-normal">Reset Your Password</h3>
-      <p>To reset your password, enter the e-mail address you used to register below. <br>
-        A message will be sent to the address with instructions on how to reset your password.</p>
-      <form @submit.prevent="submitForm()">
-        <div class="form-group">
-          <input
-            v-model.trim="state.email"
-            id="email"
-            type="text"
-            class="form-control w-50"
-            required
-          />
-        </div>
-        <Alert
-          v-if="message.message"
-          :message="message"
-          messageName="message"
-          :alertType="message.messageType"
-          class = "w-50"
-        ></Alert>
-        <button class="w-50 btn btn-lg btn-primary mt-3" type="submit">
-          Reset
-        </button>
-        <br>
-        <router-link to="login"
-          class="w-50 btn btn-lg btn-primary btn-white mt-3"
-        >
-          Back
-        </router-link>
-      </form>
+      <div class="col-md-8">
+        <h3 class="mb-3 fw-normal">Reset Your Password</h3>
+        <p>
+          To reset your password, enter the e-mail address you used to register
+          below. <br />
+          A message will be sent to the address with instructions on how to
+          reset your password.
+        </p>
+        <form @submit.prevent="submitForm()">
+          <div class="form-group">
+            <input
+              v-model.trim="state.email"
+              id="email"
+              type="text"
+              class="form-control w-50"
+              required
+            />
+          </div>
+          <Alert
+            v-if="message.message"
+            :message="message"
+            messageName="message"
+            :alertType="message.messageType"
+            class="w-50"
+          ></Alert>
+          <button class="w-50 btn btn-lg btn-primary mt-3" type="submit">
+            Reset
+          </button>
+          <br />
+          <router-link
+            to="login"
+            class="w-50 btn btn-lg btn-primary btn-white mt-3"
+          >
+            Back
+          </router-link>
+        </form>
+      </div>
+      <div class="col-md-4"></div>
     </div>
-    <div class="col-md-4"></div>
-  </div>
   </div>
 </template>
 

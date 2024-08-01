@@ -1,5 +1,4 @@
 <script setup>
-
 const props = defineProps({
   media_file: {
     type: Object,
@@ -74,17 +73,17 @@ function hideEnlargedImage(imgId) {
       @mouseenter="showEnlargedImage($event, media_file.media_id)" @mouseleave="hideEnlargedImage(media_file.media_id)"
     >
       <div class="align-self-center media-image-top mt-2">
-      <img
-        :src="buildImageProps(media_file.media.thumbnail)"
-        :style="{
-          width: media_file.media.thumbnail.WIDTH + 'px',
-          height: media_file.media.thumbnail.HEIGHT + 'px',
-          backgroundSize: '20px',
-          backgroundRepeat: 'no-repeat',
-          backgroundImage: 'url(' + '/images/loader.png' + ')',
-          backgroundPosition: '10px 10px',
-        }"
-      />
+        <img
+          :src="buildImageProps(media_file.media.thumbnail)"
+          :style="{
+            width: media_file.media.thumbnail.WIDTH + 'px',
+            height: media_file.media.thumbnail.HEIGHT + 'px',
+            backgroundSize: '20px',
+            backgroundRepeat: 'no-repeat',
+            backgroundImage: 'url(' + '/images/loader.png' + ')',
+            backgroundPosition: '10px 10px',
+          }"
+        />
       </div>
       <div v-if="full_view" class="text-block text-center p-1">
         <div>
@@ -95,10 +94,7 @@ function hideEnlargedImage(imgId) {
           v-html="media_file.specimen_name"
           class="truncate-multiline mt-1"
         ></div>
-        <div
-          v-if="media_file.view_name"
-          class="mt-1"
-        >
+        <div v-if="media_file.view_name" class="mt-1">
           {{ media_file.view_name }}
         </div>
       </div>
@@ -122,10 +118,7 @@ function hideEnlargedImage(imgId) {
         alt="Enlarged Image"
       />
       <div class="text-block text-center p-1">
-        <div
-          v-if="media_file.view_name"
-          class="mt-1"
-        >
+        <div v-if="media_file.view_name" class="mt-1">
           {{ media_file.view_name }}
         </div>
         <div
@@ -156,14 +149,14 @@ function hideEnlargedImage(imgId) {
   height: 8rem;
 }
 .truncate-multiline {
-    display: -webkit-box;
-    -webkit-line-clamp: 2; /* Number of lines to display before truncating */
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Number of lines to display before truncating */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .image-container {
-    position: relative;
-    display: inline-block;
+  position: relative;
+  display: inline-block;
 }
 .enlarged-image {
     display: none;
