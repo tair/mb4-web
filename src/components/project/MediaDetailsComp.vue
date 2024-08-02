@@ -207,7 +207,7 @@ function getHitsMessage(mediaObj) {
       </div>
       <div>
         <strong>Taxonomic name</strong>
-        <p v-html="media_file.taxa_name"></p>
+        <p v-html="media_file.taxon_name"></p>
       </div>
       <div v-if="media_file.specimen_name">
         <strong>Specimen</strong>

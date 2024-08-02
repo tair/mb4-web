@@ -62,7 +62,7 @@ export const usePublicMediaStore = defineStore({
           'view_name',
           'user_name',
           'copyright_holder',
-          'taxa_name',
+          'taxon_name',
           'higher_taxon_phylum',
           'higher_taxon_class',
           'higher_taxon_order',
@@ -170,11 +170,11 @@ export const usePublicMediaStore = defineStore({
 
     sortByTaxaField(field) {
       this.media_files.sort((a, b) => {
-        if (!a.taxa_sort_fields || !a.taxa_sort_fields[field]) return 1
-        if (!b.taxa_sort_fields || !b.taxa_sort_fields[field]) return -1
-        const compareResult = a.taxa_sort_fields[field]
+        if (!a.taxon_sort_fields || !a.taxon_sort_fields[field]) return 1
+        if (!b.taxon_sort_fields || !b.taxon_sort_fields[field]) return -1
+        const compareResult = a.taxon_sort_fields[field]
           .toLowerCase()
-          .localeCompare(b.taxa_sort_fields[field].toLowerCase())
+          .localeCompare(b.taxon_sort_fields[field].toLowerCase())
         // when result is the same sort by media_id
         if (compareResult == 0) {
           return a.media_id - b.media_id
