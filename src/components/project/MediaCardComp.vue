@@ -92,8 +92,8 @@ function hideEnlargedImage(imgId) {
           {{ 'M' + media_file.media_id }}
         </div>
         <div
-          v-if="media_file.specimen_name"
-          v-html="media_file.specimen_name"
+          v-if="media_file.taxa_name"
+          v-html="media_file.taxa_name"
           class="truncate-multiline mt-1"
         ></div>
         <div v-if="media_file.view_name" class="mt-1">
