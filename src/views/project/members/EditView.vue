@@ -18,13 +18,10 @@ async function edit(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
   json.group_ids = formData.getAll('group_ids')
-  console.log('changes')
-  console.log(json)
 
   const success = await projectUsersStore.editUser(
     projectId,
     linkId,
-    //user,
     json.membership_type,
     json.group_ids,
   )
