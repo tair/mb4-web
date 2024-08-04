@@ -23,7 +23,7 @@ async function edit(event) {
     projectId,
     linkId,
     json.membership_type,
-    json.group_ids,
+    json.group_ids
   )
   if (success) {
     router.go(-1)

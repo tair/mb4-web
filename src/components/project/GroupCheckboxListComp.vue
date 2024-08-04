@@ -20,10 +20,10 @@ const props = defineProps<{
 const projectMemberGroupsStore = useProjectMemberGroupsStore()
 const groups = computed((): Group[] => projectMemberGroupsStore.groups)
 
-const group_memberships = ref<{[key: number]: boolean}>({})
+const group_memberships = ref<{ [key: number]: boolean }>({})
 
 function compare() {
-  for( let group of groups.value) {
+  for (let group of groups.value) {
     group_memberships.value[group.group_id] = check(group.group_id)
   }
 }
@@ -46,7 +46,6 @@ onMounted(() => {
 watch(groups, () => {
   compare()
 })
-
 </script>
 <template>
   <div v-for="group in groups" :key="group.group_id">
@@ -57,7 +56,9 @@ watch(groups, () => {
       :checked="group_memberships[group.group_id]"
       :value="group.group_id"
       @click="
-        group_memberships[group.group_id] ? remove(group.group_id) : add(group.group_id)
+        group_memberships[group.group_id]
+          ? remove(group.group_id)
+          : add(group.group_id)
       "
     />
     <label> &nbsp{{ group.group_name }}</label>

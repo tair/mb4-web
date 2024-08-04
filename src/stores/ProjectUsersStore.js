@@ -24,7 +24,11 @@ export const useProjectUsersStore = defineStore({
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/users/${linkId}/edit`
-      const response = await axios.post(url, { userData, membership_type, group_ids })
+      const response = await axios.post(url, {
+        userData,
+        membership_type,
+        group_ids,
+      })
       if (response.status == 200) {
         const user = response.data.user
         this.removeUserByLinkId(user.link_id)
