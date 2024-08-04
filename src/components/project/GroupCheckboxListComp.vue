@@ -13,7 +13,6 @@ const props = defineProps<{
   value?: number[]
   name: string
 }>()
-
 function check(group: number) {
   return props.value.includes(group)
 }
@@ -40,11 +39,11 @@ onMounted(() => {
       type="checkbox"
       :name="name"
       :checked="!!check(group.group_id)"
+      :value="group.group_id"
       @click="
         !check(group.group_id) ? add(group.group_id) : remove(group.group_id)
       "
     />
-    <input type="hidden" :name="name" :value="JSON.stringify(value)" />
     <label> &nbsp{{ group.group_name }}</label>
   </div>
 </template>

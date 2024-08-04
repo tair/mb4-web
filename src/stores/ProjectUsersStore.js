@@ -19,15 +19,16 @@ export const useProjectUsersStore = defineStore({
       this.users = response.data.users
       this.isLoaded = true
     },
-    async editUser(projectId, linkId, user, groupsJoined) {
+    async editUser(projectId, linkId, membership_type, group_ids) {
+      const userData = this.getUserByLinkId(linkId)
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/users/${linkId}/edit`
-      const response = await axios.post(url, { user, groupsJoined })
+      const response = await axios.post(url, { userData, membership_type, group_ids })
       if (response.status == 200) {
         const user = response.data.user
-        const index = this.removeUserByLinkId(user.link_id)
-        this.users.splice(index, 0, user)
+        this.removeUserByLinkId(user.link_id)
+        this.users.push(user)
         return true
       }
       return false
@@ -82,7 +83,7 @@ export const useProjectUsersStore = defineStore({
       for (let x = 0; x < this.users.length; ++x) {
         if (linkId == this.users[x].link_id) {
           this.users.splice(x, 1)
-          return x
+          break
         }
       }
     },

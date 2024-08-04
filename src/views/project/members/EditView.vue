@@ -16,21 +16,21 @@ const isLoaded = computed(() => projectUsersStore.isLoaded)
 
 async function edit(event) {
   const formData = new FormData(event.currentTarget)
-  const changes = Object.fromEntries(formData)
-  const groupsJoined = JSON.parse(changes.joined_groups)
-  const oldMembershipType = user.value.membership_type
-  user.value.membership_type = changes.membership_type
+  const json = Object.fromEntries(formData)
+  json.group_ids = formData.getAll('group_ids')
+  console.log('changes')
+  console.log(json)
 
   const success = await projectUsersStore.editUser(
     projectId,
     linkId,
-    user.value,
-    groupsJoined
+    //user,
+    json.membership_type,
+    json.group_ids,
   )
   if (success) {
     router.go(-1)
   } else {
-    user.value.membership_type = oldMembershipType
     alert('Failed to update member')
   }
 }

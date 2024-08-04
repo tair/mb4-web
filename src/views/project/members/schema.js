@@ -14,7 +14,7 @@ export const userSchema = {
       },
     },
   },
-  joined_groups: {
+  group_ids: {
     label: 'Belongs to member group(s)',
     view: GroupCheckboxList,
   },
