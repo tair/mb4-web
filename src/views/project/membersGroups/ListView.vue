@@ -40,6 +40,7 @@ onMounted(() => {
     <MembersGroupsComp
       :groups="projectMemberGroupsStore.groups"
       v-model:deleteGroup="groupToDelete"
+      :projectId="projectId"
     ></MembersGroupsComp>
   </LoadingIndicator>
   <DeleteGroupDialog :group="groupToDelete" :projectId="projectId" />

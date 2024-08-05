@@ -8,6 +8,7 @@ type Group = {
 const props = defineProps<{
   groups: Group[]
   deleteGroup: Group
+  projectId: string
 }>()
 </script>
 
@@ -23,6 +24,13 @@ const props = defineProps<{
           {{ group.group_name }}
         </div>
         <div class="list-group-item-buttons">
+          <RouterLink
+            :to="`/myprojects/${projectId}/members/groups/${group.group_id}/edit`"
+          >
+            <button type="button" class="btn btn-sm btn-secondary">
+              <i class="fa-regular fa-pen-to-square"></i>
+            </button>
+          </RouterLink>
           <button
             type="button"
             class="btn btn-sm btn-secondary"
