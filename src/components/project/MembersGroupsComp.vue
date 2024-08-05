@@ -42,9 +42,6 @@ const props = defineProps<{
           </button>
         </div>
       </div>
-      <div>
-        {{ group.description }}
-      </div>
     </li>
   </ul>
 </template>

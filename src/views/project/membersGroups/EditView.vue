@@ -17,11 +17,11 @@ const isLoaded = computed(() => projectMemberGroupsStore.isLoaded)
 async function edit(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
-  const success = await projectMemberGroupsStore.editUser(projectId, linkId, json)
+  const success = await projectMemberGroupsStore.editGroup(projectId, groupId, json)
   if (success) {
     router.go(-1)
   } else {
-    alert('Failed to update member')
+    alert('Failed to update group')
   }
 }
 
@@ -54,7 +54,6 @@ onMounted(() => {
               :is="definition.view"
               :name="index"
               :value="group[index]"
-              v-bind="definition.args"
             >
             </component>
           </div>
