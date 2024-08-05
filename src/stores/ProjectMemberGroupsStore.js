@@ -1,11 +1,6 @@
 import axios from 'axios'
 import { defineStore } from 'pinia'
 
-/**
- * Defines a store for the users in the project. This is useful for retrieving
- * user information once but then populating the name whenever the user id is
- * available.
- */
 export const useProjectMemberGroupsStore = defineStore({
   id: 'project-member-groups',
   state: () => ({

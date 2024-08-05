@@ -11,6 +11,7 @@ const projectId = route.params.id
 
 const projectMemberGroupsStore = useProjectMemberGroupsStore()
 const isLoaded = computed(() => projectMemberGroupsStore.isLoaded)
+const groups = computed(() => projectMemberGroupsStore.groups)
 const numOfGroups = computed(() => projectMemberGroupsStore.groups?.length)
 const groupToDelete = ref({})
 
@@ -38,7 +39,7 @@ onMounted(() => {
       </RouterLink>
     </div>
     <MembersGroupsComp
-      :groups="projectMemberGroupsStore.groups"
+      :groups="groups"
       v-model:deleteGroup="groupToDelete"
     ></MembersGroupsComp>
   </LoadingIndicator>
