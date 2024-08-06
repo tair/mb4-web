@@ -113,10 +113,7 @@ onMounted(() => {
           :class="[{ active: selectedLetter == letter }, 'fw-bold']"
           v-for="letter in letters"
           :key="letter"
-          @click="
-            selectedLetter = letter
-            selectAll = false
-          "
+          @click="selectedLetter = letter ; selectAll = false"
         >
           {{ letter }}
         </button>
