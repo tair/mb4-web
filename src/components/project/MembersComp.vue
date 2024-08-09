@@ -42,12 +42,17 @@ defineProps<{
         </div>
       </div>
       <div>
-        {{ 
-          user.membership_type == 0 ? 'Full membership (can edit everything)':
-          user.membership_type == 1 ? 'Observer (cannot edit)':
-          user.membership_type == 2 ? 'Character annotater (can edit everything but characters and states)':
-          user.membership_type == 3 ? 'Bibliography maintainer (can edit bibliography only)': ''
-         }}
+        {{
+          user.membership_type == 0
+            ? 'Full membership (can edit everything)'
+            : user.membership_type == 1
+            ? 'Observer (cannot edit)'
+            : user.membership_type == 2
+            ? 'Character annotater (can edit everything but characters and states)'
+            : user.membership_type == 3
+            ? 'Bibliography maintainer (can edit bibliography only)'
+            : ''
+        }}
       </div>
       <div v-if="user.admin" class="fw-bold">Project Administrator</div>
     </li>

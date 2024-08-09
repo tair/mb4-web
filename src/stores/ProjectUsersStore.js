@@ -28,7 +28,11 @@ export const useProjectUsersStore = defineStore({
         group_ids,
       })
       if (response.status == 200) {
-        this.updateUser(linkId, response.data.group_ids, response.data.membership_type)
+        this.updateUser(
+          linkId,
+          response.data.group_ids,
+          response.data.membership_type
+        )
         return true
       }
       return false
