@@ -20,22 +20,23 @@ export const useProjectUsersStore = defineStore({
       this.isLoaded = true
     },
     async editUser(projectId, linkId, membership_type, group_ids) {
-      const userData = this.getUserByLinkId(linkId)
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/users/${linkId}/edit`
       const response = await axios.post(url, {
-        userData,
         membership_type,
         group_ids,
       })
       if (response.status == 200) {
-        const user = response.data.user
-        this.removeUserByLinkId(user.link_id)
-        this.users.push(user)
+        this.updateUser(linkId, response.data.group_ids, response.data.membership_type)
         return true
       }
       return false
+    },
+    updateUser(linkId, group_ids, membership_type) {
+      const index = this.getUserIndexByLinkId(linkId)
+      this.users[index].group_ids = group_ids
+      this.users[index].membership_type = membership_type
     },
     getUserIndexByLinkId(linkId) {
       for (let x = 0; x < this.users.length; x++) {

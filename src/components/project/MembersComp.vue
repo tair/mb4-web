@@ -8,30 +8,14 @@ type User = {
   email: string
   membership_type: number
 }
-
-const props = defineProps<{
+defineProps<{
   users: User[]
   deleteUser: User
   projectId: string
 }>()
-function convertRole(m: User): String {
-  switch (m.membership_type) {
-    case 0:
-      return 'Full membership (can edit everything)'
-    case 1:
-      return 'Observer (cannot edit)'
-    case 2:
-      return 'Character annotater (can edit everything but characters and states)'
-    case 3:
-      return 'Bibliography maintainer (can edit bibliography only)'
-    default:
-      return ''
-  }
-}
 </script>
-
 <template>
-  <ul v-for="user in props.users" :key="user.user_id" class="list-group pt-3">
+  <ul v-for="user in users" :key="user.user_id" class="list-group pt-3">
     <li class="list-group-item">
       <div class="list-group-item-header">
         <div class="list-group-item-name">
@@ -58,7 +42,12 @@ function convertRole(m: User): String {
         </div>
       </div>
       <div>
-        {{ convertRole(user) }}
+        {{ 
+          user.membership_type == 0 ? 'Full membership (can edit everything)':
+          user.membership_type == 1 ? 'Observer (cannot edit)':
+          user.membership_type == 2 ? 'Character annotater (can edit everything but characters and states)':
+          user.membership_type == 3 ? 'Bibliography maintainer (can edit bibliography only)': ''
+         }}
       </div>
       <div v-if="user.admin" class="fw-bold">Project Administrator</div>
     </li>

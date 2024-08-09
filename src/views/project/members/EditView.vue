@@ -12,7 +12,6 @@ const linkId = route.params.linkId
 
 const projectUsersStore = useProjectUsersStore()
 const user = computed(() => projectUsersStore.getUserByLinkId(linkId))
-const isLoaded = computed(() => projectUsersStore.isLoaded)
 
 async function edit(event) {
   const formData = new FormData(event.currentTarget)
@@ -40,7 +39,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <LoadingIndicator :isLoaded="isLoaded">
+  <LoadingIndicator :isLoaded="projectUsersStore.isLoaded">
     <div>
       <div v-if="user" class="d-flex">
         <p class="fw-bold">Editing:&nbsp;</p>
