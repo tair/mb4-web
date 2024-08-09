@@ -9,11 +9,25 @@ const route = useRoute()
 const projectId = route.params.id
 const projectStore = usePublicProjectDetailsStore()
 
-const defaultFilterByOption = 'genus'
+const filterByOptions = computed(() => {
+  return projectStore.getSpecimenFilterFields()
+})
+
+const defaultFilterByOption = computed(() => {
+  return projectStore.getDefaultSpecimenFilter()
+})
+const selectedFilterByOption = ref(undefined);
+
+// Watch for changes in defaultFilterByOption and update selectedFilterByOption accordingly
+watch(defaultFilterByOption, (newVal) => {
+  if (newVal !== undefined) {
+    selectedFilterByOption.value = newVal;
+  }
+}, { immediate: true }); // immediate: true ensures the watcher runs immediately with the current value
+
 const selectedLetter = ref(null)
 // default set to genus
-let selectedFilterByOption = ref(defaultFilterByOption)
-let selectAll = ref(false)
+let selectAll = ref(true)
 
 const letters = computed(() => {
   let uniqueLetters = null
@@ -34,7 +48,7 @@ const filteredSpecimens = computed(() => {
 })
 
 function onResetFilter() {
-  selectedFilterByOption.value = defaultFilterByOption
+  selectedFilterByOption.value = defaultFilterByOption.value
   selectedLetter.value = null
   selectAll.value = true
 }
@@ -48,10 +62,6 @@ const unidentifiedSpecimens = computed(() => {
 const hasUnidentified = computed(() => {
   const specimens = unidentifiedSpecimens.value
   return specimens && specimens.length > 0
-})
-
-const filterByOptions = computed(() => {
-  return projectStore.getSpecimenFilterFields()
 })
 
 let isDetailsActive = ref(false)
@@ -211,23 +221,3 @@ onMounted(() => {
     </div>
   </ProjectLoaderComp>
 </template>
-
-<style>
-.filters {
-  margin-bottom: 10px;
-  font-weight: bold;
-}
-
-.filters button {
-  margin: 0 3px;
-  padding: 2px 6px;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  color: #ef782f;
-}
-
-.filters button.active {
-  color: #666;
-}
-</style>
