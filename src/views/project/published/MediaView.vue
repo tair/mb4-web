@@ -2,6 +2,7 @@
 import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePublicMediaStore } from '@/stores/PublicMediaStore.js'
+import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
 import MediaCardComp from '@/components/project/MediaCardComp.vue'
 import MediaDetailsComp from '@/components/project/MediaDetailsComp.vue'
@@ -9,6 +10,7 @@ import MediaDetailsComp from '@/components/project/MediaDetailsComp.vue'
 const route = useRoute()
 
 const mediaStore = usePublicMediaStore()
+const projectStore = usePublicProjectDetailsStore()
 const projectId = route.params.id
 const thumbnailView = ref(true)
 const mediaDetailsFor = ref(null)
@@ -18,6 +20,8 @@ let searchStr = ref(null)
 
 onMounted(() => {
   mediaStore.fetchMediaFiles(projectId)
+  // need to get project title
+  projectStore.fetchProject(projectId)
 })
 
 let isDetailsActive = ref(false)
