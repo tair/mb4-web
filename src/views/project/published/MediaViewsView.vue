@@ -54,11 +54,7 @@ onMounted(() => {
         {{ letter }}
       </button>
       <span v-if="letters.length > 0">|</span>
-      <button
-        class="fw-bold"
-        :key="ALL"
-        @click="selectedLetter = 'ALL'"
-      >
+      <button class="fw-bold" :key="ALL" @click="selectedLetter = 'ALL'">
         ALL
       </button>
     </div>

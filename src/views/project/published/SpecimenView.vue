@@ -16,14 +16,18 @@ const filterByOptions = computed(() => {
 const defaultFilterByOption = computed(() => {
   return projectStore.getDefaultSpecimenFilter()
 })
-const selectedFilterByOption = ref(undefined);
+const selectedFilterByOption = ref(undefined)
 
 // Watch for changes in defaultFilterByOption and update selectedFilterByOption accordingly
-watch(defaultFilterByOption, (newVal) => {
-  if (newVal !== undefined) {
-    selectedFilterByOption.value = newVal;
-  }
-}, { immediate: true }); // immediate: true ensures the watcher runs immediately with the current value
+watch(
+  defaultFilterByOption,
+  (newVal) => {
+    if (newVal !== undefined) {
+      selectedFilterByOption.value = newVal
+    }
+  },
+  { immediate: true }
+) // immediate: true ensures the watcher runs immediately with the current value
 
 const selectedLetter = ref(null)
 // default set to genus
@@ -123,7 +127,10 @@ onMounted(() => {
           :class="[{ active: selectedLetter == letter }, 'fw-bold']"
           v-for="letter in letters"
           :key="letter"
-          @click="selectedLetter = letter ; selectAll = false"
+          @click="
+            selectedLetter = letter;
+            selectAll = false
+          "
         >
           {{ letter }}
         </button>

@@ -15,14 +15,18 @@ const filterByOptions = computed(() => {
 const defaultFilterByOption = computed(() => {
   return projectStore.getDefaultTaxaFilter()
 })
-const selectedFilterByOption = ref(undefined);
+const selectedFilterByOption = ref(undefined)
 
 // Watch for changes in defaultFilterByOption and update selectedFilterByOption accordingly
-watch(defaultFilterByOption, (newVal) => {
-  if (newVal !== undefined) {
-    selectedFilterByOption.value = newVal;
-  }
-}, { immediate: true }); // immediate: true ensures the watcher runs immediately with the current value
+watch(
+  defaultFilterByOption,
+  (newVal) => {
+    if (newVal !== undefined) {
+      selectedFilterByOption.value = newVal
+    }
+  },
+  { immediate: true }
+) // immediate: true ensures the watcher runs immediately with the current value
 
 const partitionByOptions = computed(() => {
   return projectStore.getTaxaPartitionFields()
@@ -32,14 +36,18 @@ const defaultPartitionByField = computed(() => {
   return projectStore.getDefaultTaxaPartitionField()
 })
 
-const selectedPartitionByOption = ref(null);
+const selectedPartitionByOption = ref(null)
 let selectPartition = ref(false)
 
-watch(defaultPartitionByField, (newVal) => {
-  if (newVal !== undefined) {
-    selectedPartitionByOption.value = newVal;
-  }
-}, { immediate: true });
+watch(
+  defaultPartitionByField,
+  (newVal) => {
+    if (newVal !== undefined) {
+      selectedPartitionByOption.value = newVal
+    }
+  },
+  { immediate: true }
+)
 
 const selectedLetter = ref(null)
 // default set to genus
@@ -109,8 +117,19 @@ onMounted(() => {
     <div class="mb-3">
       <div class="mb-2">
         <label for="filter" class="me-2">Search for:</label>
-        <input id="filter" v-model="searchStr" class="me-2" @input="selectAll = false" />
-        <button @click="searchStr = ''; selectAll = true" class="btn btn-primary btn-white">
+        <input
+          id="filter"
+          v-model="searchStr"
+          class="me-2"
+          @input="selectAll = false"
+        />
+        <button
+          @click="
+            searchStr = '';
+            selectAll = true
+          "
+          class="btn btn-primary btn-white"
+        >
           clear
         </button>
       </div>
@@ -132,12 +151,17 @@ onMounted(() => {
           </select>
         </div>
         <div class="col-7 text-end">
-          <label for="patition-by" class="me-2">Show by taxa partition or matrix:</label>
+          <label for="patition-by" class="me-2"
+            >Show by taxa partition or matrix:</label
+          >
           <select
             class="me-3"
             id="partition-by"
             v-model="selectedPartitionByOption"
-            @change="selectPartition = true ; selectAll = false"
+            @change="
+              selectPartition = true;
+              selectAll = false
+            "
           >
             <option
               v-for="(label, key) in partitionByOptions"
@@ -157,7 +181,10 @@ onMounted(() => {
           :class="[{ active: selectedLetter == letter }, 'fw-bold']"
           v-for="letter in letters"
           :key="letter"
-          @click="selectedLetter = letter ; selectAll = false"
+          @click="
+            selectedLetter = letter;
+            selectAll = false
+          "
         >
           {{ letter }}
         </button>
@@ -183,7 +210,16 @@ onMounted(() => {
             v-for="(taxa, n) in supraTaxa"
             class="list-group-item"
           >
-            <span v-html="getTaxonNameDisplay(taxa.taxon_name, taxa.lookup_failed, taxa.pbdb_verified)" class="me-2"></span>
+            <span
+              v-html="
+                getTaxonNameDisplay(
+                  taxa.taxon_name,
+                  taxa.lookup_failed,
+                  taxa.pbdb_verified
+                )
+              "
+              class="me-2"
+            ></span>
             <Tooltip :content="taxa.notes" v-if="taxa.notes"></Tooltip>
           </li>
         </ul>
@@ -192,14 +228,17 @@ onMounted(() => {
         <ul class="list-group">
           <li class="list-group-item">
             <h4>
-              Genus, Species, Subspecies, Scientific name author, Scientific name year
+              Genus, Species, Subspecies, Scientific name author, Scientific
+              name year
             </h4>
           </li>
           <li class="list-group-item">
             <p>
-              <span class="highlight">*</span> indicates that a taxon has NOT matched to the <span class="highlight">NCBI</span> hierarchy.
-              <br/>
-              <span class="highlight">#</span> indicates that a taxon has been matched to a PBDB entry.
+              <span class="highlight">*</span> indicates that a taxon has NOT
+              matched to the <span class="highlight">NCBI</span> hierarchy.
+              <br />
+              <span class="highlight">#</span> indicates that a taxon has been
+              matched to a PBDB entry.
             </p>
           </li>
           <li
@@ -207,7 +246,16 @@ onMounted(() => {
             v-for="(taxa, n) in genusTaxa"
             class="list-group-item"
           >
-            <span v-html="getTaxonNameDisplay(taxa.taxon_name, taxa.lookup_failed, taxa.pbdb_verified)" class="me-2"></span>
+            <span
+              v-html="
+                getTaxonNameDisplay(
+                  taxa.taxon_name,
+                  taxa.lookup_failed,
+                  taxa.pbdb_verified
+                )
+              "
+              class="me-2"
+            ></span>
             <Tooltip :content="taxa.notes" v-if="taxa.notes"></Tooltip>
           </li>
         </ul>
@@ -215,15 +263,18 @@ onMounted(() => {
     </div>
     <div v-else>
       <div v-if="selectPartition" class="mb-2">
-        Showing {{ filteredTaxa?.length }} taxa from {{ partitionByOptions[selectedPartitionByOption] }}.
+        Showing {{ filteredTaxa?.length }} taxa from
+        {{ partitionByOptions[selectedPartitionByOption] }}.
       </div>
       <div class="row">
         <ul class="list-group">
           <li class="list-group-item">
             <p>
-              <span class="highlight">*</span> indicates that a taxon has NOT matched to the <span class="highlight">NCBI</span> hierarchy.
-              <br/>
-              <span class="highlight">#</span> indicates that a taxon has been matched to a PBDB entry.
+              <span class="highlight">*</span> indicates that a taxon has NOT
+              matched to the <span class="highlight">NCBI</span> hierarchy.
+              <br />
+              <span class="highlight">#</span> indicates that a taxon has been
+              matched to a PBDB entry.
             </p>
           </li>
           <li
@@ -231,7 +282,16 @@ onMounted(() => {
             v-for="(taxa, n) in filteredTaxa"
             class="list-group-item"
           >
-            <span v-html="getTaxonNameDisplay(taxa.taxon_name, taxa.lookup_failed, taxa.pbdb_verified)" class="me-2"></span>
+            <span
+              v-html="
+                getTaxonNameDisplay(
+                  taxa.taxon_name,
+                  taxa.lookup_failed,
+                  taxa.pbdb_verified
+                )
+              "
+              class="me-2"
+            ></span>
             <Tooltip :content="taxa.notes" v-if="taxa.notes"></Tooltip>
           </li>
         </ul>
@@ -242,6 +302,6 @@ onMounted(() => {
 
 <style scoped>
 ::v-deep .highlight {
-  color: #ef782f
+  color: #ef782f;
 }
 </style>

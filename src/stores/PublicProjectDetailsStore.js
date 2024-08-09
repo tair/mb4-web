@@ -54,25 +54,25 @@ export const usePublicProjectDetailsStore = defineStore({
 
     taxaFilterByOptions: {
       'supraspecific clade': 'supraspecific_clade',
-      'kingdom': 'higher_taxon_kingdom',
-      'phylum': 'higher_taxon_phylum',
-      'class': 'higher_taxon_class',
-      'subclass': 'higher_taxon_subclass',
-      'infraclass': 'higher_taxon_infraclass',
-      'cohort': 'higher_taxon_cohort',
-      'superorder': 'higher_taxon_superorder',
-      'order': 'higher_taxon_order',
-      'suborder': 'higher_taxon_suborder',
-      'infraorder': 'higher_taxon_infraorder',
-      'superfamily': 'higher_taxon_superfamily',
-      'family': 'higher_taxon_family',
-      'subfamily': 'higher_taxon_subfamily',
-      'tribe': 'higher_taxon_tribe',
-      'subtribe': 'higher_taxon_subtribe',
-      'genus': 'genus',
-      'subgenus': 'subgenus',
-      'species': 'specific_epithet',
-      'subspecies': 'subspecific_epithet'
+      kingdom: 'higher_taxon_kingdom',
+      phylum: 'higher_taxon_phylum',
+      class: 'higher_taxon_class',
+      subclass: 'higher_taxon_subclass',
+      infraclass: 'higher_taxon_infraclass',
+      cohort: 'higher_taxon_cohort',
+      superorder: 'higher_taxon_superorder',
+      order: 'higher_taxon_order',
+      suborder: 'higher_taxon_suborder',
+      infraorder: 'higher_taxon_infraorder',
+      superfamily: 'higher_taxon_superfamily',
+      family: 'higher_taxon_family',
+      subfamily: 'higher_taxon_subfamily',
+      tribe: 'higher_taxon_tribe',
+      subtribe: 'higher_taxon_subtribe',
+      genus: 'genus',
+      subgenus: 'subgenus',
+      species: 'specific_epithet',
+      subspecies: 'subspecific_epithet',
     },
 
     taxaSortByFields: [
@@ -95,7 +95,7 @@ export const usePublicProjectDetailsStore = defineStore({
       'higher_taxon_class',
       'higher_taxon_phylum',
       'higher_taxon_kingdom',
-      'supraspecific_clade'
+      'supraspecific_clade',
     ],
   }),
   getters: {
@@ -150,16 +150,33 @@ export const usePublicProjectDetailsStore = defineStore({
     // specimen details function
     sortSpecimenInDefaultOrder() {
       this.specimen_details = this.specimen_details.sort((a, b) =>
-        this.sortByFields(a.sort_fields, b.sort_fields, this.specimenSortByFields))
+        this.sortByFields(
+          a.sort_fields,
+          b.sort_fields,
+          this.specimenSortByFields
+        )
+      )
     },
     getDefaultSpecimenFilter() {
-      return this.getDefaultFilterField(this.specimenSortByFields, this.specimen_details)
+      return this.getDefaultFilterField(
+        this.specimenSortByFields,
+        this.specimen_details
+      )
     },
     getSpecimenFilterFields() {
-      return this.getFilterFields(this.specimenFilterByOptions, this.specimen_details)
+      return this.getFilterFields(
+        this.specimenFilterByOptions,
+        this.specimen_details
+      )
     },
     getFilteredSpecimen(showAll, filterBy, letter) {
-      return this.getFilteredElements(showAll, filterBy, letter, this.specimen_details, this.specimenSortByFields)
+      return this.getFilteredElements(
+        showAll,
+        filterBy,
+        letter,
+        this.specimen_details,
+        this.specimenSortByFields
+      )
     },
     getFilteredSpecimenInitials(filterBy) {
       return this.getFilteredElementsInitials(filterBy, this.specimen_details)
@@ -167,10 +184,15 @@ export const usePublicProjectDetailsStore = defineStore({
     // taxa details function
     sortTaxaInDefaultOrder() {
       this.taxa_details = this.taxa_details.sort((a, b) =>
-        this.sortByFields(a.sort_fields, b.sort_fields, this.taxaSortByFields))
+        this.sortByFields(a.sort_fields, b.sort_fields, this.taxaSortByFields)
+      )
     },
     getDefaultTaxaPartitionField() {
-      if ((!this.partitions || this.partitions.length == 0) && (!this.matrices || this.matrices.length == 0)) return null
+      if (
+        (!this.partitions || this.partitions.length == 0) &&
+        (!this.matrices || this.matrices.length == 0)
+      )
+        return null
       if (this.partitions && this.partitions.length > 0) {
         return `P${this.partitions[0].partition_id}`
       }
@@ -179,13 +201,25 @@ export const usePublicProjectDetailsStore = defineStore({
       }
     },
     getTaxaPartitionFields() {
-      if ((!this.partitions || this.partitions.length == 0) && (!this.matrices || this.matrices.length == 0)) return null
+      if (
+        (!this.partitions || this.partitions.length == 0) &&
+        (!this.matrices || this.matrices.length == 0)
+      )
+        return null
       const fields = {}
       for (let partition of this.partitions) {
         // only display fields that have taxa
-        if (this.taxa_details && this.taxa_details.some((item) =>
-          item.partitions && item.partitions.map(Number).includes(Number(partition.partition_id)))) {
-            fields[`P${partition.partition_id}`] = `partition: ${partition.name}`
+        if (
+          this.taxa_details &&
+          this.taxa_details.some(
+            (item) =>
+              item.partitions &&
+              item.partitions
+                .map(Number)
+                .includes(Number(partition.partition_id))
+          )
+        ) {
+          fields[`P${partition.partition_id}`] = `partition: ${partition.name}`
         }
       }
       for (let matrix of this.matrices) {
@@ -194,32 +228,50 @@ export const usePublicProjectDetailsStore = defineStore({
       return fields
     },
     getDefaultTaxaFilter() {
-      return this.getDefaultFilterField(this.taxaSortByFields, this.taxa_details)
+      return this.getDefaultFilterField(
+        this.taxaSortByFields,
+        this.taxa_details
+      )
     },
     getTaxaFilterFields() {
       return this.getFilterFields(this.taxaFilterByOptions, this.taxa_details)
     },
-    getFilteredTaxa(showAll, filterBy, letter, selectPartition, partitionBy, searchStr) {
+    getFilteredTaxa(
+      showAll,
+      filterBy,
+      letter,
+      selectPartition,
+      partitionBy,
+      searchStr
+    ) {
       // when search str presents, show search result
       if (searchStr) return this.searchForTaxa(searchStr)
       if (selectPartition) return this.getPartitionedTaxa(partitionBy)
-      return this.getFilteredElements(showAll, filterBy, letter, this.taxa_details, this.taxaSortByFields)
+      return this.getFilteredElements(
+        showAll,
+        filterBy,
+        letter,
+        this.taxa_details,
+        this.taxaSortByFields
+      )
     },
     getPartitionedTaxa(partitionBy) {
       const partitionIdPattern = /^P(\d+)$/
       let partitionMatch = partitionBy.match(partitionIdPattern)
       if (partitionMatch) {
         let partitionId = Number(partitionMatch[1]) // Remove the 'P' and get the digits
-        return this.taxa_details.filter((item) =>
-          item.partitions && item.partitions.map(Number).includes(partitionId)
+        return this.taxa_details.filter(
+          (item) =>
+            item.partitions && item.partitions.map(Number).includes(partitionId)
         )
       }
       const matrixIdPattern = /^M(\d+)$/
       let matrixMatch = partitionBy.match(matrixIdPattern)
       if (matrixMatch) {
         let matrixId = Number(matrixMatch[1]) // Remove the 'M' and get the digits
-        return this.taxa_details.filter((item) =>
-          item.matrices && item.matrices.map(Number).includes(matrixId)
+        return this.taxa_details.filter(
+          (item) =>
+            item.matrices && item.matrices.map(Number).includes(matrixId)
         )
       }
     },
@@ -227,10 +279,20 @@ export const usePublicProjectDetailsStore = defineStore({
       return this.getFilteredElementsInitials(filterBy, this.taxa_details)
     },
     getSupraTaxa() {
-      return this.taxa_details.filter(obj => !obj.sort_fields['genus'] && !obj.sort_fields['specific_epithet'] && !obj.sort_fields['subspecific_epithet'])
+      return this.taxa_details.filter(
+        (obj) =>
+          !obj.sort_fields['genus'] &&
+          !obj.sort_fields['specific_epithet'] &&
+          !obj.sort_fields['subspecific_epithet']
+      )
     },
     getGenusTaxa() {
-      return this.taxa_details.filter(obj => obj.sort_fields['genus'] || obj.sort_fields['specific_epithet'] || obj.sort_fields['subspecific_epithet'])
+      return this.taxa_details.filter(
+        (obj) =>
+          obj.sort_fields['genus'] ||
+          obj.sort_fields['specific_epithet'] ||
+          obj.sort_fields['subspecific_epithet']
+      )
     },
     // assume no need for sorting since the original arr is already sorted
     searchForTaxa(searchStr) {
@@ -245,8 +307,7 @@ export const usePublicProjectDetailsStore = defineStore({
         let hasValidValue = false
         if (arr) {
           hasValidValue = arr.some(
-            (item) =>
-              item['sort_fields'][sortByFields[key]]
+            (item) => item['sort_fields'][sortByFields[key]]
           )
         }
 
@@ -264,8 +325,7 @@ export const usePublicProjectDetailsStore = defineStore({
         let hasValidValue = false
         if (arr) {
           hasValidValue = arr.some(
-            (item) =>
-              item['sort_fields'][cleanedFilterByOptions[key]]
+            (item) => item['sort_fields'][cleanedFilterByOptions[key]]
           )
         }
 
@@ -282,8 +342,7 @@ export const usePublicProjectDetailsStore = defineStore({
       }
       // assume no need for sorting since the original arr is already sorted
       return arr.filter(
-        (obj) =>
-          this.getFirstChar(obj.sort_fields[filterBy]) == letter
+        (obj) => this.getFirstChar(obj.sort_fields[filterBy]) == letter
       )
     },
     getFilteredElementsInitials(filterBy, arr) {
@@ -291,9 +350,7 @@ export const usePublicProjectDetailsStore = defineStore({
         ...new Set(
           arr
             .filter((obj) => obj.sort_fields[filterBy])
-            .map((obj) =>
-              this.getFirstChar(obj.sort_fields[filterBy])
-            )
+            .map((obj) => this.getFirstChar(obj.sort_fields[filterBy]))
         ),
       ]
       return [...uniqueLetters.sort()]
@@ -318,7 +375,10 @@ export const usePublicProjectDetailsStore = defineStore({
     },
     getFirstChar(str) {
       if (!str) return ''
-      return str.replace(/[^a-zA-Z?]/g, '').charAt(0).toUpperCase()
+      return str
+        .replace(/[^a-zA-Z?]/g, '')
+        .charAt(0)
+        .toUpperCase()
     },
   },
 })
