@@ -1,6 +1,9 @@
 <script setup>
+import { ref } from 'vue'
 import { toDateString } from '@/utils/date'
 import Tooltip from '@/components/main/Tooltip.vue'
+import CustomModal from './CustomModal.vue'
+import MediaViewPanel from './MediaViewPanel.vue'
 
 const props = defineProps({
   media_file: {
@@ -8,12 +11,46 @@ const props = defineProps({
   },
 })
 
-const viewTooltipText =
+const showZoomModal = ref(false)
+const showDownloadModal = ref(false)
+const viewStatsTooltipText =
   'Project download and view statistics are available since August 2012.  Views and downloads pre August 2012 are not reflected in the statistics.'
+const downloadTooltipText =
+  "By downloading from MorphoBank, you agree to the site's Terms of Use & Privacy Policy."
+
+async function confirmDownload(mediaObj, fileName) {
+  // if (!isCaptchaVerified) {
+  //   alert("Please complete the CAPTCHA");
+  //   return;
+  // }
+  // CAPTCHA is completed, proceed with the download
+  const imageUrl = buildImageProps(mediaObj)
+  let downloadFileName = fileName
+  if (!downloadFileName) {
+    downloadFileName = getLastElementFromUrl(imageUrl)
+  }
+  // TODO: create download blob after put the media file behind the API
+  // const response = await fetch(imageUrl);
+  // const blob = await response.blob();
+  // const url = URL.createObjectURL(blob);
+  const link = document.createElement('a')
+  link.href = imageUrl
+  link.download = downloadFileName
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  // URL.revokeObjectURL(url);
+
+  showDownloadModal.value = false
+}
+
+function getLastElementFromUrl(url) {
+  const parts = url.split('/')
+  return parts[parts.length - 1]
+}
 
 function buildImageProps(mediaObj, type) {
   try {
-    // console.log(mediaObj)
     let media = mediaObj
     if (type) media = mediaObj[type]
 
@@ -54,18 +91,30 @@ function getSibilingMessage(mediaObj) {
 }
 
 function getHitsMessage(mediaObj) {
-  let message =
-    ' This media record has been viewed ' +
-    mediaObj.hits +
-    ' time' +
-    (mediaObj.hits == 1 ? '' : 's')
-  if (mediaObj.downloads) {
-    message +=
-      ' and downloaded ' +
-      mediaObj.downloads +
+  let message = ''
+  if (mediaObj.hits) {
+    message =
+      ' This media record has been viewed ' +
+      mediaObj.hits +
       ' time' +
-      (mediaObj.downloads == 1 ? '' : 's')
+      (mediaObj.hits == 1 ? '' : 's')
+    if (mediaObj.downloads) {
+      message +=
+        ' and downloaded ' +
+        mediaObj.downloads +
+        ' time' +
+        (mediaObj.downloads == 1 ? '' : 's')
+    }
+  } else {
+    if (mediaObj.downloads) {
+      message =
+        'This media record has been downloaded ' +
+        mediaObj.downloads +
+        ' time' +
+        (mediaObj.downloads == 1 ? '' : 's')
+    }
   }
+
   return message
 }
 </script>
@@ -86,16 +135,67 @@ function getHitsMessage(mediaObj) {
             backgroundImage: 'url(' + '/images/loader.png' + ')',
             backgroundPosition: '10px 10px',
           }"
-          class="card-img-top"
+          class="card-img"
         />
 
         <div class="card-body">
-          <h5 class="card-title">Original filename: Amostra_3.15_foto4.jpg</h5>
           <div class="card-text">
             <div class="nav">
-              <a class="nav-link" href="#">Zoom</a>
-              <a class="nav-link" href="#">Download</a>
+              <a class="nav-link" href="#" @click="showZoomModal = true"
+                >>> Zoom</a
+              >
+              <CustomModal
+                :isVisible="showZoomModal"
+                @close="showZoomModal = false"
+              >
+                <MediaViewPanel
+                  :imgSrc="buildImageProps(media_file.media['original'])"
+                />
+              </CustomModal>
+              <a class="nav-link" href="#" @click="showDownloadModal = true"
+                >>> Download <Tooltip :content="downloadTooltipText"></Tooltip
+              ></a>
+              <CustomModal
+                :isVisible="showDownloadModal"
+                @close="showDownloadModal = false"
+              >
+                <div>
+                  <h2>Copyright Warning</h2>
+                  <p>
+                    You are downloading media from MorphoBank. If you plan to
+                    reuse this item you must check the copyright reuse policy in
+                    place for this item.<br />
+                    Please acknowledge that you have read and understood the
+                    copyright warning before proceeding with the download.
+                  </p>
+                  <button
+                    class="btn btn-primary"
+                    @click="
+                      confirmDownload(
+                        media_file.media['original'],
+                        media_file.media['ORIGINAL_FILENAME']
+                      )
+                    "
+                  >
+                    I Acknowledge and Proceed
+                  </button>
+                </div>
+              </CustomModal>
             </div>
+          </div>
+          <div v-if="media_file.license && media_file.license.image">
+            <img :src="`/images/${media_file.license.image}`" class="cc-icon" />
+          </div>
+          <div v-if="media_file.license && media_file.license.isOneTimeUse">
+            <p>
+              Copyright license for future use: Media released for onetime use,
+              no reuse without permission
+            </p>
+          </div>
+          <div>
+            <p class="card-title" v-if="media_file.media['ORIGINAL_FILENAME']">
+              Original filename: {{ media_file.media['ORIGINAL_FILENAME'] }}
+            </p>
           </div>
         </div>
       </div>
@@ -152,7 +252,9 @@ function getHitsMessage(mediaObj) {
       <div v-if="media_file.url">
         <strong>Web source of media</strong>
         <p>
-          <a href="media_file.url" target="_blank">View media online &raquo;</a>
+          <a :href="media_file.url" target="_blank"
+            >View media online &raquo;</a
+          >
         </p>
       </div>
       <div v-if="media_file.url_description">
@@ -169,10 +271,61 @@ function getHitsMessage(mediaObj) {
           <i v-html="getSibilingMessage(media_file)"></i>
         </p>
       </div>
-      <div class="mb-4">
+      <div class="mb-4" v-if="getHitsMessage(media_file)">
         {{ getHitsMessage(media_file) }}
-        <Tooltip :content="viewTooltipText"></Tooltip>
+        <Tooltip :content="viewStatsTooltipText"></Tooltip>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.cc-icon {
+  width: 88;
+  height: 31;
+}
+
+.card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+}
+
+.card-img {
+  margin: 1rem;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.nav {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.nav-link {
+  margin: 0 0.5rem;
+  text-decoration: none;
+  color: #007bff;
+}
+
+.nav-link:hover {
+  text-decoration: underline;
+}
+
+.cc-icon {
+  max-width: 100px;
+  margin-bottom: 1rem;
+}
+
+.card-title,
+p {
+  margin: 0.5rem 0;
+}
+</style>

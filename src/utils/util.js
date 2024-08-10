@@ -25,4 +25,26 @@ function getPasswordRule() {
   return 'Password must be 8 or more characters long, have at least 1 number, 1 uppercase letter, 1 lowercase letter, and 1 special character.'
 }
 
-export { buildImageProps, getPasswordPattern, getPasswordRule }
+function searchInObject(obj, searchStr, includeFields = []) {
+  for (let key in obj) {
+    if (typeof obj[key] === 'object' && obj[key] !== null) {
+      if (searchInObject(obj[key], searchStr)) {
+        return true
+      }
+    } else {
+      // when includeFields option present, check if the current key shall be examined
+      // otherwise check all keys
+      if (includeFields.length > 0 && !includeFields.includes(key)) continue
+      if (typeof obj[key] === 'string' || typeof obj[key] === 'number') {
+        if (
+          obj[key].toString().toLowerCase().includes(searchStr.toLowerCase())
+        ) {
+          return true
+        }
+      }
+    }
+  }
+  return false
+}
+
+export { buildImageProps, getPasswordPattern, getPasswordRule, searchInObject }
