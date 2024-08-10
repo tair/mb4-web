@@ -12,12 +12,18 @@ const linkId = route.params.linkId
 
 const projectUsersStore = useProjectUsersStore()
 const user = computed(() => projectUsersStore.getUserByLinkId(linkId))
-const isLoaded = computed(() => projectUsersStore.isLoaded)
 
 async function edit(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
-  const success = await projectUsersStore.editUser(projectId, linkId, json)
+  json.group_ids = formData.getAll('group_ids')
+
+  const success = await projectUsersStore.editUser(
+    projectId,
+    linkId,
+    json.membership_type,
+    json.group_ids
+  )
   if (success) {
     router.go(-1)
   } else {
@@ -33,7 +39,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <LoadingIndicator :isLoaded="isLoaded">
+  <LoadingIndicator :isLoaded="projectUsersStore.isLoaded">
     <div>
       <div v-if="user" class="d-flex">
         <p class="fw-bold">Editing:&nbsp;</p>
@@ -46,7 +52,7 @@ onMounted(() => {
             :key="index"
             class="form-group mb-3"
           >
-            <label :for="index" class="form-label">{{
+            <label :for="index" class="form-label fw-bold">{{
               definition.label
             }}</label>
             <component
