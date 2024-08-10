@@ -24,6 +24,26 @@ export const useProjectInstitutionStore = defineStore({
       }
     },
 
+    insertInstitution(institution) {
+      let low = 0
+      let high = this.institutions.length
+
+      while (low < high) {
+        let midPoint = Math.floor((low + high) / 2)
+
+        if (
+          institution.name.toUpperCase() >
+          this.institutions[midPoint].name.toUpperCase()
+        ) {
+          low = midPoint + 1
+        } else {
+          high = midPoint
+        }
+      }
+
+      this.institutions.splice(low, 0, institution)
+    },
+
     async removeInstitution(projectId, institutionIds) {
       const url = `${
         import.meta.env.VITE_API_URL
@@ -56,7 +76,7 @@ export const useProjectInstitutionStore = defineStore({
       if (response.status == 200) {
         const institution = response.data.institution
 
-        this.institutions.push(institution)
+        this.insertInstitution(institution)
 
         return true
       }
@@ -83,7 +103,7 @@ export const useProjectInstitutionStore = defineStore({
         this.removeByInstitutionIds([institutionId])
 
         const institution = response.data.institution
-        this.institutions.push(institution)
+        this.insertInstitution(institution)
 
         return true
       }
