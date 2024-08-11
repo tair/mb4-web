@@ -33,6 +33,19 @@ onMounted(() => {
   if (!projectInstitutionsStore.isLoaded) {
     projectInstitutionsStore.fetchInstitutions(projectId)
   }
+
+  projectInstitutionsStore.institutions.sort((first, second) => {
+    const first_string = first.name.toUpperCase()
+    const second_string = second.name.toUpperCase()
+
+    if (first_string < second_string) {
+      return -1
+    }
+    if (first_string > second_string) {
+      return 1
+    }
+    return 0
+  })
 })
 
 function refresh() {
