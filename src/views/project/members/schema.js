@@ -1,4 +1,5 @@
 import SelectInput from '@/components/project/SelectInput.vue'
+import GroupCheckboxList from '@/components/project/GroupCheckboxListComp.vue'
 
 export const userSchema = {
   membership_type: {
@@ -12,5 +13,9 @@ export const userSchema = {
         'Bibliography maintainer (can edit bibliography only)': 3,
       },
     },
+  },
+  group_ids: {
+    label: 'Belongs to member group(s)',
+    view: GroupCheckboxList,
   },
 }

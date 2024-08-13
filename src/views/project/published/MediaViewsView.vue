@@ -46,20 +46,15 @@ onMounted(() => {
     <div class="filters mb-3 text-black-50 fw-bold">
       Display media views beginning with:
       <button
-        class="fw-bold"
+        :class="[{ active: selectedLetter == letter }, 'fw-bold']"
         v-for="letter in letters"
         :key="letter"
         @click="selectedLetter = letter"
       >
         {{ letter }}
       </button>
-      <span v-if="letters.length > 1">|</span>
-      <button
-        v-if="letters.length > 1"
-        class="fw-bold"
-        :key="ALL"
-        @click="selectedLetter = 'ALL'"
-      >
+      <span v-if="letters.length > 0">|</span>
+      <button class="fw-bold" :key="ALL" @click="selectedLetter = 'ALL'">
         ALL
       </button>
     </div>
@@ -74,19 +69,3 @@ onMounted(() => {
     </ul>
   </ProjectLoaderComp>
 </template>
-
-<style>
-.filters {
-  margin-bottom: 10px;
-  font-weight: bold;
-}
-
-.filters button {
-  margin: 0 3px;
-  padding: 2px 6px;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  color: #ef782f;
-}
-</style>

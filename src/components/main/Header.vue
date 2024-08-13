@@ -122,6 +122,10 @@ function onLogout() {
   </header>
 </template>
 <style scoped>
+header {
+  z-index: 100;
+}
+
 header.navbar {
   border-top: 3px solid #ee7a19;
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05),

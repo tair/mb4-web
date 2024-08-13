@@ -28,12 +28,30 @@ function toTop() {
   })
 }
 </script>
-<style scoped>
+<style>
 #btn-back-to-top {
   position: fixed;
   bottom: 80px;
   right: 20px;
   display: none;
+}
+
+.filters {
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.filters button {
+  margin: 0 3px;
+  padding: 2px 6px;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  color: #ef782f;
+}
+
+.filters button.active {
+  color: #666;
 }
 </style>
 
