@@ -128,7 +128,7 @@ onMounted(() => {
           v-for="letter in letters"
           :key="letter"
           @click="
-            selectedLetter = letter;
+            selectedLetter = letter
             selectAll = false
           "
         >
