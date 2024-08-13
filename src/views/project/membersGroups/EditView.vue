@@ -12,7 +12,6 @@ const groupId = route.params.groupId
 
 const projectMemberGroupsStore = useProjectMemberGroupsStore()
 const group = computed(() => projectMemberGroupsStore.getGroupById(groupId))
-const isLoaded = computed(() => projectMemberGroupsStore.isLoaded)
 
 async function edit(event) {
   const formData = new FormData(event.currentTarget)
@@ -33,7 +32,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <LoadingIndicator :isLoaded="isLoaded">
+  <LoadingIndicator :isLoaded="projectMemberGroupsStore.isLoaded">
     <div>
       <div v-if="group" class="d-flex">
         <p class="fw-bold">Editing:&nbsp;</p>
