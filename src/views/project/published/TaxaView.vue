@@ -91,6 +91,21 @@ function onResetFilter() {
   selectPartition.value = false
 }
 
+function onClearSearchStr() {
+  searchStr.value = ''
+  selectAll.value = true
+}
+
+function onSelectLetter(letter) {
+  selectedLetter.value = letter
+  selectAll.value = false
+}
+
+function onSelectPartition() {
+  selectPartition.value = true
+  selectAll.value = false
+}
+
 function getTaxonNameDisplay(taxonName, lookupFailed, pbdbVerified) {
   let display = taxonName
   if (lookupFailed) display += '<span class="highlight">*</span>'
@@ -123,13 +138,7 @@ onMounted(() => {
           class="me-2"
           @input="selectAll = false"
         />
-        <button
-          @click="
-            searchStr = '';
-            selectAll = true
-          "
-          class="btn btn-primary btn-white"
-        >
+        <button @click="onClearSearchStr()" class="btn btn-primary btn-white">
           clear
         </button>
       </div>
@@ -158,10 +167,7 @@ onMounted(() => {
             class="me-3"
             id="partition-by"
             v-model="selectedPartitionByOption"
-            @change="
-              selectPartition = true;
-              selectAll = false
-            "
+            @change="onSelectPartition()"
           >
             <option
               v-for="(label, key) in partitionByOptions"
@@ -181,10 +187,7 @@ onMounted(() => {
           :class="[{ active: selectedLetter == letter }, 'fw-bold']"
           v-for="letter in letters"
           :key="letter"
-          @click="
-            selectedLetter = letter;
-            selectAll = false
-          "
+          @click="onSelectLetter(letter)"
         >
           {{ letter }}
         </button>
