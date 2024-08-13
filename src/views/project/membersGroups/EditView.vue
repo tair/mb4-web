@@ -16,7 +16,11 @@ const group = computed(() => projectMemberGroupsStore.getGroupById(groupId))
 async function edit(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
-  const success = await projectMemberGroupsStore.editGroup(projectId, groupId, json)
+  const success = await projectMemberGroupsStore.editGroup(
+    projectId,
+    groupId,
+    json
+  )
   if (success) {
     router.go(-1)
   } else {
