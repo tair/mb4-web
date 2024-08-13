@@ -51,6 +51,11 @@ const filteredSpecimens = computed(() => {
   )
 })
 
+function onSelectLetter(letter) {
+  selectedLetter.value = letter
+  selectAll.value = false
+}
+
 function onResetFilter() {
   selectedFilterByOption.value = defaultFilterByOption.value
   selectedLetter.value = null
@@ -127,10 +132,7 @@ onMounted(() => {
           :class="[{ active: selectedLetter == letter }, 'fw-bold']"
           v-for="letter in letters"
           :key="letter"
-          @click="
-            selectedLetter = letter;
-            selectAll = false
-          "
+          @click="onSelectLetter(letter)"
         >
           {{ letter }}
         </button>
