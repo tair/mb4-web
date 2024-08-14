@@ -15,7 +15,7 @@ export const useProjectMemberGroupsStore = defineStore({
       this.isLoaded = true
     },
     getGroupById(groupId) {
-      for (const group of this.groups) {
+      for (let group of this.groups) {
         if (group.group_id == groupId) {
           return group
         }
