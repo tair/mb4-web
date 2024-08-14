@@ -62,7 +62,10 @@ onMounted(() => {
       <li
         :key="n"
         v-for="(view, n) in filteredMediaViews"
-        class="list-group-item"
+        :class="[
+          n % 2 != 0 ? 'list-group-item-secondary' : '',
+          'list-group-item',
+        ]"
       >
         {{ view }}
       </li>

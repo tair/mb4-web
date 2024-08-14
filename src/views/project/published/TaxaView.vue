@@ -202,7 +202,10 @@ onMounted(() => {
           <li
             :key="'supra-' + n"
             v-for="(taxa, n) in supraTaxa"
-            class="list-group-item"
+            :class="[
+              n % 2 != 0 ? 'list-group-item-secondary' : '',
+              'list-group-item',
+            ]"
           >
             <span
               v-html="
@@ -238,7 +241,10 @@ onMounted(() => {
           <li
             :key="'genus-' + n"
             v-for="(taxa, n) in genusTaxa"
-            class="list-group-item"
+            :class="[
+              n % 2 != 0 ? 'list-group-item-secondary' : '',
+              'list-group-item',
+            ]"
           >
             <span
               v-html="
@@ -281,7 +287,10 @@ onMounted(() => {
           <li
             :key="n"
             v-for="(taxa, n) in filteredTaxa"
-            class="list-group-item"
+            :class="[
+              n % 2 != 0 ? 'list-group-item-secondary' : '',
+              'list-group-item',
+            ]"
           >
             <span
               v-html="
