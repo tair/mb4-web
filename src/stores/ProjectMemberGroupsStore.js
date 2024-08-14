@@ -22,14 +22,6 @@ export const useProjectMemberGroupsStore = defineStore({
       }
       return null
     },
-    getGroupIndexById(groupId) {
-      for (let x = 0; x < this.groups.length; x++) {
-        if (this.groups[x].group_id == groupId) {
-          return x
-        }
-      }
-      return null
-    },
     async deleteGroup(projectId, groupId) {
       const url = `${
         import.meta.env.VITE_API_URL
@@ -54,15 +46,11 @@ export const useProjectMemberGroupsStore = defineStore({
       })
       const group = response.data.group
       if (response.status == 200) {
-        this.updateGroup(group.group_id, group.group_name, group.description)
+        this.removeGroupById(group.group_id)
+        this.groups.push(group)
         return true
       }
       return false
-    },
-    updateGroup(groupId, group_name, description) {
-      const index = this.getGroupIndexById(groupId)
-      this.groups[index].group_name = group_name
-      this.groups[index].description = description
     },
     removeGroupById(groupId) {
       for (let x = 0; x < this.groups.length; ++x) {
