@@ -264,6 +264,23 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
+    path: 'members/groups/:groupId(\\d+)/edit',
+    name: 'MyProjectMembersGroupsEditView',
+    meta: {
+      itemName: 'members',
+      breadcrumbs: [
+        {
+          label: 'Project Members Groups',
+          to: 'MyProjectMembersGroupsView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/membersGroups/EditView.vue'
+      ),
+  },
+  {
     path: 'views',
     name: 'MyProjectMediaViewsView',
     meta: {

@@ -15,7 +15,7 @@ export const useProjectMemberGroupsStore = defineStore({
       this.isLoaded = true
     },
     getGroupById(groupId) {
-      for (const group of this.groups) {
+      for (let group of this.groups) {
         if (group.group_id == groupId) {
           return group
         }
@@ -31,6 +31,23 @@ export const useProjectMemberGroupsStore = defineStore({
       })
       if (response.status == 200) {
         this.removeGroupById(groupId)
+        return true
+      }
+      return false
+    },
+    async editGroup(projectId, groupId, changes) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/groups/${groupId}/edit`
+      const response = await axios.post(url, {
+        group_id: groupId,
+        group_name: changes.group_name,
+        description: changes.description,
+      })
+      const group = response.data.group
+      if (response.status == 200) {
+        this.removeGroupById(group.group_id)
+        this.groups.push(group)
         return true
       }
       return false
