@@ -1,6 +1,5 @@
 <script setup>
 import router from '@/router'
-import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectMemberGroupsStore } from '@/stores/ProjectMemberGroupsStore'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
@@ -8,17 +7,14 @@ import { groupSchema } from '@/views/project/membersGroups/schema.js'
 
 const route = useRoute()
 const projectId = route.params.id
-const groupId = route.params.groupId
 
 const projectMemberGroupsStore = useProjectMemberGroupsStore()
-const group = computed(() => projectMemberGroupsStore.getGroupById(groupId))
 
-async function edit(event) {
+async function create(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
-  const success = await projectMemberGroupsStore.editGroup(
+  const success = await projectMemberGroupsStore.createGroup(
     projectId,
-    groupId,
     json
   )
   if (success) {
@@ -28,21 +24,12 @@ async function edit(event) {
   }
 }
 
-onMounted(() => {
-  if (!projectMemberGroupsStore.isLoaded) {
-    projectMemberGroupsStore.fetchGroups(projectId)
-  }
-})
 </script>
 
 <template>
   <LoadingIndicator :isLoaded="projectMemberGroupsStore.isLoaded">
     <div>
-      <div v-if="group" class="d-flex">
-        <p class="fw-bold">Editing:&nbsp;</p>
-        {{ group.group_name }}
-      </div>
-      <form @submit.prevent="edit">
+      <form @submit.prevent="create">
         <div class="row setup-content">
           <div
             v-for="(definition, index) in groupSchema"
@@ -56,7 +43,6 @@ onMounted(() => {
               :key="index"
               :is="definition.view"
               :name="index"
-              :value="group[index]"
             >
             </component>
           </div>
@@ -68,7 +54,7 @@ onMounted(() => {
             >
               Cancel
             </button>
-            <button class="btn btn-primary" type="submit">Save</button>
+            <button class="btn btn-primary" type="submit">Create</button>
           </div>
         </div>
       </form>

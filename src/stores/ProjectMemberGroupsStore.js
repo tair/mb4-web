@@ -44,9 +44,21 @@ export const useProjectMemberGroupsStore = defineStore({
         group_name: changes.group_name,
         description: changes.description,
       })
-      const group = response.data.group
       if (response.status == 200) {
+        const group = response.data.group
         this.removeGroupById(group.group_id)
+        this.groups.push(group)
+        return true
+      }
+      return false
+    },
+    async createGroup(projectId, group) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/groups/create`
+      const response = await axios.post(url, { group })
+      if (response.status == 200) {
+        const group = response.data.group
         this.groups.push(group)
         return true
       }
