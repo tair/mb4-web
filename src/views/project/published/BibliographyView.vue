@@ -13,7 +13,11 @@ const selectedLetter = ref('ALL')
 
 const letters = computed(() => {
   const uniqueLetters = [
-    ...new Set(projectStore.bibliography.map((bibliography) => bibliography.title[0].toUpperCase())),
+    ...new Set(
+      projectStore.bibliography.map((bibliography) =>
+        bibliography.title[0].toUpperCase()
+      )
+    ),
   ]
   return [...uniqueLetters.sort()]
 })
@@ -50,7 +54,7 @@ onMounted(() => {
     </div>
 
     <div class="filters mb-3 text-black-50 fw-bold">
-      Display bibliographic references beginning with:
+      Display bibliographic references whose author beginning with:
       <button
         :class="[{ active: selectedLetter == letter }, 'fw-bold']"
         v-for="letter in letters"
@@ -74,8 +78,7 @@ onMounted(() => {
           'list-group-item',
         ]"
         v-html="b.title"
-      >
-      </li>
+      ></li>
     </ul>
   </ProjectLoaderComp>
 </template>
