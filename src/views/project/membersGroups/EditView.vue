@@ -39,7 +39,7 @@ onMounted(() => {
   <LoadingIndicator :isLoaded="projectMemberGroupsStore.isLoaded">
     <div>
       <div v-if="group" class="d-flex">
-        <p class="fw-bold">Editing:&nbsp;</p>
+        <p class="fw-bold">Editing:</p>
         {{ group.group_name }}
       </div>
       <form @submit.prevent="edit">

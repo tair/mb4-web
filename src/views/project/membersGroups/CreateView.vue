@@ -25,6 +25,7 @@ async function create(event) {
 <template>
   <LoadingIndicator :isLoaded="projectMemberGroupsStore.isLoaded">
     <div>
+      <p class="fw-bold">Creating new project member group</p>
       <form @submit.prevent="create">
         <div class="row setup-content">
           <div
