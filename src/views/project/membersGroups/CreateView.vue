@@ -13,17 +13,13 @@ const projectMemberGroupsStore = useProjectMemberGroupsStore()
 async function create(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
-  const success = await projectMemberGroupsStore.createGroup(
-    projectId,
-    json
-  )
+  const success = await projectMemberGroupsStore.createGroup(projectId, json)
   if (success) {
     router.go(-1)
   } else {
     alert('Failed to update group')
   }
 }
-
 </script>
 
 <template>
@@ -39,11 +35,7 @@ async function create(event) {
             <label :for="index" class="form-label">{{
               definition.label
             }}</label>
-            <component
-              :key="index"
-              :is="definition.view"
-              :name="index"
-            >
+            <component :key="index" :is="definition.view" :name="index">
             </component>
           </div>
           <div class="btn-form-group">
