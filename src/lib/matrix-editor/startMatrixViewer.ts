@@ -8,8 +8,15 @@ export default function startMatrixViewer(
   projectId: number,
   matrixId: number,
   streaming: boolean,
-  location: string
+  location: string,
+  published: boolean = false
 ) {
-  const viewer = new MatrixViewer(projectId, matrixId, streaming, location)
+  const viewer = new MatrixViewer(
+    projectId,
+    matrixId,
+    streaming,
+    location,
+    published
+  )
   viewer.start()
 }

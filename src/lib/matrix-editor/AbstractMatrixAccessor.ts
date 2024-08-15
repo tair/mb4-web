@@ -25,10 +25,11 @@ export abstract class AbstractMatrixAccessor {
     projectId: number,
     matrixId: number,
     streaming: boolean,
-    location: string
+    location: string,
+    published: boolean = false
   ) {
     this.matrixLoader = new MatrixLoader(projectId, location)
-    this.matrixLoader.setMatrixId(matrixId)
+    this.matrixLoader.setMatrixId(matrixId, published)
 
     this.matrixModel = new MatrixModel(matrixId, this.matrixLoader)
     this.matrixModel.setStreaming(streaming)

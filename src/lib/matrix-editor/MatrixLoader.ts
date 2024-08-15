@@ -21,14 +21,24 @@ export class MatrixLoader {
    * Sets the project and matrix id.
    *
    */
-  setMatrixId(matrixId: number) {
-    this.url =
-      this.host +
-      '/projects/' +
-      this.projectId +
-      '/matrices/' +
-      matrixId +
-      '/edit/'
+  setMatrixId(matrixId: number, published: boolean = false) {
+    if (published) {
+      this.url =
+        this.host +
+        '/public/projects/' +
+        this.projectId +
+        '/matrices/' +
+        matrixId +
+        '/view/'
+    } else {
+      this.url =
+        this.host +
+        '/projects/' +
+        this.projectId +
+        '/matrices/' +
+        matrixId +
+        '/edit/'
+    }
   }
 
   /**
