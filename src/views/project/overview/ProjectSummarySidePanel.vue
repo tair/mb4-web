@@ -2,6 +2,7 @@
 import { useRoute } from 'vue-router'
 import Tooltip from '@/components/main/Tooltip.vue'
 import { toDMYDate } from '@/utils/date'
+import { getViewStatsTooltipText } from '@/utils/util.js'
 
 type Views = {
   total: number
@@ -30,8 +31,7 @@ defineProps<{
 const route = useRoute()
 const projectId = route.params.id
 
-const viewTooltipText =
-  'Project download and view statistics are available since August 2012.  Views and downloads pre August 2012 are not reflected in the statistics.'
+const viewTooltipText = getViewStatsTooltipText()
 </script>
 
 <template>
@@ -60,15 +60,15 @@ const viewTooltipText =
           </li>
           <li class="list-group-item" v-if="overview.project_downloads.M">
             <router-link class="fw-bold" to="#project-download"
-              >Media downloads</router-link
-            >
+              >Media downloads
+            </router-link>
             <Tooltip :content="viewTooltipText"></Tooltip>:
             {{ overview.project_downloads.M }}
           </li>
           <li class="list-group-item" v-if="overview.project_downloads.X">
             <router-link class="fw-bold" to="#project-download"
-              >Matrix downloads</router-link
-            >
+              >Matrix downloads
+            </router-link>
             <Tooltip :content="viewTooltipText"></Tooltip>:
             {{ overview.project_downloads.X }}
           </li>

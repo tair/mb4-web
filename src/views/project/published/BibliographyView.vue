@@ -47,7 +47,7 @@ onMounted(() => {
     basePath="project"
     itemName="bibliography"
   >
-    <div class="mb-3 text-black-50 fw-bold">
+    <div class="mb-3">
       This project has {{ projectStore.bibliography?.length }} bibliographic
       references. Displaying {{ filteredBibliographies.length }} bibliographic
       references.

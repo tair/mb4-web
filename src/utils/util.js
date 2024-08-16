@@ -47,4 +47,19 @@ function searchInObject(obj, searchStr, includeFields = []) {
   return false
 }
 
-export { buildImageProps, getPasswordPattern, getPasswordRule, searchInObject }
+function getViewStatsTooltipText() {
+  return 'Project download and view statistics are available since August 2012. Views and downloads pre August 2012 are not reflected in the statistics.'
+}
+
+function getDownloadTooltipText() {
+  return "By downloading from MorphoBank, you agree to the site's Terms of Use & Privacy Policy."
+}
+
+export {
+  buildImageProps,
+  getPasswordPattern,
+  getPasswordRule,
+  searchInObject,
+  getViewStatsTooltipText,
+  getDownloadTooltipText,
+}

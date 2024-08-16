@@ -144,6 +144,7 @@ onMounted(() => {
           </button>
         </div>
       </div>
+      <p class="text-black-50 fw-bold">- OR -</p>
       <div class="filters-slim">
         <label for="filter-by" class="me-2">Browse by</label>
         <select
@@ -170,7 +171,7 @@ onMounted(() => {
           {{ letter }}
         </button>
       </div>
-      <p class="text-black-50"><b>- OR -</b></p>
+      <p class="text-black-50 fw-bold">- OR -</p>
       <div>
         <label for="patition-by" class="me-2"
           >Browse by taxa partition or matrix:</label
