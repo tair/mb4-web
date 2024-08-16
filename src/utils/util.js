@@ -28,7 +28,7 @@ function getPasswordRule() {
 function searchInObject(obj, searchStr, includeFields = []) {
   for (let key in obj) {
     if (typeof obj[key] === 'object' && obj[key] !== null) {
-      if (searchInObject(obj[key], searchStr)) {
+      if (searchInObject(obj[key], searchStr, includeFields)) {
         return true
       }
     } else {

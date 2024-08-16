@@ -37,7 +37,6 @@ const defaultPartitionByField = computed(() => {
 })
 
 const selectedPartitionByOption = ref(null)
-let selectPartition = ref(false)
 
 watch(
   defaultPartitionByField,
@@ -51,8 +50,8 @@ watch(
 
 const selectedLetter = ref(null)
 // default set to genus
-let selectAll = ref(true)
 let searchStr = ref(null)
+let filterType = ref('All')
 
 const letters = computed(() => {
   let uniqueLetters = null
@@ -66,10 +65,9 @@ const letters = computed(() => {
 
 const filteredTaxa = computed(() => {
   return projectStore.getFilteredTaxa(
-    selectAll.value,
+    filterType.value,
     selectedFilterByOption.value,
     selectedLetter.value,
-    selectPartition.value,
     selectedPartitionByOption.value,
     searchStr.value
   )
@@ -83,27 +81,26 @@ const genusTaxa = computed(() => {
   return projectStore.getGenusTaxa()
 })
 
+function onFilterBy(type) {
+  // type includes 'All', 'Search', 'Taxa', 'Partition'
+  filterType.value = type
+}
+
 function onResetFilter() {
   selectedFilterByOption.value = defaultFilterByOption.value
   selectedPartitionByOption.value = defaultPartitionByField.value
   selectedLetter.value = null
-  selectAll.value = true
-  selectPartition.value = false
+  onFilterBy('All')
 }
 
 function onClearSearchStr() {
   searchStr.value = ''
-  selectAll.value = true
+  onFilterBy('All')
 }
 
 function onSelectLetter(letter) {
   selectedLetter.value = letter
-  selectAll.value = false
-}
-
-function onSelectPartition() {
-  selectPartition.value = true
-  selectAll.value = false
+  onFilterBy('Taxa')
 }
 
 function getTaxonNameDisplay(taxonName, lookupFailed, pbdbVerified) {
@@ -130,59 +127,40 @@ onMounted(() => {
       {{ filteredTaxa?.length }} taxa.
     </p>
     <div class="mb-3">
-      <div class="mb-2">
-        <label for="filter" class="me-2">Search for:</label>
-        <input
-          id="filter"
-          v-model="searchStr"
+      <div class="row mb-2">
+        <div class="col-8 d-flex align-items-center">
+          <label for="filter" class="me-2">Search for:</label>
+          <input id="filter" v-model="searchStr" class="me-2" />
+          <button @click="onFilterBy('Search')" class="btn btn-primary me-2">
+            Submit
+          </button>
+          <button @click="onClearSearchStr()" class="btn btn-primary btn-white">
+            Clear
+          </button>
+        </div>
+        <div class="col-4 d-flex justify-content-end align-items-center">
+          <button class="nav-link" @click="onResetFilter()">
+            Show All Taxa
+          </button>
+        </div>
+      </div>
+      <div class="filters-slim">
+        <label for="filter-by" class="me-2">Browse by</label>
+        <select
+          id="filter-by"
+          v-model="selectedFilterByOption"
+          @change="onFilterBy('Taxa')"
           class="me-2"
-          @input="selectAll = false"
-        />
-        <button @click="onClearSearchStr()" class="btn btn-primary btn-white">
-          clear
-        </button>
-      </div>
-      <div class="row">
-        <div class="col-5">
-          <label for="filter-by" class="me-2">Browse by:</label>
-          <select
-            id="filter-by"
-            v-model="selectedFilterByOption"
-            @change="selectAll = false"
+        >
+          <option
+            v-for="(label, key) in filterByOptions"
+            :key="key"
+            :value="key"
           >
-            <option
-              v-for="(value, label) in filterByOptions"
-              :key="value"
-              :value="value"
-            >
-              {{ label }}
-            </option>
-          </select>
-        </div>
-        <div class="col-7 text-end">
-          <label for="patition-by" class="me-2"
-            >Show by taxa partition or matrix:</label
-          >
-          <select
-            class="me-3"
-            id="partition-by"
-            v-model="selectedPartitionByOption"
-            @change="onSelectPartition()"
-          >
-            <option
-              v-for="(label, key) in partitionByOptions"
-              :key="key"
-              :value="key"
-            >
-              {{ label }}
-            </option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="filters text-black-50 fw-bold">
-      <div>
-        Display taxa beginning with:
+            {{ label }}
+          </option>
+        </select>
+        beginning with:
         <button
           :class="[{ active: selectedLetter == letter }, 'fw-bold']"
           v-for="letter in letters"
@@ -191,16 +169,29 @@ onMounted(() => {
         >
           {{ letter }}
         </button>
-        <span v-if="letters && letters.length > 1">|</span>
-        <button
-          :class="[{ active: selectAll }, 'fw-bold']"
-          @click="onResetFilter()"
+      </div>
+      <p class="text-black-50"><b>- OR -</b></p>
+      <div>
+        <label for="patition-by" class="me-2"
+          >Browse by taxa partition or matrix:</label
         >
-          ALL
-        </button>
+        <select
+          class="me-3"
+          id="partition-by"
+          v-model="selectedPartitionByOption"
+          @change="onFilterBy('Partition')"
+        >
+          <option
+            v-for="(label, key) in partitionByOptions"
+            :key="key"
+            :value="key"
+          >
+            {{ label }}
+          </option>
+        </select>
       </div>
     </div>
-    <div v-if="selectAll">
+    <div v-if="filterType == 'All'">
       <div id="supra-taxa">
         <ul class="list-group">
           <li class="list-group-item">
@@ -265,9 +256,16 @@ onMounted(() => {
       </div>
     </div>
     <div v-else>
-      <div v-if="selectPartition" class="mb-2">
-        Showing {{ filteredTaxa?.length }} taxa from
-        {{ partitionByOptions[selectedPartitionByOption] }}.
+      <div class="fw-bold text-black-50">
+        <div v-if="filterType == 'Taxa'" class="mb-2">
+          Showing {{ filteredTaxa?.length }} taxa whose
+          {{ filterByOptions[selectedFilterByOption] }} beginning with
+          {{ selectedLetter }}.
+        </div>
+        <div v-if="filterType == 'Partition'" class="mb-2">
+          Showing {{ filteredTaxa?.length }} taxa from
+          {{ partitionByOptions[selectedPartitionByOption] }}.
+        </div>
       </div>
       <div class="row">
         <ul class="list-group">
