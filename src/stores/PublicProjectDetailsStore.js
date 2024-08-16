@@ -35,7 +35,7 @@ export const usePublicProjectDetailsStore = defineStore({
       higher_taxon_subfamily: 'subfamily',
       genus: 'genus',
       specific_epithet: 'species',
-      subspecific_epithet: 'subspecies'
+      subspecific_epithet: 'subspecies',
     },
 
     specimenSortByFields: [
@@ -72,7 +72,7 @@ export const usePublicProjectDetailsStore = defineStore({
       genus: 'genus',
       subgenus: 'subgenus',
       specific_epithet: 'species',
-      subspecific_epithet: 'subspecies'
+      subspecific_epithet: 'subspecies',
     },
 
     taxaSortByFields: [
@@ -236,15 +236,9 @@ export const usePublicProjectDetailsStore = defineStore({
     getTaxaFilterFields() {
       return this.getFilterFields(this.taxaFilterByOptions, this.taxa_details)
     },
-    getFilteredTaxa(
-      filterType,
-      filterBy,
-      letter,
-      partitionBy,
-      searchStr
-    ) {
+    getFilteredTaxa(filterType, filterBy, letter, partitionBy, searchStr) {
       // when search str presents, show search result
-      switch(filterType) {
+      switch (filterType) {
         case 'Search':
           if (searchStr) return this.searchForTaxa(searchStr)
           return this.taxa_details
@@ -331,9 +325,7 @@ export const usePublicProjectDetailsStore = defineStore({
         // Check if any item has a valid (non-null and non-undefined) value for the key
         let hasValidValue = false
         if (arr) {
-          hasValidValue = arr.some(
-            (item) => item['sort_fields'][key]
-          )
+          hasValidValue = arr.some((item) => item['sort_fields'][key])
         }
 
         // If no items have a valid value for the key, delete it from specimenFilterByOptions

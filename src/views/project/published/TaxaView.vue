@@ -130,11 +130,7 @@ onMounted(() => {
       <div class="row mb-2">
         <div class="col-8 d-flex align-items-center">
           <label for="filter" class="me-2">Search for:</label>
-          <input
-            id="filter"
-            v-model="searchStr"
-            class="me-2"
-          />
+          <input id="filter" v-model="searchStr" class="me-2" />
           <button @click="onFilterBy('Search')" class="btn btn-primary me-2">
             Submit
           </button>
@@ -143,10 +139,7 @@ onMounted(() => {
           </button>
         </div>
         <div class="col-4 d-flex justify-content-end align-items-center">
-          <button
-            class="nav-link"
-            @click="onResetFilter()"
-          >
+          <button class="nav-link" @click="onResetFilter()">
             Show All Taxa
           </button>
         </div>
@@ -265,7 +258,8 @@ onMounted(() => {
     <div v-else>
       <div class="fw-bold text-black-50">
         <div v-if="filterType == 'Taxa'" class="mb-2">
-          Showing {{ filteredTaxa?.length }} taxa whose {{ filterByOptions[selectedFilterByOption] }} beginning with
+          Showing {{ filteredTaxa?.length }} taxa whose
+          {{ filterByOptions[selectedFilterByOption] }} beginning with
           {{ selectedLetter }}.
         </div>
         <div v-if="filterType == 'Partition'" class="mb-2">
