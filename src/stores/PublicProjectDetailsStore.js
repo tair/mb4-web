@@ -26,16 +26,16 @@ export const usePublicProjectDetailsStore = defineStore({
     unidentified_specimen_details: null,
 
     specimenFilterByOptions: {
-      'supraspecific clade': 'supraspecific_clade',
-      phylum: 'higher_taxon_phylum',
-      class: 'higher_taxon_class',
-      order: 'higher_taxon_order',
-      superfamily: 'higher_taxon_superfamily',
-      family: 'higher_taxon_family',
-      subfamily: 'higher_taxon_subfamily',
+      supraspecific_clade: 'supraspecific clade',
+      higher_taxon_phylum: 'phylum',
+      higher_taxon_class: 'class',
+      higher_taxon_order: 'order',
+      higher_taxon_superfamily: 'superfamily',
+      higher_taxon_family: 'family',
+      higher_taxon_subfamily: 'subfamily',
       genus: 'genus',
-      species: 'specific_epithet',
-      subspecies: 'subspecific_epithet',
+      specific_epithet: 'species',
+      subspecific_epithet: 'subspecies'
     },
 
     specimenSortByFields: [
@@ -53,26 +53,26 @@ export const usePublicProjectDetailsStore = defineStore({
     ],
 
     taxaFilterByOptions: {
-      'supraspecific clade': 'supraspecific_clade',
-      kingdom: 'higher_taxon_kingdom',
-      phylum: 'higher_taxon_phylum',
-      class: 'higher_taxon_class',
-      subclass: 'higher_taxon_subclass',
-      infraclass: 'higher_taxon_infraclass',
-      cohort: 'higher_taxon_cohort',
-      superorder: 'higher_taxon_superorder',
-      order: 'higher_taxon_order',
-      suborder: 'higher_taxon_suborder',
-      infraorder: 'higher_taxon_infraorder',
-      superfamily: 'higher_taxon_superfamily',
-      family: 'higher_taxon_family',
-      subfamily: 'higher_taxon_subfamily',
-      tribe: 'higher_taxon_tribe',
-      subtribe: 'higher_taxon_subtribe',
+      supraspecific_clade: 'supraspecific clade',
+      higher_taxon_kingdom: 'kingdom',
+      higher_taxon_phylum: 'phylum',
+      higher_taxon_class: 'class',
+      higher_taxon_subclass: 'subclass',
+      higher_taxon_infraclass: 'infraclass',
+      higher_taxon_cohort: 'cohort',
+      higher_taxon_superorder: 'superorder',
+      higher_taxon_order: 'order',
+      higher_taxon_suborder: 'suborder',
+      higher_taxon_infraorder: 'infraorder',
+      higher_taxon_superfamily: 'superfamily',
+      higher_taxon_family: 'family',
+      higher_taxon_subfamily: 'subfamily',
+      higher_taxon_tribe: 'tribe',
+      higher_taxon_subtribe: 'subtribe',
       genus: 'genus',
       subgenus: 'subgenus',
-      species: 'specific_epithet',
-      subspecies: 'subspecific_epithet',
+      specific_epithet: 'species',
+      subspecific_epithet: 'subspecies'
     },
 
     taxaSortByFields: [
@@ -237,23 +237,30 @@ export const usePublicProjectDetailsStore = defineStore({
       return this.getFilterFields(this.taxaFilterByOptions, this.taxa_details)
     },
     getFilteredTaxa(
-      showAll,
+      filterType,
       filterBy,
       letter,
-      selectPartition,
       partitionBy,
       searchStr
     ) {
       // when search str presents, show search result
-      if (searchStr) return this.searchForTaxa(searchStr)
-      if (selectPartition) return this.getPartitionedTaxa(partitionBy)
-      return this.getFilteredElements(
-        showAll,
-        filterBy,
-        letter,
-        this.taxa_details,
-        this.taxaSortByFields
-      )
+      switch(filterType) {
+        case 'Search':
+          if (searchStr) return this.searchForTaxa(searchStr)
+          return this.taxa_details
+        case 'Partition':
+          return this.getPartitionedTaxa(partitionBy)
+        case 'Taxa':
+          return this.getFilteredElements(
+            false,
+            filterBy,
+            letter,
+            this.taxa_details,
+            this.taxaSortByFields
+          )
+        case 'All':
+          return this.taxa_details
+      }
     },
     getPartitionedTaxa(partitionBy) {
       const partitionIdPattern = /^P(\d+)$/
@@ -325,7 +332,7 @@ export const usePublicProjectDetailsStore = defineStore({
         let hasValidValue = false
         if (arr) {
           hasValidValue = arr.some(
-            (item) => item['sort_fields'][cleanedFilterByOptions[key]]
+            (item) => item['sort_fields'][key]
           )
         }
 

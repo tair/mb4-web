@@ -132,9 +132,9 @@ onMounted(() => {
           @change="selectAll = false"
         >
           <option
-            v-for="(value, label) in filterByOptions"
-            :key="value"
-            :value="value"
+            v-for="(label, key) in filterByOptions"
+            :key="key"
+            :value="key"
           >
             {{ label }}
           </option>

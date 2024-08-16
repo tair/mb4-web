@@ -33,14 +33,19 @@ function onShowDetails(media_file) {
   mediaDetailsFor.value = media_file
 }
 
+function searchByStr() {
+  mediaStore.filterMediaFiles(searchStr.value)
+  mediaStore.recalculatePageInfo()
+  mediaStore.fetchByPage()
+}
+
+function onResetSearch() {
+  searchStr.value = ''
+  searchByStr()
+}
+
 watch(orderBySelection, (currentValue, oldValue) => {
   mediaStore.sortByOption(currentValue)
-  mediaStore.fetchByPage()
-})
-
-watch(searchStr, (currentValue, oldValue) => {
-  mediaStore.filterMediaFiles(currentValue)
-  mediaStore.recalculatePageInfo()
   mediaStore.fetchByPage()
 })
 
@@ -74,8 +79,11 @@ watch(selectedPageSize, (currentValue, oldValue) => {
         <div class="mb-2">
           <label for="filter" class="me-2">Search for:</label>
           <input id="filter" v-model="searchStr" class="me-2" />
-          <button @click="searchStr = ''" class="btn btn-primary btn-white">
-            clear
+          <button @click="searchByStr()" class="btn btn-primary me-2">
+            Submit
+          </button>
+          <button @click="onResetSearch()" class="btn btn-primary btn-white">
+            Clear
           </button>
         </div>
         <div>
