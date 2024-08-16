@@ -29,7 +29,7 @@ onMounted(() => {
     </header>
     <br />
     <div class="action-bar">
-      <RouterLink :to="`/myprojects/${projectId}/member/group/add`">
+      <RouterLink :to="`/myprojects/${projectId}/members/groups/create`">
         <button type="button" class="btn btn-m btn-outline-primary">
           <i class="fa fa-plus"></i>
           <span> Add New Project Member Group </span>

@@ -1,6 +1,5 @@
 <script setup>
 import router from '@/router'
-import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectMemberGroupsStore } from '@/stores/ProjectMemberGroupsStore'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
@@ -8,41 +7,26 @@ import { groupSchema } from '@/views/project/membersGroups/schema.js'
 
 const route = useRoute()
 const projectId = route.params.id
-const groupId = route.params.groupId
 
 const projectMemberGroupsStore = useProjectMemberGroupsStore()
-const group = computed(() => projectMemberGroupsStore.getGroupById(groupId))
 
-async function edit(event) {
+async function create(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
-  const success = await projectMemberGroupsStore.editGroup(
-    projectId,
-    groupId,
-    json
-  )
+  const success = await projectMemberGroupsStore.createGroup(projectId, json)
   if (success) {
     router.go(-1)
   } else {
     alert('Failed to update group')
   }
 }
-
-onMounted(() => {
-  if (!projectMemberGroupsStore.isLoaded) {
-    projectMemberGroupsStore.fetchGroups(projectId)
-  }
-})
 </script>
 
 <template>
   <LoadingIndicator :isLoaded="projectMemberGroupsStore.isLoaded">
     <div>
-      <div v-if="group" class="d-flex">
-        <p class="fw-bold">Editing:</p>
-        {{ group.group_name }}
-      </div>
-      <form @submit.prevent="edit">
+      <p class="fw-bold">Creating new project member group</p>
+      <form @submit.prevent="create">
         <div class="row setup-content">
           <div
             v-for="(definition, index) in groupSchema"
@@ -52,12 +36,7 @@ onMounted(() => {
             <label :for="index" class="form-label">{{
               definition.label
             }}</label>
-            <component
-              :key="index"
-              :is="definition.view"
-              :name="index"
-              :value="group[index]"
-            >
+            <component :key="index" :is="definition.view" :name="index">
             </component>
           </div>
           <div class="btn-form-group">
@@ -68,7 +47,7 @@ onMounted(() => {
             >
               Cancel
             </button>
-            <button class="btn btn-primary" type="submit">Save</button>
+            <button class="btn btn-primary" type="submit">Create</button>
           </div>
         </div>
       </form>
