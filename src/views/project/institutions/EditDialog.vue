@@ -21,16 +21,14 @@ async function editInstitution() {
     return
   }
 
-  const response = await projectInstitutionsStore.editInstitution(
+  const success = await projectInstitutionsStore.editInstitution(
     props.projectId,
     props.institution.institution_id,
     institutionName,
     institutionId
   )
 
-  if (response) {
-    alert('Success.')
-  } else {
+  if (!success) {
     alert('Could not edit the chosen institution.')
   }
 }
