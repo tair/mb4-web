@@ -10,8 +10,6 @@ const route = useRoute()
 const projectId = route.params.id
 
 const projectMemberGroupsStore = useProjectMemberGroupsStore()
-const isLoaded = computed(() => projectMemberGroupsStore.isLoaded)
-const groups = computed(() => projectMemberGroupsStore.groups)
 const numOfGroups = computed(() => projectMemberGroupsStore.groups?.length)
 const groupToDelete = ref({})
 
@@ -22,7 +20,7 @@ onMounted(() => {
 })
 </script>
 <template>
-  <LoadingIndicator :isLoaded="isLoaded">
+  <LoadingIndicator :isLoaded="projectMemberGroupsStore.isLoaded">
     <header v-if="numOfGroups == 1">
       There is {{ numOfGroups }} member group associated with this project.
     </header>
@@ -31,7 +29,7 @@ onMounted(() => {
     </header>
     <br />
     <div class="action-bar">
-      <RouterLink :to="`/myprojects/${projectId}/member/group/add`">
+      <RouterLink :to="`/myprojects/${projectId}/members/groups/create`">
         <button type="button" class="btn btn-m btn-outline-primary">
           <i class="fa fa-plus"></i>
           <span> Add New Project Member Group </span>
@@ -39,8 +37,9 @@ onMounted(() => {
       </RouterLink>
     </div>
     <MembersGroupsComp
-      :groups="groups"
+      :groups="projectMemberGroupsStore.groups"
       v-model:deleteGroup="groupToDelete"
+      :projectId="projectId"
     ></MembersGroupsComp>
   </LoadingIndicator>
   <DeleteGroupDialog :group="groupToDelete" :projectId="projectId" />

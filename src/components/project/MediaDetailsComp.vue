@@ -14,7 +14,7 @@ const props = defineProps({
 const showZoomModal = ref(false)
 const showDownloadModal = ref(false)
 const viewStatsTooltipText =
-  'Project download and view statistics are available since August 2012.  Views and downloads pre August 2012 are not reflected in the statistics.'
+  'Project download and view statistics are available since August 2012. Views and downloads pre August 2012 are not reflected in the statistics.'
 const downloadTooltipText =
   "By downloading from MorphoBank, you agree to the site's Terms of Use & Privacy Policy."
 
@@ -207,7 +207,7 @@ function getHitsMessage(mediaObj) {
       </div>
       <div>
         <strong>Taxonomic name</strong>
-        <p v-html="media_file.taxa_name"></p>
+        <p v-html="media_file.taxon_name"></p>
       </div>
       <div v-if="media_file.specimen_name">
         <strong>Specimen</strong>

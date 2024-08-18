@@ -74,9 +74,11 @@ export const useProjectInstitutionStore = defineStore({
       const response = await axios.post(url, { institutionId, name })
 
       if (response.status == 200) {
+        this.removeByInstitutionIds([institutionId])
+
         const institution = response.data.institution
 
-        this.insertInstitution(institution)
+        this.institutions.push(institution)
 
         return true
       }
@@ -103,7 +105,7 @@ export const useProjectInstitutionStore = defineStore({
         this.removeByInstitutionIds([institutionId])
 
         const institution = response.data.institution
-        this.insertInstitution(institution)
+        this.institutions.push(institution)
 
         return true
       }
