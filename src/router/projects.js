@@ -298,6 +298,23 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
+    path: 'members/create',
+    name: 'MyProjectMembersCreateView',
+    meta: {
+      itemName: 'members',
+      breadcrumbs: [
+        {
+          label: 'Project Members',
+          to: 'MyProjectMembersView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/members/CreateView.vue'
+      ),
+  },
+  {
     path: 'views',
     name: 'MyProjectMediaViewsView',
     meta: {

@@ -37,6 +37,28 @@ export const useProjectUsersStore = defineStore({
       }
       return false
     },
+    async checkEmail(projectId, json) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/users/check/email`
+      const response = await axios.post(url, json )
+      if (response.status == 200) {
+        return response.data
+      }
+      return false
+    },
+    async createUser(projectId, json, exist) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/users/create`
+      const response = await axios.post(url, {json, exist} )
+      if (response.status == 200) {
+        const user = response.data.user
+        this.users.push(user)
+        return true
+      }
+      return false
+    },
     updateUser(linkId, group_ids, membership_type) {
       const index = this.getUserIndexByLinkId(linkId)
       this.users[index].group_ids = group_ids

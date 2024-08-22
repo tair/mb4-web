@@ -29,7 +29,7 @@ onMounted(() => {
     </header>
     <br />
     <div class="action-bar">
-      <RouterLink :to="`/myprojects/${projectId}/member/add`">
+      <RouterLink :to="`/myprojects/${projectId}/members/create`">
         <button type="button" class="btn btn-m btn-outline-primary">
           <i class="fa fa-plus"></i>
           <span> Add New Member </span>
