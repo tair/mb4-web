@@ -51,6 +51,11 @@ const filteredSpecimens = computed(() => {
   )
 })
 
+function onSelectLetter(letter) {
+  selectedLetter.value = letter
+  selectAll.value = false
+}
+
 function onResetFilter() {
   selectedFilterByOption.value = defaultFilterByOption.value
   selectedLetter.value = null
@@ -66,6 +71,13 @@ const unidentifiedSpecimens = computed(() => {
 const hasUnidentified = computed(() => {
   const specimens = unidentifiedSpecimens.value
   return specimens && specimens.length > 0
+})
+
+const getSpecimenCount = computed(() => {
+  return (
+    (projectStore.specimen_details?.length ?? 0) +
+    (unidentifiedSpecimens.value?.length ?? 0)
+  )
 })
 
 let isDetailsActive = ref(false)
@@ -89,22 +101,27 @@ onMounted(() => {
     basePath="project"
   >
     <div class="row mb-3">
-      <p>
-        This project has
-        {{ projectStore.specimen_details?.length }} specimens. Displaying
-        {{ filteredSpecimens?.length }} specimens.
-      </p>
-
-      <div
-        class="mb-3 text-end nav-link"
-        @click="showUnidentified = !showUnidentified"
-        v-if="hasUnidentified"
-      >
-        {{
-          showUnidentified
-            ? 'Show Identified Specimens'
-            : 'Show Unidentified Specimens'
-        }}
+      <div class="row">
+        <div class="col-8">
+          <p v-if="!showUnidentified">
+            This project has
+            {{ getSpecimenCount }} specimens. Displaying
+            {{ filteredSpecimens?.length }} identified specimens.
+          </p>
+          <p v-else>
+            This project has
+            {{ getSpecimenCount }} specimens. Displaying
+            {{ unidentifiedSpecimens?.length }} unidentified specimens.
+          </p>
+        </div>
+        <div class="col-4">
+          <div class="text-end" v-if="hasUnidentified">
+            <select id="showUnidentified" v-model="showUnidentified">
+              <option :value="true">Show Unidentified Specimens</option>
+              <option :value="false">Show Identified Specimens</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <div class="filters text-black-50 fw-bold" v-if="!showUnidentified">
@@ -115,9 +132,9 @@ onMounted(() => {
           @change="selectAll = false"
         >
           <option
-            v-for="(value, label) in filterByOptions"
-            :key="value"
-            :value="value"
+            v-for="(label, key) in filterByOptions"
+            :key="key"
+            :value="key"
           >
             {{ label }}
           </option>
@@ -127,10 +144,7 @@ onMounted(() => {
           :class="[{ active: selectedLetter == letter }, 'fw-bold']"
           v-for="letter in letters"
           :key="letter"
-          @click="
-            selectedLetter = letter;
-            selectAll = false
-          "
+          @click="onSelectLetter(letter)"
         >
           {{ letter }}
         </button>
