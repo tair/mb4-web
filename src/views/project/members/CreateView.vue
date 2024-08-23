@@ -18,14 +18,24 @@ const projectUsersStore = useProjectUsersStore()
 async function check(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
+  // checking if email is in correct format
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isValid = emailPattern.test(json.email);
+  if (!isValid) {
+    alert('E-mail address is not valid.')
+    return
+  }
+  // email is valid so we store it for later use
   email.value = json.email
-
+  // checking if user with email exist in the project already
   const user = projectUsersStore.users.find(
     (user) => user.email == email.value
   )
 
   if (user == null) {
     const result = await projectUsersStore.checkEmail(projectId, json)
+    // we check email and see if a user with the email exist in morphobank 
+    // or not (exist property will tell us)
     if(result) {
       cont.value = true
       exist.value = result.exist
