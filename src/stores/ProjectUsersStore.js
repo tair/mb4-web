@@ -43,15 +43,27 @@ export const useProjectUsersStore = defineStore({
       }/projects/${projectId}/users/check/email`
       const response = await axios.post(url, json )
       if (response.status == 200) {
+        console.log(response.data)
         return response.data
       }
       return false
     },
-    async createUser(projectId, json, exist) {
+    async inProject(projectId, email) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/users/in/project`
+      const response = await axios.post(url, {email} )
+      if (response.status == 200) {
+        const inProject = response.data.inProject
+        return inProject
+      }
+      return false
+    },
+    async createUser(projectId, json) {
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/users/create`
-      const response = await axios.post(url, {json, exist} )
+      const response = await axios.post(url, {json} )
       if (response.status == 200) {
         const user = response.data.user
         this.users.push(user)

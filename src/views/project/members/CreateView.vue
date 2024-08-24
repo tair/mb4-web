@@ -9,7 +9,6 @@ import { schema } from '@/views/project/members/createSchema.js'
 const route = useRoute()
 const projectId = route.params.id
 const cont = ref(false)
-const exist = ref()
 const newProjectUser = ref()
 const email = ref()
 
@@ -28,18 +27,15 @@ async function check(event) {
   // email is valid so we store it for later use
   email.value = json.email
   // checking if user with email exist in the project already
-  const user = projectUsersStore.users.find(
-    (user) => user.email == email.value
-  )
+  const isProjectMember = await inProject(json.email)
 
-  if (user == null) {
+  if (!isProjectMember) {
     const result = await projectUsersStore.checkEmail(projectId, json)
     // we check email and see if a user with the email exist in morphobank 
-    // or not (exist property will tell us)
-    if(result) {
-      cont.value = true
-      exist.value = result.exist
+    // or not (exist property from result will tell us)
+    if(result.exist) {
       newProjectUser.value = result.user
+      cont.value = true
     } else {
       alert('Could not add a member to this project')
     }
@@ -47,11 +43,22 @@ async function check(event) {
     alert('User is already a member of this project')
   }
 }
+
+async function inProject(em) {
+  const user = projectUsersStore.users.find(
+    (user) => user.email == email.value
+  )
+  if (user == null) {
+    return false
+  }
+  const result = await projectUsersStore.inProject(projectId, em)
+  return result
+}
 async function create(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
   json.email = email.value
-  const success = await projectUsersStore.createUser(projectId, json, exist.value)
+  const success = await projectUsersStore.createUser(projectId, json)
   if (success) {
     router.go(-1)
   } else {
@@ -97,28 +104,8 @@ onMounted(() => {
     <div v-else>
       <form @submit.prevent="create">
         <div class="row setup-content">
-          <div v-if="exist">
+          <div>
             <p>{{ `${newProjectUser.fname} ${newProjectUser.lname}, with email address ${newProjectUser.email}, is already a member of the Morphobank community.` }}</p>
-          </div>
-          <div v-else>
-            <p>{{`The individual with the email address ${newProjectUser.email} is not yet a member of the Morphobank community.`}}</p>
-            <p>Please provide their first and last name so they can be added</p>
-            <label :for="'fname'" class="form-label fw-bold">{{
-              schema.fname.label
-            }}</label>
-            <component
-              :is="schema.fname.view"
-              :name="'fname'"
-            >
-            </component>
-            <label :for="'lname'" class="form-label fw-bold">{{
-              schema.lname.label
-            }}</label>
-            <component
-              :is="schema.lname.view"
-              :name="'lname'"
-            >
-            </component>
           </div>
           <div class="form-group mb-3">
             <label :for="'message'" class="form-label fw-bold">{{
