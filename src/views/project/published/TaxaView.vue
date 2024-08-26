@@ -125,7 +125,7 @@ onMounted(() => {
         />
         <button
           @click="
-            searchStr = '';
+            searchStr = ''
             selectAll = true
           "
           class="btn btn-primary btn-white"
@@ -159,7 +159,7 @@ onMounted(() => {
             id="partition-by"
             v-model="selectedPartitionByOption"
             @change="
-              selectPartition = true;
+              selectPartition = true
               selectAll = false
             "
           >
@@ -182,7 +182,7 @@ onMounted(() => {
           v-for="letter in letters"
           :key="letter"
           @click="
-            selectedLetter = letter;
+            selectedLetter = letter
             selectAll = false
           "
         >

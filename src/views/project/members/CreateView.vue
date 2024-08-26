@@ -18,8 +18,8 @@ async function check(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
   // checking if email is in correct format
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const isValid = emailPattern.test(json.email);
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const isValid = emailPattern.test(json.email)
   if (!isValid) {
     alert('E-mail address is not valid.')
     return
@@ -31,9 +31,9 @@ async function check(event) {
 
   if (!isProjectMember) {
     const result = await projectUsersStore.isAvailableUser(projectId, json)
-    // we check email and see if a user with the email exist in morphobank 
+    // we check email and see if a user with the email exist in morphobank
     // or not (exist property from result will tell us)
-    if(!result.errorMessage) {
+    if (!result.errorMessage) {
       newProjectUser.value = result.user
       cont.value = true
     } else {
@@ -44,10 +44,8 @@ async function check(event) {
   }
 }
 async function inProject(em) {
-  const user = projectUsersStore.users.find(
-    (user) => user.email == email.value
-  )
-  return user == null ? false: true
+  const user = projectUsersStore.users.find((user) => user.email == email.value)
+  return user == null ? false : true
 }
 async function create(event) {
   const formData = new FormData(event.currentTarget)
@@ -77,11 +75,7 @@ onMounted(() => {
             <label :for="'email'" class="form-label">{{
               schema.email.label
             }}</label>
-            <component
-              :is="schema.email.view"
-              :name="'email'"
-            >
-            </component>
+            <component :is="schema.email.view" :name="'email'"> </component>
           </div>
           <div class="btn-form-group">
             <button
@@ -100,17 +94,17 @@ onMounted(() => {
       <form @submit.prevent="create">
         <div class="row setup-content">
           <div>
-            <p>{{ `${newProjectUser.fname} ${newProjectUser.lname}, with email address ${newProjectUser.email}, is already a member of the Morphobank community.` }}</p>
+            <p>
+              {{
+                `${newProjectUser.fname} ${newProjectUser.lname}, with email address ${newProjectUser.email}, is already a member of the Morphobank community.`
+              }}
+            </p>
           </div>
           <div class="form-group mb-3">
             <label :for="'message'" class="form-label fw-bold">{{
               schema.message.label
             }}</label>
-            <component
-              :is="schema.message.view"
-              :name="'message'"
-            >
-            </component>
+            <component :is="schema.message.view" :name="'message'"> </component>
             <label :for="'membership_type'" class="form-label fw-bold">{{
               schema.membership_type.label
             }}</label>
@@ -130,7 +124,9 @@ onMounted(() => {
             >
               Cancel
             </button>
-            <button class="btn btn-primary" type="submit">Send Invitation</button>
+            <button class="btn btn-primary" type="submit">
+              Send Invitation
+            </button>
           </div>
         </div>
       </form>

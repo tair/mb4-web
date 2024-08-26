@@ -41,7 +41,7 @@ export const useProjectUsersStore = defineStore({
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/users/is/available`
-      const response = await axios.post(url, json )
+      const response = await axios.post(url, json)
       if (response.status == 200) {
         return response.data
       }
@@ -51,7 +51,7 @@ export const useProjectUsersStore = defineStore({
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/users/in/project`
-      const response = await axios.post(url, {email} )
+      const response = await axios.post(url, { email })
       if (response.status == 200) {
         const inProject = response.data.inProject
         return inProject
@@ -62,7 +62,7 @@ export const useProjectUsersStore = defineStore({
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/users/create`
-      const response = await axios.post(url, {json} )
+      const response = await axios.post(url, { json })
       if (response.status == 200) {
         const user = response.data.user
         this.users.push(user)
