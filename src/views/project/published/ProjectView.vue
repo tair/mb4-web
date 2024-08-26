@@ -41,7 +41,12 @@ function toTop() {
   font-weight: bold;
 }
 
-.filters button {
+.filters-slim {
+  margin-bottom: 10px;
+}
+
+.filters button,
+.filters-slim button {
   margin: 0 3px;
   padding: 2px 6px;
   background-color: transparent;
@@ -50,7 +55,8 @@ function toTop() {
   color: #ef782f;
 }
 
-.filters button.active {
+.filters button.active,
+.filters-slim button.active {
   color: #666;
 }
 </style>

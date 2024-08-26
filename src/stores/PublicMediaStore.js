@@ -48,6 +48,10 @@ export const usePublicMediaStore = defineStore({
   },
   actions: {
     filterMediaFiles(searchStr) {
+      if (!searchStr) {
+        this.media_files = this.full_media_files
+        return
+      }
       const mediaIdPattern = /^M(\d+)$/
       let match = searchStr.match(mediaIdPattern)
       if (match) {
