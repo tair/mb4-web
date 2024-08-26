@@ -30,34 +30,29 @@ async function check(event) {
   const isProjectMember = await inProject(json.email)
 
   if (!isProjectMember) {
-    const result = await projectUsersStore.checkEmail(projectId, json)
+    const result = await projectUsersStore.isAvailableUser(projectId, json)
     // we check email and see if a user with the email exist in morphobank 
     // or not (exist property from result will tell us)
-    if(result.exist) {
+    if(!result.errorMessage) {
       newProjectUser.value = result.user
       cont.value = true
     } else {
-      alert('Could not add a member to this project')
+      alert(result.errorMessage)
     }
   } else {
     alert('User is already a member of this project')
   }
 }
-
 async function inProject(em) {
   const user = projectUsersStore.users.find(
     (user) => user.email == email.value
   )
-  if (user == null) {
-    return false
-  }
-  const result = await projectUsersStore.inProject(projectId, em)
-  return result
+  return user == null ? false: true
 }
 async function create(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
-  json.email = email.value
+  json.user_id = newProjectUser.value.user_id
   const success = await projectUsersStore.createUser(projectId, json)
   if (success) {
     router.go(-1)
