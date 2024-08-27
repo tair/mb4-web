@@ -12,6 +12,24 @@ const projectId = route.params.id
 const projectUsersStore = useProjectUsersStore()
 const numOfUsers = computed(() => projectUsersStore.users?.length)
 const userToDelete = ref({})
+const users = computed(() =>
+  projectUsersStore.users.sort((a, b) => {
+    const nameA = a.fname
+    if (!nameA) {
+      return -1
+    }
+
+    const nameB = b.fname
+    if (!nameB) {
+      return -1
+    }
+
+    const compare = nameA.localeCompare(nameB)
+    if (compare) {
+      return compare
+    }
+  })
+)
 
 onMounted(() => {
   if (!projectUsersStore.isLoaded) {
@@ -37,7 +55,7 @@ onMounted(() => {
       </RouterLink>
     </div>
     <MembersComp
-      :users="projectUsersStore.users"
+      :users="users"
       :projectId="projectId"
       v-model:deleteUser="userToDelete"
     ></MembersComp>
