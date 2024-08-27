@@ -37,7 +37,7 @@ export const useProjectUsersStore = defineStore({
       }
       return false
     },
-    async isAvailableUser(projectId, json) {
+    async isEmailAvailable(projectId, json) {
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/users/isEmailAvailable`
@@ -64,7 +64,7 @@ export const useProjectUsersStore = defineStore({
       this.users[index].group_ids = group_ids
       this.users[index].membership_type = membership_type
     },
-    inProject(email) {
+    isUserInProject(email) {
       const user = this.users.find((user) => user.email == email)
       return !!user
     },

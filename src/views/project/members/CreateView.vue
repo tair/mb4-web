@@ -29,10 +29,10 @@ async function check(event) {
   // email is valid so we store it for later use
   email.value = json.email
   // checking if user with email exist in the project already
-  const isProjectMember = projectUsersStore.inProject(json.email)
+  const isProjectMember = projectUsersStore.isUserInProject(json.email)
 
   if (!isProjectMember) {
-    const result = await projectUsersStore.isAvailableUser(projectId, json)
+    const result = await projectUsersStore.isEmailAvailable(projectId, json)
     // we check email and see if a user with the email exist in morphobank
     // or not (exist property from result will tell us)
     if (!result.errorMessage) {

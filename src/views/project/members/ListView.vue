@@ -15,6 +15,11 @@ const userToDelete = ref({})
 const users = computed(() =>
   projectUsersStore.users.sort((a, b) => {
     const nameA = a.fname
+    const adminA = a.admin
+    const adminB = b.admin
+    if( adminA || adminB) {
+      return adminA ? -1: 1
+    }
     if (!nameA) {
       return -1
     }
