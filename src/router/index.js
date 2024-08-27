@@ -28,7 +28,6 @@ import UserView from '@/views/users/UserView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    // User's Projects
     {
       path: '/',
       name: 'RootView',
@@ -174,6 +173,7 @@ const router = createRouter({
         },
       ],
     },
+    // Routes related to matrix editor
     {
       path: '/myprojects/:projectId/matrices/:matrixId/edit',
       name: 'MyProjectMatrixEditView',
