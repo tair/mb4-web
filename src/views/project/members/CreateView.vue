@@ -4,7 +4,10 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
-import { schema } from '@/views/project/members/createSchema.js'
+import TextArea from '@/components/project/TextArea.vue'
+import TextInput from '@/components/project/TextInput.vue'
+import SelectInput from '@/components/project/SelectInput.vue'
+import SelectInput from '@/components/project/SelectInput.vue'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -27,7 +30,7 @@ async function check(event) {
   // email is valid so we store it for later use
   email.value = json.email
   // checking if user with email exist in the project already
-  const isProjectMember = await inProject(json.email)
+  const isProjectMember =  projectUsersStore.inProject(json.email)
 
   if (!isProjectMember) {
     const result = await projectUsersStore.isAvailableUser(projectId, json)
@@ -42,10 +45,6 @@ async function check(event) {
   } else {
     alert('User is already a member of this project')
   }
-}
-async function inProject(em) {
-  const user = projectUsersStore.users.find((user) => user.email == email.value)
-  return user == null ? false : true
 }
 async function create(event) {
   const formData = new FormData(event.currentTarget)
@@ -72,10 +71,8 @@ onMounted(() => {
       <form @submit.prevent="check">
         <div class="row setup-content">
           <div class="form-group mb-3">
-            <label :for="'email'" class="form-label">{{
-              schema.email.label
-            }}</label>
-            <component :is="schema.email.view" :name="'email'"> </component>
+            <label :for="'email'" class="form-label">Email address of new workgroup member</label>
+            <TextInput :name="'email'"> </TextInput>
           </div>
           <div class="btn-form-group">
             <button
@@ -101,20 +98,20 @@ onMounted(() => {
             </p>
           </div>
           <div class="form-group mb-3">
-            <label :for="'message'" class="form-label fw-bold">{{
-              schema.message.label
-            }}</label>
-            <component :is="schema.message.view" :name="'message'"> </component>
-            <label :for="'membership_type'" class="form-label fw-bold">{{
-              schema.membership_type.label
-            }}</label>
-            <component
-              :is="schema.membership_type.view"
+            <label :for="'message'" class="form-label fw-bold">Please provide a message to be emailed to the new workgroup member</label>
+            <TextArea :name="'message'"> </TextArea>
+            <label :for="'membership_type'" class="form-label fw-bold">Membership Type</label>
+            <SelectInput
               :name="'membership_type'"
               :value="0"
-              v-bind="schema.membership_type.args"
+              v-bind:options="{
+        'Full membership (can edit everything)': 0,
+        'Observer (cannot edit)': 1,
+        'Character annotater (can edit everything but characters and states)': 2,
+        'Bibliography maintainer (can edit bibliography only)': 3,
+      }"
             >
-            </component>
+            </SelectInput>
           </div>
           <div class="btn-form-group">
             <button

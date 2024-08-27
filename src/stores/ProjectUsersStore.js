@@ -40,21 +40,10 @@ export const useProjectUsersStore = defineStore({
     async isAvailableUser(projectId, json) {
       const url = `${
         import.meta.env.VITE_API_URL
-      }/projects/${projectId}/users/is/available`
+      }/projects/${projectId}/users/isEmailAvailable`
       const response = await axios.post(url, json)
       if (response.status == 200) {
         return response.data
-      }
-      return false
-    },
-    async inProject(projectId, email) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/users/in/project`
-      const response = await axios.post(url, { email })
-      if (response.status == 200) {
-        const inProject = response.data.inProject
-        return inProject
       }
       return false
     },
@@ -74,6 +63,10 @@ export const useProjectUsersStore = defineStore({
       const index = this.getUserIndexByLinkId(linkId)
       this.users[index].group_ids = group_ids
       this.users[index].membership_type = membership_type
+    },
+    inProject(email) {
+      const user = this.users.find((user) => user.email == email)
+      return user == null ? false : true
     },
     getUserIndexByLinkId(linkId) {
       for (let x = 0; x < this.users.length; x++) {
