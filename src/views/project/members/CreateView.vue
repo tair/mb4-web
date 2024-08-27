@@ -7,7 +7,6 @@ import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import TextArea from '@/components/project/TextArea.vue'
 import TextInput from '@/components/project/TextInput.vue'
 import SelectInput from '@/components/project/SelectInput.vue'
-import SelectInput from '@/components/project/SelectInput.vue'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -30,7 +29,7 @@ async function check(event) {
   // email is valid so we store it for later use
   email.value = json.email
   // checking if user with email exist in the project already
-  const isProjectMember =  projectUsersStore.inProject(json.email)
+  const isProjectMember = projectUsersStore.inProject(json.email)
 
   if (!isProjectMember) {
     const result = await projectUsersStore.isAvailableUser(projectId, json)
@@ -71,7 +70,9 @@ onMounted(() => {
       <form @submit.prevent="check">
         <div class="row setup-content">
           <div class="form-group mb-3">
-            <label :for="'email'" class="form-label">Email address of new workgroup member</label>
+            <label :for="'email'" class="form-label"
+              >Email address of new workgroup member</label
+            >
             <TextInput :name="'email'"> </TextInput>
           </div>
           <div class="btn-form-group">
@@ -98,18 +99,23 @@ onMounted(() => {
             </p>
           </div>
           <div class="form-group mb-3">
-            <label :for="'message'" class="form-label fw-bold">Please provide a message to be emailed to the new workgroup member</label>
+            <label :for="'message'" class="form-label fw-bold"
+              >Please provide a message to be emailed to the new workgroup
+              member</label
+            >
             <TextArea :name="'message'"> </TextArea>
-            <label :for="'membership_type'" class="form-label fw-bold">Membership Type</label>
+            <label :for="'membership_type'" class="form-label fw-bold"
+              >Membership Type</label
+            >
             <SelectInput
               :name="'membership_type'"
               :value="0"
               v-bind:options="{
-        'Full membership (can edit everything)': 0,
-        'Observer (cannot edit)': 1,
-        'Character annotater (can edit everything but characters and states)': 2,
-        'Bibliography maintainer (can edit bibliography only)': 3,
-      }"
+                'Full membership (can edit everything)': 0,
+                'Observer (cannot edit)': 1,
+                'Character annotater (can edit everything but characters and states)': 2,
+                'Bibliography maintainer (can edit bibliography only)': 3,
+              }"
             >
             </SelectInput>
           </div>
