@@ -66,7 +66,7 @@ export const useProjectUsersStore = defineStore({
     },
     inProject(email) {
       const user = this.users.find((user) => user.email == email)
-      return user == null ? false : true
+      return !!user
     },
     getUserIndexByLinkId(linkId) {
       for (let x = 0; x < this.users.length; x++) {
