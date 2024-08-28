@@ -40,8 +40,9 @@ onMounted(() => {
     "
     basePath="project"
   >
-    <div class="mb-3 text-black-50 fw-bold">
+    <div class="mb-3">
       This project has {{ projectStore.media_views.length }} media views.
+      Displaying {{ filteredMediaViews?.length }} media views.
     </div>
     <div class="filters mb-3 text-black-50 fw-bold">
       Display media views beginning with:
@@ -62,7 +63,10 @@ onMounted(() => {
       <li
         :key="n"
         v-for="(view, n) in filteredMediaViews"
-        class="list-group-item"
+        :class="[
+          n % 2 != 0 ? 'list-group-item-secondary' : '',
+          'list-group-item',
+        ]"
       >
         {{ view }}
       </li>

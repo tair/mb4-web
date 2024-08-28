@@ -199,7 +199,10 @@ onMounted(() => {
           <li
             :key="n"
             v-for="(specimen, n) in filteredSpecimens"
-            class="list-group-item"
+            :class="[
+              n % 2 != 0 ? 'list-group-item-secondary' : '',
+              'list-group-item',
+            ]"
           >
             <a
               class="nav-link"
@@ -213,7 +216,10 @@ onMounted(() => {
           <li
             :key="n"
             v-for="(specimen, n) in unidentifiedSpecimens"
-            class="list-group-item"
+            :class="[
+              n % 2 != 0 ? 'list-group-item-secondary' : '',
+              'list-group-item',
+            ]"
           >
             <a
               class="nav-link"

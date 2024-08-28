@@ -379,5 +379,23 @@ export const usePublicProjectDetailsStore = defineStore({
         .charAt(0)
         .toUpperCase()
     },
+    getMatrixDownloadLink(projectId, matrixId, format, notes) {
+      const downloadUrl = `${
+        import.meta.env.VITE_API_URL
+      }/public/projects/${projectId}/matrices/${matrixId}/download?format=${format}&notes=${notes}`
+      return downloadUrl
+    },
+    getMatrixCharListDownloadLink(projectId, matrixId, notes) {
+      const downloadUrl = `${
+        import.meta.env.VITE_API_URL
+      }/public/projects/${projectId}/matrices/${matrixId}/download/characters?notes=${notes}`
+      return downloadUrl
+    },
+    getMatrixOntologyDownloadLink(projectId, matrixId) {
+      const downloadUrl = `${
+        import.meta.env.VITE_API_URL
+      }/public/projects/${projectId}/matrices/${matrixId}/download/ontology`
+      return downloadUrl
+    },
   },
 })

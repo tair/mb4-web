@@ -1,5 +1,6 @@
 <script setup>
 import { toDateString } from '@/utils/date'
+import { getViewStatsTooltipText } from '@/utils/util.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 
 const props = defineProps({
@@ -8,9 +9,7 @@ const props = defineProps({
   },
 })
 
-const viewStatsTooltipText =
-  'Project download and view statistics are available since August 2012. Views and downloads pre August 2012 are not reflected in the statistics.'
-
+const viewStatsTooltipText = getViewStatsTooltipText()
 function getHitsMessage(specimenObj) {
   let message = ''
   if (specimenObj.hits) {

@@ -1,14 +1,31 @@
 <script setup lang="ts">
-defineProps<{
+interface Props {
   content: string
-}>()
+  displayStyle?: string
+  displayContent?: string | null
+}
+
+const props = defineProps<Props>()
+
+// If you need to assign defaults, do it here
+const displayStyle = props.displayStyle || 'question'
+const displayContent = props.displayContent || null
 </script>
+
 <template>
-  <tippy :content="content">
+  <tippy
+    :content="props.content"
+    :allowHTML="true"
+    v-if="displayStyle === 'question'"
+  >
     <i class="fa-solid fa-circle-question theme-color"></i>
   </tippy>
-  <div class="sr-only">{{ content }}</div>
+  <tippy :content="props.content" :allowHTML="true" v-else>
+    <div v-html="displayContent"></div>
+  </tippy>
+  <div class="sr-only">{{ props.content }}</div>
 </template>
+
 <style scoped>
 .theme-color {
   color: #ef782f;

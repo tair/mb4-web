@@ -13,9 +13,10 @@ export class MatrixViewer extends AbstractMatrixAccessor {
     projectId: number,
     matrixId: number,
     streaming: boolean,
-    location: string
+    location: string,
+    published: boolean = false
   ) {
-    super(projectId, matrixId, streaming, location)
+    super(projectId, matrixId, streaming, location, published)
     this.matrixModel.setReadonly(true)
   }
 
