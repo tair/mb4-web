@@ -32,21 +32,7 @@ const partitionByOptions = computed(() => {
   return projectStore.getTaxaPartitionFields()
 })
 
-const defaultPartitionByField = computed(() => {
-  return projectStore.getDefaultTaxaPartitionField()
-})
-
-const selectedPartitionByOption = ref(null)
-
-watch(
-  defaultPartitionByField,
-  (newVal) => {
-    if (newVal !== undefined) {
-      selectedPartitionByOption.value = newVal
-    }
-  },
-  { immediate: true }
-)
+const selectedPartitionByOption = ref('')
 
 const selectedLetter = ref(null)
 // default set to genus
@@ -88,7 +74,7 @@ function onFilterBy(type) {
 
 function onResetFilter() {
   selectedFilterByOption.value = defaultFilterByOption.value
-  selectedPartitionByOption.value = defaultPartitionByField.value
+  selectedPartitionByOption.value = ''
   selectedLetter.value = null
   onFilterBy('All')
 }
@@ -182,6 +168,7 @@ onMounted(() => {
           v-model="selectedPartitionByOption"
           @change="onFilterBy('Partition')"
         >
+          <option value="">- Select A Partition -</option>
           <option
             v-for="(label, key) in partitionByOptions"
             :key="key"
@@ -193,7 +180,7 @@ onMounted(() => {
       </div>
     </div>
     <div v-if="filterType == 'All'">
-      <div id="supra-taxa">
+      <div id="supra-taxa" v-if="supraTaxa?.length > 0">
         <ul class="list-group">
           <li class="list-group-item">
             <h4>
@@ -208,21 +195,12 @@ onMounted(() => {
               'list-group-item',
             ]"
           >
-            <span
-              v-html="
-                getTaxonNameDisplay(
-                  taxa.taxon_name,
-                  taxa.lookup_failed,
-                  taxa.pbdb_verified
-                )
-              "
-              class="me-2"
-            ></span>
+            <span v-html="taxa.taxon_name" class="me-2"></span>
             <Tooltip :content="taxa.notes" v-if="taxa.notes"></Tooltip>
           </li>
         </ul>
       </div>
-      <div id="genus-taxa" class="mt-2">
+      <div id="genus-taxa" class="mt-2" v-if="genusTaxa?.length > 0">
         <ul class="list-group">
           <li class="list-group-item">
             <h4>

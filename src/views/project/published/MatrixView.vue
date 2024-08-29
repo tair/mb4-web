@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
@@ -21,9 +21,31 @@ const copyRightTooltipText = `MorphoBank hosts phylogenetic data (matrices, char
 const polymorphoricCellTooltipText =
   "You can find polymorphic scores by using the Search feature in the Matrix Editor. This is available as the 'Polymorphic' option in the Cell tab within the Search dialog."
 
-const showMatrixDownloadModal = ref(false)
-const showCharListDownloadModal = ref(false)
-const showOntologyDownloadModal = ref(false)
+const selectedMatrixDownloadOption = ref([])
+const selectedCharListDownloadOption = ref([])
+
+const showMatrixDownloadModal = ref([])
+const showCharListDownloadModal = ref([])
+const showOntologyDownloadModal = ref([])
+
+// Watch for changes to projectStore.matrices
+watch(
+  () => projectStore.matrices,
+  (newMatrices) => {
+    if (newMatrices?.length) {
+      selectedMatrixDownloadOption.value = Array(newMatrices.length).fill(
+        'nexus_no_notes'
+      )
+      selectedCharListDownloadOption.value = Array(newMatrices.length).fill(
+        'character_list'
+      )
+      showMatrixDownloadModal.value = Array(newMatrices.length).fill(false)
+      showCharListDownloadModal.value = Array(newMatrices.length).fill(false)
+      showOntologyDownloadModal.value = Array(newMatrices.length).fill(false)
+    }
+  },
+  { immediate: true } // Runs the watcher immediately on component mount
+)
 
 function getMatrixUrl(matrixId) {
   return `/project/${projectId}/matrices/${matrixId}/view`
@@ -57,21 +79,6 @@ function getDOILink(doi) {
   return `http://dx.doi.org/${doi}`
 }
 
-function getMatrixDownloadOptions(matrix) {
-  if (hasContinuousChar(matrix)) {
-    selectedMatrixDownloadOption.value = 'tnt'
-    return {
-      tnt: 'TNT',
-    }
-  }
-  return {
-    nexus_no_notes: 'NEXUS w/o notes',
-    nexus: 'NEXUS',
-    nexml: 'NeXML',
-    tnt: 'TNT',
-  }
-}
-
 function hasContinuousChar(matrix) {
   return matrix.counts['continuous_character']
 }
@@ -84,17 +91,30 @@ function hasCharacterRule(matrix) {
   return matrix.counts['character_rule']
 }
 
-const selectedMatrixDownloadOption = ref('nexus_no_notes')
+function getMatrixDownloadOptions(matrix, n) {
+  if (hasContinuousChar(matrix)) {
+    selectedMatrixDownloadOption.value[n] = 'tnt'
+    return {
+      tnt: 'TNT',
+    }
+  }
+  return {
+    nexus_no_notes: 'NEXUS w/o notes',
+    nexus: 'NEXUS',
+    nexml: 'NeXML',
+    tnt: 'TNT',
+  }
+}
 
 // TODO: ReCaptcha verification
-function onDownloadMatrix(matrixId) {
+function onDownloadMatrix(matrixId, n) {
   let format = ''
   let notes = '' // use empty value to represent 'false'
-  switch (selectedMatrixDownloadOption.value) {
+  switch (selectedMatrixDownloadOption.value[n]) {
     case 'tnt':
     case 'nexml':
     case 'nexus':
-      format = selectedMatrixDownloadOption.value
+      format = selectedMatrixDownloadOption.value[n]
       notes = 'true'
       break
     case 'nexus_no_notes':
@@ -109,7 +129,7 @@ function onDownloadMatrix(matrixId) {
     notes
   )
   downloadFile(downloadUrl)
-  showDownloadModal.value = false
+  showMatrixDownloadModal.value[n] = false
 }
 
 const charListDownloadOptions = {
@@ -117,12 +137,10 @@ const charListDownloadOptions = {
   character_list_notes: 'with character notes',
 }
 
-const selectedCharListDownloadOption = ref('character_list')
-
 // TODO: ReCaptcha verification
-function onDownloadCharList(matrixId) {
+function onDownloadCharList(matrixId, n) {
   let notes = '' // use empty value to represent 'false'
-  switch (selectedCharListDownloadOption.value) {
+  switch (selectedCharListDownloadOption.value[n]) {
     case 'character_list_notes':
       notes = 'true'
       break
@@ -136,17 +154,17 @@ function onDownloadCharList(matrixId) {
     notes
   )
   downloadFile(downloadUrl)
-  showCharListDownloadModal.value = false
+  showCharListDownloadModal.value[n] = false
 }
 
 // TODO: ReCaptcha verification
-function onDownloadOntology(matrixId) {
+function onDownloadOntology(matrixId, n) {
   const downloadUrl = projectStore.getMatrixOntologyDownloadLink(
     projectId,
     matrixId
   )
   downloadFile(downloadUrl)
-  showOntologyDownloadModal.value = false
+  showOntologyDownloadModal.value[n] = false
 }
 
 function downloadFile(downloadUrl) {
@@ -227,11 +245,11 @@ onMounted(() => {
           Download entire matrix as
           <select
             id="download-matrix"
-            v-model="selectedMatrixDownloadOption"
+            v-model="selectedMatrixDownloadOption[n]"
             class="me-2"
           >
             <option
-              v-for="(label, key) in getMatrixDownloadOptions(matrix)"
+              v-for="(label, key) in getMatrixDownloadOptions(matrix, n)"
               :key="key"
               :value="key"
             >
@@ -241,21 +259,21 @@ onMounted(() => {
           format
           <Tooltip :content="downloadTooltipText"></Tooltip>
           <button
-            @click="showMatrixDownloadModal = true"
+            @click="showMatrixDownloadModal[n] = true"
             class="btn btn-primary ms-2"
           >
             Download Matrix
           </button>
           <CustomModal
-            :isVisible="showMatrixDownloadModal"
-            @close="showMatrixDownloadModal = false"
+            :isVisible="showMatrixDownloadModal[n]"
+            @close="showMatrixDownloadModal[n] = false"
           >
             <div>
               <h2>Copyright Notice</h2>
               <p v-html="copyRightTooltipText"></p>
               <button
                 class="btn btn-primary"
-                @click="onDownloadMatrix(matrix.matrix_id)"
+                @click="onDownloadMatrix(matrix.matrix_id, n)"
               >
                 I Acknowledge and Proceed
               </button>
@@ -275,7 +293,7 @@ onMounted(() => {
           Download character list
           <select
             id="download-char-list"
-            v-model="selectedCharListDownloadOption"
+            v-model="selectedCharListDownloadOption[n]"
             class="me-2"
           >
             <option
@@ -289,21 +307,21 @@ onMounted(() => {
           format
           <Tooltip :content="downloadTooltipText"></Tooltip>
           <button
-            @click="showCharListDownloadModal = true"
+            @click="showCharListDownloadModal[n] = true"
             class="btn btn-primary ms-2"
           >
             Download Character List
           </button>
           <CustomModal
-            :isVisible="showCharListDownloadModal"
-            @close="showCharListDownloadModal = false"
+            :isVisible="showCharListDownloadModal[n]"
+            @close="showCharListDownloadModal[n] = false"
           >
             <div>
               <h2>Copyright Notice</h2>
               <p v-html="copyRightTooltipText"></p>
               <button
                 class="btn btn-primary"
-                @click="onDownloadCharList(matrix.matrix_id)"
+                @click="onDownloadCharList(matrix.matrix_id, n)"
               >
                 I Acknowledge and Proceed
               </button>
@@ -312,21 +330,21 @@ onMounted(() => {
         </p>
         <p v-if="hasCharacterRule(matrix)" class="fst-italic">
           <button
-            @click="showOntologyDownloadModal = true"
+            @click="showOntologyDownloadModal[n] = true"
             class="btn btn-primary"
           >
             >> Download Ontology >>
           </button>
           <CustomModal
-            :isVisible="showOntologyDownloadModal"
-            @close="showOntologyDownloadModal = false"
+            :isVisible="showOntologyDownloadModal[n]"
+            @close="showOntologyDownloadModal[n] = false"
           >
             <div>
               <h2>Copyright Notice</h2>
               <p v-html="copyRightTooltipText"></p>
               <button
                 class="btn btn-primary"
-                @click="onDownloadOntology(matrix.matrix_id)"
+                @click="onDownloadOntology(matrix.matrix_id, n)"
               >
                 I Acknowledge and Proceed
               </button>
