@@ -218,7 +218,7 @@ onMounted(() => {
         <p>{{ getCountsMessage(matrix.counts) }}</p>
         <div class="row">
           <div class="col-10">
-            <p>
+            <p v-if="getHitMessage(matrix.hits, matrix.downloads)">
               {{ getHitMessage(matrix.hits, matrix.downloads) }}
               <Tooltip :content="viewStatsTooltipText"></Tooltip>
             </p>
