@@ -47,11 +47,11 @@ export const useProjectUsersStore = defineStore({
       }
       return false
     },
-    async createUser(projectId, json) {
+    async createUser(projectId, json, existing_user) {
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/users/create`
-      const response = await axios.post(url, { json })
+      const response = await axios.post(url, { json, existing_user })
       if (response.status == 200) {
         const user = response.data.user
         this.users.push(user)

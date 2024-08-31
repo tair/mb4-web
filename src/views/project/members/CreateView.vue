@@ -13,6 +13,7 @@ const projectId = route.params.id
 const cont = ref(false)
 const newProjectUser = ref()
 const email = ref()
+const existingUser = ref()
 
 const projectUsersStore = useProjectUsersStore()
 
@@ -36,6 +37,7 @@ async function check(event) {
     // we check email and see if a user with the email exist in morphobank
     // or not (exist property from result will tell us)
     if (!result.errorMessage) {
+      existingUser.value = result.existing_user
       newProjectUser.value = result.user
       cont.value = true
     } else {
@@ -48,8 +50,19 @@ async function check(event) {
 async function create(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
-  json.user_id = newProjectUser.value.user_id
-  const success = await projectUsersStore.createUser(projectId, json)
+  // if the user existed we'll send their user_id back
+  // if they did not then we'll send back their email to add a row to users
+  if (existingUser.value) {
+    json.user_id = newProjectUser.value.user_id
+  } else {
+    json.email = newProjectUser.value.email
+  }
+  // could add argument to send if user already exist or not
+  const success = await projectUsersStore.createUser(
+    projectId,
+    json,
+    existingUser.value
+  )
   if (success) {
     router.go(-1)
   } else {
@@ -91,12 +104,24 @@ onMounted(() => {
     <div v-else>
       <form @submit.prevent="create">
         <div class="row setup-content">
-          <div>
+          <div v-if="existingUser">
             <p>
               {{
                 `${newProjectUser.fname} ${newProjectUser.lname}, with email address ${newProjectUser.email}, is already a member of the Morphobank community.`
               }}
             </p>
+          </div>
+          <div v-else>
+            <p>
+              {{
+                `This individual with the email address ${newProjectUser.email} is not yet a member of the morphobank community.`
+              }}
+            </p>
+            <p>Please provide their first and last name so they may be added</p>
+            <label :for="'fname'" class="form-label">First Name</label>
+            <TextInput :name="'fname'"> </TextInput>
+            <label :for="'lname'" class="form-label">Last Name</label>
+            <TextInput :name="'lname'"> </TextInput>
           </div>
           <div class="form-group mb-3">
             <label :for="'message'" class="form-label fw-bold"

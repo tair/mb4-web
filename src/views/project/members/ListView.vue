@@ -17,8 +17,8 @@ const users = computed(() =>
     const nameA = a.fname
     const adminA = a.admin
     const adminB = b.admin
-    if( adminA || adminB) {
-      return adminA ? -1: 1
+    if (adminA || adminB) {
+      return adminA ? -1 : 1
     }
     if (!nameA) {
       return -1
