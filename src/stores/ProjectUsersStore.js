@@ -59,6 +59,18 @@ export const useProjectUsersStore = defineStore({
       }
       return false
     },
+    async addMember(projectId, json) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/users/add`
+      const response = await axios.post(url, { json })
+      if (response.status == 200) {
+        const user = response.data.user
+        this.users.push(user)
+        return true
+      }
+      return false
+    },
     updateUser(linkId, group_ids, membership_type) {
       const index = this.getUserIndexByLinkId(linkId)
       this.users[index].group_ids = group_ids
