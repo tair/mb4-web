@@ -47,11 +47,23 @@ export const useProjectUsersStore = defineStore({
       }
       return false
     },
-    async createUser(projectId, json, existing_user) {
+    async createUser(projectId, json) {
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/users/create`
-      const response = await axios.post(url, { json, existing_user })
+      const response = await axios.post(url, { json })
+      if (response.status == 200) {
+        const user = response.data.user
+        this.users.push(user)
+        return true
+      }
+      return false
+    },
+    async addMember(projectId, json) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/users/add`
+      const response = await axios.post(url, { json })
       if (response.status == 200) {
         const user = response.data.user
         this.users.push(user)

@@ -58,11 +58,9 @@ async function create(event) {
     json.email = newProjectUser.value.email
   }
   // could add argument to send if user already exist or not
-  const success = await projectUsersStore.createUser(
-    projectId,
-    json,
-    existingUser.value
-  )
+  const success = existingUser.value
+    ? await projectUsersStore.addMember(projectId, json)
+    : await projectUsersStore.createUser(projectId, json)
   if (success) {
     router.go(-1)
   } else {
