@@ -54,7 +54,7 @@ onMounted(() => {
     </div>
 
     <div class="filters mb-3 text-black-50 fw-bold">
-      Display bibliographic references whose author beginning with:
+      Display bibliographic references, ordered by last name of first author:
       <button
         :class="[{ active: selectedLetter == letter }, 'fw-bold']"
         v-for="letter in letters"
