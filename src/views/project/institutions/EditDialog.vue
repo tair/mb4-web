@@ -28,9 +28,7 @@ async function editInstitution() {
     institutionId
   )
 
-  if (response) {
-    alert('Success.')
-  } else {
+  if (!response) {
     alert('Could not edit the chosen institution.')
   }
 }
