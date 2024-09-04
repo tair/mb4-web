@@ -105,6 +105,11 @@ export abstract class AbstractBaseTokenizer extends Tokenizer {
         character == Token.TICK
       ) {
         isNumber = false
+
+        // Ticks are treated uniquely because there is a bug in Mesquite that
+        // inserts ticks in place of single and double quotes for one or both
+        // of the quotes. We adjust our parser to convert ticks to their
+        // equivalent quotes.
         if (character == Token.TICK) {
           if (Token.TICK == this.reader.peekCharacter()) {
             this.reader.getCharacter()
@@ -113,6 +118,7 @@ export abstract class AbstractBaseTokenizer extends Tokenizer {
             character = Token.SINGLE_QUOTE
           }
         }
+
         const quoteChar = character
 
         while (!this.reader.isAtEnd()) {
@@ -121,7 +127,18 @@ export abstract class AbstractBaseTokenizer extends Tokenizer {
             const nextCharacter = this.reader.peekCharacter()
             if (nextCharacter == character) {
               this.reader.getCharacter()
-              character = Token.DOUBLE_QUOTE
+
+              // There is a buq in Mesquite in which double quotes are replaced
+              // by two consecutive single quotes in rare cases. We replace the
+              // two single quotes with a double quote iff it starts with a
+              // double quote to check if we should terminate the string.
+              switch (quoteChar) {
+                case Token.SINGLE_QUOTE:
+                  cstring.push(Token.SINGLE_QUOTE)
+                  continue
+                default:
+                  character = Token.DOUBLE_QUOTE
+              }
             }
           }
 
