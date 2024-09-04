@@ -5,9 +5,12 @@ export const useSpecimenCitationsStore = defineStore({
   id: 'specimen-citations',
   state: () => ({
     isLoaded: false,
-    citations: [],
+    map: new Map(),
   }),
   getters: {
+    citations: function () {
+      return Array.from(this.map.values())
+    },
     citationIds: function () {
       const citationIds = new Set()
       for (const citations of this.citations) {
@@ -33,7 +36,8 @@ export const useSpecimenCitationsStore = defineStore({
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/specimens/${specimenId}/citations`
       const response = await axios.get(url)
-      this.citations = response.data.citations
+      const citations = response.data.citations
+      this.addCitations(citations)
 
       this.isLoaded = true
     },
@@ -44,7 +48,7 @@ export const useSpecimenCitationsStore = defineStore({
       const response = await axios.post(url, { citation })
       if (response.status == 200) {
         const citation = response.data.citation
-        this.citations.push(citation)
+        this.addCitations([citation])
         return true
       }
       return false
@@ -56,8 +60,7 @@ export const useSpecimenCitationsStore = defineStore({
       const response = await axios.post(url, { citation })
       if (response.status == 200) {
         const citation = response.data.citation
-        this.removeCitationsByIds([citation.link_id])
-        this.citations.push(citation)
+        this.addCitations([citation])
         return true
       }
       return false
@@ -75,35 +78,31 @@ export const useSpecimenCitationsStore = defineStore({
       }
       return false
     },
-    getCitationById(citationId) {
-      for (const citation of this.citations) {
-        if (citation.link_id == citationId) {
-          return citation
-        }
+    addCitations(citations) {
+      for (const citation of citations) {
+        const id = citation.link_id
+        this.map.set(id, citation)
       }
-      return null
+    },
+    getCitationById(citationId) {
+      return this.map.get(citationId)
     },
     getCitationsByIds(citationIds) {
       const map = new Map()
-      for (const citation of this.citations) {
-        if (citationIds.includes(citation.link_id)) {
-          map.set(citation.link_id, citation)
+      for (const citationId of citationIds) {
+        if (this.map.has(citationId)) {
+          map.set(citationId, this.map.get(citationId))
         }
       }
       return map
     },
     removeCitationsByIds(citationIds) {
-      let x = 0
-      while (x < this.citations.length) {
-        if (citationIds.includes(this.citations[x].link_id)) {
-          this.citations.splice(x, 1)
-        } else {
-          ++x
-        }
+      for (const citationId of citationIds) {
+        this.map.delete(citationId)
       }
     },
     invalidate() {
-      this.citations = []
+      this.map.clear()
       this.isLoaded = false
     },
   },

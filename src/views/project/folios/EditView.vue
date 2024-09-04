@@ -9,7 +9,7 @@ import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 
 const route = useRoute()
 const projectId = route.params.id
-const folioId = route.params.folioId
+const folioId = parseInt(route.params.folioId)
 
 const projectUsersStore = useProjectUsersStore()
 const foliosStore = useFoliosStore()

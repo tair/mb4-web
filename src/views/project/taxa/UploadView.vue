@@ -6,7 +6,7 @@ import { nameColumnMap } from '@/utils/taxa'
 import { csvToArray } from '@/utils/csv'
 
 const route = useRoute()
-const projectId = route.params.id as string
+const projectId = parseInt(route.params.id as string)
 const taxaStore = useTaxaStore()
 
 // The list of taxa that will be set when the file is uploaded.

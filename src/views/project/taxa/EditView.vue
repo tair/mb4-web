@@ -8,8 +8,8 @@ import { schema } from '@/views/project/taxa/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 
 const route = useRoute()
-const projectId = route.params.id
-const taxonId = route.params.taxonId
+const projectId = parseInt(route.params.id)
+const taxonId = parseInt(route.params.taxonId)
 
 const projectUsersStore = useProjectUsersStore()
 const taxaStore = useTaxaStore()

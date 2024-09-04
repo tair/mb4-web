@@ -5,14 +5,20 @@ export const useMediaViewsStore = defineStore({
   id: 'media-views',
   state: () => ({
     isLoaded: false,
-    mediaViews: [],
+    map: new Map(),
   }),
-  getters: {},
+  getters: {
+    mediaViews: function () {
+      return Array.from(this.map.values())
+    },
+  },
   actions: {
     async fetchMediaViews(projectId) {
       const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/views`
       const response = await axios.get(url)
-      this.mediaViews = response.data.views
+      const mediaViews = response.data.views || []
+      this.addMediaViews(mediaViews)
+
       this.isLoaded = true
     },
     async create(projectId, view) {
@@ -22,7 +28,7 @@ export const useMediaViewsStore = defineStore({
       const response = await axios.post(url, view)
       if (response.status == 200) {
         const view = response.data.view
-        this.mediaViews.push(view)
+        this.addMediaViews([view])
         return true
       }
       return false
@@ -34,8 +40,7 @@ export const useMediaViewsStore = defineStore({
       const response = await axios.post(url, view)
       if (response.status == 200) {
         const view = response.data.view
-        this.removeByViewIds([view.view_id])
-        this.mediaViews.push(view)
+        this.addMediaViews([view])
         return true
       }
       return false
@@ -53,35 +58,31 @@ export const useMediaViewsStore = defineStore({
       }
       return false
     },
-    getMediaViewById(viewId) {
-      for (const mediaView of this.mediaViews) {
-        if (mediaView.view_id == viewId) {
-          return mediaView
-        }
+    addMediaViews(mediaViews) {
+      for (const mediaView of mediaViews) {
+        const id = mediaView.view_id
+        this.map.set(id, mediaView)
       }
-      return null
+    },
+    getMediaViewById(viewId) {
+      return this.map.get(viewId)
     },
     getMediaViewByIds(viewIds) {
       const views = []
-      for (const mediaView of this.mediaViews) {
-        if (viewIds.has(mediaView.view_id)) {
-          views.push(mediaView)
+      for (const viewId of viewIds) {
+        if (this.map.has(viewId)) {
+          views.push(this.map.get(viewId))
         }
       }
       return views
     },
     removeByViewIds(viewIds) {
-      let x = 0
-      while (x < this.mediaViews.length) {
-        if (viewIds.includes(this.mediaViews[x].view_id)) {
-          this.mediaViews.splice(x, 1)
-        } else {
-          ++x
-        }
+      for (const viewId of viewIds) {
+        this.map.delete(viewId)
       }
     },
     invalidate() {
-      this.mediaViews = []
+      this.map.clear()
       this.isLoaded = false
     },
   },

@@ -5,8 +5,8 @@ import { RouterLink, RouterView, useRoute } from 'vue-router'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 
 const route = useRoute()
-const projectId = route.params.id as string
-const folioId = route.params.folioId as string
+const projectId = parseInt(route.params.id as string)
+const folioId = parseInt(route.params.folioId as string)
 
 const foliosStore = useFoliosStore()
 const folio = computed(() => foliosStore.getFolioById(folioId))

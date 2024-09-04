@@ -7,7 +7,7 @@ import { csvToArray } from '@/utils/csv'
 import { sha256 } from '@/utils/digest'
 
 const route = useRoute()
-const projectId = route.params.id as string
+const projectId = parseInt(route.params.id as string)
 const specimensStore = useSpecimensStore()
 
 const specimens = new Set()

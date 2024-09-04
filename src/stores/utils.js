@@ -1,23 +1,27 @@
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
+import { useCharactersStore } from './CharactersStore'
 import { useDocumentsStore } from '@/stores/DocumentsStore'
 import { useFoliosStore } from '@/stores/FoliosStore'
 import { useFolioMediaStore } from '@/stores/FolioMediaStore'
 import { useMatricesStore } from '@/stores/MatricesStore'
+import { useMediaCitationsStore } from './MediaCitationsStore'
 import { useMediaStore } from '@/stores/MediaStore'
+import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useSpecimenCitationsStore } from '@/stores/SpecimenCitationsStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaCitationsStore } from '@/stores/TaxaCitationsStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
-import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 
 export function invalidateAll() {
   const bibliographiesStore = useBibliographiesStore()
+  const characterStore = useCharactersStore()
   const documentsStore = useDocumentsStore()
   const foliosStore = useFoliosStore()
   const folioMediaStore = useFolioMediaStore()
   const matricesStore = useMatricesStore()
   const mediaStore = useMediaStore()
+  const mediaCitationStore = useMediaCitationsStore()
   const mediaViewsStore = useMediaViewsStore()
   const projectUsersStore = useProjectUsersStore()
   const specimenCitationsStore = useSpecimenCitationsStore()
@@ -26,11 +30,13 @@ export function invalidateAll() {
   const taxaStore = useTaxaStore()
 
   bibliographiesStore.invalidate()
+  characterStore.invalidate()
   documentsStore.invalidate()
   foliosStore.invalidate()
   folioMediaStore.invalidate()
   matricesStore.invalidate()
   mediaStore.invalidate()
+  mediaCitationStore.invalidate()
   mediaViewsStore.invalidate()
   projectUsersStore.invalidate()
   specimenCitationsStore.invalidate()

@@ -9,7 +9,7 @@ import { folderSchema } from '@/views/project/documents/schema.js'
 
 const route = useRoute()
 const projectId = route.params.id
-const folderId = route.params.folderId
+const folderId = parseInt(route.params.folderId)
 const folder = computed(() => documentsStore.getFolderById(folderId))
 
 const baseUrl = `${

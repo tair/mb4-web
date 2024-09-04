@@ -5,9 +5,12 @@ export const useFolioMediaStore = defineStore({
   id: 'folio-media',
   state: () => ({
     isLoaded: false,
-    media: [],
+    map: new Map(),
   }),
   getters: {
+    media: function () {
+      return Array.from(this.map.values())
+    },
     folioIds: function () {
       const folioIds = new Set()
       for (const media of this.media) {
@@ -33,7 +36,8 @@ export const useFolioMediaStore = defineStore({
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/folios/${folioId}/media`
       const response = await axios.get(url)
-      this.media = response.data.media
+      const media = response.data.media
+      this.addMedia(media)
 
       this.isLoaded = true
     },
@@ -44,7 +48,7 @@ export const useFolioMediaStore = defineStore({
       const response = await axios.post(url, { media_ids: mediaIds })
       if (response.status == 200) {
         const media = response.data.media
-        this.media.push(...media)
+        this.addMedia([media])
         return true
       }
       return false
@@ -56,9 +60,7 @@ export const useFolioMediaStore = defineStore({
       const response = await axios.post(url, { media })
       if (response.status == 200) {
         const media = response.data.media
-        const linkIds = media.map((m) => m.link_id)
-        this.removeByIds(linkIds)
-        this.media.push(...media)
+        this.addMedia([media])
         return true
       }
       return false
@@ -86,18 +88,31 @@ export const useFolioMediaStore = defineStore({
       }
       return []
     },
-    removeByIds(linkIds) {
-      let x = 0
-      while (x < this.media.length) {
-        if (linkIds.includes(this.media[x].link_id)) {
-          this.media.splice(x, 1)
-        } else {
-          ++x
+    addMedia(links) {
+      for (const link of links) {
+        const id = link.link_id
+        this.map.set(id, link)
+      }
+    },
+    getMediaById(linkId) {
+      return this.map.get(linkId)
+    },
+    getMediaByIds(linkIds) {
+      const map = new Map()
+      for (const linkId of linkIds) {
+        if (this.map.has(linkId)) {
+          map.set(linkId, this.map.get(linkId))
         }
+      }
+      return map
+    },
+    removeByIds(linkIds) {
+      for (const linkId of linkIds) {
+        this.map.delete(linkId)
       }
     },
     invalidate() {
-      this.media = []
+      this.map.clear()
       this.isLoaded = false
     },
   },

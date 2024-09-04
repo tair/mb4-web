@@ -10,35 +10,43 @@ export const useProjectUsersStore = defineStore({
   id: 'project-users',
   state: () => ({
     isLoaded: false,
-    users: [],
+    map: new Map(),
   }),
+  getters: {
+    users: function () {
+      return Array.from(this.map.values())
+    },
+  },
   actions: {
     async fetchUsers(projectId) {
       const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/users`
       const response = await axios.get(url)
-      this.users = response.data.users
+      const users = response.data.users || []
+      this.addUsers(users)
+
       this.isLoaded = true
     },
-    getUserById(userId) {
-      for (const user of this.users) {
-        if (user.user_id == userId) {
-          return user
-        }
+    addUsers(users) {
+      for (const user of users) {
+        const id = user.user_id
+        this.map.set(id, user)
       }
-      return null
+    },
+    getUserById(userId) {
+      return this.map.get(userId)
     },
     getUserByIds(userIds) {
       const users = []
-      for (const user of this.users) {
-        if (userIds.has(user.user_id)) {
-          users.push(user)
+      for (const userId of userIds) {
+        if (this.map.has(userId)) {
+          users.push(this.map.get(userId))
         }
       }
       return users
     },
     invalidate() {
+      this.map.clear()
       this.isLoaded = false
-      this.users = []
     },
   },
 })

@@ -5,7 +5,7 @@ import { useFoliosStore } from '@/stores/FoliosStore'
 import { schema } from '@/views/project/folios/schema.js'
 
 const route = useRoute()
-const projectId = route.params.id
+const projectId = parseInt(route.params.id)
 
 const foliosStore = useFoliosStore()
 

@@ -1,27 +1,26 @@
 import axios from 'axios'
 import { defineStore } from 'pinia'
-import { csvToArray } from '@/utils/csv'
 
 export const useTaxaStore = defineStore({
   id: 'taxa',
   state: () => ({
     isLoaded: false,
-    taxa: [],
+    map: new Map(),
     partitions: [],
     matrices: [],
   }),
-  getters: {},
-  actions: {
-    invalidate() {
-      this.isLoaded = false
-      this.taxa = []
-      this.partitions = []
-      this.matrices = []
+  getters: {
+    taxa: function () {
+      return Array.from(this.map.values())
     },
+  },
+  actions: {
     async fetch(projectId) {
       const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/taxa`
       const response = await axios.get(url)
-      this.taxa = response.data.taxa
+      const taxa = response.data.taxa
+      this.addTaxa(taxa)
+
       this.partitions = response.data.partitions
       this.matrices = response.data.matrices
 
@@ -43,7 +42,7 @@ export const useTaxaStore = defineStore({
       const response = await axios.post(url, taxon)
       if (response.status == 200) {
         const taxon = response.data.taxon
-        this.taxa.push(taxon)
+        this.addTaxa([taxon])
         return true
       }
       return false
@@ -55,7 +54,7 @@ export const useTaxaStore = defineStore({
       const response = await axios.post(url, { taxa: taxa })
       if (response.status == 200) {
         const taxa = response.data.taxa
-        this.taxa.push(...taxa)
+        this.addTaxa(taxa)
         return true
       }
       return false
@@ -67,8 +66,7 @@ export const useTaxaStore = defineStore({
       const response = await axios.post(url, taxon)
       if (response.status == 200) {
         const taxon = response.data.taxon
-        this.removeByTaxonIds([taxon.taxon_id])
-        this.taxa.push(taxon)
+        this.addTaxa([taxon])
         return true
       }
       return false
@@ -83,8 +81,7 @@ export const useTaxaStore = defineStore({
       })
       if (response.status == 200) {
         const taxa = response.data.taxa
-        this.removeByTaxonIds(taxaIds)
-        this.taxa.push(...taxa)
+        this.addTaxa(taxa)
         return true
       }
       return false
@@ -103,32 +100,35 @@ export const useTaxaStore = defineStore({
       }
       return false
     },
-    getTaxonById(taxonId) {
-      for (const taxon of this.taxa) {
-        if (taxon.taxon_id == taxonId) {
-          return taxon
-        }
+    addTaxa(taxa) {
+      for (const taxon of taxa) {
+        const taxonId = taxon.taxon_id
+        this.map.set(taxonId, taxon)
       }
-      return null
     },
-    getTaxaByIds(taxaIds) {
+    getTaxonById(taxonId) {
+      return this.map.get(taxonId)
+    },
+    getTaxaByIds(taxonIds) {
       const taxa = []
-      for (const taxon of this.taxa) {
-        if (taxaIds.has(taxon.taxon_id)) {
-          taxa.push(taxon)
+      for (const taxonId of taxonIds) {
+        if (this.map.has(taxonId)) {
+          taxa.push(this.map.get(taxonId))
         }
       }
       return taxa
     },
     removeByTaxonIds(taxonIds) {
-      let x = 0
-      while (x < this.taxa.length) {
-        if (taxonIds.includes(this.taxa[x].taxon_id)) {
-          this.taxa.splice(x, 1)
-        } else {
-          ++x
-        }
+      for (const taxonId of taxonIds) {
+        this.map.delete(taxonId)
       }
+    },
+    invalidate() {
+      this.map.clear()
+      this.partitions = []
+      this.matrices = []
+
+      this.isLoaded = false
     },
   },
 })
