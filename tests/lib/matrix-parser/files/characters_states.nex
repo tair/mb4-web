@@ -1,0 +1,21 @@
+#NEXUS
+
+BEGIN TAXA;
+  DIMENSIONS NTAX=1;
+  TAXLABELS
+    'Homo erectus';
+END;
+
+BEGIN CHARACTERS;
+  DIMENSIONS  NCHAR=3;
+  FORMAT DATATYPE = STANDARD RESPECTCASE GAP = - MISSING = ? SYMBOLS = "0123456789";
+  CHARSTATELABELS 
+    1 'Ornament (intensive growth)' /  'elongated ridges (''zones of intensive growth'')' prepineal_growth_zone_established_on_anterior_parietal_and_postorbital,
+    2 'Sphenethmoid (floor)' /  "deeply incised and 'U-shaped' in outline'' `shallowly ''incised'' with "broad" coverage of os basale' "deeply incised and 'U-shaped', but with midline extension",
+    3 'Squamation (shape)' /  'dermal scales oval to spindle-shaped' 'broad, oval with ''microsaur-type'' ''ornament''';
+
+	MATRIX
+	  'Homo erectus' 000
+  ;
+
+END;
