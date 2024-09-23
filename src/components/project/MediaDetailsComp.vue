@@ -1,6 +1,10 @@
 <script setup>
 import { ref } from 'vue'
 import { toDateString } from '@/utils/date'
+import {
+  getViewStatsTooltipText,
+  getDownloadTooltipText,
+} from '@/utils/util.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import CustomModal from './CustomModal.vue'
 import MediaViewPanel from './MediaViewPanel.vue'
@@ -13,10 +17,8 @@ const props = defineProps({
 
 const showZoomModal = ref(false)
 const showDownloadModal = ref(false)
-const viewStatsTooltipText =
-  'Project download and view statistics are available since August 2012. Views and downloads pre August 2012 are not reflected in the statistics.'
-const downloadTooltipText =
-  "By downloading from MorphoBank, you agree to the site's Terms of Use & Privacy Policy."
+const viewStatsTooltipText = getViewStatsTooltipText()
+const downloadTooltipText = getDownloadTooltipText()
 
 async function confirmDownload(mediaObj, fileName) {
   // if (!isCaptchaVerified) {

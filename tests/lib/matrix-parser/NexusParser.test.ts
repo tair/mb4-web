@@ -1,11 +1,45 @@
-import { StringReader } from '@/lib/matrix-parser/StringReader'
+import { MatrixObject } from '@/lib/matrix-parser/MatrixObject'
 import { NexusParser } from '@/lib/matrix-parser/NexusParser'
-import { describe, test } from '@jest/globals'
+import { StringReader } from '@/lib/matrix-parser/StringReader'
+import { describe, expect, test } from '@jest/globals'
 import fs from 'fs'
 
 describe('NexusParserTest', () => {
-  test('test file', () => {
-    // TODO(kenzley): Add NEXUS test files.
+  test('Test Character States', () => {
+    const matrix = parseMatrix('characters_states.nex')
+
+    expect(matrix.getFormat()).toBe('NEXUS')
+    expect(matrix.getTaxonCount()).toBe(1)
+    expect(matrix.getCharacterCount()).toBe(3)
+
+    const characters = matrix.getCharacters()
+    expect(characters.length).toBe(3)
+    // Test single quoted string with consecutive single quotes:
+    expect(characters[0].states[0].name).toBe(
+      "elongated ridges ('zones of intensive growth')"
+    )
+    // Test string with underscores:
+    expect(characters[0].states[1].name).toBe(
+      'prepineal growth zone established on anterior parietal and postorbital'
+    )
+    // Test fixes to a bug in Mesquite which has a consecutive single quote to
+    // mark the end of a double quote.
+    expect(characters[1].states[0].name).toBe(
+      "deeply incised and 'U-shaped' in outline"
+    )
+    // Tests fixes to q bug in Mesquite which Ticks are used in place of single
+    // quotes at beginning of a string.
+    expect(characters[1].states[1].name).toBe(
+      'shallowly \'incised\' with "broad" coverage of os basale'
+    )
+    // Test double quoted string with single quotes:
+    expect(characters[1].states[2].name).toBe(
+      "deeply incised and 'U-shaped', but with midline extension"
+    )
+    // Test single quoted string with consecutive single quotes at end:
+    expect(characters[2].states[1].name).toBe(
+      "broad, oval with 'microsaur-type' 'ornament'"
+    )
   })
 })
 
@@ -13,4 +47,10 @@ function getParserForFile(file: string): NexusParser {
   const content = fs.readFileSync(file, { encoding: 'utf8', flag: 'r' })
   const reader = new StringReader(content)
   return new NexusParser(reader)
+}
+
+function parseMatrix(fileName: string): MatrixObject {
+  const path = `tests/lib/matrix-parser/files/${fileName}`
+  const parser = getParserForFile(path)
+  return parser.parse()
 }
