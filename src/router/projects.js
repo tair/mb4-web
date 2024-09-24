@@ -213,6 +213,108 @@ export const MY_PROJECT_VIEWS = [
     ],
   },
   {
+    path: 'members',
+    name: 'MyProjectMembersView',
+    meta: {
+      itemName: 'members',
+      breadcrumbs: [
+        {
+          label: 'Project Members',
+          to: 'MyProjectMembersView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/members/ListView.vue'
+      ),
+  },
+  {
+    path: 'members/groups',
+    name: 'MyProjectMembersGroupsView',
+    meta: {
+      itemName: 'members',
+      breadcrumbs: [
+        {
+          label: 'Project Members Groups',
+          to: 'MyProjectMembersGroupsView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/membersGroups/ListView.vue'
+      ),
+  },
+  {
+    path: 'members/:linkId(\\d+)/edit',
+    name: 'MyProjectMembersEditView',
+    meta: {
+      itemName: 'members',
+      breadcrumbs: [
+        {
+          label: 'Project Members',
+          to: 'MyProjectMembersView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/members/EditView.vue'
+      ),
+  },
+  {
+    path: 'members/groups/:groupId(\\d+)/edit',
+    name: 'MyProjectMembersGroupsEditView',
+    meta: {
+      itemName: 'members',
+      breadcrumbs: [
+        {
+          label: 'Project Members Groups',
+          to: 'MyProjectMembersGroupsView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/membersGroups/EditView.vue'
+      ),
+  },
+  {
+    path: 'members/groups/create',
+    name: 'MyProjectMembersGroupsCreateView',
+    meta: {
+      itemName: 'members',
+      breadcrumbs: [
+        {
+          label: 'Project Members Groups',
+          to: 'MyProjectMembersGroupsView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/membersGroups/CreateView.vue'
+      ),
+  },
+  {
+    path: 'members/create',
+    name: 'MyProjectMembersCreateView',
+    meta: {
+      itemName: 'members',
+      breadcrumbs: [
+        {
+          label: 'Project Members',
+          to: 'MyProjectMembersView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/members/CreateView.vue'
+      ),
+  },
+  {
     path: 'views',
     name: 'MyProjectMediaViewsView',
     meta: {
@@ -656,5 +758,90 @@ export const MY_PROJECT_VIEWS = [
           ),
       },
     ],
+  },
+  {
+    path: 'institutions/',
+    name: 'MyProjectInstitutionsView',
+    meta: {
+      itemName: 'institutions',
+      breadcrumbs: [
+        {
+          label: 'institutions',
+          to: 'MyProjectInstitutionsView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/institutions/ListView.vue'
+      ),
+  },
+  {
+    path: 'institutions/create',
+    name: 'MyProjectInstitutionsCreateView',
+    meta: {
+      itemName: 'institutions',
+      breadcrumbs: [
+        {
+          label: 'institutions',
+          to: 'MyProjectInstitutionsView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/institutions/CreateView.vue'
+      ),
+  },
+  {
+    path: 'duplication/request',
+    name: 'MyProjectDuplicationRequestView',
+    meta: {
+      itemName: 'duplication',
+      breadcrumbs: [
+        {
+          label: 'duplication',
+          to: 'MyProjectDuplicationRequestView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/duplication/RequestView.vue'
+      ),
+  },
+  {
+    path: 'publish/partition',
+    name: 'MyProjectPublishPartitionView',
+    meta: {
+      itemName: 'Publish Partition',
+      breadcrumbs: [
+        {
+          label: 'Publish Partition',
+          to: 'MyProjectPublishPartitionView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/publishPartition/PublishPartitionView.vue'
+      ),
+  },
+  {
+    path: 'publish/partition/:partitionId',
+    name: 'MyProjectPublishPartitionSummaryView',
+    meta: {
+      itemName: 'Publish Partition',
+      breadcrumbs: [
+        {
+          label: 'Publish Partition',
+          to: 'MyProjectPublishPartitionView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/publishPartition/SummaryView.vue'
+      ),
   },
 ]
