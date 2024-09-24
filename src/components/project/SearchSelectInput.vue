@@ -23,7 +23,7 @@ const props = defineProps<{
   getId: (item: any) => number
 }>()
 
-const emit = defineEmits(['select'])
+const emit = defineEmits(['select', 'updateTextboxString'])
 const items = ref([])
 const item = computed(() => props.getItem(props.initialValue))
 const text = ref(props.getText(item.value))
@@ -35,6 +35,7 @@ async function handleInput(event: any) {
     items.value = []
   } else {
     items.value = await props.search(text)
+    emit('updateTextboxString', text)
   }
 }
 
