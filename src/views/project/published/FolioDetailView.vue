@@ -29,6 +29,10 @@ onMounted(() => {
       })
     })
 })
+
+function generateFoliosListRoute() {
+  return `/project/${projectId}/folios`
+}
 </script>
 
 <template>
@@ -37,6 +41,9 @@ onMounted(() => {
     :errorMessage="mediaStore.media_files ? null : 'No media data available.'"
     basePath="project"
   >
+    <p>
+      <router-link :to="generateFoliosListRoute()">&lt;&lt; Back to Folios List</router-link>
+    </p>
     <p>
       Viewing
       <span class="fw-bold"
