@@ -19,6 +19,7 @@ export const usePublicProjectDetailsStore = defineStore({
     partitions: null,
     bibliography: null,
     docs: null,
+    folios: null,
     matrices: null,
     media: null,
     media_views: null,
@@ -125,6 +126,7 @@ export const usePublicProjectDetailsStore = defineStore({
         this.partitions = res.data.partitions
         this.bibliography = res.data.bibliography
         this.docs = res.data.docs
+        this.folios = res.data.folios
 
         this.matrices = res.data.overview.matrices
         this.media_views = res.data.media_views
@@ -146,6 +148,16 @@ export const usePublicProjectDetailsStore = defineStore({
     isDownloadValid(id) {
       // hardcoded value to prevent download from extra large project
       return id != 773
+    },
+    // get folio view count
+    getFolioViewCount(folioId) {
+      return this.overview?.project_views?.details?.F?.filter(
+        (f) => f.rowId == folioId
+      )?.[0]?.val
+    },
+    // get folio info
+    getFolioInfo(folioId) {
+      return this.folios?.filter((f) => f.folio_id == folioId)?.[0]
     },
     // specimen details function
     sortSpecimenInDefaultOrder() {

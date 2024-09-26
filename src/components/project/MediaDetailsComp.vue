@@ -4,6 +4,7 @@ import { toDateString } from '@/utils/date'
 import {
   getViewStatsTooltipText,
   getDownloadTooltipText,
+  buildImageProps,
 } from '@/utils/util.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import CustomModal from './CustomModal.vue'
@@ -49,25 +50,6 @@ async function confirmDownload(mediaObj, fileName) {
 function getLastElementFromUrl(url) {
   const parts = url.split('/')
   return parts[parts.length - 1]
-}
-
-function buildImageProps(mediaObj, type) {
-  try {
-    let media = mediaObj
-    if (type) media = mediaObj[type]
-
-    if (!media.HASH || !media.MAGIC || !media.FILENAME) return null
-
-    const url =
-      `https://morphobank.org/media/morphobank3/` +
-      `images/${media.HASH}/${media.MAGIC}_${media.FILENAME}`
-
-    return url
-  } catch (e) {
-    console.log('VV: ' + mediaObj)
-    console.error(e)
-    return null
-  }
 }
 
 function getAncestorMessage(mediaObj) {
