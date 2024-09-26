@@ -42,7 +42,9 @@ function generateFoliosListRoute() {
     basePath="project"
   >
     <p>
-      <router-link :to="generateFoliosListRoute()">&lt;&lt; Back to Folios List</router-link>
+      <router-link :to="generateFoliosListRoute()"
+        >&lt;&lt; Back to Folios List</router-link
+      >
     </p>
     <p>
       Viewing
