@@ -1,27 +1,10 @@
 <script setup>
 import { RouterLink } from 'vue-router'
+import { buildImageProps } from '@/utils/util.js'
 
 const props = defineProps({
   project: Object,
 })
-
-function buildImageProps(mediaObj, type) {
-  try {
-    let media = mediaObj
-    if (type) media = mediaObj[type]
-
-    if (!media.HASH || !media.MAGIC || !media.FILENAME) return null
-
-    const url =
-      `https://morphobank.org/media/morphobank3/` +
-      `images/${media.HASH}/${media.MAGIC}_${media.FILENAME}`
-
-    return url
-  } catch (e) {
-    console.error(e)
-    return null
-  }
-}
 </script>
 <style scoped>
 .thumb {

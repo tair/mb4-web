@@ -11,6 +11,7 @@ import AskUsView from '@/views/misc/AskUsView.vue'
 import CuratorHomeView from '@/views/curator/CuratorHomeView.vue'
 import CuratorView from '@/views/curator/CuratorView.vue'
 import HomeView from '@/views/HomeView.vue'
+import PermalinkView from '@/views/PermalinkView.vue'
 import MyProjectsView from '@/views/project/MyProjectsView.vue'
 import NewsView from '@/views/misc/NewsView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
@@ -37,6 +38,13 @@ const router = createRouter({
           path: '',
           name: 'HomeView',
           component: HomeView,
+        },
+
+        //permalink
+        {
+          path: '/permalink',
+          name: 'Permalink',
+          component: PermalinkView,
         },
 
         // misc
@@ -104,7 +112,6 @@ const router = createRouter({
             },
           ],
         },
-
         // admin
         {
           path: '/admin',

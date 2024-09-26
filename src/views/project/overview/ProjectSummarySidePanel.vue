@@ -92,7 +92,7 @@ const viewTooltipText = getViewStatsTooltipText()
             :key="idx"
             v-for="(institution, idx) in overview.institutions"
           >
-            {{ institution }}
+            {{ institution.name }}
           </li>
         </ul>
       </div>
