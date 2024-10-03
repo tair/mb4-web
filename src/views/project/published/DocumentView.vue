@@ -109,7 +109,7 @@ function getDocumentsNumbers(docs) {
               <div class="d-flex align-items-center">
                 <span v-html="doc.title"></span>
                 <span v-if="doc.download">
-                  (Downloaded {{ doc.download }} times
+                  &nbsp;(Downloaded {{ doc.download }} times
                   <Tooltip :content="viewStatsTooltipText"></Tooltip>)</span
                 >
                 <a
@@ -147,7 +147,7 @@ function getDocumentsNumbers(docs) {
           <div class="d-flex align-items-center">
             <span v-html="doc.title"></span>
             <span v-if="doc.download">
-              (Downloaded {{ doc.download }} times
+              &nbsp;(Downloaded {{ doc.download }} times
               <Tooltip :content="viewStatsTooltipText"></Tooltip>)</span
             >
             <a class="ms-auto" @click="onDownloadDocuments(doc.url)" href="#">

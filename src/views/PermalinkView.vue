@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="error">{{ error }}</div>
+    <div v-if="error" class="text-center fw-bold">{{ error }}</div>
     <!-- Add other UI elements or components as needed -->
   </div>
 </template>
@@ -54,20 +54,16 @@ export default {
     },
     async handleProject(projectId) {
       try {
+        // this endpoint only returns project data when it's public
         const response = await axios.get(
           `${import.meta.env.VITE_API_URL}/public/projects/${projectId}`
         )
         const project = response.data
-
-        if (project.published === 1) {
-          window.location.href = `${import.meta.env.VITE_HOST}/project/${
-            folio.project_id
-          }/overview`
-        } else {
-          this.error = 'Invalid project number (np)'
-        }
+        window.location.href = `${import.meta.env.VITE_HOST}/project/${
+          project.project_id
+        }/overview`
       } catch (error) {
-        this.error = 'Invalid project number (ne)'
+        this.error = error.response.data.message
       }
     },
     async handleFolio(folioId) {
@@ -77,15 +73,11 @@ export default {
         )
         const folio = folioResponse.data
 
-        if (folio) {
-          window.location.href = `${import.meta.env.VITE_HOST}/project/${
-            folio.project_id
-          }/folios/${folio.folio_id}`
-        } else {
-          this.error = 'Invalid folio number (ne)'
-        }
+        window.location.href = `${import.meta.env.VITE_HOST}/project/${
+          folio.project_id
+        }/folios/${folio.folio_id}`
       } catch (error) {
-        this.error = 'Invalid folio number'
+        this.error = error.response.data.message
       }
     },
   },
