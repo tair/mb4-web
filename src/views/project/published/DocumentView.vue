@@ -5,6 +5,8 @@ import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore
 import {
   getViewStatsTooltipText,
   getDownloadTooltipText,
+  getCopyRightTooltipText,
+  getCC0ImgTag,
 } from '@/utils/util.js'
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
 import Tooltip from '@/components/main/Tooltip.vue'
@@ -15,6 +17,8 @@ const projectStore = usePublicProjectDetailsStore()
 const projectId = route.params.id
 const viewStatsTooltipText = getViewStatsTooltipText()
 const downloadTooltipText = getDownloadTooltipText()
+const copyRightTooltipText = getCopyRightTooltipText()
+const cc0Img = getCC0ImgTag()
 
 // TODO: ReCaptcha verification
 function onDownloadDocuments(documentUrl) {
@@ -32,6 +36,24 @@ function getDocumentsSectionTitle(docs) {
   text += length > 1 ? ' Documents' : ' Document'
   return text
 }
+
+function getDocumentsNumbers(docs) {
+  let docNum = 0
+  if (docs.folders) {
+    for (let i = 0; i < docs.folders.length; i++) {
+      docNum += docs.folders[i].documents.length
+    }
+  }
+  if (docs.documents) docNum += docs.documents.length
+  let text = `This project has ${docNum} document`
+  if (docNum > 1) text += 's'
+  if (docs.folders && docs.folders.length > 0) {
+    text += ` and ${docs.folders.length} folder`
+    if (docs.folders.length > 1) text += 's'
+  }
+  text += '.'
+  return text
+}
 </script>
 
 <template>
@@ -40,13 +62,20 @@ function getDocumentsSectionTitle(docs) {
     :errorMessage="projectStore.docs ? null : 'No documents data available.'"
     basePath="project"
   >
-    <p>
-      Please find here additional documents associated with this project.<br />
+    <div class="mb-5">{{ getDocumentsNumbers(projectStore.docs) }}</div>
+    <div class="mb-2">
+      Please find here additional documents associated with this project.
       Occasionally MorphoBank receives matrices that are not formatted to parse
-      to the database,<br />
-      these can also be found here, along with others and are presented 'as is'
-      from the scientist.
-    </p>
+      to the database, these can also be found here, along with others and are
+      presented 'as is' from the scientist.
+    </div>
+    <div v-if="projectStore.overview?.publish_cc0" class="img-float">
+      <Tooltip
+        :content="copyRightTooltipText"
+        :displayStyle="'image'"
+        :displayContent="cc0Img"
+      ></Tooltip>
+    </div>
     <div
       v-if="projectStore.docs.folders && projectStore.docs.folders.length > 0"
       class="mb-4"
@@ -132,3 +161,10 @@ function getDocumentsSectionTitle(docs) {
     </div>
   </ProjectLoaderComp>
 </template>
+
+<style>
+.img-float {
+  float: right;
+  margin-right: 10px;
+}
+</style>
