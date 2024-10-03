@@ -45,6 +45,9 @@ export const usePublicMediaStore = defineStore({
     getDefaultOrderBy() {
       return 'mnumber'
     },
+    hasMedia() {
+      return this.full_media_files?.length > 0
+    },
   },
   actions: {
     getMediaFilesByIdList(idList) {
