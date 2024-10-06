@@ -6,6 +6,8 @@ import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
 import {
   getViewStatsTooltipText,
   getDownloadTooltipText,
+  getCopyRightTooltipText,
+  getCC0ImgTag,
 } from '@/utils/util.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import CustomModal from '@/components/project/CustomModal.vue'
@@ -16,8 +18,8 @@ const projectStore = usePublicProjectDetailsStore()
 const projectId = route.params.id
 const viewStatsTooltipText = getViewStatsTooltipText()
 const downloadTooltipText = getDownloadTooltipText()
-const cc0Img = '<img src="/images/CC-0_gray.png" />'
-const copyRightTooltipText = `MorphoBank hosts phylogenetic data (matrices, characters, character states and documents) that are scientific facts in the public domain and not typically subject to copyright. Some authors have additionally marked their non-image data as CC0 ${cc0Img} to emphasize its availability for reuse.<br/><br/>Image data on MorphoBank may, however, be subject to copyright and licenses should be checked before reuse.`
+const cc0Img = getCC0ImgTag()
+const copyRightTooltipText = getCopyRightTooltipText()
 const polymorphoricCellTooltipText =
   "You can find polymorphic scores by using the Search feature in the Matrix Editor. This is available as the 'Polymorphic' option in the Cell tab within the Search dialog."
 
