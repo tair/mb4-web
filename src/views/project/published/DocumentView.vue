@@ -24,33 +24,38 @@ const cc0Img = getCC0ImgTag()
 async function onDownloadDocuments(documentUrl, filename) {
   try {
     // Fetch the document as a blob
-    const response = await fetch(documentUrl);
+    const response = await fetch(documentUrl)
 
-    if (!response.ok) throw new Error(`Failed to fetch the document: ${response.statusText}`);
+    if (!response.ok)
+      throw new Error(`Failed to fetch the document: ${response.statusText}`)
 
-    const blob = await response.blob();
-    const contentType = response.headers.get('Content-Type');
+    const blob = await response.blob()
+    const contentType = response.headers.get('Content-Type')
 
     // Check if the content is viewable (images, pdf, text)
-    if (contentType.startsWith('image/') || contentType.startsWith('application/pdf') || contentType.startsWith('text/')) {
+    if (
+      contentType.startsWith('image/') ||
+      contentType.startsWith('application/pdf') ||
+      contentType.startsWith('text/')
+    ) {
       // Open viewable types in a new tab
-      const blobUrl = URL.createObjectURL(blob);
-      window.open(blobUrl, '_blank');
+      const blobUrl = URL.createObjectURL(blob)
+      window.open(blobUrl, '_blank')
     } else {
       // For other types, force download
-      const blobUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = filename || documentUrl.split('/').pop();  // Fallback to original filename if none provided
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);  // Clean up
+      const blobUrl = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = filename || documentUrl.split('/').pop() // Fallback to original filename if none provided
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(blobUrl) // Clean up
     }
   } catch (error) {
-    console.error('Error downloading the file:', error);
+    console.error('Error downloading the file:', error)
     // Fallback to opening the file in a new tab
-    window.open(documentUrl, '_blank');
+    window.open(documentUrl, '_blank')
   }
 }
 
@@ -179,7 +184,11 @@ function getDocumentsNumbers(docs) {
               &nbsp;(Downloaded {{ doc.download }} times
               <Tooltip :content="viewStatsTooltipText"></Tooltip>)</span
             >
-            <a class="ms-auto" @click="onDownloadDocuments(doc.url, doc.file_name)" href="#">
+            <a
+              class="ms-auto"
+              @click="onDownloadDocuments(doc.url, doc.file_name)"
+              href="#"
+            >
               >> View/Download File
               <Tooltip :content="downloadTooltipText"></Tooltip>
             </a>
