@@ -11,8 +11,8 @@ import { schema } from '@/views/project/media/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 
 const route = useRoute()
-const projectId = route.params.id
-const mediaId = route.params.mediaId
+const projectId = parseInt(route.params.id)
+const mediaId = parseInt(route.params.mediaId)
 
 const projectUsersStore = useProjectUsersStore()
 const mediaStore = useMediaStore()

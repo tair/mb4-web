@@ -23,7 +23,7 @@ defineProps<{
         </div>
         <div class="list-group-item-buttons">
           <RouterLink
-            :to="`/myprojects/${projectId}/members/${user.link_id}/edit`"
+            :to="`/myprojects/${projectId}/members/${user.user_id}/edit`"
           >
             <button type="button" class="btn btn-sm btn-secondary">
               <i class="fa-regular fa-pen-to-square"></i>

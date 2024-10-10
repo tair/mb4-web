@@ -14,7 +14,7 @@ import TaxonomicName from '@/components/project/TaxonomicName.vue'
 
 const route = useRoute()
 const projectId = route.params.id
-const taxonId = route.params.taxonId
+const taxonId = parseInt(route.params.taxonId)
 
 const taxaCitationStore = useTaxaCitationsStore()
 const bibliographiesStore = useBibliographiesStore()

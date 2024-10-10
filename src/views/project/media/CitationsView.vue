@@ -10,8 +10,8 @@ import BibliographyItem from '@/components/project/BibliographyItem.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 
 const route = useRoute()
-const projectId = route.params.id
-const mediaId = route.params.mediaId
+const projectId = parseInt(route.params.id)
+const mediaId = parseInt(route.params.mediaId)
 
 const mediaCitationsStore = useMediaCitationsStore()
 const bibliographiesStore = useBibliographiesStore()

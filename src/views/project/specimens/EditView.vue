@@ -9,8 +9,8 @@ import { schema } from '@/views/project/specimens/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 
 const route = useRoute()
-const projectId = route.params.id
-const specimenId = route.params.specimenId
+const projectId = parseInt(route.params.id)
+const specimenId = parseInt(route.params.specimenId)
 
 const projectUsersStore = useProjectUsersStore()
 const specimensStore = useSpecimensStore()

@@ -14,7 +14,7 @@ import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaCard from '@/components/project/MediaCard.vue'
 
 const route = useRoute()
-const projectId = route.params.id
+const projectId = parseInt(route.params.id)
 
 const mediaStore = useMediaStore()
 const specimensStore = useSpecimensStore()

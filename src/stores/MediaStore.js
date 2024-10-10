@@ -5,9 +5,12 @@ export const useMediaStore = defineStore({
   id: 'media',
   state: () => ({
     isLoaded: false,
-    media: [],
+    map: new Map(),
   }),
   getters: {
+    media: function () {
+      return Array.from(this.map.values())
+    },
     viewIds: function () {
       const viewIds = new Set()
       for (const media of this.media) {
@@ -31,7 +34,8 @@ export const useMediaStore = defineStore({
     async fetchMedia(projectId) {
       const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/media`
       const response = await axios.get(url)
-      this.media = response.data.media
+      const media = response.data.media
+      this.addMedia(media)
 
       this.isLoaded = true
     },
@@ -51,7 +55,7 @@ export const useMediaStore = defineStore({
       const response = await axios.post(url, mediaFormData)
       if (response.status == 200) {
         const media = response.data.media
-        this.media.push(media)
+        this.addMedia([media])
         return true
       }
       return false
@@ -63,7 +67,7 @@ export const useMediaStore = defineStore({
       const response = await axios.post(url, mediaFormData)
       if (response.status == 200) {
         const media = response.data.media
-        this.media.push(...media)
+        this.addMedia(media)
         return true
       }
       return false
@@ -75,8 +79,7 @@ export const useMediaStore = defineStore({
       const response = await axios.post(url, mediaFormData)
       if (response.status == 200) {
         const media = response.data.media
-        this.removeByMediaIds([media.media_id])
-        this.media.push(media)
+        this.addMedia([media])
         return true
       }
       return false
@@ -91,8 +94,7 @@ export const useMediaStore = defineStore({
       })
       if (response.status == 200) {
         const media = response.data.media
-        this.removeByMediaIds(mediaIds)
-        this.media.push(...media)
+        this.addMedia(media)
         return true
       }
       return false
@@ -111,35 +113,31 @@ export const useMediaStore = defineStore({
       }
       return false
     },
-    getMediaById(mediaId) {
-      for (const media of this.media) {
-        if (media.media_id == mediaId) {
-          return media
-        }
+    addMedia(media) {
+      for (const medium of media) {
+        const id = medium.media_id
+        this.map.set(id, medium)
       }
-      return null
+    },
+    getMediaById(mediaId) {
+      return this.map.get(mediaId)
     },
     getMediaByIds(mediaIds) {
       const map = new Map()
-      for (const media of this.media) {
-        if (mediaIds.includes(media.media_id)) {
-          map.set(media.media_id, media)
+      for (const mediaId of mediaIds) {
+        if (this.map.has(mediaId)) {
+          map.set(mediaId, this.map.get(mediaId))
         }
       }
       return map
     },
     removeByMediaIds(mediaIds) {
-      let x = 0
-      while (x < this.media.length) {
-        if (mediaIds.includes(this.media[x].media_id)) {
-          this.media.splice(x, 1)
-        } else {
-          ++x
-        }
+      for (const mediaId of mediaIds) {
+        this.map.delete(mediaId)
       }
     },
     invalidate() {
-      this.media = []
+      this.map.clear()
       this.isLoaded = false
     },
   },

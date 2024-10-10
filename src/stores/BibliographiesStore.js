@@ -5,16 +5,22 @@ export const useBibliographiesStore = defineStore({
   id: 'bibliographies',
   state: () => ({
     isLoaded: false,
-    bibliographies: [],
+    map: new Map(),
   }),
-  getters: {},
+  getters: {
+    bibliographies: function () {
+      return Array.from(this.map.values())
+    },
+  },
   actions: {
     async fetchBibliographies(projectId) {
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/bibliography`
       const response = await axios.get(url)
-      this.bibliographies = response.data.bibliographies
+      const bibliographies = response.data.bibliographies || []
+      this.addReferences(bibliographies)
+
       this.isLoaded = true
     },
     async deleteIds(projectId, referenceIds) {
@@ -37,7 +43,7 @@ export const useBibliographiesStore = defineStore({
       const response = await axios.post(url, reference)
       if (response.status == 200) {
         const bibliography = response.data.bibliography
-        this.bibliographies.push(bibliography)
+        this.addReferences([bibliography])
         return true
       }
       return false
@@ -49,8 +55,7 @@ export const useBibliographiesStore = defineStore({
       const response = await axios.post(url, reference)
       if (response.status == 200) {
         const bibliography = response.data.bibliography
-        this.removeByReferenceIds([bibliography.reference_id])
-        this.bibliographies.push(bibliography)
+        this.addReferences([bibliography])
         return true
       }
       return false
@@ -65,42 +70,40 @@ export const useBibliographiesStore = defineStore({
       })
       if (response.status == 200) {
         const bibliographies = response.data.bibliographies
-        this.removeByReferenceIds(referenceIds)
-        this.bibliographies.push(...bibliographies)
+        this.addReferences(bibliographies)
         return true
       }
       return false
     },
+    addReferences(bibliographies) {
+      for (const bibliography of bibliographies) {
+        const referenceId = bibliography.reference_id
+        this.map.set(referenceId, bibliography)
+      }
+    },
     getReferenceById(referenceId) {
-      for (let x = 0; x < this.bibliographies.length; ++x) {
-        const bibliography = this.bibliographies[x]
-        if (bibliography.reference_id == referenceId) {
-          return bibliography
-        }
+      if (this.map.has(referenceId)) {
+        return this.map.get(referenceId)
       }
       return null
     },
     getReferencesByIds(referenceIds) {
       const map = new Map()
-      for (const bibliography of this.bibliographies) {
-        if (referenceIds.includes(bibliography.reference_id)) {
-          map.set(bibliography.reference_id, bibliography)
+      for (const referenceId of referenceIds) {
+        if (this.map.has(referenceId)) {
+          const bibliography = this.map.get(referenceId)
+          map.set(referenceId, bibliography)
         }
       }
       return map
     },
     removeByReferenceIds(referenceIds) {
-      let x = 0
-      while (x < this.bibliographies.length) {
-        if (referenceIds.includes(this.bibliographies[x].reference_id)) {
-          this.bibliographies.splice(x, 1)
-        } else {
-          ++x
-        }
+      for (const referenceId of referenceIds) {
+        this.map.delete(referenceId)
       }
     },
     invalidate() {
-      this.bibliographies = []
+      this.map.clear()
       this.isLoaded = false
     },
   },

@@ -6,9 +6,12 @@ export const useSpecimensStore = defineStore({
   id: 'specimens',
   state: () => ({
     isLoaded: false,
-    specimens: [],
+    map: new Map(),
   }),
   getters: {
+    specimens: function () {
+      return Array.from(this.map.values())
+    },
     taxaIds: function () {
       const taxaIds = new Set()
       for (const specimen of this.specimens) {
@@ -25,7 +28,8 @@ export const useSpecimensStore = defineStore({
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/specimens`
       const response = await axios.get(url)
-      this.specimens = response.data.specimens
+      const specimens = response.data.specimens || []
+      this.addSpecimens(specimens)
 
       this.isLoaded = true
     },
@@ -45,7 +49,7 @@ export const useSpecimensStore = defineStore({
       const response = await axios.post(url, { specimen })
       if (response.status == 200) {
         const specimen = response.data.specimen
-        this.specimens.push(specimen)
+        this.addSpecimens([specimen])
         return true
       }
       return false
@@ -59,10 +63,10 @@ export const useSpecimensStore = defineStore({
         const taxaStore = useTaxaStore()
         // Add newly create taxa to the taxa store.
         const taxa = response.data.taxa
-        taxaStore.taxa.push(...taxa)
+        taxaStore.addTaxa(taxa)
 
         const specimens = response.data.specimens
-        this.specimens.push(...specimens)
+        this.addSpecimens(specimens)
         return true
       }
       return false
@@ -74,8 +78,7 @@ export const useSpecimensStore = defineStore({
       const response = await axios.post(url, { specimen })
       if (response.status == 200) {
         const specimen = response.data.specimen
-        this.removeBySpecimenIds([specimen.specimen_id])
-        this.specimens.push(specimen)
+        this.addSpecimens([specimen])
         return true
       }
       return false
@@ -94,35 +97,31 @@ export const useSpecimensStore = defineStore({
       }
       return false
     },
-    getSpecimenById(specimenId) {
-      for (const specimen of this.specimens) {
-        if (specimen.specimen_id == specimenId) {
-          return specimen
-        }
+    addSpecimens(specimens) {
+      for (const specimen of specimens) {
+        const specimenId = specimen.specimen_id
+        this.map.set(specimenId, specimen)
       }
-      return null
+    },
+    getSpecimenById(specimenId) {
+      return this.map.get(specimenId)
     },
     getSpecimensByIds(specimenIds) {
       const specimens = []
-      for (const specimen of this.specimens) {
-        if (specimenIds.has(specimen.specimen_id)) {
-          specimens.push(specimen)
+      for (const specimenId of specimenIds) {
+        if (this.map.has(specimenId)) {
+          specimens.push(this.map.get(specimenId))
         }
       }
       return specimens
     },
     removeBySpecimenIds(specimenIds) {
-      let x = 0
-      while (x < this.specimens.length) {
-        if (specimenIds.includes(this.specimens[x].specimen_id)) {
-          this.specimens.splice(x, 1)
-        } else {
-          ++x
-        }
+      for (const specimenId of specimenIds) {
+        this.map.delete(specimenId)
       }
     },
     invalidate() {
-      this.specimens = []
+      this.map.clear()
       this.isLoaded = false
     },
   },

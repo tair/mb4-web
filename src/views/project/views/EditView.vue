@@ -9,7 +9,7 @@ import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 
 const route = useRoute()
 const projectId = route.params.id
-const viewId = route.params.viewId
+const viewId = parseInt(route.params.viewId)
 
 const projectUsersStore = useProjectUsersStore()
 const mediaViewsStore = useMediaViewsStore()

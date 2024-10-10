@@ -91,8 +91,8 @@ async function findMedia(text: string): Promise<number[]> {
 async function deleteFolioMedia(): Promise<boolean> {
   const mediaIds: number[] = filioMediaToDelete.value
   const linkIds = folioMediaStore.media
-    .filter((m) => mediaIds.includes(m.media_id))
-    .map((m) => m.link_id)
+    .filter((m: any) => mediaIds.includes(m.media_id))
+    .map((m: any) => m.link_id)
   const deleted = folioMediaStore.deleteIds(projectId, folioId, linkIds)
   if (deleted) {
     filioMediaToDelete.value = []

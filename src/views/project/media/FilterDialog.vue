@@ -38,18 +38,22 @@ const taxaStore = useTaxaStore()
 
 const specimens = computed(() =>
   specimensStore.getSpecimensByIds(
-    new Set(mediaStore.media.map((m) => m.specimen_id).filter((x) => !!x))
+    new Set(
+      mediaStore.media.map((m: any) => m.specimen_id).filter((x: any) => !!x)
+    )
   )
 )
 const views = computed(() =>
   mediaViewsStore.getMediaViewByIds(
-    new Set(mediaStore.media.map((m) => m.view_id).filter((x) => !!x))
+    new Set(mediaStore.media.map((m: any) => m.view_id).filter((x: any) => !!x))
   )
 )
 const submitters = computed(() =>
   projectUsersStore
     .getUserByIds(
-      new Set(mediaStore.media.map((m) => m.user_id).filter((x) => !!x))
+      new Set(
+        mediaStore.media.map((m: any) => m.user_id).filter((x: any) => !!x)
+      )
     )
     .sort((a, b) => {
       const fnameA = a?.fname ?? ''
@@ -67,13 +71,19 @@ const submitters = computed(() =>
 )
 const licenses = computed(
   () =>
-    new Set(mediaStore.media.map((m) => m.copyright_license).filter((x) => !!x))
+    new Set(
+      mediaStore.media
+        .map((m: any) => m.copyright_license)
+        .filter((x: any) => !!x)
+    )
 )
 
 const permissions = computed(
   () =>
     new Set(
-      mediaStore.media.map((m) => m.copyright_permission).filter((x) => !!x)
+      mediaStore.media
+        .map((m: any) => m.copyright_permission)
+        .filter((x: any) => !!x)
     )
 )
 

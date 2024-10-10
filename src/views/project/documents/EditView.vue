@@ -8,7 +8,7 @@ import { documentSchema } from '@/views/project/documents/schema.js'
 
 const route = useRoute()
 const projectId = route.params.id
-const documentId = route.params.documentId
+const documentId = parseInt(route.params.documentId)
 
 const documentsStore = useDocumentsStore()
 const document = computed(() => documentsStore.getDocumentById(documentId))

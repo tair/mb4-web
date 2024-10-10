@@ -45,7 +45,7 @@ const taxaStore = useTaxaStore()
 const filteredTaxa = computed(() =>
   Object.values(filters)
     .reduce((taxa, filter) => taxa.filter(filter), taxaStore.taxa)
-    .sort((a, b) => {
+    .sort((a: any, b: any) => {
       const nameA = getTaxonName(a, TaxaColumns.GENUS, false)
       if (!nameA) {
         return -1
@@ -149,8 +149,8 @@ function selectAllForImport(shouldImport = true, shouldAddAsExemplar = true) {
 
 async function fecthMediaForSelectedTaxa() {
   const selectedTaxaIds = taxaStore.taxa
-    .filter((taxon) => taxon.selected)
-    .map((taxon) => taxon.taxon_id)
+    .filter((taxon: any) => taxon.selected)
+    .map((taxon: any) => taxon.taxon_id)
   if (selectedTaxaIds.length > 100) {
     alert(
       `You selected ${

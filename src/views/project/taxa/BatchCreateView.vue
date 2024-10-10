@@ -7,7 +7,7 @@ import { TaxaColumns, nameColumnMap } from '@/utils/taxa'
 import { capitalizeFirstLetter } from '@/utils/string'
 
 const route = useRoute()
-const projectId = route.params.id as string
+const projectId = parseInt(route.params.id as string)
 const taxaStore = useTaxaStore()
 
 type Taxon = { [key in TaxaColumns]?: string } & { is_extinct?: string }

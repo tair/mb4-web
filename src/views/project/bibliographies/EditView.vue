@@ -9,8 +9,8 @@ import { schema } from '@/views/project/bibliographies/schema.js'
 import { convertAuthors } from '@/views/project/bibliographies/utils.js'
 
 const route = useRoute()
-const projectId = route.params.id
-const referenceId = route.params.referenceId
+const projectId = parseInt(route.params.id)
+const referenceId = parseInt(route.params.referenceId)
 
 const bibliographiesStore = useBibliographiesStore()
 const reference = computed(() =>

@@ -2,7 +2,7 @@
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 
 const route = useRoute()
-const mediaId = route.params.mediaId
+const mediaId = parseInt(route.params.mediaId as string)
 </script>
 <template>
   <header>

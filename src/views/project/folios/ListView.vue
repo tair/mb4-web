@@ -10,7 +10,7 @@ const projectId = parseInt(route.params.id as string)
 
 const foliosStore = useFoliosStore()
 const folios = computed(() =>
-  foliosStore.folios.sort((a, b) => {
+  foliosStore.folios.sort((a: any, b: any) => {
     const nameA = a.name
     if (!nameA) {
       return -1
@@ -32,15 +32,15 @@ const foliosToDelete = ref([])
 
 const allSelected = computed({
   get: function () {
-    return folios.value.every((b) => b.selected)
+    return folios.value.every((b: any) => b.selected)
   },
   set: function (value) {
-    folios.value.forEach((b) => {
+    folios.value.forEach((b: any) => {
       b.selected = value
     })
   },
 })
-const someSelected = computed(() => folios.value.some((b) => b.selected))
+const someSelected = computed(() => folios.value.some((b: any) => b.selected))
 
 onMounted(() => {
   if (!foliosStore.isLoaded) {
@@ -85,7 +85,7 @@ function refresh() {
           class="item"
           data-bs-toggle="modal"
           data-bs-target="#folioDeleteModal"
-          @click="foliosToDelete = folios.filter((b) => b.selected)"
+          @click="foliosToDelete = folios.filter((b: any) => b.selected)"
         >
           <i class="fa-regular fa-trash-can"></i>
         </span>

@@ -6,8 +6,8 @@ const props = defineProps<{
   user?: any
 }>()
 const projectUsersStore = useProjectUsersStore()
-async function deleteUser(linkId: number) {
-  const deleted = await projectUsersStore.deleteUser(props.projectId, linkId)
+async function deleteUser(userId: number) {
+  const deleted = await projectUsersStore.deleteUser(props.projectId, userId)
   if (!deleted) {
     alert('Failed to delete user')
   }
@@ -35,7 +35,7 @@ async function deleteUser(linkId: number) {
             type="button"
             class="btn btn-primary"
             data-bs-dismiss="modal"
-            @click="deleteUser(user.link_id)"
+            @click="deleteUser(user.user_id)"
           >
             Delete
           </button>

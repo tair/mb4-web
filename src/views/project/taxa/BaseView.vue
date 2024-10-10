@@ -6,8 +6,8 @@ import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import TaxonomicName from '@/components/project/TaxonomicName.vue'
 
 const route = useRoute()
-const projectId = route.params.id as string
-const taxonId = route.params.taxonId as string
+const projectId = parseInt(route.params.id as string)
+const taxonId = parseInt(route.params.taxonId as string)
 
 const taxaStore = useTaxaStore()
 const taxon = computed(() => taxaStore.getTaxonById(taxonId))

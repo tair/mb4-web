@@ -8,7 +8,7 @@ import SpecimenName from '@/components/project/SpecimenName.vue'
 
 const route = useRoute()
 const projectId = route.params.id
-const specimenId = route.params.specimenId
+const specimenId = parseInt(route.params.specimenId as string)
 
 const specimensStore = useSpecimensStore()
 const taxaStore = useTaxaStore()

@@ -5,14 +5,20 @@ export const useFoliosStore = defineStore({
   id: 'folios',
   state: () => ({
     isLoaded: false,
-    folios: [],
+    map: new Map(),
   }),
-  getters: {},
+  getters: {
+    folios: function () {
+      return Array.from(this.map.values())
+    },
+  },
   actions: {
     async fetch(projectId) {
       const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/folios`
       const response = await axios.get(url)
-      this.folios = response.data.folios
+      const folios = response.data.folios
+      this.addFolios(folios)
+
       this.isLoaded = true
     },
     async create(projectId, folio) {
@@ -22,7 +28,7 @@ export const useFoliosStore = defineStore({
       const response = await axios.post(url, { folio })
       if (response.status == 200) {
         const folio = response.data.folio
-        this.folios.push(folio)
+        this.addFolios([folio])
         return true
       }
       return false
@@ -34,8 +40,7 @@ export const useFoliosStore = defineStore({
       const response = await axios.post(url, { folio })
       if (response.status == 200) {
         const folio = response.data.folio
-        this.removeByFolioIds([folio.folio_id])
-        this.folios.push(folio)
+        this.addFolios([folio])
         return true
       }
       return false
@@ -53,26 +58,31 @@ export const useFoliosStore = defineStore({
       }
       return false
     },
+    addFolios(folios) {
+      for (const folio of folios) {
+        const id = folio.folio_id
+        this.map.set(id, folio)
+      }
+    },
     getFolioById(folioId) {
-      for (const folio of this.folios) {
-        if (folio.folio_id == folioId) {
-          return folio
+      return this.map.get(folioId)
+    },
+    getFolioByIds(folioIds) {
+      const map = new Map()
+      for (const folioId of folioIds) {
+        if (this.map.has(folioId)) {
+          map.set(folioId, this.map.get(folioId))
         }
       }
-      return null
+      return map
     },
     removeByFolioIds(folioIds) {
-      let x = 0
-      while (x < this.folios.length) {
-        if (folioIds.includes(this.folios[x].folio_id)) {
-          this.folios.splice(x, 1)
-        } else {
-          ++x
-        }
+      for (const folioId of folioIds) {
+        this.map.delete(folioId)
       }
     },
     invalidate() {
-      this.folios = []
+      this.map.clear()
       this.isLoaded = false
     },
   },
