@@ -19,8 +19,8 @@ export const usePublicProjectDetailsStore = defineStore({
     partitions: null,
     bibliography: null,
     docs: null,
+    folios: null,
     matrices: null,
-    media: null,
     media_views: null,
     specimen_details: null,
     unidentified_specimen_details: null,
@@ -102,6 +102,30 @@ export const usePublicProjectDetailsStore = defineStore({
     isLoading(state) {
       return state.loading
     },
+    hasMatrices() {
+      return this.matrices?.length > 0
+    },
+    hasMediaViews() {
+      return this.media_views?.length > 0
+    },
+    hasSpecimens() {
+      return (
+        this.specimen_details?.length > 0 ||
+        this.unidentified_specimen_details?.length > 0
+      )
+    },
+    hasTaxa() {
+      return this.taxa_details?.length > 0
+    },
+    hasFolios() {
+      return this.folios?.length > 0
+    },
+    hasBibliographies() {
+      return this.bibliography?.length > 0
+    },
+    hasDocuments() {
+      return this.docs?.folders?.length > 0 || this.docs?.documents?.length > 0
+    },
   },
   actions: {
     async fetchProject(id) {
@@ -125,6 +149,7 @@ export const usePublicProjectDetailsStore = defineStore({
         this.partitions = res.data.partitions
         this.bibliography = res.data.bibliography
         this.docs = res.data.docs
+        this.folios = res.data.folios
 
         this.matrices = res.data.overview.matrices
         this.media_views = res.data.media_views
@@ -146,6 +171,16 @@ export const usePublicProjectDetailsStore = defineStore({
     isDownloadValid(id) {
       // hardcoded value to prevent download from extra large project
       return id != 773
+    },
+    // get folio view count
+    getFolioViewCount(folioId) {
+      return this.overview?.project_views?.details?.F?.filter(
+        (f) => f.rowId == folioId
+      )?.[0]?.val
+    },
+    // get folio info
+    getFolioInfo(folioId) {
+      return this.folios?.filter((f) => f.folio_id == folioId)?.[0]
     },
     // specimen details function
     sortSpecimenInDefaultOrder() {

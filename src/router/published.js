@@ -102,6 +102,15 @@ export const PUBLISHED_PROJECT_VIEWS = [
       ),
   },
   {
+    path: ':id/folios/:folioId',
+    name: 'ProjectFolioDetailView',
+    meta: { itemName: 'folioDetail' },
+    component: () =>
+      import(
+        /* webpackChunkName: "published" */ '@/views/project/published/FolioDetailView.vue'
+      ),
+  },
+  {
     path: ':id/views',
     name: 'ProjectMediaViewsView',
     meta: { itemName: 'media_views' },

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ProjectSideNav from '@/components/project/ProjectSideNav.vue'
+import PublishedProjectSideNav from '@/components/project/PublishedProjectSideNav.vue'
 import ProjectTitleComp from '@/components/project/ProjectTitleComp.vue'
 
 defineProps<{
@@ -16,7 +16,7 @@ defineProps<{
   <div v-else>
     <div class="row">
       <div class="col-2 border-end">
-        <ProjectSideNav :basePath="basePath"></ProjectSideNav>
+        <PublishedProjectSideNav :basePath="basePath"></PublishedProjectSideNav>
       </div>
 
       <div class="col-10">

@@ -1,4 +1,6 @@
 <script setup>
+import { buildImageProps } from '@/utils/util.js'
+
 const props = defineProps({
   media_file: {
     type: Object,
@@ -8,25 +10,11 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
+  show_copy_right: {
+    type: Boolean,
+    default: true,
+  },
 })
-
-function buildImageProps(mediaObj, type) {
-  try {
-    let media = mediaObj
-    if (type) media = mediaObj[type]
-
-    if (!media.HASH || !media.MAGIC || !media.FILENAME) return null
-
-    const url =
-      `https://morphobank.org/media/morphobank3/` +
-      `images/${media.HASH}/${media.MAGIC}_${media.FILENAME}`
-
-    return url
-  } catch (e) {
-    console.error(e)
-    return null
-  }
-}
 
 function truncateNote(note) {
   if (note.length > 120) {
@@ -129,14 +117,18 @@ function hideEnlargedImage(imgId) {
           v-html="media_file.specimen_name"
           class="mt-1"
         ></div>
-        <div v-if="media_file.copyright_holder">
+        <div v-if="show_copy_right && media_file.copyright_holder">
           Copyright Holder: {{ media_file.copyright_holder }}
         </div>
-        <div v-if="media_file.license && media_file.license.image">
+        <div
+          v-if="
+            show_copy_right && media_file.license && media_file.license.image
+          "
+        >
           <img :src="`/images/${media_file.license.image}`" class="cc-icon" />
         </div>
         <div
-          v-if="media_file.notes"
+          v-if="show_copy_right && media_file.notes"
           class="truncate-multiline"
           v-html="truncateNote(media_file.notes)"
         ></div>

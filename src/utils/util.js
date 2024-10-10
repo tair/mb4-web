@@ -1,17 +1,15 @@
 function buildImageProps(mediaObj, type) {
   try {
-    media = mediaObj[type]
+    let media = mediaObj
+    if (type) media = mediaObj[type]
 
     if (!media.HASH || !media.MAGIC || !media.FILENAME) return null
 
     const url =
       `https://morphobank.org/media/morphobank3/` +
       `images/${media.HASH}/${media.MAGIC}_${media.FILENAME}`
-    return {
-      url: url,
-      width: media.WIDTH,
-      height: media.HEIGHT,
-    }
+
+    return url
   } catch (e) {
     return null
   }
@@ -55,6 +53,14 @@ function getDownloadTooltipText() {
   return "By downloading from MorphoBank, you agree to the site's Terms of Use & Privacy Policy."
 }
 
+function getCopyRightTooltipText() {
+  return `MorphoBank hosts phylogenetic data (matrices, characters, character states and documents) that are scientific facts in the public domain and not typically subject to copyright. Some authors have additionally marked their non-image data as CC0 <img src="/images/CC-0_gray.png" /> to emphasize its availability for reuse.<br/><br/>Image data on MorphoBank may, however, be subject to copyright and licenses should be checked before reuse.`
+}
+
+function getCC0ImgTag() {
+  return '<img src="/images/CC-0_gray.png" />'
+}
+
 export {
   buildImageProps,
   getPasswordPattern,
@@ -62,4 +68,6 @@ export {
   searchInObject,
   getViewStatsTooltipText,
   getDownloadTooltipText,
+  getCopyRightTooltipText,
+  getCC0ImgTag,
 }
