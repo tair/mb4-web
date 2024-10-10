@@ -455,7 +455,7 @@ export class NexusParser extends AbstractParser {
             secondNumber = firstNumber
           }
         } else if (this.tokenizer.consumeTokenIfMatch([Token.ALL])) {
-          firstNumber = 1
+          firstNumber = 0
           secondNumber = this.matrixObject.getCharacterCount()
         } else {
           throw new Error(

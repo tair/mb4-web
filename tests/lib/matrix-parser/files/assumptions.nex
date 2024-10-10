@@ -1,0 +1,41 @@
+#NEXUS
+
+BEGIN TAXA;
+  DIMENSIONS NTAX=1;
+  TAXLABELS
+    'Homo erectus';
+END;
+
+BEGIN CHARACTERS;
+  DIMENSIONS  NCHAR=3;
+  FORMAT DATATYPE = STANDARD RESPECTCASE GAP = - MISSING = ? SYMBOLS = "0123456789";
+  CHARSTATELABELS 
+    1 'Ornament (intensive growth)' /  'elongated ridges (''zones of intensive growth'')' prepineal_growth_zone_established_on_anterior_parietal_and_postorbital,
+    2 'Sphenethmoid (floor)' /  "deeply incised and 'U-shaped' in outline'' `shallowly ''incised'' with "broad" coverage of os basale' "deeply incised and 'U-shaped', but with midline extension",
+    3 'Squamation (shape)' /  'dermal scales oval to spindle-shaped' 'broad, oval with ''microsaur-type'' ''ornament''',
+		4 LIngual_cingulum_on_upper_incisors /  present absent,
+		5 Diastema_between_upper_I2_and_C /  absent diastema_present,
+		6 Number_of_lower_incisors /  'three pairs (i1, i2, i3)' 'two pairs (i1, i2)' 'one pair (i1)',
+		7 Shape_of__lower_i1 /  trilobed bilobed,
+		8 Shape_of_lower_i2 /  trilobed bilobed,
+		9 Number_of_upper_premolars /  'three premolars (P1, P3, P4)' 'two premolars (P3, P4)' 'one premolar (P4)',
+		10 'P3-P4 diastema' /  absent diastema_present,
+		11 Crown_height_of_P3 /  height_of_P3_subequal_to_P4 'height of P3 less than one-half the height of P4',
+		12 P4_protocone /  'cusp high, narrow, and sharply pointed' 'cusp lower, broader, more blunt',
+		13 P4_anterolabial_cingulum_development /  absent narrow_cingular_shelf well_developed,
+		14 Number_of_lower_premolars /  'three lower premolars (p1, p3, p4)' 'two premolars (p1, p4)' 'one premolar (p4)',
+		15 Lower_p3_crown_length_ /  'p3 large, length 90% to 100% of the length of p4' 'p3 small, length less than or equal to 50% that of p4 ',
+		16 Lower_p3_number_of_roots /  two_roots one_root,
+		17 Large_p3_shape /  square_to_rectangular_in_occlusal_view diamond_shaped_in_occlusal_view,
+		18 Small_p3_shape /  'blunt or peg-like' sharp_conical_cusp,
+		19 Diastema_between_alveoli_of_adjacent_lower_premolars /  no_diastema_between_premolar_alveoli narrow_diastema_present,
+		20 Lower_p4_with_notch_for_p3 /  Absent Notch_for_p3_present;
+	MATRIX
+	  'Homo erectus' 00000000000000000000
+  ;
+
+END;
+
+BEGIN ASSUMPTIONS;
+  TYPESET * UNTITLED   =  unord:  1-5 9-12 14 18;
+END;
