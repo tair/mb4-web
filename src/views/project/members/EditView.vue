@@ -8,7 +8,7 @@ import { userSchema } from '@/views/project/members/schema.js'
 
 const route = useRoute()
 const projectId = route.params.id
-const userId = route.params.userId
+const userId = parseInt(route.params.userId)
 
 const projectUsersStore = useProjectUsersStore()
 const user = computed(() => projectUsersStore.getUserById(userId))
