@@ -1,11 +1,11 @@
-import { MatrixObject } from '@/lib/matrix-parser/MatrixObject'
+import { MatrixObject, CharacterOrdering } from '@/lib/matrix-parser/MatrixObject'
 import { NexusParser } from '@/lib/matrix-parser/NexusParser'
 import { StringReader } from '@/lib/matrix-parser/StringReader'
 import { describe, expect, test } from '@jest/globals'
 import fs from 'fs'
 
 describe('NexusParserTest', () => {
-  test('Test Character States', () => {
+  test('Test CHARSTATELABELS with quotes', () => {
     const matrix = parseMatrix('characters_states.nex')
 
     expect(matrix.getFormat()).toBe('NEXUS')
@@ -40,6 +40,32 @@ describe('NexusParserTest', () => {
     expect(characters[2].states[1].name).toBe(
       "broad, oval with 'microsaur-type' 'ornament'"
     )
+  })
+
+  // This ensures that the ASSUMPTION blocks will be positioned correctly with
+  // the proper indecies.
+  test('Test ASSUMPTIONS ordering', () => {
+    const matrix = parseMatrix('assumptions.nex')
+
+    expect(matrix.getFormat()).toBe('NEXUS')
+    expect(matrix.getTaxonCount()).toBe(1)
+    expect(matrix.getCharacterCount()).toBe(20)
+
+    const characters = matrix.getCharacters()
+    expect(characters.length).toBe(20)
+    const expectedUnorderedIndex = [
+      0, 1, 2, 3, 4, // 1-5
+      8, 9, 10, 11, // 9-12
+      13, // 14
+      17 // 18
+    ]
+    for (const index of expectedUnorderedIndex) {
+      expect(characters[index].ordering).toBe(CharacterOrdering.UNORDERING)
+    }
+    const expectedUndefinedIndex = [5, 6, 7, 12, 14, 15, 16, 18, 19]
+    for (const index of expectedUndefinedIndex) {
+      expect(characters[index].ordering).toBeUndefined()
+    }
   })
 })
 
