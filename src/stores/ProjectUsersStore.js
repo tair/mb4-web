@@ -35,11 +35,10 @@ export const useProjectUsersStore = defineStore({
         group_ids,
       })
       if (response.status == 200) {
-        this.updateUser(
-          linkId,
-          response.data.group_ids,
-          response.data.membership_type
-        )
+        const userId = response.data.user_id
+        const user = this.map.get(userId)
+        user.group_ids = response.data.group_ids
+        user.membership_type = response.data.membership_type
         return true
       }
       return false
@@ -61,7 +60,7 @@ export const useProjectUsersStore = defineStore({
       const response = await axios.post(url, { json })
       if (response.status == 200) {
         const user = response.data.user
-        this.users.push(user)
+        this.addUsers([user])
         return true
       }
       return false
@@ -73,33 +72,33 @@ export const useProjectUsersStore = defineStore({
       const response = await axios.post(url, { json })
       if (response.status == 200) {
         const user = response.data.user
-        this.users.push(user)
+        this.addUsers([user])
         return true
       }
       return false
     },
-    updateUser(linkId, group_ids, membership_type) {
-      const index = this.getUserIndexByLinkId(linkId)
-      this.users[index].group_ids = group_ids
-      this.users[index].membership_type = membership_type
+    async deleteUser(projectId, userId) {
+      const user = this.getUserById(userId)
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/users/delete`
+      const response = await axios.post(url, {
+        link_id: user.link_id,
+      })
+      if (response.status == 200) {
+        this.map.delete(userId)
+        return true
+      }
+      return false
     },
     isUserInProject(email) {
       const user = this.users.find((user) => user.email == email)
       return !!user
     },
-    getUserIndexByLinkId(linkId) {
-      for (let x = 0; x < this.users.length; x++) {
-        if (this.users[x].link_id == linkId) {
-          return x
-        }
-      }
-      return null
-    },
-    getUserById(userId) {
-      for (const user of this.users) {
-        if (user.user_id == userId) {
-          return user
-        }
+    addUsers(users) {
+      for (const user of users) {
+        const id = user.user_id
+        this.map.set(id, user)
       }
     },
     getUserById(userId) {
@@ -113,41 +112,6 @@ export const useProjectUsersStore = defineStore({
         }
       }
       return users
-    },
-    getUserByLinkId(linkId) {
-      for (const user of this.users) {
-        if (user.link_id == linkId) {
-          return user
-        }
-      }
-      return null
-    },
-    async deleteUser(projectId, linkId) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/users/delete`
-      const response = await axios.post(url, {
-        link_id: linkId,
-      })
-      if (response.status == 200) {
-        this.removeUserByLinkId(linkId)
-        return true
-      }
-      return false
-    },
-    removeUserByLinkId(linkId) {
-      for (let x = 0; x < this.users.length; ++x) {
-        if (linkId == this.users[x].link_id) {
-          this.users.splice(x, 1)
-          break
-        }
-      }
-    },
-    addUsers(users) {
-      for (const user of users) {
-        const id = user.user_id
-        this.map.set(id, user)
-      }
     },
     invalidate() {
       this.map.clear()

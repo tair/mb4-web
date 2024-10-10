@@ -8,10 +8,10 @@ import { userSchema } from '@/views/project/members/schema.js'
 
 const route = useRoute()
 const projectId = route.params.id
-const linkId = route.params.linkId
+const userId = route.params.userId
 
 const projectUsersStore = useProjectUsersStore()
-const user = computed(() => projectUsersStore.getUserByLinkId(linkId))
+const user = computed(() => projectUsersStore.getUserById(userId))
 
 async function edit(event) {
   const formData = new FormData(event.currentTarget)
@@ -20,7 +20,7 @@ async function edit(event) {
 
   const success = await projectUsersStore.editUser(
     projectId,
-    linkId,
+    userId,
     json.membership_type,
     json.group_ids
   )
