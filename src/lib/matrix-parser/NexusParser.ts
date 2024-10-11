@@ -456,6 +456,10 @@ export class NexusParser extends AbstractParser {
                 this.convertNumber(this.tokenizer.assertToken(Token.NUMBER)) - 1
             } else if (this.tokenizer.consumeTokenIfMatch([Token.DOT])) {
               end = this.matrixObject.getCharacterCount() - 1
+            } else {
+              throw new Error(
+                'Unable to parse ' + this.tokenizer.getTokenValue().getToken()
+              )
             }
           }
         } else if (this.tokenizer.consumeTokenIfMatch([Token.ALL])) {
