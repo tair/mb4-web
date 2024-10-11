@@ -8,7 +8,7 @@ describe('CharacterOrderingTokenizerTest', () => {
     const tokenizer = getTokenizerForContent('1-24,')
 
     expect(tokenizer.getTokenValue().getValue()).toBe('1')
-    expect(tokenizer.getTokenValue().getValue()).toBe('-')
+    expect(tokenizer.getTokenValue().getValue()).toBe(Token.MINUS)
     expect(tokenizer.getTokenValue().getValue()).toBe('24')
     expect(tokenizer.getTokenValue().getToken()).toBe(Token.COMMA)
   })
@@ -17,8 +17,17 @@ describe('CharacterOrderingTokenizerTest', () => {
     const tokenizer = getTokenizerForContent(' 1 - 24 ;')
 
     expect(tokenizer.getTokenValue().getValue()).toBe('1')
-    expect(tokenizer.getTokenValue().getValue()).toBe('-')
+    expect(tokenizer.getTokenValue().getValue()).toBe(Token.MINUS)
     expect(tokenizer.getTokenValue().getValue()).toBe('24')
+    expect(tokenizer.getTokenValue().getToken()).toBe(Token.SEMICOLON)
+  })
+
+  test('test period for all', () => {
+    const tokenizer = getTokenizerForContent(' 1-.;')
+
+    expect(tokenizer.getTokenValue().getValue()).toBe('1')
+    expect(tokenizer.getTokenValue().getValue()).toBe(Token.MINUS)
+    expect(tokenizer.getTokenValue().getValue()).toBe(Token.DOT)
     expect(tokenizer.getTokenValue().getToken()).toBe(Token.SEMICOLON)
   })
 
@@ -27,6 +36,42 @@ describe('CharacterOrderingTokenizerTest', () => {
 
     expect(tokenizer.getTokenValue().getValue()).toBe(Token.ALL)
     expect(tokenizer.getTokenValue().getToken()).toBe(Token.SEMICOLON)
+  })
+
+  test('test key word ALL', () => {
+    const tokenizer = getTokenizerForContent('ALL\\2;')
+
+    expect(tokenizer.getTokenValue().getValue()).toBe(Token.ALL)
+    expect(tokenizer.getTokenValue().getValue()).toBe(Token.FORWARDSLASH)
+    expect(tokenizer.getTokenValue().getValue()).toBe('2')
+    expect(tokenizer.getTokenValue().getToken()).toBe(Token.SEMICOLON)
+  })
+
+  test('test strides', () => {
+    const tokenizer = getTokenizerForContent('1-8\\4 12-24\\3 25 26-40\\2;')
+
+    const expectedTokens = [
+      '1',
+      '-',
+      '8',
+      '\\',
+      '4',
+      '12',
+      '-',
+      '24',
+      '\\',
+      '3',
+      '25',
+      '26',
+      '-',
+      '40',
+      '\\',
+      '2',
+      ';',
+    ]
+    for (const expectedToken of expectedTokens) {
+      expect(tokenizer.getTokenValue().getValue()).toBe(expectedToken)
+    }
   })
 })
 

@@ -444,30 +444,38 @@ export class NexusParser extends AbstractParser {
         if (this.tokenizer.consumeTokenIfMatch([Token.COMMA])) {
           break
         }
-        let firstNumber: number
-        let secondNumber: number
+        let start: number
+        let end: number
+        let stride: number = 1
         if (this.tokenizer.isToken([Token.NUMBER])) {
-          firstNumber = this.convertNumber(this.tokenizer.getTokenValue()) - 1
+          start = this.convertNumber(this.tokenizer.getTokenValue()) - 1
+          end = start
           if (this.tokenizer.consumeTokenIfMatch([Token.MINUS])) {
-            secondNumber =
-              this.convertNumber(this.tokenizer.assertToken(Token.NUMBER)) - 1
-          } else {
-            secondNumber = firstNumber
+            if (this.tokenizer.isToken([Token.NUMBER])) {
+              end =
+                this.convertNumber(this.tokenizer.assertToken(Token.NUMBER)) - 1
+            } else if (this.tokenizer.consumeTokenIfMatch([Token.DOT])) {
+              end = this.matrixObject.getCharacterCount() - 1
+            } else {
+              throw new Error(
+                'Unable to parse ' + this.tokenizer.getTokenValue().getToken()
+              )
+            }
           }
         } else if (this.tokenizer.consumeTokenIfMatch([Token.ALL])) {
-          firstNumber = 0
-          secondNumber = this.matrixObject.getCharacterCount()
+          start = 0
+          end = this.matrixObject.getCharacterCount()
         } else {
           throw new Error(
             'Unable to parse ' + this.tokenizer.getTokenValue().getToken()
           )
         }
 
-        this.matrixObject.setCharacterOrdering(
-          firstNumber,
-          secondNumber,
-          ordering
-        )
+        if (this.tokenizer.consumeTokenIfMatch([Token.FORWARDSLASH])) {
+          stride = this.convertNumber(this.tokenizer.assertToken(Token.NUMBER))
+        }
+
+        this.matrixObject.setCharacterOrdering(start, end, ordering, stride)
       }
       this.tokenizer.removeTokenizer()
     }

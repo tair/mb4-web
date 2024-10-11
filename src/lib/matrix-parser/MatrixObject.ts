@@ -123,19 +123,21 @@ export class MatrixObject {
   setCharacterOrdering(
     startNumber: number,
     endNumber: number,
-    ordering: CharacterOrdering
+    ordering: CharacterOrdering,
+    stride: number = 1
   ): void {
     const characters = Array.from(this.characters.values())
 
     if (characters.length < endNumber) {
       setTimeout(
-        () => this.setCharacterOrdering(startNumber, endNumber, ordering),
+        () =>
+          this.setCharacterOrdering(startNumber, endNumber, ordering, stride),
         1000
       )
       return
     }
 
-    for (let x = startNumber; x <= endNumber; x++) {
+    for (let x = startNumber; x <= endNumber; x += stride) {
       const character = characters[x]
       character.ordering = ordering
     }

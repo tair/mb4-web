@@ -1,4 +1,7 @@
-import { MatrixObject, CharacterOrdering } from '@/lib/matrix-parser/MatrixObject'
+import {
+  MatrixObject,
+  CharacterOrdering,
+} from '@/lib/matrix-parser/MatrixObject'
 import { NexusParser } from '@/lib/matrix-parser/NexusParser'
 import { StringReader } from '@/lib/matrix-parser/StringReader'
 import { describe, expect, test } from '@jest/globals'
@@ -54,15 +57,26 @@ describe('NexusParserTest', () => {
     const characters = matrix.getCharacters()
     expect(characters.length).toBe(20)
     const expectedUnorderedIndex = [
-      0, 1, 2, 3, 4, // 1-5
-      8, 9, 10, 11, // 9-12
+      0, // 1-5
+      1,
+      2,
+      3,
+      4,
+      8, // 9-12\3
+      11,
       13, // 14
-      17 // 18
+      17, // 18-.
+      18,
+      19,
     ]
     for (const index of expectedUnorderedIndex) {
       expect(characters[index].ordering).toBe(CharacterOrdering.UNORDERING)
     }
-    const expectedUndefinedIndex = [5, 6, 7, 12, 14, 15, 16, 18, 19]
+    const expectedOrderedIndex = [5, 7, 16]
+    for (const index of expectedOrderedIndex) {
+      expect(characters[index].ordering).toBe(CharacterOrdering.ORDERING)
+    }
+    const expectedUndefinedIndex = [6, 9, 10, 12, 14, 15]
     for (const index of expectedUndefinedIndex) {
       expect(characters[index].ordering).toBeUndefined()
     }
