@@ -78,12 +78,15 @@
 import { reactive, ref } from 'vue'
 import axios from 'axios'
 import Alert from '../../components/main/Alert.vue'
+import { useAuthStore } from '@/stores/AuthStore.js'
 
 export default {
   components: {
     Alert,
   },
   setup() {
+    const authStore = useAuthStore()
+
     // Initial state of the form
     const initialForm = {
       name: '',
@@ -181,6 +184,8 @@ export default {
         projectNumber: form.projectNumber,
         published: form.published,
         attachments: attachments,
+        userAgent: navigator.userAgent,
+        userId: authStore.user.userId,
       }
 
       loading.value = true
