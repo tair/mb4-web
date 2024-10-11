@@ -68,7 +68,7 @@
       </div>
       <div class="form-group action-buttons">
         <button type="submit">Submit</button>
-        <button type="reset">Reset</button>
+        <button type="reset" @click="confirmReset">Reset</button>
       </div>
     </form>
   </div>
@@ -84,7 +84,8 @@ export default {
     Alert,
   },
   setup() {
-    const form = reactive({
+    // Initial state of the form
+    const initialForm = {
       name: '',
       email: '',
       question: '',
@@ -94,7 +95,10 @@ export default {
       attachments: [],
       security: '',
       attachmentError: '',
-    })
+    }
+
+    // Create reactive form data
+    const form = reactive({ ...initialForm })
 
     const loading = ref(false)
 
@@ -192,7 +196,6 @@ export default {
         )
         alert.customMessage = 'Form submitted successfully.'
         alert.type = 'success'
-        console.log(response.data)
         // Delay the page reload by two seconds to give use opportunity to know its successful
         setTimeout(() => {
           location.reload()
@@ -210,12 +213,31 @@ export default {
       }
     }
 
+    const confirmReset = () => {
+      if (confirm('Are you sure you want to reset the form?')) {
+        resetForm()
+      }
+    }
+
+    const resetForm = () => {
+      // Reset the form by copying the initial values
+      Object.assign(form, initialForm)
+
+      // Scroll back to the top of the page
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      })
+    }
+
     return {
       form,
       firstNumber,
       secondNumber,
       onFileChange,
       submitForm,
+      resetForm,
+      confirmReset,
       alert,
       loading,
     }
@@ -285,7 +307,7 @@ p {
 }
 
 .action-buttons button[type='submit'] {
-  background: #007bff;
+  background: #ff9800;
 }
 
 .action-buttons button[type='reset'] {
