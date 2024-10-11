@@ -5,6 +5,7 @@ import { TokenValue } from './TokenValue'
 export class CharacterOrderingTokenizer extends Tokenizer {
   private static readonly separatorTokens: Set<string> = new Set([
     Token.COMMA,
+    Token.FORWARDSLASH,
     Token.MINUS,
     Token.SEMICOLON,
   ])
@@ -52,6 +53,8 @@ export class CharacterOrderingTokenizer extends Tokenizer {
         return Token.COMMA
       case Token.SEMICOLON:
         return Token.SEMICOLON
+      case Token.FORWARDSLASH:
+        return Token.FORWARDSLASH
       default:
         return Token.STRING
     }

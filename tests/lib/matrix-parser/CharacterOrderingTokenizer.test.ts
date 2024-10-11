@@ -28,6 +28,33 @@ describe('CharacterOrderingTokenizerTest', () => {
     expect(tokenizer.getTokenValue().getValue()).toBe(Token.ALL)
     expect(tokenizer.getTokenValue().getToken()).toBe(Token.SEMICOLON)
   })
+
+  test('test strides', () => {
+    const tokenizer = getTokenizerForContent('1-8\\4 12-24\\3 25 26-40\\2;')
+
+    const expectedTokens = [
+      '1',
+      '-',
+      '8',
+      '\\',
+      '4',
+      '12',
+      '-',
+      '24',
+      '\\',
+      '3',
+      '25',
+      '26',
+      '-',
+      '40',
+      '\\',
+      '2',
+      ';',
+    ]
+    for (const expectedToken of expectedTokens) {
+      expect(tokenizer.getTokenValue().getValue()).toBe(expectedToken)
+    }
+  })
 })
 
 function getTokenizerForContent(content: string): CharacterOrderingTokenizer {
