@@ -449,17 +449,21 @@ export class NexusParser extends AbstractParser {
         let stride: number = 1
         if (this.tokenizer.isToken([Token.NUMBER])) {
           start = this.convertNumber(this.tokenizer.getTokenValue()) - 1
-          end = this.tokenizer.consumeTokenIfMatch([Token.MINUS])
-            ? this.convertNumber(this.tokenizer.assertToken(Token.NUMBER)) - 1
-            : start
+          end = start
+          if (this.tokenizer.consumeTokenIfMatch([Token.MINUS])) {
+            if (this.tokenizer.isToken([Token.NUMBER])) {
+              end =
+                this.convertNumber(this.tokenizer.assertToken(Token.NUMBER)) - 1
+            } else if (this.tokenizer.consumeTokenIfMatch([Token.DOT])) {
+              end = this.matrixObject.getCharacterCount() - 1
+            }
+          }
         } else if (this.tokenizer.consumeTokenIfMatch([Token.ALL])) {
           start = 0
           end = this.matrixObject.getCharacterCount()
         } else {
           throw new Error(
-            'Unable to parse ' +
-              this.tokenizer.getTokenValue().getValue() +
-              this.tokenizer.getTokenValue().getValue()
+            'Unable to parse ' + this.tokenizer.getTokenValue().getToken()
           )
         }
 

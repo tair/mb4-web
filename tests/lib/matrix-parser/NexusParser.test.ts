@@ -57,15 +57,17 @@ describe('NexusParserTest', () => {
     const characters = matrix.getCharacters()
     expect(characters.length).toBe(20)
     const expectedUnorderedIndex = [
-      0,
+      0, // 1-5
       1,
       2,
       3,
-      4, // 1-5
-      8,
-      11, // 9-12\3
+      4,
+      8, // 9-12\3
+      11,
       13, // 14
-      17, // 18
+      17, // 18-.
+      18,
+      19,
     ]
     for (const index of expectedUnorderedIndex) {
       expect(characters[index].ordering).toBe(CharacterOrdering.UNORDERING)
@@ -74,7 +76,7 @@ describe('NexusParserTest', () => {
     for (const index of expectedOrderedIndex) {
       expect(characters[index].ordering).toBe(CharacterOrdering.ORDERING)
     }
-    const expectedUndefinedIndex = [6, 9, 10, 12, 14, 15, 18, 19]
+    const expectedUndefinedIndex = [6, 9, 10, 12, 14, 15]
     for (const index of expectedUndefinedIndex) {
       expect(characters[index].ordering).toBeUndefined()
     }

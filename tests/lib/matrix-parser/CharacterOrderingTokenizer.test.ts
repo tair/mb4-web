@@ -8,7 +8,7 @@ describe('CharacterOrderingTokenizerTest', () => {
     const tokenizer = getTokenizerForContent('1-24,')
 
     expect(tokenizer.getTokenValue().getValue()).toBe('1')
-    expect(tokenizer.getTokenValue().getValue()).toBe('-')
+    expect(tokenizer.getTokenValue().getValue()).toBe(Token.MINUS)
     expect(tokenizer.getTokenValue().getValue()).toBe('24')
     expect(tokenizer.getTokenValue().getToken()).toBe(Token.COMMA)
   })
@@ -17,8 +17,17 @@ describe('CharacterOrderingTokenizerTest', () => {
     const tokenizer = getTokenizerForContent(' 1 - 24 ;')
 
     expect(tokenizer.getTokenValue().getValue()).toBe('1')
-    expect(tokenizer.getTokenValue().getValue()).toBe('-')
+    expect(tokenizer.getTokenValue().getValue()).toBe(Token.MINUS)
     expect(tokenizer.getTokenValue().getValue()).toBe('24')
+    expect(tokenizer.getTokenValue().getToken()).toBe(Token.SEMICOLON)
+  })
+
+  test('test period for all', () => {
+    const tokenizer = getTokenizerForContent(' 1-.;')
+
+    expect(tokenizer.getTokenValue().getValue()).toBe('1')
+    expect(tokenizer.getTokenValue().getValue()).toBe(Token.MINUS)
+    expect(tokenizer.getTokenValue().getValue()).toBe(Token.DOT)
     expect(tokenizer.getTokenValue().getToken()).toBe(Token.SEMICOLON)
   })
 
