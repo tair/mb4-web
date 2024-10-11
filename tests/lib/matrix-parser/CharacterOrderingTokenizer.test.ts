@@ -38,6 +38,15 @@ describe('CharacterOrderingTokenizerTest', () => {
     expect(tokenizer.getTokenValue().getToken()).toBe(Token.SEMICOLON)
   })
 
+  test('test key word ALL', () => {
+    const tokenizer = getTokenizerForContent('ALL\\2;')
+
+    expect(tokenizer.getTokenValue().getValue()).toBe(Token.ALL)
+    expect(tokenizer.getTokenValue().getValue()).toBe(Token.FORWARDSLASH)
+    expect(tokenizer.getTokenValue().getValue()).toBe('2')
+    expect(tokenizer.getTokenValue().getToken()).toBe(Token.SEMICOLON)
+  })
+
   test('test strides', () => {
     const tokenizer = getTokenizerForContent('1-8\\4 12-24\\3 25 26-40\\2;')
 
