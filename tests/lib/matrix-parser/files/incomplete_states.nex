@@ -1,0 +1,26 @@
+#NEXUS
+
+BEGIN TAXA;
+  DIMENSIONS NTAX=2;
+  TAXLABELS
+    'Homo erectus'
+    'Homo sapien'
+    'Home Neanderthal';
+END;
+
+BEGIN CHARACTERS;
+  DIMENSIONS  NCHAR=4;
+  FORMAT DATATYPE = STANDARD RESPECTCASE GAP = - MISSING = ? SYMBOLS = "012";
+  CHARSTATELABELS 
+    1 'Ornament (intensive growth)' /  'present' present,
+    2 'Sphenethmoid (floor)' /  absent,
+    3 'Squamation (shape)' /  absent _ present,
+    4 'Fingers' / '(open' 'blank' 'close)';
+
+	MATRIX
+	  'Homo erectus' 0000
+    'Homo sapien'  1121
+    'Home Neanderthal' 0000
+  ;
+
+END;

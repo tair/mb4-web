@@ -333,6 +333,8 @@ export enum CharacterStateIncompleteType {
   INCORRECT_NUMBER_OF_SCORES,
   EMPTY_NAME,
   GENERIC_STATE,
+  DUPLICATE_SATE,
+  NAME_TOO_LONG,
 }
 
 export enum CharacterType {

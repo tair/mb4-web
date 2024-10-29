@@ -81,24 +81,49 @@ function validateCells(matrixObject: MatrixObject) {
 function validateCharacters(characters: Character[]) {
   for (const character of characters) {
     const maxScoredStateIndex = character.maxScoredStatePosition
-    const generic_state = /State\ \d+/
+    const genericStatePattern = /State\ \d+/
 
-    let isMarkedAsIncomplete = false
+    // This keeps track of state names to determine whether there were duplicate
+    // states.
+    const namesMap: Map<string, CharacterState> = new Map()
     // If this character was already marked as incomplete, we don't need to
     // mark it again.
     for (const state of character.states) {
       if (state.incompleteType) {
-        isMarkedAsIncomplete = true
         continue
       }
-      if (state.name.match(generic_state)) {
+
+      const stateName = state.name
+      if (stateName == null || stateName.length == 0) {
+        state.incompleteType = CharacterStateIncompleteType.EMPTY_NAME
+        continue
+      }
+
+      // Determine whether there is a duplicated state name so that we can warn
+      // the user.
+      if (namesMap.has(stateName)) {
+        const duplicateState = namesMap.get(stateName)
+        duplicateState.incompleteType =
+          CharacterStateIncompleteType.DUPLICATE_SATE
+        state.incompleteType = CharacterStateIncompleteType.DUPLICATE_SATE
+        continue
+      }
+
+      namesMap.set(stateName, state)
+
+      if (stateName.match(genericStatePattern)) {
         state.incompleteType = CharacterStateIncompleteType.GENERIC_STATE
+      } else if (stateName.length > 255) {
+        state.incompleteType = CharacterStateIncompleteType.NAME_TOO_LONG
       }
     }
 
     // If none of the states were marked as incomplete and the scores/states
     // mismatch, then we'll mark all of the characters states are incomplete.
     const scoredMismatch = maxScoredStateIndex != character.states.length - 1
+    const isMarkedAsIncomplete = character.states.some(
+      (state) => state.incompleteType != null
+    )
     if (
       !isMarkedAsIncomplete &&
       scoredMismatch &&
@@ -153,8 +178,10 @@ function hasMatchingBrackets(name: string): boolean {
 }
 
 function getSymbolsMap(symbols: string): Map<string, number> {
+  debugger
   if (symbols) {
-    return arrayFlip(symbols.split(''))
+    const symbolList = symbols.split('').filter((x) => x != ' ')
+    return arrayFlip(symbolList)
   }
   return null
 }

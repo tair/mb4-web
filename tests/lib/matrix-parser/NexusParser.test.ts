@@ -1,13 +1,30 @@
 import {
   MatrixObject,
   CharacterOrdering,
+  CharacterStateIncompleteType,
 } from '@/lib/matrix-parser/MatrixObject'
+import { validate } from '@/lib/matrix-parser/MatrixValidator'
 import { NexusParser } from '@/lib/matrix-parser/NexusParser'
 import { StringReader } from '@/lib/matrix-parser/StringReader'
 import { describe, expect, test } from '@jest/globals'
 import fs from 'fs'
 
 describe('NexusParserTest', () => {
+  // Test that character numbers are associated correctly in the CHARSTATELABELS
+  // block.
+  test('Test CHARSTATELABELS with quotes', () => {
+    const matrix = parseMatrix('characters_states.nex')
+
+    expect(matrix.getFormat()).toBe('NEXUS')
+
+    const characters = matrix.getCharacters()
+    expect(characters.length).toBe(3)
+    for (let x = 0; x < characters.length; x++) {
+      expect(characters[x].characterNumber).toBe(x)
+    }
+  })
+
+  // Test that the quotes are handled correctly with the CHARSTATELABELS block
   test('Test CHARSTATELABELS with quotes', () => {
     const matrix = parseMatrix('characters_states.nex')
 
@@ -16,7 +33,6 @@ describe('NexusParserTest', () => {
     expect(matrix.getCharacterCount()).toBe(3)
 
     const characters = matrix.getCharacters()
-    expect(characters.length).toBe(3)
     // Test single quoted string with consecutive single quotes:
     expect(characters[0].states[0].name).toBe(
       "elongated ridges ('zones of intensive growth')"
@@ -45,8 +61,8 @@ describe('NexusParserTest', () => {
     )
   })
 
-  // This ensures that the ASSUMPTION blocks will be positioned correctly with
-  // the proper indecies.
+  // Test the ASSUMPTION blocks will be positioned correctly with the proper
+  // indicies.
   test('Test ASSUMPTIONS ordering', () => {
     const matrix = parseMatrix('assumptions.nex')
 
@@ -80,6 +96,57 @@ describe('NexusParserTest', () => {
     for (const index of expectedUndefinedIndex) {
       expect(characters[index].ordering).toBeUndefined()
     }
+  })
+
+  // This ensures that the ASSUMPTION blocks will be positioned correctly with
+  // the proper indecies.
+  test('Test incompete states', () => {
+    const matrix = parseMatrix('incomplete_states.nex')
+    validate(matrix)
+    expect(matrix.getFormat()).toBe('NEXUS')
+    expect(matrix.getCharacterCount()).toBe(4)
+
+    const characters = matrix.getCharacters()
+    expect(characters[0].states[0].incompleteType).toBe(
+      CharacterStateIncompleteType.DUPLICATE_SATE
+    )
+    expect(characters[0].states[1].incompleteType).toBe(
+      CharacterStateIncompleteType.DUPLICATE_SATE
+    )
+    expect(characters[1].states[1].incompleteType).toBe(
+      CharacterStateIncompleteType.CREATED_STATE
+    )
+    expect(characters[2].states[1].incompleteType).toBe(
+      CharacterStateIncompleteType.EMPTY_NAME
+    )
+    expect(characters[3].states[0].incompleteType).toBe(
+      CharacterStateIncompleteType.INCORRECT_NUMBER_OF_SCORES
+    )
+  })
+
+  // Test that the erroneous character states are labeled correctly.
+  test('Test incompete states', () => {
+    const matrix = parseMatrix('incomplete_states.nex')
+    validate(matrix)
+    expect(matrix.getFormat()).toBe('NEXUS')
+    expect(matrix.getCharacterCount()).toBe(4)
+
+    const characters = matrix.getCharacters()
+    expect(characters[0].states[0].incompleteType).toBe(
+      CharacterStateIncompleteType.DUPLICATE_SATE
+    )
+    expect(characters[0].states[1].incompleteType).toBe(
+      CharacterStateIncompleteType.DUPLICATE_SATE
+    )
+    expect(characters[1].states[1].incompleteType).toBe(
+      CharacterStateIncompleteType.CREATED_STATE
+    )
+    expect(characters[2].states[1].incompleteType).toBe(
+      CharacterStateIncompleteType.EMPTY_NAME
+    )
+    expect(characters[3].states[0].incompleteType).toBe(
+      CharacterStateIncompleteType.INCORRECT_NUMBER_OF_SCORES
+    )
   })
 })
 
