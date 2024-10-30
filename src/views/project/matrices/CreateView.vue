@@ -86,13 +86,27 @@ function saveEditedCharacter() {
 
 function confirmCharacter(character) {
   if (character.states) {
+    const stateNames = new Set()
     for (const state of character.states) {
+      const stateName = state.name
+      if (stateName == null || stateName.length == 0) {
+        alert('All states must have non-empty names.')
+        return
+      }
       if (state.name.match(/State\ \d+$/)) {
         alert(
           `You must rename the generic state: '${state.name}' or recode the character in the matrix.`
         )
         return
       }
+      if (stateNames.has(stateName)) {
+        alert('All states must have unique names.')
+        return
+      }
+      stateNames.add(stateName)
+    }
+
+    for (const state of character.states) {
       delete state.incompleteType
     }
   }

@@ -307,9 +307,8 @@ export class NexusParser extends AbstractParser {
       }
 
       if (this.tokenizer.isToken([Token.NUMBER])) {
-        const characterNumber = this.convertNumber(
-          this.tokenizer.getTokenValue()
-        )
+        const characterNumber =
+          this.convertNumber(this.tokenizer.getTokenValue()) - 1
         const characterName = this.tokenizer.getTokenValue().getValue()
 
         // Meristic characters do not have states to just take the string as-is.
