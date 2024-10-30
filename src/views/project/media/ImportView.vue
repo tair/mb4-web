@@ -239,7 +239,9 @@ async function importMediaForSelectedTaxa() {
   }
 
   if (!response.data.success) {
-    alert('Failed to import media: ' + (response.data.message ?? 'Unknown issue'))
+    alert(
+      'Failed to import media: ' + (response.data.message ?? 'Unknown issue')
+    )
     return
   }
 
