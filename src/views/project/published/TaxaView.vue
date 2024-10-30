@@ -290,7 +290,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-::v-deep .highlight {
+:deep(.highlight) {
   color: #ef782f;
 }
 </style>
