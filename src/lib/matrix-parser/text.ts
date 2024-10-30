@@ -13,9 +13,9 @@ export function getIncompleteStateText(
     case CharacterStateIncompleteType.GENERIC_STATE:
       return "Generic state labels like 'State 0' are not allowed, please add a descriptive label."
     case CharacterStateIncompleteType.DUPLICATE_SATE:
-      return 'A state has a duplicate name within the character.'
+      return 'Two or more states share identical names.'
     case CharacterStateIncompleteType.NAME_TOO_LONG:
-      return 'A state was given a very long name - which will be truncated.'
+      return 'The state name is longer than 500 characters and will be truncated as shown.'
     default:
       return ''
   }

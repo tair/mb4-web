@@ -113,7 +113,7 @@ function validateCharacters(characters: Character[]) {
 
       if (stateName.match(genericStatePattern)) {
         state.incompleteType = CharacterStateIncompleteType.GENERIC_STATE
-      } else if (stateName.length > 255) {
+      } else if (stateName.length > 500) {
         state.incompleteType = CharacterStateIncompleteType.NAME_TOO_LONG
       }
     }

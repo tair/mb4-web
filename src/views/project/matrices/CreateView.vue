@@ -86,7 +86,7 @@ function saveEditedCharacter() {
 
 function confirmCharacter(character) {
   if (character.states) {
-    const stateNames = new Set();
+    const stateNames = new Set()
     for (const state of character.states) {
       const stateName = state.name
       if (stateName == null || stateName.length == 0) {
@@ -103,7 +103,7 @@ function confirmCharacter(character) {
         alert('All states must have unique names.')
         return
       }
-      stateNames.add(stateName);
+      stateNames.add(stateName)
     }
 
     for (const state of character.states) {
