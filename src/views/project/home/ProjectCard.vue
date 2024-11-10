@@ -75,7 +75,7 @@ function getOverviewUrl() {
           <div class="mt-3">
             <RouterLink :to="getOverviewUrl()">
               <button type="button" class="btn btn-primary">
-                View Project >>
+                View Project
               </button>
             </RouterLink>
           </div>

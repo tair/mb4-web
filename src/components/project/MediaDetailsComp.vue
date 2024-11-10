@@ -125,9 +125,9 @@ function getHitsMessage(mediaObj) {
         <div class="card-body">
           <div class="card-text">
             <div class="nav">
-              <a class="nav-link" href="#" @click="showZoomModal = true"
-                >>> Zoom</a
-              >
+              <a class="nav-link" href="#" @click="showZoomModal = true">
+                Zoom
+              </a>
               <CustomModal
                 :isVisible="showZoomModal"
                 @close="showZoomModal = false"
@@ -136,9 +136,10 @@ function getHitsMessage(mediaObj) {
                   :imgSrc="buildImageProps(media_file.media['original'])"
                 />
               </CustomModal>
-              <a class="nav-link" href="#" @click="showDownloadModal = true"
-                >>> Download <Tooltip :content="downloadTooltipText"></Tooltip
-              ></a>
+              <a class="nav-link" href="#" @click="showDownloadModal = true">
+                Download
+                <Tooltip :content="downloadTooltipText"></Tooltip>
+              </a>
               <CustomModal
                 :isVisible="showDownloadModal"
                 @close="showDownloadModal = false"

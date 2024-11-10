@@ -335,7 +335,7 @@ onMounted(() => {
             @click="showOntologyDownloadModal[n] = true"
             class="btn btn-primary"
           >
-            >> Download Ontology >>
+            Download Ontology
           </button>
           <CustomModal
             :isVisible="showOntologyDownloadModal[n]"

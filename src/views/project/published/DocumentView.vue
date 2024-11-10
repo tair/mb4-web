@@ -151,7 +151,7 @@ function getDocumentsNumbers(docs) {
                   @click="onDownloadDocuments(doc.url, doc.file_name)"
                   href="#"
                 >
-                  >> View/Download File
+                  View/Download File
                   <Tooltip :content="downloadTooltipText"></Tooltip>
                 </a>
               </div>
@@ -189,7 +189,7 @@ function getDocumentsNumbers(docs) {
               @click="onDownloadDocuments(doc.url, doc.file_name)"
               href="#"
             >
-              >> View/Download File
+              View/Download File
               <Tooltip :content="downloadTooltipText"></Tooltip>
             </a>
           </div>

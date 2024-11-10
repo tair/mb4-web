@@ -43,7 +43,7 @@ const unpublishedProjects = computed(() =>
         <div class="mt-3">
           <RouterLink :to="`/myprojects/create`">
             <button type="button" class="btn btn-primary">
-              >> Create New Project
+              Create New Project
             </button>
           </RouterLink>
         </div>

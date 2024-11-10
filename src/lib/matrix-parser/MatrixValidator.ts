@@ -178,7 +178,6 @@ function hasMatchingBrackets(name: string): boolean {
 }
 
 function getSymbolsMap(symbols: string): Map<string, number> {
-  debugger
   if (symbols) {
     const symbolList = symbols.split('').filter((x) => x != ' ')
     return arrayFlip(symbolList)

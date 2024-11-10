@@ -115,7 +115,7 @@ function popDownloadAlert() {
           Project Administrator should add exemplar media
         </div>
         <div class="mt-3">
-          <router-link to="media"> More Images >> </router-link>
+          <router-link to="media"> More Images </router-link>
         </div>
       </div>
 
