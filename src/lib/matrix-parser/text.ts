@@ -15,7 +15,7 @@ export function getIncompleteStateText(
     case CharacterStateIncompleteType.DUPLICATE_SATE:
       return 'Two or more states share identical names.'
     case CharacterStateIncompleteType.NAME_TOO_LONG:
-      return 'The state name is longer than 500 characters and will be truncated as shown.'
+      return 'The state name is longer than 500 characters and must be truncated before saving.'
     default:
       return ''
   }

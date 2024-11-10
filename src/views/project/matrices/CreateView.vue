@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 import { useCharactersStore } from '@/stores/CharactersStore'
 import { useMatricesStore } from '@/stores/MatricesStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { CharacterStateIncompleteType } from '@/lib/matrix-parser/MatrixObject.ts'
 import { getIncompleteStateText } from '@/lib/matrix-parser/text.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
 import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
@@ -82,6 +83,7 @@ function saveEditedCharacter() {
   const name = keys[characterNumber]
   const character = importedMatrix.characters.get(name)
   Object.assign(character, JSON.parse(JSON.stringify(editingCharacter.value)))
+  updateIncompleteType(character)
 }
 
 function confirmCharacter(character) {
@@ -103,11 +105,39 @@ function confirmCharacter(character) {
         alert('All states must have unique names.')
         return
       }
+      if (stateName.length > 500) {
+        alert('All states must names that are under 500 characters.')
+        return
+      }
       stateNames.add(stateName)
     }
 
     for (const state of character.states) {
       delete state.incompleteType
+    }
+  }
+  return false
+}
+
+function updateIncompleteType(character) {
+  if (character.states) {
+    const stateNames = new Map()
+    for (const state of character.states) {
+      const stateName = state.name
+      if (stateName == null || stateName.length == 0) {
+        state.incompleteType = CharacterStateIncompleteType.EMPTY_NAME
+      } else if (state.name.match(/State\ \d+$/)) {
+        state.incompleteType = CharacterStateIncompleteType.GENERIC_STATE
+      } else if (stateNames.has(stateName)) {
+        state.incompleteType = CharacterStateIncompleteType.DUPLICATE_SATE
+        const otherState = stateNames.get(stateName)
+        otherState.incompleteType = CharacterStateIncompleteType.DUPLICATE_SATE
+      } else if (stateName.length > 500) {
+        state.incompleteType = CharacterStateIncompleteType.NAME_TOO_LONG
+      } else {
+        delete state.incompleteType
+      }
+      stateNames.set(stateName, state)
     }
   }
   return false
@@ -532,21 +562,36 @@ onMounted(() => {
                   </div>
                   <div class="form-group">
                     <label>States</label><br />
-                    <div>
-                      <span
-                        class="character-states"
+                    <div class="character-states">
+                      <div
+                        class="character-state"
                         v-for="(state, index) in editingCharacter.states"
                       >
-                        <input
-                          class="form-control"
-                          type="text"
-                          v-model="state.name"
-                        />
+                        <div class="character-state-name">
+                          <textarea
+                            class="form-control"
+                            row="1"
+                            v-model="state.name"
+                          >
+                          </textarea>
+                          <div class="character-state-error-message">
+                            <template
+                              v-if="
+                                state.incompleteType ==
+                                CharacterStateIncompleteType.NAME_TOO_LONG
+                              "
+                            >
+                              Character length: {{ state.name.length }} / 500
+                            </template>
+                            <template v-else> &nbsp; </template>
+                          </div>
+                        </div>
                         <i
                           class="fa-solid fa-xmark"
                           @click="removeCharacterState(editingCharacter, index)"
-                        ></i>
-                      </span>
+                        >
+                        </i>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -843,10 +888,31 @@ div.matrix-confirmation-screen table td {
 
 .character-states {
   display: flex;
-  padding-bottom: 5px;
+  flex-direction: column;
+}
+
+.character-state {
+  display: flex;
+  flex-direction: row;
+  padding-bottom: 3px;
+}
+
+.character-state-name {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.character-state-error-message {
+  display: flex;
+  flex-direction: row-reverse;
+  font-style: italic;
+  font-size: 0.75rem;
 }
 
 .character-states .remove-state {
+  display: flex;
+  flex-direction: row;
   color: #ef782f;
   margin: auto;
   padding: 0 4px;
