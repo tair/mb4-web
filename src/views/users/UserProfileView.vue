@@ -247,8 +247,9 @@ const confirmPassword = function () {
               href="#"
               class="removeLink"
               @click.prevent="removeInstitution(institution.institution_id)"
-              >>> Remove</a
             >
+              Remove
+            </a>
           </li>
         </ul>
         <Alert

@@ -59,8 +59,9 @@ const viewStatsTooltipText = getViewStatsTooltipText()
           <router-link
             :to="generateFolioViewRoute(folio.folio_id)"
             class="right-align"
-            >>> View Folio Media</router-link
           >
+            View Folio Media
+          </router-link>
         </li>
       </ul>
     </div>

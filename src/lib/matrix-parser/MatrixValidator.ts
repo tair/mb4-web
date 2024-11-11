@@ -78,7 +78,7 @@ function validateCells(matrixObject: MatrixObject) {
  * indication that the character state was parsed incorrectly. Since we don't
  * know which state was incorrectly parsed, we'll flag all of them.
  */
-function validateCharacters(characters: Character[]) {
+export function validateCharacters(characters: Character[]) {
   for (const character of characters) {
     const maxScoredStateIndex = character.maxScoredStatePosition
     const genericStatePattern = /State\ \d+/
@@ -178,7 +178,6 @@ function hasMatchingBrackets(name: string): boolean {
 }
 
 function getSymbolsMap(symbols: string): Map<string, number> {
-  debugger
   if (symbols) {
     const symbolList = symbols.split('').filter((x) => x != ' ')
     return arrayFlip(symbolList)

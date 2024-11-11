@@ -1,12 +1,16 @@
 <script setup lang="ts">
-const props = defineProps<{
-  alertType: string
+const {
+  message,
+  messageName,
+  alertType = 'info',
+} = defineProps<{
   message: { [key: string]: string }
   messageName: string
+  alertType?: string
 }>()
 
-const dismissAlert = function () {
-  props.message[props.messageName] = ''
+function dismissAlert() {
+  message[messageName] = ''
 }
 </script>
 <template>
