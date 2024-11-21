@@ -5,7 +5,11 @@
         <div class="interior_mainheader_title">
           <h1>Register</h1>
           <div>
-            New to Morphobank? Register to create your own projects.
+            <p>
+              New to Morphobank? Register to create your own projects. Logging
+              in with your ORCID will create a new account for you based on that
+              ID.
+            </p>
             <router-link to="/users/login" id="loginLink"
               >Click here to Login.</router-link
             >

@@ -60,7 +60,7 @@ const props = defineProps({
         </div>
         <div class="col d-flex align-items-stretch thumb">
           <img
-            :src="buildImageProps(project.image_props)"
+            :src="buildImageProps(project.image_props, 'media')"
             class="card-img-top"
           />
         </div>
