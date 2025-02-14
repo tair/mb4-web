@@ -29,13 +29,13 @@ function onSorted(sort) {
   switch (page_type.value) {
     case 'pub_date':
       projectsStore.sortProjectsByPublishedDate(sort)
-      break;
+      break
     case 'prj_no':
       projectsStore.sortProjectsByNumber(sort)
-      break;
+      break
     case 'journal_year':
       projectsStore.sortProjectsByJournalYear(sort)
-      break;
+      break
   }
 
   selectedPage.value = 1

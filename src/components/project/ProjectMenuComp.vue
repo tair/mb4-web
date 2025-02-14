@@ -113,7 +113,9 @@ const props = defineProps({
       </button>
     </RouterLink>
     <div v-else>
-      <button type="button" class="btn btn-warning btn-sm">Article Publication Year</button>
+      <button type="button" class="btn btn-warning btn-sm">
+        Article Publication Year
+      </button>
     </div>
   </div>
 </template>
