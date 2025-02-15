@@ -12,13 +12,13 @@ const props = defineProps({
       v-if="menuItem != 'pub_date'"
     >
       <button type="button" class="btn btn-secondary btn-sm">
-        Publication Date
+        Project Publication Date
       </button>
     </RouterLink>
     <div v-else>
       <RouterLink :to="`/project/pub_date`" class="nav-link p-0">
         <button type="button" class="btn btn-warning btn-sm">
-          Publication Date
+          Project Publication Date
         </button>
       </RouterLink>
     </div>
@@ -109,11 +109,13 @@ const props = defineProps({
       v-if="menuItem != 'journal_year'"
     >
       <button type="button" class="btn btn-secondary btn-sm">
-        Journal Year
+        Article Publication Year
       </button>
     </RouterLink>
     <div v-else>
-      <button type="button" class="btn btn-warning btn-sm">Journal Year</button>
+      <button type="button" class="btn btn-warning btn-sm">
+        Article Publication Year
+      </button>
     </div>
   </div>
 </template>

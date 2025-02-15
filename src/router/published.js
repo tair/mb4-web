@@ -22,7 +22,7 @@ export const PUBLISHED_PROJECT_VIEWS = [
     name: 'ProjectJornalYearView',
     component: () =>
       import(
-        /* webpackChunkName: "published" */ '@/views/project/published/JournalView.vue'
+        /* webpackChunkName: "published" */ '@/views/project/published/HomeView.vue'
       ),
   },
   {
