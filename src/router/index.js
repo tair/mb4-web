@@ -21,7 +21,7 @@ import TermsView from '@/views/misc/TermsView.vue'
 import UserLoginView from '@/views/users/UserLoginView.vue'
 import UserAuthView from '@/views/users/UserAuthView.vue'
 import UserProfileView from '@/views/users/UserProfileView.vue'
-import UserRegistrationView from '@/views/users/UserRegistrationView.vue'
+import UserRegistrationByORCIDView from '@/views/users/UserRegistrationByORCIDView.vue'
 import UserResetPasswordView from '@/views/users/UserResetPasswordView.vue'
 import UserSetNewPasswordView from '@/views/users/UserSetNewPasswordView.vue'
 import UserView from '@/views/users/UserView.vue'
@@ -98,7 +98,7 @@ const router = createRouter({
             {
               path: 'register',
               name: 'UserRegistrationView',
-              component: UserRegistrationView,
+              component: UserRegistrationByORCIDView,
             },
             {
               path: 'resetpassword',
