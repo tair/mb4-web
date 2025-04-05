@@ -16,15 +16,43 @@
     <form @submit.prevent="submitForm">
       <div class="form-group">
         <label for="name">Name</label>
-        <input id="name" v-model="form.name" type="text" />
+        <input
+          id="name"
+          v-model="form.name"
+          type="text"
+          @blur="handleNameBlur"
+          :class="{ 'is-invalid': nameError }"
+          class="form-control"
+        />
+        <div v-if="nameError" class="invalid-feedback">{{ nameError }}</div>
       </div>
       <div class="form-group">
         <label for="email">E-mail Address</label>
-        <input id="email" v-model="form.email" type="email" />
+        <input
+          id="email"
+          v-model="form.email"
+          type="email"
+          @blur="handleEmailBlur"
+          :class="{ 'is-invalid': emailError }"
+          class="form-control"
+        />
+        <div v-if="emailError" class="invalid-feedback">{{ emailError }}</div>
       </div>
       <div class="form-group">
-        <label for="question">Tell us your question, issue or idea</label>
-        <textarea id="question" v-model="form.question"></textarea>
+        <label for="question" class="form-label"
+          >Tell us your question, issue or idea</label
+        >
+        <textarea
+          id="question"
+          v-model="form.question"
+          class="form-control"
+          :class="{ 'is-invalid': descriptionError }"
+          rows="5"
+          @blur="handleDescriptionBlur"
+        ></textarea>
+        <div v-if="descriptionError" class="invalid-feedback">
+          {{ descriptionError }}
+        </div>
       </div>
       <div class="form-group">
         <label for="media"
@@ -34,10 +62,25 @@
       </div>
       <div class="form-group">
         <label for="projectNumber">Project Number (if applicable)</label>
-        <input id="projectNumber" v-model="form.projectNumber" type="text" />
+        <input
+          id="projectNumber"
+          v-model="form.projectNumber"
+          type="text"
+          @blur="handleProjectNumberBlur"
+          :class="{ 'is-invalid': projectNumberError }"
+          class="form-control"
+        />
+        <div v-if="projectNumberError" class="invalid-feedback">
+          {{ projectNumberError }}
+        </div>
       </div>
       <div class="form-group checkbox">
-        <input id="published" v-model="form.published" type="checkbox" />
+        <input
+          id="published"
+          v-model="form.published"
+          type="checkbox"
+          @change="handlePublishedChange"
+        />
         <label for="published"
           >Check here if this project is currently "published" on MorphoBank
           (visible to the public)</label
@@ -78,12 +121,15 @@
 import { reactive, ref } from 'vue'
 import axios from 'axios'
 import Alert from '../../components/main/Alert.vue'
+import SpamDetection from 'spam-detection'
+import { useAuthStore } from '@/stores/AuthStore.js'
 
 export default {
   components: {
     Alert,
   },
   setup() {
+    const authStore = useAuthStore()
     const form = reactive({
       name: '',
       email: '',
@@ -95,6 +141,11 @@ export default {
       security: '',
       attachmentError: '',
     })
+
+    const emailError = ref('')
+    const nameError = ref('')
+    const projectNumberError = ref('')
+    const descriptionError = ref('')
 
     const loading = ref(false)
 
@@ -110,33 +161,175 @@ export default {
       const files = e.target.files
       let totalSize = 0
       for (let i = 0; i < files.length; i++) {
-        totalSize += files[i].size // Add the size of each file
+        totalSize += files[i].size // Calculate total size of all files
       }
       if (totalSize > 9 * 1024 * 1024) {
         // Check if total size exceeds 9MB
         form.attachmentError =
-          'Failed to submit form. The total attachment size is too large.' //Making messaging uniform for this
-        return // Return without updating form.attachments
+          'Failed to submit form. The total attachment size is too large.'
+        return // Stop if size limit exceeded
       }
       form.attachmentError = ''
-      form.attachments = [] // Clear the existing attachments
+      form.attachments = [] // Reset attachments array
       for (let i = 0; i < files.length; i++) {
-        form.attachments.push(files[i]) // Store the File object directly
+        form.attachments.push(files[i]) // Add each file to attachments array
+      }
+    }
+
+    const validateDescription = (description) => {
+      if (!description || description.length < 200) {
+        return 'The description must contain more than 200 characters. Please clearly state the problem and what was expected.'
+      }
+
+      // Check for HTML links
+      if (/<\w*a.*href=.*>/.test(description)) {
+        return 'Description should not contain external links.'
+      }
+
+      // Check for URLs
+      if (/(http|https):\/\//.test(description)) {
+        return 'Description should not refer to external links.'
+      }
+
+      // Check for non-English characters
+      if (/[^\x00-\x7F]/.test(description)) {
+        return 'Description should not contain non-English words. Please reconsider rephrasing your message.'
+      }
+
+      // Use spam detection library to check for spam content
+      const spamResult = SpamDetection.detect(description)
+      if (spamResult.isSpam) {
+        return 'Description contains suspicious text. Please reconsider rephrasing your message.'
+      }
+
+      return ''
+    }
+
+    const validateEmail = (email) => {
+      // Use strict email format validation
+      const emailRegex =
+        /^([a-zA-Z0-9])+([a-zA-Z0-9\._-])*@([a-zA-Z0-9_-])+([a-zA-Z0-9\._-]+)+$/
+      if (!emailRegex.test(email)) {
+        return 'E-mail address is not valid.'
+      }
+
+      // Check if @morphobank.org domain is used
+      if (email.toLowerCase().includes('@morphobank.org')) {
+        return 'E-mail address cannot be used.'
+      }
+
+      return null
+    }
+
+    const validateName = (name) => {
+      if (name.length > 50) {
+        return 'The provided name is too long. Please consider using your first name only.'
+      }
+
+      // Use spam detection library to check for spam content
+      const spamResult = SpamDetection.detect(name)
+      if (spamResult.isSpam) {
+        return 'User name contains suspicious words. Please consider using your first name only.'
+      }
+
+      return null
+    }
+
+    const validateProjectNumber = (projectNumber, isPublished) => {
+      if (projectNumber && isNaN(projectNumber)) {
+        return 'The project number must be a number.'
+      }
+
+      if (isPublished && !projectNumber) {
+        return 'The project number must be specified if published checkbox is checked.'
+      }
+
+      return null
+    }
+
+    const handleEmailBlur = () => {
+      if (form.email.trim()) {
+        emailError.value = validateEmail(form.email)
+      } else {
+        emailError.value = ''
+      }
+    }
+
+    const handleNameBlur = () => {
+      if (form.name.trim()) {
+        nameError.value = validateName(form.name)
+      } else {
+        nameError.value = ''
+      }
+    }
+
+    const handleProjectNumberBlur = () => {
+      projectNumberError.value = validateProjectNumber(
+        form.projectNumber,
+        form.published
+      )
+    }
+
+    const handlePublishedChange = () => {
+      projectNumberError.value = validateProjectNumber(
+        form.projectNumber,
+        form.published
+      )
+    }
+
+    const handleDescriptionBlur = () => {
+      if (form.question.trim()) {
+        descriptionError.value = validateDescription(form.question)
+      } else {
+        descriptionError.value = ''
       }
     }
 
     const submitForm = async () => {
-      // Reset previous alert
+      // Reset previous alert message
       alert.customMessage = ''
-      alert.type = 'danger' // Default error type
+      alert.type = 'danger' // Set default alert type to danger
       const securityAnswer = parseInt(form.security, 10)
-      // Check for required fields
+
+      // Validate required fields
       if (!form.name.trim() || !form.email.trim() || !form.question.trim()) {
         alert.customMessage =
           'Please fill out all required fields (Name, E-mail Address, and Question).'
         return
       }
 
+      // Validate name
+      const nameError = validateName(form.name)
+      if (nameError) {
+        alert.customMessage = nameError
+        return
+      }
+
+      // Validate email format and domain
+      const emailError = validateEmail(form.email)
+      if (emailError) {
+        alert.customMessage = emailError
+        return
+      }
+
+      // Validate project number
+      const projectNumberError = validateProjectNumber(
+        form.projectNumber,
+        form.published
+      )
+      if (projectNumberError) {
+        alert.customMessage = projectNumberError
+        return
+      }
+
+      // Validate question content
+      const questionError = validateDescription(form.question)
+      if (questionError) {
+        alert.customMessage = questionError
+        return
+      }
+
+      // Validate security question answer
       if (
         isNaN(securityAnswer) ||
         securityAnswer !== firstNumber.value + secondNumber.value
@@ -146,13 +339,13 @@ export default {
         return
       }
 
-      // Check if attachment error is present
+      // Check for attachment errors
       if (form.attachmentError) {
         alert.customMessage = form.attachmentError
-        return // Return without proceeding to submit
+        return
       }
 
-      // Map the attachments to include both name and Base64 content
+      // Convert attachments to Base64 format
       const attachments = await Promise.all(
         form.attachments.map(async (file) => {
           return new Promise((resolve) => {
@@ -168,7 +361,7 @@ export default {
         })
       )
 
-      // Create an object for the form data
+      // Prepare form data for submission
       const formData = {
         name: form.name,
         email: form.email,
@@ -177,10 +370,13 @@ export default {
         projectNumber: form.projectNumber,
         published: form.published,
         attachments: attachments,
+        userAgent: navigator.userAgent,
+        userId: authStore.user?.userId || null,
       }
 
       loading.value = true
       try {
+        // Submit form data to API
         const response = await axios.post(
           `${import.meta.env.VITE_API_URL}/email/contact-us-submit`,
           formData,
@@ -190,14 +386,15 @@ export default {
             },
           }
         )
-        alert.customMessage = 'Form submitted successfully.'
+        alert.customMessage =
+          'Your email has been sent. MorphoBank will be back in touch with you very shortly!'
         alert.type = 'success'
-        console.log(response.data)
-        // Delay the page reload by two seconds to give use opportunity to know its successful
+        // Reload page after successful submission
         setTimeout(() => {
           location.reload()
         }, 2000)
       } catch (error) {
+        // Handle specific error cases
         if (error.response && error.response.status === 413) {
           alert.customMessage =
             'Failed to submit form. The total attachment size is too large.'
@@ -218,6 +415,15 @@ export default {
       submitForm,
       alert,
       loading,
+      emailError,
+      nameError,
+      projectNumberError,
+      handleEmailBlur,
+      handleNameBlur,
+      handleProjectNumberBlur,
+      handlePublishedChange,
+      descriptionError,
+      handleDescriptionBlur,
     }
   },
 }
@@ -259,6 +465,7 @@ p {
   box-sizing: border-box;
   border: 1px solid #ccc;
   border-radius: 4px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 .form-group.checkbox {
@@ -327,5 +534,9 @@ p {
 }
 textarea {
   height: 200px;
+}
+.error-message,
+.error-input {
+  display: none;
 }
 </style>
