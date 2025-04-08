@@ -262,10 +262,8 @@ const submitForm = () => {
     })
     .catch(function (e) {
       console.log(e.response)
-      // Check if the error is due to an existing email
       if (e.response && e.response.data && e.response.data.message) {
-        error.signup =
-          'An error occurred while creating user: ' + e.response.data.message
+        error.signup = e.response.data.message
       } else {
         error.signup =
           'An error occurred while creating user. Please try again later.'

@@ -232,9 +232,9 @@ export const useAuthStore = defineStore({
         } else if (res.data.potentialUserByEmail) {
           return {
             messages: {
-              msg: `We find your email address <b>${res.data.potentialUserByEmail.email}</b> in our database.`,
+              msg: `We found an account with your email address <b>${res.data.potentialUserByEmail.email}</b> in our database.`,
               signinMsg:
-                'Please sign in to MorphoBank to link with your ORCID account.',
+                'Please sign in to that account MorphoBank with your username/pwd and link it with your ORCID id.',
             },
             showSignin: true,
             showRegister: false,
@@ -244,7 +244,7 @@ export const useAuthStore = defineStore({
             messages: {
               msg: `We find user <b>${res.data.potentialUsersByName[0].name}</b> in our database.`,
               signinMsg:
-                "If it's you, please sign in to MorphoBank to link with your ORCID account.",
+                "If it's you, please sign in to MorphoBank with your username/pwd and link it with your ORCID id.",
               registerMsg:
                 'Otherwise, please proceed to create an account with your ORCID record.',
             },
