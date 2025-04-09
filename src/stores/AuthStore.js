@@ -45,6 +45,7 @@ export const useAuthStore = defineStore({
         userId: null,
         userEmail: null,
         name: null,
+        access: null,
       }
       this.orcid = {
         orcid: null,
@@ -139,7 +140,6 @@ export const useAuthStore = defineStore({
         this.user = uObj
 
         localStorage.setItem('mb-user', JSON.stringify(uObj))
-        console.log('Login successful')
         return true
       } catch (e) {
         console.error(`store:auth:login(): ${e}\n${e.response.data.message}`)
@@ -221,6 +221,7 @@ export const useAuthStore = defineStore({
             userId: res.data.user.user_id,
             userEmail: res.data.user.email,
             name: res.data.user.name,
+            access: res.data.user.access,
           }
           this.user = uObj
           localStorage.setItem('mb-user', JSON.stringify(uObj))
