@@ -17,6 +17,7 @@ const userCanCurate = computed(() => authStore.isUserCurator)
 const searchQuery = ref('')
 const isDropdownOpen = ref(false)
 const dropdownRef = ref(null)
+const isLoadingCuratorProjects = ref(false)
 
 // Add computed property for filtered curator projects
 const filteredCuratorProjects = computed(() => {
@@ -45,6 +46,7 @@ onMounted(async () => {
   try {
     // Fetch curator projects if user has curator permissions
     if (userCanCurate.value) {
+      isLoadingCuratorProjects.value = true
       const curatorResponse = await axios.get(
         `${import.meta.env.VITE_API_URL}/projects/curator-projects`
       )
@@ -52,6 +54,8 @@ onMounted(async () => {
     }
   } catch (error) {
     console.error('Error fetching curator projects:', error)
+  } finally {
+    isLoadingCuratorProjects.value = false
   }
 
   // Add click outside event listener
@@ -145,32 +149,45 @@ const selectCuratorProject = () => {
             </div>
             <div v-if="isDropdownOpen" class="dropdown-options">
               <div
-                v-for="project in filteredCuratorProjects"
-                :key="project.project_id"
-                class="dropdown-option"
-                :class="{
-                  selected: selectedCuratorProject === project.project_id,
-                }"
-                @click="
-                  () => {
-                    selectedCuratorProject = project.project_id
-                    searchQuery = `[P${project.project_id}${
-                      project.published ? '; PUBLISHED' : ''
-                    }] ${project.name.substring(0, 100)}`
-                    isDropdownOpen = false
-                  }
-                "
+                v-if="isLoadingCuratorProjects"
+                class="dropdown-option loading"
               >
-                [P{{ project.project_id
-                }}{{ project.published ? '; PUBLISHED' : '' }}]
-                {{ project.name.substring(0, 100) }}
+                <span
+                  class="spinner-border spinner-border-sm me-2"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                Loading projects...
               </div>
-              <div
-                v-if="filteredCuratorProjects.length === 0"
-                class="dropdown-option no-results"
-              >
-                No projects found
-              </div>
+              <template v-else>
+                <div
+                  v-for="project in filteredCuratorProjects"
+                  :key="project.project_id"
+                  class="dropdown-option"
+                  :class="{
+                    selected: selectedCuratorProject === project.project_id,
+                  }"
+                  @click="
+                    () => {
+                      selectedCuratorProject = project.project_id
+                      searchQuery = `[P${project.project_id}${
+                        project.published ? '; PUBLISHED' : ''
+                      }] ${project.name.substring(0, 100)}`
+                      isDropdownOpen = false
+                    }
+                  "
+                >
+                  [P{{ project.project_id
+                  }}{{ project.published ? '; PUBLISHED' : '' }}]
+                  {{ project.name.substring(0, 100) }}
+                </div>
+                <div
+                  v-if="filteredCuratorProjects.length === 0"
+                  class="dropdown-option no-results"
+                >
+                  No projects found
+                </div>
+              </template>
             </div>
           </div>
           <button type="submit" class="btn btn-primary">Go</button>
@@ -292,5 +309,19 @@ const selectCuratorProject = () => {
 /* Add styles for the search input */
 .form-control {
   margin-bottom: 0.5rem;
+}
+
+.dropdown-option.loading {
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+.spinner-border {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.15em;
 }
 </style>
