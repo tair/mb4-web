@@ -7,7 +7,7 @@ const props = defineProps({
 <template>
   <div class="d-grid gap-2 d-sm-flex mb-3">
     <RouterLink
-      :to="`/project/pub_date`"
+      :to="`/projects/pub_date`"
       class="nav-link p-0"
       v-if="menuItem != 'pub_date'"
     >
@@ -16,7 +16,7 @@ const props = defineProps({
       </button>
     </RouterLink>
     <div v-else>
-      <RouterLink :to="`/project/pub_date`" class="nav-link p-0">
+      <RouterLink :to="`/projects/pub_date`" class="nav-link p-0">
         <button type="button" class="btn btn-warning btn-sm">
           Project Publication Date
         </button>
@@ -24,7 +24,7 @@ const props = defineProps({
     </div>
 
     <RouterLink
-      :to="`/project/prj_no`"
+      :to="`/projects/prj_no`"
       class="nav-link p-0"
       v-if="menuItem != 'prj_no'"
     >
@@ -33,7 +33,7 @@ const props = defineProps({
       </button>
     </RouterLink>
     <div v-else>
-      <RouterLink :to="`/project/prj_no`" class="nav-link p-0">
+      <RouterLink :to="`/projects/prj_no`" class="nav-link p-0">
         <button type="button" class="btn btn-warning btn-sm">
           Project Number
         </button>
@@ -41,7 +41,7 @@ const props = defineProps({
     </div>
 
     <RouterLink
-      :to="`/project/title`"
+      :to="`/projects/title`"
       class="nav-link p-0"
       v-if="menuItem != 'prj_title'"
     >
@@ -56,7 +56,7 @@ const props = defineProps({
     </div>
 
     <RouterLink
-      :to="`/project/author`"
+      :to="`/projects/author`"
       class="nav-link p-0"
       v-if="menuItem != 'author'"
     >
@@ -67,7 +67,7 @@ const props = defineProps({
     </div>
 
     <RouterLink
-      :to="`/project/journal`"
+      :to="`/projects/journal`"
       class="nav-link p-0"
       v-if="menuItem != 'publication'"
     >
@@ -80,7 +80,7 @@ const props = defineProps({
     </div>
 
     <RouterLink
-      :to="`/project/popular`"
+      :to="`/projects/popular`"
       class="nav-link p-0"
       v-if="menuItem != 'popular'"
     >
@@ -91,7 +91,7 @@ const props = defineProps({
     </div>
 
     <RouterLink
-      :to="`/project/institution`"
+      :to="`/projects/institution`"
       class="nav-link p-0"
       v-if="menuItem != 'institution'"
     >
@@ -104,7 +104,7 @@ const props = defineProps({
     </div>
 
     <RouterLink
-      :to="`/project/journal_year`"
+      :to="`/projects/journal_year`"
       class="nav-link p-0"
       v-if="menuItem != 'journal_year'"
     >

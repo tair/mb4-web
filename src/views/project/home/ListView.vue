@@ -75,13 +75,11 @@ const unpublishedProjects = computed(() =>
 )
 
 // Curator project selector method
-const selectCuratorProject = () => {
-  if (selectedCuratorProject.value) {
-    router.push({
-      name: 'select-project',
-      params: { projectId: selectedCuratorProject.value },
-    })
+async function selectCuratorProject() {
+  if (!selectedCuratorProject.value) {
+    return
   }
+  router.push(`/myprojects/${selectedCuratorProject.value}/overview`)
 }
 </script>
 <template>
