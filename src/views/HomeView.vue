@@ -2,6 +2,7 @@
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { getBestMediaUrl, processItemsWithMedia } from '@/utils/mediaUtils'
 
 const router = useRouter()
 
@@ -48,39 +49,23 @@ onMounted(async () => {
       maintenanceStatus
     } = response.data;
 
+    // Fetch stats data
+    const statsResponse = await axios.get(`${import.meta.env.VITE_API_URL}/stats/home`);
+    stats.value = statsResponse.data;
+
     // Process media URLs for featured projects
-    featuredProjects.value = featuredProjectsData.map(project => ({
-      ...project,
-      media: project.media?.medium ? 
-        `https://morphobank.org/media/morphobank3/images/${project.media.medium.HASH}/${project.media.medium.MAGIC}_${project.media.medium.FILENAME}` : 
-        null
-    }));
+    featuredProjects.value = processItemsWithMedia(featuredProjectsData);
 
     // Process media URLs for matrix images
-    matrixImages.value = matrixImagesData.map(image => ({
-      ...image,
-      media: image.media?.medium ? 
-        `https://morphobank.org/media/morphobank3/images/${image.media.medium.HASH}/${image.media.medium.MAGIC}_${image.media.medium.FILENAME}` : 
-        null
-    }));
+    matrixImages.value = processItemsWithMedia(matrixImagesData);
 
     announcements.value = announcementsData;
     
     // Process media URLs for tools
-    tools.value = toolsData.map(tool => ({
-      ...tool,
-      media: tool.media?.medium ? 
-        `https://morphobank.org/media/morphobank3/images/${tool.media.medium.HASH}/${tool.media.medium.MAGIC}_${tool.media.medium.FILENAME}` : 
-        null
-    }));
+    tools.value = processItemsWithMedia(toolsData);
 
     // Process media URLs for press
-    press.value = pressData.map(item => ({
-      ...item,
-      media: item.media?.thumbnail ? 
-        `https://morphobank.org/media/morphobank3/images/${item.media.thumbnail.HASH}/${item.media.thumbnail.MAGIC}_${item.media.thumbnail.FILENAME}` : 
-        null
-    }));
+    press.value = processItemsWithMedia(pressData);
 
     maintenanceMode.value = maintenanceStatus.enabled;
     maintenanceMessage.value = maintenanceStatus.message;
@@ -91,29 +76,36 @@ onMounted(async () => {
     currentToolIndex.value = 0
     currentPressIndex.value = 0
 
-    // Initialize slideshows after data is loaded
-    nextTick(() => {
-      if (featuredProjects.value.length) {
-        $('#featuredProjectSlideShow').cycle({
-          speed: 200,
-          timeout: 8000,
-          pager: '#featuredProjectSlideShowNav',
-          pagerEvent: 'mouseover',
-          pauseOnPagerHover: true
-        });
-      }
+    // Start auto-rotation for slideshows
+    if (featuredProjects.value.length) {
+      setInterval(() => {
+        if (currentFeaturedIndex.value < featuredProjects.value.length - 1) {
+          currentFeaturedIndex.value++
+        } else {
+          currentFeaturedIndex.value = 0
+        }
+      }, 8000)
+    }
 
-      if (tools.value.length) {
-        $('#toolsSlideShow').cycle({
-          delay: -4000,
-          speed: 400,
-          timeout: 8000,
-          pager: '#toolsSlideShowNav',
-          pagerEvent: 'mouseover',
-          pauseOnPagerHover: true
-        });
-      }
-    });
+    if (tools.value.length) {
+      setInterval(() => {
+        if (currentToolIndex.value < tools.value.length - 1) {
+          currentToolIndex.value++
+        } else {
+          currentToolIndex.value = 0
+        }
+      }, 8000)
+    }
+
+    if (press.value.length) {
+      setInterval(() => {
+        if (currentPressIndex.value < press.value.length - 1) {
+          currentPressIndex.value++
+        } else {
+          currentPressIndex.value = 0
+        }
+      }, 8000)
+    }
   } catch (error) {
     console.error('Error fetching data:', error);
   }
@@ -190,7 +182,7 @@ onMounted(() => {
       <div class="matrix-side">
         <router-link 
           v-if="matrixImages.length > 0"
-          :to="{ name: 'ProjectMatrixViewerView', params: { projectId: matrixImages[0].project_id, matrixId: 0 } }" 
+          :to="`/project/${matrixImages[0].project_id}/overview`" 
           class="matrix-link"
         >
           <img 
@@ -203,10 +195,10 @@ onMounted(() => {
       </div>
 
       <div class="content-side">
-        <h1 class="main-title">Building the Tree of Life with phenotypes</h1>
+        <h1 class="main-title">Building the Tree of Life with Phenotypes</h1>
         
         <div class="action-buttons">
-          <router-link to="/my-projects" class="action-button scientists">
+          <router-link to="/myprojects" class="action-button scientists">
             <strong>For Scientists</strong>
             <span>Use the Tools</span>
           </router-link>
@@ -379,7 +371,7 @@ onMounted(() => {
                  :key="project.project_id" 
                  class="featured-project"
                  :class="{ active: currentFeaturedIndex === index }">
-              <router-link :to="{ name: 'ProjectMatrixViewerView', params: { projectId: project.project_id, matrixId: 0 } }" 
+              <router-link :to="`/project/${project.project_id}/overview`" 
                           class="featured-link">
                 <div class="card-image-container">
                   <img v-if="project.media" :src="project.media" :alt="project.name" class="card-image" />
@@ -500,7 +492,7 @@ onMounted(() => {
     <!-- Sponsors Section -->
     <div class="clearline"></div>
     <div class="institutional-supporters">
-      <h2 class="supporters-title">Our Institutional Supporters</h2>
+      <h2 class="supporters-title">Founding Partners</h2>
       <div class="sponsors">
         <a href="http://www.nsf.gov" target="funder" class="sponsor-link">
           <img src="/images/nsf.gif" width="75" height="75" alt="NSF" class="sponsor-image" />
@@ -515,6 +507,11 @@ onMounted(() => {
           <img src="/images/phoenix_logo.png" width="130" height="85" alt="Phoenix Bioinformatics" class="sponsor-image" />
         </a>
       </div>
+      <div class="supporting-members">
+        <a href="https://ui.arabidopsis.org/#/contentaccess/list?partnerId=morphobank" target="_blank" class="supporting-members-link">
+          View Our Supporting Members
+        </a>
+      </div>
     </div>
   </div>
 </template>
@@ -523,7 +520,7 @@ onMounted(() => {
 .home-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 0;
   font-family: Arial, sans-serif;
   color: #333;
 }
@@ -534,7 +531,7 @@ onMounted(() => {
   font-size: 24px;
   font-weight: bold;
   color: #cc0000;
-  margin: 10px;
+  margin: 10px 0;
   line-height: 26px;
   background-color: #fff3f3;
   padding: 10px;
@@ -544,52 +541,65 @@ onMounted(() => {
 /* Matrix Area */
 .matrixarea {
   display: flex;
-  gap: 2rem;
-  margin: 1rem auto;
+  gap: 3rem;
+  margin: 2rem 0;
   align-items: center;
-  max-width: 1100px;
-  padding: 0 1.5rem;
+  max-width: 1200px;
+  padding: 0 2rem;
 }
 
 .matrix-side {
-  flex: 0 0 300px;
-  background: black;
-  border-radius: 8px;
+  flex: 0 0 500px;
+  background: white;
+  border-radius: 12px;
   overflow: hidden;
-  height: 220px;
+  height: 180px; /* Adjusted for 3:9 or 3:6 ratio */
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .matrix-link {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: 100%;
+  width: 100%;
 }
 
 .matrix-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: cover; /* Changed to cover to maintain aspect ratio */
   display: block;
 }
 
 .content-side {
-  flex: 0 0 600px;
+  flex: 1;
+  min-width: 300px;
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  gap: 2.5rem;
+  padding-right: 2rem;
 }
 
 .main-title {
-  font-size: 2.75rem;
-  font-weight: 600;
-  color: #2c3e50;
-  line-height: 1.1;
-  margin-bottom: 1.5rem;
+  font-size: 3rem;
+  font-weight: 700;
+  color: #000000;
+  line-height: 1.2;
+  margin: 0;
   letter-spacing: -0.02em;
 }
 
 .action-buttons {
   display: flex;
   gap: 1rem;
-  max-width: 550px;
+  width: 100%;
+  max-width: 600px;
 }
 
 .action-button {
@@ -598,91 +608,72 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.25rem 1rem;
+  padding: 1rem 1.5rem;
   text-decoration: none;
   border-radius: 8px;
   text-align: center;
-  transition: transform 0.15s ease;
+  transition: all 0.2s ease;
+  min-height: 80px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .action-button:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
 .action-button.scientists {
-  background: #2c3e50;
+  background: #666;
   color: white;
 }
 
 .action-button.public {
-  background: #E27B58;
+  background: #ef782f;
   color: white;
 }
 
 .action-button strong {
-  font-size: 1.15rem;
-  margin-bottom: 0.35rem;
-  font-weight: 500;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
 }
 
 .action-button span {
-  font-size: 1rem;
+  font-size: 0.9rem;
   opacity: 0.9;
+}
+
+@media (max-width: 1200px) {
+  .matrixarea {
+    max-width: 1000px;
+    gap: 2.5rem;
+  }
+
+  .matrix-side {
+    flex: 0 0 400px;
+    height: 150px;
+    min-height: 150px;
+  }
+
+  .main-title {
+    font-size: 2.2rem;
+  }
 }
 
 @media (max-width: 1024px) {
   .matrixarea {
     max-width: 900px;
+    padding: 0 1.5rem;
   }
 
   .matrix-side {
-    flex: 0 0 250px;
-    height: 200px;
+    flex: 0 0 350px;
+    height: 130px;
+    min-height: 130px;
   }
 
   .content-side {
-    flex: 0 0 500px;
-  }
-
-  .main-title {
-    font-size: 2.5rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .matrixarea {
-    flex-direction: column;
-    gap: 1.5rem;
-    padding: 0 1rem;
-    margin: 1rem 0;
-  }
-
-  .matrix-side {
-    width: 100%;
-    max-width: 300px;
-    height: 220px;
-  }
-
-  .content-side {
-    width: 100%;
-    max-width: 500px;
-    align-items: center;
-  }
-
-  .main-title {
-    font-size: 2.25rem;
-    text-align: center;
-  }
-
-  .action-buttons {
-    width: 100%;
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 480px) {
-  .matrixarea {
-    gap: 1rem;
+    gap: 2rem;
   }
 
   .main-title {
@@ -690,15 +681,73 @@ onMounted(() => {
   }
 
   .action-button {
-    padding: 1rem;
+    min-height: 70px;
+    padding: 0.875rem 1.25rem;
   }
 
   .action-button strong {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   .action-button span {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .matrixarea {
+    flex-direction: column;
+    gap: 2rem;
+    padding: 0 1rem;
+    margin: 1.5rem 0;
+    text-align: center;
+  }
+
+  .matrix-side {
+    width: 100%;
+    max-width: 500px;
+    height: 120px;
+    min-height: 120px;
+  }
+
+  .content-side {
+    width: 100%;
+    height: auto;
+    align-items: center;
+    gap: 1.5rem;
+    padding-right: 0;
+  }
+
+  .action-buttons {
+    max-width: 500px;
+    width: 100%;
+  }
+
+  .main-title {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .matrix-side {
+    height: 100px;
+    min-height: 100px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.75rem;
+  }
+
+  .action-button {
+    width: 100%;
+    min-height: 60px;
+    padding: 0.75rem;
+  }
+
+  .main-title {
+    font-size: 1.6rem;
   }
 }
 
@@ -1092,7 +1141,7 @@ onMounted(() => {
   transform: translateX(-50%);
   width: 60px;
   height: 3px;
-  background: #E27B58;
+  background: #ef782f;
   border-radius: 2px;
 }
 
@@ -1131,14 +1180,32 @@ onMounted(() => {
   max-width: 100%;
   width: auto;
   object-fit: contain;
-  filter: grayscale(100%);
-  opacity: 0.8;
   transition: all 0.3s ease;
 }
 
 .sponsor-link:hover .sponsor-image {
-  filter: grayscale(0%);
-  opacity: 1;
+  transform: scale(1.05);
+}
+
+.supporting-members {
+  margin-top: 2rem;
+}
+
+.supporting-members-link {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: #ef782f;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.supporting-members-link:hover {
+  background: #d86c13;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 120, 47, 0.2);
 }
 
 @media (max-width: 1200px) {
@@ -1291,7 +1358,7 @@ onMounted(() => {
 }
 
 .card-id {
-  color: #E27B58;
+  color: #ef782f;
   font-size: 16px;
   display: block;
   margin-bottom: 6px;
@@ -1375,7 +1442,7 @@ onMounted(() => {
 }
 
 .dot.active {
-  background-color: #E27B58;
+  background-color: #ef782f;
 }
 
 @media (max-width: 1024px) {
