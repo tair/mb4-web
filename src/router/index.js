@@ -2,8 +2,10 @@ import { useAuthStore } from '@/stores/AuthStore.js'
 import { invalidateAll } from '@/stores/utils.js'
 import { createRouter, createWebHistory } from 'vue-router'
 import { MY_PROJECT_VIEWS } from '@/router/projects.js'
-import { PUBLISHED_PROJECT_VIEWS } from '@/router/published.js'
-
+import {
+  PUBLISHED_PROJECT_DETAIL_VIEWS,
+  PUBLISHED_PROJECT_VIEWS,
+} from '@/router/published.js'
 import AdminHomeView from '@/views/admin/AdminHomeView.vue'
 import AdminView from '@/views/admin/AdminView.vue'
 import ApiView from '@/views/misc/ApiView.vue'
@@ -25,6 +27,7 @@ import UserRegistrationByORCIDView from '@/views/users/UserRegistrationByORCIDVi
 import UserResetPasswordView from '@/views/users/UserResetPasswordView.vue'
 import UserSetNewPasswordView from '@/views/users/UserSetNewPasswordView.vue'
 import UserView from '@/views/users/UserView.vue'
+import axios from 'axios'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -162,20 +165,79 @@ const router = createRouter({
           path: '/myprojects/:id(\\d+)',
           name: 'MyProjectsView',
           component: MyProjectsView,
-          beforeEnter: [requireSignIn, invalidateAll],
+          beforeEnter: [
+            requireSignIn,
+            invalidateAll,
+            async (to, from, next) => {
+              const projectId = to.params.id
+              const isPublished = await checkProjectPublished(projectId)
+
+              if (isPublished) {
+                // Extract the sub-path from the full path
+                const fullPath = to.fullPath
+                const subPath = fullPath.replace(`/myprojects`, '')
+
+                // Redirect to the published project path
+                next(`/project${subPath}`)
+              } else {
+                next()
+              }
+            },
+          ],
           children: MY_PROJECT_VIEWS,
         },
 
         // Public view of Projects
         {
-          path: '/project',
+          path: '/projects',
           component: ProjectView,
-          // add default redirect to /project view
-          redirect: '/project/pub_date',
+          // add default redirect to /projects/pub_date
+          redirect: '/projects/pub_date',
           children: PUBLISHED_PROJECT_VIEWS,
         },
         {
-          path: '/:catchAll(.*)',
+          path: '/project/:id(\\d+)',
+          component: ProjectView,
+          beforeEnter: async (to, from, next) => {
+            const projectId = to.params.id
+            console.log('projectId', projectId)
+            const { exists, published, message } =
+              await checkProjectExistsAndPublished(projectId)
+            console.log('exists', exists)
+            console.log('published', published)
+            console.log('message', message)
+            if (!exists) {
+              next({
+                name: 'NotFoundView',
+                query: {
+                  message: message || 'This project does not exist.',
+                },
+              })
+              return
+            }
+
+            if (!published) {
+              next({
+                name: 'NotFoundView',
+                query: {
+                  message:
+                    message || 'This project is not yet publicly available.',
+                },
+              })
+              return
+            }
+
+            next()
+          },
+          children: PUBLISHED_PROJECT_DETAIL_VIEWS,
+        },
+        {
+          path: '/project',
+          redirect: '/projects',
+        },
+        {
+          path: '/:catchAll(.*)*',
+          name: 'NotFoundView',
           component: NotFoundView,
         },
       ],
@@ -227,4 +289,49 @@ function requireSignIn(to) {
     return { name: 'UserLogin' }
   }
 }
+
+// Add a function to check if a project is published
+async function checkProjectPublished(projectId) {
+  try {
+    const response = await axios.get(
+      `${import.meta.env.VITE_API_URL}/projects/${projectId}/overview`
+    )
+    return response.data.overview.published === 1
+  } catch (error) {
+    console.error('Error checking if project is published:', error)
+    return false
+  }
+}
+
+// Add a function to check if a project exists and is published
+async function checkProjectExistsAndPublished(projectId) {
+  try {
+    const response = await axios.get(
+      `${import.meta.env.VITE_API_URL}/projects/${projectId}/overview`
+    )
+    return {
+      exists: true,
+      published: response.data.overview.published === 1,
+      message:
+        response.data.overview.published === 1
+          ? null
+          : 'This project is not yet publicly available.',
+    }
+  } catch (error) {
+    if (error.response?.status === 404) {
+      return {
+        exists: false,
+        published: false,
+        message: error.response.data.message,
+      }
+    }
+    console.error('Error checking project status:', error)
+    return {
+      exists: false,
+      published: false,
+      message: 'An error occurred while checking the project status.',
+    }
+  }
+}
+
 export default router

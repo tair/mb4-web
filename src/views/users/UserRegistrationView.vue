@@ -147,7 +147,7 @@
           <h5>
             Registration is not required to view published projects. If you are
             interested in only viewing a project, please<br /><br />
-            <router-link to="/project/pub_date"
+            <router-link to="/projects/pub_date"
               >click to BROWSE published projects</router-link
             ><br /><br /><em>OR</em><br /><br />
             SEARCH published projects in the search box at the top of the page

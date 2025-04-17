@@ -7,6 +7,8 @@ import { useMessageStore } from '@/stores/MessageStore.js'
 import { getPasswordPattern, getPasswordRule } from '@/utils/util.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import Alert from '@/components/main/Alert.vue'
+import FormLayout from '@/components/main/FormLayout.vue'
+import '@/assets/css/form.css'
 
 const userStore = useUserStore()
 const authStore = useAuthStore()
@@ -151,245 +153,226 @@ const confirmPassword = function () {
 </script>
 
 <template>
-  <h3 class="mb-3 fw-normal">User Profile</h3>
-  <div v-if="!error.fetchUser && userForm">
-    <form @submit.prevent="submitForm" class="form-profile">
-      <Alert
-        :message="errorMsg"
-        messageName="message"
-        :alertType="messageStore.getMessageType()"
-      ></Alert>
-      <div class="form-group">
-        <label for="firstName">First Name</label>
-        <input
-          id="firstName"
-          type="text"
-          class="form-control"
-          v-model="userData.userForm.firstName"
-          required
-        />
-      </div>
-      <div class="form-group">
-        <label for="lastName">Last Name</label>
-        <input
-          id="lastName"
-          type="text"
-          class="form-control"
-          v-model="userData.userForm.lastName"
-          required
-        />
-      </div>
-      <div class="form-group">
-        <label for="email">
-          Email <Tooltip :content="emailTooltipText"></Tooltip>
-        </label>
-        <input
-          id="email"
-          type="email"
-          class="form-control"
-          v-model="userData.userForm.email"
-          required
-        />
-      </div>
-      <div class="form-group">
-        <label for="newPassword"
-          >Password<br />(Only enter a password if you wish to change your
-          current password) <Tooltip :content="passwordTooltipText"></Tooltip
-        ></label>
-        <input
-          id="newPassword"
-          type="password"
-          autocomplete="new-password"
-          class="form-control"
-          v-model="userData.userForm.newPassword"
-          @blur="validatePassword"
-        />
+  <FormLayout title="USER PROFILE">
+    <div v-if="!error.fetchUser && userForm">
+      <form @submit.prevent="submitForm" class="list-form">
         <Alert
-          :message="error"
-          messageName="newPasswordValidation"
-          alertType="danger"
+          :message="errorMsg"
+          messageName="message"
+          :alertType="messageStore.getMessageType()"
         ></Alert>
-      </div>
 
-      <div class="form-group">
-        <label for="newPasswordConfirm">Password (Confirm)</label>
-        <input
-          id="newPasswordConfirm"
-          type="password"
-          autocomplete="new-password-confirm"
-          class="form-control"
-          v-model="userData.userForm.newPasswordConfirm"
-          @blur="confirmPassword"
-        />
-        <Alert
-          :message="error"
-          messageName="newPasswordConfirm"
-          alertType="danger"
-        ></Alert>
-      </div>
-      <div class="form-group">
-        <label>
-          Institutional Affiliation(s)
-          <Tooltip :content="insititutionalTootipText"></Tooltip>
-        </label>
-        <Alert
-          :message="error"
-          messageName="loadInstitutions"
-          alertType="danger"
-        ></Alert>
-        <ul>
-          <li
-            v-for="institution in userData.userForm.institutions"
-            :key="institution.institution_id"
-          >
-            {{ institution.name }}
-            <a
-              href="#"
-              class="removeLink"
-              @click.prevent="removeInstitution(institution.institution_id)"
-            >
-              Remove
-            </a>
-          </li>
-        </ul>
-        <Alert
-          :message="error"
-          messageName="removeInstitution"
-          alertType="danger"
-        ></Alert>
-      </div>
-      <div class="form-group">
-        <label for="newInstitution">Add Affiliated Institution</label>
-        <Alert
-          :message="error"
-          messageName="addInstitution"
-          alertType="danger"
-        ></Alert>
-        <div class="search-container">
+        <!-- Basic Information -->
+        <div class="form-group">
+          <label class="form-label"> First Name </label>
           <input
-            id="newInstitution"
             type="text"
-            v-model="searchTerm"
-            @input="searchInstitutions"
             class="form-control"
-          />
-          <img
-            class="loading-icon"
-            alt="Loading spinner"
-            src="/Loading_spinner.svg"
-            title="Loading Spinner"
-            v-if="searchLoading"
+            v-model="userData.userForm.firstName"
+            required
           />
         </div>
-        <select v-if="institutionList.length" :size="10" class="form-control">
-          <option
-            v-for="institution in institutionList"
-            :key="institution.institution_id"
-            :value="institution.institution_id"
-            @click="
-              addInstitution(institution.institution_id, institution.name)
-            "
-          >
-            {{ institution.name }}
-          </option>
-        </select>
-      </div>
-      <div class="form-group row text-vert-center">
-        <div class="col-sm-2" style="">ORCID</div>
-        <div class="col-sm-10">
-          <a
-            v-if="!userData.user.orcid"
-            :href="orcidLoginUrl"
-            class="w-100 btn btn-lg btn-primary btn-white"
-            ><img
-              alt="ORCID logo"
-              src="/ORCIDiD_iconvector.svg"
-              class="orcid-icon"
+
+        <div class="form-group">
+          <label class="form-label"> Last Name </label>
+          <input
+            type="text"
+            class="form-control"
+            v-model="userData.userForm.lastName"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            Email
+            <Tooltip :content="emailTooltipText"></Tooltip>
+          </label>
+          <input
+            type="email"
+            class="form-control"
+            v-model="userData.userForm.email"
+            required
+          />
+        </div>
+
+        <!-- Password Section -->
+        <h2 class="section-heading">PASSWORD</h2>
+        <div class="section-dividing-line"></div>
+
+        <div class="form-group">
+          <label class="form-label">
+            New Password
+            <Tooltip :content="passwordTooltipText"></Tooltip>
+          </label>
+          <p class="field-description">
+            Only enter a password if you wish to change your current password
+          </p>
+          <input
+            type="password"
+            autocomplete="new-password"
+            class="form-control"
+            v-model="userData.userForm.newPassword"
+            @blur="validatePassword"
+          />
+          <Alert
+            :message="error"
+            messageName="newPasswordValidation"
+            alertType="danger"
+          ></Alert>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            Confirm New Password
+            <span class="required">Required</span>
+          </label>
+          <input
+            type="password"
+            autocomplete="new-password-confirm"
+            class="form-control"
+            v-model="userData.userForm.newPasswordConfirm"
+            @blur="confirmPassword"
+          />
+          <Alert
+            :message="error"
+            messageName="newPasswordConfirm"
+            alertType="danger"
+          ></Alert>
+        </div>
+
+        <!-- Institutional Affiliation Section -->
+        <h2 class="section-heading">INSTITUTIONAL AFFILIATION</h2>
+        <div class="section-dividing-line"></div>
+
+        <div class="form-group">
+          <label class="form-label">
+            Current Affiliations
+            <Tooltip :content="insititutionalTootipText"></Tooltip>
+          </label>
+          <Alert
+            :message="error"
+            messageName="loadInstitutions"
+            alertType="danger"
+          ></Alert>
+          <ul class="institution-list">
+            <li
+              v-for="institution in userData.userForm.institutions"
+              :key="institution.institution_id"
+              class="institution-item"
+            >
+              {{ institution.name }}
+              <a
+                href="#"
+                class="removeLink"
+                @click.prevent="removeInstitution(institution.institution_id)"
+              >
+                Remove
+              </a>
+            </li>
+          </ul>
+          <Alert
+            :message="error"
+            messageName="removeInstitution"
+            alertType="danger"
+          ></Alert>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            Add New Institution
+            <Tooltip :content="insititutionalTootipText"></Tooltip>
+          </label>
+          <Alert
+            :message="error"
+            messageName="addInstitution"
+            alertType="danger"
+          ></Alert>
+          <div class="search-container">
+            <input
+              type="text"
+              v-model="searchTerm"
+              @input="searchInstitutions"
+              class="form-control"
+              placeholder="Search for institutions..."
             />
-            Link Account with ORCID</a
-          >
-          <div v-if="userData.user.orcid">
             <img
-              alt="ORCID logo"
-              src="/ORCIDiD_iconvector.svg"
-              title="ORCID iD"
-              class="orcid-icon"
+              class="loading-icon"
+              alt="Loading spinner"
+              src="/Loading_spinner.svg"
+              title="Loading Spinner"
+              v-if="searchLoading"
             />
-            {{ userData.user.orcid }}
+          </div>
+          <select v-if="institutionList.length" :size="10" class="form-control">
+            <option
+              v-for="institution in institutionList"
+              :key="institution.institution_id"
+              :value="institution.institution_id"
+              @click="
+                addInstitution(institution.institution_id, institution.name)
+              "
+            >
+              {{ institution.name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- ORCID Section -->
+        <h2 class="section-heading">ORCID</h2>
+        <div class="section-dividing-line"></div>
+
+        <div class="form-group">
+          <div class="orcid-container">
+            <div v-if="!userData.user.orcid">
+              <a :href="orcidLoginUrl" class="btn btn-lg btn-primary btn-white">
+                <img
+                  alt="ORCID logo"
+                  src="/ORCIDiD_iconvector.svg"
+                  class="orcid-icon"
+                />
+                Link Account with ORCID
+              </a>
+            </div>
+            <div v-else class="orcid-linked">
+              <img
+                alt="ORCID logo"
+                src="/ORCIDiD_iconvector.svg"
+                title="ORCID iD"
+                class="orcid-icon"
+              />
+              {{ userData.user.orcid }}
+            </div>
           </div>
         </div>
-      </div>
-      <Alert
-        :message="error"
-        messageName="updateUser"
-        alertType="danger"
-      ></Alert>
-      <Alert
-        :message="message"
-        messageName="updateUser"
-        alertType="success"
-      ></Alert>
-      <div class="row margin-top-s">
-        <div class="col-sm-1"></div>
-        <div class="col-sm-4">
-          <button class="w-100 btn btn-lg btn-primary form-group" type="submit">
-            Update
-          </button>
-        </div>
-        <div class="col-sm-2"></div>
-        <div class="col-sm-4">
+
+        <Alert
+          :message="error"
+          messageName="updateUser"
+          alertType="danger"
+        ></Alert>
+        <Alert
+          :message="message"
+          messageName="updateUser"
+          alertType="success"
+        ></Alert>
+
+        <div class="form-buttons">
+          <button class="btn btn-primary" type="submit">Update</button>
           <button
-            class="w-100 btn btn-lg btn-secondary form-group"
-            type
+            class="btn btn-secondary"
+            type="button"
             @click.prevent="userStore.reset()"
           >
             Cancel
           </button>
         </div>
-        <div class="col-sm-1"></div>
-      </div>
-    </form>
-  </div>
-  <Alert :message="error" messageName="fetchUser" alertType="danger"></Alert>
+      </form>
+    </div>
+    <Alert :message="error" messageName="fetchUser" alertType="danger"></Alert>
+  </FormLayout>
 </template>
 
 <style scoped>
-.form-profile {
-  width: 100%;
-  max-width: 600px;
-  padding: 15px;
-}
-.btn-white {
-  background-color: #ffffff !important;
-  border: 1px solid #ced4da !important;
-  color: #333333;
-}
-.margin-top-s {
-  margin-top: 10px;
-}
-.orcid-icon {
-  width: 24px;
-  height: 24px;
-}
-.form-group {
-  margin-top: 10px;
-}
-.text-vert-center {
-  display: flex;
-  align-items: center;
-}
-.search-container {
-  position: relative;
-}
-.loading-icon {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 50px;
-}
-a.removeLink {
-  color: #ef782f;
-  margin-left: 5px;
-}
+/* Remove all duplicate styles since we're using the shared form.css */
 </style>

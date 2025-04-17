@@ -1,0 +1,114 @@
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: normal;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.required {
+  color: #ef782f;
+  margin-left: 5px;
+}
+
+.field-description {
+  font-size: 0.9em;
+  color: #666;
+  margin-bottom: 10px;
+  font-style: italic;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.form-buttons {
+  margin-top: 30px;
+  display: flex;
+  gap: 10px;
+}
+
+.section-heading {
+  font-size: 1.2em;
+  margin: 20px 0 10px;
+  /* color: #444; */
+  font-weight: normal;
+}
+
+.section-dividing-line {
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 20px;
+}
+
+.btn-white {
+  background-color: #ffffff !important;
+  border: 1px solid #ced4da !important;
+  color: #333333;
+}
+
+.institution-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.institution-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.removeLink {
+  color: #ef782f;
+  text-decoration: none;
+  margin-left: 10px;
+}
+
+.removeLink:hover {
+  text-decoration: underline;
+}
+
+.search-container {
+  position: relative;
+}
+
+.loading-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 20px;
+}
+
+.orcid-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.orcid-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 10px;
+}
+
+.orcid-linked {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+} 
