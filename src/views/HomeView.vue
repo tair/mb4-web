@@ -202,7 +202,7 @@ onMounted(() => {
             <strong>For Scientists</strong>
             <span>Use the Tools</span>
           </router-link>
-          <router-link to="/project/pub_date" class="action-button public">
+          <router-link to="/projects/pub_date" class="action-button public">
             <strong>For Scientists & The Public</strong>
             <span>See Published Research</span>
           </router-link>
@@ -214,7 +214,7 @@ onMounted(() => {
     <div class="statsrow">
       <h1 class="stats-title">
         <span>Comparative biologists at work with these tools now....</span>
-        <router-link to="/project/pub_date" class="stats-link">see total activity</router-link>
+        <router-link to="/projects/pub_date" class="stats-link">see total activity</router-link>
       </h1>
       <div class="stats-grid">
         <div class="stat">
@@ -256,7 +256,7 @@ onMounted(() => {
         <p class="browse-subtitle">Explore MorphoBank projects through different perspectives</p>
       </div>
       <div class="browse-links">
-        <router-link to="/project/pub_date" class="browse-link">
+        <router-link to="/projects/pub_date" class="browse-link">
           <div class="browse-icon">
             <i class="fas fa-calendar-alt"></i>
           </div>
@@ -266,7 +266,7 @@ onMounted(() => {
           </div>
         </router-link>
         
-        <router-link to="/project/prj_no" class="browse-link">
+        <router-link to="/projects/prj_no" class="browse-link">
           <div class="browse-icon">
             <i class="fas fa-hashtag"></i>
           </div>
@@ -276,7 +276,7 @@ onMounted(() => {
           </div>
         </router-link>
         
-        <router-link to="/project/title" class="browse-link">
+        <router-link to="/projects/title" class="browse-link">
           <div class="browse-icon">
             <i class="fas fa-heading"></i>
           </div>
@@ -286,7 +286,7 @@ onMounted(() => {
           </div>
         </router-link>
         
-        <router-link to="/project/author" class="browse-link">
+        <router-link to="/projects/author" class="browse-link">
           <div class="browse-icon">
             <i class="fas fa-user-edit"></i>
           </div>
@@ -296,7 +296,7 @@ onMounted(() => {
           </div>
         </router-link>
         
-        <router-link to="/project/journal" class="browse-link">
+        <router-link to="/projects/journal" class="browse-link">
           <div class="browse-icon">
             <i class="fas fa-book-open"></i>
           </div>
@@ -306,7 +306,7 @@ onMounted(() => {
           </div>
         </router-link>
         
-        <router-link to="/project/popular" class="browse-link">
+        <router-link to="/projects/popular" class="browse-link">
           <div class="browse-icon">
             <i class="fas fa-fire"></i>
           </div>
@@ -316,7 +316,7 @@ onMounted(() => {
           </div>
         </router-link>
         
-        <router-link to="/project/institution" class="browse-link">
+        <router-link to="/projects/institution" class="browse-link">
           <div class="browse-icon">
             <i class="fas fa-university"></i>
           </div>
@@ -326,7 +326,7 @@ onMounted(() => {
           </div>
         </router-link>
         
-        <router-link to="/project/journal_year" class="browse-link">
+        <router-link to="/projects/journal_year" class="browse-link">
           <div class="browse-icon">
             <i class="fas fa-clock"></i>
           </div>
@@ -492,7 +492,7 @@ onMounted(() => {
     <!-- Sponsors Section -->
     <div class="clearline"></div>
     <div class="institutional-supporters">
-      <h2 class="supporters-title">Founding Partners</h2>
+      <h2 class="supporters-title">Founding and Sustaining Partners</h2>
       <div class="sponsors">
         <a href="http://www.nsf.gov" target="funder" class="sponsor-link">
           <img src="/images/nsf.gif" width="75" height="75" alt="NSF" class="sponsor-image" />
