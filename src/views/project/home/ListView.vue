@@ -4,6 +4,7 @@ import { useProjectsStore } from '@/stores/ProjectsStore'
 import { useAuthStore } from '@/stores/AuthStore'
 import { useRouter } from 'vue-router'
 import ProjectCard from '@/views/project/home/ProjectCard.vue'
+import FormLayout from '@/components/main/FormLayout.vue'
 import axios from 'axios'
 
 const projectsStore = useProjectsStore()
@@ -83,12 +84,11 @@ async function selectCuratorProject() {
 }
 </script>
 <template>
-  <div class="my-projects-container">
-    <!-- Curator Project Selector -->
-
-    <header>
+  <FormLayout title="MY PROJECTS">
+    <div class="my-projects-container">
+      <!-- Curator Project Selector -->
       <div class="row">
-        <div class="col-md-3"><h2>My Projects</h2></div>
+        <div class="col-md-3"><h3>My Projects</h3></div>
         <div class="col-md-9">
           <div class="mb-2">
             You have {{ projectsStore.projects.length }} projects in Morphobank.
@@ -116,16 +116,14 @@ async function selectCuratorProject() {
           </div>
         </div>
       </div>
-    </header>
-    <main>
       <div v-if="userCanCurate" class="mb-4">
         <hr />
         <h3 class="mb-3">Curator access</h3>
         <form
           @submit.prevent="selectCuratorProject"
-          class="d-flex flex-column gap-2"
+          class="d-flex align-items-center gap-2"
         >
-          <div class="searchable-dropdown" ref="dropdownRef">
+          <div class="searchable-dropdown flex-grow-1" ref="dropdownRef">
             <div
               class="dropdown-input"
               @click="isDropdownOpen = !isDropdownOpen"
@@ -223,29 +221,34 @@ async function selectCuratorProject() {
           </button>
         </RouterLink>
       </div>
-    </main>
-  </div>
+    </div>
+  </FormLayout>
 </template>
 <style scoped>
 .my-projects-container {
   padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
 .searchable-dropdown {
   position: relative;
   width: 100%;
+  margin-bottom: 0;
 }
 
 .dropdown-input {
   position: relative;
   display: flex;
   align-items: center;
+  height: 38px;
 }
 
 .dropdown-input input {
   width: 100%;
   padding-right: 30px;
   cursor: pointer;
+  height: 38px;
 }
 
 .dropdown-arrow {
@@ -274,6 +277,7 @@ async function selectCuratorProject() {
   padding: 8px 12px;
   cursor: pointer;
   border-bottom: 1px solid #eee;
+  color: #666;
 }
 
 .dropdown-option:last-child {
@@ -302,6 +306,7 @@ async function selectCuratorProject() {
   padding: 30px;
   background-color: #f8f9fa;
   border-radius: 5px;
+  color: #666;
 }
 
 /* Add styles for the search input */
@@ -321,5 +326,36 @@ async function selectCuratorProject() {
   width: 1rem;
   height: 1rem;
   border-width: 0.15em;
+}
+
+h3 {
+  color: #444;
+  font-weight: 500;
+}
+
+a {
+  color: var(--mb-orange);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--mb-orange-hover);
+  text-decoration: underline;
+}
+
+b,
+strong {
+  font-weight: 500;
+}
+
+/* Add styles for the form container */
+form.d-flex {
+  display: flex;
+  align-items: stretch;
+}
+
+form.d-flex button {
+  height: 38px;
+  margin-left: 8px;
 }
 </style>
