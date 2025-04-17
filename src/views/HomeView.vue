@@ -214,7 +214,7 @@ onMounted(() => {
     <div class="statsrow">
       <h1 class="stats-title">
         <span>Comparative biologists at work with these tools now....</span>
-        <router-link to="/project/pub_date" class="stats-link">see total activity</router-link>
+        <router-link to="/projects/pub_date" class="stats-link">see total activity</router-link>
       </h1>
       <div class="stats-grid">
         <div class="stat">
