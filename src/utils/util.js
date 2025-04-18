@@ -16,11 +16,17 @@ function buildImageProps(mediaObj, type) {
 }
 
 function getPasswordPattern() {
-  return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+  // Updated pattern to be more compatible with browser auto-generation
+  // Requires at least 8 characters and at least 3 of the following:
+  // - lowercase letter
+  // - uppercase letter
+  // - number
+  // - special character (including hyphen, underscore, and other common special chars)
+  return /^(?:(?=.*[a-z])(?=.*[A-Z])(?=.*\d)|(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])|(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])|(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]))[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,}$/
 }
 
 function getPasswordRule() {
-  return 'Password must be 8 or more characters long, have at least 1 number, 1 uppercase letter, 1 lowercase letter, and 1 special character (@$!%*?&).'
+  return 'Password must be at least 8 characters long and contain at least 3 of the following: lowercase letter, uppercase letter, number, or special character.'
 }
 
 function searchInObject(obj, searchStr, includeFields = []) {
