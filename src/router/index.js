@@ -170,7 +170,7 @@ const router = createRouter({
             invalidateAll,
             async (to, from, next) => {
               const projectId = to.params.id
-              const isPublished = await checkProjectPublished(projectId)
+              const isPublished = await checkUnpublishedProjectStatus(projectId)
 
               if (isPublished) {
                 // Extract the sub-path from the full path
@@ -291,7 +291,7 @@ function requireSignIn(to) {
 }
 
 // Add a function to check if a project is published
-async function checkProjectPublished(projectId) {
+async function checkUnpublishedProjectStatus(projectId) {
   try {
     const response = await axios.get(
       `${import.meta.env.VITE_API_URL}/projects/${projectId}/overview`
@@ -306,14 +306,15 @@ async function checkProjectPublished(projectId) {
 // Add a function to check if a project exists and is published
 async function checkProjectExistsAndPublished(projectId) {
   try {
+    // Check if the project exists on public projects
     const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/projects/${projectId}/overview`
+      `${import.meta.env.VITE_API_URL}/public/projects/${projectId}`
     )
     return {
       exists: true,
-      published: response.data.overview.published === 1,
+      published: response.data.published === 1,
       message:
-        response.data.overview.published === 1
+        response.data.published === 1
           ? null
           : 'This project is not yet publicly available.',
     }
