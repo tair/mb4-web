@@ -20,13 +20,13 @@ const stats = ref({
   numMatrixViews: 0,
   numMatrixDownloads: 0,
   numMediaViews: 0,
-  numMediaDownloads: 0
+  numMediaDownloads: 0,
 })
 const tools = ref([])
 const press = ref([])
 const userCoordinates = ref({
   loggedIn: '',
-  nonLoggedIn: ''
+  nonLoggedIn: '',
 })
 const maintenanceMode = ref(false)
 const maintenanceMessage = ref('')
@@ -39,37 +39,41 @@ const currentPressIndex = ref(0)
 onMounted(async () => {
   try {
     // Fetch all required data from the new endpoint
-    const response = await axios.get(`${import.meta.env.VITE_API_URL}/home-page`);
+    const response = await axios.get(
+      `${import.meta.env.VITE_API_URL}/home-page`
+    )
     const {
       featuredProjects: featuredProjectsData,
       matrixImages: matrixImagesData,
       announcements: announcementsData,
       tools: toolsData,
       press: pressData,
-      maintenanceStatus
-    } = response.data;
+      maintenanceStatus,
+    } = response.data
 
     // Fetch stats data
-    const statsResponse = await axios.get(`${import.meta.env.VITE_API_URL}/stats/home`);
-    stats.value = statsResponse.data;
+    const statsResponse = await axios.get(
+      `${import.meta.env.VITE_API_URL}/stats/home`
+    )
+    stats.value = statsResponse.data
 
     // Process media URLs for featured projects
-    featuredProjects.value = processItemsWithMedia(featuredProjectsData);
+    featuredProjects.value = processItemsWithMedia(featuredProjectsData)
 
     // Process media URLs for matrix images
-    matrixImages.value = processItemsWithMedia(matrixImagesData);
+    matrixImages.value = processItemsWithMedia(matrixImagesData)
 
-    announcements.value = announcementsData;
-    
+    announcements.value = announcementsData
+
     // Process media URLs for tools
-    tools.value = processItemsWithMedia(toolsData);
+    tools.value = processItemsWithMedia(toolsData)
 
     // Process media URLs for press
-    press.value = processItemsWithMedia(pressData);
+    press.value = processItemsWithMedia(pressData)
 
-    maintenanceMode.value = maintenanceStatus.enabled;
-    maintenanceMessage.value = maintenanceStatus.message;
-    nextMaintenanceDate.value = maintenanceStatus.nextDate;
+    maintenanceMode.value = maintenanceStatus.enabled
+    maintenanceMessage.value = maintenanceStatus.message
+    nextMaintenanceDate.value = maintenanceStatus.nextDate
 
     // Set initial indices
     currentFeaturedIndex.value = 0
@@ -107,7 +111,7 @@ onMounted(async () => {
       }, 8000)
     }
   } catch (error) {
-    console.error('Error fetching data:', error);
+    console.error('Error fetching data:', error)
   }
 })
 
@@ -126,23 +130,29 @@ const navigateToProjects = (params = {}) => {
 
 // Add these new functions for carousel navigation
 const scrollFeaturedProjects = (direction) => {
-  const newIndex = direction === 'left' 
-    ? Math.max(0, currentFeaturedIndex.value - 1)
-    : Math.min(featuredProjects.value.length - 1, currentFeaturedIndex.value + 1)
+  const newIndex =
+    direction === 'left'
+      ? Math.max(0, currentFeaturedIndex.value - 1)
+      : Math.min(
+          featuredProjects.value.length - 1,
+          currentFeaturedIndex.value + 1
+        )
   goToFeaturedProject(newIndex)
 }
 
 const scrollTools = (direction) => {
-  const newIndex = direction === 'left'
-    ? Math.max(0, currentToolIndex.value - 1)
-    : Math.min(tools.value.length - 1, currentToolIndex.value + 1)
+  const newIndex =
+    direction === 'left'
+      ? Math.max(0, currentToolIndex.value - 1)
+      : Math.min(tools.value.length - 1, currentToolIndex.value + 1)
   goToTool(newIndex)
 }
 
 const scrollPress = (direction) => {
-  const newIndex = direction === 'left'
-    ? Math.max(0, currentPressIndex.value - 1)
-    : Math.min(press.value.length - 1, currentPressIndex.value + 1)
+  const newIndex =
+    direction === 'left'
+      ? Math.max(0, currentPressIndex.value - 1)
+      : Math.min(press.value.length - 1, currentPressIndex.value + 1)
   goToPress(newIndex)
 }
 
@@ -180,15 +190,15 @@ onMounted(() => {
     <!-- Matrix Area -->
     <div class="matrixarea">
       <div class="matrix-side">
-        <router-link 
+        <router-link
           v-if="matrixImages.length > 0"
-          :to="`/project/${matrixImages[0].project_id}/overview`" 
+          :to="`/project/${matrixImages[0].project_id}/overview`"
           class="matrix-link"
         >
-          <img 
-            v-if="matrixImages[0].media" 
-            :src="matrixImages[0].media" 
-            :alt="'Project ' + matrixImages[0].project_id" 
+          <img
+            v-if="matrixImages[0].media"
+            :src="matrixImages[0].media"
+            :alt="'Project ' + matrixImages[0].project_id"
             class="matrix-image"
           />
         </router-link>
@@ -196,7 +206,7 @@ onMounted(() => {
 
       <div class="content-side">
         <h1 class="main-title">Building the Tree of Life with Phenotypes</h1>
-        
+
         <div class="action-buttons">
           <router-link to="/myprojects" class="action-button scientists">
             <strong>For Scientists</strong>
@@ -214,7 +224,9 @@ onMounted(() => {
     <div class="statsrow">
       <h1 class="stats-title">
         <span>Comparative biologists at work with these tools now....</span>
-        <router-link to="/project/pub_date" class="stats-link">see total activity</router-link>
+        <router-link to="/project/pub_date" class="stats-link"
+          >see total activity</router-link
+        >
       </h1>
       <div class="stats-grid">
         <div class="stat">
@@ -234,15 +246,21 @@ onMounted(() => {
           <div class="stat-label">Images Uploaded</div>
         </div>
         <div class="stat">
-          <h3 class="stat-number">{{ stats.numProjectViews }}/{{ stats.numProjectDownloads }}</h3>
+          <h3 class="stat-number">
+            {{ stats.numProjectViews }}/{{ stats.numProjectDownloads }}
+          </h3>
           <div class="stat-label">Project Views/Downloads</div>
         </div>
         <div class="stat">
-          <h3 class="stat-number">{{ stats.numMatrixViews }}/{{ stats.numMatrixDownloads }}</h3>
+          <h3 class="stat-number">
+            {{ stats.numMatrixViews }}/{{ stats.numMatrixDownloads }}
+          </h3>
           <div class="stat-label">Matrix Views/Downloads</div>
         </div>
         <div class="stat">
-          <h3 class="stat-number">{{ stats.numMediaViews }}/{{ stats.numMediaDownloads }}</h3>
+          <h3 class="stat-number">
+            {{ stats.numMediaViews }}/{{ stats.numMediaDownloads }}
+          </h3>
           <div class="stat-label">Media Views/Downloads</div>
         </div>
       </div>
@@ -253,7 +271,9 @@ onMounted(() => {
     <div class="browserow">
       <div class="browse-header">
         <h1 class="browse-title">Browse by</h1>
-        <p class="browse-subtitle">Explore MorphoBank projects through different perspectives</p>
+        <p class="browse-subtitle">
+          Explore MorphoBank projects through different perspectives
+        </p>
       </div>
       <div class="browse-links">
         <router-link to="/project/pub_date" class="browse-link">
@@ -262,10 +282,12 @@ onMounted(() => {
           </div>
           <div class="browse-text">
             <span class="browse-label">Project Publication Date</span>
-            <span class="browse-description">Sort by when projects were published</span>
+            <span class="browse-description"
+              >Sort by when projects were published</span
+            >
           </div>
         </router-link>
-        
+
         <router-link to="/project/prj_no" class="browse-link">
           <div class="browse-icon">
             <i class="fas fa-hashtag"></i>
@@ -275,17 +297,19 @@ onMounted(() => {
             <span class="browse-description">Browse by project ID</span>
           </div>
         </router-link>
-        
+
         <router-link to="/project/title" class="browse-link">
           <div class="browse-icon">
             <i class="fas fa-heading"></i>
           </div>
           <div class="browse-text">
             <span class="browse-label">Project Title</span>
-            <span class="browse-description">Alphabetical listing by title</span>
+            <span class="browse-description"
+              >Alphabetical listing by title</span
+            >
           </div>
         </router-link>
-        
+
         <router-link to="/project/author" class="browse-link">
           <div class="browse-icon">
             <i class="fas fa-user-edit"></i>
@@ -295,17 +319,19 @@ onMounted(() => {
             <span class="browse-description">Find projects by researcher</span>
           </div>
         </router-link>
-        
+
         <router-link to="/project/journal" class="browse-link">
           <div class="browse-icon">
             <i class="fas fa-book-open"></i>
           </div>
           <div class="browse-text">
             <span class="browse-label">Publication</span>
-            <span class="browse-description">Browse by journal or publication</span>
+            <span class="browse-description"
+              >Browse by journal or publication</span
+            >
           </div>
         </router-link>
-        
+
         <router-link to="/project/popular" class="browse-link">
           <div class="browse-icon">
             <i class="fas fa-fire"></i>
@@ -315,34 +341,45 @@ onMounted(() => {
             <span class="browse-description">Most viewed and downloaded</span>
           </div>
         </router-link>
-        
+
         <router-link to="/project/institution" class="browse-link">
           <div class="browse-icon">
             <i class="fas fa-university"></i>
           </div>
           <div class="browse-text">
             <span class="browse-label">Institution</span>
-            <span class="browse-description">Browse by research institution</span>
+            <span class="browse-description"
+              >Browse by research institution</span
+            >
           </div>
         </router-link>
-        
+
         <router-link to="/project/journal_year" class="browse-link">
           <div class="browse-icon">
             <i class="fas fa-clock"></i>
           </div>
           <div class="browse-text">
             <span class="browse-label">Article Publication Year</span>
-            <span class="browse-description">Sort by article publication date</span>
+            <span class="browse-description"
+              >Sort by article publication date</span
+            >
           </div>
         </router-link>
       </div>
     </div>
 
     <!-- Social Panel -->
-    <div v-if="userCoordinates.loggedIn || userCoordinates.nonLoggedIn" class="socialpanel">
+    <div
+      v-if="userCoordinates.loggedIn || userCoordinates.nonLoggedIn"
+      class="socialpanel"
+    >
       <h4 class="social-title">Latest Visitors</h4>
       <div class="map-container">
-        <img :src="`https://maps.googleapis.com/maps/api/staticmap?key=YOUR_API_KEY&size=290x200&maptype=roadmap&sensor=false&markers=color:blue|${userCoordinates.loggedIn}${userCoordinates.nonLoggedIn}`" alt="Visitor Map" class="map-image" />
+        <img
+          :src="`https://maps.googleapis.com/maps/api/staticmap?key=YOUR_API_KEY&size=290x200&maptype=roadmap&sensor=false&markers=color:blue|${userCoordinates.loggedIn}${userCoordinates.nonLoggedIn}`"
+          alt="Visitor Map"
+          class="map-image"
+        />
       </div>
       <div class="map-legend">
         <div class="legend-item">
@@ -351,7 +388,9 @@ onMounted(() => {
         </div>
         <div class="legend-item">
           <div class="visitor-key"></div>
-          <span class="legend-text">scientists and the public using the data</span>
+          <span class="legend-text"
+            >scientists and the public using the data</span
+          >
         </div>
       </div>
     </div>
@@ -362,34 +401,56 @@ onMounted(() => {
       <div v-if="featuredProjects.length" class="newsbox">
         <h2 class="newsbox-title">Featured Projects</h2>
         <div class="card-slideshow">
-          <div class="nav-arrow left" @click="scrollFeaturedProjects('left')" 
-               v-show="currentFeaturedIndex > 0"></div>
-          <div class="nav-arrow right" @click="scrollFeaturedProjects('right')"
-               v-show="currentFeaturedIndex < featuredProjects.length - 1"></div>
+          <div
+            class="nav-arrow left"
+            @click="scrollFeaturedProjects('left')"
+            v-show="currentFeaturedIndex > 0"
+          ></div>
+          <div
+            class="nav-arrow right"
+            @click="scrollFeaturedProjects('right')"
+            v-show="currentFeaturedIndex < featuredProjects.length - 1"
+          ></div>
           <div class="card-content">
-            <div v-for="(project, index) in featuredProjects" 
-                 :key="project.project_id" 
-                 class="featured-project"
-                 :class="{ active: currentFeaturedIndex === index }">
-              <router-link :to="`/project/${project.project_id}/overview`" 
-                          class="featured-link">
+            <div
+              v-for="(project, index) in featuredProjects"
+              :key="project.project_id"
+              class="featured-project"
+              :class="{ active: currentFeaturedIndex === index }"
+            >
+              <router-link
+                :to="`/project/${project.project_id}/overview`"
+                class="featured-link"
+              >
                 <div class="card-image-container">
-                  <img v-if="project.media" :src="project.media" :alt="project.name" class="card-image" />
+                  <img
+                    v-if="project.media"
+                    :src="project.media"
+                    :alt="project.name"
+                    class="card-image"
+                  />
                 </div>
                 <div class="card-desc">
                   <strong class="card-id">P{{ project.project_id }}</strong>
-                  <p class="card-name">{{ project.name.length > 200 ? project.name.substring(0, 200) + '...' : project.name }}</p>
+                  <p class="card-name">
+                    {{
+                      project.name.length > 200
+                        ? project.name.substring(0, 200) + '...'
+                        : project.name
+                    }}
+                  </p>
                 </div>
               </router-link>
             </div>
           </div>
           <div class="dot-navigation">
-            <div v-for="(project, index) in featuredProjects" 
-                 :key="index" 
-                 class="dot"
-                 :class="{ active: currentFeaturedIndex === index }"
-                 @click="goToFeaturedProject(index)">
-            </div>
+            <div
+              v-for="(project, index) in featuredProjects"
+              :key="index"
+              class="dot"
+              :class="{ active: currentFeaturedIndex === index }"
+              @click="goToFeaturedProject(index)"
+            ></div>
           </div>
         </div>
       </div>
@@ -398,19 +459,32 @@ onMounted(() => {
       <div v-if="tools.length" class="tools-section">
         <h2 class="section-title">Tools</h2>
         <div class="card-slideshow">
-          <div class="nav-arrow left" @click="scrollTools('left')"
-               v-show="currentToolIndex > 0"></div>
-          <div class="nav-arrow right" @click="scrollTools('right')"
-               v-show="currentToolIndex < tools.length - 1"></div>
+          <div
+            class="nav-arrow left"
+            @click="scrollTools('left')"
+            v-show="currentToolIndex > 0"
+          ></div>
+          <div
+            class="nav-arrow right"
+            @click="scrollTools('right')"
+            v-show="currentToolIndex < tools.length - 1"
+          ></div>
           <div class="card-content">
-            <div v-for="(tool, index) in tools" 
-                 :key="tool.tool_id" 
-                 class="tool-card"
-                 :class="{ active: currentToolIndex === index }">
+            <div
+              v-for="(tool, index) in tools"
+              :key="tool.tool_id"
+              class="tool-card"
+              :class="{ active: currentToolIndex === index }"
+            >
               <template v-if="tool.link">
                 <a :href="tool.link" class="tool-link" target="_blank">
                   <div class="card-image-container">
-                    <img v-if="tool.media" :src="tool.media" :alt="tool.title" class="card-image" />
+                    <img
+                      v-if="tool.media"
+                      :src="tool.media"
+                      :alt="tool.title"
+                      class="card-image"
+                    />
                   </div>
                   <div class="card-desc">
                     <h3 class="card-id">{{ tool.title }}</h3>
@@ -420,7 +494,12 @@ onMounted(() => {
               </template>
               <template v-else>
                 <div class="card-image-container">
-                  <img v-if="tool.media" :src="tool.media" :alt="tool.title" class="card-image" />
+                  <img
+                    v-if="tool.media"
+                    :src="tool.media"
+                    :alt="tool.title"
+                    class="card-image"
+                  />
                 </div>
                 <div class="card-desc">
                   <h3 class="card-id">{{ tool.title }}</h3>
@@ -430,12 +509,13 @@ onMounted(() => {
             </div>
           </div>
           <div class="dot-navigation">
-            <div v-for="(tool, index) in tools" 
-                 :key="index" 
-                 class="dot"
-                 :class="{ active: currentToolIndex === index }"
-                 @click="goToTool(index)">
-            </div>
+            <div
+              v-for="(tool, index) in tools"
+              :key="index"
+              class="dot"
+              :class="{ active: currentToolIndex === index }"
+              @click="goToTool(index)"
+            ></div>
           </div>
         </div>
       </div>
@@ -444,46 +524,73 @@ onMounted(() => {
       <div v-if="press.length" class="press-section">
         <h2 class="section-title">MorphoBank Updates</h2>
         <div class="card-slideshow">
-          <div class="nav-arrow left" @click="scrollPress('left')"
-               v-show="currentPressIndex > 0"></div>
-          <div class="nav-arrow right" @click="scrollPress('right')"
-               v-show="currentPressIndex < press.length - 1"></div>
+          <div
+            class="nav-arrow left"
+            @click="scrollPress('left')"
+            v-show="currentPressIndex > 0"
+          ></div>
+          <div
+            class="nav-arrow right"
+            @click="scrollPress('right')"
+            v-show="currentPressIndex < press.length - 1"
+          ></div>
           <div class="card-content">
-            <div v-for="(item, index) in press" 
-                 :key="item.press_id" 
-                 class="press-card"
-                 :class="{ active: currentPressIndex === index }">
+            <div
+              v-for="(item, index) in press"
+              :key="item.press_id"
+              class="press-card"
+              :class="{ active: currentPressIndex === index }"
+            >
               <template v-if="item.link">
                 <a :href="item.link" target="_blank" class="press-link">
                   <div class="card-image-container">
-                    <img v-if="item.media" :src="item.media" :alt="item.title" class="card-image" />
+                    <img
+                      v-if="item.media"
+                      :src="item.media"
+                      :alt="item.title"
+                      class="card-image"
+                    />
                   </div>
                   <div class="card-desc">
-                    <div v-if="item.author" class="card-name">{{ item.author }}</div>
+                    <div v-if="item.author" class="card-name">
+                      {{ item.author }}
+                    </div>
                     <h3 class="card-id">{{ item.title }}</h3>
-                    <div v-if="item.publication" class="card-name">{{ item.publication }}</div>
+                    <div v-if="item.publication" class="card-name">
+                      {{ item.publication }}
+                    </div>
                   </div>
                 </a>
               </template>
               <template v-else>
                 <div class="card-image-container">
-                  <img v-if="item.media" :src="item.media" :alt="item.title" class="card-image" />
+                  <img
+                    v-if="item.media"
+                    :src="item.media"
+                    :alt="item.title"
+                    class="card-image"
+                  />
                 </div>
                 <div class="card-desc">
-                  <div v-if="item.author" class="card-name">{{ item.author }}</div>
+                  <div v-if="item.author" class="card-name">
+                    {{ item.author }}
+                  </div>
                   <h3 class="card-id">{{ item.title }}</h3>
-                  <div v-if="item.publication" class="card-name">{{ item.publication }}</div>
+                  <div v-if="item.publication" class="card-name">
+                    {{ item.publication }}
+                  </div>
                 </div>
               </template>
             </div>
           </div>
           <div class="dot-navigation">
-            <div v-for="(item, index) in press" 
-                 :key="index" 
-                 class="dot"
-                 :class="{ active: currentPressIndex === index }"
-                 @click="goToPress(index)">
-            </div>
+            <div
+              v-for="(item, index) in press"
+              :key="index"
+              class="dot"
+              :class="{ active: currentPressIndex === index }"
+              @click="goToPress(index)"
+            ></div>
           </div>
         </div>
       </div>
@@ -495,20 +602,56 @@ onMounted(() => {
       <h2 class="supporters-title">Founding Partners</h2>
       <div class="sponsors">
         <a href="http://www.nsf.gov" target="funder" class="sponsor-link">
-          <img src="/images/nsf.gif" width="75" height="75" alt="NSF" class="sponsor-image" />
+          <img
+            src="/images/nsf.gif"
+            width="75"
+            height="75"
+            alt="NSF"
+            class="sponsor-image"
+          />
         </a>
         <a href="http://www.amnh.org" target="funder" class="sponsor-link">
-          <img src="/images/amnh.png" width="283" height="65" alt="AMNH" class="sponsor-image" />
+          <img
+            src="/images/amnh.png"
+            width="283"
+            height="65"
+            alt="AMNH"
+            class="sponsor-image"
+          />
         </a>
-        <a href="http://www.stonybrook.edu/" target="funder" class="sponsor-link">
-          <img src="/images/sb_logo.gif" width="90" height="75" alt="Stony Brook" class="sponsor-image" />
+        <a
+          href="http://www.stonybrook.edu/"
+          target="funder"
+          class="sponsor-link"
+        >
+          <img
+            src="/images/sb_logo.gif"
+            width="90"
+            height="75"
+            alt="Stony Brook"
+            class="sponsor-image"
+          />
         </a>
-        <a href="http://www.phoenixbioinformatics.org/" target="funder" class="sponsor-link">
-          <img src="/images/phoenix_logo.png" width="130" height="85" alt="Phoenix Bioinformatics" class="sponsor-image" />
+        <a
+          href="http://www.phoenixbioinformatics.org/"
+          target="funder"
+          class="sponsor-link"
+        >
+          <img
+            src="/images/phoenix_logo.png"
+            width="130"
+            height="85"
+            alt="Phoenix Bioinformatics"
+            class="sponsor-image"
+          />
         </a>
       </div>
       <div class="supporting-members">
-        <a href="https://ui.arabidopsis.org/#/contentaccess/list?partnerId=morphobank" target="_blank" class="supporting-members-link">
+        <a
+          href="https://ui.arabidopsis.org/#/contentaccess/list?partnerId=morphobank"
+          target="_blank"
+          class="supporting-members-link"
+        >
           View Our Supporting Members
         </a>
       </div>
@@ -919,7 +1062,7 @@ onMounted(() => {
 
 .browse-link:hover .browse-icon {
   transform: scale(1.1);
-  color: #E27B58;
+  color: #e27b58;
 }
 
 .browse-icon {
@@ -1063,7 +1206,8 @@ onMounted(() => {
   gap: 10px;
 }
 
-.user-key, .visitor-key {
+.user-key,
+.visitor-key {
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -1091,7 +1235,9 @@ onMounted(() => {
   padding: 0 1rem;
 }
 
-.newsbox, .tools-section, .press-section {
+.newsbox,
+.tools-section,
+.press-section {
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -1099,7 +1245,8 @@ onMounted(() => {
   height: 100%;
 }
 
-.newsbox-title, .section-title {
+.newsbox-title,
+.section-title {
   font-size: 1.75rem;
   color: #2c3e50;
   margin: 0;
@@ -1215,12 +1362,12 @@ onMounted(() => {
     padding: 1.5rem;
     margin: 0 1rem;
   }
-  
+
   .supporters-title {
     font-size: 2rem;
     margin-bottom: 2.5rem;
   }
-  
+
   .sponsor-link {
     height: 100px;
   }
@@ -1231,26 +1378,26 @@ onMounted(() => {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
-  
+
   .sponsor-link {
     padding: 1rem;
     height: 90px;
   }
-  
+
   .sponsor-image {
     max-height: 60px;
   }
-  
+
   .supporters-title {
     font-size: 1.75rem;
     margin-bottom: 2rem;
   }
-  
+
   .supporters-title:after {
     width: 40px;
     height: 2px;
   }
-  
+
   .institutional-supporters {
     padding: 3rem 1rem;
   }
@@ -1527,11 +1674,11 @@ onMounted(() => {
   .press-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .section-title {
     font-size: 24px;
   }
-  
+
   .tool-title,
   .press-title {
     font-size: 18px;

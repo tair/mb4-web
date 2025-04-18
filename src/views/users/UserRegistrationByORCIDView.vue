@@ -144,6 +144,14 @@
               messageName="signup"
               alertType="danger"
             ></Alert>
+            <div v-if="error.showResetLink" class="mt-2 mb-2">
+              <router-link
+                :to="`/users/resetpassword?email=${state.email}`"
+                class="btn btn-link p-0"
+              >
+                Reset your password
+              </router-link>
+            </div>
             <div>
               <button
                 class="w-100 btn btn-lg btn-primary form-group"
@@ -199,7 +207,12 @@ const state = reactive({
   accessToken: '',
   refreshToken: '',
 })
-const error = reactive({})
+const error = reactive({
+  signup: null,
+  passwordValidation: null,
+  passwordConfirm: null,
+  showResetLink: false,
+})
 
 const validatePassword = function () {
   const passwordValidation = getPasswordPattern()
@@ -258,15 +271,26 @@ const submitForm = () => {
         router.push({ path: '/users/login' })
       } else {
         error.signup = 'An error occurred while creating user.'
+        error.showResetLink = false
       }
     })
     .catch(function (e) {
       console.log(e.response)
       if (e.response && e.response.data && e.response.data.message) {
-        error.signup = e.response.data.message
+        // Check if the error message indicates email already exists
+        const errorMessage = e.response.data.message.toLowerCase()
+        if (errorMessage.includes('email') && errorMessage.includes('reset')) {
+          error.signup =
+            'This email is already in our system. Please reset your password below instead of creating a new account.'
+          error.showResetLink = true
+        } else {
+          error.signup = e.response.data.message
+          error.showResetLink = false
+        }
       } else {
         error.signup =
           'An error occurred while creating user. Please try again later.'
+        error.showResetLink = false
       }
     })
 }
