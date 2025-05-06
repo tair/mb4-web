@@ -50,9 +50,29 @@ const media = computed(() => searchResultsStore.results.media || [])
     <div class="border p-2 mb-3" style="max-height: 180px; overflow-y: auto">
       <div v-if="!projects.length">No projects were found</div>
       <div v-else>
-        <div v-for="project in projects" :key="project.code" class="mb-2">
-          <span class="text-danger fw-bold">{{ project.code }}</span> -
-          {{ project.title }}
+        <div v-for="project in projects" :key="project.project_id" class="mb-2">
+          <span class="text-danger fw-bold">{{ project.project_id }}</span> -
+          {{ project.name }}
+          <template
+            v-if="
+              project.article_authors ||
+              project.journal_year ||
+              project.journal_title
+            "
+          >
+            <br />
+            <span class="text-muted small">
+              <template v-if="project.article_authors">{{
+                project.article_authors
+              }}</template>
+              <template v-if="project.journal_year">
+                ({{ project.journal_year }})</template
+              >
+              <template v-if="project.journal_title"
+                >. {{ project.journal_title }}</template
+              >
+            </span>
+          </template>
         </div>
       </div>
     </div>
