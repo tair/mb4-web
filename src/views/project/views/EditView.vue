@@ -57,7 +57,11 @@ async function edit(event) {
         </component>
       </div>
       <div class="btn-form-group">
-        <button class="btn btn-primary btn-white" type="button" @click="$router.go(-1)">
+        <button
+          class="btn btn-primary btn-white"
+          type="button"
+          @click="$router.go(-1)"
+        >
           Cancel
         </button>
         <button class="btn btn-primary" type="submit">Save</button>
@@ -66,5 +70,4 @@ async function edit(event) {
   </LoadingIndicator>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

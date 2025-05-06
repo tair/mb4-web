@@ -21,17 +21,42 @@ export const useMediaViewsStore = defineStore({
 
       this.isLoaded = true
     },
-    async create(projectId, view) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/views/create`
-      const response = await axios.post(url, view)
-      if (response.status == 200) {
-        const view = response.data.view
-        this.addMediaViews([view])
-        return true
+    async create(projectId, data) {
+      try {
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_URL}/projects/${projectId}/views/create`,
+          data
+        )
+        if (response.status === 200) {
+          // Handle both single view and bulk creation responses
+          if (response.data.view) {
+            this.addMediaViews([response.data.view])
+          } else if (response.data.views) {
+            this.addMediaViews(response.data.views)
+          }
+          return { success: true }
+        }
+        return { success: false }
+      } catch (error) {
+        console.error('Error creating media views:', error)
+        if (error.response?.data?.status === 'error') {
+          const errorData = error.response.data
+          let errorMessage = errorData.message
+
+          if (errorData.existingNames) {
+            errorMessage += `: ${errorData.existingNames.join(', ')}`
+          }
+
+          return {
+            success: false,
+            error: errorMessage,
+          }
+        }
+        return {
+          success: false,
+          error: 'Failed to create media views. Please try again.',
+        }
       }
-      return false
     },
     async edit(projectId, viewId, view) {
       const url = `${
