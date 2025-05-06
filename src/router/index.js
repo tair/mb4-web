@@ -25,6 +25,7 @@ import UserRegistrationView from '@/views/users/UserRegistrationView.vue'
 import UserResetPasswordView from '@/views/users/UserResetPasswordView.vue'
 import UserSetNewPasswordView from '@/views/users/UserSetNewPasswordView.vue'
 import UserView from '@/views/users/UserView.vue'
+import SearchView from '@/views/SearchView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -38,6 +39,11 @@ const router = createRouter({
           path: '',
           name: 'HomeView',
           component: HomeView,
+        },
+        {
+          path: '/search',
+          name: 'SearchView',
+          component: SearchView,
         },
 
         //permalink

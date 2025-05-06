@@ -10,6 +10,7 @@ export const useProjectsStore = defineStore({
   getters: {},
   actions: {
     async fetchProjects() {
+      console.log('fetchProjects')
       const url = `${import.meta.env.VITE_API_URL}/projects/`
       const response = await axios.get(url)
       this.projects = response.data.projects
