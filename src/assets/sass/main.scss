@@ -2,8 +2,9 @@
 $primary: #900;
 $enable-shadows: true;
 $warning: #ef782f;
+$danger: #ff0000;
 // Default variable overrides
 $body-bg: #000;
 $body-color: #111;
 
-@import "../../../node_modules/bootstrap/scss/bootstrap"
+@import '../../../node_modules/bootstrap/scss/bootstrap';
