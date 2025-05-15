@@ -2,12 +2,24 @@
 import { computed, onMounted, watch, ref } from 'vue'
 import { useSearchResultsStore } from '@/stores/SearchResultsStore'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/AuthStore.js'
 
 const searchResultsStore = useSearchResultsStore()
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 const searching = ref(false)
 const localSearch = ref(route.query.q || '')
+
+// Filter toggles for each section
+const projectsFilter = ref('all')
+const mediaFilter = ref('all')
+const mediaViewsFilter = ref('all')
+const specimensFilter = ref('all')
+const charactersFilter = ref('all')
+const taxaFilter = ref('all')
+const matricesFilter = ref('all')
+const referencesFilter = ref('all')
 
 onMounted(() => {
   doSearch(route.query.q || '')
@@ -17,6 +29,10 @@ function doSearch(q) {
   searching.value = true
   const searchTerm = q || ''
   const query = { searchTerm }
+  // If user is admin, add published: false to query
+  if (authStore.isUserAdministrator) {
+    query.published = false
+  }
   // fetchResults can be async or return a promise
   const result = searchResultsStore.fetchResults(query)
   if (result && typeof result.then === 'function') {
@@ -48,28 +64,71 @@ watch(
 
 // Helper to truncate text with ellipsis
 function truncate(text, max = 100) {
-  if (!text) return ''
+  if (!text) return 'Unknown'
   return text.length > max ? text.slice(0, max) + '…' : text
 }
 
 function truncateProjectName(text, max = 40) {
-  if (!text) return ''
+  if (!text) return 'Unknown'
   return text.length > max ? text.slice(0, max) + '…' : text
 }
 
-const projects = computed(() => searchResultsStore.results.projects || [])
-const media = computed(() => searchResultsStore.results.media || [])
-const mediaDisplay = computed(() => media.value.slice(0, 100))
+function filterByPublished(list, filterKey = 'all') {
+  if (filterKey === 'published')
+    return list.filter((item) => item.published == 1 || item.published === true)
+  if (filterKey === 'unpublished')
+    return list.filter(
+      (item) => item.published == 0 || item.published === false
+    )
+  return list
+}
+
+const filteredProjects = computed(() =>
+  filterByPublished(
+    searchResultsStore.results.projects || [],
+    projectsFilter.value
+  )
+)
+const filteredMedia = computed(() =>
+  filterByPublished(searchResultsStore.results.media || [], mediaFilter.value)
+)
+const filteredMediaDisplay = computed(() => filteredMedia.value.slice(0, 100))
+const filteredMediaViews = computed(() =>
+  filterByPublished(
+    searchResultsStore.results.media_views || [],
+    mediaViewsFilter.value
+  )
+)
+const filteredSpecimens = computed(() =>
+  filterByPublished(
+    searchResultsStore.results.specimens || [],
+    specimensFilter.value
+  )
+)
+const filteredCharacters = computed(() =>
+  filterByPublished(
+    searchResultsStore.results.characters || [],
+    charactersFilter.value
+  )
+)
+const filteredReferences = computed(() =>
+  filterByPublished(
+    searchResultsStore.results.references || [],
+    referencesFilter.value
+  )
+)
+const filteredMatrices = computed(() =>
+  filterByPublished(
+    searchResultsStore.results.matrices || [],
+    matricesFilter.value
+  )
+)
+const filteredTaxa = computed(() =>
+  filterByPublished(searchResultsStore.results.taxa || [], taxaFilter.value)
+)
+
 const searchingProjects = computed(() => searchResultsStore.searching?.projects)
 const searchingMedia = computed(() => searchResultsStore.searching?.media)
-
-const media_views = computed(() => searchResultsStore.results.media_views || [])
-const specimens = computed(() => searchResultsStore.results.specimens || [])
-const characters = computed(() => searchResultsStore.results.characters || [])
-const references = computed(() => searchResultsStore.results.references || [])
-const matrices = computed(() => searchResultsStore.results.matrices || [])
-const taxa = computed(() => searchResultsStore.results.taxa || [])
-
 const searchingMediaViews = computed(
   () => searchResultsStore.searching?.media_views
 )
@@ -84,6 +143,42 @@ const searchingReferences = computed(
 )
 const searchingMatrices = computed(() => searchResultsStore.searching?.matrices)
 const searchingTaxa = computed(() => searchResultsStore.searching?.taxa)
+
+// Helper to format authors array as a string
+function formatAuthors(authors) {
+  if (!Array.isArray(authors) || authors.length === 0) return ''
+  return authors
+    .map((a) => {
+      let name = a.surname || ''
+      if (a.forename) name += ', ' + a.forename
+      return name
+    })
+    .join('; ')
+}
+
+// Reusable ToggleLinks component
+const ToggleLinks = {
+  props: ['modelValue'],
+  emits: ['update:modelValue'],
+  setup(props, { emit }) {
+    const options = [
+      { key: 'all', label: 'All' },
+      { key: 'published', label: 'Published' },
+      { key: 'unpublished', label: 'Unpublished' },
+    ]
+    function setValue(val) {
+      emit('update:modelValue', val)
+    }
+    return { options, setValue }
+  },
+  template: `
+    <span class='ms-2 text-muted small'>
+      <template v-for="(opt, idx) in options">
+        <a href="#" @click.prevent="setValue(opt.key)" :style="modelValue === opt.key ? 'font-weight:bold;text-decoration:underline;color:inherit' : 'color:inherit'">{{ opt.label }}</a><span v-if="idx < options.length-1"> | </span>
+      </template>
+    </span>
+  `,
+}
 </script>
 
 <template>
@@ -112,29 +207,39 @@ const searchingTaxa = computed(() => searchResultsStore.searching?.taxa)
     <div class="mb-3">
       <template v-if="route.query.q">
         You searched for <i>{{ route.query.q }}</i> in all
-        <b>published</b> projects.
+        <b v-if="!authStore.isUserAdministrator">published</b>
+        <b v-else>published and unpublished</b>
+        projects.
       </template>
       <template v-else> Please enter a search term to see results. </template>
     </div>
 
     <!-- Projects Section -->
     <div class="bg-light p-2 mb-2">
-      <b>Projects ({{ projects.length }})</b>
+      <b>Projects ({{ filteredProjects.length }})</b>
+      <ToggleLinks v-model="projectsFilter" />
     </div>
     <div class="border p-2 mb-3" style="max-height: 180px; overflow-y: auto">
       <template v-if="searchingProjects">
         <i class="fas fa-spinner fa-spin"></i> Searching projects...
       </template>
       <template v-else>
-        <div v-if="!projects.length">No projects were found</div>
+        <div v-if="!filteredProjects.length">No projects were found</div>
         <div v-else>
           <div
-            v-for="project in projects"
+            v-for="project in filteredProjects"
             :key="project.project_id"
             class="mb-2"
           >
-            <span class="text-mb fw-bold">{{ project.project_id }}</span> -
-            {{ project.name }}
+            <a
+              :href="`/project/${project.project_id}/overview`"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span class="text-mb fw-bold"
+                >M{{ project.project_id }}- {{ project.name }}</span
+              >
+            </a>
             <template
               v-if="
                 project.article_authors ||
@@ -162,20 +267,21 @@ const searchingTaxa = computed(() => searchResultsStore.searching?.taxa)
 
     <!-- Media Section -->
     <div class="bg-light p-2 mb-2">
-      <b>Media ({{ media.length }})</b>
-      <span v-if="media.length > 100" class="text-muted small"
+      <b>Media ({{ filteredMedia.length }})</b>
+      <span v-if="filteredMedia.length > 100" class="text-muted small"
         >&nbsp;Showing first 100</span
       >
+      <ToggleLinks v-model="mediaFilter" />
     </div>
     <div class="border p-2 mb-3" style="max-height: 400px; overflow-y: auto">
       <template v-if="searchingMedia">
         <i class="fas fa-spinner fa-spin"></i> Searching media...
       </template>
       <template v-else>
-        <div v-if="!media.length">No media were found</div>
+        <div v-if="!filteredMedia.length">No media were found</div>
         <div v-else>
           <div
-            v-for="item in mediaDisplay"
+            v-for="item in filteredMediaDisplay"
             :key="item.media_id"
             class="d-flex align-items-start mb-2 pb-2 border-bottom"
             style="min-height: 60px"
@@ -195,9 +301,18 @@ const searchingTaxa = computed(() => searchResultsStore.searching?.taxa)
               >
                 <div class="fw-bold">M{{ item.media_id }}</div>
               </a>
+              <div class="text-muted fst-italic">
+                {{ item.genus }} {{ item.specific_epithet }}
+                <template v-if="item.reference_source == 1">
+                  (unvouchered)
+                </template>
+                <template v-else>
+                  ({{ item.institution_code }}:{{ item.catalog_number }})
+                </template>
+              </div>
               <div class="text-muted small mb-1">
-                from P{{ item.project_id
-                }}<span v-if="item.project_name">
+                from <b>P{{ item.project_id }}</b>
+                <span v-if="item.project_name">
                   - {{ truncateProjectName(item.project_name, 40) }}</span
                 >
               </div>
@@ -212,16 +327,21 @@ const searchingTaxa = computed(() => searchResultsStore.searching?.taxa)
 
     <!-- Media Views Section -->
     <div class="bg-light p-2 mb-2">
-      <b>Media Views ({{ media_views.length }})</b>
+      <b>Media Views ({{ filteredMediaViews.length }})</b>
+      <ToggleLinks v-model="mediaViewsFilter" />
     </div>
     <div class="border p-2 mb-3" style="max-height: 180px; overflow-y: auto">
       <template v-if="searchingMediaViews">
         <i class="fas fa-spinner fa-spin"></i> Searching media views...
       </template>
       <template v-else>
-        <div v-if="!media_views.length">No media views were found</div>
+        <div v-if="!filteredMediaViews.length">No media views were found</div>
         <div v-else>
-          <div v-for="item in media_views" :key="item.view_id" class="mb-1">
+          <div
+            v-for="item in filteredMediaViews"
+            :key="item.view_id"
+            class="mb-1"
+          >
             <a
               :href="`/project/${item.project_id}/overview`"
               target="_blank"
@@ -242,16 +362,21 @@ const searchingTaxa = computed(() => searchResultsStore.searching?.taxa)
 
     <!-- Specimens Section -->
     <div class="bg-light p-2 mb-2">
-      <b>Specimens ({{ specimens.length }})</b>
+      <b>Specimens ({{ filteredSpecimens.length }})</b>
+      <ToggleLinks v-model="specimensFilter" />
     </div>
     <div class="border p-2 mb-3" style="max-height: 180px; overflow-y: auto">
       <template v-if="searchingSpecimens">
         <i class="fas fa-spinner fa-spin"></i> Searching specimens...
       </template>
       <template v-else>
-        <div v-if="!specimens.length">No specimens were found</div>
+        <div v-if="!filteredSpecimens.length">No specimens were found</div>
         <div v-else>
-          <div v-for="item in specimens" :key="item.specimen_id" class="mb-1">
+          <div
+            v-for="item in filteredSpecimens"
+            :key="item.specimen_id"
+            class="mb-1"
+          >
             <a
               :href="`/project/${item.project_id}/specimens`"
               target="_blank"
@@ -268,12 +393,20 @@ const searchingTaxa = computed(() => searchResultsStore.searching?.taxa)
                     : 'Unknown'
                 }}
               </span>
+              <span class="text-mb small">
+                <template v-if="item.reference_source == 1">
+                  (unvouchered)
+                </template>
+                <template v-else>
+                  ({{ item.institution_code }}:{{ item.catalog_number }})
+                </template>
+              </span>
             </a>
             <span v-if="!item.reference_source != 1" class="text-mb small"
               >&nbsp;(unvouchered)</span
             >
-            <span class="text-muted small fw-bold">
-              from P{{ item.project_id }}
+            <span class="text-muted small">
+              from <b>P{{ item.project_id }}</b>
             </span>
             <span class="text-muted small">
               - {{ truncateProjectName(item.project_name, 40) }}</span
@@ -285,16 +418,21 @@ const searchingTaxa = computed(() => searchResultsStore.searching?.taxa)
 
     <!-- Characters Section -->
     <div class="bg-light p-2 mb-2">
-      <b>Characters ({{ characters.length }})</b>
+      <b>Characters ({{ filteredCharacters.length }})</b>
+      <ToggleLinks v-model="charactersFilter" />
     </div>
     <div class="border p-2 mb-3" style="max-height: 180px; overflow-y: auto">
       <template v-if="searchingCharacters">
         <i class="fas fa-spinner fa-spin"></i> Searching characters...
       </template>
       <template v-else>
-        <div v-if="!characters.length">No characters were found</div>
+        <div v-if="!filteredCharacters.length">No characters were found</div>
         <div v-else>
-          <div v-for="item in characters" :key="item.character_id" class="mb-1">
+          <div
+            v-for="item in filteredCharacters"
+            :key="item.character_id"
+            class="mb-1"
+          >
             <a
               :href="`/project/${item.project_id}/overview`"
               target="_blank"
@@ -315,16 +453,17 @@ const searchingTaxa = computed(() => searchResultsStore.searching?.taxa)
 
     <!-- Taxa Section -->
     <div class="bg-light p-2 mb-2">
-      <b>Taxa ({{ taxa.length }})</b>
+      <b>Taxa ({{ filteredTaxa.length }})</b>
+      <ToggleLinks v-model="taxaFilter" />
     </div>
     <div class="border p-2 mb-3" style="max-height: 180px; overflow-y: auto">
       <template v-if="searchingTaxa">
         <i class="fas fa-spinner fa-spin"></i> Searching taxa...
       </template>
       <template v-else>
-        <div v-if="!taxa.length">No taxa were found</div>
+        <div v-if="!filteredTaxa.length">No taxa were found</div>
         <div v-else>
-          <div v-for="item in taxa" :key="item.taxon_id" class="mb-1">
+          <div v-for="item in filteredTaxa" :key="item.taxon_id" class="mb-1">
             <a
               :href="`/project/${item.project_id}/taxa`"
               target="_blank"
@@ -347,16 +486,21 @@ const searchingTaxa = computed(() => searchResultsStore.searching?.taxa)
 
     <!-- Matrices Section -->
     <div class="bg-light p-2 mb-2">
-      <b>Matrices ({{ matrices.length }})</b>
+      <b>Matrices ({{ filteredMatrices.length }})</b>
+      <ToggleLinks v-model="matricesFilter" />
     </div>
     <div class="border p-2 mb-3" style="max-height: 180px; overflow-y: auto">
       <template v-if="searchingMatrices">
         <i class="fas fa-spinner fa-spin"></i> Searching matrices...
       </template>
       <template v-else>
-        <div v-if="!matrices.length">No matrices were found</div>
+        <div v-if="!filteredMatrices.length">No matrices were found</div>
         <div v-else>
-          <div v-for="item in matrices" :key="item.matrix_id" class="mb-1">
+          <div
+            v-for="item in filteredMatrices"
+            :key="item.matrix_id"
+            class="mb-1"
+          >
             <a
               :href="`/project/${item.project_id}/overview`"
               target="_blank"
@@ -379,23 +523,51 @@ const searchingTaxa = computed(() => searchResultsStore.searching?.taxa)
 
     <!-- References Section -->
     <div class="bg-light p-2 mb-2">
-      <b>References ({{ references.length }})</b>
+      <b>References ({{ filteredReferences.length }})</b>
+      <ToggleLinks v-model="referencesFilter" />
     </div>
     <div class="border p-2 mb-3" style="max-height: 180px; overflow-y: auto">
       <template v-if="searchingReferences">
         <i class="fas fa-spinner fa-spin"></i> Searching references...
       </template>
       <template v-else>
-        <div v-if="!references.length">No references were found</div>
+        <div v-if="!filteredReferences.length">No references were found</div>
         <div v-else>
-          <div v-for="item in references" :key="item.reference_id" class="mb-1">
-            <span class="text-mb fw-bold">R{{ item.reference_id }}</span> -
-            {{ truncate(item.authors, 50) }} ({{ item.year }})
-            {{ truncate(item.title, 50) }}
-            <span class="text-muted small">(P{{ item.project_id }})</span>
+          <div
+            v-for="item in filteredReferences"
+            :key="item.reference_id"
+            class="mb-1"
+          >
+            <a
+              :href="`/project/${item.project_id}/specimens`"
+              target="_blank"
+              rel="noopener noreferrer"
+              ><span class="text-mb fw-bold" v-if="item.article_title">
+                {{ truncate(item.article_title, 50) }}</span
+              ></a
+            >
+            <br />
+            <span class="text-muted small">
+              <template v-if="item.authors">{{
+                formatAuthors(item.authors)
+              }}</template>
+              <template v-if="item.pubyear"> ({{ item.pubyear }})</template>
+            </span>
+            <span class="text-muted small fw-bold">
+              from P{{ item.project_id }}
+            </span>
+            <span class="text-muted small">
+              - {{ truncateProjectName(item.project_name, 40) }}</span
+            >
           </div>
         </div>
       </template>
     </div>
   </div>
 </template>
+
+<script>
+export default {
+  components: { ToggleLinks },
+}
+</script>
