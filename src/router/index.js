@@ -27,6 +27,7 @@ import UserRegistrationByORCIDView from '@/views/users/UserRegistrationByORCIDVi
 import UserResetPasswordView from '@/views/users/UserResetPasswordView.vue'
 import UserSetNewPasswordView from '@/views/users/UserSetNewPasswordView.vue'
 import UserView from '@/views/users/UserView.vue'
+import SearchView from '@/views/SearchView.vue'
 import axios from 'axios'
 
 const router = createRouter({
@@ -41,6 +42,11 @@ const router = createRouter({
           path: '',
           name: 'HomeView',
           component: HomeView,
+        },
+        {
+          path: '/search',
+          name: 'SearchView',
+          component: SearchView,
         },
 
         //permalink
