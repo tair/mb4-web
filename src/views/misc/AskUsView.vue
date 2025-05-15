@@ -1,160 +1,477 @@
 <template>
-  <div class="ask-us">
-    <h1>Ask Us</h1>
-    <p>
-      Have a question about the site? Don't know where to start? You can search
-      topics in our
-      <a
-        href="https://conf.phoenixbioinformatics.org/display/MD/MorphoBank+Documentation"
-        target="_blank"
-        >manual</a
-      >
-      by typing key words into your browser's search. Or contact us - we love to
-      hear from your users.
-    </p>
+  <FormLayout title="ASK US">
+    <div class="ask-us-container">
+      <p class="description">
+        Have a question about the site? Don't know where to start? You can
+        search topics in our
+        <a
+          href="https://conf.phoenixbioinformatics.org/display/MD/MorphoBank+Documentation"
+          target="_blank"
+          >manual</a
+        >
+        by typing key words into your browser's search. Or contact us - we love
+        to hear from your users.
+      </p>
 
-    <form @submit.prevent="submitForm">
-      <div class="form-group">
-        <label for="name">Name</label>
-        <input id="name" v-model="form.name" type="text" />
-      </div>
-      <div class="form-group">
-        <label for="email">E-mail Address</label>
-        <input id="email" v-model="form.email" type="email" />
-      </div>
-      <div class="form-group">
-        <label for="question">Tell us your question, issue or idea</label>
-        <textarea id="question" v-model="form.question"></textarea>
-      </div>
-      <div class="form-group">
-        <label for="media"
-          >Media or Matrix numbers affected (if applicable)</label
-        >
-        <input id="media" v-model="form.media" type="text" />
-      </div>
-      <div class="form-group">
-        <label for="projectNumber">Project Number (if applicable)</label>
-        <input id="projectNumber" v-model="form.projectNumber" type="text" />
-      </div>
-      <div class="form-group checkbox">
-        <input id="published" v-model="form.published" type="checkbox" />
-        <label for="published"
-          >Check here if this project is currently "published" on MorphoBank
-          (visible to the public)</label
-        >
-      </div>
-      <div class="form-group">
-        <label for="security"
-          >Security Question (to prevent SPAMbots): {{ firstNumber }} +
-          {{ secondNumber }} = ?</label
-        >
-        <input id="security" v-model="form.security" type="text" />
-      </div>
-      <div class="form-group">
-        <label for="attachment">Related Attachments</label>
-        <input id="attachment" type="file" multiple @change="onFileChange" />
-        <p class="warning-message">
-          Attachments must not exceed a total size of 9MB.
-        </p>
-        <!-- Static warning message -->
-      </div>
-      <Alert
-        :alertType="alert.type"
-        :message="alert"
-        messageName="customMessage"
-      />
-      <div v-if="loading" class="loading-indicator">
-        <div class="spinner"></div>
-      </div>
-      <div class="form-group action-buttons">
-        <button type="submit">Submit</button>
-        <button type="reset">Reset</button>
-      </div>
-    </form>
-  </div>
+      <form @submit.prevent="submitForm" class="ask-us-form">
+        <div class="form-group">
+          <label for="name" class="form-label">
+            Name
+            <span class="required">Required</span>
+          </label>
+          <input
+            type="text"
+            id="name"
+            v-model="formData.name"
+            class="form-control"
+            :class="{ 'is-invalid': errors.name }"
+            @blur="handleNameBlur"
+          />
+          <div class="invalid-feedback" v-if="errors.name">
+            {{ errors.name }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="email" class="form-label">
+            E-mail Address
+            <span class="required">Required</span>
+          </label>
+          <input
+            type="email"
+            id="email"
+            v-model="formData.email"
+            class="form-control"
+            :class="{ 'is-invalid': errors.email }"
+            @blur="handleEmailBlur"
+          />
+          <div class="invalid-feedback" v-if="errors.email">
+            {{ errors.email }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="question" class="form-label">
+            Tell us your question, issue or idea
+            <span class="required">Required</span>
+          </label>
+          <textarea
+            id="question"
+            v-model="formData.question"
+            class="form-control"
+            :class="{ 'is-invalid': errors.question }"
+            rows="5"
+            @blur="handleDescriptionBlur"
+          ></textarea>
+          <div class="invalid-feedback" v-if="errors.question">
+            {{ errors.question }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="mediaNumbers" class="form-label"
+            >Media or Matrix numbers affected (if applicable)</label
+          >
+          <input
+            type="text"
+            id="mediaNumbers"
+            v-model="formData.mediaNumbers"
+            class="form-control"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="projectNumber" class="form-label"
+            >Project Number (if applicable)</label
+          >
+          <input
+            type="text"
+            id="projectNumber"
+            v-model="formData.projectNumber"
+            class="form-control"
+            :class="{ 'is-invalid': errors.projectNumber }"
+            @blur="handleProjectNumberBlur"
+          />
+          <div class="invalid-feedback" v-if="errors.projectNumber">
+            {{ errors.projectNumber }}
+          </div>
+        </div>
+
+        <div class="form-group checkbox">
+          <input
+            id="published"
+            v-model="formData.published"
+            type="checkbox"
+            @change="handlePublishedChange"
+          />
+          <label for="published" class="form-label">
+            Check here if this project is currently "published" on MorphoBank
+            (visible to the public)
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label for="securityQuestion" class="form-label">
+            Security Question (to prevent SPAMbots): {{ firstNumber }} +
+            {{ secondNumber }} = ?
+            <span class="required">Required</span>
+          </label>
+          <input
+            type="text"
+            id="securityQuestion"
+            v-model="formData.securityAnswer"
+            class="form-control"
+            :class="{ 'is-invalid': errors.securityAnswer }"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="attachment" class="form-label">Related Attachments</label>
+          <div class="file-upload-container">
+            <input
+              id="attachment"
+              type="file"
+              multiple
+              @change="onFileChange"
+              class="file-input"
+              ref="fileInput"
+            />
+            <div class="file-upload-button">
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                @click="triggerFileInput"
+              >
+                <i class="fas fa-paperclip"></i> Choose Files
+              </button>
+              <span class="file-count" v-if="formData.attachments.length > 0">
+                {{ formData.attachments.length }} file(s) selected
+              </span>
+            </div>
+            <p class="warning-message">
+              Attachments must not exceed a total size of 9MB.
+            </p>
+            <div class="invalid-feedback" v-if="formData.attachmentError">
+              {{ formData.attachmentError }}
+            </div>
+          </div>
+
+          <div class="attachments-list" v-if="formData.attachments.length > 0">
+            <div
+              class="attachment-item"
+              v-for="(file, index) in formData.attachments"
+              :key="index"
+            >
+              <div class="attachment-info">
+                <span class="attachment-name">{{ file.name }}</span>
+                <span class="attachment-size">{{
+                  formatFileSize(file.size)
+                }}</span>
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger"
+                @click="removeAttachment(index)"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <Alert
+          :alertType="alert.type"
+          :message="alert"
+          messageName="customMessage"
+        />
+
+        <div v-if="loading" class="loading-indicator">
+          <div class="spinner"></div>
+        </div>
+
+        <div class="form-buttons">
+          <button type="submit" class="btn btn-primary">Submit</button>
+          <button type="reset" class="btn btn-secondary">Reset</button>
+        </div>
+      </form>
+    </div>
+  </FormLayout>
 </template>
 
 <script>
 import { reactive, ref } from 'vue'
 import axios from 'axios'
 import Alert from '../../components/main/Alert.vue'
+import SpamDetection from 'spam-detection'
+import { useAuthStore } from '@/stores/AuthStore.js'
+import FormLayout from '@/components/main/FormLayout.vue'
+import '@/assets/css/form.css'
 
 export default {
   components: {
     Alert,
+    FormLayout,
   },
   setup() {
-    const form = reactive({
+    const authStore = useAuthStore()
+    const fileInput = ref(null)
+    const formData = reactive({
       name: '',
       email: '',
       question: '',
-      media: '',
+      mediaNumbers: '',
       projectNumber: '',
       published: false,
+      securityAnswer: '',
       attachments: [],
-      security: '',
       attachmentError: '',
+    })
+
+    const errors = reactive({
+      name: '',
+      email: '',
+      question: '',
+      securityAnswer: '',
+      projectNumber: '',
     })
 
     const loading = ref(false)
 
-    const alert = reactive({
-      customMessage: '',
-      type: 'success', // You can set 'success' or 'danger' based on your requirement
-    })
-
     let firstNumber = ref(Math.floor(Math.random() * 10))
     let secondNumber = ref(Math.floor(Math.random() * 10))
+
+    const alert = reactive({
+      customMessage: '',
+      type: 'success',
+    })
+
+    const triggerFileInput = () => {
+      fileInput.value.click()
+    }
+
+    const formatFileSize = (bytes) => {
+      if (bytes === 0) return '0 Bytes'
+      const k = 1024
+      const sizes = ['Bytes', 'KB', 'MB', 'GB']
+      const i = Math.floor(Math.log(bytes) / Math.log(k))
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+    }
+
+    const removeAttachment = (index) => {
+      formData.attachments.splice(index, 1)
+      if (formData.attachments.length === 0) {
+        formData.attachmentError = ''
+      }
+    }
 
     const onFileChange = (e) => {
       const files = e.target.files
       let totalSize = 0
-      for (let i = 0; i < files.length; i++) {
-        totalSize += files[i].size // Add the size of each file
+
+      // Calculate total size of existing attachments
+      for (let i = 0; i < formData.attachments.length; i++) {
+        totalSize += formData.attachments[i].size
       }
+
+      // Add size of new files
+      for (let i = 0; i < files.length; i++) {
+        totalSize += files[i].size
+      }
+
       if (totalSize > 9 * 1024 * 1024) {
         // Check if total size exceeds 9MB
-        form.attachmentError =
-          'Failed to submit form. The total attachment size is too large.' //Making messaging uniform for this
-        return // Return without updating form.attachments
+        formData.attachmentError =
+          'Failed to add files. The total attachment size would exceed 9MB.'
+        return // Stop if size limit exceeded
       }
-      form.attachmentError = ''
-      form.attachments = [] // Clear the existing attachments
+
+      formData.attachmentError = ''
+
+      // Add new files to attachments array
       for (let i = 0; i < files.length; i++) {
-        form.attachments.push(files[i]) // Store the File object directly
+        formData.attachments.push(files[i])
+      }
+
+      // Reset the file input to allow selecting the same file again
+      e.target.value = ''
+    }
+
+    const validateDescription = (description) => {
+      if (!description || description.length < 200) {
+        return 'The description must contain more than 200 characters. Please clearly state the problem and what was expected.'
+      }
+
+      // Check for HTML links
+      if (/<\w*a.*href=.*>/.test(description)) {
+        return 'Description should not contain external links.'
+      }
+
+      // Check for URLs
+      if (/(http|https):\/\//.test(description)) {
+        return 'Description should not refer to external links.'
+      }
+
+      // Check for non-English characters
+      if (/[^\x00-\x7F]/.test(description)) {
+        return 'Description should not contain non-English words. Please reconsider rephrasing your message.'
+      }
+
+      // Use spam detection library to check for spam content
+      const spamResult = SpamDetection.detect(description)
+      if (spamResult.isSpam) {
+        return 'Description contains suspicious text. Please reconsider rephrasing your message.'
+      }
+
+      return ''
+    }
+
+    const validateEmail = (email) => {
+      // Use strict email format validation
+      const emailRegex =
+        /^([a-zA-Z0-9])+([a-zA-Z0-9\._-])*@([a-zA-Z0-9_-])+([a-zA-Z0-9\._-]+)+$/
+      if (!emailRegex.test(email)) {
+        return 'E-mail address is not valid.'
+      }
+
+      // Check if @morphobank.org domain is used
+      if (email.toLowerCase().includes('@morphobank.org')) {
+        return 'E-mail address cannot be used.'
+      }
+
+      return null
+    }
+
+    const validateName = (name) => {
+      if (name.length > 50) {
+        return 'The provided name is too long. Please consider using your first name only.'
+      }
+
+      // Use spam detection library to check for spam content
+      const spamResult = SpamDetection.detect(name)
+      if (spamResult.isSpam) {
+        return 'User name contains suspicious words. Please consider using your first name only.'
+      }
+
+      return null
+    }
+
+    const validateProjectNumber = (projectNumber, isPublished) => {
+      if (projectNumber && isNaN(projectNumber)) {
+        return 'The project number must be a number.'
+      }
+
+      if (isPublished && !projectNumber) {
+        return 'The project number must be specified if published checkbox is checked.'
+      }
+
+      return null
+    }
+
+    const handleEmailBlur = () => {
+      if (formData.email.trim()) {
+        errors.email = validateEmail(formData.email)
+      } else {
+        errors.email = ''
+      }
+    }
+
+    const handleNameBlur = () => {
+      if (formData.name.trim()) {
+        errors.name = validateName(formData.name)
+      } else {
+        errors.name = ''
+      }
+    }
+
+    const handleProjectNumberBlur = () => {
+      errors.projectNumber = validateProjectNumber(
+        formData.projectNumber,
+        formData.published
+      )
+    }
+
+    const handlePublishedChange = () => {
+      errors.projectNumber = validateProjectNumber(
+        formData.projectNumber,
+        formData.published
+      )
+    }
+
+    const handleDescriptionBlur = () => {
+      if (formData.question.trim()) {
+        errors.question = validateDescription(formData.question)
+      } else {
+        errors.question = ''
       }
     }
 
     const submitForm = async () => {
-      // Reset previous alert
+      // Reset previous alert message
       alert.customMessage = ''
-      alert.type = 'danger' // Default error type
-      const securityAnswer = parseInt(form.security, 10)
-      // Check for required fields
-      if (!form.name.trim() || !form.email.trim() || !form.question.trim()) {
+      alert.type = 'danger' // Set default alert type to danger
+      const securityAnswer = parseInt(formData.securityAnswer, 10)
+
+      // Validate required fields
+      if (
+        !formData.name.trim() ||
+        !formData.email.trim() ||
+        !formData.question.trim()
+      ) {
         alert.customMessage =
           'Please fill out all required fields (Name, E-mail Address, and Question).'
         return
       }
 
+      // Validate name
+      const nameError = validateName(formData.name)
+      if (nameError) {
+        alert.customMessage = nameError
+        return
+      }
+
+      // Validate email format and domain
+      const emailError = validateEmail(formData.email)
+      if (emailError) {
+        alert.customMessage = emailError
+        return
+      }
+
+      // Validate project number
+      const projectNumberError = validateProjectNumber(
+        formData.projectNumber,
+        formData.published
+      )
+      if (projectNumberError) {
+        alert.customMessage = projectNumberError
+        return
+      }
+
+      // Validate question content
+      const questionError = validateDescription(formData.question)
+      if (questionError) {
+        alert.customMessage = questionError
+        return
+      }
+
+      // Validate security question answer
       if (
         isNaN(securityAnswer) ||
         securityAnswer !== firstNumber.value + secondNumber.value
       ) {
         alert.customMessage = 'Incorrect security answer. Please try again.'
-        form.security = ''
+        formData.securityAnswer = ''
         return
       }
 
-      // Check if attachment error is present
-      if (form.attachmentError) {
-        alert.customMessage = form.attachmentError
-        return // Return without proceeding to submit
+      // Check for attachment errors
+      if (formData.attachmentError) {
+        alert.customMessage = formData.attachmentError
+        return
       }
 
-      // Map the attachments to include both name and Base64 content
+      // Convert attachments to Base64 format
       const attachments = await Promise.all(
-        form.attachments.map(async (file) => {
+        formData.attachments.map(async (file) => {
           return new Promise((resolve) => {
             const reader = new FileReader()
             reader.onloadend = () => {
@@ -168,36 +485,41 @@ export default {
         })
       )
 
-      // Create an object for the form data
-      const formData = {
-        name: form.name,
-        email: form.email,
-        question: form.question,
-        media: form.media,
-        projectNumber: form.projectNumber,
-        published: form.published,
+      // Prepare form data for submission
+      const formDataForSubmission = {
+        name: formData.name,
+        email: formData.email,
+        question: formData.question,
+        mediaNumbers: formData.mediaNumbers,
+        projectNumber: formData.projectNumber,
+        published: formData.published,
+        securityAnswer: formData.securityAnswer,
         attachments: attachments,
+        userAgent: navigator.userAgent,
+        userId: authStore.user?.userId || null,
       }
 
       loading.value = true
       try {
+        // Submit form data to API
         const response = await axios.post(
           `${import.meta.env.VITE_API_URL}/email/contact-us-submit`,
-          formData,
+          formDataForSubmission,
           {
             headers: {
               'Content-Type': 'application/json',
             },
           }
         )
-        alert.customMessage = 'Form submitted successfully.'
+        alert.customMessage =
+          'Your email has been sent. MorphoBank will be back in touch with you very shortly!'
         alert.type = 'success'
-        console.log(response.data)
-        // Delay the page reload by two seconds to give use opportunity to know its successful
+        // Reload page after successful submission
         setTimeout(() => {
           location.reload()
         }, 2000)
       } catch (error) {
+        // Handle specific error cases
         if (error.response && error.response.status === 413) {
           alert.customMessage =
             'Failed to submit form. The total attachment size is too large.'
@@ -211,69 +533,85 @@ export default {
     }
 
     return {
-      form,
+      formData,
       firstNumber,
       secondNumber,
       onFileChange,
       submitForm,
       alert,
       loading,
+      errors,
+      handleEmailBlur,
+      handleNameBlur,
+      handleProjectNumberBlur,
+      handlePublishedChange,
+      handleDescriptionBlur,
+      fileInput,
+      triggerFileInput,
+      formatFileSize,
+      removeAttachment,
     }
   },
 }
 </script>
 
 <style scoped>
-.ask-us {
-  width: 60%;
-  margin: 0 auto;
-  padding: 2rem;
-  box-sizing: border-box;
-  font-size: 1rem;
+.ask-us-container {
+  padding: 20px;
 }
 
-h1 {
-  margin-bottom: 1.5rem;
-  color: #333;
-}
-
-p {
+.description {
   margin-bottom: 2rem;
   color: #666;
+  line-height: 1.5;
 }
 
-.form-group {
-  margin-bottom: 1rem;
+.ask-us-form {
+  max-width: 800px;
+  margin: 0 auto;
 }
 
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
+.warning-message {
+  color: #ff9800;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
 }
 
-.form-group input[type='text'],
-.form-group input[type='email'],
-.form-group textarea {
-  width: 100%;
-  padding: 0.5rem;
-  box-sizing: border-box;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.form-group.checkbox {
+.loading-indicator {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 1000;
 }
 
-.form-group.checkbox input[type='checkbox'] {
-  margin-top: 0.3rem;
-  margin-right: 0.5rem;
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border-left: 4px solid #000;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .action-buttons {
   display: flex;
   justify-content: space-between;
+  margin-top: 20px;
 }
 
 .action-buttons button {
@@ -292,40 +630,67 @@ p {
   background: #6c757d;
 }
 
-.warning-message {
-  color: #ff9800;
-  font-size: 0.8rem;
-  margin-top: 0.5rem;
+.form-group.checkbox {
+  display: flex;
+  align-items: flex-start;
 }
-.loading-indicator {
+
+.form-group.checkbox input[type='checkbox'] {
+  margin-top: 0.3rem;
+  margin-right: 0.5rem;
+}
+
+.file-upload-container {
+  margin-bottom: 10px;
+}
+
+.file-input {
+  display: none;
+}
+
+.file-upload-button {
   display: flex;
   align-items: center;
-  justify-content: center;
-  position: fixed; /* Fixed position */
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
-  z-index: 1000; /* Put it on top of everything else */
+  gap: 10px;
 }
-.spinner {
-  border: 4px solid rgba(0, 0, 0, 0.1);
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border-left: 4px solid #000;
-  animation: spin 1s linear infinite;
+
+.file-count {
+  color: #666;
+  font-size: 0.9rem;
 }
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+
+.attachments-list {
+  margin-top: 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
 }
-textarea {
-  height: 200px;
+
+.attachment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.attachment-item:last-child {
+  border-bottom: none;
+}
+
+.attachment-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.attachment-name {
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.attachment-size {
+  font-size: 0.8rem;
+  color: #666;
 }
 </style>

@@ -73,7 +73,7 @@ function onSearch() {
                 <li class="nav-item mx-1">
                   <RouterLink
                     class="nav-link p-0 m-1 text-nowrap"
-                    to="/project/pub_date"
+                    to="/projects/pub_date"
                   >
                     Browse Projects
                   </RouterLink>

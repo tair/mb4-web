@@ -64,5 +64,39 @@ export const useProjectsStore = defineStore({
         }
       }
     },
+    async createProject(projectData) {
+      try {
+        // Log the data being sent
+        // if (projectData instanceof FormData) {
+        //   const formDataObj = {}
+        //   for (const [key, value] of projectData.entries()) {
+        //     formDataObj[key] = value
+        //   }
+        //   console.log("Sending FormData to API:", formDataObj)
+        // } else {
+        //   console.log("Sending data to API:", projectData)
+        // }
+
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_URL}/projects/create`,
+          projectData,
+          {
+            headers:
+              projectData instanceof FormData
+                ? {
+                    'Content-Type': 'multipart/form-data',
+                  }
+                : {
+                    'Content-Type': 'application/json',
+                  },
+          }
+        )
+
+        return response.data
+      } catch (error) {
+        console.error('Error creating project:', error.response || error)
+        throw error
+      }
+    },
   },
 })

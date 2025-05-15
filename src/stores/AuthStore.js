@@ -45,6 +45,7 @@ export const useAuthStore = defineStore({
         userId: null,
         userEmail: null,
         name: null,
+        access: null,
       }
       this.orcid = {
         orcid: null,
@@ -140,7 +141,6 @@ export const useAuthStore = defineStore({
         this.user = uObj
 
         localStorage.setItem('mb-user', JSON.stringify(uObj))
-        console.log('Login successful')
         return true
       } catch (e) {
         console.error(`store:auth:login(): ${e}\n${e.response.data.message}`)
@@ -222,6 +222,7 @@ export const useAuthStore = defineStore({
             userId: res.data.user.user_id,
             userEmail: res.data.user.email,
             name: res.data.user.name,
+            access: res.data.user.access,
           }
           this.user = uObj
           localStorage.setItem('mb-user', JSON.stringify(uObj))
@@ -233,9 +234,9 @@ export const useAuthStore = defineStore({
         } else if (res.data.potentialUserByEmail) {
           return {
             messages: {
-              msg: `We find your email address <b>${res.data.potentialUserByEmail.email}</b> in our database.`,
+              msg: `We found an account with your email address <b>${res.data.potentialUserByEmail.email}</b> in our database.`,
               signinMsg:
-                'Please sign in to MorphoBank to link with your ORCID account.',
+                'Please sign in to that MorphoBank account with your email/pwd and link it with your ORCID id.',
             },
             showSignin: true,
             showRegister: false,
@@ -243,9 +244,9 @@ export const useAuthStore = defineStore({
         } else if (res.data.potentialUsersByName) {
           return {
             messages: {
-              msg: `We find user <b>${res.data.potentialUsersByName[0].name}</b> in our database.`,
+              msg: `We found user <b>${res.data.potentialUsersByName[0].name}</b> in our database.`,
               signinMsg:
-                "If it's you, please sign in to MorphoBank to link with your ORCID account.",
+                "If it's you, please sign in to MorphoBank with your email/pwd and link it with your ORCID id.",
               registerMsg:
                 'Otherwise, please proceed to create an account with your ORCID record.',
             },

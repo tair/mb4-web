@@ -3,20 +3,34 @@
     <div class="row">
       <div class="col-md-6">
         <div class="interior_mainheader_title">
-          <h1>Register</h1>
+          <h1>Register with ORCID</h1>
           <div>
             <p>
               New to Morphobank? Register to create your own projects. Logging
               in with your ORCID will create a new account for you based on that
               ID.
             </p>
-            <router-link to="/users/login" id="loginLink"
-              >Click here to Login.</router-link
-            >
           </div>
           <div><br /><i>* indicates required fields.</i></div>
         </div>
-        <form @submit.prevent="submitForm">
+
+        <!-- Show ORCID login button when no ORCID is present -->
+        <div v-if="!authStore.orcid.orcid" class="text-center">
+          <a
+            :href="orcidLoginUrl"
+            class="w-100 btn btn-lg btn-primary btn-white mt-3"
+          >
+            <img
+              alt="ORCID logo"
+              src="/ORCIDiD_iconvector.svg"
+              class="orcid-icon"
+            />
+            Sign in with ORCID
+          </a>
+        </div>
+
+        <!-- Show registration form when ORCID is present -->
+        <form v-else @submit.prevent="submitForm">
           <div class="form-section">
             <div class="input-container">
               <br />
@@ -92,7 +106,7 @@
                 alertType="danger"
               ></Alert>
             </div>
-            <div class="input-container orcid-container row" v-if="state.orcid">
+            <div class="input-container orcid-container row">
               <div class="col-sm-2 align-self-center">
                 <span>ORCID</span>
               </div>
@@ -130,6 +144,14 @@
               messageName="signup"
               alertType="danger"
             ></Alert>
+            <div v-if="error.showResetLink" class="mt-2 mb-2">
+              <router-link
+                :to="`/users/resetpassword?email=${state.email}`"
+                class="btn btn-link p-0"
+              >
+                Reset your password
+              </router-link>
+            </div>
             <div>
               <button
                 class="w-100 btn btn-lg btn-primary form-group"
@@ -159,7 +181,7 @@
 </template>
 
 <script setup>
-import { reactive, onMounted } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/AuthStore.js'
 import { useMessageStore } from '@/stores/MessageStore.js'
 import { getPasswordPattern, getPasswordRule } from '@/utils/util.js'
@@ -172,6 +194,7 @@ const authStore = useAuthStore()
 const messageStore = useMessageStore()
 const passwordTooltipText = getPasswordRule()
 const confirmPasswordText = 'Please enter the password exactly as above.'
+const orcidLoginUrl = ref(null)
 
 const state = reactive({
   fname: '',
@@ -184,8 +207,12 @@ const state = reactive({
   accessToken: '',
   refreshToken: '',
 })
-const error = reactive({})
-//adding check while typing
+const error = reactive({
+  signup: null,
+  passwordValidation: null,
+  passwordConfirm: null,
+  showResetLink: false,
+})
 
 const validatePassword = function () {
   const passwordValidation = getPasswordPattern()
@@ -211,7 +238,8 @@ const confirmPassword = function () {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  orcidLoginUrl.value = await authStore.getOrcidLoginUrl()
   if (authStore.orcid.name) {
     let names = authStore.orcid.name.split(' ')
     state.fname = names[0]
@@ -224,44 +252,46 @@ onMounted(() => {
 
 const submitForm = () => {
   if (!validatePassword() || !confirmPassword()) return
-  // Object to send to backend and also to contain all the inputs based on whether there is a cached token for ORCID
-  let formObject = {}
-  if (state.orcid) {
-    formObject = {
-      fname: state.fname,
-      lname: state.lname,
-      email: state.email,
-      password: state.password,
-      orcid: state.orcid,
-      accessToken: state.accessToken,
-      refreshToken: state.refreshToken,
-    }
-  } else {
-    formObject = {
-      fname: state.fname,
-      lname: state.lname,
-      email: state.email,
-      password: state.password,
-    }
+
+  const formObject = {
+    fname: state.fname,
+    lname: state.lname,
+    email: state.email,
+    password: state.password,
+    orcid: state.orcid,
+    accessToken: state.accessToken,
+    refreshToken: state.refreshToken,
   }
 
-  // Make a request for a user with a given ID
   axios
     .post(authStore.getRegisterUrl(), formObject)
     .then(function (response) {
-      // handle success
       if (response.status === 201) {
         messageStore.setSuccessMessage('User was created successfully!')
         router.push({ path: '/users/login' })
       } else {
-        // handle error
         error.signup = 'An error occurred while creating user.'
+        error.showResetLink = false
       }
     })
     .catch(function (e) {
-      // handle error
-      error.signup =
-        'An error occurred while creating user: ' + e.response.data.message
+      console.log(e.response)
+      if (e.response && e.response.data && e.response.data.message) {
+        // Check if the error message indicates email already exists
+        const errorMessage = e.response.data.message.toLowerCase()
+        if (errorMessage.includes('email') && errorMessage.includes('reset')) {
+          error.signup =
+            'This email is already in our system. Please reset your password below instead of creating a new account.'
+          error.showResetLink = true
+        } else {
+          error.signup = e.response.data.message
+          error.showResetLink = false
+        }
+      } else {
+        error.signup =
+          'An error occurred while creating user. Please try again later.'
+        error.showResetLink = false
+      }
     })
 }
 </script>
@@ -279,11 +309,10 @@ const submitForm = () => {
 }
 
 .space-container {
-  height: 100px; /* adjust this value as needed */
+  height: 100px;
 }
 
 .orcid-container .col-sm-2.align-self-center span {
-  /* style based on your requirement */
   align-items: center;
 }
 
@@ -293,7 +322,7 @@ const submitForm = () => {
 }
 
 .checkbox {
-  margin-right: 10px; /* adjust this value as needed */
+  margin-right: 10px;
 }
 
 .orcid-icon {
@@ -308,9 +337,9 @@ const submitForm = () => {
   border-radius: 4px;
 }
 
-.alert-danger {
-  color: #a94442;
-  background-color: #f2dede;
-  border-color: #ebccd1;
+.btn-white {
+  background-color: #ffffff !important;
+  border: 1px solid #ced4da !important;
+  color: #333333;
 }
 </style>

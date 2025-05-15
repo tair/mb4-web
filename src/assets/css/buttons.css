@@ -1,0 +1,76 @@
+:root {
+  --mb-orange: #ef782f;
+  --mb-orange-hover: #d86c13;
+  --mb-orange-disabled: #f6ba95;
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-warning,
+.btn-warning:disabled {
+  background-color: var(--mb-orange);
+  border: var(--mb-orange);
+  color: white;
+}
+
+.btn-warning:hover {
+  background-color: var(--mb-orange-hover);
+  color: white;
+}
+
+.btn-primary {
+  background-color: var(--mb-orange);
+  border: none;
+  outline: none;
+}
+
+.btn-primary:hover {
+  background-color: var(--mb-orange-hover);
+  border: none;
+}
+
+.btn-primary:disabled {
+  background-color: var(--mb-orange-disabled);
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+.btn-outline-primary {
+  border-color: var(--mb-orange);
+  color: var(--mb-orange);
+  outline: none;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--mb-orange);
+  border-color: var(--mb-orange);
+  color: white;
+}
+
+.btn-link {
+  color: #0066cc;
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+} 
