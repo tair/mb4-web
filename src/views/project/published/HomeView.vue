@@ -14,7 +14,6 @@ let page_type = ref(route.path.split('/')[2])
 
 onMounted(() => {
   page_type.value = route.path.split('/')[2]
-  console.log('page_type', page_type.value)
   projectsStore.fetchProjects()
   // set default sort desc
   onSorted(sort_by)
