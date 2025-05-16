@@ -4,6 +4,7 @@ import { useSearchResultsStore } from '@/stores/SearchResultsStore'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/AuthStore.js'
 import ToggleLinks from '@/components/ToggleLinks.vue'
+import { getBestMediaUrl } from '@/utils/mediaUtils'
 
 const searchResultsStore = useSearchResultsStore()
 const route = useRoute()
@@ -270,8 +271,8 @@ function formatAuthors(authors) {
             style="min-height: 60px"
           >
             <img
-              v-if="item.media && item.media.icon && item.media.icon.FILENAME"
-              :src="`https://dev.morphobank.org/media/morphobank3/images/${item.media.icon.FILENAME}`"
+              v-if="item.media"
+              :src="getBestMediaUrl(item.media, ['thumbnail'])"
               alt="thumb"
               class="me-2 flex-shrink-0 bg-light border"
               style="width: 60px; height: 60px; object-fit: contain"

@@ -51,7 +51,6 @@ export const useSearchResultsStore = defineStore({
       axios
         .get(`${baseUrl}/search/projects`, { params: query })
         .then((res) => {
-          console.log(res.data)
           this.results.projects = res.data.projects
         })
         .catch(() => {
@@ -65,7 +64,6 @@ export const useSearchResultsStore = defineStore({
       axios
         .get(`${baseUrl}/search/media`, { params: query })
         .then((res) => {
-          console.log(res.data)
           this.results.media = res.data.media
         })
         .catch(() => {
@@ -79,7 +77,6 @@ export const useSearchResultsStore = defineStore({
       axios
         .get(`${baseUrl}/search/media-views`, { params: query })
         .then((res) => {
-          console.log(res.data)
           this.results.media_views = res.data.mediaViews
         })
         .catch(() => {
@@ -106,7 +103,6 @@ export const useSearchResultsStore = defineStore({
       axios
         .get(`${baseUrl}/search/characters`, { params: query })
         .then((res) => {
-          console.log(res.data)
           this.results.characters = res.data.characters
         })
         .catch(() => {
