@@ -12,6 +12,16 @@ export const useSpecimensStore = defineStore({
     specimens: function () {
       return Array.from(this.map.values())
     },
+    identifiedSpecimens: function () {
+      return Array.from(this.map.values()).filter(
+        (specimen) => specimen.taxon_id
+      )
+    },
+    unidentifiedSpecimens: function () {
+      return Array.from(this.map.values()).filter(
+        (specimen) => !specimen.taxon_id
+      )
+    },
     taxaIds: function () {
       const taxaIds = new Set()
       for (const specimen of this.specimens) {
@@ -30,7 +40,6 @@ export const useSpecimensStore = defineStore({
       const response = await axios.get(url)
       const specimens = response.data.specimens || []
       this.addSpecimens(specimens)
-
       this.isLoaded = true
     },
     async fetchSpecimensUsage(projectId, specimenIds) {
@@ -83,6 +92,21 @@ export const useSpecimensStore = defineStore({
       }
       return false
     },
+    async editIds(projectId, specimenIds, json) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/specimens/edit`
+      const response = await axios.post(url, {
+        specimen_ids: specimenIds,
+        specimen: json,
+      })
+      if (response.status == 200) {
+        const specimens = response.data.specimens
+        this.addSpecimens(specimens)
+        return true
+      }
+      return false
+    },
     async deleteIds(projectId, specimenIds, remappedSpecimenIds) {
       const url = `${
         import.meta.env.VITE_API_URL
@@ -109,9 +133,7 @@ export const useSpecimensStore = defineStore({
     getSpecimensByIds(specimenIds) {
       const specimens = []
       for (const specimenId of specimenIds) {
-        if (this.map.has(specimenId)) {
-          specimens.push(this.map.get(specimenId))
-        }
+        const specimen = this.map.get(specimenId)
       }
       return specimens
     },
