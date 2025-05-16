@@ -6,5 +6,5 @@ defineProps<{
 }>()
 </script>
 <template>
-  <span> {{ getText(value) }} </span>
+  <span v-html="getText(value)"></span>
 </template>

@@ -97,6 +97,14 @@ export function getJournalCoverTooltip() {
   return 'Upload a JPEG, GIF, PNG or TIFF image file of the journal cover from your publication to be used as an illustration on MorphoBank.org for your project'
 }
 
+export function getSpecimenTypeTooltipText() {
+  return 'A "vouchered" specimen is used to describe images or media of a member of a species whose remains are housed in a repository (museum, university) and have been given a collection number. An unvouchered specimen is used to describe a 2D or 3D image that does not have such data due to historical recording keeping practices, or because the species has been observed in the wild, or because the image is a composite of many individuals.'
+}
+
+export function getTaxonTooltipText() {
+  return 'Before you add a specimen you must first add the Taxon to your MorphoBank project. Once the taxon is added just type the first few letters of its name and it will appear automatically'
+}
+
 export const TOOLTIP_ALLOW_REVIEWER_LOGIN =
   'Allow reviewers to log in and access your project data during the review process'
 export const TOOLTIP_ARTICLE_DOI =

@@ -21,15 +21,27 @@ const taxaStore = useTaxaStore()
 const isLoaded = computed(() => specimensStore.isLoaded && taxaStore.isLoaded)
 
 const specimensToDelete = ref([])
+const showUnidentified = ref(false)
 
 const filters = reactive({})
-const filteredSpecimens = computed(() =>
-  Object.values(filters)
-    .reduce(
-      (specimens, filter) => specimens.filter(filter),
-      specimensStore.specimens
-    )
+const filteredSpecimens = computed(() => {
+  let specimens = showUnidentified.value
+    ? specimensStore.unidentifiedSpecimens
+    : specimensStore.identifiedSpecimens
+  return Object.values(filters)
+    .reduce((specimens, filter) => specimens.filter(filter), specimens)
     .sort((a, b) => {
+      if (showUnidentified.value) {
+        // Sort unidentified specimens by institution code, collection code, and catalog number
+        const aKey = `${a.institution_code || ''}${a.collection_code || ''}${
+          a.catalog_number || ''
+        }`
+        const bKey = `${b.institution_code || ''}${b.collection_code || ''}${
+          b.catalog_number || ''
+        }`
+        return aKey.localeCompare(bKey)
+      }
+
       const nameA = getTaxonName(
         taxaStore.getTaxonById(a.taxon_id),
         TaxaColumns.GENUS,
@@ -50,7 +62,7 @@ const filteredSpecimens = computed(() =>
 
       return nameA.localeCompare(nameB)
     })
-)
+})
 
 const rank = ref(TaxaColumns.GENUS)
 const availableRanks = computed(() => {
@@ -113,6 +125,10 @@ function refresh() {
 }
 
 function setPage(event) {
+  if (showUnidentified.value) {
+    return
+  }
+
   const text = event.target.textContent
   if (text == 'ALL') {
     selectedLetter.value = null
@@ -133,6 +149,10 @@ function setPage(event) {
 }
 
 function setRank(event) {
+  if (showUnidentified.value) {
+    return
+  }
+
   delete filters['page']
   selectedLetter.value = null
 
@@ -161,8 +181,34 @@ function setRank(event) {
         </button>
       </RouterLink>
     </div>
-    <div v-if="specimensStore.specimens?.length">
-      <div v-if="availableRanks.size > 0">
+    <div
+      v-if="
+        specimensStore.identifiedSpecimens?.length ||
+        specimensStore.unidentifiedSpecimens?.length
+      "
+    >
+      <div class="row mb-3">
+        <div class="col-8">
+          <p v-if="!showUnidentified">
+            Displaying {{ filteredSpecimens?.length }} identified specimens.
+          </p>
+          <p v-else>
+            Displaying {{ filteredSpecimens?.length }} unidentified specimens.
+          </p>
+        </div>
+        <div class="col-4">
+          <div
+            class="text-end"
+            v-if="specimensStore.unidentifiedSpecimens?.length"
+          >
+            <select id="showUnidentified" v-model="showUnidentified">
+              <option :value="true">Show Unidentified Specimens</option>
+              <option :value="false">Show Identified Specimens</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div v-if="availableRanks.size > 0 && !showUnidentified">
         Show specimens whose
         <select @change="setRank">
           <template v-for="[column, name] in nameColumnMap">
@@ -176,7 +222,7 @@ function setRank(event) {
           </template>
         </select>
       </div>
-      <div class="alphabet-bar">
+      <div class="alphabet-bar" v-if="!showUnidentified">
         begins with:
         <template v-for="letter in letters">
           <span
