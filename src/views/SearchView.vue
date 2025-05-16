@@ -3,6 +3,7 @@ import { computed, onMounted, watch, ref } from 'vue'
 import { useSearchResultsStore } from '@/stores/SearchResultsStore'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/AuthStore.js'
+import ToggleLinks from '@/components/ToggleLinks.vue'
 
 const searchResultsStore = useSearchResultsStore()
 const route = useRoute()
@@ -30,7 +31,7 @@ function doSearch(q) {
   const searchTerm = q || ''
   const query = { searchTerm }
   // If user is admin, add published: false to query
-  if (authStore.isUserAdministrator) {
+  if (authStore.isUserAdministrator || authStore.isUserCurator) {
     query.published = false
   }
   // fetchResults can be async or return a promise
@@ -155,30 +156,6 @@ function formatAuthors(authors) {
     })
     .join('; ')
 }
-
-// Reusable ToggleLinks component
-const ToggleLinks = {
-  props: ['modelValue'],
-  emits: ['update:modelValue'],
-  setup(props, { emit }) {
-    const options = [
-      { key: 'all', label: 'All' },
-      { key: 'published', label: 'Published' },
-      { key: 'unpublished', label: 'Unpublished' },
-    ]
-    function setValue(val) {
-      emit('update:modelValue', val)
-    }
-    return { options, setValue }
-  },
-  template: `
-    <span class='ms-2 text-muted small'>
-      <template v-for="(opt, idx) in options">
-        <a href="#" @click.prevent="setValue(opt.key)" :style="modelValue === opt.key ? 'font-weight:bold;text-decoration:underline;color:inherit' : 'color:inherit'">{{ opt.label }}</a><span v-if="idx < options.length-1"> | </span>
-      </template>
-    </span>
-  `,
-}
 </script>
 
 <template>
@@ -217,7 +194,10 @@ const ToggleLinks = {
     <!-- Projects Section -->
     <div class="bg-light p-2 mb-2">
       <b>Projects ({{ filteredProjects.length }})</b>
-      <ToggleLinks v-model="projectsFilter" />
+      <ToggleLinks
+        v-if="authStore.isUserAdministrator || authStore.isUserCurator"
+        v-model="projectsFilter"
+      />
     </div>
     <div class="border p-2 mb-3" style="max-height: 180px; overflow-y: auto">
       <template v-if="searchingProjects">
@@ -271,7 +251,10 @@ const ToggleLinks = {
       <span v-if="filteredMedia.length > 100" class="text-muted small"
         >&nbsp;Showing first 100</span
       >
-      <ToggleLinks v-model="mediaFilter" />
+      <ToggleLinks
+        v-if="authStore.isUserAdministrator || authStore.isUserCurator"
+        v-model="mediaFilter"
+      />
     </div>
     <div class="border p-2 mb-3" style="max-height: 400px; overflow-y: auto">
       <template v-if="searchingMedia">
@@ -328,7 +311,10 @@ const ToggleLinks = {
     <!-- Media Views Section -->
     <div class="bg-light p-2 mb-2">
       <b>Media Views ({{ filteredMediaViews.length }})</b>
-      <ToggleLinks v-model="mediaViewsFilter" />
+      <ToggleLinks
+        v-if="authStore.isUserAdministrator || authStore.isUserCurator"
+        v-model="mediaViewsFilter"
+      />
     </div>
     <div class="border p-2 mb-3" style="max-height: 180px; overflow-y: auto">
       <template v-if="searchingMediaViews">
@@ -363,7 +349,10 @@ const ToggleLinks = {
     <!-- Specimens Section -->
     <div class="bg-light p-2 mb-2">
       <b>Specimens ({{ filteredSpecimens.length }})</b>
-      <ToggleLinks v-model="specimensFilter" />
+      <ToggleLinks
+        v-if="authStore.isUserAdministrator || authStore.isUserCurator"
+        v-model="specimensFilter"
+      />
     </div>
     <div class="border p-2 mb-3" style="max-height: 180px; overflow-y: auto">
       <template v-if="searchingSpecimens">
@@ -419,7 +408,10 @@ const ToggleLinks = {
     <!-- Characters Section -->
     <div class="bg-light p-2 mb-2">
       <b>Characters ({{ filteredCharacters.length }})</b>
-      <ToggleLinks v-model="charactersFilter" />
+      <ToggleLinks
+        v-if="authStore.isUserAdministrator || authStore.isUserCurator"
+        v-model="charactersFilter"
+      />
     </div>
     <div class="border p-2 mb-3" style="max-height: 180px; overflow-y: auto">
       <template v-if="searchingCharacters">
@@ -454,7 +446,10 @@ const ToggleLinks = {
     <!-- Taxa Section -->
     <div class="bg-light p-2 mb-2">
       <b>Taxa ({{ filteredTaxa.length }})</b>
-      <ToggleLinks v-model="taxaFilter" />
+      <ToggleLinks
+        v-if="authStore.isUserAdministrator || authStore.isUserCurator"
+        v-model="taxaFilter"
+      />
     </div>
     <div class="border p-2 mb-3" style="max-height: 180px; overflow-y: auto">
       <template v-if="searchingTaxa">
@@ -487,7 +482,10 @@ const ToggleLinks = {
     <!-- Matrices Section -->
     <div class="bg-light p-2 mb-2">
       <b>Matrices ({{ filteredMatrices.length }})</b>
-      <ToggleLinks v-model="matricesFilter" />
+      <ToggleLinks
+        v-if="authStore.isUserAdministrator || authStore.isUserCurator"
+        v-model="matricesFilter"
+      />
     </div>
     <div class="border p-2 mb-3" style="max-height: 180px; overflow-y: auto">
       <template v-if="searchingMatrices">
@@ -524,7 +522,10 @@ const ToggleLinks = {
     <!-- References Section -->
     <div class="bg-light p-2 mb-2">
       <b>References ({{ filteredReferences.length }})</b>
-      <ToggleLinks v-model="referencesFilter" />
+      <ToggleLinks
+        v-if="authStore.isUserAdministrator || authStore.isUserCurator"
+        v-model="referencesFilter"
+      />
     </div>
     <div class="border p-2 mb-3" style="max-height: 180px; overflow-y: auto">
       <template v-if="searchingReferences">
@@ -565,9 +566,3 @@ const ToggleLinks = {
     </div>
   </div>
 </template>
-
-<script>
-export default {
-  components: { ToggleLinks },
-}
-</script>
