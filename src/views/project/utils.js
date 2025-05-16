@@ -6,7 +6,7 @@ export function getUserName(userId) {
   const projectUserStore = useProjectUsersStore()
   const user = projectUserStore.getUserById(userId)
   if (user) {
-    return ` ${user.fname} ${user.lname} (${user.email})`
+    return ` ${user.fname} ${user.lname} (<a href="mailto:${user.email}">${user.email}</a>)`
   }
   return ' Unknown User'
 }

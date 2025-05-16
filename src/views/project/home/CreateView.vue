@@ -484,10 +484,10 @@
       </div>
 
       <div class="form-buttons">
-        <button type="submit" class="btn btn-primary">Save</button>
-        <button type="button" @click="cancel" class="btn btn-secondary">
+        <button type="button" @click="cancel" class="btn btn-primary btn-white">
           Cancel
         </button>
+        <button type="submit" class="btn btn-primary">Save</button>
       </div>
     </form>
   </FormLayout>
