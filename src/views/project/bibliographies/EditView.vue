@@ -27,7 +27,23 @@ async function editReference(event) {
   const formData = new FormData(event.currentTarget)
   const authorFields = ['authors', 'secondary_authors', 'editors']
   const authors = Object.fromEntries(
-    authorFields.map((field) => [field, convertAuthors(formData, field)])
+    authorFields.map((field) => {
+      const authors = []
+      let index = 0
+      while (
+        formData.has(`${field}[${index}].forename`) ||
+        formData.has(`${field}[${index}].middlename`) ||
+        formData.has(`${field}[${index}].surname`)
+      ) {
+        authors.push({
+          forename: formData.get(`${field}[${index}].forename`) || '',
+          middlename: formData.get(`${field}[${index}].middlename`) || '',
+          surname: formData.get(`${field}[${index}].surname`) || '',
+        })
+        index++
+      }
+      return [field, authors]
+    })
   )
   const json = { ...Object.fromEntries(formData), ...authors }
   const success = await bibliographiesStore.edit(projectId, referenceId, json)
@@ -57,7 +73,11 @@ async function editReference(event) {
         </component>
       </div>
       <div class="btn-form-group">
-        <button class="btn btn-primary" type="button" @click="$router.go(-1)">
+        <button
+          class="btn btn-outline-primary"
+          type="button"
+          @click="$router.go(-1)"
+        >
           Cancel
         </button>
         <button class="btn btn-primary" type="submit">Save</button>

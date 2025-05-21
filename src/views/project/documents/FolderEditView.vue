@@ -62,7 +62,7 @@ onMounted(() => {
           </div>
           <div class="btn-form-group">
             <button
-              class="btn btn-primary"
+              class="btn btn-outline-primary"
               type="button"
               @click="$router.go(-1)"
             >

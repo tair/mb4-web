@@ -54,7 +54,7 @@ async function edit(event) {
       </div>
       <div class="btn-form-group">
         <RouterLink :to="{ name: 'MyProjectFoliosView' }">
-          <button class="btn btn-primary btn-white" type="button">
+          <button class="btn btn-outline-primary" type="button">
             Cancel
           </button>
         </RouterLink>

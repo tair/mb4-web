@@ -140,7 +140,7 @@ async function createBatch() {
       <div class="btn-form-group">
         <RouterLink :to="`/myprojects/${projectId}/specimens`">
           <button
-            class="btn btn-m btn-outline-primary"
+            class="btn btn-outline-primary"
             type="button"
             :disabled="isProcessing"
           >
@@ -148,7 +148,7 @@ async function createBatch() {
           </button>
         </RouterLink>
         <button
-          class="btn btn-m btn-primary"
+          class="btn btn-primary"
           type="submit"
           :disabled="isProcessing"
         >

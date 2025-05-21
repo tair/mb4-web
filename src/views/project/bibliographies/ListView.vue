@@ -148,7 +148,7 @@ function filterByLetter(letter) {
     </div>
     <div v-if="bibliographiesStore.bibliographies?.length">
       <div class="alphabet-bar">
-        Display bibliographic references beginning with:
+        Display bibliographic references, ordered by last name of first author:
         <template v-for="letter in letters">
           <span
             :class="{ selected: selectedLetter == letter }"
@@ -172,9 +172,6 @@ function filterByLetter(letter) {
         </label>
         <span v-if="!someSelected" class="item" @click="refresh">
           <i class="fa-solid fa-arrow-rotate-right"></i>
-        </span>
-        <span v-if="someSelected" class="item">
-          <i class="fa-regular fa-pen-to-square"></i>
         </span>
         <span
           v-if="someSelected"

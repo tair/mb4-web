@@ -1,50 +1,117 @@
 <script setup lang="ts">
+import { reactive, watch } from 'vue'
+import { nanoid } from 'nanoid' // or any small ID generator
+
 type AuthorName = {
+  id: string
   forename?: string
   middlename?: string
   surname?: string
 }
 
-import { reactive } from 'vue'
 const props = defineProps<{
   name: string
   value?: AuthorName[]
 }>()
 
-const authors: AuthorName[] = props.value || reactive([{}])
+// Initialize with IDs
+const authors = reactive<AuthorName[]>(
+  props.value?.map((a) => ({ id: nanoid(), ...a })) || [{ id: nanoid() }]
+)
+
+watch(
+  () => props.value,
+  (newValue) => {
+    if (newValue) {
+      const newAuthors = newValue.map((a) => ({ id: nanoid(), ...a }))
+      authors.splice(0, authors.length, ...newAuthors)
+    }
+  },
+  { deep: true }
+)
+
+function addAuthor() {
+  authors.push({ id: nanoid() })
+}
+
+function removeAuthor(i: number) {
+  if (authors.length > 1) {
+    authors.splice(i, 1)
+  }
+}
 </script>
+
 <template>
-  <div v-for="(author, index) in authors" :key="index">
-    <input
-      type="text"
-      :name="`${name}.forename`"
-      :value="author.forename"
-      placeholder="First name or initial"
-    />
-    <input
-      type="text"
-      :name="`${name}.middlename`"
-      :value="author.middlename"
-      placeholder="Middle name or initial"
-    />
-    <input
-      type="text"
-      :name="`${name}.surname`"
-      :value="author.surname"
-      placeholder="Last name"
-    />
+  <div class="authors-container">
+    <div
+      v-for="(author, index) in authors"
+      :key="author.id"
+      class="author-input-group"
+    >
+      <input
+        v-model="author.forename"
+        :name="`${name}[${index}].forename`"
+        placeholder="First name or initial"
+        class="author-input"
+      />
+      <input
+        v-model="author.middlename"
+        :name="`${name}[${index}].middlename`"
+        placeholder="Middle name or initial"
+        class="author-input"
+      />
+      <input
+        v-model="author.surname"
+        :name="`${name}[${index}].surname`"
+        placeholder="Last name"
+        class="author-input"
+      />
+      <button
+        v-if="authors.length > 1"
+        type="button"
+        class="btn-close"
+        aria-label="Remove author"
+        @click="removeAuthor(index)"
+      ></button>
+    </div>
     <button
       type="button"
-      class="btn-close"
-      aria-label="Close"
-      @click="() => authors.splice(index, 1)"
-    ></button>
+      class="btn btn-sm btn-outline-warning add-more-btn"
+      @click="addAuthor"
+    >
+      + Add more
+    </button>
   </div>
-  <button
-    type="button"
-    class="btn btn-xxs btn-outline-secondary"
-    @click="() => authors.push({})"
-  >
-    Add more
-  </button>
 </template>
+
+<style scoped>
+.authors-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.author-input-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.author-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.add-more-btn {
+  align-self: flex-start;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  color: #fd7e14;
+  border-color: #fd7e14;
+}
+
+.add-more-btn:hover {
+  background-color: #fd7e14;
+  color: white;
+}
+</style>

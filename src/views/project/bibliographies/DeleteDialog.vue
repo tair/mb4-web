@@ -29,7 +29,8 @@ async function deleteBibliographies(referenceIds: number[]) {
           <h5 class="modal-title">Confirm</h5>
         </div>
         <div class="modal-body" v-if="bibliographies.length">
-          Really delete Biliographies:
+          Really delete <span v-if="bibliographies.length > 1">Biliographies</span>
+          <span v-else>Biliography</span>:
           <p
             v-for="bibliography in bibliographies"
             :key="bibliography.reference_id"
@@ -40,7 +41,7 @@ async function deleteBibliographies(referenceIds: number[]) {
         <div class="modal-footer">
           <button
             type="button"
-            class="btn btn-secondary"
+            class="btn btn-outline-primary"
             data-bs-dismiss="modal"
           >
             Cancel

@@ -52,7 +52,7 @@ async function createCitation(event) {
           <div class="modal-footer">
             <button
               type="reset"
-              class="btn btn-secondary"
+              class="btn btn-outline-primary"
               data-bs-dismiss="modal"
             >
               Cancel

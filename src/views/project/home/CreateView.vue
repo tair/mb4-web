@@ -484,7 +484,7 @@
       </div>
 
       <div class="form-buttons">
-        <button type="button" @click="cancel" class="btn btn-primary btn-white">
+        <button type="button" @click="cancel" class="btn btn-outline-primary">
           Cancel
         </button>
         <button type="submit" class="btn btn-primary">Save</button>
