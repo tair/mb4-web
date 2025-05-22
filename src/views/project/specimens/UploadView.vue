@@ -147,11 +147,7 @@ async function createBatch() {
             Cancel
           </button>
         </RouterLink>
-        <button
-          class="btn btn-primary"
-          type="submit"
-          :disabled="isProcessing"
-        >
+        <button class="btn btn-primary" type="submit" :disabled="isProcessing">
           <span
             v-if="isProcessing"
             class="spinner-border spinner-border-sm me-2"

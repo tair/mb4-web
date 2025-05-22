@@ -24,9 +24,21 @@ async function uploadBibliography(event) {
   formData.append('file', file.value)
 
   try {
-    const success = await bibliographiesStore.upload(projectId, formData)
-    if (success) {
-      router.push({ name: 'MyProjectBibliographyListView' })
+    const importInfo = await bibliographiesStore.upload(projectId, formData)
+
+    if (importInfo) {
+      // Show import statistics
+      const message =
+        `Import completed:\n` +
+        `- ${importInfo.import_count} new records imported\n` +
+        `- ${importInfo.update_count} records updated\n` +
+        `- ${importInfo.error_count} errors encountered`
+
+      alert(message)
+
+      if (importInfo.error_count === 0) {
+        router.push({ name: 'MyProjectBibliographyListView' })
+      }
     } else {
       alert('Failed to upload bibliography file')
     }
@@ -42,7 +54,10 @@ async function uploadBibliography(event) {
   <LoadingIndicator :isLoaded="true">
     <div class="setup-content">
       <div class="mb-3">
-        <RouterLink :to="{ name: 'MyProjectBibliographyListView' }" class="text-decoration-none">
+        <RouterLink
+          :to="{ name: 'MyProjectBibliographyListView' }"
+          class="text-decoration-none"
+        >
           <i class="fa-solid fa-arrow-left"></i> Back to Bibliography
         </RouterLink>
       </div>
@@ -52,14 +67,18 @@ async function uploadBibliography(event) {
       <div class="form-group">
         <p>
           You can import bibliographic references created using
-          <a href="http://www.endnote.com" target="_blank" rel="noopener">EndNote</a>
-          into your MorphoBank project. Simply save your EndNote data in the EndNote
-          <strong>XML format</strong> and upload the file into your project using this form.
+          <a href="http://www.endnote.com" target="_blank" rel="noopener"
+            >EndNote</a
+          >
+          into your MorphoBank project. Simply save your EndNote data in the
+          EndNote
+          <strong>XML format</strong> and upload the file into your project
+          using this form.
         </p>
 
         <p>
-          Note that the file must be in the EndNote XML format. Other formats are proprietary to
-          EndNote and not supported.
+          Note that the file must be in the EndNote XML format. Other formats
+          are proprietary to EndNote and not supported.
         </p>
 
         <div class="mt-3">
@@ -74,7 +93,7 @@ async function uploadBibliography(event) {
                 <li>Secondary Authors</li>
                 <li>Author Address</li>
                 <li>Reference Type</li>
-            </ul>
+              </ul>
             </div>
             <div class="col-md-4">
               <ul>
@@ -84,7 +103,7 @@ async function uploadBibliography(event) {
                 <li>Volume and Number</li>
                 <li>Publication Year</li>
                 <li>Publisher and Location</li>
-            </ul>
+              </ul>
             </div>
             <div class="col-md-4">
               <ul>
@@ -117,13 +136,15 @@ async function uploadBibliography(event) {
         </div>
 
         <div class="mt-3">
-            <b>Note:</b> Large batches can take a few minutes to process. Be
-            patient!
+          <b>Note:</b> Large batches can take a few minutes to process. Be
+          patient!
         </div>
 
         <div class="btn-form-group">
           <RouterLink :to="{ name: 'MyProjectBibliographyListView' }">
-            <button type="button" class="btn btn-outline-primary">Cancel</button>
+            <button type="button" class="btn btn-outline-primary">
+              Cancel
+            </button>
           </RouterLink>
           <button
             type="submit"
@@ -146,4 +167,4 @@ async function uploadBibliography(event) {
   color: #666;
   font-style: italic;
 }
-</style> 
+</style>

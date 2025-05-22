@@ -29,7 +29,8 @@ async function deleteBibliographies(referenceIds: number[]) {
           <h5 class="modal-title">Confirm</h5>
         </div>
         <div class="modal-body" v-if="bibliographies.length">
-          Really delete <span v-if="bibliographies.length > 1">Biliographies</span>
+          Really delete
+          <span v-if="bibliographies.length > 1">Biliographies</span>
           <span v-else>Biliography</span>:
           <p
             v-for="bibliography in bibliographies"
