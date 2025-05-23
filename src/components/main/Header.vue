@@ -2,11 +2,20 @@
 import 'bootstrap'
 import router from '@/router'
 import { useAuthStore } from '@/stores/AuthStore.js'
+import { ref } from 'vue'
 const authStore = useAuthStore()
+
+const searchText = ref('')
 
 function onLogout() {
   authStore.invalidate()
   router.push({ path: '/users/login' })
+}
+
+function onSearch() {
+  if (searchText.value.trim()) {
+    router.push({ name: 'SearchView', query: { q: searchText.value } })
+  }
 }
 </script>
 <template>
@@ -40,8 +49,13 @@ function onLogout() {
                   class="form-control"
                   placeholder="Search"
                   aria-label="Search"
+                  v-model="searchText"
+                  @keyup.enter="onSearch"
                 />
-                <button class="btn btn-outline-secondary my-2 my-sm-0 btn-sm">
+                <button
+                  class="btn btn-outline-secondary my-2 my-sm-0 btn-sm"
+                  @click="onSearch"
+                >
                   <i class="fas fa-search"></i>
                 </button>
               </div>
@@ -59,7 +73,7 @@ function onLogout() {
                 <li class="nav-item mx-1">
                   <RouterLink
                     class="nav-link p-0 m-1 text-nowrap"
-                    to="/project/pub_date"
+                    to="/projects/pub_date"
                   >
                     Browse Projects
                   </RouterLink>

@@ -6,6 +6,10 @@ export const schema = {
   name: {
     label: 'View Name',
     view: TextInput,
+    allowMultiple: true,
+    args: {
+      placeholder: 'Enter view names separated by commas',
+    },
   },
   user_id: {
     label: 'Submitted by',

@@ -1,6 +1,6 @@
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 
-export const PUBLISHED_PROJECT_VIEWS = [
+const PUBLISHED_PROJECT_VIEWS = [
   {
     path: 'pub_date',
     name: 'ProjectPubDateView',
@@ -22,7 +22,7 @@ export const PUBLISHED_PROJECT_VIEWS = [
     name: 'ProjectJornalYearView',
     component: () =>
       import(
-        /* webpackChunkName: "published" */ '@/views/project/published/JournalView.vue'
+        /* webpackChunkName: "published" */ '@/views/project/published/HomeView.vue'
       ),
   },
   {
@@ -65,8 +65,11 @@ export const PUBLISHED_PROJECT_VIEWS = [
         /* webpackChunkName: "published" */ '@/views/project/published/InstitutionView.vue'
       ),
   },
+]
+
+const PUBLISHED_PROJECT_DETAIL_VIEWS = [
   {
-    path: ':id/overview',
+    path: 'overview',
     name: 'ProjectOverviewView',
     meta: { itemName: 'overview' },
     component: () =>
@@ -75,7 +78,7 @@ export const PUBLISHED_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/matrices',
+    path: 'matrices',
     name: 'ProjectMatrixView',
     meta: { itemName: 'matrices' },
     component: () =>
@@ -84,7 +87,7 @@ export const PUBLISHED_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/media',
+    path: 'media',
     name: 'ProjectMediaView',
     meta: { itemName: 'media' },
     component: () =>
@@ -93,7 +96,7 @@ export const PUBLISHED_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/folios',
+    path: 'folios',
     name: 'ProjectFoliosView',
     meta: { itemName: 'folios' },
     component: () =>
@@ -102,7 +105,7 @@ export const PUBLISHED_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/folios/:folioId',
+    path: 'folios/:folioId',
     name: 'ProjectFolioDetailView',
     meta: { itemName: 'folioDetail' },
     component: () =>
@@ -111,7 +114,7 @@ export const PUBLISHED_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/views',
+    path: 'views',
     name: 'ProjectMediaViewsView',
     meta: { itemName: 'media_views' },
     component: () =>
@@ -120,7 +123,7 @@ export const PUBLISHED_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/specimens',
+    path: 'specimens',
     name: 'ProjectSpecimenView',
     meta: { itemName: 'specimens' },
     component: () =>
@@ -129,7 +132,7 @@ export const PUBLISHED_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/taxa',
+    path: 'taxa',
     name: 'ProjectTaxaView',
     meta: { itemName: 'taxa' },
     component: () =>
@@ -138,7 +141,7 @@ export const PUBLISHED_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/bibliography',
+    path: 'bibliography',
     name: 'ProjectBibliographyView',
     meta: { itemName: 'bibliography' },
     component: () =>
@@ -147,7 +150,7 @@ export const PUBLISHED_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/documents',
+    path: 'documents',
     name: 'ProjectDocumentView',
     meta: { itemName: 'documents' },
     component: () =>
@@ -156,7 +159,7 @@ export const PUBLISHED_PROJECT_VIEWS = [
       ),
   },
   {
-    path: ':id/download',
+    path: 'download',
     name: 'ProjectDownloadView',
     component: () =>
       import(
@@ -171,3 +174,5 @@ export const PUBLISHED_PROJECT_VIEWS = [
     },
   },
 ]
+
+export { PUBLISHED_PROJECT_VIEWS, PUBLISHED_PROJECT_DETAIL_VIEWS }

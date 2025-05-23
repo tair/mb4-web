@@ -1,15 +1,25 @@
 <script setup>
-import { reactive } from 'vue'
+import { reactive, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/AuthStore.js'
 import Alert from '@/components/main/Alert.vue'
+import { useRoute } from 'vue-router'
 
 const authStore = useAuthStore()
+const route = useRoute()
 const state = reactive({
   email: null,
 })
 const message = reactive({
   message: null,
   messageType: null,
+})
+
+// Extract email from URL query parameters if present
+onMounted(() => {
+  const emailParam = route.query.email
+  if (emailParam) {
+    state.email = emailParam
+  }
 })
 
 const submitForm = async () => {

@@ -2,6 +2,7 @@
 import { RouterView } from 'vue-router'
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/AuthStore.js'
+import '@/assets/css/buttons.css'
 const authStore = useAuthStore()
 
 onMounted(() => {
@@ -63,46 +64,5 @@ a[role='button']:hover {
   background-color: #ef782f;
 }
 
-.btn-warning,
-.btn-warning:disabled {
-  background-color: #ef782f;
-  border: #ef782f;
-  color: white;
-}
-
-.btn-warning:hover {
-  background-color: #d86c13;
-  color: white;
-}
-
-.btn-primary {
-  background-color: #ef782f;
-  border: none;
-  outline: none;
-}
-
-.btn-primary:hover {
-  background-color: #ef630b;
-  border: none;
-}
-
-.btn-primary:hover {
-  background-color: #ef630b;
-}
-
-.btn-primary:disabled {
-  background-color: #f6ba95;
-  cursor: not-allowed;
-}
-
-.btn-outline-primary {
-  border-color: #ef630b;
-  color: #ef630b;
-  outline: none;
-}
-
-.btn-outline-primary:hover {
-  background-color: #ef630b;
-  border-color: #6c757d;
-}
+/* Button styles are now imported from buttons.css */
 </style>

@@ -79,7 +79,7 @@ onMounted(async () => {
           v-if="showSignin"
         >
           <button class="mt-3 w-100 btn btn-lg btn-primary">
-            Sign in to MorphoBank
+            Sign in to MorphoBank with email/pwd
           </button>
         </RouterLink>
       </div>

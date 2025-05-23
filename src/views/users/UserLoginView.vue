@@ -18,7 +18,7 @@ const error = reactive({})
 const submitForm = async () => {
   const loggedIn = await authStore.login(state.email, state.password)
   if (authStore.err) {
-    error.login = 'Login failed. ' + authStore.err
+    error.login = authStore.err
   }
   if (loggedIn) {
     if (route.query.redirect) {

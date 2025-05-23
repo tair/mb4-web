@@ -42,7 +42,7 @@ function getOverviewUrl() {
       </div>
       <div class="col-md-9">
         <div class="card-body">
-          <h5 class="card-title text-black-50">
+          <h5 class="card-title">
             {{ `Project ${project.project_id}: ${project.name}` }}
           </h5>
           <p class="card-text">
@@ -86,6 +86,111 @@ function getOverviewUrl() {
 </template>
 
 <style scoped>
+.project-card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 20px;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.project-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+.project-title {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #666;
+  font-weight: 500;
+  flex: 1;
+}
+
+.project-status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.project-status.published {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.project-status.unpublished {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+/*.project-details {
+  color: #666;
+}*/
+
+.project-description {
+  margin: 0 0 15px 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.project-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.project-meta span {
+  color: #666;
+}
+
+.project-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.project-actions button {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #666;
+  background: transparent;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.project-actions button:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.project-actions button.primary {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.project-actions button.primary:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
 .card-image {
   height: 200px;
   margin: 20px;
@@ -93,5 +198,17 @@ function getOverviewUrl() {
   display: flex;
   justify-content: center; /* Centers horizontally */
   align-items: center; /* Centers vertically */
+}
+
+.card-title {
+  font-weight: 500;
+}
+
+.card-text b {
+  font-weight: 500;
+}
+
+.text-muted {
+  color: #444;
 }
 </style>

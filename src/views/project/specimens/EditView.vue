@@ -7,6 +7,11 @@ import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { schema } from '@/views/project/specimens/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
+import Tooltip from '@/components/main/Tooltip.vue'
+import {
+  getSpecimenTypeTooltipText,
+  getTaxonTooltipText,
+} from '@/utils/util.js'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id)
@@ -50,7 +55,25 @@ async function edit(event) {
   <LoadingIndicator :isLoaded="isLoaded">
     <form @submit.prevent="edit">
       <div v-for="(definition, index) in schema" :key="index" class="mb-3">
-        <label for="index" class="form-label">{{ definition.label }}</label>
+        <label for="index" class="form-label">
+          {{ definition.label }}
+          <Tooltip
+            v-if="index === 'reference_source'"
+            :content="getSpecimenTypeTooltipText()"
+          ></Tooltip>
+          <Tooltip
+            v-if="index === 'taxon_id'"
+            :content="getTaxonTooltipText()"
+          ></Tooltip>
+          <RouterLink
+            v-if="index === 'taxon_id'"
+            :to="{ name: 'MyProjectTaxaCreateView', params: { id: projectId } }"
+            target="_blank"
+            class="ms-2"
+          >
+            Add new taxon
+          </RouterLink>
+        </label>
         <component
           :key="index"
           :is="definition.view"
