@@ -481,18 +481,15 @@ export class MatrixModel extends EventTarget {
    * Sets access to a set of taxa
    *
    * @param taxaIds the taxon ids to change their access
-   * @param userId the id of the user who will have access to this taxon
    * @param groupId the id of the group which will have access to this taxon
    */
   setTaxaAccess(
     taxaIds: number[],
-    userId: number,
     groupId: number
   ): Promise<void> {
     const request = new Request('setTaxaAccess')
       .addParameter('id', this.matrixId)
       .addParameter('taxa_ids', taxaIds)
-      .addParameter('user_id', userId)
       .addParameter('group_id', groupId)
     return this.loader
       .send(request)
@@ -500,7 +497,6 @@ export class MatrixModel extends EventTarget {
         const taxa = this.getTaxa().getByIds(taxaIds)
         for (let x = 0; x < taxa.length; x++) {
           const taxon = taxa[x]
-          taxon.setUserId(userId)
           taxon.setGroupId(groupId)
         }
         this.dispatchEvent(TaxaChangedEvents.create(taxaIds))
