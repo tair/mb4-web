@@ -483,10 +483,7 @@ export class MatrixModel extends EventTarget {
    * @param taxaIds the taxon ids to change their access
    * @param groupId the id of the group which will have access to this taxon
    */
-  setTaxaAccess(
-    taxaIds: number[],
-    groupId: number
-  ): Promise<void> {
+  setTaxaAccess(taxaIds: number[], groupId: number): Promise<void> {
     const request = new Request('setTaxaAccess')
       .addParameter('id', this.matrixId)
       .addParameter('taxa_ids', taxaIds)

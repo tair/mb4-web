@@ -607,7 +607,9 @@ class AccessPane extends Component {
   override enterDocument() {
     super.enterDocument()
     const handler = this.getHandler()
-    handler.listen(this.groupSelect, EventType.CHANGE, () => this.onAccessChange())
+    handler.listen(this.groupSelect, EventType.CHANGE, () =>
+      this.onAccessChange()
+    )
   }
 
   /** Change the access of the taxon */

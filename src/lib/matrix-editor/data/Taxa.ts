@@ -72,6 +72,7 @@ export class Taxon extends  AbstractItem {
   hasAccess(projectProperties: ProjectProperties): boolean {
     // Access is always guaranteed to Project Administrators and the creator of
     // the matrix regardless of the access restrictions.
+    console.log('is admin: ', projectProperties.getIsAdmin())
     if (projectProperties.getIsAdmin()) {
       return true;
     }
