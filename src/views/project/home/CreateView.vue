@@ -186,7 +186,7 @@
             >Required</span
           >
           <Tooltip :content="getJournalTitleTooltip()"></Tooltip>
-        </label>
+            </label>
         <p class="field-description">
           Select a journal title from the list, or choose Add a new journal if
           the title is not available
@@ -249,8 +249,8 @@
                 class="dropdown-option no-results"
               >
                 No journals found
-              </div>
-            </template>
+          </div>
+        </template>
           </div>
         </div>
 

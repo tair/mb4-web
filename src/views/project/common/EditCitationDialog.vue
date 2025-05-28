@@ -44,6 +44,7 @@ async function createCitation(event) {
                 :is="definition.view"
                 :name="index"
                 :value="citation[index]"
+                :disabled="index === 'reference_id'"
                 v-bind="definition.args"
               >
               </component>
