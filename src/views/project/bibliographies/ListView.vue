@@ -5,6 +5,7 @@ import BibliographyItem from '@/components/project/BibliographyItem.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
 import DeleteDialog from '@/views/project/bibliographies/DeleteDialog.vue'
+import axios from 'axios'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -110,6 +111,38 @@ function filterByLetter(letter) {
     return false
   }
 }
+
+async function exportEndNote() {
+  try {
+    const response = await axios.get(
+      `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/bibliography/export`,
+      {
+        responseType: 'blob',
+      }
+    )
+
+    // Create a blob URL and trigger download
+    const blob = new Blob([response.data], {
+      type: 'text/tab-separated-values',
+    })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute(
+      'download',
+      `morphobank_bibliography_for_P${projectId}.txt`
+    )
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('Error exporting EndNote file:', error)
+    alert('Failed to export EndNote file')
+  }
+}
 </script>
 <template>
   <LoadingIndicator :isLoaded="bibliographiesStore.isLoaded">
@@ -140,7 +173,7 @@ function filterByLetter(letter) {
           <span> Export </span>
         </button>
         <div class="dropdown-menu">
-          <button type="button" class="dropdown-item">
+          <button type="button" class="dropdown-item" @click="exportEndNote">
             Endnote tab-delimited File
           </button>
         </div>
