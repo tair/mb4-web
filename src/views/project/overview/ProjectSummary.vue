@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Tooltip from '@/components/main/Tooltip.vue'
 import { formatBytes, formatNumber } from '@/utils/format'
+import { logDownload } from '@/lib/analytics.js'
 
 type OverviewStat = {
   taxon_name: string
@@ -39,8 +40,9 @@ type OverviewStats = {
   stats: OverviewStat
 }
 
-defineProps<{
-  overview: OverviewStats
+const props = defineProps<{
+  overview: OverviewStats,
+  projectId: string | number
 }>()
 
 const downloadTooltipText =
@@ -79,6 +81,7 @@ function popDownloadAlert() {
   alert(
     "You are downloading data from MorphoBank. If you plan to reuse these items you must check the copyright reuse policies for the individual media, matrix, document or character list. Note - policies are often different for different media. By downloading from MorphoBank, you agree to the site's Terms of Use & Privacy Policy."
   )
+  logDownload({ project_id: props.projectId, download_type: 'P' })
 }
 </script>
 

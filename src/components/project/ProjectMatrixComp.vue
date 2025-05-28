@@ -2,6 +2,7 @@
 import axios from 'axios'
 import { ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { logDownload } from '@/lib/analytics.js'
 
 const props = defineProps({
   matrix: {
@@ -54,6 +55,7 @@ async function onDownloadMatrix() {
     searchParams.append('partitionId', partitionId.value)
   }
   window.location.href = url
+  logDownload({ project_id: projectStore.project_id, download_type: 'X', row_id: matrixId })
 }
 
 async function onDownloadCharacters() {
@@ -66,11 +68,13 @@ async function onDownloadCharacters() {
     searchParams.append('partitionId', partitionId.value)
   }
   window.location.href = url
+  logDownload({ project_id: projectStore.project_id, download_type: 'C', row_id: matrixId })
 }
 
 async function onDownloadOntology() {
   const url = new URL(`${baseUrl}/download/ontology`)
   window.location.href = url
+  logDownload({ project_id: projectId, download_type: 'X', row_id: matrixId })
 }
 
 async function toggleMatrixStreaming() {

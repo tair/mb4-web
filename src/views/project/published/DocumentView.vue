@@ -10,18 +10,20 @@ import {
 } from '@/utils/util.js'
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
 import Tooltip from '@/components/main/Tooltip.vue'
+import { logDownload, logView, HIT_TYPES } from '@/lib/analytics.js'
 
 const route = useRoute()
 
 const projectStore = usePublicProjectDetailsStore()
 const projectId = route.params.id
+const documentId = route.params.documentId
 const viewStatsTooltipText = getViewStatsTooltipText()
 const downloadTooltipText = getDownloadTooltipText()
 const copyRightTooltipText = getCopyRightTooltipText()
 const cc0Img = getCC0ImgTag()
 
 // TODO: ReCaptcha verification
-async function onDownloadDocuments(documentUrl, filename) {
+async function onDownloadDocuments(documentUrl, filename, docId = null) {
   try {
     // Fetch the document as a blob
     const response = await fetch(documentUrl)
@@ -52,6 +54,8 @@ async function onDownloadDocuments(documentUrl, filename) {
       document.body.removeChild(link)
       URL.revokeObjectURL(blobUrl) // Clean up
     }
+
+    logDownload({ project_id: projectId, download_type: 'D', row_id: docId })
   } catch (error) {
     console.error('Error downloading the file:', error)
     // Fallback to opening the file in a new tab
@@ -61,6 +65,8 @@ async function onDownloadDocuments(documentUrl, filename) {
 
 onMounted(() => {
   projectStore.fetchProject(projectId)
+  // Track documents page view
+  logView({ project_id: projectId, hit_type: HIT_TYPES.DOCUMENT })
 })
 
 function getDocumentsSectionTitle(docs) {
@@ -148,7 +154,7 @@ function getDocumentsNumbers(docs) {
                 >
                 <a
                   class="ms-auto"
-                  @click="onDownloadDocuments(doc.url, doc.file_name)"
+                  @click="onDownloadDocuments(doc.url, doc.file_name, doc.document_id)"
                   href="#"
                 >
                   View/Download File
@@ -186,7 +192,7 @@ function getDocumentsNumbers(docs) {
             >
             <a
               class="ms-auto"
-              @click="onDownloadDocuments(doc.url, doc.file_name)"
+              @click="onDownloadDocuments(doc.url, doc.file_name, doc.document_id)"
               href="#"
             >
               View/Download File
