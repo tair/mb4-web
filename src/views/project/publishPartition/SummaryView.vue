@@ -168,7 +168,7 @@ async function publishPartition(event) {
           </div>
         </div>
         <RouterLink :to="`/myprojects/${projectId}/overview`">
-          <button type="button">Cancel</button>
+          <button type="button" class="btn btn-outline-primary">Cancel</button>
         </RouterLink>
 
         <button type="submit">Publish</button>

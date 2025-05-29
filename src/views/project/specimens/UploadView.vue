@@ -140,18 +140,14 @@ async function createBatch() {
       <div class="btn-form-group">
         <RouterLink :to="`/myprojects/${projectId}/specimens`">
           <button
-            class="btn btn-m btn-outline-primary"
+            class="btn btn-outline-primary"
             type="button"
             :disabled="isProcessing"
           >
             Cancel
           </button>
         </RouterLink>
-        <button
-          class="btn btn-m btn-primary"
-          type="submit"
-          :disabled="isProcessing"
-        >
+        <button class="btn btn-primary" type="submit" :disabled="isProcessing">
           <span
             v-if="isProcessing"
             class="spinner-border spinner-border-sm me-2"

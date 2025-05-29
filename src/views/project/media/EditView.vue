@@ -81,7 +81,9 @@ onMounted(() => {
         </div>
         <div class="btn-form-group">
           <RouterLink :to="{ name: 'MyProjectMediaView' }">
-            <button class="btn btn-primary" type="button">Cancel</button>
+            <button class="btn btn-outline-primary" type="button">
+              Cancel
+            </button>
           </RouterLink>
           <button class="btn btn-primary" type="submit">Save</button>
         </div>

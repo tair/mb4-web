@@ -17,7 +17,7 @@ export const schema = {
     view: TextArea,
   },
   journal_title: {
-    label: 'Journal Title',
+    label: 'Journal or Book Title',
     view: TextArea,
   },
   vol: {
@@ -105,7 +105,7 @@ export const schema = {
     view: TextArea,
   },
   keywords: {
-    label: 'Keywords',
+    label: 'Keywords (separate with commas or semicolons)',
     view: TextArea,
   },
 }

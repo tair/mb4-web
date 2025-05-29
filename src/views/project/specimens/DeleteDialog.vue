@@ -120,7 +120,7 @@ async function handleDelete() {
                   {{ getUsageText(usages[specimen.specimen_id]) }}.
                   <button
                     type="button"
-                    class="btn btn-sm btn-secondary"
+                    class="btn btn-outline-primary mt-1"
                     data-bs-toggle="collapse"
                     :data-bs-target="`#collapseTransferSpecimen-${specimen.specimen_id}`"
                   >
@@ -128,7 +128,7 @@ async function handleDelete() {
                   </button>
                   <div
                     :id="`collapseTransferSpecimen-${specimen.specimen_id}`"
-                    class="collapse"
+                    class="collapse mt-3"
                   >
                     <div class="card card-body">
                       <p>
@@ -165,7 +165,7 @@ async function handleDelete() {
         <div class="modal-footer">
           <button
             type="button"
-            class="btn btn-secondary"
+            class="btn btn-outline-primary"
             data-bs-dismiss="modal"
           >
             Cancel

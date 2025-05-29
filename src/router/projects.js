@@ -538,6 +538,23 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
+    path: 'bibliography/upload',
+    name: 'MyProjectBibliographyUploadView',
+    meta: {
+      itemName: 'bibliography',
+      breadcrumbs: [
+        {
+          label: 'Bibliographies',
+          to: 'MyProjectBibliographyListView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/bibliographies/UploadView.vue'
+      ),
+  },
+  {
     path: 'bibliography/create',
     name: 'MyProjectBibliographyCreateView',
     meta: {

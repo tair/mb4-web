@@ -41,7 +41,11 @@ async function createReference(event) {
       </component>
     </div>
     <div class="btn-form-group">
-      <button class="btn btn-primary" type="button" @click="$router.go(-1)">
+      <button
+        class="btn btn-outline-primary"
+        type="button"
+        @click="$router.go(-1)"
+      >
         Cancel
       </button>
       <button class="btn btn-primary" type="submit">Create</button>
