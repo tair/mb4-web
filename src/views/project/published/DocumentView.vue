@@ -10,7 +10,7 @@ import {
 } from '@/utils/util.js'
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
 import Tooltip from '@/components/main/Tooltip.vue'
-import { logDownload, logView, HIT_TYPES } from '@/lib/analytics.js'
+import { logDownload, logView, HIT_TYPES, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 
 const route = useRoute()
 
@@ -55,7 +55,7 @@ async function onDownloadDocuments(documentUrl, filename, docId = null) {
       URL.revokeObjectURL(blobUrl) // Clean up
     }
 
-    logDownload({ project_id: projectId, download_type: 'D', row_id: docId })
+    logDownload({ project_id: projectId, download_type: DOWNLOAD_TYPES.DOCUMENT, row_id: docId })
   } catch (error) {
     console.error('Error downloading the file:', error)
     // Fallback to opening the file in a new tab

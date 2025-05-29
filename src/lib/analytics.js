@@ -15,6 +15,14 @@ const HIT_TYPES = {
   BIBLIOGRAPHY: 'B'  // Bibliography views
 }
 
+// Download types mapping
+const DOWNLOAD_TYPES = {
+  PROJECT: 'P',      // Project downloads
+  MATRIX: 'X',       // Matrix downloads
+  MEDIA: 'M',        // Media downloads
+  DOCUMENT: 'D',     // Document downloads
+}
+
 export async function logView({ project_id, hit_type, row_id = null }) {
   try {
     await axios.post(`${API_URL}/analytics/view`, { project_id, hit_type, row_id })
@@ -33,4 +41,4 @@ export async function logDownload({ project_id, download_type, row_id = null }) 
   }
 }
 
-export { HIT_TYPES } 
+export { HIT_TYPES, DOWNLOAD_TYPES } 
