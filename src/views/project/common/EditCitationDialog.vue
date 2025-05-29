@@ -44,6 +44,7 @@ async function createCitation(event) {
                 :is="definition.view"
                 :name="index"
                 :value="citation[index]"
+                :disabled="index === 'reference_id'"
                 v-bind="definition.args"
               >
               </component>
@@ -52,7 +53,7 @@ async function createCitation(event) {
           <div class="modal-footer">
             <button
               type="reset"
-              class="btn btn-secondary"
+              class="btn btn-outline-primary"
               data-bs-dismiss="modal"
             >
               Cancel

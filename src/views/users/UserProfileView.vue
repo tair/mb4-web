@@ -360,8 +360,8 @@ const confirmPassword = function () {
         <div class="form-buttons">
           <button class="btn btn-primary" type="submit">Update</button>
           <button
-            class="btn btn-secondary"
             type="button"
+            class="btn btn-outline-primary"
             @click.prevent="userStore.reset()"
           >
             Cancel

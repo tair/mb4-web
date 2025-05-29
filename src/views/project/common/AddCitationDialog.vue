@@ -1,23 +1,36 @@
 <script setup>
 import { Modal } from 'bootstrap'
 import { schema } from '@/views/project/common/citationSchema.js'
+import { ref } from 'vue'
 
 const props = defineProps({
   addCitation: Function,
 })
 
+const errorMessage = ref('')
+const hasError = ref(false)
+
 async function createCitation(event) {
   const target = event.currentTarget
   const formData = new FormData(target)
   const json = Object.fromEntries(formData)
-  const created = await props.addCitation(json)
-  if (created) {
-    const element = document.getElementById('addCitationModal')
-    const modal = Modal.getInstance(element)
-    modal.hide()
-    target.reset()
-  } else {
-    alert('Failed to add citation')
+  try {
+    hasError.value = false
+    errorMessage.value = ''
+    const created = await props.addCitation(json)
+    if (created) {
+      const element = document.getElementById('addCitationModal')
+      const modal = Modal.getInstance(element)
+      modal.hide()
+      target.reset()
+    }
+  } catch (error) {
+    hasError.value = true
+    if (error.response?.status === 400 && error.response?.data?.message === 'This citation already exists') {
+      errorMessage.value = 'This citation already exists. Please select a different reference.'
+    } else {
+      errorMessage.value = 'Failed to add citation: ' + (error.response?.data?.message || error.message || 'Unknown error')
+    }
   }
 }
 </script>
@@ -44,17 +57,22 @@ async function createCitation(event) {
                   :key="index"
                   :is="definition.view"
                   :name="index"
+                  :class="{ 'is-invalid': hasError && index === 'reference_id' }"
                   v-bind="definition.args"
                 >
                 </component>
+                <div v-if="hasError && index === 'reference_id'" class="invalid-feedback">
+                  {{ errorMessage }}
+                </div>
               </div>
             </template>
           </div>
           <div class="modal-footer">
             <button
               type="reset"
-              class="btn btn-secondary"
+              class="btn btn-outline-primary"
               data-bs-dismiss="modal"
+              @click="hasError = false; errorMessage = ''"
             >
               Cancel
             </button>
@@ -65,4 +83,8 @@ async function createCitation(event) {
     </form>
   </div>
 </template>
-<style scoped></style>
+<style scoped>
+.invalid-feedback {
+  display: block;
+}
+</style>

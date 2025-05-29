@@ -28,12 +28,15 @@ const items = ref([])
 const item = computed(() => props.getItem(props.initialValue))
 const text = ref(props.getText(item.value))
 const currentValue = ref(props.initialValue)
+const isSearching = ref(false)
 
 async function handleInput(event: any) {
   const text = event.target.value
   if (text.length < 3) {
     items.value = []
+    isSearching.value = false
   } else {
+    isSearching.value = true
     items.value = await props.search(text)
     emit('updateTextboxString', text)
   }
@@ -56,6 +59,7 @@ function handleSelect(item: any) {
   text.value = itemText
 
   items.value = []
+  isSearching.value = false
   emit('select', item)
 }
 
@@ -65,6 +69,7 @@ function handleBlur() {
     const itemText = props.getText(item)
     text.value = itemText
     items.value = []
+    isSearching.value = false
   }
 }
 </script>
@@ -92,6 +97,9 @@ function handleBlur() {
           <slot name="item" v-bind="item"></slot>
         </li>
       </template>
+    </ul>
+    <ul v-else-if="isSearching && text.length >= 3" class="results">
+      <li class="no-results">No matching search results found</li>
     </ul>
   </div>
 </template>
@@ -121,5 +129,12 @@ ul.results li {
 ul.results li:hover {
   background: #eee;
   cursor: pointer;
+}
+
+ul.results li.no-results {
+  color: #666;
+  font-style: italic;
+  text-align: center;
+  padding: 10px;
 }
 </style>
