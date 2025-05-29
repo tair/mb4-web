@@ -3,10 +3,12 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
+import { logView, HIT_TYPES } from '@/lib/analytics.js'
 
 const route = useRoute()
 const projectStore = usePublicProjectDetailsStore()
 const projectId = route.params.id
+const mediaViewId = route.params.mediaViewId
 
 const selectedLetter = ref('ALL')
 
@@ -29,6 +31,8 @@ const filteredMediaViews = computed(() => {
 
 onMounted(() => {
   projectStore.fetchProject(projectId)
+  // Track media views page view
+  logView({ project_id: projectId, hit_type: HIT_TYPES.MEDIA_VIEW })
 })
 </script>
 

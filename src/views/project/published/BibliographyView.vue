@@ -3,11 +3,13 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
+import { logView, HIT_TYPES } from '@/lib/analytics.js'
 
 const route = useRoute()
 
 const projectStore = usePublicProjectDetailsStore()
 const projectId = route.params.id
+const bibliographyId = route.params.bibliographyId
 
 const selectedLetter = ref('ALL')
 
@@ -34,6 +36,8 @@ const filteredBibliographies = computed(() => {
 
 onMounted(() => {
   projectStore.fetchProject(projectId)
+  // Track bibliography page view
+  logView({ project_id: projectId, hit_type: HIT_TYPES.BIBLIOGRAPHY })
 })
 </script>
 

@@ -10,6 +10,7 @@ const route = useRoute()
 
 const projectStore = usePublicProjectDetailsStore()
 const projectId = route.params.id
+const folioId = route.params.folioId
 
 onMounted(() => {
   projectStore.fetchProject(projectId)

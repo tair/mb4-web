@@ -6,12 +6,14 @@ import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
 import MediaCardComp from '@/components/project/MediaCardComp.vue'
 import MediaDetailsComp from '@/components/project/MediaDetailsComp.vue'
+import { logView, HIT_TYPES } from '@/lib/analytics.js'
 
 const route = useRoute()
 
 const mediaStore = usePublicMediaStore()
 const projectStore = usePublicProjectDetailsStore()
 const projectId = route.params.id
+const mediaId = route.params.mediaId
 const thumbnailView = ref(true)
 const mediaDetailsFor = ref(null)
 const orderByOptions = mediaStore.getOrderByOptions
@@ -31,6 +33,10 @@ let selectedPageSize = ref(mediaStore.itemsPerPage)
 function onShowDetails(media_file) {
   isDetailsActive.value = true
   mediaDetailsFor.value = media_file
+  // Track media view when a specific media item is clicked
+  if (projectId && media_file.media_id) {
+    logView({ project_id: projectId, hit_type: HIT_TYPES.MEDIA, row_id: media_file.media_id })
+  }
 }
 
 function searchByStr() {
