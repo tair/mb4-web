@@ -12,7 +12,7 @@ const projectId = route.params.id
 onMounted(() => {
   projectStore.fetchProject(projectId)
   // Track download page view
-  logView({ project_id: projectId, hit_type: HIT_TYPES.PROJECT })
+  // logView({ project_id: projectId, hit_type: HIT_TYPES.PROJECT })
 })
 </script>
 <template>
