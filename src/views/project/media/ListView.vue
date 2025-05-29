@@ -8,6 +8,7 @@ import { useTaxaStore } from '@/stores/TaxaStore'
 import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { getTaxonForMediaId } from '@/views/project/utils'
 import { TaxaFriendlyNames, nameColumnMap } from '@/utils/taxa'
+// import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 import FilterDialog from '@/views/project/media/FilterDialog.vue'
 import EditBatchDialog from '@/views/project/media/EditBatchDialog.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
@@ -95,6 +96,7 @@ const baseUrl = `${import.meta.env.VITE_API_URL}/projects/${projectId}/media`
 function onClickDownloadOriginalFilenames() {
   const url = `${baseUrl}/download/filenames`
   window.location.href = url
+  // logDownload({ project_id: projectId, download_type: DOWNLOAD_TYPES.MEDIA })
 }
 
 function onSelectShow(event) {
