@@ -8,6 +8,7 @@ export const useMatricesStore = defineStore({
     matrices: null,
     partitions: null,
     canEditMatrix: null,
+    jobs: null,
   }),
   getters: {},
   actions: {
@@ -16,6 +17,7 @@ export const useMatricesStore = defineStore({
       this.matrices = null
       this.partitions = null
       this.canEditMatrix = null
+      this.jobs = null
     },
 
     async fetchMatricesByProjectId(projectId) {
@@ -26,7 +28,9 @@ export const useMatricesStore = defineStore({
       this.matrices = response.data.matrices
       this.partitions = response.data.partitions
       this.canEditMatrix = response.data.canEditMatrix
+      this.jobs = response.data.jobs
       this.isLoaded = true
+      console.log('The length of jobs is: ', this.jobs?.length)
     },
   },
 })

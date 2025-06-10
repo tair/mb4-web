@@ -17,6 +17,10 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
+  jobs: {
+    type: Object,
+    required: false,
+  },
 })
 
 const formats = new Map()
@@ -41,6 +45,27 @@ const matrixId = props.matrix.matrix_id
 const baseUrl = `${
   import.meta.env.VITE_API_URL
 }/projects/${projectId}/matrices/${matrixId}`
+
+const tools = new Map()
+tools.set('PAUPRAT', 'PAUP Ratchet')
+//tools.set('MRBAYES_XSEDE', 'Mr Bayes')
+const tool = ref(tools.keys()?.next()?.value)
+const jobName = ref('')
+const jobNote = ref('')
+const jobNumIterations = ref(200)
+const jobCharsToPermute = ref('')
+const jobBranchSwappingAlgorithms = new Map()
+jobBranchSwappingAlgorithms.set('tbr', 'tree bisection and reconnection')
+jobBranchSwappingAlgorithms.set('spr', 'subtree pruning and grafting')
+jobBranchSwappingAlgorithms.set('nni', 'nearest neighbor interchange')
+const jobBranchSwappingAlgorithm = ref(jobBranchSwappingAlgorithms.keys()?.next()?.value)
+
+const currentMatrixJobs = props.jobs?.filter(job => job.matrix_id == matrixId)
+const refresh = route.query.refresh
+const homeButtonClass = (refresh != true)? 'nav-link active' : 'nav-link'
+const buildatreeButtonClass = (refresh == true)? 'nav-link active' : 'nav-link'
+const homePanelClass = (refresh != true)? 'tab-pane fade show active' : 'tab-pane fade'
+const buildatreePanelClass = (refresh == true)? 'tab-pane fade show active' : 'tab-pane fade'
 
 async function onDownloadMatrix() {
   const url = new URL(`${baseUrl}/download`)
@@ -89,6 +114,42 @@ async function toggleMatrixStreaming() {
   } else {
     alert(response.data?.message || 'Failed to set preferences')
   }
+}
+
+async function onRun() {
+      const url = new URL(`${baseUrl}/run`)
+      const searchParams = url.searchParams
+      if (tool.value) {
+        searchParams.append('tool', tool.value)
+      }
+      if (jobName.value) {
+        searchParams.append('jobName', jobName.value)
+      }
+      if (jobNote.value) {
+        searchParams.append('jobNote', jobNote.value)
+      }
+      if (jobNumIterations.value && jobNumIterations.value > 0) {
+        searchParams.append('jobNumIterations', jobNumIterations.value)
+      }
+      if (jobCharsToPermute.value ) {
+        searchParams.append('jobCharsToPermute', jobCharsToPermute.value)
+      }
+      if (jobBranchSwappingAlgorithm.value ) {
+        searchParams.append('jobBranchSwappingAlgorithm', jobBranchSwappingAlgorithm.value)
+      }
+      const response = await axios.post(url)
+      const msg = response.data?.message || 'Failed to submit job to CIPRES'
+      alert(msg)
+      if (!msg.includes('fail') && !msg.includes('Fail')) {
+        let urlNew = window.location.href    
+        if (urlNew.indexOf('?') > -1){
+          if (urlNew.indexOf('refresh=true') < 0)
+            urlNew += '&refresh=true'
+        } else {
+          urlNew += '?refresh=true'
+        }
+        window.location.href = urlNew
+      }
 }
 </script>
 <template>
@@ -142,7 +203,7 @@ async function toggleMatrixStreaming() {
     <ul class="nav nav-tabs" id="myTab" role="tablist">
       <li class="nav-item" role="presentation">
         <button
-          class="nav-link active"
+          :class="(refresh != 'true')? 'nav-link active' : 'nav-link'"
           id="homeTab"
           data-bs-toggle="tab"
           :data-bs-target="'#home' + matrix.matrix_id"
@@ -169,7 +230,8 @@ async function toggleMatrixStreaming() {
       </li>
       <li class="nav-item" role="presentation">
         <button
-          class="nav-link"
+          :class="(refresh == 'true')? 'nav-link active' : 'nav-link'"
+          id="buildTab"
           data-bs-toggle="tab"
           :data-bs-target="'#build' + matrix.matrix_id"
           type="button"
@@ -183,6 +245,31 @@ async function toggleMatrixStreaming() {
     </ul>
     <div class="tab-content">
       <div
+        :class="(refresh != 'true')? 'tab-pane fade show active' : 'tab-pane fade'"
+        :id="'home' + matrix.matrix_id"
+        role="tabpanel"
+      >
+        The matrix contains:
+        <div class="description">
+          {{ matrix.counts.cell ?? 0 }} scorings;
+          {{ matrix.counts.taxa ?? 0 }} taxa;
+          {{ matrix.counts.character ?? 0 }} characters;
+          {{ matrix.counts.cell_media ?? 0 }} cell images;
+          {{ matrix.counts.media_label ?? 0 }} labels attached to cell images;
+          {{ matrix.counts.character_media ?? 0 }} character images;
+        </div>
+        <RouterLink
+          :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/characters`"
+          target="_blank"
+        >
+          <button type="button" class="btn btn-sm btn-secondary">
+            Edit Characters
+          </button>
+        </RouterLink>
+      </div>
+      <!--
+      <div
+        v-if="refresh != 'true'"
         class="tab-pane fade show active"
         :id="'home' + matrix.matrix_id"
         role="tabpanel"
@@ -205,6 +292,7 @@ async function toggleMatrixStreaming() {
           </button>
         </RouterLink>
       </div>
+      -->
       <div
         class="tab-pane fade"
         :id="'download' + matrix.matrix_id"
@@ -281,12 +369,89 @@ async function toggleMatrixStreaming() {
         </div>
       </div>
       <div
-        class="tab-pane fade"
+        :class="(refresh == 'true')? 'tab-pane fade show active' : 'tab-pane fade'"
         :id="'build' + matrix.matrix_id"
         role="tabpanel"
       >
         <!-- TODO(kenzley): Create the text when working on the CIPRES integration. -->
-        ...
+        <h6 title="MorphoBank now offers the option to run your matrix without leaving the Web by sending it to the online algorithms at CIPRES. It doesn’t matter what computer you are using or where you are in the world.  CIPRES works by notifying you when your job is complete, so please check back on this page below for results.">Tree-building options:</h6>
+        <h6>Please try this BETA tool and send any feedback to Contact Support</h6>
+        <div class="tab-content">
+          <div> 
+            Run <b>{{ matrix.title }}</b> with
+            <select v-model="tool">
+              <option v-for="[tool, name] in tools" v-bind:value="tool">
+                {{ name }}
+              </option>
+            </select>
+            Job name: <input type="text" v-model="jobName" title="Enter a short name for this job, to make it easy to track over time."/>
+          </div>
+          <div>
+            Notes for run: <input type="text" v-model="jobNote" size=54 title="You will see these notes displayed in MorphoBank below once your results file returns from CIPRES.  These are not written to your underlying Nexus file."/>&nbsp;
+            <button
+              type="button"
+              class="btn btn-sm btn-secondary"
+              @click="onRun">
+              Run 
+            </button> 
+
+          </div>
+          <div class="read-only">
+            The Parsimony Ratchet (Kevin Nixon, 1999) improves the ability to find shortest trees during heuristic searches on larget database (it is ok to use on small ones too). You can use it to search for a tree or tree(s) based on your MorphoBank matrix. Set your parameters below and click "Run" and MorphoBank will write the commands for you to use the program PAUPRat (Sikes and Lewis, 2001) to execute the Parsimony Ratchet on in PAUP* via CIPRES<br>The commands tell PAUP* to to this:<br>
+           <ol>
+             <li>Conduct an heuristic search from scratch for a starting tree. This will use the Branch Swapping Algorithm that you select.</li>
+             <li>Perform two tree searches for each Ratchet iteration, one in chich a subset of your characters is assigned a weight of 2, and a second in which all characters are equally weighted. The characters to be weighted are chosen randomly.</li>
+             <li>The repeats for the number of iterations or replicates that you specify.</li>
+             <li>The shortest trees and related files are returned to you from CIPRES here.</li>
+           </ol>
+           <br>You can learn more about the Parsimony Ratchet <a href="http://onlinelibrary.wiley.com/doi/10.1111/j.1096-0031.1999.tb00277.x/abstract">here</a> and <a href="http://www.iab.uaf.edu/people/derek_sikes/PAUPRat_manual.pdf">here</a>.<br>Two default parameters are set verbose defaults to "terse" and starting seed to 0.
+          </div>
+          <div>
+           <table>
+            <thead>
+              <tr>
+                <th>&nbsp;</th>
+                <th>&nbsp;</th>
+                <th>&nbsp;</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td title="This specifies the number of iterations to have PAUP* perform, i.e., the number of replicates that the Ratchet runs.">Number of Iterations:</td>
+                <td title="Select how many characters you want to weight (the weight assigned is “2”).  You can either select a defined number of characters or a percentage of characters. <em>For percentages follow the quantity with a '%' sign.</em>  Typically less than ¼ of the characters are weighted."># or % chars to permute:</td>
+                <td>Branch-swapping algorithm:</td>
+              </tr>
+              <tr>
+                <td><input type="number" v-model="jobNumIterations" value=200 title="This specifies the number of iterations to have PAUP* perform, i.e., the number of replicates that the Ratchet runs."/></td>
+                <td>
+                  <input type="string" v-model="jobCharsToPermute" title="Select how many characters you want to weight (the weight assigned is “2”).  You can either select a defined number of characters or a percentage of characters. <em>For percentages follow the quantity with a '%' sign.</em>  Typically less than ¼ of the characters are weighted."/>
+                </td>
+                <td>
+                  <select v-model="jobBranchSwappingAlgorithm">
+                    <option v-for="[jobBranchSwappingAlgorithm, name] in jobBranchSwappingAlgorithms" v-bind:value="jobBranchSwappingAlgorithm">
+                      {{ name }}
+                    </option>
+                  </select>
+                </td>
+              </tr>
+            </tbody>
+           </table>
+          </div>
+        </div>
+        <hr class="bold_hr" />
+        <div v-if="currentMatrixJobs?.length > 0">
+          <h6><b>Previous runs:</b></h6>
+          <div v-for="job in currentMatrixJobs">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <p><b>Job name</b>:{{ job.jobname }}: <b>Run on</b>: {{ job.created_on }} <b>Tool</b>: {{ job.cipres_tool }} <b>Status</b>: {{ job.cipres_last_status }}</p>
+                <p><button v-if="job.cipres_last_status == 'COMPLETED'" type="button" class="btn btn-sm btn-secondary" title="To see the commands MorphoBank sent to CIPRES open the file .nex that CIPRES returned to you.">Download</button>
+                <button type="button" class="btn btn-sm btn-primary">Delete</button></p>
+                </div>
+              <b>Notes</b>: {{ job.notes }}<br>
+              <b>Parameters</b>: {{ job.cipres_settings }}
+            <hr/>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -329,4 +494,26 @@ async function toggleMatrixStreaming() {
 .hidden {
   visibility: hidden;
 }
+
+.read-only {
+  background-color: silver;
+}
+textarea {
+  width: 580px;
+  height: 150px;
+}
+input[type='number']{
+    width: 55px;
+} 
+th, td {
+  padding-right: 25px;
+}
+.bold_hr {
+    text-align:left;
+    margin-left:0;
+    height:5px;
+    background-color: silver;
+}
 </style>
+
+
