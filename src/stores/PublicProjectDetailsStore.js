@@ -139,7 +139,8 @@ export const usePublicProjectDetailsStore = defineStore({
         var getter = axios.create()
         delete getter.defaults.headers.common['Authorization']
 
-        const url = `https://mb4-data.s3.us-west-2.amazonaws.com/prj_details/prj_${id}.json`
+        //const url = `https://mb4-data.s3.us-west-2.amazonaws.com/prj_details/prj_${id}.json`
+        const url = `${import.meta.env.VITE_API_URL}/s3/prj_details/prj_${id}.json`
         const res = await getter.get(url)
 
         this.overview = res.data.overview
