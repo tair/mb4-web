@@ -24,6 +24,7 @@ export const usePublicProjectDetailsStore = defineStore({
     media_views: null,
     specimen_details: null,
     unidentified_specimen_details: null,
+    stats: null,
 
     specimenFilterByOptions: {
       supraspecific_clade: 'supraspecific clade',
@@ -139,10 +140,15 @@ export const usePublicProjectDetailsStore = defineStore({
         var getter = axios.create()
         delete getter.defaults.headers.common['Authorization']
 
-        const url = `https://mb4-data.s3.us-west-2.amazonaws.com/prj_details/prj_${id}.json`
+        //const url = `https://mb4-data.s3.us-west-2.amazonaws.com/prj_details/prj_${id}.json`
+        const url = `${import.meta.env.VITE_API_URL}/s3/prj_details/prj_${id}.json`
         const res = await getter.get(url)
 
+        const urlStats = `${import.meta.env.VITE_API_URL}/s3/prj_stats/prj_${id}.json`
+        const resStats = await getter.get(urlStats)
+
         this.overview = res.data.overview
+        this.stats = resStats.data
         this.taxa_details = res.data.taxa_details
         // add a default sort
         this.sortTaxaInDefaultOrder()

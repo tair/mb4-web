@@ -31,16 +31,16 @@ const foldThreshold = 20
       <tbody>
         <tr>
           <th scope="row">Total downloads from project</th>
-          <td>{{ projectStore.overview.project_downloads['total'] }}</td>
+          <td>{{ projectStore.stats.project_downloads['total'] }}</td>
           <td></td>
         </tr>
         <tr>
           <th scope="row">Media downloads</th>
-          <td>{{ projectStore.overview.project_downloads['M'] }}</td>
+          <td>{{ projectStore.stats.project_downloads['M'] }}</td>
           <td>
-            <div v-if="projectStore.overview.project_downloads.details['M']">
+            <div v-if="projectStore.stats.project_downloads.details['M']">
               <span
-                v-for="(item, index) in projectStore.overview.project_downloads
+                v-for="(item, index) in projectStore.stats.project_downloads
                   .details['M']"
                 :class="{
                   badge: true,
@@ -53,7 +53,7 @@ const foldThreshold = 20
               >
               <button
                 v-if="
-                  projectStore.overview.project_downloads.details['M'].length >
+                  projectStore.stats.project_downloads.details['M'].length >
                   foldThreshold
                 "
                 class="btn btn-link"
@@ -66,11 +66,11 @@ const foldThreshold = 20
         </tr>
         <tr>
           <th scope="row">Matrix downloads</th>
-          <td>{{ projectStore.overview.project_downloads['X'] }}</td>
+          <td>{{ projectStore.stats.project_downloads['X'] }}</td>
           <td>
-            <div v-if="projectStore.overview.project_downloads.details['X']">
+            <div v-if="projectStore.stats.project_downloads.details['X']">
               <span
-                v-for="(item, index) in projectStore.overview.project_downloads
+                v-for="(item, index) in projectStore.stats.project_downloads
                   .details['X']"
                 :class="{
                   badge: true,
@@ -83,7 +83,7 @@ const foldThreshold = 20
               >
               <button
                 v-if="
-                  projectStore.overview.project_downloads.details['X'].length >
+                  projectStore.stats.project_downloads.details['X'].length >
                   foldThreshold
                 "
                 class="btn btn-link"
@@ -96,16 +96,16 @@ const foldThreshold = 20
         </tr>
         <tr>
           <th scope="row">Project downloads</th>
-          <td>{{ projectStore.overview.project_downloads['P'] }}</td>
+          <td>{{ projectStore.stats.project_downloads['P'] }}</td>
           <td></td>
         </tr>
         <tr>
           <th scope="row">Document downloads</th>
-          <td>{{ projectStore.overview.project_downloads['D'] }}</td>
+          <td>{{ projectStore.stats.project_downloads['D'] }}</td>
           <td>
-            <div v-if="projectStore.overview.project_downloads.details['D']">
+            <div v-if="projectStore.stats.project_downloads.details['D']">
               <span
-                v-for="(item, index) in projectStore.overview.project_downloads
+                v-for="(item, index) in projectStore.stats.project_downloads
                   .details['D']"
                 :class="{
                   badge: true,
@@ -118,7 +118,7 @@ const foldThreshold = 20
               >
               <button
                 v-if="
-                  projectStore.overview.project_downloads.details['D'].length >
+                  projectStore.stats.project_downloads.details['D'].length >
                   foldThreshold
                 "
                 class="btn btn-link"
