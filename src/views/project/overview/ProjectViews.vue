@@ -19,7 +19,7 @@ const foldThreshold = 20
 <template>
   <div id="project-view">
     <h3>Project Views</h3>
-    <!-- {{ projectStore.overview.project_views[0]["hit_type"] }} -->
+    <!-- {{ projectStore.stats.project_views[0]["hit_type"] }} -->
     <table class="table table-bordered table-striped">
       <thead>
         <tr>
@@ -31,21 +31,21 @@ const foldThreshold = 20
       <tbody>
         <tr>
           <th scope="row">Total project views</th>
-          <td>{{ projectStore.overview.project_views['total'] }}</td>
+          <td>{{ projectStore.stats.project_views['total'] }}</td>
           <td></td>
         </tr>
         <tr>
           <th scope="row">Project overview</th>
-          <td>{{ projectStore.overview.project_views['P'] }}</td>
+          <td>{{ projectStore.stats.project_views['P'] }}</td>
           <td></td>
         </tr>
-        <tr v-if="projectStore.overview.project_views['M']">
+        <tr v-if="projectStore.stats.project_views['M']">
           <th scope="row">Media views</th>
-          <td>{{ projectStore.overview.project_views['M'] }}</td>
+          <td>{{ projectStore.stats.project_views['M'] }}</td>
           <td>
-            <div v-if="projectStore.overview.project_views.details['M']">
+            <div v-if="projectStore.stats.project_views.details['M']">
               <span
-                v-for="(item, index) in projectStore.overview.project_views
+                v-for="(item, index) in projectStore.stats.project_views
                   .details['M']"
                 :class="{
                   badge: true,
@@ -58,7 +58,7 @@ const foldThreshold = 20
               >
               <button
                 v-if="
-                  projectStore.overview.project_views.details['M'].length >
+                  projectStore.stats.project_views.details['M'].length >
                   foldThreshold
                 "
                 class="btn btn-link"
@@ -69,23 +69,23 @@ const foldThreshold = 20
             </div>
           </td>
         </tr>
-        <tr v-if="projectStore.overview.project_views['T']">
+        <tr v-if="projectStore.stats.project_views['T']">
           <th scope="row">Taxon list</th>
-          <td>{{ projectStore.overview.project_views['T'] }}</td>
+          <td>{{ projectStore.stats.project_views['T'] }}</td>
           <td></td>
         </tr>
-        <tr v-if="projectStore.overview.project_views['S']">
+        <tr v-if="projectStore.stats.project_views['S']">
           <th scope="row">Specimen list</th>
-          <td>{{ projectStore.overview.project_views['S'] }}</td>
+          <td>{{ projectStore.stats.project_views['S'] }}</td>
           <td></td>
         </tr>
-        <tr v-if="projectStore.overview.project_views['F']">
+        <tr v-if="projectStore.stats.project_views['F']">
           <th scope="row">Folio views</th>
-          <td>{{ projectStore.overview.project_views['F'] }}</td>
+          <td>{{ projectStore.stats.project_views['F'] }}</td>
           <td>
-            <div v-if="projectStore.overview.project_views.details['F']">
+            <div v-if="projectStore.stats.project_views.details['F']">
               <span
-                v-for="(item, index) in projectStore.overview.project_views
+                v-for="(item, index) in projectStore.stats.project_views
                   .details['F']"
                 :class="{
                   badge: true,
@@ -98,7 +98,7 @@ const foldThreshold = 20
               >
               <button
                 v-if="
-                  projectStore.overview.project_views.details['F'].length >
+                  projectStore.stats.project_views.details['F'].length >
                   foldThreshold
                 "
                 class="btn btn-link"
@@ -109,28 +109,28 @@ const foldThreshold = 20
             </div>
           </td>
         </tr>
-        <tr v-if="projectStore.overview.project_views['V']">
+        <tr v-if="projectStore.stats.project_views['V']">
           <th scope="row">Views for media list</th>
-          <td>{{ projectStore.overview.project_views['V'] }}</td>
+          <td>{{ projectStore.stats.project_views['V'] }}</td>
           <td></td>
         </tr>
-        <tr v-if="projectStore.overview.project_views['B']">
+        <tr v-if="projectStore.stats.project_views['B']">
           <th scope="row">Bibliography</th>
-          <td>{{ projectStore.overview.project_views['B'] }}</td>
+          <td>{{ projectStore.stats.project_views['B'] }}</td>
           <td></td>
         </tr>
-        <tr v-if="projectStore.overview.project_views['D']">
+        <tr v-if="projectStore.stats.project_views['D']">
           <th scope="row">Documents list</th>
-          <td>{{ projectStore.overview.project_views['D'] }}</td>
+          <td>{{ projectStore.stats.project_views['D'] }}</td>
           <td></td>
         </tr>
-        <tr v-if="projectStore.overview.project_views['X']">
+        <tr v-if="projectStore.stats.project_views['X']">
           <th scope="row">Matrix views</th>
-          <td>{{ projectStore.overview.project_views['X'] }}</td>
+          <td>{{ projectStore.stats.project_views['X'] }}</td>
           <td>
-            <div v-if="projectStore.overview.project_views.details['X']">
+            <div v-if="projectStore.stats.project_views.details['X']">
               <span
-                v-for="(item, index) in projectStore.overview.project_views
+                v-for="(item, index) in projectStore.stats.project_views
                   .details['X']"
                 :class="{
                   badge: true,
@@ -143,7 +143,7 @@ const foldThreshold = 20
               >
               <button
                 v-if="
-                  projectStore.overview.project_views.details['X'].length >
+                  projectStore.stats.project_views.details['X'].length >
                   foldThreshold
                 "
                 class="btn btn-link"
