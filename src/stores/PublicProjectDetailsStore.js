@@ -130,7 +130,10 @@ export const usePublicProjectDetailsStore = defineStore({
   },
   actions: {
     async fetchProject(id) {
-      if (this.project_id && this.project_id == id) return
+      // Prevent duplicate requests for the same project
+      if (this.loading || (this.project_id && this.project_id == id)) {
+        return
+      }
 
       this.loading = true
       this.loaded = false
