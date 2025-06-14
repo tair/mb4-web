@@ -27,6 +27,7 @@ onMounted(async () => {
         <div class="col border-end">
           <ProjectSummary
             :overview="projectOverviewStore.overview"
+            :projectId="projectId"
           ></ProjectSummary>
         </div>
         <div class="col-3">
