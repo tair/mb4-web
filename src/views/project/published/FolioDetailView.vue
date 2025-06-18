@@ -29,10 +29,14 @@ onMounted(() => {
         )
       })
     })
-  
+
   // Track folio view only when there's a specific folio ID
   if (projectId && folioId) {
-    logView({ project_id: projectId, hit_type: HIT_TYPES.FOLIO, row_id: folioId })
+    logView({
+      project_id: projectId,
+      hit_type: HIT_TYPES.FOLIO,
+      row_id: folioId,
+    })
   }
 })
 

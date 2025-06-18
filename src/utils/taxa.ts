@@ -97,3 +97,42 @@ export function getTaxonName(
 }
 
 export const TAXA_COLUMN_NAMES: string[] = Object.values(TaxaColumns)
+
+// Common taxonomic units used in matrix forms (subset of all available taxa columns)
+export const MATRIX_OTU_OPTIONS = [
+  TaxaColumns.SUPRASPECIFIC_CLADE,
+  TaxaColumns.CLASS,
+  TaxaColumns.SUBCLASS,
+  TaxaColumns.ORDER,
+  TaxaColumns.SUPERFAMILY,
+  TaxaColumns.FAMILY,
+  TaxaColumns.SUBFAMILY,
+  TaxaColumns.GENUS,
+  TaxaColumns.SPECIFIC_EPITHET,
+  TaxaColumns.SUBSPECIFIC_EPITHET,
+] as const
+
+/**
+ * Gets taxonomic unit options for dropdown lists in matrix forms
+ * @returns Array of objects with value and label properties for dropdown options
+ */
+export function getTaxonomicUnitOptions() {
+  return MATRIX_OTU_OPTIONS.map((column) => {
+    const friendlyName = nameColumnMap.get(column) || column
+    // Capitalize the first letter to match existing dropdown format
+    const label = friendlyName.charAt(0).toUpperCase() + friendlyName.slice(1)
+    return {
+      value: column,
+      label: label,
+    }
+  })
+}
+
+/**
+ * Gets the display label for a taxonomic unit column
+ * @param column The taxonomic column enum value
+ * @returns The friendly display name
+ */
+export function getTaxonomicUnitLabel(column: TaxaColumns): string {
+  return nameColumnMap.get(column) || column
+}

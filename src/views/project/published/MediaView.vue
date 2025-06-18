@@ -35,7 +35,11 @@ function onShowDetails(media_file) {
   mediaDetailsFor.value = media_file
   // Track media view when a specific media item is clicked
   if (projectId && media_file.media_id) {
-    logView({ project_id: projectId, hit_type: HIT_TYPES.MEDIA, row_id: media_file.media_id })
+    logView({
+      project_id: projectId,
+      hit_type: HIT_TYPES.MEDIA,
+      row_id: media_file.media_id,
+    })
   }
 }
 

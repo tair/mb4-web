@@ -41,7 +41,7 @@ type OverviewStats = {
 }
 
 const props = defineProps<{
-  overview: OverviewStats,
+  overview: OverviewStats
   projectId: string | number
 }>()
 

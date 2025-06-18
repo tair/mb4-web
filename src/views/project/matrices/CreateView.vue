@@ -9,6 +9,7 @@ import { CharacterStateIncompleteType } from '@/lib/matrix-parser/MatrixObject.t
 import { getIncompleteStateText } from '@/lib/matrix-parser/text.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
 import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
+import { getTaxonomicUnitOptions } from '@/utils/taxa'
 import router from '@/router'
 
 const route = useRoute()
@@ -17,7 +18,11 @@ const matricesStore = useMatricesStore()
 const charactersStore = useCharactersStore()
 const projectId = route.params.id
 
+// Taxonomic unit options for dropdown
+const taxonomicUnits = getTaxonomicUnitOptions()
+
 const importedMatrix = reactive({})
+const isProcessingMatrix = ref(false)
 const defaultNumbering = computed(() =>
   importedMatrix.format == 'NEXUS' ? 1 : 0
 )
@@ -187,23 +192,33 @@ function moveUpload() {
   return false
 }
 
-function moveToCharacters() {
-  if (taxaStore.isLoaded && charactersStore.isLoaded) {
-    const otu = document.getElementById('otu')
-    const itemNote = document.getElementById('item-notes')
-    mergeMatrix(
-      importedMatrix,
-      otu.value,
-      itemNote.value,
-      taxaStore.taxa,
-      charactersStore.characters
-    )
-  } else {
-    // Add a loading screen when the taxa and characters are not loaded. We will
-    // delay component and move on the step-2 when taxa and characters have
-    // loaded. Consider using AsyncComponents
+async function moveToCharacters() {
+  if (!importedMatrix.taxa || !importedMatrix.characters) {
+    alert('Please upload a valid matrix file first')
+    return false
   }
-  moveToStep('step-2')
+
+  isProcessingMatrix.value = true
+  try {
+    if (taxaStore.isLoaded && charactersStore.isLoaded) {
+      const otu = document.getElementById('otu')
+      const itemNote = document.getElementById('item-notes')
+      mergeMatrix(
+        importedMatrix,
+        otu.value,
+        itemNote.value,
+        taxaStore.taxa,
+        charactersStore.characters
+      )
+    } else {
+      // Add a loading screen when the taxa and characters are not loaded. We will
+      // delay component and move on the step-2 when taxa and characters have
+      // loaded. Consider using AsyncComponents
+    }
+    moveToStep('step-2')
+  } finally {
+    isProcessingMatrix.value = false
+  }
   return false
 }
 
@@ -232,8 +247,12 @@ function moveToStep(step) {
 }
 
 let isUploading = ref(false)
+let uploadError = ref(null)
+
 async function uploadMatrix() {
-  isUploading = true
+  isUploading.value = true
+  uploadError.value = null
+
   try {
     const formData = new FormData()
 
@@ -261,18 +280,27 @@ async function uploadMatrix() {
     const url = new URL(
       `${import.meta.env.VITE_API_URL}/projects/${projectId}/matrices/upload`
     )
-    const response = await axios.post(url, formData)
-    if (response.status != 200) {
-      alert('There was an error importing the matrix')
-      return
-    }
 
-    alert('Successfully imported')
-    matricesStore.invalidate()
-    router.push({ path: `/myprojects/${projectId}/matrices` })
+    const response = await axios.post(url, formData, {
+      timeout: 300000 // 5 minutes timeout
+    })
+    if (response.status === 200) {
+      // Wait for store invalidation to complete
+      await matricesStore.invalidate()
+      
+      // Use replace instead of push to prevent back navigation to the upload page
+      await router.push({ path: `/myprojects/${projectId}/matrices` })
+    }
+  } catch (error) {
+    console.error('Error uploading matrix:', error)
+    uploadError.value = 'Failed to upload matrix. Please try again.'
   } finally {
-    isUploading = false
+    isUploading.value = false
   }
+}
+
+function cancelImport() {
+  router.push({ path: `/myprojects/${projectId}/matrices` })
 }
 
 onMounted(() => {
@@ -342,16 +370,14 @@ onMounted(() => {
           <div class="form-group">
             <label for="otu">Operational taxonomic unit</label>
             <select id="otu" name="otu" class="form-control">
-              <option value="supraspecific_clade">Supraspecific Clade</option>
-              <option value="higher_taxon_class">Class</option>
-              <option value="higher_taxon_subclass">Subclass</option>
-              <option value="higher_taxon_order">Order</option>
-              <option value="higher_taxon_superfamily">Superfamily</option>
-              <option value="higher_taxon_family">Family</option>
-              <option value="higher_taxon_subfamily">Subfamily</option>
-              <option value="genus" selected="selected">Genus</option>
-              <option value="specific_epithet">Species</option>
-              <option value="subspecific_epithet">Subspecies</option>
+              <option
+                v-for="unit in taxonomicUnits"
+                :key="unit.value"
+                :value="unit.value"
+                :selected="unit.value === 'genus'"
+              >
+                {{ unit.label }}
+              </option>
             </select>
           </div>
           <div class="form-group">
@@ -394,12 +420,35 @@ onMounted(() => {
             </div>
           </fieldset>
           <div class="btn-step-group">
-            <button class="btn btn-primary btn-step-prev" type="button">
+            <button
+              class="btn btn-outline-primary btn-step-prev"
+              type="button"
+              @click="cancelImport"
+            >
               Cancel
             </button>
-            <button class="btn btn-primary btn-step-next" type="submit">
-              Next
+            <button
+              class="btn btn-primary btn-step-next"
+              type="submit"
+              :disabled="isUploading || isProcessingMatrix"
+            >
+              <span
+                v-if="isProcessingMatrix"
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              {{
+                isProcessingMatrix
+                  ? 'Processing...'
+                  : isUploading
+                  ? 'Uploading...'
+                  : 'Next'
+              }}
             </button>
+          </div>
+          <div v-if="uploadError" class="alert alert-danger mt-3" role="alert">
+            {{ uploadError }}
           </div>
         </div>
         <div class="row setup-content" id="step-2">
@@ -550,8 +599,13 @@ onMounted(() => {
                     <input
                       type="text"
                       class="form-control"
+                      :class="{ 'is-invalid': !editingCharacter.name }"
                       v-model="editingCharacter.name"
+                      required
                     />
+                    <div class="invalid-feedback">
+                      Character name is required
+                    </div>
                   </div>
                   <div class="form-group">
                     <label>Notes</label><br />
@@ -586,11 +640,11 @@ onMounted(() => {
                             <template v-else> &nbsp; </template>
                           </div>
                         </div>
-                        <i
+                        <!-- <i
                           class="fa-solid fa-xmark"
                           @click="removeCharacterState(editingCharacter, index)"
                         >
-                        </i>
+                        </i> -->
                       </div>
                     </div>
                   </div>
@@ -599,7 +653,7 @@ onMounted(() => {
               <div class="modal-footer">
                 <button
                   type="button"
-                  class="btn btn-secondary"
+                  class="btn btn-outline-primary"
                   data-bs-dismiss="modal"
                   @click="cancelEditedCharacter"
                 >
@@ -671,9 +725,18 @@ onMounted(() => {
               :disabled="isUploading"
               @click="uploadMatrix"
             >
-              Upload
+              <span
+                v-if="isUploading"
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              {{ isUploading ? 'Uploading...' : 'Upload' }}
             </button>
           </div>
+        </div>
+        <div v-if="uploadError" class="alert alert-danger mt-3" role="alert">
+          {{ uploadError }}
         </div>
         <div class="modal" id="taxonModal" tabindex="-1">
           <div class="modal-dialog">
@@ -692,12 +755,17 @@ onMounted(() => {
                     />
                   </div>
                   <div class="form-group">
-                    <label>Is Extinct</label>
-                    <input
-                      type="checkbox"
-                      class="form-check-input form-control"
-                      v-model="editingTaxon.extinct"
-                    />
+                    <div class="form-check">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="extinct-checkbox"
+                        v-model="editingTaxon.extinct"
+                      />
+                      <label class="form-check-label" for="extinct-checkbox">
+                        Is Extinct
+                      </label>
+                    </div>
                   </div>
                   <div class="form-group">
                     <label>Notes</label><br />
@@ -711,7 +779,7 @@ onMounted(() => {
               <div class="modal-footer">
                 <button
                   type="button"
-                  class="btn btn-secondary"
+                  class="btn btn-outline-primary"
                   data-bs-dismiss="modal"
                   @click="cancelEditedTaxon"
                 >

@@ -104,9 +104,14 @@ export function mergeMatrix(
 }
 
 function contains(text1, text2) {
-  text1 = text1.toLowerCase()
-  text2 = text2.toLowerCase()
-  return text1.length < text2.length
-    ? text2.includes(text1)
-    : text1.includes(text2)
+  // Handle null/undefined values
+  if (!text1 || !text2) {
+    return false
+  }
+
+  // Ensure both values are strings before calling toLowerCase
+  const str1 = String(text1).toLowerCase()
+  const str2 = String(text2).toLowerCase()
+
+  return str1.length < str2.length ? str2.includes(str1) : str1.includes(str2)
 }

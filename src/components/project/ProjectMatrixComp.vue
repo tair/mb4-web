@@ -1,7 +1,7 @@
 <script setup>
 import axios from 'axios'
 import { ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 
 const props = defineProps({
@@ -32,6 +32,7 @@ if (matrix.type != 1) {
 }
 
 const route = useRoute()
+const router = useRouter()
 const notes = ref(true)
 const format = ref(formats.keys()?.next()?.value)
 const partitionId = ref('')
@@ -55,7 +56,11 @@ async function onDownloadMatrix() {
     searchParams.append('partitionId', partitionId.value)
   }
   window.location.href = url
-  logDownload({ project_id: projectStore.project_id, download_type: DOWNLOAD_TYPES.MATRIX, row_id: matrixId })
+  logDownload({
+    project_id: projectStore.project_id,
+    download_type: DOWNLOAD_TYPES.MATRIX,
+    row_id: matrixId,
+  })
 }
 
 async function onDownloadCharacters() {
@@ -68,13 +73,21 @@ async function onDownloadCharacters() {
     searchParams.append('partitionId', partitionId.value)
   }
   window.location.href = url
-  logDownload({ project_id: projectStore.project_id, download_type: DOWNLOAD_TYPES.MATRIX, row_id: matrixId })
+  logDownload({
+    project_id: projectStore.project_id,
+    download_type: DOWNLOAD_TYPES.MATRIX,
+    row_id: matrixId,
+  })
 }
 
 async function onDownloadOntology() {
   const url = new URL(`${baseUrl}/download/ontology`)
   window.location.href = url
-  logDownload({ project_id: projectId, download_type: DOWNLOAD_TYPES.MATRIX, row_id: matrixId })
+  logDownload({
+    project_id: projectId,
+    download_type: DOWNLOAD_TYPES.MATRIX,
+    row_id: matrixId,
+  })
 }
 
 async function toggleMatrixStreaming() {
@@ -89,6 +102,10 @@ async function toggleMatrixStreaming() {
   } else {
     alert(response.data?.message || 'Failed to set preferences')
   }
+}
+
+function navigateToSettings() {
+  router.push(`/myprojects/${projectId}/matrices/${matrixId}/settings`)
 }
 </script>
 <template>
@@ -110,6 +127,7 @@ async function toggleMatrixStreaming() {
           type="button"
           class="btn btn-sm btn-secondary"
           tooltip="Click here to name this matrix, block the scoring, and use various automated features"
+          @click="navigateToSettings"
         >
           <i class="fa-regular fa-pen-to-square"></i>
         </button>
