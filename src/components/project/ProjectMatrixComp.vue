@@ -137,6 +137,10 @@ async function onRun() {
       if (jobBranchSwappingAlgorithm.value ) {
         searchParams.append('jobBranchSwappingAlgorithm', jobBranchSwappingAlgorithm.value)
       }
+      sendCipresRequest(url)
+}
+
+async function sendCipresRequest(url) {
       const response = await axios.post(url)
       const msg = response.data?.message || 'Failed to submit job to CIPRES'
       alert(msg)
@@ -150,6 +154,14 @@ async function onRun() {
         }
         window.location.href = urlNew
       }
+}
+
+async function onDelete(jobName, cipresJobId) {
+      const url = new URL(`${baseUrl}/deleteJob`)
+      const searchParams = url.searchParams
+      searchParams.append('jobName', jobName)
+      searchParams.append('cipresJobId', cipresJobId)
+      sendCipresRequest(url)
 }
 </script>
 <template>
@@ -394,10 +406,9 @@ async function onRun() {
               @click="onRun">
               Run 
             </button> 
-
           </div>
           <div class="read-only">
-            The Parsimony Ratchet (Kevin Nixon, 1999) improves the ability to find shortest trees during heuristic searches on larget database (it is ok to use on small ones too). You can use it to search for a tree or tree(s) based on your MorphoBank matrix. Set your parameters below and click "Run" and MorphoBank will write the commands for you to use the program PAUPRat (Sikes and Lewis, 2001) to execute the Parsimony Ratchet on in PAUP* via CIPRES<br>The commands tell PAUP* to to this:<br>
+             The Parsimony Ratchet (Kevin Nixon, 1999) improves the ability to find shortest trees during heuristic searches on larget database (it is ok to use on small ones too). You can use it to search for a tree or tree(s) based on your MorphoBank matrix. Set your parameters below and click "Run" and MorphoBank will write the commands for you to use the program PAUPRat (Sikes and Lewis, 2001) to execute the Parsimony Ratchet on in PAUP* via CIPRES<br>The commands tell PAUP* to to this:<br>
            <ol>
              <li>Conduct an heuristic search from scratch for a starting tree. This will use the Branch Swapping Algorithm that you select.</li>
              <li>Perform two tree searches for each Ratchet iteration, one in chich a subset of your characters is assigned a weight of 2, and a second in which all characters are equally weighted. The characters to be weighted are chosen randomly.</li>
@@ -442,14 +453,14 @@ async function onRun() {
         <div v-if="currentMatrixJobs?.length > 0">
           <h6><b>Previous runs:</b></h6>
           <div v-for="job in currentMatrixJobs">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <p><b>Job name</b>:{{ job.jobname }}: <b>Run on</b>: {{ job.created_on }} <b>Tool</b>: {{ job.cipres_tool }} <b>Status</b>: {{ job.cipres_last_status }}</p>
                 <p><button v-if="job.cipres_last_status == 'COMPLETED'" type="button" class="btn btn-sm btn-secondary" title="To see the commands MorphoBank sent to CIPRES open the file .nex that CIPRES returned to you.">Download</button>
-                <button type="button" class="btn btn-sm btn-primary">Delete</button></p>
-                </div>
-              <b>Notes</b>: {{ job.notes }}<br>
-              <b>Parameters</b>: {{ job.cipres_settings }}
-            <hr/>
+                <button type="button" class="btn btn-sm btn-primary" @click="onDelete(job.jobname, job.cipres_job_id)">Delete</button></p>
+             </div>
+             <b>Notes</b>: {{ job.notes }}<br>
+             <b>Parameters</b>: {{ job.cipres_settings }}
+             <hr/>
           </div>
         </div>
       </div>
