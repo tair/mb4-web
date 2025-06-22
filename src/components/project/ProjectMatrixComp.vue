@@ -163,6 +163,45 @@ async function onDelete(jobName, cipresJobId) {
       searchParams.append('cipresJobId', cipresJobId)
       sendCipresRequest(url)
 }
+
+async function onDownloadJob(userId, jobName, cipresJobId, requestId, cu, ck, cr, ca) {
+      const cipresURL= `${cu}/job/${ca}/${cipresJobId}/outputbyname/mbank_X${matrixId}_${userId}_${jobName}.zip`
+      await onDownloadJobResults(cipresURL, `mbank_X${matrixId}_${userId}_${jobName}.zip`, ck, cr)
+      // logDownload({ project_id: projectId, download_type: DOWNLOAD_TYPES.CIPRES, row_id: requestId })
+}
+
+async function onDownloadJobResults(url, filename, ck, cr) {
+  try {
+    const response = await fetch(url,
+        {
+          headers: {
+            'cipres-appkey':`${ck}`,
+            'Authorization': `Basic ${cr}`
+          },
+        }
+    )
+ 
+    if (!response.ok)
+    {
+      throw new Error(`Failed to download results: ${response.statusText}`)
+    }
+    const blob = await response.blob()
+    const contentType = response.headers.get('Content-Type')
+
+    const blobUrl = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = blobUrl
+    link.download = filename || documentUrl.split('/').pop() // Fallback to original filename if none provided
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(blobUrl) // Clean up
+  } catch (error) {
+    console.error('Error downloading the file:', error)
+    alert("Failed to download results for " + (filename || documentUrl.split('/').pop()))
+  }
+}
+
 </script>
 <template>
   <div class="p-2 card shadow matrix-card">
@@ -455,7 +494,7 @@ async function onDelete(jobName, cipresJobId) {
           <div v-for="job in currentMatrixJobs">
              <div style="display: flex; justify-content: space-between; align-items: center;">
                 <p><b>Job name</b>:{{ job.jobname }}: <b>Run on</b>: {{ job.created_on }} <b>Tool</b>: {{ job.cipres_tool }} <b>Status</b>: {{ job.cipres_last_status }}</p>
-                <p><button v-if="job.cipres_last_status == 'COMPLETED'" type="button" class="btn btn-sm btn-secondary" title="To see the commands MorphoBank sent to CIPRES open the file .nex that CIPRES returned to you.">Download</button>
+                <p><button v-if="job.cipres_last_status == 'COMPLETED'" type="button" class="btn btn-sm btn-secondary" title="To see the commands MorphoBank sent to CIPRES open the file .nex that CIPRES returned to you." @click="onDownloadJob(job.user_id, job.jobname, job.cipres_job_id, job.request_id, job.cu, job.ck, job.cr, job.ca)">Download</button>
                 <button type="button" class="btn btn-sm btn-primary" @click="onDelete(job.jobname, job.cipres_job_id)">Delete</button></p>
              </div>
              <b>Notes</b>: {{ job.notes }}<br>
