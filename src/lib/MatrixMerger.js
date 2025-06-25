@@ -47,20 +47,28 @@ export function mergeMatrix(
         break
     }
 
-    let note = taxon.note || ''
+    let note = taxon.note
     const existingTaxon = matchExistingTaxon(parsedTaxon)
     if (existingTaxon) {
       // Assign the taxonId so that the server will set this value.
       taxon.taxon_id = existingTaxon.taxon_id
 
-      const existingTaxonNote = existingTaxon.note
+      const existingTaxonNote = existingTaxon.notes
       if (existingTaxonNote && !contains(existingTaxonNote, note)) {
-        note = note + '\n\n' + existingTaxonNote
+        if (note) {
+          note = note + '\n\n' + existingTaxonNote
+        } else {
+          note = existingTaxonNote
+        }
       }
     }
 
     if (itemNote && !contains(itemNote, note)) {
-      note = itemNote + '\n\n' + note
+      if (note) {
+        note = note + '\n\n' + itemNote
+      } else {
+        note = itemNote
+      }
     }
     if (note) {
       taxon.note = note.trim()
@@ -78,7 +86,7 @@ export function mergeMatrix(
 
     if (projectCharactersNameMap.has(characterName)) {
       const projectCharacter = projectCharactersNameMap.get(characterName)
-      character.character_id = projectCharacter.project_id
+      character.character_id = projectCharacter.character_id
 
       // Double check the type, we should handle this better but this doesn't
       // happen often.
@@ -88,14 +96,22 @@ export function mergeMatrix(
         )} but matrix marked it as ${getCharacterTypeText(character.type)}`
       }
 
-      const existingNotes = character.description
+      const existingNotes = projectCharacter.description
       if (existingNotes && !contains(existingNotes, note)) {
-        note = note + '\n\n' + existingNotes
+        if (note) {
+          note = note + '\n\n' + existingNotes
+        } else {
+          note = existingNotes
+        }
       }
     }
 
     if (itemNote && !contains(itemNote, note)) {
-      note = itemNote + '\n\n' + note
+      if (note) {
+        note = note + '\n\n' + itemNote
+      } else {
+        note = itemNote
+      }
     }
     if (note) {
       character.note = note.trim()

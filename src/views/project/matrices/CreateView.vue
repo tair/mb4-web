@@ -1,10 +1,11 @@
 <script setup>
 import axios from 'axios'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCharactersStore } from '@/stores/CharactersStore'
 import { useMatricesStore } from '@/stores/MatricesStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useFileTransferStore } from '@/stores/FileTransferStore'
 import { CharacterStateIncompleteType } from '@/lib/matrix-parser/MatrixObject.ts'
 import { getIncompleteStateText } from '@/lib/matrix-parser/text.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
@@ -16,6 +17,7 @@ const route = useRoute()
 const taxaStore = useTaxaStore()
 const matricesStore = useMatricesStore()
 const charactersStore = useCharactersStore()
+const fileTransferStore = useFileTransferStore()
 const projectId = route.params.id
 
 // Taxonomic unit options for dropdown
@@ -175,7 +177,6 @@ async function importMatrix(event) {
 
   const file = files[0]
   const reader = new FileReader()
-
   reader.onload = function () {
     Object.assign(importedMatrix, parser.parseMatrix(reader.result))
   }
@@ -271,8 +272,32 @@ async function uploadMatrix() {
     const published = document.getElementById('published')
     formData.set('published', published.value)
 
-    const file = document.getElementById('upload')
-    formData.set('file', file.files[0])
+    // Check if this is a merge operation
+    const isMerge = route.query.merge === 'true'
+    const matrixId = route.query.matrixId
+
+    // Handle file differently for merge vs new matrix
+    if (isMerge) {
+      // For merge operations, get the file from FileTransferStore
+      const mergeFile = fileTransferStore.getMergeFile()
+      formData.set('matrixId', matrixId)
+      // console.log('Merge file from store:', mergeFile ? `${mergeFile.name} (${mergeFile.size} bytes)` : 'null')
+      if (mergeFile) {
+        formData.set('file', mergeFile)
+      } else {
+        uploadError.value =
+          'Merge file not found. Please go back and select a file again.'
+        return
+      }
+    } else {
+      // For new matrix creation, require file upload
+      const file = document.getElementById('upload')
+      if (!file.files[0]) {
+        uploadError.value = 'Please select a file to upload.'
+        return
+      }
+      formData.set('file', file.files[0])
+    }
 
     const serializedMatrix = serializeMatrix(importedMatrix)
     formData.set('matrix', serializedMatrix)
@@ -282,34 +307,100 @@ async function uploadMatrix() {
     )
 
     const response = await axios.post(url, formData, {
-      timeout: 300000 // 5 minutes timeout
+      timeout: 300000, // 5 minutes timeout
     })
     if (response.status === 200) {
+      // Clear the file from FileTransferStore after successful upload
+      if (isMerge) {
+        fileTransferStore.clearMergeFile()
+        sessionStorage.removeItem('matrixMergeData')
+      }
+
       // Wait for store invalidation to complete
       await matricesStore.invalidate()
-      
-      // Use replace instead of push to prevent back navigation to the upload page
-      await router.push({ path: `/myprojects/${projectId}/matrices` })
+
+      // Force a full page reload to ensure fresh data is loaded
+      window.location.href = `/myprojects/${projectId}/matrices`
     }
   } catch (error) {
     console.error('Error uploading matrix:', error)
-    uploadError.value = 'Failed to upload matrix. Please try again.'
+    uploadError.value =
+      error.response?.data?.message ||
+      'Failed to upload matrix. Please try again.'
   } finally {
     isUploading.value = false
   }
 }
 
 function cancelImport() {
+  // Clean up stores and sessionStorage
+  const isMerge = route.query.merge === 'true'
+  if (isMerge) {
+    fileTransferStore.clearMergeFile()
+    sessionStorage.removeItem('matrixMergeData')
+  }
   router.push({ path: `/myprojects/${projectId}/matrices` })
 }
 
-onMounted(() => {
+function convertNewlines(text) {
+  return text.replace(/\n/g, '<br>')
+}
+
+onMounted(async () => {
   if (!taxaStore.isLoaded) {
-    taxaStore.fetch(projectId)
+    await taxaStore.fetch(projectId)
   }
 
   if (!charactersStore.isLoaded) {
-    charactersStore.fetchCharactersByProjectId(projectId)
+    await charactersStore.fetchCharactersByProjectId(projectId)
+  }
+
+  // Check if this is a merge operation and load data from sessionStorage
+  const isMerge = route.query.merge === 'true'
+  if (isMerge) {
+    const mergeDataString = sessionStorage.getItem('matrixMergeData')
+    if (mergeDataString) {
+      try {
+        const mergeData = JSON.parse(mergeDataString)
+
+        // Restore the imported matrix data
+        if (mergeData.importedMatrix) {
+          // Restore basic properties
+          importedMatrix.format = mergeData.importedMatrix.format
+          importedMatrix.parameters = mergeData.importedMatrix.parameters || {}
+          importedMatrix.blocks = mergeData.importedMatrix.blocks || []
+
+          // Restore Maps from arrays
+          importedMatrix.characters = new Map(
+            mergeData.importedMatrix.characters
+          )
+          importedMatrix.taxa = new Map(mergeData.importedMatrix.taxa)
+          importedMatrix.cells = mergeData.importedMatrix.cells
+        }
+
+        // Load taxa and characters stores if needed
+        if (!taxaStore.isLoaded) {
+          await taxaStore.fetch(projectId)
+        }
+        if (!charactersStore.isLoaded) {
+          await charactersStore.fetchCharactersByProjectId(projectId)
+        }
+
+        // Set the step based on query parameter
+        const step = route.query.step || '1'
+        moveToStep(`step-${step}`)
+      } catch (error) {
+        console.error('Error loading merge data:', error)
+      }
+    }
+  }
+})
+
+onUnmounted(() => {
+  // Clean up file transfer store if user navigates away
+  const isMerge = route.query.merge === 'true'
+  if (isMerge) {
+    fileTransferStore.clearMergeFile()
   }
 })
 </script>
@@ -321,7 +412,7 @@ onMounted(() => {
   <div class="stepwizard">
     <div class="matrix-import-step-row setup-panel">
       <hr />
-      <div class="matrix-import-step">
+      <div class="matrix-import-step" v-if="route.query.merge !== 'true'">
         <a href="#step-1" type="button" class="btn btn-primary btn-circle">
           1
         </a>
@@ -331,10 +422,14 @@ onMounted(() => {
         <a
           href="#step-2"
           type="button"
-          class="btn btn-default btn-circle"
-          disabled="disabled"
+          :class="
+            route.query.merge === 'true'
+              ? 'btn btn-primary btn-circle'
+              : 'btn btn-default btn-circle'
+          "
+          :disabled="route.query.merge !== 'true' ? 'disabled' : false"
         >
-          2
+          {{ route.query.merge === 'true' ? '1' : '2' }}
         </a>
         <p>Characters</p>
       </div>
@@ -345,14 +440,18 @@ onMounted(() => {
           class="btn btn-default btn-circle"
           disabled="disabled"
         >
-          3
+          {{ route.query.merge === 'true' ? '2' : '3' }}
         </a>
         <p>Taxa</p>
       </div>
     </div>
     <div>
       <form @submit.prevent="moveToCharacters">
-        <div class="row setup-content" id="step-1">
+        <div
+          class="row setup-content"
+          id="step-1"
+          :class="{ 'hidden-step': route.query.merge === 'true' }"
+        >
           <div class="form-group">
             <label for="matrix-title">Title</label>
             <input
@@ -406,6 +505,7 @@ onMounted(() => {
                 type="file"
                 id="upload"
                 name="upload"
+                accept=".nex,.nexus,.tnt"
                 class="form-control"
                 @change="importMatrix"
                 required="required"
@@ -452,7 +552,11 @@ onMounted(() => {
           </div>
         </div>
         <div class="row setup-content" id="step-2">
-          <h5>
+          <h5 v-if="route.query.merge === 'true'">
+            We found {{ importedMatrix?.characters?.size }} characters to merge
+            into your matrix.
+          </h5>
+          <h5 v-else>
             We found {{ importedMatrix?.characters?.size }} characters in your
             matrix.
           </h5>
@@ -489,6 +593,10 @@ onMounted(() => {
             on the screen, save your edits and click next or (2) update the data
             matrix file and reupload.
           </p>
+          <p v-else-if="route.query.merge === 'true'">
+            Please review the characters that will be merged into your existing
+            matrix.
+          </p>
           <p v-else>
             Please confirm that the character and their states are correct.
           </p>
@@ -519,7 +627,7 @@ onMounted(() => {
                     <p class="notes" v-if="character.note">
                       <b>Notes:</b>
                       <br />
-                      <i>{{ character.note }}</i>
+                      <i v-html="convertNewlines(character.note)"></i>
                     </p>
                   </td>
                   <td>
@@ -570,6 +678,7 @@ onMounted(() => {
           </div>
           <div class="btn-step-group">
             <button
+              v-if="route.query.merge !== 'true'"
               class="btn btn-primary btn-step-prev"
               type="button"
               @click="moveUpload"
@@ -694,7 +803,7 @@ onMounted(() => {
                     <p class="notes" v-if="taxon.note">
                       <b>Notes:</b>
                       <br />
-                      <i>{{ taxon.note }}</i>
+                      <i v-html="convertNewlines(taxon.note)"></i>
                     </p>
                   </td>
                   <td>
@@ -731,7 +840,12 @@ onMounted(() => {
                 role="status"
                 aria-hidden="true"
               ></span>
-              {{ isUploading ? 'Uploading...' : 'Upload' }}
+              <template v-if="route.query.merge === 'true'">
+                {{ isUploading ? 'Merging...' : 'Merge' }}
+              </template>
+              <template v-else>
+                {{ isUploading ? 'Uploading...' : 'Upload' }}
+              </template>
             </button>
           </div>
         </div>
@@ -984,5 +1098,9 @@ div.matrix-confirmation-screen table td {
   color: #ef782f;
   margin: auto;
   padding: 0 4px;
+}
+
+.hidden-step {
+  display: none !important;
 }
 </style>

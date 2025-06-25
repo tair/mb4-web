@@ -27,14 +27,6 @@ const formData = ref({
   ENABLE_CELL_MEDIA_AUTOMATION: false,
 })
 
-// Matrix file upload
-const useMatrixFileUpload = ref(false)
-const matrixFileData = ref({
-  file: null,
-  notes: '',
-  otu: 'genus',
-})
-
 // Taxonomic unit options
 const taxonomicUnits = getTaxonomicUnitOptions()
 
@@ -61,14 +53,6 @@ const deleteWithTaxaAndCharacters = ref(true)
 const canDelete = ref(false)
 
 // Computed
-
-// Watchers
-watch(useMatrixFileUpload, (newValue) => {
-  if (!newValue) {
-    matrixFileData.value.file = null
-    matrixFileData.value.notes = ''
-  }
-})
 
 // Methods
 function getCurrentUserId() {
@@ -147,25 +131,6 @@ async function handleSubmit() {
   errors.value = {}
 
   try {
-    // Handle matrix file upload if enabled and file is selected
-    if (useMatrixFileUpload.value && matrixFileData.value.file) {
-      const uploadFormData = new FormData()
-      uploadFormData.append('matrix_file', matrixFileData.value.file)
-
-      await axios.post(
-        `${
-          import.meta.env.VITE_API_URL
-        }/projects/${projectId}/matrices/${matrixId}/edit/upload`,
-        uploadFormData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      )
-      console.log('Matrix file uploaded successfully')
-    }
-
     // Prepare matrix options as JSON for other_options field
     const matrixOptions = {
       DISABLE_SCORING: formData.value.DISABLE_SCORING,
@@ -178,7 +143,7 @@ async function handleSubmit() {
       notes: formData.value.notes,
       published: formData.value.published,
       otu: formData.value.otu,
-      other_options: JSON.stringify(matrixOptions)
+      other_options: JSON.stringify(matrixOptions),
     }
 
     await axios.put(
@@ -207,12 +172,12 @@ async function handleDelete() {
 async function confirmDelete() {
   isLoading.value = true
   showDeleteModal.value = false
-  
+
   try {
-    const deleteParams = deleteWithTaxaAndCharacters.value 
-      ? '?deleteTaxaAndCharacters=true' 
+    const deleteParams = deleteWithTaxaAndCharacters.value
+      ? '?deleteTaxaAndCharacters=true'
       : ''
-    
+
     await axios.delete(
       `${
         import.meta.env.VITE_API_URL
@@ -232,13 +197,6 @@ async function confirmDelete() {
 function cancelDelete() {
   showDeleteModal.value = false
   deleteWithTaxaAndCharacters.value = false
-}
-
-function handleFileChange(event) {
-  const file = event.target.files[0]
-  if (file) {
-    matrixFileData.value.file = file
-  }
 }
 
 function formatDate(dateString) {
@@ -312,8 +270,10 @@ onMounted(() => {
       <!-- Matrix Title Header -->
       <div v-if="matrix" class="matrix-header mb-4">
         <h2 class="matrix-title">Matrix Settings</h2>
-        <p class="matrix-subtitle">{{ matrix.title }} (<i>matrix {{ matrix.matrix_id }}</i
-            >)</p>
+        <p class="matrix-subtitle">
+          {{ matrix.title }} (<i>matrix {{ matrix.matrix_id }}</i
+          >)
+        </p>
       </div>
 
       <form @submit.prevent="handleSubmit" class="list-form">
@@ -418,21 +378,6 @@ onMounted(() => {
           <div v-if="errors.otu" class="invalid-feedback">{{ errors.otu }}</div>
         </div>
 
-        <!-- OTU Field (only when file upload is enabled) -->
-        <div v-if="useMatrixFileUpload" class="form-group">
-          <label class="form-label">Operational taxonomic unit</label>
-          <select name="otu" class="form-control" v-model="matrixFileData.otu">
-            <option
-              v-for="unit in taxonomicUnits"
-              :key="unit.value"
-              :value="unit.value"
-              :selected="unit.value === 'genus'"
-            >
-              {{ unit.label }}
-            </option>
-          </select>
-        </div>
-
         <!-- Publishing Status -->
         <div class="form-group">
           <label class="form-label">
@@ -462,78 +407,6 @@ onMounted(() => {
         <div v-if="matrix" class="form-group">
           <label class="form-label">Last modified on</label>
           <div class="form-text">{{ formatDate(matrix.last_modified_on) }}</div>
-        </div>
-
-        <!-- Matrix File Upload Section -->
-        <div class="form-group">
-          <div class="form-check">
-            <input
-              type="checkbox"
-              name="useMatrixFileUpload"
-              id="useMatrixFileUpload"
-              value="1"
-              v-model="useMatrixFileUpload"
-              class="form-check-input"
-            />
-            <label for="useMatrixFileUpload" class="form-check-label">
-              <strong>Merge a NEXUS or TNT file with this matrix</strong>
-            </label>
-          </div>
-
-          <div
-            v-show="useMatrixFileUpload"
-            class="mt-3"
-            style="margin-left: 15px"
-            id="matrixFileUpload"
-          >
-            <div
-              style="
-                border-bottom: 1px dashed #dedede;
-                padding: 10px 5px 5px 3px;
-                margin: 3px;
-              "
-            >
-              <span class="form-note">
-                <strong>Note</strong> – your matrix must have character names
-                for all the characters and these character names must each be
-                different. If this is a file with combined molecular and
-                morphological data, or molecular data only, it must be submitted
-                to the Documents area.
-              </span>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label"
-                >NEXUS or TNT file to add to matrix</label
-              >
-              <input
-                type="file"
-                name="upload"
-                id="upload"
-                class="form-control"
-                accept=".nex,.nexus,.tnt"
-                @change="handleFileChange"
-              />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label"
-                >Descriptive text to add to each character and taxon added to
-                the project from this file</label
-              >
-              <textarea
-                name="item_note"
-                rows="3"
-                class="form-control"
-                v-model="matrixFileData.notes"
-                id="item_note"
-              ></textarea>
-            </div>
-
-            <input type="hidden" name="useMatrixFileUpload" value="1" />
-          </div>
-
-          <div style="margin-bottom: 10px"></div>
         </div>
 
         <!-- Form Buttons -->
@@ -569,7 +442,7 @@ onMounted(() => {
     <div
       v-if="showDeleteModal"
       class="modal fade show"
-      style="display: block; background-color: rgba(0,0,0,0.5);"
+      style="display: block; background-color: rgba(0, 0, 0, 0.5)"
       tabindex="-1"
       role="dialog"
     >
@@ -579,7 +452,9 @@ onMounted(() => {
             <h5 class="modal-title">Delete Matrix</h5>
           </div>
           <div class="modal-body">
-            <p><strong>Really delete matrix: {{ matrix?.title }}?</strong></p>
+            <p>
+              <strong>Really delete matrix: {{ matrix?.title }}?</strong>
+            </p>
             <div class="form-check mt-3">
               <input
                 type="checkbox"
@@ -588,7 +463,13 @@ onMounted(() => {
                 class="form-check-input"
               />
               <label for="deleteWithTaxaAndCharacters" class="form-check-label">
-                Check this box if you want to completely remove the taxa and characters in this matrix from your Project along with all the scores in the matrix. We recommend this if you want a clean slate - otherwise the taxa and characters will remain in memory after the matrix scores are deleted. If you happen to have multiple matrices that may contain the same taxa or characters those will not be erased.
+                Check this box if you want to completely remove the taxa and
+                characters in this matrix from your Project along with all the
+                scores in the matrix. We recommend this if you want a clean
+                slate - otherwise the taxa and characters will remain in memory
+                after the matrix scores are deleted. If you happen to have
+                multiple matrices that may contain the same taxa or characters
+                those will not be erased.
               </label>
             </div>
           </div>
