@@ -76,27 +76,24 @@ function cancelEditedCharacter() {
 
 function removeCharacterState(character, index) {
   if (character.states.length - 1 <= character.maxScoredStatePosition) {
-    alert(
-      `The data matrix you uploaded has at least ${character.maxScoredStatePosition} states for this character. Please define the missing one or update the data matrix and then reupload.`
+    const confirmed = confirm(
+      `Warning: The data matrix you uploaded has at least ${
+        Number(character.maxScoredStatePosition) + 1
+      } states for this character. Deleting this state may cause issues with your matrix data.\n\nDo you want to delete it anyway?`
     )
-    return
+    if (!confirmed) {
+      return
+    }
   }
+
   character.states.splice(index, 1)
 }
 
 function saveEditedCharacter() {
-  const characterNumber = editingCharacter.value.characterNumber
-  const keys = Array.from(importedMatrix.characters.keys())
-  const name = keys[characterNumber]
-  const character = importedMatrix.characters.get(name)
-  Object.assign(character, JSON.parse(JSON.stringify(editingCharacter.value)))
-  updateIncompleteType(character)
-}
-
-function confirmCharacter(character) {
-  if (character.states) {
+  // Validate character states before saving
+  if (editingCharacter.value.states) {
     const stateNames = new Set()
-    for (const state of character.states) {
+    for (const state of editingCharacter.value.states) {
       const stateName = state.name
       if (stateName == null || stateName.length == 0) {
         alert('All states must have non-empty names.')
@@ -119,12 +116,21 @@ function confirmCharacter(character) {
       stateNames.add(stateName)
     }
 
-    for (const state of character.states) {
+    // Clear incomplete type flags if validation passes
+    for (const state of editingCharacter.value.states) {
       delete state.incompleteType
     }
   }
-  return false
+
+  const characterNumber = editingCharacter.value.characterNumber
+  const keys = Array.from(importedMatrix.characters.keys())
+  const name = keys[characterNumber]
+  const character = importedMatrix.characters.get(name)
+  Object.assign(character, JSON.parse(JSON.stringify(editingCharacter.value)))
+  updateIncompleteType(character)
 }
+
+
 
 function updateIncompleteType(character) {
   if (character.states) {
@@ -664,13 +670,6 @@ onUnmounted(() => {
                     >
                       Edit
                     </a>
-
-                    <a
-                      :href="`#character${character.characterNumber}`"
-                      @click.stop.prevent="confirmCharacter(character)"
-                    >
-                      Confirm
-                    </a>
                   </td>
                 </tr>
               </tbody>
@@ -729,6 +728,7 @@ onUnmounted(() => {
                       <div
                         class="character-state"
                         v-for="(state, index) in editingCharacter.states"
+                        :key="index"
                       >
                         <div class="character-state-name">
                           <textarea
@@ -749,11 +749,14 @@ onUnmounted(() => {
                             <template v-else> &nbsp; </template>
                           </div>
                         </div>
-                        <!-- <i
-                          class="fa-solid fa-xmark"
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-danger remove-state ms-2"
                           @click="removeCharacterState(editingCharacter, index)"
+                          title="Delete state"
                         >
-                        </i> -->
+                          <i class="fa-solid fa-xmark"></i>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -1095,9 +1098,22 @@ div.matrix-confirmation-screen table td {
 .character-states .remove-state {
   display: flex;
   flex-direction: row;
-  color: #ef782f;
+  align-items: center;
+  justify-content: center;
   margin: auto;
-  padding: 0 4px;
+  padding: 2px 6px;
+  cursor: pointer;
+  font-size: 12px;
+  user-select: none;
+  min-width: 28px;
+  height: 28px;
+  border-radius: 3px;
+}
+
+.character-states .remove-state:hover {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: white;
 }
 
 .hidden-step {
