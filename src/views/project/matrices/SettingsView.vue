@@ -69,7 +69,6 @@ async function loadData() {
           import.meta.env.VITE_API_URL
         }/projects/${projectId}/matrices/${matrixId}`
       )
-      console.log('response', response)
       matrix.value = response.data
 
       // Parse other_options if it's a JSON string
@@ -416,7 +415,7 @@ onMounted(() => {
           </button>
           <RouterLink
             :to="`/myprojects/${projectId}/matrices`"
-            class="btn btn-outline-secondary ms-2"
+            class="btn btn-outline-primary ms-2"
           >
             Cancel
           </RouterLink>
@@ -476,7 +475,7 @@ onMounted(() => {
           <div class="modal-footer">
             <button
               type="button"
-              class="btn btn-outline-secondary"
+              class="btn btn-outline-primary"
               @click="cancelDelete"
             >
               Cancel

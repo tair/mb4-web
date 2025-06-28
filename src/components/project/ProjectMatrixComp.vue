@@ -492,7 +492,7 @@ function resetMergeForm() {
           :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/characters`"
           target="_blank"
         >
-          <button type="button" class="btn btn-sm btn-secondary">
+          <button type="button" class="btn btn-primary">
             Edit Characters
           </button>
         </RouterLink>
@@ -551,21 +551,21 @@ function resetMergeForm() {
         <div class="tab-content-buttons">
           <button
             type="button"
-            class="btn btn-sm btn-secondary"
+            class="btn btn-primary"
             @click="onDownloadMatrix"
           >
             Download Matrix
           </button>
           <button
             type="button"
-            class="btn btn-sm btn-secondary"
+            class="btn btn-primary"
             @click="onDownloadCharacters"
           >
             Download Characters
           </button>
           <button
             type="button"
-            class="btn btn-sm btn-secondary"
+            class="btn btn-primary"
             @click="onDownloadOntology"
           >
             Download Ontology
@@ -647,7 +647,7 @@ function resetMergeForm() {
             </button>
             <button
               type="button"
-              class="btn btn-outline-secondary"
+              class="btn btn-outline-primary"
               @click="resetMergeForm"
               :disabled="isUploading"
             >
