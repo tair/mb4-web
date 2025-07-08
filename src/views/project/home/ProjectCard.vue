@@ -2,6 +2,7 @@
 import { toDMYDate } from '@/utils/date'
 import { getProjectCitation } from '@/utils/project'
 import { type Media } from '@/types/media'
+import { buildS3MediaUrl } from '@/utils/util.js'
 
 type Project = {
   project_id: number
@@ -24,6 +25,13 @@ function getOverviewUrl() {
   }
   return `/myprojects/${props.project.project_id}/overview`
 }
+
+// Helper function to get media URL using S3 endpoint
+function getMediaUrl() {
+  // For now, use the existing URL since this component doesn't have media_id
+  // This would need to be updated when the backend provides media_id in the project data
+  return props.project?.media?.url || null
+}
 </script>
 <template>
   <div class="card mb-3">
@@ -32,7 +40,7 @@ function getOverviewUrl() {
         <div class="card-image">
           <img
             v-if="project.media"
-            :src="project.media.url"
+            :src="getMediaUrl()"
             :width="project.media.width"
             :height="project.media.height"
             class="img-fluid rounded-start"

@@ -272,7 +272,7 @@ function formatAuthors(authors) {
           >
             <img
               v-if="item.media"
-              :src="getBestMediaUrl(item.media, ['thumbnail'])"
+              :src="getBestMediaUrl(item.media, ['thumbnail'], item.project_id, item.media_id)"
               alt="thumb"
               class="me-2 flex-shrink-0 bg-light border"
               style="width: 60px; height: 60px; object-fit: contain"

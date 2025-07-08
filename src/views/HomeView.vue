@@ -2,7 +2,7 @@
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
-import { getBestMediaUrl, processItemsWithMedia } from '@/utils/mediaUtils'
+import { processItemsWithMedia } from '@/utils/mediaUtils'
 
 const router = useRouter()
 
@@ -57,19 +57,19 @@ onMounted(async () => {
     )
     stats.value = statsResponse.data
 
-    // Process media URLs for featured projects
-    featuredProjects.value = processItemsWithMedia(featuredProjectsData)
+    // Process media URLs for featured projects using S3
+    featuredProjects.value = processItemsWithMedia(featuredProjectsData, ['large', 'medium', 'small', 'original', 'thumbnail'])
 
-    // Process media URLs for matrix images
-    matrixImages.value = processItemsWithMedia(matrixImagesData)
+    // Process media URLs for matrix images using old system
+    matrixImages.value = processItemsWithMedia(matrixImagesData, ['large', 'medium', 'small', 'original', 'thumbnail'])
 
     announcements.value = announcementsData
 
-    // Process media URLs for tools
-    tools.value = processItemsWithMedia(toolsData)
+    // Process media URLs for tools using old system
+    tools.value = processItemsWithMedia(toolsData, ['large', 'medium', 'small', 'original', 'thumbnail'])
 
-    // Process media URLs for press
-    press.value = processItemsWithMedia(pressData)
+    // Process media URLs for press using old system
+    press.value = processItemsWithMedia(pressData, ['large', 'medium', 'small', 'original', 'thumbnail'])
 
     maintenanceMode.value = maintenanceStatus.enabled
     maintenanceMessage.value = maintenanceStatus.message

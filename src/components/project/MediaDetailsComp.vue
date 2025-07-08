@@ -4,7 +4,7 @@ import { toDateString } from '@/utils/date'
 import {
   getViewStatsTooltipText,
   getDownloadTooltipText,
-  buildImageProps,
+  buildS3MediaUrl,
 } from '@/utils/util.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import CustomModal from './CustomModal.vue'
@@ -15,6 +15,10 @@ const props = defineProps({
   media_file: {
     type: Object,
   },
+  project_id: {
+    type: [Number, String],
+    required: false,
+  },
 })
 
 const showZoomModal = ref(false)
@@ -22,13 +26,22 @@ const showDownloadModal = ref(false)
 const viewStatsTooltipText = getViewStatsTooltipText()
 const downloadTooltipText = getDownloadTooltipText()
 
-async function confirmDownload(mediaObj, fileName) {
+// Helper function to get media URL using S3 endpoint
+function getMediaUrl(fileSize) {
+  if (props.project_id && props.media_file?.media_id) {
+    return buildS3MediaUrl(props.project_id, props.media_file.media_id, fileSize)
+  }
+  // Fallback to old method if project_id not available
+  return null
+}
+
+async function confirmDownload(fileSize, fileName) {
   // if (!isCaptchaVerified) {
   //   alert("Please complete the CAPTCHA");
   //   return;
   // }
   // CAPTCHA is completed, proceed with the download
-  const imageUrl = buildImageProps(mediaObj)
+  const imageUrl = getMediaUrl(fileSize)
   let downloadFileName = fileName
   if (!downloadFileName) {
     downloadFileName = getLastElementFromUrl(imageUrl)
@@ -46,7 +59,7 @@ async function confirmDownload(mediaObj, fileName) {
   // URL.revokeObjectURL(url);
 
   showDownloadModal.value = false
-  logDownload({ project_id: projectStore.project_id, download_type: DOWNLOAD_TYPES.MEDIA, row_id: media_file.media_id })
+  logDownload({ project_id: props.project_id, download_type: DOWNLOAD_TYPES.MEDIA, row_id: props.media_file.media_id })
 }
 
 function getLastElementFromUrl(url) {
@@ -112,10 +125,8 @@ function getHitsMessage(mediaObj) {
     <div class="col">
       <div class="card shadow">
         <img
-          :src="buildImageProps(media_file.media['medium'])"
+          :src="getMediaUrl('large')"
           :style="{
-            width: media_file.media['medium'].WIDTH + 'px',
-            height: media_file.media['medium'].HEIGHT + 'px',
             backgroundSize: '20px',
             backgroundRepeat: 'no-repeat',
             backgroundImage: 'url(' + '/images/loader.png' + ')',
@@ -135,7 +146,7 @@ function getHitsMessage(mediaObj) {
                 @close="showZoomModal = false"
               >
                 <MediaViewPanel
-                  :imgSrc="buildImageProps(media_file.media['original'])"
+                  :imgSrc="getMediaUrl('large')"
                 />
               </CustomModal>
               <a class="nav-link" href="#" @click="showDownloadModal = true">
@@ -159,7 +170,7 @@ function getHitsMessage(mediaObj) {
                     class="btn btn-primary"
                     @click="
                       confirmDownload(
-                        media_file.media['original'],
+                        'original',
                         media_file.media['ORIGINAL_FILENAME']
                       )
                     "
@@ -277,10 +288,16 @@ function getHitsMessage(mediaObj) {
   justify-content: center;
   align-items: center;
   margin: 0;
+  padding: 1rem;
 }
 
 .card-img {
   margin: 1rem;
+  max-width: 100%;
+  max-height: 500px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
 }
 
 .card-body {

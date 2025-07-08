@@ -1,9 +1,35 @@
-function buildImageProps(mediaObj, type) {
+/**
+ * Build S3 media URL for a given project, media ID, and file size
+ * @param {number|string} projectId - The project ID
+ * @param {number|string} mediaId - The media ID
+ * @param {string} fileSize - The file size (original, large, medium, thumbnail, etc.)
+ * @returns {string} - The S3 media URL
+ */
+function buildS3MediaUrl(projectId, mediaId, fileSize = 'original') {
+  return `${import.meta.env.VITE_API_URL}/public/media/${projectId}/serve/${mediaId}/${fileSize}`
+}
+
+/**
+ * Build image URL from media object - now uses S3 endpoints
+ * @param {Object} mediaObj - Media object containing media data
+ * @param {string} type - Optional type/size to extract from media object
+ * @param {number|string} projectId - Project ID (required for S3 URLs)
+ * @param {number|string} mediaId - Media ID (required for S3 URLs)
+ * @returns {string|null} - The media URL or null if not available
+ */
+function buildImageProps(mediaObj, type, projectId, mediaId) {
   try {
+    // If projectId and mediaId are provided, use S3 endpoint
+    if (projectId && mediaId) {
+      const fileSize = type || 'original'
+      return buildS3MediaUrl(projectId, mediaId, fileSize)
+    }
+
+    // Fallback to old method for backward compatibility
     let media = mediaObj
     if (type) media = mediaObj[type]
 
-    if (!media.HASH || !media.MAGIC || !media.FILENAME) return null
+    if (!media || (!media.HASH || !media.MAGIC || !media.FILENAME)) return null
 
     const url =
       `https://morphobank.org/media/morphobank3/` +
@@ -112,6 +138,7 @@ export const TOOLTIP_ARTICLE_DOI =
 
 export {
   buildImageProps,
+  buildS3MediaUrl,
   getPasswordPattern,
   getPasswordRule,
   searchInObject,
