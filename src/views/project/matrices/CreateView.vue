@@ -130,8 +130,6 @@ function saveEditedCharacter() {
   updateIncompleteType(character)
 }
 
-
-
 function updateIncompleteType(character) {
   if (character.states) {
     const stateNames = new Map()

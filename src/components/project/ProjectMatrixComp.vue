@@ -492,9 +492,7 @@ function resetMergeForm() {
           :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/characters`"
           target="_blank"
         >
-          <button type="button" class="btn btn-primary">
-            Edit Characters
-          </button>
+          <button type="button" class="btn btn-primary">Edit Characters</button>
         </RouterLink>
       </div>
       <div
