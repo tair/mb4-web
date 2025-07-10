@@ -23,6 +23,17 @@
   font-style: italic;
 }
 
+.form-note {
+  color: #666;
+  font-size: 12px;
+  font-weight: normal;
+}
+
+.form-note strong {
+  color: #666;
+  font-weight: bold;
+}
+
 .form-control {
   width: 100%;
   padding: 8px;

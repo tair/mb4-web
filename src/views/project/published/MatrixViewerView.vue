@@ -14,7 +14,11 @@ const published = true
 onMounted(() => {
   // Track individual matrix view
   if (projectId && matrixId) {
-    logView({ project_id: projectId, hit_type: HIT_TYPES.MATRIX, row_id: matrixId })
+    logView({
+      project_id: projectId,
+      hit_type: HIT_TYPES.MATRIX,
+      row_id: matrixId,
+    })
   }
 })
 

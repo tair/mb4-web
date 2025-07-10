@@ -26,10 +26,16 @@ async function createCitation(event) {
     }
   } catch (error) {
     hasError.value = true
-    if (error.response?.status === 400 && error.response?.data?.message === 'This citation already exists') {
-      errorMessage.value = 'This citation already exists. Please select a different reference.'
+    if (
+      error.response?.status === 400 &&
+      error.response?.data?.message === 'This citation already exists'
+    ) {
+      errorMessage.value =
+        'This citation already exists. Please select a different reference.'
     } else {
-      errorMessage.value = 'Failed to add citation: ' + (error.response?.data?.message || error.message || 'Unknown error')
+      errorMessage.value =
+        'Failed to add citation: ' +
+        (error.response?.data?.message || error.message || 'Unknown error')
     }
   }
 }
@@ -57,11 +63,16 @@ async function createCitation(event) {
                   :key="index"
                   :is="definition.view"
                   :name="index"
-                  :class="{ 'is-invalid': hasError && index === 'reference_id' }"
+                  :class="{
+                    'is-invalid': hasError && index === 'reference_id',
+                  }"
                   v-bind="definition.args"
                 >
                 </component>
-                <div v-if="hasError && index === 'reference_id'" class="invalid-feedback">
+                <div
+                  v-if="hasError && index === 'reference_id'"
+                  class="invalid-feedback"
+                >
                   {{ errorMessage }}
                 </div>
               </div>
@@ -72,7 +83,10 @@ async function createCitation(event) {
               type="reset"
               class="btn btn-outline-primary"
               data-bs-dismiss="modal"
-              @click="hasError = false; errorMessage = ''"
+              @click="
+                hasError = false
+                errorMessage = ''
+              "
             >
               Cancel
             </button>

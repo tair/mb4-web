@@ -125,7 +125,10 @@ export class CharacterDetailedGridRenderer extends CharacterGridRenderer {
       truncatedCharacterName +
       '</b>' +
       '<p>Notes:</p><i>' +
-      mb.truncateString(mb.htmlEscape(character.getDescription()), 900) +
+      mb.truncateString(
+        mb.htmlEscapeWithLineBreaks(character.getDescription()),
+        900
+      ) +
       '</i>' +
       '</div>'
     )

@@ -11,6 +11,7 @@ import {
   TaxaColumns,
   nameColumnMap,
   getTaxonName,
+  sortTaxaAlphabetically,
 } from '@/utils/taxa'
 
 const route = useRoute()
@@ -38,23 +39,14 @@ const letters = computed(() => {
 })
 
 const filters = reactive({})
-const filteredTaxa = computed(() =>
-  Object.values(filters)
-    .reduce((taxa, filter) => taxa.filter(filter), taxaStore.taxa)
-    .sort((a, b) => {
-      const nameA = getTaxonName(a, TaxaColumns.GENUS, false)
-      if (!nameA) {
-        return -1
-      }
+const filteredTaxa = computed(() => {
+  const filtered = Object.values(filters).reduce(
+    (taxa, filter) => taxa.filter(filter),
+    taxaStore.taxa
+  )
 
-      const nameB = getTaxonName(b, TaxaColumns.GENUS, false)
-      if (!nameB) {
-        return -1
-      }
-
-      return nameA.localeCompare(nameB)
-    })
-)
+  return sortTaxaAlphabetically(filtered, TaxaColumns.GENUS)
+})
 
 const availableRanks = computed(() => {
   const ranks = new Set()

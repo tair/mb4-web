@@ -163,7 +163,7 @@ const PUBLISHED_PROJECT_DETAIL_VIEWS = [
     name: 'ProjectDownloadView',
     component: () =>
       import(
-        /* webpackChunkName: "published" */ '@/views/project/published/DocumentView.vue'
+        /* webpackChunkName: "published" */ '@/views/project/published/DownloadView.vue'
       ),
     beforeEnter: (to, from) => {
       const projectDetailStore = usePublicProjectDetailsStore()

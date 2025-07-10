@@ -46,7 +46,11 @@ async function confirmDownload(mediaObj, fileName) {
   // URL.revokeObjectURL(url);
 
   showDownloadModal.value = false
-  logDownload({ project_id: projectStore.project_id, download_type: DOWNLOAD_TYPES.MEDIA, row_id: media_file.media_id })
+  logDownload({
+    project_id: projectStore.project_id,
+    download_type: DOWNLOAD_TYPES.MEDIA,
+    row_id: media_file.media_id,
+  })
 }
 
 function getLastElementFromUrl(url) {
