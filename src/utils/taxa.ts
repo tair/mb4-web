@@ -136,3 +136,28 @@ export function getTaxonomicUnitOptions() {
 export function getTaxonomicUnitLabel(column: TaxaColumns): string {
   return nameColumnMap.get(column) || column
 }
+
+/**
+ * Sorts taxa alphabetically by their taxonomic name
+ * @param taxa Array of taxa to sort
+ * @param otu Operational taxonomic unit to use for sorting (defaults to GENUS)
+ * @returns A new array of taxa sorted alphabetically
+ */
+export function sortTaxaAlphabetically(
+  taxa: Array<{ [key: string]: any }>,
+  otu: TaxaColumns = TaxaColumns.GENUS
+): Array<{ [key: string]: any }> {
+  return [...taxa].sort((a, b) => {
+    const nameA = getTaxonName(a, otu, false)
+    if (!nameA) {
+      return -1
+    }
+
+    const nameB = getTaxonName(b, otu, false)
+    if (!nameB) {
+      return -1
+    }
+
+    return nameA.localeCompare(nameB)
+  })
+}

@@ -74,6 +74,23 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
+    path: 'matrices/create-manual',
+    name: 'MyProjectMatrixCreateManualView',
+    meta: {
+      itemName: 'matrices',
+      breadcrumbs: [
+        {
+          label: 'Matrices',
+          to: 'MyProjectMatrixView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/matrices/CreateManualView.vue'
+      ),
+  },
+  {
     path: 'matrices/:matrixId(\\d+)/settings',
     name: 'MyProjectMatrixSettingsView',
     meta: {

@@ -11,6 +11,7 @@ import {
   TaxaColumns,
   getTaxonName,
   nameColumnMap,
+  sortTaxaAlphabetically,
 } from '@/utils/taxa'
 
 const route = useRoute()

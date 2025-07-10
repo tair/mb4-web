@@ -110,7 +110,7 @@ async function loadData() {
       }
     }
 
-    // Load taxa to get first taxon name
+    // Load taxa to get first taxon name (alphabetically)
     if (!taxaStore.isLoaded) {
       await taxaStore.fetch(projectId)
     }
