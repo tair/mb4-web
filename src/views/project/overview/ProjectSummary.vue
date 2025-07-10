@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Tooltip from '@/components/main/Tooltip.vue'
 import { formatBytes, formatNumber } from '@/utils/format'
-import { buildS3MediaUrl } from '@/utils/util'
+import { buildMediaUrl } from '@/utils/mediaUtils.js'
 import { usePublicMediaStore } from '@/stores/PublicMediaStore'
 import { ref, onMounted, computed } from 'vue'
 // import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
@@ -93,7 +93,7 @@ function popDownloadAlert() {
         <div v-if="exemplarMedia" class="d-flex flex-column">
           <div class="d-flex justify-content-center">
             <img
-              :src="exemplarMedia.media_id ? buildS3MediaUrl(projectId, exemplarMedia.media_id, 'large') : null"
+              :src="buildMediaUrl(projectId, exemplarMedia.media_id, 'large')"
               :style="{
                 width: getWidth(exemplarMedia),
                 height: getHeight(exemplarMedia),
@@ -122,7 +122,7 @@ function popDownloadAlert() {
         <div v-else-if="overview.image_props?.media" class="d-flex flex-column">
           <div class="d-flex justify-content-center">
             <img
-              :src="overview.image_props.media.media_id ? buildS3MediaUrl(projectId, overview.image_props.media.media_id, 'large') : null"
+              :src="buildMediaUrl(projectId, overview.image_props?.media?.media_id, 'large')"
               :style="{
                 width: getWidth(overview.image_props.media) + 'px',
                 height: getHeight(overview.image_props.media) + 'px',

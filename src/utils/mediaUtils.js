@@ -1,148 +1,133 @@
-// /**
-//  * Build S3 media URL for a given project, media ID, and file size
-//  * @param {number|string} projectId - The project ID
-//  * @param {number|string} mediaId - The media ID
-//  * @param {string} fileSize - The file size (original, large, medium, thumbnail, etc.)
-//  * @returns {string} - The S3 media URL
-//  */
-// export const buildS3MediaUrl = (projectId, mediaId, fileSize = 'original') => {
-//   return `${import.meta.env.VITE_API_URL}/public/media/${projectId}/serve/${mediaId}/${fileSize}`
-// }
+/**
+ * Build S3 media URL for a given project, media ID, and file size
+ * @param {number|string} projectId - The project ID
+ * @param {number|string} mediaId - The media ID
+ * @param {string} fileSize - The file size (original, large, medium, thumbnail, etc.)
+ * @returns {string} - The S3 media URL or placeholder image URL
+ */
+function buildMediaUrl(projectId, mediaId, fileSize = 'large') {
+    if (!projectId || !mediaId) {
+      return '/public/images/image-not-found.png'
+    }
+    return `${import.meta.env.VITE_API_URL}/public/media/${projectId}/serve/${mediaId}/${fileSize}`
+  }
 
-// /**
-//  * Extract media ID from filename
-//  * @param {string} filename - The filename to extract media ID from
-//  * @returns {string|null} - The extracted media ID or null if not found
-//  */
-// export const extractMediaId = (filename) => {
-//   if (!filename) {
-//     return null
-//   }
-//   // Extract media ID from pattern: "media_files_media_482278_icon.jpg"
-//   const match = filename.match(/media_files_media_(\d+)_/)
-//   return match ? match[1] : null
-// }
+/**
+ * Build image URL from media object, with both S3 and legacy support
+ * @param {Object|string|null} mediaObj - the media data or a raw URL string
+ * @param {string} [type] - optional size/type key (original, large, etc.)
+ * @param {number|string} projectId - project ID for S3 URLs
+ * @param {number|string} mediaId - media ID for S3 URLs
+ * @returns {string|null} - the best possible URL, or null if none
+ */
+function buildImageProps(mediaObj, type, projectId, mediaId) {
+  // 1) If caller already passed a raw URL string, use it
+  if (typeof mediaObj === 'string') {
+    return mediaObj
+  }
 
-// /**
-//  * Extract media ID from media object by checking various size variants
-//  * @param {Object} media - The media object containing size variants
-//  * @returns {string|null} - The extracted media ID or null if not found
-//  */
-// export const extractMediaIdFromMedia = (media) => {
-//   if (!media) {
-//     return null
-//   }
+  // 2) If the API object has a full-URL field on it, use that
+  //    (you may need to tweak these property names to match your payload)
+  if (mediaObj && (mediaObj.url || mediaObj.fullUrl)) {
+    return mediaObj.url || mediaObj.fullUrl
+  }
+
+  // 3) If we have projectId + mediaId, use your S3 helper
+  if (projectId && mediaId) {
+    const fileSize = type || 'large'
+    return buildMediaUrl(projectId, mediaId, fileSize)
+  }
+
+  // 4) Legacy HASH/MAGIC/FILENAME method
+  let media = mediaObj
+  if (type) media = mediaObj[type]
+
+  if (media && media.HASH && media.MAGIC && media.FILENAME) {
+    return `https://morphobank.org/media/morphobank3/images/` +
+           `${media.HASH}/${media.MAGIC}_${media.FILENAME}`
+  }
+
+  // 5) Try fallback sizes if the requested type doesn't exist
+  if (type && mediaObj) {
+    const fallbackSizes = ['original', 'large', 'medium', 'small', 'thumbnail']
+    for (const fallbackSize of fallbackSizes) {
+      if (fallbackSize !== type && mediaObj[fallbackSize] && 
+          mediaObj[fallbackSize].HASH && mediaObj[fallbackSize].MAGIC && mediaObj[fallbackSize].FILENAME) {
+        return `https://morphobank.org/media/morphobank3/images/` +
+               `${mediaObj[fallbackSize].HASH}/${mediaObj[fallbackSize].MAGIC}_${mediaObj[fallbackSize].FILENAME}`
+      }
+    }
+  }
+
+  // 6) Give up
+  return null
+}
   
-//   // Try to find media ID from any of the size variants
-//   const sizeVariants = ['large', 'medium', 'small', 'original', 'thumbnail', 'preview', 'icon']
+  /**
+   * Get the best available media URL based on size preferences
+   * @param {Object} media - Media object containing different size variants
+   * @param {string[]} sizePreference - Array of size preferences in order of preference
+   * @param {number|string} projectId - Project ID (required for S3 URLs)
+   * @param {number|string} mediaId - Media ID (required for S3 URLs)
+   * @returns {string} - The best available media URL or placeholder image URL
+   */
+  function getBestMediaUrl(media, sizePreference = ['large', 'medium', 'small', 'original', 'thumbnail'], projectId, mediaId) {
+    if (!media) return '/images/image-not-found.png'
   
-//   for (const size of sizeVariants) {
-//     if (media[size]?.FILENAME) {
-//       const mediaId = extractMediaId(media[size].FILENAME)
-//       if (mediaId) {
-//         return mediaId
-//       }
-//     }
-//   }
+    // Use S3 endpoint with built-in null handling
+    for (const size of sizePreference) {
+      if (media[size]) {
+        return buildMediaUrl(projectId, mediaId, size)
+      }
+    }
+    // If no preferred size found, try large
+    return buildMediaUrl(projectId, mediaId, 'large')
+  }
   
-//   return null
-// }
+  /**
+   * Process an array of items with media objects - now uses S3 endpoints
+   * @param {Array} items - Array of items containing media objects
+   * @param {string[]} sizePreference - Array of size preferences in order of preference
+   * @param {number|string} projectId - Project ID (required for S3 URLs)
+   * @returns {Array} - Processed items with media URLs
+   */
+  function processItemsWithMedia(
+    items,
+    sizePreference = ['large', 'medium', 'small', 'original', 'thumbnail']
+  ) {
+    if (!Array.isArray(items)) return []
+  
+    return items.map((item) => ({
+      ...item,
+      media: getBestMediaUrl(item.media, sizePreference, item.projectId, item.media_id),
+    }))
+  }
 
-// /**
-//  * Process items with S3 media URLs
-//  * @param {Array} items - Array of items containing media objects
-//  * @param {string[]} sizePreference - Array of size preferences in order of preference
-//  * @returns {Array} - Processed items with S3 media URLs
-//  */
-// export const processItemsWithS3Media = (
-//   items,
-//   sizePreference = ['large', 'medium', 'small', 'original', 'thumbnail']
-// ) => {
-//   if (!Array.isArray(items)) {
-//     return []
-//   }
-
-//   return items.map((item) => {
-//     let mediaUrl = null
+  /**
+   * Process an array of items with media objects using buildImageProps for maximum compatibility
+   * @param {Array} items - Array of items containing media objects
+   * @param {string} typeKey - Optional type/size key (e.g., 'large', 'original')
+   * @returns {Array} - Processed items with media URLs
+   */
+  function processItemsWithMediaLegacy(items, typeKey = null) {
+    if (!Array.isArray(items)) return []
     
-//     // Check if we have project_id and media info
-//     if (item.project_id && item.media) {
-//       const mediaId = extractMediaIdFromMedia(item.media)
-//       if (mediaId) {
-//         // Use the first available size from preferences
-//         for (const size of sizePreference) {
-//           if (item.media[size]) {
-//             mediaUrl = buildS3MediaUrl(item.project_id, mediaId, size)
-//             break
-//           }
-//         }
-//         // If no specific size found, use original
-//         if (!mediaUrl) {
-//           mediaUrl = buildS3MediaUrl(item.project_id, mediaId, 'original')
-//         }
-//       }
-//     }
-    
-//     return {
-//       ...item,
-//       media: mediaUrl
-//     }
-//   })
-// }
+    return items.map(item => ({
+      ...item,
+      media: buildImageProps(
+        item.media,
+        typeKey,                 // e.g. 'large' or whatever you need
+        item.projectId || item.project_id,
+        item.mediaId  || item.media_id
+      )
+    }))
+  }
 
-// /**
-//  * Get the best available media URL based on size preferences - now uses S3 endpoints
-//  * @param {Object} media - Media object containing different size variants
-//  * @param {string[]} sizePreference - Array of size preferences in order of preference
-//  * @param {number|string} projectId - Project ID (required for S3 URLs)
-//  * @param {number|string} mediaId - Media ID (required for S3 URLs)
-//  * @returns {string|null} - The best available media URL or null if no media is available
-//  */
-// export const getBestMediaUrl = (
-//   media,
-//   sizePreference = ['large', 'medium', 'small', 'original', 'thumbnail'],
-//   projectId,
-//   mediaId
-// ) => {
-//   if (!media) return null
 
-//   // If projectId and mediaId are provided, use S3 endpoint
-//   if (projectId && mediaId) {
-//     for (const size of sizePreference) {
-//       if (media[size]) {
-//         return buildS3MediaUrl(projectId, mediaId, size)
-//       }
-//     }
-//     // If no preferred size found, try original
-//     return buildS3MediaUrl(projectId, mediaId, 'original')
-//   }
-
-//   // Fallback to old method for backward compatibility
-//   for (const size of sizePreference) {
-//     if (media[size]) {
-//       return `https://morphobank.org/media/morphobank3/images/${media[size].HASH}/${media[size].MAGIC}_${media[size].FILENAME}`
-//     }
-//   }
-
-//   return null
-// }
-
-// /**
-//  * Process an array of items with media objects - now uses S3 endpoints
-//  * @param {Array} items - Array of items containing media objects
-//  * @param {string[]} sizePreference - Array of size preferences in order of preference
-//  * @param {number|string} projectId - Project ID (required for S3 URLs)
-//  * @returns {Array} - Processed items with media URLs
-//  */
-// export const processItemsWithMedia = (
-//   items,
-//   sizePreference = ['large', 'medium', 'small', 'original', 'thumbnail'],
-//   projectId
-// ) => {
-//   if (!Array.isArray(items)) return []
-
-//   return items.map((item) => ({
-//     ...item,
-//     media: getBestMediaUrl(item.media, sizePreference, projectId, item.media_id),
-//   }))
-// }
+  export {
+    buildMediaUrl,
+    buildImageProps,
+    processItemsWithMedia,
+    processItemsWithMediaLegacy,
+    getBestMediaUrl
+  }

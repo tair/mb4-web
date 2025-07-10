@@ -1,97 +1,4 @@
-/**
- * Build S3 media URL for a given project, media ID, and file size
- * @param {number|string} projectId - The project ID
- * @param {number|string} mediaId - The media ID
- * @param {string} fileSize - The file size (original, large, medium, thumbnail, etc.)
- * @returns {string} - The S3 media URL
- */
-function buildS3MediaUrl(projectId, mediaId, fileSize = 'large') {
-  return `${import.meta.env.VITE_API_URL}/public/media/${projectId}/serve/${mediaId}/${fileSize}`
-}
 
-/**
- * Get the best available media URL based on size preferences
- * @param {Object} media - Media object containing different size variants
- * @param {string[]} sizePreference - Array of size preferences in order of preference
- * @param {number|string} projectId - Project ID (required for S3 URLs)
- * @param {number|string} mediaId - Media ID (required for S3 URLs)
- * @returns {string|null} - The best available media URL or null if no media is available
- */
-function getBestMediaUrl(media, sizePreference = ['large', 'medium', 'small', 'original', 'thumbnail'], projectId, mediaId) {
-  if (!media) return null
-
-  // If projectId and mediaId are provided, use S3 endpoint
-  if (projectId && mediaId) {
-    for (const size of sizePreference) {
-      if (media[size]) {
-        return buildS3MediaUrl(projectId, mediaId, size)
-      }
-    }
-    // If no preferred size found, try original
-    return buildS3MediaUrl(projectId, mediaId, 'original')
-  }
-
-  // Fallback to old method for backward compatibility
-  for (const size of sizePreference) {
-    if (media[size]) {
-      return `https://morphobank.org/media/morphobank3/images/${media[size].HASH}/${media[size].MAGIC}_${media[size].FILENAME}`
-    }
-  }
-
-  return null
-}
-
-/**
- * Process an array of items with media objects - now uses S3 endpoints
- * @param {Array} items - Array of items containing media objects
- * @param {string[]} sizePreference - Array of size preferences in order of preference
- * @param {number|string} projectId - Project ID (required for S3 URLs)
- * @returns {Array} - Processed items with media URLs
- */
-function processItemsWithMedia(
-  items,
-  sizePreference = ['large', 'medium', 'small', 'original', 'thumbnail'],
-  projectId
-) {
-  if (!Array.isArray(items)) return []
-
-  return items.map((item) => ({
-    ...item,
-    media: getBestMediaUrl(item.media, sizePreference, projectId, item.media_id),
-  }))
-}
-
-// /** OLD IMAGE LOADING TEMPLATE
-//  * Build image URL from media object - now uses S3 endpoints
-//  * @param {Object} mediaObj - Media object containing media data
-//  * @param {string} type - Optional type/size to extract from media object
-//  * @param {number|string} projectId - Project ID (required for S3 URLs)
-//  * @param {number|string} mediaId - Media ID (required for S3 URLs)
-//  * @returns {string|null} - The media URL or null if not available
-//  */
-// function buildImageProps(mediaObj, type, projectId, mediaId) {
-//   try {
-//     // If projectId and mediaId are provided, use S3 endpoint
-//     if (projectId && mediaId) {
-//       const fileSize = type || 'original'
-//       return buildS3MediaUrl(projectId, mediaId, fileSize)
-//     }
-
-//     // Fallback to old method for backward compatibility
-//     let media = mediaObj
-//     if (type) media = mediaObj[type]
-
-//     if (!media || (!media.HASH || !media.MAGIC || !media.FILENAME)) return null
-
-//     const url =
-//       `https://morphobank.org/media/morphobank3/` +
-//       `images/${media.HASH}/${media.MAGIC}_${media.FILENAME}`
-
-//     return url
-//   } catch (e) {
-//     return null
-//   }
-// }
 
 function getPasswordPattern() {
   // Updated pattern to be more compatible with browser auto-generation
@@ -189,10 +96,6 @@ export const TOOLTIP_ARTICLE_DOI =
   'Enter the article DOI as provided by the publisher. The DOI should be entered as the identifier alone, like this:<br/><br/>10.1093/sysbio/syu008<br/><br/>If the publication has not been or will not be issued a DOI, please leave blank.'
 
 export {
-  // buildImageProps,
-  buildS3MediaUrl,
-  processItemsWithMedia,
-  getBestMediaUrl,
   getPasswordPattern,
   getPasswordRule,
   searchInObject,

@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import MediaCardComp from './MediaCardComp.vue'
 import CustomModal from './CustomModal.vue'
 import MediaViewPanel from './MediaViewPanel.vue'
-import { buildS3MediaUrl } from '@/utils/util.js'
+import { buildMediaUrl } from '@/utils/mediaUtils.js'
 
 const props = defineProps({
   media_file: {
@@ -31,6 +31,6 @@ const showZoomModal = ref(false)
     ></MediaCardComp>
   </a>
   <CustomModal :isVisible="showZoomModal" @close="showZoomModal = false">
-    <MediaViewPanel :imgSrc="props.project_id && props.media_file?.media_id ? buildS3MediaUrl(props.project_id, props.media_file.media_id, 'large') : null" />
+    <MediaViewPanel :imgSrc="buildMediaUrl(props.project_id, props.media_file?.media_id, 'large')" />
   </CustomModal>
 </template>

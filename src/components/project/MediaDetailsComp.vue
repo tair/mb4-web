@@ -4,12 +4,12 @@ import { toDateString } from '@/utils/date'
 import {
   getViewStatsTooltipText,
   getDownloadTooltipText,
-  buildS3MediaUrl,
 } from '@/utils/util.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import CustomModal from './CustomModal.vue'
 import MediaViewPanel from './MediaViewPanel.vue'
 import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
+import { buildMediaUrl } from '@/utils/mediaUtils.js'
 
 const props = defineProps({
   media_file: {
@@ -33,7 +33,7 @@ async function confirmDownload(fileSize, fileName) {
   //   return;
   // }
   // CAPTCHA is completed, proceed with the download
-  const imageUrl = props.project_id && props.media_file?.media_id ? buildS3MediaUrl(props.project_id, props.media_file.media_id, fileSize) : null
+  const imageUrl = buildMediaUrl(props.project_id, props.media_file.media_id, fileSize)
   let downloadFileName = fileName
   if (!downloadFileName) {
     downloadFileName = getLastElementFromUrl(imageUrl)
@@ -117,7 +117,7 @@ function getHitsMessage(mediaObj) {
     <div class="col">
       <div class="card shadow">
         <img
-          :src="props.project_id && props.media_file?.media_id ? buildS3MediaUrl(props.project_id, props.media_file.media_id, 'original') : null"
+          :src="buildMediaUrl(props.project_id, props.media_file.media_id, 'original')"
           :style="{
             backgroundSize: '20px',
             backgroundRepeat: 'no-repeat',
@@ -138,7 +138,7 @@ function getHitsMessage(mediaObj) {
                 @close="showZoomModal = false"
               >
                 <MediaViewPanel
-                  :imgSrc="props.project_id && props.media_file?.media_id ? buildS3MediaUrl(props.project_id, props.media_file.media_id, 'large') : null"
+                  :imgSrc="buildMediaUrl(props.project_id, props.media_file?.media_id, 'large')"
                 />
               </CustomModal>
               <a class="nav-link" href="#" @click="showDownloadModal = true">

@@ -1,5 +1,5 @@
 <script setup>
-import { buildS3MediaUrl } from '@/utils/util.js'
+import { buildMediaUrl } from '@/utils/mediaUtils.js'
 
 const props = defineProps({
   media_file: {
@@ -68,7 +68,7 @@ function hideEnlargedImage(imgId) {
     > 
       <div class="align-self-center media-image-top mt-2">
         <img
-          :src="props.project_id && props.media_file.media_id ? buildS3MediaUrl(props.project_id, props.media_file.media_id, 'thumbnail') : null"
+          :src="buildMediaUrl(props.project_id, props.media_file?.media_id, 'thumbnail')"
           :style="{
             width: media_file.media.thumbnail.WIDTH + 'px',
             height: media_file.media.thumbnail.HEIGHT + 'px',

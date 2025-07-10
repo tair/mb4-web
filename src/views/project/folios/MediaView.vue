@@ -12,7 +12,7 @@ import AddMediaDialog from '@/views/project/common/AddMediaDialog.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaCard from '@/components/project/MediaCard.vue'
 import DeleteDialog from '@/views/project/common/DeleteDialog.vue'
-import { buildS3MediaUrl } from '@/utils/util.js'
+import { buildMediaUrl } from '@/utils/mediaUtils.js'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id as string)
@@ -115,7 +115,7 @@ async function refresh() {
 function getMediaThumbnailUrl(media: any) {
   if (media.media_id) {
     return {
-      url: buildS3MediaUrl(projectId, media.media_id, 'thumbnail'),
+      url: buildMediaUrl(projectId, media.media_id, 'thumbnail'),
       width: media.thumbnail?.WIDTH || media.thumbnail?.width || 120,
       height: media.thumbnail?.HEIGHT || media.thumbnail?.height || 120
     }

@@ -4,7 +4,7 @@ import { useSearchResultsStore } from '@/stores/SearchResultsStore'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/AuthStore.js'
 import ToggleLinks from '@/components/ToggleLinks.vue'
-import { getBestMediaUrl } from '@/utils/util'
+import { getBestMediaUrl } from '@/utils/mediaUtils.js'
 
 const searchResultsStore = useSearchResultsStore()
 const route = useRoute()

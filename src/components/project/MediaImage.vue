@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { buildS3MediaUrl } from '@/utils/util.js'
+import { buildMediaUrl } from '@/utils/mediaUtils.js'
 
 interface Image {
   url: string
@@ -24,8 +24,7 @@ const props = defineProps<{
     }"
   >
     <img
-      v-if="props.projectId && props.mediaId ? buildS3MediaUrl(props.projectId, props.mediaId, props.fileSize || 'original') : props.image?.url"
-      :src="props.projectId && props.mediaId ? buildS3MediaUrl(props.projectId, props.mediaId, props.fileSize || 'original') : props.image?.url"
+      :src="buildMediaUrl(props.projectId, props.mediaId, props.fileSize || 'original')"
       :width="image?.width"
       :height="image?.height"
       class="loading"

@@ -1,11 +1,17 @@
 <script setup>
 import { RouterLink } from 'vue-router'
-import { buildS3MediaUrl } from '@/utils/util.js'
+import { buildMediaUrl } from '@/utils/mediaUtils.js'
+import { computed } from 'vue'
 
 const props = defineProps({
   project: Object,
 })
 
+// Extract media ID from filename
+const mediaId = computed(() => {
+  const match = props.project.image_props.media.FILENAME.match(/media_files_media_(\d+)_preview/)
+  return match ? match[1] : null
+})
 
 </script>
 <style scoped>
@@ -62,16 +68,7 @@ const props = defineProps({
         </div>
         <div class="col d-flex align-items-stretch thumb">
           <img
-            :src="(() => {
-              if (props.project?.project_id && props.project?.image_props?.media?.FILENAME) {
-                const match = props.project.image_props.media.FILENAME.match(/media_files_media_(\d+)_preview/)
-                const mediaId = match ? match[1] : null
-                if (mediaId) {
-                  return buildS3MediaUrl(props.project.project_id, mediaId, 'large')
-                }
-              }
-              return null
-            })()"
+            :src="buildMediaUrl(props.project.project_id, mediaId, 'large')"
             class="card-img-top"
           />
         </div>

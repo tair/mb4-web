@@ -2,7 +2,7 @@
 import { toDMYDate } from '@/utils/date'
 import { getProjectCitation } from '@/utils/project'
 import { type Media } from '@/types/media'
-import { buildS3MediaUrl } from '@/utils/util.js'
+import { buildMediaUrl } from '@/utils/mediaUtils.js'
 
 type Project = {
   project_id: number
