@@ -12,6 +12,7 @@ import AddMediaDialog from '@/views/project/common/AddMediaDialog.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaCard from '@/components/project/MediaCard.vue'
 import DeleteDialog from '@/views/project/common/DeleteDialog.vue'
+import { buildMediaUrl } from '@/utils/mediaUtils.js'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id as string)
@@ -109,6 +110,19 @@ async function refresh() {
     mediaViewsStore.fetchMediaViews(projectId),
   ])
 }
+
+// Helper function to create S3 media URLs for MediaCard
+function getMediaThumbnailUrl(media: any) {
+  if (media.media_id) {
+    return {
+      url: buildMediaUrl(projectId, media.media_id, 'thumbnail'),
+      width: media.thumbnail?.WIDTH || media.thumbnail?.width || 120,
+      height: media.thumbnail?.HEIGHT || media.thumbnail?.height || 120
+    }
+  }
+  // Fallback to existing thumbnail object
+  return media.thumbnail
+}
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
@@ -160,7 +174,7 @@ async function refresh() {
         <div v-for="media in folioMedia" :key="media.media_id">
           <MediaCard
             :mediaId="media.media_id"
-            :image="media.thumbnail"
+            :image="getMediaThumbnailUrl(media)"
             :viewName="mediaViewsStore.getMediaViewById(media.view_id)?.name"
             :taxon="getTaxonForMediaId(media)"
           >
