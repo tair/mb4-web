@@ -1,23 +1,30 @@
 <script setup>
 import axios from 'axios'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCharactersStore } from '@/stores/CharactersStore'
 import { useMatricesStore } from '@/stores/MatricesStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useFileTransferStore } from '@/stores/FileTransferStore'
 import { CharacterStateIncompleteType } from '@/lib/matrix-parser/MatrixObject.ts'
 import { getIncompleteStateText } from '@/lib/matrix-parser/text.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
 import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
+import { getTaxonomicUnitOptions } from '@/utils/taxa'
 import router from '@/router'
 
 const route = useRoute()
 const taxaStore = useTaxaStore()
 const matricesStore = useMatricesStore()
 const charactersStore = useCharactersStore()
+const fileTransferStore = useFileTransferStore()
 const projectId = route.params.id
 
+// Taxonomic unit options for dropdown
+const taxonomicUnits = getTaxonomicUnitOptions()
+
 const importedMatrix = reactive({})
+const isProcessingMatrix = ref(false)
 const defaultNumbering = computed(() =>
   importedMatrix.format == 'NEXUS' ? 1 : 0
 )
@@ -69,27 +76,24 @@ function cancelEditedCharacter() {
 
 function removeCharacterState(character, index) {
   if (character.states.length - 1 <= character.maxScoredStatePosition) {
-    alert(
-      `The data matrix you uploaded has at least ${character.maxScoredStatePosition} states for this character. Please define the missing one or update the data matrix and then reupload.`
+    const confirmed = confirm(
+      `Warning: The data matrix you uploaded has at least ${
+        Number(character.maxScoredStatePosition) + 1
+      } states for this character. Deleting this state may cause issues with your matrix data.\n\nDo you want to delete it anyway?`
     )
-    return
+    if (!confirmed) {
+      return
+    }
   }
+
   character.states.splice(index, 1)
 }
 
 function saveEditedCharacter() {
-  const characterNumber = editingCharacter.value.characterNumber
-  const keys = Array.from(importedMatrix.characters.keys())
-  const name = keys[characterNumber]
-  const character = importedMatrix.characters.get(name)
-  Object.assign(character, JSON.parse(JSON.stringify(editingCharacter.value)))
-  updateIncompleteType(character)
-}
-
-function confirmCharacter(character) {
-  if (character.states) {
+  // Validate character states before saving
+  if (editingCharacter.value.states) {
     const stateNames = new Set()
-    for (const state of character.states) {
+    for (const state of editingCharacter.value.states) {
       const stateName = state.name
       if (stateName == null || stateName.length == 0) {
         alert('All states must have non-empty names.')
@@ -112,11 +116,18 @@ function confirmCharacter(character) {
       stateNames.add(stateName)
     }
 
-    for (const state of character.states) {
+    // Clear incomplete type flags if validation passes
+    for (const state of editingCharacter.value.states) {
       delete state.incompleteType
     }
   }
-  return false
+
+  const characterNumber = editingCharacter.value.characterNumber
+  const keys = Array.from(importedMatrix.characters.keys())
+  const name = keys[characterNumber]
+  const character = importedMatrix.characters.get(name)
+  Object.assign(character, JSON.parse(JSON.stringify(editingCharacter.value)))
+  updateIncompleteType(character)
 }
 
 function updateIncompleteType(character) {
@@ -170,7 +181,6 @@ async function importMatrix(event) {
 
   const file = files[0]
   const reader = new FileReader()
-
   reader.onload = function () {
     Object.assign(importedMatrix, parser.parseMatrix(reader.result))
   }
@@ -187,23 +197,33 @@ function moveUpload() {
   return false
 }
 
-function moveToCharacters() {
-  if (taxaStore.isLoaded && charactersStore.isLoaded) {
-    const otu = document.getElementById('otu')
-    const itemNote = document.getElementById('item-notes')
-    mergeMatrix(
-      importedMatrix,
-      otu.value,
-      itemNote.value,
-      taxaStore.taxa,
-      charactersStore.characters
-    )
-  } else {
-    // Add a loading screen when the taxa and characters are not loaded. We will
-    // delay component and move on the step-2 when taxa and characters have
-    // loaded. Consider using AsyncComponents
+async function moveToCharacters() {
+  if (!importedMatrix.taxa || !importedMatrix.characters) {
+    alert('Please upload a valid matrix file first')
+    return false
   }
-  moveToStep('step-2')
+
+  isProcessingMatrix.value = true
+  try {
+    if (taxaStore.isLoaded && charactersStore.isLoaded) {
+      const otu = document.getElementById('otu')
+      const itemNote = document.getElementById('item-notes')
+      mergeMatrix(
+        importedMatrix,
+        otu.value,
+        itemNote.value,
+        taxaStore.taxa,
+        charactersStore.characters
+      )
+    } else {
+      // Add a loading screen when the taxa and characters are not loaded. We will
+      // delay component and move on the step-2 when taxa and characters have
+      // loaded. Consider using AsyncComponents
+    }
+    moveToStep('step-2')
+  } finally {
+    isProcessingMatrix.value = false
+  }
   return false
 }
 
@@ -232,8 +252,12 @@ function moveToStep(step) {
 }
 
 let isUploading = ref(false)
+let uploadError = ref(null)
+
 async function uploadMatrix() {
-  isUploading = true
+  isUploading.value = true
+  uploadError.value = null
+
   try {
     const formData = new FormData()
 
@@ -252,8 +276,32 @@ async function uploadMatrix() {
     const published = document.getElementById('published')
     formData.set('published', published.value)
 
-    const file = document.getElementById('upload')
-    formData.set('file', file.files[0])
+    // Check if this is a merge operation
+    const isMerge = route.query.merge === 'true'
+    const matrixId = route.query.matrixId
+
+    // Handle file differently for merge vs new matrix
+    if (isMerge) {
+      // For merge operations, get the file from FileTransferStore
+      const mergeFile = fileTransferStore.getMergeFile()
+      formData.set('matrixId', matrixId)
+      // console.log('Merge file from store:', mergeFile ? `${mergeFile.name} (${mergeFile.size} bytes)` : 'null')
+      if (mergeFile) {
+        formData.set('file', mergeFile)
+      } else {
+        uploadError.value =
+          'Merge file not found. Please go back and select a file again.'
+        return
+      }
+    } else {
+      // For new matrix creation, require file upload
+      const file = document.getElementById('upload')
+      if (!file.files[0]) {
+        uploadError.value = 'Please select a file to upload.'
+        return
+      }
+      formData.set('file', file.files[0])
+    }
 
     const serializedMatrix = serializeMatrix(importedMatrix)
     formData.set('matrix', serializedMatrix)
@@ -261,27 +309,102 @@ async function uploadMatrix() {
     const url = new URL(
       `${import.meta.env.VITE_API_URL}/projects/${projectId}/matrices/upload`
     )
-    const response = await axios.post(url, formData)
-    if (response.status != 200) {
-      alert('There was an error importing the matrix')
-      return
-    }
 
-    alert('Successfully imported')
-    matricesStore.invalidate()
-    router.push({ path: `/myprojects/${projectId}/matrices` })
+    const response = await axios.post(url, formData, {
+      timeout: 300000, // 5 minutes timeout
+    })
+    if (response.status === 200) {
+      // Clear the file from FileTransferStore after successful upload
+      if (isMerge) {
+        fileTransferStore.clearMergeFile()
+        sessionStorage.removeItem('matrixMergeData')
+      }
+
+      // Wait for store invalidation to complete
+      await matricesStore.invalidate()
+
+      // Force a full page reload to ensure fresh data is loaded
+      window.location.href = `/myprojects/${projectId}/matrices`
+    }
+  } catch (error) {
+    console.error('Error uploading matrix:', error)
+    uploadError.value =
+      error.response?.data?.message ||
+      'Failed to upload matrix. Please try again.'
   } finally {
-    isUploading = false
+    isUploading.value = false
   }
 }
 
-onMounted(() => {
+function cancelImport() {
+  // Clean up stores and sessionStorage
+  const isMerge = route.query.merge === 'true'
+  if (isMerge) {
+    fileTransferStore.clearMergeFile()
+    sessionStorage.removeItem('matrixMergeData')
+  }
+  router.push({ path: `/myprojects/${projectId}/matrices` })
+}
+
+function convertNewlines(text) {
+  return text.replace(/\n/g, '<br>')
+}
+
+onMounted(async () => {
   if (!taxaStore.isLoaded) {
-    taxaStore.fetch(projectId)
+    await taxaStore.fetch(projectId)
   }
 
   if (!charactersStore.isLoaded) {
-    charactersStore.fetchCharactersByProjectId(projectId)
+    await charactersStore.fetchCharactersByProjectId(projectId)
+  }
+
+  // Check if this is a merge operation and load data from sessionStorage
+  const isMerge = route.query.merge === 'true'
+  if (isMerge) {
+    const mergeDataString = sessionStorage.getItem('matrixMergeData')
+    if (mergeDataString) {
+      try {
+        const mergeData = JSON.parse(mergeDataString)
+
+        // Restore the imported matrix data
+        if (mergeData.importedMatrix) {
+          // Restore basic properties
+          importedMatrix.format = mergeData.importedMatrix.format
+          importedMatrix.parameters = mergeData.importedMatrix.parameters || {}
+          importedMatrix.blocks = mergeData.importedMatrix.blocks || []
+
+          // Restore Maps from arrays
+          importedMatrix.characters = new Map(
+            mergeData.importedMatrix.characters
+          )
+          importedMatrix.taxa = new Map(mergeData.importedMatrix.taxa)
+          importedMatrix.cells = mergeData.importedMatrix.cells
+        }
+
+        // Load taxa and characters stores if needed
+        if (!taxaStore.isLoaded) {
+          await taxaStore.fetch(projectId)
+        }
+        if (!charactersStore.isLoaded) {
+          await charactersStore.fetchCharactersByProjectId(projectId)
+        }
+
+        // Set the step based on query parameter
+        const step = route.query.step || '1'
+        moveToStep(`step-${step}`)
+      } catch (error) {
+        console.error('Error loading merge data:', error)
+      }
+    }
+  }
+})
+
+onUnmounted(() => {
+  // Clean up file transfer store if user navigates away
+  const isMerge = route.query.merge === 'true'
+  if (isMerge) {
+    fileTransferStore.clearMergeFile()
   }
 })
 </script>
@@ -293,7 +416,7 @@ onMounted(() => {
   <div class="stepwizard">
     <div class="matrix-import-step-row setup-panel">
       <hr />
-      <div class="matrix-import-step">
+      <div class="matrix-import-step" v-if="route.query.merge !== 'true'">
         <a href="#step-1" type="button" class="btn btn-primary btn-circle">
           1
         </a>
@@ -303,10 +426,14 @@ onMounted(() => {
         <a
           href="#step-2"
           type="button"
-          class="btn btn-default btn-circle"
-          disabled="disabled"
+          :class="
+            route.query.merge === 'true'
+              ? 'btn btn-primary btn-circle'
+              : 'btn btn-default btn-circle'
+          "
+          :disabled="route.query.merge !== 'true' ? 'disabled' : false"
         >
-          2
+          {{ route.query.merge === 'true' ? '1' : '2' }}
         </a>
         <p>Characters</p>
       </div>
@@ -317,14 +444,18 @@ onMounted(() => {
           class="btn btn-default btn-circle"
           disabled="disabled"
         >
-          3
+          {{ route.query.merge === 'true' ? '2' : '3' }}
         </a>
         <p>Taxa</p>
       </div>
     </div>
     <div>
       <form @submit.prevent="moveToCharacters">
-        <div class="row setup-content" id="step-1">
+        <div
+          class="row setup-content"
+          id="step-1"
+          :class="{ 'hidden-step': route.query.merge === 'true' }"
+        >
           <div class="form-group">
             <label for="matrix-title">Title</label>
             <input
@@ -342,16 +473,14 @@ onMounted(() => {
           <div class="form-group">
             <label for="otu">Operational taxonomic unit</label>
             <select id="otu" name="otu" class="form-control">
-              <option value="supraspecific_clade">Supraspecific Clade</option>
-              <option value="higher_taxon_class">Class</option>
-              <option value="higher_taxon_subclass">Subclass</option>
-              <option value="higher_taxon_order">Order</option>
-              <option value="higher_taxon_superfamily">Superfamily</option>
-              <option value="higher_taxon_family">Family</option>
-              <option value="higher_taxon_subfamily">Subfamily</option>
-              <option value="genus" selected="selected">Genus</option>
-              <option value="specific_epithet">Species</option>
-              <option value="subspecific_epithet">Subspecies</option>
+              <option
+                v-for="unit in taxonomicUnits"
+                :key="unit.value"
+                :value="unit.value"
+                :selected="unit.value === 'genus'"
+              >
+                {{ unit.label }}
+              </option>
             </select>
           </div>
           <div class="form-group">
@@ -380,6 +509,7 @@ onMounted(() => {
                 type="file"
                 id="upload"
                 name="upload"
+                accept=".nex,.nexus,.tnt"
                 class="form-control"
                 @change="importMatrix"
                 required="required"
@@ -394,16 +524,43 @@ onMounted(() => {
             </div>
           </fieldset>
           <div class="btn-step-group">
-            <button class="btn btn-primary btn-step-prev" type="button">
+            <button
+              class="btn btn-outline-primary btn-step-prev"
+              type="button"
+              @click="cancelImport"
+            >
               Cancel
             </button>
-            <button class="btn btn-primary btn-step-next" type="submit">
-              Next
+            <button
+              class="btn btn-primary btn-step-next"
+              type="submit"
+              :disabled="isUploading || isProcessingMatrix"
+            >
+              <span
+                v-if="isProcessingMatrix"
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              {{
+                isProcessingMatrix
+                  ? 'Processing...'
+                  : isUploading
+                  ? 'Uploading...'
+                  : 'Next'
+              }}
             </button>
+          </div>
+          <div v-if="uploadError" class="alert alert-danger mt-3" role="alert">
+            {{ uploadError }}
           </div>
         </div>
         <div class="row setup-content" id="step-2">
-          <h5>
+          <h5 v-if="route.query.merge === 'true'">
+            We found {{ importedMatrix?.characters?.size }} characters to merge
+            into your matrix.
+          </h5>
+          <h5 v-else>
             We found {{ importedMatrix?.characters?.size }} characters in your
             matrix.
           </h5>
@@ -440,6 +597,10 @@ onMounted(() => {
             on the screen, save your edits and click next or (2) update the data
             matrix file and reupload.
           </p>
+          <p v-else-if="route.query.merge === 'true'">
+            Please review the characters that will be merged into your existing
+            matrix.
+          </p>
           <p v-else>
             Please confirm that the character and their states are correct.
           </p>
@@ -470,7 +631,7 @@ onMounted(() => {
                     <p class="notes" v-if="character.note">
                       <b>Notes:</b>
                       <br />
-                      <i>{{ character.note }}</i>
+                      <i v-html="convertNewlines(character.note)"></i>
                     </p>
                   </td>
                   <td>
@@ -507,13 +668,6 @@ onMounted(() => {
                     >
                       Edit
                     </a>
-
-                    <a
-                      :href="`#character${character.characterNumber}`"
-                      @click.stop.prevent="confirmCharacter(character)"
-                    >
-                      Confirm
-                    </a>
                   </td>
                 </tr>
               </tbody>
@@ -521,6 +675,7 @@ onMounted(() => {
           </div>
           <div class="btn-step-group">
             <button
+              v-if="route.query.merge !== 'true'"
               class="btn btn-primary btn-step-prev"
               type="button"
               @click="moveUpload"
@@ -550,8 +705,13 @@ onMounted(() => {
                     <input
                       type="text"
                       class="form-control"
+                      :class="{ 'is-invalid': !editingCharacter.name }"
                       v-model="editingCharacter.name"
+                      required
                     />
+                    <div class="invalid-feedback">
+                      Character name is required
+                    </div>
                   </div>
                   <div class="form-group">
                     <label>Notes</label><br />
@@ -566,6 +726,7 @@ onMounted(() => {
                       <div
                         class="character-state"
                         v-for="(state, index) in editingCharacter.states"
+                        :key="index"
                       >
                         <div class="character-state-name">
                           <textarea
@@ -586,11 +747,14 @@ onMounted(() => {
                             <template v-else> &nbsp; </template>
                           </div>
                         </div>
-                        <i
-                          class="fa-solid fa-xmark"
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-danger remove-state ms-2"
                           @click="removeCharacterState(editingCharacter, index)"
+                          title="Delete state"
                         >
-                        </i>
+                          <i class="fa-solid fa-xmark"></i>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -599,7 +763,7 @@ onMounted(() => {
               <div class="modal-footer">
                 <button
                   type="button"
-                  class="btn btn-secondary"
+                  class="btn btn-outline-primary"
                   data-bs-dismiss="modal"
                   @click="cancelEditedCharacter"
                 >
@@ -640,7 +804,7 @@ onMounted(() => {
                     <p class="notes" v-if="taxon.note">
                       <b>Notes:</b>
                       <br />
-                      <i>{{ taxon.note }}</i>
+                      <i v-html="convertNewlines(taxon.note)"></i>
                     </p>
                   </td>
                   <td>
@@ -671,9 +835,23 @@ onMounted(() => {
               :disabled="isUploading"
               @click="uploadMatrix"
             >
-              Upload
+              <span
+                v-if="isUploading"
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              <template v-if="route.query.merge === 'true'">
+                {{ isUploading ? 'Merging...' : 'Merge' }}
+              </template>
+              <template v-else>
+                {{ isUploading ? 'Uploading...' : 'Upload' }}
+              </template>
             </button>
           </div>
+        </div>
+        <div v-if="uploadError" class="alert alert-danger mt-3" role="alert">
+          {{ uploadError }}
         </div>
         <div class="modal" id="taxonModal" tabindex="-1">
           <div class="modal-dialog">
@@ -692,12 +870,17 @@ onMounted(() => {
                     />
                   </div>
                   <div class="form-group">
-                    <label>Is Extinct</label>
-                    <input
-                      type="checkbox"
-                      class="form-check-input form-control"
-                      v-model="editingTaxon.extinct"
-                    />
+                    <div class="form-check">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="extinct-checkbox"
+                        v-model="editingTaxon.extinct"
+                      />
+                      <label class="form-check-label" for="extinct-checkbox">
+                        Is Extinct
+                      </label>
+                    </div>
                   </div>
                   <div class="form-group">
                     <label>Notes</label><br />
@@ -711,7 +894,7 @@ onMounted(() => {
               <div class="modal-footer">
                 <button
                   type="button"
-                  class="btn btn-secondary"
+                  class="btn btn-outline-primary"
                   data-bs-dismiss="modal"
                   @click="cancelEditedTaxon"
                 >
@@ -913,8 +1096,25 @@ div.matrix-confirmation-screen table td {
 .character-states .remove-state {
   display: flex;
   flex-direction: row;
-  color: #ef782f;
+  align-items: center;
+  justify-content: center;
   margin: auto;
-  padding: 0 4px;
+  padding: 2px 6px;
+  cursor: pointer;
+  font-size: 12px;
+  user-select: none;
+  min-width: 28px;
+  height: 28px;
+  border-radius: 3px;
+}
+
+.character-states .remove-state:hover {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: white;
+}
+
+.hidden-step {
+  display: none !important;
 }
 </style>

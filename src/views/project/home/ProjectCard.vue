@@ -50,8 +50,10 @@ function getMediaUrl() {
       </div>
       <div class="col-md-9">
         <div class="card-body">
-          <h5 class="card-title" v-html="`Project ${project.project_id}: ${project.name}`">
-          </h5>
+          <h5
+            class="card-title"
+            v-html="`Project ${project.project_id}: ${project.name}`"
+          ></h5>
           <p class="card-text">
             {{ getProjectCitation(project) }}
           </p>

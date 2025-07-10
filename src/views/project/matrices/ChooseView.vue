@@ -31,7 +31,7 @@ const projectId = route.params.id
       <div class="matrix-choose-item">
         <RouterLink
           class="matrix-choose-link"
-          :to="`/myprojects/${projectId}/matrices/create`"
+          :to="`/myprojects/${projectId}/matrices/create-manual`"
         >
           Create a matrix from scratch
         </RouterLink>

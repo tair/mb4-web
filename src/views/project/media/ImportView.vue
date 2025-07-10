@@ -4,7 +4,7 @@ import axios from 'axios'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTaxaStore } from '@/stores/TaxaStore'
-import { TaxaColumns, getTaxonName } from '@/utils/taxa'
+import { TaxaColumns, getTaxonName, sortTaxaAlphabetically } from '@/utils/taxa'
 import { Filter } from '@/types/most'
 import { toISODate } from '@/utils/date'
 
@@ -42,23 +42,14 @@ const importText = importType == 'eol' ? 'Eol.org' : 'iDigBio.org'
 
 const filters = reactive<Filter>({})
 const taxaStore = useTaxaStore()
-const filteredTaxa = computed(() =>
-  Object.values(filters)
-    .reduce((taxa, filter) => taxa.filter(filter), taxaStore.taxa)
-    .sort((a: any, b: any) => {
-      const nameA = getTaxonName(a, TaxaColumns.GENUS, false)
-      if (!nameA) {
-        return -1
-      }
+const filteredTaxa = computed(() => {
+  const filtered = Object.values(filters).reduce(
+    (taxa, filter) => taxa.filter(filter),
+    taxaStore.taxa
+  )
 
-      const nameB = getTaxonName(b, TaxaColumns.GENUS, false)
-      if (!nameB) {
-        return -1
-      }
-
-      return nameA.localeCompare(nameB)
-    })
-)
+  return sortTaxaAlphabetically(filtered, TaxaColumns.GENUS)
+})
 
 const isLoaded = computed(() => taxaStore.isLoaded)
 const hasNoResult = computed(() =>
