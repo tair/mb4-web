@@ -14,14 +14,7 @@ const props = defineProps<{
   fileSize?: string
 }>()
 
-// Helper function to get media URL using S3 endpoint
-function getMediaUrl(): string | null {
-  if (props.projectId && props.mediaId) {
-    return buildS3MediaUrl(props.projectId, props.mediaId, props.fileSize || 'original')
-  }
-  // Fallback to existing image URL
-  return props.image?.url || null
-}
+
 </script>
 <template>
   <div
@@ -31,8 +24,8 @@ function getMediaUrl(): string | null {
     }"
   >
     <img
-      v-if="getMediaUrl()"
-      :src="getMediaUrl()"
+      v-if="props.projectId && props.mediaId ? buildS3MediaUrl(props.projectId, props.mediaId, props.fileSize || 'original') : props.image?.url"
+      :src="props.projectId && props.mediaId ? buildS3MediaUrl(props.projectId, props.mediaId, props.fileSize || 'original') : props.image?.url"
       :width="image?.width"
       :height="image?.height"
       class="loading"

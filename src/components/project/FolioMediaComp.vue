@@ -18,14 +18,7 @@ const props = defineProps({
 
 const showZoomModal = ref(false)
 
-// Helper function to get media URL using S3 endpoint
-function getMediaUrl(fileSize) {
-  if (props.project_id && props.media_file?.media_id) {
-    return buildS3MediaUrl(props.project_id, props.media_file.media_id, fileSize)
-  }
-  // Fallback to old method if project_id not available
-  return null
-}
+
 </script>
 <template>
   <a href="#" class="nav-link" @click="showZoomModal = true">
@@ -38,6 +31,6 @@ function getMediaUrl(fileSize) {
     ></MediaCardComp>
   </a>
   <CustomModal :isVisible="showZoomModal" @close="showZoomModal = false">
-    <MediaViewPanel :imgSrc="getMediaUrl('large')" />
+    <MediaViewPanel :imgSrc="props.project_id && props.media_file?.media_id ? buildS3MediaUrl(props.project_id, props.media_file.media_id, 'large') : null" />
   </CustomModal>
 </template>

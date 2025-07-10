@@ -2,7 +2,7 @@
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
-import { processItemsWithMedia } from '@/utils/mediaUtils'
+import { processItemsWithMedia } from '@/utils/util'
 
 const router = useRouter()
 
@@ -58,18 +58,18 @@ onMounted(async () => {
     stats.value = statsResponse.data
 
     // Process media URLs for featured projects using S3
-    featuredProjects.value = processItemsWithMedia(featuredProjectsData, ['large', 'medium', 'small', 'original', 'thumbnail'])
+    featuredProjects.value = processItemsWithMedia(featuredProjectsData)
 
     // Process media URLs for matrix images using old system
-    matrixImages.value = processItemsWithMedia(matrixImagesData, ['large', 'medium', 'small', 'original', 'thumbnail'])
+    matrixImages.value = processItemsWithMedia(matrixImagesData)
 
     announcements.value = announcementsData
 
     // Process media URLs for tools using old system
-    tools.value = processItemsWithMedia(toolsData, ['large', 'medium', 'small', 'original', 'thumbnail'])
+    tools.value = processItemsWithMedia(toolsData)
 
     // Process media URLs for press using old system
-    press.value = processItemsWithMedia(pressData, ['large', 'medium', 'small', 'original', 'thumbnail'])
+    press.value = processItemsWithMedia(pressData)
 
     maintenanceMode.value = maintenanceStatus.enabled
     maintenanceMessage.value = maintenanceStatus.message

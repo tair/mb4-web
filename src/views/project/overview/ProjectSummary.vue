@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Tooltip from '@/components/main/Tooltip.vue'
 import { formatBytes, formatNumber } from '@/utils/format'
+import { buildS3MediaUrl } from '@/utils/util'
 import { usePublicMediaStore } from '@/stores/PublicMediaStore'
 import { ref, onMounted, computed } from 'vue'
 // import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
@@ -65,24 +66,6 @@ onMounted(async () => {
 const downloadTooltipText =
   'This tool downloads the entire project, all media, matrices and documents, as a zipped file. Please click on the menu to the left, if you only want a Matrix, certain Media or Documents.'
 
-function getUrl(mediaObj: { [key: string]: string }): string {
-  try {
-    
-    // Only use S3 endpoint if media_id is available
-    if (mediaObj.media_id) {
-      const url = `${import.meta.env.VITE_API_URL}/public/media/${props.projectId}/serve/${mediaObj.media_id}/large`
-      console.log('Using S3 URL:', url)
-      return url
-    }
-
-    // No media_id available, return null
-    console.log('No media_id available, returning null')
-    return null
-  } catch (e) {
-    console.error('Error in getUrl:', e)
-    return null
-  }
-}
 
 function getWidth(mediaObj: { [key: string]: any }): string {
   // Prefer actual width, fallback to 100% for responsive
@@ -110,7 +93,7 @@ function popDownloadAlert() {
         <div v-if="exemplarMedia" class="d-flex flex-column">
           <div class="d-flex justify-content-center">
             <img
-              :src="getUrl(exemplarMedia)"
+              :src="exemplarMedia.media_id ? buildS3MediaUrl(projectId, exemplarMedia.media_id, 'large') : null"
               :style="{
                 width: getWidth(exemplarMedia),
                 height: getHeight(exemplarMedia),
@@ -139,7 +122,7 @@ function popDownloadAlert() {
         <div v-else-if="overview.image_props?.media" class="d-flex flex-column">
           <div class="d-flex justify-content-center">
             <img
-              :src="getUrl(overview.image_props.media)"
+              :src="overview.image_props.media.media_id ? buildS3MediaUrl(projectId, overview.image_props.media.media_id, 'large') : null"
               :style="{
                 width: getWidth(overview.image_props.media) + 'px',
                 height: getHeight(overview.image_props.media) + 'px',

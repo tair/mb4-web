@@ -6,25 +6,7 @@ const props = defineProps({
   project: Object,
 })
 
-// Helper function to extract media ID from filename
-function extractMediaId(filename) {
-  if (!filename) return null
-  // Extract media ID from pattern: "media_files_media_911458_preview.jpg"
-  const match = filename.match(/media_files_media_(\d+)_preview/)
-  return match ? match[1] : null
-}
 
-// Helper function to get media URL using S3 endpoint
-function getMediaUrl(fileSize = 'medium') {
-  if (props.project?.project_id && props.project?.image_props?.media?.FILENAME) {
-    const mediaId = extractMediaId(props.project.image_props.media.FILENAME)
-    if (mediaId) {
-      return buildS3MediaUrl(props.project.project_id, mediaId, fileSize)
-    }
-  }
-  // Fallback to old method if project_id not available
-  return null
-}
 </script>
 <style scoped>
 .thumb {
@@ -80,7 +62,16 @@ function getMediaUrl(fileSize = 'medium') {
         </div>
         <div class="col d-flex align-items-stretch thumb">
           <img
-            :src="getMediaUrl('large')"
+            :src="(() => {
+              if (props.project?.project_id && props.project?.image_props?.media?.FILENAME) {
+                const match = props.project.image_props.media.FILENAME.match(/media_files_media_(\d+)_preview/)
+                const mediaId = match ? match[1] : null
+                if (mediaId) {
+                  return buildS3MediaUrl(props.project.project_id, mediaId, 'large')
+                }
+              }
+              return null
+            })()"
             class="card-img-top"
           />
         </div>

@@ -59,14 +59,6 @@ function hideEnlargedImage(imgId) {
   document.getElementById(imgId).style.display = 'none'
 }
 
-// Helper function to get media URL using S3 endpoint
-function getMediaUrl(fileSize) {
-  if (props.project_id && props.media_file.media_id) {
-    return buildS3MediaUrl(props.project_id, props.media_file.media_id, fileSize)
-  }
-  // Fallback to old method if project_id not available
-  return null
-}
 </script>
 
 <template>
@@ -76,7 +68,7 @@ function getMediaUrl(fileSize) {
     > 
       <div class="align-self-center media-image-top mt-2">
         <img
-          :src="getMediaUrl('thumbnail')"
+          :src="props.project_id && props.media_file.media_id ? buildS3MediaUrl(props.project_id, props.media_file.media_id, 'thumbnail') : null"
           :style="{
             width: media_file.media.thumbnail.WIDTH + 'px',
             height: media_file.media.thumbnail.HEIGHT + 'px',

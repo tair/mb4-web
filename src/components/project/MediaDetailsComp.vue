@@ -26,14 +26,6 @@ const showDownloadModal = ref(false)
 const viewStatsTooltipText = getViewStatsTooltipText()
 const downloadTooltipText = getDownloadTooltipText()
 
-// Helper function to get media URL using S3 endpoint
-function getMediaUrl(fileSize) {
-  if (props.project_id && props.media_file?.media_id) {
-    return buildS3MediaUrl(props.project_id, props.media_file.media_id, fileSize)
-  }
-  // Fallback to old method if project_id not available
-  return null
-}
 
 async function confirmDownload(fileSize, fileName) {
   // if (!isCaptchaVerified) {
@@ -41,7 +33,7 @@ async function confirmDownload(fileSize, fileName) {
   //   return;
   // }
   // CAPTCHA is completed, proceed with the download
-  const imageUrl = getMediaUrl(fileSize)
+  const imageUrl = props.project_id && props.media_file?.media_id ? buildS3MediaUrl(props.project_id, props.media_file.media_id, fileSize) : null
   let downloadFileName = fileName
   if (!downloadFileName) {
     downloadFileName = getLastElementFromUrl(imageUrl)
@@ -125,7 +117,7 @@ function getHitsMessage(mediaObj) {
     <div class="col">
       <div class="card shadow">
         <img
-          :src="getMediaUrl('large')"
+          :src="props.project_id && props.media_file?.media_id ? buildS3MediaUrl(props.project_id, props.media_file.media_id, 'original') : null"
           :style="{
             backgroundSize: '20px',
             backgroundRepeat: 'no-repeat',
@@ -146,7 +138,7 @@ function getHitsMessage(mediaObj) {
                 @close="showZoomModal = false"
               >
                 <MediaViewPanel
-                  :imgSrc="getMediaUrl('large')"
+                  :imgSrc="props.project_id && props.media_file?.media_id ? buildS3MediaUrl(props.project_id, props.media_file.media_id, 'large') : null"
                 />
               </CustomModal>
               <a class="nav-link" href="#" @click="showDownloadModal = true">
