@@ -174,7 +174,8 @@ export class CharacterTooltipManager {
     if (type === CharacterType.MERISTIC) {
       html += '<br/><div class="state">Meristic Character</div>'
     }
-    html += '<p>' + mb.htmlEscape(character.getDescription()) + '</p>'
+    html +=
+      '<p>' + mb.htmlEscapeWithLineBreaks(character.getDescription()) + '</p>'
     html +=
       '<br/> Ordering: ' + (character.getOrdering() ? 'Ordered' : 'Unordered')
     html += '<br/> Comments: ' + character.getCommentCount()

@@ -89,7 +89,11 @@ function onShowDetails(specimen_detail) {
   specimenDetailsFor.value = specimen_detail
   // Track specimen view when a specific specimen is clicked
   if (projectId && specimen_detail.specimen_id) {
-    logView({ project_id: projectId, hit_type: HIT_TYPES.SPECIMEN, row_id: specimen_detail.specimen_id })
+    logView({
+      project_id: projectId,
+      hit_type: HIT_TYPES.SPECIMEN,
+      row_id: specimen_detail.specimen_id,
+    })
   }
 }
 

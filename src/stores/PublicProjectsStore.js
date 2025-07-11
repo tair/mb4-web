@@ -104,22 +104,22 @@ export const usePublicProjectsStore = defineStore({
         delete getter.defaults.headers.common['Authorization']
 
         let res = await getter.get(
-          `https://mb4-data.s3.us-west-2.amazonaws.com/stats_files/projectViewsForLast30Days.json`
+          `${import.meta.env.VITE_API_URL}/s3/stats_files/projectViewsForLast30Days.json`
         )
         const projectViewsForLast30Days = res.data
 
         res = await getter.get(
-          `https://mb4-data.s3.us-west-2.amazonaws.com/stats_files/matrixDownloadsForLast30Days.json`
+          `${import.meta.env.VITE_API_URL}/s3/stats_files/matrixDownloadsForLast30Days.json`
         )
         const matrixDownloadsForLast30Days = res.data
 
         res = await getter.get(
-          `https://mb4-data.s3.us-west-2.amazonaws.com/stats_files/mediaViewsForLast30Days.json`
+          `${import.meta.env.VITE_API_URL}/s3/stats_files/mediaViewsForLast30Days.json`
         )
         const mediaViewsForLast30Days = res.data
 
         res = await getter.get(
-          `https://mb4-data.s3.us-west-2.amazonaws.com/stats_files/docDownloadsForLast30Days.json`
+          `${import.meta.env.VITE_API_URL}/s3/stats_files/docDownloadsForLast30Days.json`
         )
         const docDownloadsForLast30Days = res.data
 
@@ -148,7 +148,7 @@ export const usePublicProjectsStore = defineStore({
         var getter = axios.create()
         delete getter.defaults.headers.common['Authorization']
 
-        const url = `https://mb4-data.s3.us-west-2.amazonaws.com/projects.json`
+        const url = `${import.meta.env.VITE_API_URL}/s3/projects.json`
         const res = await getter.get(url)
         this.projects = res.data
         this.recalculatePageInfo()

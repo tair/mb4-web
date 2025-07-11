@@ -10,7 +10,7 @@ import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
-import { TaxaColumns, getTaxonName } from '@/utils/taxa'
+import { TaxaColumns, getTaxonName, sortTaxaAlphabetically } from '@/utils/taxa'
 import TaxonomicName from '@/components/project/TaxonomicName.vue'
 import {
   applyFilter,
@@ -96,23 +96,11 @@ const repositories = computed(
         .sort()
     )
 )
-const taxa = computed(() =>
-  taxaStore
-    .getTaxaByIds(new Set(specimens.value.map((s) => s.taxon_id)))
-    .sort((a, b) => {
-      const nameA = getTaxonName(a, TaxaColumns.GENUS, false)
-      if (!nameA) {
-        return -1
-      }
-
-      const nameB = getTaxonName(b, TaxaColumns.GENUS, false)
-      if (!nameB) {
-        return -1
-      }
-
-      return nameA.localeCompare(nameB)
-    })
-)
+const taxa = computed(() => {
+  const taxaIds = new Set(specimens.value.map((s) => s.taxon_id))
+  const taxaList = taxaStore.getTaxaByIds(taxaIds)
+  return sortTaxaAlphabetically(taxaList, TaxaColumns.GENUS)
+})
 
 const menuCollapsed = ref({
   filterTaxa: true,

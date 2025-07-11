@@ -1402,7 +1402,7 @@ class CommentsPane extends BasePane {
           datetime,
           comment['user'],
           comment['statename'],
-          comment['comment'],
+          mb.htmlEscapeWithLineBreaks(comment['comment']),
         ],
         data: { id: comment['id'] },
       }

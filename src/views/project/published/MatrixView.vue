@@ -11,7 +11,12 @@ import {
 } from '@/utils/util.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import CustomModal from '@/components/project/CustomModal.vue'
-import { logDownload, logView, HIT_TYPES, DOWNLOAD_TYPES } from '@/lib/analytics.js'
+import {
+  logDownload,
+  logView,
+  HIT_TYPES,
+  DOWNLOAD_TYPES,
+} from '@/lib/analytics.js'
 
 const route = useRoute()
 
@@ -134,7 +139,11 @@ function onDownloadMatrix(matrixId, n) {
   )
   downloadFile(downloadUrl)
   showMatrixDownloadModal.value[n] = false
-  logDownload({ project_id: projectStore.project_id, download_type: DOWNLOAD_TYPES.MATRIX, row_id: matrixId })
+  logDownload({
+    project_id: projectStore.project_id,
+    download_type: DOWNLOAD_TYPES.MATRIX,
+    row_id: matrixId,
+  })
 }
 
 const charListDownloadOptions = {
@@ -170,7 +179,11 @@ function onDownloadOntology(matrixId, n) {
   )
   downloadFile(downloadUrl)
   showOntologyDownloadModal.value[n] = false
-  logDownload({ project_id: projectId, download_type: DOWNLOAD_TYPES.MATRIX, row_id: matrixId })
+  logDownload({
+    project_id: projectId,
+    download_type: DOWNLOAD_TYPES.MATRIX,
+    row_id: matrixId,
+  })
 }
 
 function downloadFile(downloadUrl) {

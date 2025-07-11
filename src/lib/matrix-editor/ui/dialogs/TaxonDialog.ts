@@ -565,7 +565,6 @@ class AccessPane extends Component {
   private readonly savingLabel: SavingLabel
 
   private projectProperties: ProjectProperties
-  private userSelect: Dropdown
   private groupSelect: Dropdown
 
   constructor(
@@ -580,9 +579,6 @@ class AccessPane extends Component {
     this.savingLabel = savingLabel
 
     this.projectProperties = this.matrixModel.getProjectProperties()
-    this.userSelect = new Dropdown()
-    this.userSelect.setEnabled(this.projectProperties.getIsAdmin())
-    this.registerDisposable(this.userSelect)
     this.groupSelect = new Dropdown()
     this.groupSelect.setEnabled(this.projectProperties.getIsAdmin())
     this.registerDisposable(this.groupSelect)
@@ -606,44 +602,23 @@ class AccessPane extends Component {
     }
     const groupSelectElement = this.getElementByClass('group-select')
     this.groupSelect.render(groupSelectElement)
-    this.userSelect.addItem({ text: 'No restrictions specified', value: 0 })
-    this.userSelect.setSelectedIndex(0)
-    const selectedUserId = this.taxon.getUserId()
-    const members = this.projectProperties.getMembers()
-    for (let x = 0; x < members.length; x++) {
-      const member = members[x]
-      const memberName =
-        member.getFirstName() +
-        ' ' +
-        member.getLastName() +
-        ' (' +
-        member.getEmail() +
-        ')'
-      this.userSelect.addItem({ text: memberName, value: member.getId() })
-      if (selectedUserId === member.getId()) {
-        this.userSelect.setSelectedIndex(x + 1)
-      }
-    }
-    const userSelectElement = this.getElementByClass('user-select')
-    this.userSelect.render(userSelectElement)
   }
 
   override enterDocument() {
     super.enterDocument()
     const handler = this.getHandler()
-    handler
-      .listen(this.groupSelect, EventType.CHANGE, () => this.onAccessChange())
-      .listen(this.userSelect, EventType.CHANGE, () => this.onAccessChange())
+    handler.listen(this.groupSelect, EventType.CHANGE, () =>
+      this.onAccessChange()
+    )
   }
 
   /** Change the access of the taxon */
   onAccessChange() {
     const taxonId = this.taxon.getId()
     const selectedGroupId = parseInt(this.groupSelect.getSelectedValue(), 10)
-    const selectedUserId = parseInt(this.userSelect.getSelectedValue(), 10)
     this.savingLabel.saving()
     this.matrixModel
-      .setTaxaAccess([taxonId], selectedUserId, selectedGroupId)
+      .setTaxaAccess([taxonId], selectedGroupId)
       .then(() => {
         this.savingLabel.saved()
       })
@@ -659,14 +634,13 @@ class AccessPane extends Component {
   static htmlContent(): string {
     return (
       '' +
-      '<div class="header">Limit editing access for a row (taxon) to an individual user or Member Group</div>' +
+      '<div class="header">Limit editing access for a row (taxon) to a Member Group</div>' +
       '<div class="message">' +
       'To create a Member Group - the Project Administrator must do this from the Project Overview page,' +
       ' under Edit Member Groups' +
       '</div>' +
       '<div class="fields">' +
       '<div class="field">Restrict editing to the following Member Group</div><div class="group-select"></div><br/>' +
-      '<div class="field">Restrict editing to the following User</div><div class="user-select"></div><br/>' +
       '</div>'
     )
   }
