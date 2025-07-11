@@ -17,10 +17,11 @@ const HIT_TYPES = {
 
 // Download types mapping
 const DOWNLOAD_TYPES = {
-  PROJECT: 'P', // Project downloads
-  MATRIX: 'X', // Matrix downloads
-  MEDIA: 'M', // Media downloads
-  DOCUMENT: 'D', // Document downloads
+  PROJECT: 'P',      // Project downloads
+  MATRIX: 'X',       // Matrix downloads
+  MEDIA: 'M',        // Media downloads
+  DOCUMENT: 'D',     // Document downloads
+  CIPRES: 'C',       // CIPRES downloads
 }
 
 export async function logView({ project_id, hit_type, row_id = null }) {

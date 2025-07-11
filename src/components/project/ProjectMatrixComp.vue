@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useMatricesStore } from '@/stores/MatricesStore'
 import { useFileTransferStore } from '@/stores/FileTransferStore'
 import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
+import Tooltip from '@/components/main/Tooltip.vue'
 import { getTaxonomicUnitOptions } from '@/utils/taxa'
 import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
@@ -23,6 +24,10 @@ const props = defineProps({
   canEditMatrix: {
     type: Boolean,
     required: true,
+  },
+  jobs: {
+    type: Object,
+    required: false,
   },
 })
 
@@ -64,6 +69,31 @@ const matrixId = props.matrix.matrix_id
 const baseUrl = `${
   import.meta.env.VITE_API_URL
 }/projects/${projectId}/matrices/${matrixId}`
+
+const tools = new Map()
+tools.set('PAUPRAT', 'PAUP Ratchet')
+//tools.set('MRBAYES_XSEDE', 'Mr Bayes')
+const tool = ref(tools.keys()?.next()?.value)
+const jobName = ref('')
+const jobNote = ref('')
+const jobNumIterations = ref(200)
+const jobCharsToPermute = ref('')
+const jobBranchSwappingAlgorithms = new Map()
+jobBranchSwappingAlgorithms.set('tbr', 'tbr - tree bisection and reconnection')
+jobBranchSwappingAlgorithms.set('spr', 'spr - subtree pruning and grafting')
+jobBranchSwappingAlgorithms.set('nni', 'nni - nearest neighbor interchange')
+const jobBranchSwappingAlgorithm = ref(
+  jobBranchSwappingAlgorithms.keys()?.next()?.value
+)
+
+const currentMatrixJobs = props.jobs?.filter((job) => job.matrix_id == matrixId)
+const refresh = route.query.refresh
+const homeButtonClass = refresh != true ? 'nav-link active' : 'nav-link'
+const buildatreeButtonClass = refresh == true ? 'nav-link active' : 'nav-link'
+const homePanelClass =
+  refresh != true ? 'tab-pane fade show active' : 'tab-pane fade'
+const buildatreePanelClass =
+  refresh == true ? 'tab-pane fade show active' : 'tab-pane fade'
 
 async function onDownloadMatrix() {
   const url = new URL(`${baseUrl}/download`)
@@ -125,6 +155,106 @@ async function toggleMatrixStreaming() {
     alert(response.data?.message || 'Failed to set preferences')
   }
 }
+
+async function onRun() {
+  const url = new URL(`${baseUrl}/run`)
+  const searchParams = url.searchParams
+  if (tool.value) {
+    searchParams.append('tool', tool.value)
+  }
+  if (jobName.value) {
+    searchParams.append('jobName', jobName.value)
+  }
+  if (jobNote.value) {
+    searchParams.append('jobNote', jobNote.value)
+  }
+  if (jobNumIterations.value && jobNumIterations.value > 0) {
+    searchParams.append('jobNumIterations', jobNumIterations.value)
+  }
+  if (jobCharsToPermute.value) {
+    searchParams.append('jobCharsToPermute', jobCharsToPermute.value)
+  }
+  if (jobBranchSwappingAlgorithm.value) {
+    searchParams.append(
+      'jobBranchSwappingAlgorithm',
+      jobBranchSwappingAlgorithm.value
+    )
+  }
+  sendCipresRequest(url)
+}
+
+async function sendCipresRequest(url) {
+  const response = await axios.post(url)
+  const msg = response.data?.message || 'Failed to submit job to CIPRES'
+  alert(msg)
+  if (!msg.includes('fail') && !msg.includes('Fail')) {
+    let urlNew = window.location.href
+    if (urlNew.indexOf('?') > -1) {
+      if (urlNew.indexOf('refresh=true') < 0) urlNew += '&refresh=true'
+    } else {
+      urlNew += '?refresh=true'
+    }
+    window.location.href = urlNew
+  }
+}
+
+async function onDelete(jobName, cipresJobId) {
+  const url = new URL(`${baseUrl}/deleteJob`)
+  const searchParams = url.searchParams
+  searchParams.append('jobName', jobName)
+  searchParams.append('cipresJobId', cipresJobId)
+  sendCipresRequest(url)
+}
+
+async function onDownloadJob(
+  userId,
+  jobName,
+  cipresJobId,
+  requestId,
+  cu,
+  ck,
+  cr,
+  ca
+) {
+  const cipresURL = `${cu}/job/${ca}/${cipresJobId}/outputbyname/mbank_X${matrixId}_${userId}_${jobName}.zip`
+  await onDownloadJobResults(
+    cipresURL,
+    `mbank_X${matrixId}_${userId}_${jobName}.zip`,
+    ck,
+    cr
+  )
+  // logDownload({ project_id: projectId, download_type: DOWNLOAD_TYPES.CIPRES, row_id: requestId })
+}
+
+async function onDownloadJobResults(url, filename, ck, cr) {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'cipres-appkey': `${ck}`,
+        Authorization: `Basic ${cr}`,
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to download results: ${response.statusText}`)
+    }
+    const blob = await response.blob()
+    const contentType = response.headers.get('Content-Type')
+
+    const blobUrl = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = blobUrl
+    link.download = filename || documentUrl.split('/').pop() // Fallback to original filename if none provided
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(blobUrl) // Clean up
+  } catch (error) {
+    console.error('Error downloading the file:', error)
+    alert(
+      'Failed to download results for ' +
+        (filename || documentUrl.split('/').pop())
+    )
 
 function navigateToSettings() {
   router.push(`/myprojects/${projectId}/matrices/${matrixId}/settings`)
@@ -421,7 +551,7 @@ function resetMergeForm() {
     <ul class="nav nav-tabs" id="myTab" role="tablist">
       <li class="nav-item" role="presentation">
         <button
-          class="nav-link active"
+          :class="refresh != 'true' ? 'nav-link active' : 'nav-link'"
           id="homeTab"
           data-bs-toggle="tab"
           :data-bs-target="'#home' + matrix.matrix_id"
@@ -461,7 +591,8 @@ function resetMergeForm() {
       </li>
       <li class="nav-item" role="presentation">
         <button
-          class="nav-link"
+          :class="refresh == 'true' ? 'nav-link active' : 'nav-link'"
+          id="buildTab"
           data-bs-toggle="tab"
           :data-bs-target="'#build' + matrix.matrix_id"
           type="button"
@@ -475,6 +606,33 @@ function resetMergeForm() {
     </ul>
     <div class="tab-content">
       <div
+        :class="
+          refresh != 'true' ? 'tab-pane fade show active' : 'tab-pane fade'
+        "
+        :id="'home' + matrix.matrix_id"
+        role="tabpanel"
+      >
+        The matrix contains:
+        <div class="description">
+          {{ matrix.counts.cell ?? 0 }} scorings;
+          {{ matrix.counts.taxa ?? 0 }} taxa;
+          {{ matrix.counts.character ?? 0 }} characters;
+          {{ matrix.counts.cell_media ?? 0 }} cell images;
+          {{ matrix.counts.media_label ?? 0 }} labels attached to cell images;
+          {{ matrix.counts.character_media ?? 0 }} character images;
+        </div>
+        <RouterLink
+          :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/characters`"
+          target="_blank"
+        >
+          <button type="button" class="btn btn-sm btn-secondary">
+            Edit Characters
+          </button>
+        </RouterLink>
+      </div>
+      <!--
+      <div
+        v-if="refresh != 'true'"
         class="tab-pane fade show active"
         :id="'home' + matrix.matrix_id"
         role="tabpanel"
@@ -495,6 +653,7 @@ function resetMergeForm() {
           <button type="button" class="btn btn-primary">Edit Characters</button>
         </RouterLink>
       </div>
+      -->
       <div
         class="tab-pane fade"
         :id="'download' + matrix.matrix_id"
@@ -655,12 +814,207 @@ function resetMergeForm() {
         </div>
       </div>
       <div
-        class="tab-pane fade"
+        :class="refresh == 'true' ? 'tab-pane fade show active' : 'tab-pane fade'"
         :id="'build' + matrix.matrix_id"
         role="tabpanel"
       >
         <!-- TODO(kenzley): Create the text when working on the CIPRES integration. -->
-        ...
+        <h6>
+          Tree-building options:
+          <Tooltip
+            content="MorphoBank now offers the option to run your matrix without leaving the Web by sending it to the online algorithms at CIPRES. It doesn't matter what computer you are using or where you are in the world.  CIPRES works by notifying you when your job is complete, so please check back on this page below for results."
+          ></Tooltip>
+        </h6>
+        <p>
+          Please try this BETA tool and send any feedback to
+          <router-link to="/askus">Contact Support</router-link>
+        </p>
+        <div class="tab-content">
+          <div class="mb-3">
+            <p>
+              <strong
+                >Run {{ matrix.title }} with the following parameters:</strong
+              >
+            </p>
+          </div>
+          <div class="form-row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Tool:</label>
+              <select v-model="tool" class="form-control">
+                <option v-for="[tool, name] in tools" v-bind:value="tool">
+                  {{ name }}
+                </option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label"
+                >Job name
+                <Tooltip
+                  content="Enter a short name for this job, to make it easy to track over time."
+                ></Tooltip
+                >:</label
+              >
+              <input type="text" v-model="jobName" class="form-control" />
+            </div>
+          </div>
+          <div class="form-row mb-3">
+            <div class="col-md-9">
+              <label class="form-label"
+                >Notes for run
+                <Tooltip
+                  content="You will see these notes displayed in MorphoBank below once your results file returns from CIPRES.  These are not written to your underlying Nexus file."
+                ></Tooltip
+                >:</label
+              >
+              <input type="text" v-model="jobNote" class="form-control" />
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+              <button type="button" class="btn btn-primary" @click="onRun">
+                Run
+              </button>
+            </div>
+          </div>
+          <div class="read-only">
+            The Parsimony Ratchet (Kevin Nixon, 1999) improves the ability to
+            find shortest trees during heuristic searches on larget database (it
+            is ok to use on small ones too). You can use it to search for a tree
+            or tree(s) based on your MorphoBank matrix. Set your parameters
+            below and click "Run" and MorphoBank will write the commands for you
+            to use the program PAUPRat (Sikes and Lewis, 2001) to execute the
+            Parsimony Ratchet on in PAUP* via CIPRES<br />The commands tell
+            PAUP* to to this:<br />
+            <ol>
+              <li>
+                Conduct an heuristic search from scratch for a starting tree.
+                This will use the Branch Swapping Algorithm that you select.
+              </li>
+              <li>
+                Perform two tree searches for each Ratchet iteration, one in
+                chich a subset of your characters is assigned a weight of 2, and
+                a second in which all characters are equally weighted. The
+                characters to be weighted are chosen randomly.
+              </li>
+              <li>
+                The repeats for the number of iterations or replicates that you
+                specify.
+              </li>
+              <li>
+                The shortest trees and related files are returned to you from
+                CIPRES here.
+              </li>
+            </ol>
+            <br />You can learn more about the Parsimony Ratchet
+            <a
+              href="http://onlinelibrary.wiley.com/doi/10.1111/j.1096-0031.1999.tb00277.x/abstract"
+              target="_blank"
+              >here</a
+            >
+            and
+            <a
+              href="https://www.researchgate.net/publication/259239111_Software_manual_for_PAUPRat_A_tool_to_implement_Parsimony_Ratchet_searches_using_PAUP"
+              target="_blank"
+              >here</a
+            >.<br />Two default parameters are set verbose defaults to "terse"
+            and starting seed to 0.
+          </div>
+          <div class="form-row mb-3">
+            <div class="col-md-4">
+              <label class="form-label"
+                >Number of Iterations:
+                <Tooltip
+                  content="This specifies the number of iterations to have PAUP* perform, i.e., the number of replicates that the Ratchet runs."
+                ></Tooltip
+              ></label>
+              <input
+                type="number"
+                v-model="jobNumIterations"
+                value="200"
+                class="form-control"
+              />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label"
+                ># or % chars to permute:
+                <Tooltip
+                  content="Select how many characters you want to weight (the weight assigned is &quot;2&quot;).  You can either select a defined number of characters or a percentage of characters. <em>For percentages follow the quantity with a '%' sign.</em>  Typically less than ¼ of the characters are weighted."
+                ></Tooltip
+              ></label>
+              <input
+                type="string"
+                v-model="jobCharsToPermute"
+                class="form-control"
+              />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Branch-swapping algorithm:</label>
+              <select v-model="jobBranchSwappingAlgorithm" class="form-control">
+                <option
+                  v-for="[
+                    jobBranchSwappingAlgorithm,
+                    name,
+                  ] in jobBranchSwappingAlgorithms"
+                  v-bind:value="jobBranchSwappingAlgorithm"
+                >
+                  {{ name }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <hr class="bold_hr" />
+        <h6><b>Previous runs:</b></h6>
+        <div v-if="currentMatrixJobs?.length > 0">
+          <div v-for="job in currentMatrixJobs">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              "
+            >
+              <p>
+                <b>Job name</b>:{{ job.jobname }}: <b>Run on</b>:
+                {{ job.created_on }} <b>Tool</b>: {{ job.cipres_tool }}
+                <b>Status</b>: {{ job.cipres_last_status }}
+              </p>
+              <p>
+                <button
+                  v-if="job.cipres_last_status == 'COMPLETED'"
+                  type="button"
+                  class="btn btn-sm btn-secondary"
+                  @click="
+                    onDownloadJob(
+                      job.user_id,
+                      job.jobname,
+                      job.cipres_job_id,
+                      job.request_id,
+                      job.cu,
+                      job.ck,
+                      job.cr,
+                      job.ca
+                    )
+                  "
+                >
+                  Download
+                  <Tooltip
+                    content="To see the commands MorphoBank sent to CIPRES open the file .nex that CIPRES returned to you."
+                  ></Tooltip>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary"
+                  @click="onDelete(job.jobname, job.cipres_job_id)"
+                >
+                  Delete
+                </button>
+              </p>
+            </div>
+            <b>Notes</b>: {{ job.notes }}<br />
+            <b>Parameters</b>: {{ job.cipres_settings }}
+            <hr />
+          </div>
+        </div>
+        <div v-else>No previous runs found.</div>
       </div>
     </div>
   </div>
@@ -742,5 +1096,56 @@ function resetMergeForm() {
 
 .hidden {
   visibility: hidden;
+}
+
+.read-only {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 4px;
+}
+textarea {
+  width: 580px;
+  height: 150px;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.form-row .col-md-3,
+.form-row .col-md-4,
+.form-row .col-md-6,
+.form-row .col-md-9 {
+  flex: 1;
+}
+
+.form-row .col-md-3 {
+  flex: 0 0 25%;
+}
+
+.form-row .col-md-4 {
+  flex: 0 0 33.333%;
+}
+
+.form-row .col-md-6 {
+  flex: 0 0 50%;
+}
+
+.form-row .col-md-9 {
+  flex: 0 0 75%;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 5px;
+  display: block;
+}
+.bold_hr {
+  text-align: left;
+  margin-left: 0;
+  height: 5px;
+  background-color: silver;
 }
 </style>
