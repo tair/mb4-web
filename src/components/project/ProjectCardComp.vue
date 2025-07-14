@@ -1,10 +1,18 @@
 <script setup>
 import { RouterLink } from 'vue-router'
-import { buildImageProps } from '@/utils/util.js'
+import { buildMediaUrl } from '@/utils/mediaUtils.js'
+import { computed } from 'vue'
 
 const props = defineProps({
   project: Object,
 })
+
+// Extract media ID from filename
+const mediaId = computed(() => {
+  const match = props.project.image_props.media.FILENAME.match(/media_files_media_(\d+)_preview/)
+  return match ? match[1] : null
+})
+
 </script>
 <style scoped>
 .thumb {
@@ -60,7 +68,7 @@ const props = defineProps({
         </div>
         <div class="col d-flex align-items-stretch thumb">
           <img
-            :src="buildImageProps(project.image_props, 'media')"
+            :src="buildMediaUrl(props.project.project_id, mediaId, 'large')"
             class="card-img-top"
           />
         </div>
@@ -82,77 +90,23 @@ const props = defineProps({
       >
     </div>
     <div class="card-footer">
-      <div class="row align-items-stretch">
-        <!-- tooltip dosplay order matters for layout -->
-        <div
-          v-if="project.project_stats.matrices"
-          class="col d-flex align-items-stretch"
-        >
-          <RouterLink
-            :to="`/project/${project.project_id}/matrices`"
-            class="nav-link p-0"
-          >
-            <i class="fa-solid fa-border-all"></i>
-            <small class="text-nowrap mx-1">
-              {{ project.project_stats.matrices }} matrices
-            </small>
-            <i
-              v-if="project.has_continuous_char"
-              class="fa-solid fa-ruler-horizontal"
-            ></i>
+      <div class="row">
+        <div class="col">
+          <RouterLink :to="`/project/${project.project_id}/overview`">
+            <button class="btn btn-primary">View Project</button>
           </RouterLink>
         </div>
-        <div
-          v-if="project.project_stats.docs"
-          class="col d-flex align-items-stretch"
-        >
-          <RouterLink
-            :to="`/project/${project.project_id}/docs`"
-            class="nav-link p-0"
-          >
-            <i class="fa-solid fa-file"></i>
-            <small class="text-nowrap ms-1">
-              {{ project.project_stats.docs }}
-              {{ project.project_stats.docs > 99 ? 'document' : 'documents' }}
-            </small>
-          </RouterLink>
+        <div class="col">
+          <div class="theme-color-text">
+            <strong>{{ project.project_stats.taxa }}</strong>
+          </div>
+          <div class="small">Taxa</div>
         </div>
-        <div
-          v-if="project.project_stats.media_image"
-          class="col d-flex align-items-stretch"
-        >
-          <RouterLink
-            :to="`/project/${project.project_id}/media`"
-            class="nav-link p-0"
-          >
-            <i class="fa-solid fa-camera"></i>
-            <small class="text-nowrap ms-1"
-              >{{ project.project_stats.media_image }} images</small
-            >
-          </RouterLink>
-        </div>
-        <div
-          v-if="project.project_stats.media_3d"
-          class="col d-flex align-items-stretch"
-        >
-          <RouterLink
-            :to="`/project/${project.project_id}/media`"
-            class="nav-link p-0"
-          >
-            <i class="fa-solid fa-cube"></i>
-            <small class="text-nowrap ms-1"
-              >{{ project.project_stats.media_3d }} 3D media</small
-            >
-          </RouterLink>
-        </div>
-        <div
-          v-if="project.has_continuous_char"
-          class="col d-flex align-items-stretch theme-color-text"
-        >
-          <i class="fa-solid fa-ruler-horizontal"></i>
-          <small class="text-nowrap ms-1">
-            Matrix has continuous characters
-          </small>
+        <div class="col">
+          <div class="theme-color-text">
+            <strong>{{ project.project_stats.media }}</strong>
+          </div>
+          <div class="small">Media</div>
         </div>
       </div>
     </div>

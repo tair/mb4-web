@@ -1,19 +1,4 @@
-function buildImageProps(mediaObj, type) {
-  try {
-    let media = mediaObj
-    if (type) media = mediaObj[type]
 
-    if (!media.HASH || !media.MAGIC || !media.FILENAME) return null
-
-    const url =
-      `https://morphobank.org/media/morphobank3/` +
-      `images/${media.HASH}/${media.MAGIC}_${media.FILENAME}`
-
-    return url
-  } catch (e) {
-    return null
-  }
-}
 
 function getPasswordPattern() {
   // Updated pattern to be more compatible with browser auto-generation
@@ -111,7 +96,6 @@ export const TOOLTIP_ARTICLE_DOI =
   'Enter the article DOI as provided by the publisher. The DOI should be entered as the identifier alone, like this:<br/><br/>10.1093/sysbio/syu008<br/><br/>If the publication has not been or will not be issued a DOI, please leave blank.'
 
 export {
-  buildImageProps,
   getPasswordPattern,
   getPasswordRule,
   searchInObject,

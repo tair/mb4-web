@@ -1,11 +1,12 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/AuthStore'
 import { useMediaStore } from '@/stores/MediaStore'
+import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
-import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { getTaxonForMediaId } from '@/views/project/utils'
 import { TaxaFriendlyNames, nameColumnMap } from '@/utils/taxa'
 // import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
@@ -13,6 +14,7 @@ import FilterDialog from '@/views/project/media/FilterDialog.vue'
 import EditBatchDialog from '@/views/project/media/EditBatchDialog.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaCard from '@/components/project/MediaCard.vue'
+import { buildMediaUrl } from '@/utils/util.js'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id)
@@ -244,6 +246,19 @@ function setFilter(key, value) {
 function clearFilter(key) {
   delete filters[key]
 }
+
+// Helper function to create S3 media URLs for MediaCard
+function getMediaThumbnailUrl(media) {
+  if (media.media_id) {
+    return {
+      url: buildMediaUrl(projectId, media.media_id, 'thumbnail'),
+      width: media.thumbnail?.WIDTH || media.thumbnail?.width || 120,
+      height: media.thumbnail?.HEIGHT || media.thumbnail?.height || 120
+    }
+  }
+  // Fallback to existing thumbnail object
+  return media.thumbnail
+}
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
@@ -404,7 +419,7 @@ function clearFilter(key) {
         >
           <MediaCard
             :mediaId="media.media_id"
-            :image="media.thumbnail"
+            :image="getMediaThumbnailUrl(media)"
             :viewName="mediaViewsStore.getMediaViewById(media.view_id)?.name"
             :taxon="getTaxonForMediaId(media)"
           >

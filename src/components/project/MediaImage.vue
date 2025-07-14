@@ -1,26 +1,32 @@
 <script setup lang="ts">
+import { buildMediaUrl } from '@/utils/mediaUtils.js'
+
 interface Image {
   url: string
   width: string | number
   height: string | number
 }
 
-defineProps<{
+const props = defineProps<{
   image?: Image
+  projectId?: number | string
+  mediaId?: number | string
+  fileSize?: string
 }>()
+
+
 </script>
 <template>
   <div
     :style="{
-      width: image.width + 'px',
-      height: image.height + 'px',
+      width: image?.width + 'px',
+      height: image?.height + 'px',
     }"
   >
     <img
-      v-if="image"
-      :src="image.url"
-      :width="image.width"
-      :height="image.height"
+      :src="buildMediaUrl(props.projectId, props.mediaId, props.fileSize || 'original')"
+      :width="image?.width"
+      :height="image?.height"
       class="loading"
     />
   </div>
