@@ -33,7 +33,7 @@ async function confirmDownload(fileSize, fileName) {
   //   return;
   // }
   // CAPTCHA is completed, proceed with the download
-  const imageUrl = buildMediaUrl(props.project_id, props.media_file.media_id, fileSize)
+  const imageUrl = buildMediaUrl(props.project_id, props.media_file?.media_id, fileSize)
   let downloadFileName = fileName
   if (!downloadFileName) {
     downloadFileName = getLastElementFromUrl(imageUrl)
@@ -117,7 +117,7 @@ function getHitsMessage(mediaObj) {
     <div class="col">
       <div class="card shadow">
         <img
-          :src="buildMediaUrl(props.project_id, props.media_file.media_id, 'original')"
+          :src="buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')"
           :style="{
             backgroundSize: '20px',
             backgroundRepeat: 'no-repeat',
