@@ -91,6 +91,25 @@ onMounted(() => {
   }
 })
 
+// State for taxa refresh feedback
+const isRefreshingTaxa = ref(false)
+const taxaRefreshed = ref(false)
+
+// Function to refresh taxa list
+async function refreshTaxa() {
+  isRefreshingTaxa.value = true
+  try {
+    await taxaStore.fetch(projectId)
+    taxaRefreshed.value = true
+    // Hide success message after 2 seconds
+    setTimeout(() => {
+      taxaRefreshed.value = false
+    }, 2000)
+  } finally {
+    isRefreshingTaxa.value = false
+  }
+}
+
 async function edit(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
@@ -125,17 +144,37 @@ async function edit(event) {
               v-if="index === 'taxon_id'"
               :content="getTaxonTooltipText()"
             ></Tooltip>
-            <RouterLink
-              v-if="index === 'taxon_id'"
-              :to="{
-                name: 'MyProjectTaxaCreateView',
-                params: { id: projectId },
-              }"
-              target="_blank"
-              class="ms-2"
-            >
-              Add new taxon
-            </RouterLink>
+            <div v-if="index === 'taxon_id'" class="ms-2 d-inline-block">
+              <RouterLink
+                :to="{
+                  name: 'MyProjectTaxaCreateView',
+                  params: { id: projectId },
+                }"
+                target="_blank"
+              >
+                Add new taxon
+              </RouterLink>
+              <a
+                href="#"
+                @click.prevent="refreshTaxa"
+                class="ms-2"
+                title="Refresh taxa list"
+                :class="{ 'text-muted': isRefreshingTaxa }"
+              >
+                <i 
+                  class="fa-solid"
+                  :class="isRefreshingTaxa ? 'fa-spinner fa-spin' : 'fa-arrow-rotate-right'"
+                ></i>
+                Refresh Taxa
+              </a>
+              <span 
+                v-if="taxaRefreshed" 
+                class="text-success ms-2 small"
+              >
+                <i class="fa-solid fa-check"></i>
+                Refreshed!
+              </span>
+            </div>
           </label>
 
           <!-- Special handling for reference_source to track changes -->
