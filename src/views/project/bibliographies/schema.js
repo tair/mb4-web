@@ -1,7 +1,10 @@
 import AuthorsListInput from '@/components/project/AuthorsListInput.vue'
-import TextInput from '@/components/project/TextInput.vue'
+import DateText from '@/components/project/DateText.vue'
 import SelectInput from '@/components/project/SelectInput.vue'
 import TextArea from '@/components/project/TextArea.vue'
+import TextContent from '@/components/project/TextContent.vue'
+import TextInput from '@/components/project/TextInput.vue'
+import { getUserName } from '@/views/project/utils'
 
 export const schema = {
   authors: {
@@ -107,5 +110,18 @@ export const schema = {
   keywords: {
     label: 'Keywords (separate with commas or semicolons)',
     view: TextArea,
+  },
+  user_id: {
+    label: 'This item is owned by',
+    view: TextContent,
+    existed: true,
+    args: {
+      getText: getUserName,
+    },
+  },
+  created_on: {
+    label: 'Created on',
+    view: DateText,
+    existed: true,
   },
 }

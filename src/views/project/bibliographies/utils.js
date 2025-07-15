@@ -1,24 +1,33 @@
 export function convertAuthors(form, type) {
-  const names = ['surname', 'middlename', 'forename']
-  const values = names.map((name) => {
-    const key = type + '.' + name
-    const allNames = form.getAll(key)
-    form.delete(key)
-    return allNames
-  })
-
   const authors = []
-  for (let x = 0; x < values[0].length; ++x) {
-    const surname = values[0][x]
-    const middlename = values[1][x]
-    const forename = values[2][x]
-    if (surname != '' || middlename != '' || forename != '') {
+  let index = 0
+  
+  // Look for author fields with the pattern: type[0].forename, type[1].surname, etc.
+  while (
+    form.has(`${type}[${index}].forename`) ||
+    form.has(`${type}[${index}].middlename`) ||
+    form.has(`${type}[${index}].surname`)
+  ) {
+    const forename = form.get(`${type}[${index}].forename`) || ''
+    const middlename = form.get(`${type}[${index}].middlename`) || ''
+    const surname = form.get(`${type}[${index}].surname`) || ''
+    
+    // Remove the form fields
+    form.delete(`${type}[${index}].forename`)
+    form.delete(`${type}[${index}].middlename`)
+    form.delete(`${type}[${index}].surname`)
+    
+    // Only add author if at least one field has content
+    if (forename.trim() || middlename.trim() || surname.trim()) {
       authors.push({
-        surname,
-        middlename,
-        forename,
+        forename: forename.trim(),
+        middlename: middlename.trim(),
+        surname: surname.trim(),
       })
     }
+    
+    index++
   }
+  
   return authors.length ? authors : null
 }

@@ -2,6 +2,7 @@
 import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
+import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import BibliographyItem from '@/components/project/BibliographyItem.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import router from '@/router'
@@ -13,13 +14,21 @@ const projectId = parseInt(route.params.id)
 const referenceId = parseInt(route.params.referenceId)
 
 const bibliographiesStore = useBibliographiesStore()
+const projectUsersStore = useProjectUsersStore()
 const reference = computed(() =>
   bibliographiesStore.getReferenceById(referenceId)
+)
+
+const isLoaded = computed(() => 
+  bibliographiesStore.isLoaded && projectUsersStore.isLoaded
 )
 
 onMounted(() => {
   if (!bibliographiesStore.isLoaded) {
     bibliographiesStore.fetchBibliographies(projectId)
+  }
+  if (!projectUsersStore.isLoaded) {
+    projectUsersStore.fetchUsers(projectId)
   }
 })
 
@@ -55,7 +64,7 @@ async function editReference(event) {
 }
 </script>
 <template>
-  <LoadingIndicator :isLoaded="bibliographiesStore.isLoaded">
+  <LoadingIndicator :isLoaded="isLoaded">
     <header>
       <b>Editing: </b>
       <BibliographyItem :bibliography="reference" />
