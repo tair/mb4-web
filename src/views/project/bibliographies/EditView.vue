@@ -36,23 +36,7 @@ async function editReference(event) {
   const formData = new FormData(event.currentTarget)
   const authorFields = ['authors', 'secondary_authors', 'editors']
   const authors = Object.fromEntries(
-    authorFields.map((field) => {
-      const authors = []
-      let index = 0
-      while (
-        formData.has(`${field}[${index}].forename`) ||
-        formData.has(`${field}[${index}].middlename`) ||
-        formData.has(`${field}[${index}].surname`)
-      ) {
-        authors.push({
-          forename: formData.get(`${field}[${index}].forename`) || '',
-          middlename: formData.get(`${field}[${index}].middlename`) || '',
-          surname: formData.get(`${field}[${index}].surname`) || '',
-        })
-        index++
-      }
-      return [field, authors]
-    })
+    authorFields.map((field) => [field, convertAuthors(formData, field)])
   )
   const json = { ...Object.fromEntries(formData), ...authors }
   const success = await bibliographiesStore.edit(projectId, referenceId, json)

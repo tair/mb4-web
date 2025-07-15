@@ -39,6 +39,12 @@ function removeAuthor(i: number) {
     authors.splice(i, 1)
   }
 }
+
+function clearAuthor(i: number) {
+  authors[i].forename = ''
+  authors[i].middlename = ''
+  authors[i].surname = ''
+}
 </script>
 
 <template>
@@ -73,6 +79,15 @@ function removeAuthor(i: number) {
         aria-label="Remove author"
         @click="removeAuthor(index)"
       ></button>
+      <a
+        v-else-if="author.forename || author.middlename || author.surname"
+        href="#"
+        @click.prevent="clearAuthor(index)"
+        class="clear-link"
+        title="Clear this author"
+      >
+        clear
+      </a>
     </div>
     <button
       type="button"
@@ -113,5 +128,20 @@ function removeAuthor(i: number) {
 .add-more-btn:hover {
   background-color: #fd7e14;
   color: white;
+}
+
+.clear-link {
+  color: #fd7e14;
+  text-decoration: none;
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  transition: all 0.15s ease-in-out;
+}
+
+.clear-link:hover {
+  color: white;
+  background-color: #fd7e14;
+  text-decoration: none;
 }
 </style>
