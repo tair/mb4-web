@@ -58,13 +58,19 @@ export const useSpecimenCitationsStore = defineStore({
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/specimens/${specimenId}/citations/${citationId}/edit`
-      const response = await axios.post(url, { citation })
-      if (response.status == 200) {
-        const citation = response.data.citation
-        this.addCitations([citation])
-        return true
+
+      try {
+        const response = await axios.post(url, { citation })
+        if (response.status == 200) {
+          const updatedCitation = response.data.citation
+          this.removeCitationsByIds([updatedCitation.link_id])
+          this.addCitations([updatedCitation])
+          return true
+        }
+        return false
+      } catch (error) {
+        throw error
       }
-      return false
     },
     async deleteIds(projectId, specimenId, citationIds) {
       const url = `${

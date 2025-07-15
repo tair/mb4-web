@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, computed } from 'vue'
+import { onMounted, computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import router from '@/router'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
@@ -28,6 +28,57 @@ const isLoaded = computed(
 
 const specimen = computed(() => specimensStore.getSpecimenById(specimenId))
 
+// Track the selected reference source type
+const referenceSource = ref(0) // Default to "Vouchered" (0)
+
+// Fields that should be hidden when "Unvouchered" is selected
+const voucheredOnlyFields = [
+  'institution_code',
+  'collection_code',
+  'catalog_number',
+  'occurrence_id',
+]
+
+// Reactive field values for voucher-only fields
+const fieldValues = ref({
+  institution_code: '',
+  collection_code: '',
+  catalog_number: '',
+  occurrence_id: '',
+})
+
+// Function to check if a field should be shown
+function shouldShowField(fieldName) {
+  if (voucheredOnlyFields.includes(fieldName)) {
+    return referenceSource.value === 0 // Only show for "Vouchered"
+  }
+  return true // Show all other fields
+}
+
+// Watch for changes in reference source and clear hidden fields
+watch(referenceSource, (newValue) => {
+  if (newValue === 1) {
+    // Unvouchered - clear all voucher-only field values
+    voucheredOnlyFields.forEach((fieldName) => {
+      fieldValues.value[fieldName] = ''
+    })
+  }
+})
+
+// Initialize values when specimen data is loaded
+watch(
+  specimen,
+  (newSpecimen) => {
+    if (newSpecimen) {
+      referenceSource.value = newSpecimen.reference_source || 0
+      voucheredOnlyFields.forEach((fieldName) => {
+        fieldValues.value[fieldName] = newSpecimen[fieldName] || ''
+      })
+    }
+  },
+  { immediate: true }
+)
+
 onMounted(() => {
   if (!specimensStore.isLoaded) {
     specimensStore.fetchSpecimens(projectId)
@@ -43,6 +94,14 @@ onMounted(() => {
 async function edit(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
+
+  // Remove hidden field values when "Unvouchered" is selected
+  if (referenceSource.value === 1) {
+    voucheredOnlyFields.forEach((fieldName) => {
+      delete json[fieldName]
+    })
+  }
+
   const success = await specimensStore.edit(projectId, specimenId, json)
   if (success) {
     router.go(-1)
@@ -54,35 +113,72 @@ async function edit(event) {
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
     <form @submit.prevent="edit">
-      <div v-for="(definition, index) in schema" :key="index" class="mb-3">
-        <label for="index" class="form-label">
-          {{ definition.label }}
-          <Tooltip
+      <template v-for="(definition, index) in schema" :key="index">
+        <div v-if="shouldShowField(index)" class="mb-3">
+          <label for="index" class="form-label">
+            {{ definition.label }}
+            <Tooltip
+              v-if="index === 'reference_source'"
+              :content="getSpecimenTypeTooltipText()"
+            ></Tooltip>
+            <Tooltip
+              v-if="index === 'taxon_id'"
+              :content="getTaxonTooltipText()"
+            ></Tooltip>
+            <RouterLink
+              v-if="index === 'taxon_id'"
+              :to="{
+                name: 'MyProjectTaxaCreateView',
+                params: { id: projectId },
+              }"
+              target="_blank"
+              class="ms-2"
+            >
+              Add new taxon
+            </RouterLink>
+          </label>
+
+          <!-- Special handling for reference_source to track changes -->
+          <select
             v-if="index === 'reference_source'"
-            :content="getSpecimenTypeTooltipText()"
-          ></Tooltip>
-          <Tooltip
-            v-if="index === 'taxon_id'"
-            :content="getTaxonTooltipText()"
-          ></Tooltip>
-          <RouterLink
-            v-if="index === 'taxon_id'"
-            :to="{ name: 'MyProjectTaxaCreateView', params: { id: projectId } }"
-            target="_blank"
-            class="ms-2"
+            :key="`${index}-select`"
+            :name="index"
+            class="form-control"
+            v-model="referenceSource"
           >
-            Add new taxon
-          </RouterLink>
-        </label>
-        <component
-          :key="index"
-          :is="definition.view"
-          :name="index"
-          :value="specimen[index]"
-          v-bind="definition.args"
-        >
-        </component>
-      </div>
+            <option
+              v-for="(optionValue, optionLabel) in definition.args.options"
+              :key="optionValue"
+              :value="optionValue"
+            >
+              {{ optionLabel }}
+            </option>
+          </select>
+
+          <!-- Special handling for voucher-only fields to bind values -->
+          <component
+            v-else-if="voucheredOnlyFields.includes(index)"
+            :key="`${index}-voucher`"
+            :is="definition.view"
+            :name="index"
+            v-bind="definition.args"
+            :value="fieldValues[index]"
+            @input="fieldValues[index] = $event.target.value"
+          >
+          </component>
+
+          <!-- Default component for other fields -->
+          <component
+            v-else
+            :key="`${index}-default`"
+            :is="definition.view"
+            :name="index"
+            :value="specimen[index]"
+            v-bind="definition.args"
+          >
+          </component>
+        </div>
+      </template>
       <div class="btn-form-group">
         <RouterLink :to="{ name: 'MyProjectSpecimensListView' }">
           <button class="btn btn-outline-primary" type="button">Cancel</button>
