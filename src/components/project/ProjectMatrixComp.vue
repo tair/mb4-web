@@ -255,6 +255,8 @@ async function onDownloadJobResults(url, filename, ck, cr) {
       'Failed to download results for ' +
         (filename || documentUrl.split('/').pop())
     )
+  }
+}
 
 function navigateToSettings() {
   router.push(`/myprojects/${projectId}/matrices/${matrixId}/settings`)
@@ -497,6 +499,43 @@ function resetMergeForm() {
   if (fileInput) {
     fileInput.value = ''
   }
+}
+
+function formatDateWithTimezone(dateString) {
+  if (!dateString) return ''
+  
+  try {
+    const date = new Date(dateString)
+    
+    // Format the date with timezone
+    const options = {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    }
+    
+    return date.toLocaleString('en-US', options)
+  } catch (error) {
+    console.error('Error formatting date:', error)
+    return dateString // Fallback to original string
+  }
+}
+
+function getStatusClass(status) {
+  if (!status) return 'status-unknown'
+  
+  const normalizedStatus = status.toLowerCase()
+  const knownStatuses = ['completed', 'running', 'failed', 'pending']
+  
+  if (knownStatuses.includes(normalizedStatus)) {
+    return `status-${normalizedStatus}`
+  }
+  
+  // Return default class for unknown statuses
+  return 'status-unknown'
 }
 </script>
 <template>
@@ -814,7 +853,9 @@ function resetMergeForm() {
         </div>
       </div>
       <div
-        :class="refresh == 'true' ? 'tab-pane fade show active' : 'tab-pane fade'"
+        :class="
+          refresh == 'true' ? 'tab-pane fade show active' : 'tab-pane fade'
+        "
         :id="'build' + matrix.matrix_id"
         role="tabpanel"
       >
@@ -963,25 +1004,26 @@ function resetMergeForm() {
         </div>
         <hr class="bold_hr" />
         <h6><b>Previous runs:</b></h6>
-        <div v-if="currentMatrixJobs?.length > 0">
-          <div v-for="job in currentMatrixJobs">
-            <div
-              style="
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-              "
-            >
-              <p>
-                <b>Job name</b>:{{ job.jobname }}: <b>Run on</b>:
-                {{ job.created_on }} <b>Tool</b>: {{ job.cipres_tool }}
-                <b>Status</b>: {{ job.cipres_last_status }}
-              </p>
-              <p>
+        <div v-if="currentMatrixJobs?.length > 0" class="previous-runs-container">
+          <div v-for="job in currentMatrixJobs" :key="job.request_id" class="job-card">
+            <div class="job-header">
+              <div class="job-info">
+                <div class="job-title">
+                  <strong>{{ job.jobname }}</strong>
+                  <span class="job-status" :class="getStatusClass(job.cipres_last_status)">
+                    {{ job.cipres_last_status }}
+                  </span>
+                </div>
+                <div class="job-details">
+                  <span><strong>Run on:</strong> {{ formatDateWithTimezone(job.created_on) }}</span>
+                  <span><strong>Tool:</strong> {{ job.cipres_tool }}</span>
+                </div>
+              </div>
+              <div class="job-actions">
                 <button
                   v-if="job.cipres_last_status == 'COMPLETED'"
                   type="button"
-                  class="btn btn-sm btn-secondary"
+                  class="btn btn-primary btn-sm"
                   @click="
                     onDownloadJob(
                       job.user_id,
@@ -995,26 +1037,34 @@ function resetMergeForm() {
                     )
                   "
                 >
-                  Download
+                  <i class="fa-solid fa-download"></i> Download
                   <Tooltip
                     content="To see the commands MorphoBank sent to CIPRES open the file .nex that CIPRES returned to you."
                   ></Tooltip>
                 </button>
                 <button
                   type="button"
-                  class="btn btn-sm btn-primary"
+                  class="btn btn-outline-danger btn-sm"
                   @click="onDelete(job.jobname, job.cipres_job_id)"
                 >
-                  Delete
+                  <i class="fa-solid fa-trash"></i> Delete
                 </button>
-              </p>
+              </div>
             </div>
-            <b>Notes</b>: {{ job.notes }}<br />
-            <b>Parameters</b>: {{ job.cipres_settings }}
-            <hr />
+            <div class="job-metadata">
+              <div v-if="job.notes" class="job-notes">
+                <strong>Notes:</strong> {{ job.notes }}
+              </div>
+              <div v-if="job.cipres_settings" class="job-parameters">
+                <strong>Parameters:</strong> {{ job.cipres_settings }}
+              </div>
+            </div>
           </div>
         </div>
-        <div v-else>No previous runs found.</div>
+        <div v-else class="no-runs-message">
+          <i class="fa-solid fa-info-circle"></i>
+          No previous runs found.
+        </div>
       </div>
     </div>
   </div>
@@ -1147,5 +1197,123 @@ textarea {
   margin-left: 0;
   height: 5px;
   background-color: silver;
+}
+
+/* Previous runs styling */
+.previous-runs-container {
+  margin-top: 20px;
+}
+
+.job-card {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.job-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.job-info {
+  flex: 1;
+}
+
+.job-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.job-title strong {
+  font-size: 1.1em;
+  color: #333;
+}
+
+.job-status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.status-completed {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.status-running {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.status-failed {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.status-pending {
+  background-color: #e2e3e5;
+  color: #383d41;
+  border: 1px solid #d6d8db;
+}
+
+.status-unknown {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+}
+
+.job-details {
+  display: flex;
+  gap: 20px;
+  color: #666;
+  font-size: 0.9em;
+}
+
+.job-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.job-metadata {
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.job-notes,
+.job-parameters {
+  margin-bottom: 8px;
+  color: #555;
+  font-size: 0.9em;
+  line-height: 1.4;
+}
+
+.job-notes:last-child,
+.job-parameters:last-child {
+  margin-bottom: 0;
+}
+
+.no-runs-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  font-style: italic;
+}
+
+.no-runs-message i {
+  margin-right: 8px;
+  color: #999;
 }
 </style>
