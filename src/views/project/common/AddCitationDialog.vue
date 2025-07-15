@@ -84,8 +84,8 @@ async function createCitation(event) {
               class="btn btn-outline-primary"
               data-bs-dismiss="modal"
               @click="
-                hasError = false
-                errorMessage = ''
+                hasError = false;
+                errorMessage = '';
               "
             >
               Cancel
