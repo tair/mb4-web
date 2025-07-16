@@ -13,6 +13,7 @@ type Project = {
   user_last_accessed_on: number
   media: Media
   members: { name: string }[]
+  administrator: string
 }
 
 const props = defineProps<{
@@ -58,6 +59,12 @@ function getMediaUrl() {
             {{ getProjectCitation(project) }}
           </p>
           <div class="card-text mb-2">
+            <b class="me-2">Administrator:</b>
+            <small class="text-muted">
+              {{ project.administrator || 'Unknown' }}
+            </small>
+          </div>
+          <div class="card-text mb-2">
             <b class="me-2">{{ project.members?.length ?? 0 }} members:</b>
             <small class="text-muted" v-if="project.members">
               {{ project.members.map((m) => m.name).join(', ') }}
@@ -67,12 +74,6 @@ function getMediaUrl() {
             <b class="me-2">Creation Date:</b>
             <small class="text-muted">
               {{ toDMYDate(project.created_on) }}
-            </small>
-          </div>
-          <div class="card-text">
-            <b class="me-2">Last Modified Date:</b>
-            <small class="text-muted">
-              {{ toDMYDate(project.last_accessed_on) }}
             </small>
           </div>
           <div class="card-text">
