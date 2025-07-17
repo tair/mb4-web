@@ -30,11 +30,6 @@ const isLoaded = computed(
 async function createBatch(event) {
   const formData = new FormData(event.currentTarget)
   
-  // Debug: Log form data to see what's being sent
-  for (const [key, value] of formData.entries()) {
-    console.log(`${key}: ${value}`)
-  }
-  
   try {
     const success = await mediaStore.createBatch(projectId, formData)
     if (!success) {

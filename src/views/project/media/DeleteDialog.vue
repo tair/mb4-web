@@ -14,12 +14,10 @@ const mediaStore = useMediaStore()
 async function handleDeleteButtonClicked() {
   try {
     const mediaIds = props.mediaToDelete.map((media) => media.media_id)
-    console.log('Deleting media IDs:', mediaIds)
     
     const success = await mediaStore.deleteIds(projectId, mediaIds)
     
     if (success) {
-      console.log('Successfully deleted media')
       const element = document.getElementById('mediaDeleteModal')
       const modal = Modal.getInstance(element)
       modal.hide()

@@ -91,24 +91,18 @@ export const useMediaStore = defineStore({
       return false
     },
     async editIds(projectId, mediaIds, json) {
-      console.log('MediaStore.editIds called with:', { projectId, mediaIds, json })
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/media/edit`
-      console.log('Making request to:', url)
-      console.log('Request payload:', { media_ids: mediaIds, media: json })
       
       try {
         const response = await axios.post(url, {
           media_ids: mediaIds,
           media: json,
         })
-        console.log('Response status:', response.status)
-        console.log('Response data:', response.data)
         
         if (response.status == 200) {
           const media = response.data.media
-          console.log('Updating media in store:', media)
           this.addMedia(media)
           return true
         }
@@ -134,13 +128,10 @@ export const useMediaStore = defineStore({
       return false
     },
     addMedia(media) {
-      console.log('addMedia called with:', media)
       for (const medium of media) {
         const id = medium.media_id
-        console.log(`Updating media ${id} in store:`, medium)
         this.map.set(id, medium)
       }
-      console.log('MediaStore map size after update:', this.map.size)
     },
     getMediaById(mediaId) {
       return this.map.get(mediaId)
