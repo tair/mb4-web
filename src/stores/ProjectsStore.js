@@ -6,14 +6,23 @@ export const useProjectsStore = defineStore({
   state: () => ({
     isLoaded: false,
     projects: [],
+    lastFetched: null, // Timestamp of last fetch
   }),
   getters: {},
   actions: {
-    async fetchProjects() {
+    async fetchProjects(force = false) {
+      // Smart caching: only fetch if data is stale (older than 30 seconds) or forced
+      const cacheAge = this.lastFetched ? Date.now() - this.lastFetched : Infinity
+      const isStale = cacheAge > 30000 // 30 seconds
+      
+      if (!force && this.isLoaded && !isStale) {
+        return // Use cached data
+      }
+
       const url = `${import.meta.env.VITE_API_URL}/projects/`
       const response = await axios.get(url)
       this.projects = response.data.projects
-
+      this.lastFetched = Date.now()
       this.isLoaded = true
     },
     async create(project) {
@@ -90,6 +99,13 @@ export const useProjectsStore = defineStore({
                   },
           }
         )
+
+        // Add the new project to the store's cache so it appears in the dashboard
+        if (response.data && response.status === 201) {
+          // For newly created projects, we need to fetch fresh project data
+          // since the user needs to see it with proper administrator info
+          await this.fetchProjects()
+        }
 
         return response.data
       } catch (error) {

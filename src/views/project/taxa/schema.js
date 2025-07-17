@@ -64,6 +64,10 @@ export const schema = {
     label: 'Infraorder',
     view: TextInput,
   },
+  higher_taxon_family: {
+    label: 'Family',
+    view: TextInput,
+  },
   higher_taxon_superfamily: {
     label: 'Superfamily',
     view: TextInput,

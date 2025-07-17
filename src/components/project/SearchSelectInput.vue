@@ -32,14 +32,9 @@ const isSearching = ref(false)
 
 async function handleInput(event: any) {
   const text = event.target.value
-  if (text.length < 3) {
-    items.value = []
-    isSearching.value = false
-  } else {
-    isSearching.value = true
-    items.value = await props.search(text)
-    emit('updateTextboxString', text)
-  }
+  isSearching.value = true
+  items.value = await props.search(text)
+  emit('updateTextboxString', text)
 }
 
 function handleSearch(event: Event) {
@@ -61,6 +56,14 @@ function handleSelect(item: any) {
   items.value = []
   isSearching.value = false
   emit('select', item)
+}
+
+async function handleFocus(event: any) {
+  // Show dropdown with initial results when focused
+  if (items.value.length === 0) {
+    isSearching.value = true
+    items.value = await props.search('')
+  }
 }
 
 function handleBlur() {
@@ -85,6 +88,7 @@ function handleBlur() {
     <input
       @input="handleInput"
       @search="handleSearch"
+      @focus="handleFocus"
       @blur="handleBlur"
       v-model="text"
       :disabled="disabled"
@@ -98,7 +102,7 @@ function handleBlur() {
         </li>
       </template>
     </ul>
-    <ul v-else-if="isSearching && text.length >= 3" class="results">
+    <ul v-else-if="isSearching" class="results">
       <li class="no-results">No matching search results found</li>
     </ul>
   </div>

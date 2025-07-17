@@ -87,6 +87,16 @@ export const useBibliographiesStore = defineStore({
         this.map.delete(referenceId)
       }
     },
+    async checkCitations(projectId, referenceIds) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/bibliography/check-citations`
+      const response = await axios.post(url, { reference_ids: referenceIds })
+      if (response.status === 200) {
+        return response.data.citations
+      }
+      return []
+    },
     invalidate() {
       this.map.clear()
       this.isLoaded = false

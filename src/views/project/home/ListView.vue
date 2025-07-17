@@ -19,6 +19,7 @@ const searchQuery = ref('')
 const isDropdownOpen = ref(false)
 const dropdownRef = ref(null)
 const isLoadingCuratorProjects = ref(false)
+const isRefreshing = ref(false)
 
 // Add computed property for filtered curator projects
 const filteredCuratorProjects = computed(() => {
@@ -39,9 +40,8 @@ const handleClickOutside = (event) => {
 }
 
 onMounted(async () => {
-  if (!projectsStore.isLoaded) {
-    await projectsStore.fetchProjects()
-  }
+  // Fetch projects with smart caching (will refresh if data is stale)
+  await projectsStore.fetchProjects()
 
   // Check if user has curator permissions and fetch curator projects
   try {
@@ -82,6 +82,18 @@ async function selectCuratorProject() {
   }
   router.push(`/myprojects/${selectedCuratorProject.value}/overview`)
 }
+
+// Refresh projects method
+async function refreshProjects() {
+  isRefreshing.value = true
+  try {
+    await projectsStore.fetchProjects(true) // Force refresh
+  } catch (error) {
+    console.error('Error refreshing projects:', error)
+  } finally {
+    isRefreshing.value = false
+  }
+}
 </script>
 <template>
   <FormLayout title="MY PROJECTS">
@@ -107,12 +119,21 @@ async function selectCuratorProject() {
               >{{ publishedProjects.length }} Published Projects</a
             >
           </div>
-          <div class="mt-3">
+          <div class="mt-3 d-flex gap-2">
             <RouterLink :to="`/myprojects/create`">
               <button type="button" class="btn btn-primary">
                 Create New Project
               </button>
             </RouterLink>
+            <button 
+              type="button" 
+              class="btn btn-outline-primary"
+              @click="refreshProjects"
+              :disabled="isRefreshing"
+            >
+              <i class="fa-solid fa-refresh" :class="{ 'fa-spin': isRefreshing }"></i>
+              Refresh Projects
+            </button>
           </div>
         </div>
       </div>

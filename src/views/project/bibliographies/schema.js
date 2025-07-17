@@ -1,24 +1,31 @@
 import AuthorsListInput from '@/components/project/AuthorsListInput.vue'
-import TextInput from '@/components/project/TextInput.vue'
+import DateText from '@/components/project/DateText.vue'
 import SelectInput from '@/components/project/SelectInput.vue'
 import TextArea from '@/components/project/TextArea.vue'
+import TextContent from '@/components/project/TextContent.vue'
+import TextInput from '@/components/project/TextInput.vue'
+import { getUserName } from '@/views/project/utils'
 
 export const schema = {
   authors: {
     label: 'Authors',
     view: AuthorsListInput,
+    required: true,
   },
   pubyear: {
     label: 'Year',
     view: TextInput,
+    required: true,
   },
   article_title: {
     label: 'Article Title',
     view: TextArea,
+    required: true,
   },
   journal_title: {
     label: 'Journal or Book Title',
     view: TextArea,
+    required: true,
   },
   vol: {
     label: 'Volume',
@@ -47,6 +54,7 @@ export const schema = {
   reference_type: {
     label: 'Reference Type',
     view: SelectInput,
+    required: true,
     args: {
       options: {
         Generic: 0,
@@ -107,5 +115,18 @@ export const schema = {
   keywords: {
     label: 'Keywords (separate with commas or semicolons)',
     view: TextArea,
+  },
+  user_id: {
+    label: 'This item is owned by',
+    view: TextContent,
+    readOnlySystemField: true,
+    args: {
+      getText: getUserName,
+    },
+  },
+  created_on: {
+    label: 'Created on',
+    view: DateText,
+    readOnlySystemField: true,
   },
 }
