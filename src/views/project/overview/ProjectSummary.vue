@@ -2,7 +2,7 @@
 import Tooltip from '@/components/main/Tooltip.vue'
 import { formatBytes, formatNumber } from '@/utils/format'
 import { buildMediaUrl } from '@/utils/mediaUtils.js'
-import { usePublicMediaStore } from '@/stores/PublicMediaStore'
+import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore'
 import { ref, onMounted, computed } from 'vue'
 // import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 
@@ -48,18 +48,27 @@ const props = defineProps<{
   projectId: string | number
 }>()
 
-const mediaStore = usePublicMediaStore()
+const overviewStore = useProjectOverviewStore()
 const exemplarMedia = ref(null)
 
+// Computed property to get overview data
+const overview = computed(() => overviewStore.overview)
+
 onMounted(async () => {
-  // Fetch media files for this project
-  await mediaStore.fetchMediaFiles(props.projectId)
+  // Load the project overview data (which includes image_props for exemplar media)
+  await overviewStore.fetchProject(props.projectId)
   
-  // Find the exemplar media (first media file or specific one)
-  if (mediaStore.media_files && mediaStore.media_files.length > 0) {
-    exemplarMedia.value = mediaStore.media_files[0]
+  // Use the image_props from the overview data
+  if (overview.value?.image_props && Object.keys(overview.value.image_props).length > 0) {
+    // Convert image_props to the format expected by the template
+    const imageProps = overview.value.image_props
+    exemplarMedia.value = {
+      media_id: overview.value.exemplar_media_id, // Get media_id from the main overview
+      specimen_name: imageProps.specimen_name,
+      view_name: imageProps.view_name,
+    }
   } else {
-    console.log('No media files found in store')
+    console.log('No exemplar media found for project')
   }
 })
 
@@ -68,13 +77,17 @@ const downloadTooltipText =
 
 
 function getWidth(mediaObj: { [key: string]: any }): string {
-  // Prefer actual width, fallback to 100% for responsive
-  return mediaObj.WIDTH || mediaObj.width || '100%';
+  if (mediaObj?.media?.large?.PIXEL_X) {
+    return mediaObj.media.large.PIXEL_X + 'px'
+  }
+  return 'auto'
 }
 
 function getHeight(mediaObj: { [key: string]: any }): string {
-  // Prefer actual height, fallback to auto for responsive
-  return mediaObj.HEIGHT || mediaObj.height || 'auto';
+  if (mediaObj?.media?.large?.PIXEL_Y) {
+    return mediaObj.media.large.PIXEL_Y + 'px'
+  }
+  return 'auto'
 }
 
 function popDownloadAlert() {
@@ -89,7 +102,7 @@ function popDownloadAlert() {
   <div class="row">
     <div class="col">
       <div class="thumbnil-block p-2">
-        <!-- Use exemplar media from media files JSON if available -->
+        <!-- Use exemplar media from overview data -->
         <div v-if="exemplarMedia" class="d-flex flex-column">
           <div class="d-flex justify-content-center">
             <img
@@ -115,32 +128,6 @@ function popDownloadAlert() {
             ></div>
             <div v-if="exemplarMedia.view_name">
               View: {{ exemplarMedia.view_name }}
-            </div>
-          </div>
-        </div>
-        <!-- Fallback to overview image_props if no exemplar media -->
-        <div v-else-if="overview.image_props?.media" class="d-flex flex-column">
-          <div class="d-flex justify-content-center">
-            <img
-              :src="buildMediaUrl(projectId, overview.image_props?.media?.media_id, 'large')"
-              :style="{
-                width: getWidth(overview.image_props.media) + 'px',
-                height: getHeight(overview.image_props.media) + 'px',
-                backgroundSize: '20px',
-                backgroundRepeat: 'no-repeat',
-                backgroundImage: 'url(' + '/images/loader.png' + ')',
-                backgroundPosition: '10px 10px',
-              }"
-              class="col-md-4 mt-1 ms-0 rounded float-sm-start"
-            />
-          </div>
-          <div class="text-block">
-            <div
-              v-if="overview.image_props.specimen_name"
-              v-html="'Specimen: ' + overview.image_props.specimen_name"
-            ></div>
-            <div v-if="overview.image_props.view_name">
-              View: {{ overview.image_props.view_name }}
             </div>
           </div>
         </div>
