@@ -796,13 +796,13 @@ async function handleSubmit() {
       return
     }
 
-    // Create JSON object for project creation (without journal cover)
+    // Create JSON object for project creation
     const projectData = {}
 
-    // Add all form fields to JSON except journal_cover
+    // Add all form fields to JSON
     for (const [key, value] of Object.entries(formData)) {
       if (key === 'journal_cover') {
-        // Skip journal cover for now - will be uploaded separately
+        // Skip journal cover - will be passed separately
         continue
       } else if (key === 'allow_reviewer_login') {
         // Ensure allow_reviewer_login is sent as 0 or 1
@@ -815,27 +815,11 @@ async function handleSubmit() {
       }
     }
 
-    // Create project first
-    const project = await projectsStore.createProject(projectData)
+    // Create project with optional journal cover in a single API call
+    const project = await projectsStore.createProject(projectData, formData.journal_cover)
 
     if (!project) {
       throw new Error('Failed to create project')
-    }
-
-    // If there's a journal cover file, upload it separately
-    if (formData.journal_cover) {
-      const journalCoverFormData = new FormData()
-      journalCoverFormData.append('journal_cover', formData.journal_cover)
-      
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/projects/${project.project_id}/journal-cover`,
-        journalCoverFormData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      )
     }
 
     // Redirect to project overview

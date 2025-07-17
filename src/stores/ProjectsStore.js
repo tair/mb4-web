@@ -63,16 +63,35 @@ export const useProjectsStore = defineStore({
         }
       }
     },
-    async createProject(projectData) {
+    async createProject(projectData, journalCoverFile = null) {
       try {
+        let requestData
+        let headers = {}
+
+        if (journalCoverFile) {
+          // Use FormData for file upload
+          const formData = new FormData()
+          
+          // Add all project data as JSON string
+          formData.append('projectData', JSON.stringify(projectData))
+          
+          // Add journal cover file
+          formData.append('journal_cover', journalCoverFile)
+          
+          requestData = formData
+          // Don't set Content-Type header - let browser set it with boundary
+        } else {
+          // Use JSON for project data only
+          requestData = projectData
+          headers = {
+            'Content-Type': 'application/json',
+          }
+        }
+
         const response = await axios.post(
           `${import.meta.env.VITE_API_URL}/projects/create`,
-          projectData,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
+          requestData,
+          { headers }
         )
 
         return response.data
