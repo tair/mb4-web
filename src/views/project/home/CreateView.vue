@@ -796,31 +796,46 @@ async function handleSubmit() {
       return
     }
 
-    // Create FormData object for multipart/form-data submission
-    const projectFormData = new FormData()
+    // Create JSON object for project creation (without journal cover)
+    const projectData = {}
 
-    // Add all form fields to FormData
+    // Add all form fields to JSON except journal_cover
     for (const [key, value] of Object.entries(formData)) {
       if (key === 'journal_cover') {
-        if (value) {
-          projectFormData.append('journal_cover', value)
-        }
+        // Skip journal cover for now - will be uploaded separately
+        continue
       } else if (key === 'allow_reviewer_login') {
         // Ensure allow_reviewer_login is sent as 0 or 1
-        projectFormData.append(key, value === true || value === '1' ? '1' : '0')
+        projectData[key] = value === true || value === '1' ? '1' : '0'
       } else {
         // Convert all values to strings to ensure proper transmission
         const stringValue =
           value !== null && value !== undefined ? String(value) : ''
-        projectFormData.append(key, stringValue)
+        projectData[key] = stringValue
       }
     }
 
-    // Create project with FormData
-    const project = await projectsStore.createProject(projectFormData)
+    // Create project first
+    const project = await projectsStore.createProject(projectData)
 
     if (!project) {
       throw new Error('Failed to create project')
+    }
+
+    // If there's a journal cover file, upload it separately
+    if (formData.journal_cover) {
+      const journalCoverFormData = new FormData()
+      journalCoverFormData.append('journal_cover', formData.journal_cover)
+      
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/projects/${project.project_id}/journal-cover`,
+        journalCoverFormData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      )
     }
 
     // Redirect to project overview
@@ -837,7 +852,7 @@ async function handleSubmit() {
 
 function validateForm() {
   // Basic validation
-  if (!formData.name || !formData.nsf_funded) {
+  if (!formData.name || formData.nsf_funded === '') {
     alert('Please fill in all required fields')
     return false
   }

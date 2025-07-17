@@ -12,9 +12,10 @@ import { TaxaFriendlyNames, nameColumnMap } from '@/utils/taxa'
 // import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 import FilterDialog from '@/views/project/media/FilterDialog.vue'
 import EditBatchDialog from '@/views/project/media/EditBatchDialog.vue'
+import DeleteDialog from '@/views/project/media/DeleteDialog.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaCard from '@/components/project/MediaCard.vue'
-import { buildMediaUrl } from '@/utils/util.js'
+import { buildMediaUrl } from '@/utils/mediaUtils.js'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id)
@@ -252,8 +253,6 @@ function getMediaThumbnailUrl(media) {
   if (media.media_id) {
     return {
       url: buildMediaUrl(projectId, media.media_id, 'thumbnail'),
-      width: media.thumbnail?.WIDTH || media.thumbnail?.width || 120,
-      height: media.thumbnail?.HEIGHT || media.thumbnail?.height || 120
     }
   }
   // Fallback to existing thumbnail object
@@ -438,6 +437,7 @@ function getMediaThumbnailUrl(media) {
     <div v-else>This project has no media</div>
   </LoadingIndicator>
   <EditBatchDialog :batchEdit="batchEdit"></EditBatchDialog>
+  <DeleteDialog :mediaToDelete="mediaToDelete"></DeleteDialog>
   <FilterDialog
     :setFilter="setFilter"
     :clearFilter="clearFilter"

@@ -64,13 +64,19 @@ export const useMediaStore = defineStore({
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/media/create/batch`
-      const response = await axios.post(url, mediaFormData)
-      if (response.status == 200) {
-        const media = response.data.media
-        this.addMedia(media)
-        return true
+      try {
+        const response = await axios.post(url, mediaFormData)
+        if (response.status == 200) {
+          const media = response.data.media
+          this.addMedia(media)
+          return true
+        }
+        return false
+      } catch (error) {
+        console.error('Error in createBatch:', error)
+        // Re-throw the error so the calling component can handle it
+        throw error
       }
-      return false
     },
     async edit(projectId, mediaId, mediaFormData) {
       const url = `${
@@ -85,19 +91,33 @@ export const useMediaStore = defineStore({
       return false
     },
     async editIds(projectId, mediaIds, json) {
+      console.log('MediaStore.editIds called with:', { projectId, mediaIds, json })
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/media/edit`
-      const response = await axios.post(url, {
-        media_ids: mediaIds,
-        media: json,
-      })
-      if (response.status == 200) {
-        const media = response.data.media
-        this.addMedia(media)
-        return true
+      console.log('Making request to:', url)
+      console.log('Request payload:', { media_ids: mediaIds, media: json })
+      
+      try {
+        const response = await axios.post(url, {
+          media_ids: mediaIds,
+          media: json,
+        })
+        console.log('Response status:', response.status)
+        console.log('Response data:', response.data)
+        
+        if (response.status == 200) {
+          const media = response.data.media
+          console.log('Updating media in store:', media)
+          this.addMedia(media)
+          return true
+        }
+        return false
+      } catch (error) {
+        console.error('Error in editIds:', error)
+        console.error('Error response:', error.response?.data)
+        return false
       }
-      return false
     },
     async deleteIds(projectId, mediaIds, remappedMediaIds = []) {
       const url = `${
@@ -114,10 +134,13 @@ export const useMediaStore = defineStore({
       return false
     },
     addMedia(media) {
+      console.log('addMedia called with:', media)
       for (const medium of media) {
         const id = medium.media_id
+        console.log(`Updating media ${id} in store:`, medium)
         this.map.set(id, medium)
       }
+      console.log('MediaStore map size after update:', this.map.size)
     },
     getMediaById(mediaId) {
       return this.map.get(mediaId)
