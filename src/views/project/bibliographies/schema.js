@@ -10,18 +10,22 @@ export const schema = {
   authors: {
     label: 'Authors',
     view: AuthorsListInput,
+    required: true,
   },
   pubyear: {
     label: 'Year',
     view: TextInput,
+    required: true,
   },
   article_title: {
     label: 'Article Title',
     view: TextArea,
+    required: true,
   },
   journal_title: {
     label: 'Journal or Book Title',
     view: TextArea,
+    required: true,
   },
   vol: {
     label: 'Volume',
@@ -50,6 +54,7 @@ export const schema = {
   reference_type: {
     label: 'Reference Type',
     view: SelectInput,
+    required: true,
     args: {
       options: {
         Generic: 0,
@@ -114,7 +119,7 @@ export const schema = {
   user_id: {
     label: 'This item is owned by',
     view: TextContent,
-    existed: true,
+    readOnlySystemField: true,
     args: {
       getText: getUserName,
     },
@@ -122,6 +127,6 @@ export const schema = {
   created_on: {
     label: 'Created on',
     view: DateText,
-    existed: true,
+    readOnlySystemField: true,
   },
 }
