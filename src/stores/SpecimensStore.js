@@ -134,7 +134,7 @@ export const useSpecimensStore = defineStore({
       const specimens = []
       for (const specimenId of specimenIds) {
         if (this.map.has(specimenId)) {
-          specimens.push(specimen)
+          specimens.push(this.map.get(specimenId))
         }
       }
       return specimens

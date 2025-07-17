@@ -796,28 +796,27 @@ async function handleSubmit() {
       return
     }
 
-    // Create FormData object for multipart/form-data submission
-    const projectFormData = new FormData()
+    // Create JSON object for project creation
+    const projectData = {}
 
-    // Add all form fields to FormData
+    // Add all form fields to JSON
     for (const [key, value] of Object.entries(formData)) {
       if (key === 'journal_cover') {
-        if (value) {
-          projectFormData.append('journal_cover', value)
-        }
+        // Skip journal cover - will be passed separately
+        continue
       } else if (key === 'allow_reviewer_login') {
         // Ensure allow_reviewer_login is sent as 0 or 1
-        projectFormData.append(key, value === true || value === '1' ? '1' : '0')
+        projectData[key] = value === true || value === '1' ? '1' : '0'
       } else {
         // Convert all values to strings to ensure proper transmission
         const stringValue =
           value !== null && value !== undefined ? String(value) : ''
-        projectFormData.append(key, stringValue)
+        projectData[key] = stringValue
       }
     }
 
-    // Create project with FormData
-    const project = await projectsStore.createProject(projectFormData)
+    // Create project with optional journal cover in a single API call
+    const project = await projectsStore.createProject(projectData, formData.journal_cover)
 
     if (!project) {
       throw new Error('Failed to create project')
@@ -837,7 +836,7 @@ async function handleSubmit() {
 
 function validateForm() {
   // Basic validation
-  if (!formData.name || !formData.nsf_funded) {
+  if (!formData.name || formData.nsf_funded === '') {
     alert('Please fill in all required fields')
     return false
   }

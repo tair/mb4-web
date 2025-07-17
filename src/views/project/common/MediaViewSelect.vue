@@ -14,7 +14,7 @@ defineProps({
 
 const mediaViewsStore = useMediaViewsStore()
 const options = computed(() => {
-  const views = { '- NONE - ': 0 }
+  const views = { '- NONE - ': '' }
   for (const mediaView of mediaViewsStore.mediaViews) {
     views[mediaView.name] = mediaView.view_id
   }
