@@ -142,20 +142,6 @@ async function onDownloadOntology() {
   })
 }
 
-async function toggleMatrixStreaming() {
-  const url = new URL(`${baseUrl}/setPreference`)
-  const value = !matrix.preferences?.ENABLE_STREAMING | 0
-  const response = await axios.post(url, {
-    name: 'ENABLE_STREAMING',
-    value: value,
-  })
-  if (response.status == 200) {
-    matrix.preferences.ENABLE_STREAMING = value
-  } else {
-    alert(response.data?.message || 'Failed to set preferences')
-  }
-}
-
 async function onRun() {
   const url = new URL(`${baseUrl}/run`)
   const searchParams = url.searchParams
@@ -550,41 +536,19 @@ function getStatusClass(status) {
           :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/edit`"
           target="_blank"
         >
-          <button type="button" class="btn btn-sm btn-primary">Open</button>
+          <button type="button" class="btn btn-sm btn-secondary pencil-btn">
+            <i class="fa-regular fa-pen-to-square"></i>
+          </button>
         </RouterLink>
         <button
           v-if="canEditMatrix"
           type="button"
           class="btn btn-sm btn-secondary"
-          tooltip="Click here to name this matrix, block the scoring, and use various automated features"
+          tooltip="Click here to name this matrix, enable streaming, block the scoring, and use various automated features"
           @click="navigateToSettings"
         >
-          <i class="fa-regular fa-pen-to-square"></i>
+          <i class="fa-solid fa-gear"></i>
         </button>
-        <div class="btn-group">
-          <button
-            type="button"
-            class="btn btn-sm btn-secondary dropdown-toggle"
-            data-bs-toggle="dropdown"
-          >
-            <i class="fa-solid fa-gear"></i>
-          </button>
-          <div class="dropdown-menu">
-            <h6 class="dropdown-header">Settings:</h6>
-            <div class="dropdown-divider"></div>
-            <button
-              type="button"
-              class="dropdown-item"
-              @click="toggleMatrixStreaming"
-            >
-              <i
-                class="fa-solid fa-check"
-                :class="{ hidden: !matrix.preferences?.ENABLE_STREAMING }"
-              ></i>
-              Enable Streaming
-            </button>
-          </div>
-        </div>
       </div>
     </div>
     <ul class="nav nav-tabs" id="myTab" role="tablist">
@@ -1089,6 +1053,27 @@ function getStatusClass(status) {
 .matrix-card .title .buttons {
   display: flex;
   gap: 7px;
+}
+
+/* Orange themed pencil button */
+.pencil-btn {
+  background-color: var(--theme-orange, #ef782f) !important;
+  border-color: var(--theme-orange, #ef782f) !important;
+  color: white !important;
+}
+
+.pencil-btn:hover {
+  background-color: var(--theme-orange-hover, #d9682a) !important;
+  border-color: var(--theme-orange-hover, #d9682a) !important;
+  color: white !important;
+}
+
+.pencil-btn:focus,
+.pencil-btn:active {
+  background-color: var(--theme-orange-active, #c35a25) !important;
+  border-color: var(--theme-orange-active, #c35a25) !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(239, 120, 47, 0.25) !important;
 }
 
 .matrix-card .tab-content {
