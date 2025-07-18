@@ -624,39 +624,18 @@ function getStatusClass(status) {
           {{ matrix.counts.media_label ?? 0 }} labels attached to cell images;
           {{ matrix.counts.character_media ?? 0 }} character images;
         </div>
-        <RouterLink
+        <br />
+        <div class="tab-content-buttons">
+          <RouterLink
           :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/characters`"
           target="_blank"
         >
-          <button type="button" class="btn btn-sm btn-secondary">
+          <button type="button" class="btn btn-primary">
             Edit Characters
           </button>
         </RouterLink>
-      </div>
-      <!--
-      <div
-        v-if="refresh != 'true'"
-        class="tab-pane fade show active"
-        :id="'home' + matrix.matrix_id"
-        role="tabpanel"
-      >
-        The matrix contains:
-        <div class="description">
-          {{ matrix.counts.cell ?? 0 }} scorings;
-          {{ matrix.counts.taxa ?? 0 }} taxa;
-          {{ matrix.counts.character ?? 0 }} characters;
-          {{ matrix.counts.cell_media ?? 0 }} cell images;
-          {{ matrix.counts.media_label ?? 0 }} labels attached to cell images;
-          {{ matrix.counts.character_media ?? 0 }} character images;
         </div>
-        <RouterLink
-          :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/characters`"
-          target="_blank"
-        >
-          <button type="button" class="btn btn-primary">Edit Characters</button>
-        </RouterLink>
       </div>
-      -->
       <div
         class="tab-pane fade"
         :id="'download' + matrix.matrix_id"
