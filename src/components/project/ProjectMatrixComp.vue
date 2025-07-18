@@ -42,16 +42,19 @@ const partitionId = ref('')
 
 const projectId = route.params.id
 const matrixId = props.matrix.matrix_id
+const taxonNames = props.matrix.taxonNames
 const baseUrl = `${
   import.meta.env.VITE_API_URL
 }/projects/${projectId}/matrices/${matrixId}`
 
 const tools = new Map()
 tools.set('PAUPRAT', 'PAUP Ratchet')
-//tools.set('MRBAYES_XSEDE', 'Mr Bayes')
-const tool = ref(tools.keys()?.next()?.value)
+tools.set('MRBAYES_XSEDE', 'Mr Bayes')
+const toolvalue = route.query.toolvalue
+let tool = toolvalue == null? ref(tools.keys()?.next()?.value) : toolvalue
 const jobName = ref('')
 const jobNote = ref('')
+
 const jobNumIterations = ref(200)
 const jobCharsToPermute = ref('')
 const jobBranchSwappingAlgorithms = new Map()
@@ -60,12 +63,30 @@ jobBranchSwappingAlgorithms.set('spr', 'subtree pruning and grafting')
 jobBranchSwappingAlgorithms.set('nni', 'nearest neighbor interchange')
 const jobBranchSwappingAlgorithm = ref(jobBranchSwappingAlgorithms.keys()?.next()?.value)
 
+const mrbayesblockquery = ref('1')
+const nruns_specified = ref(2)
+const nchains_specified = ref(4)
+const outgroups = new Map()
+outgroups.set('', 'None')
+for (const taxonName of taxonNames) { 
+  outgroups.set(taxonName, taxonName)
+}
+const set_outgroup = ref(outgroups.keys()?.next()?.value)
+const runtime = ref(4.0)
+const ngenval = ref(20000)
+const nrunsval = ref(2)
+const nchainsval = ref(4)
+const samplefreqval = ref(1000)
+const specify_diagnfreqval = ref(5000)
+const burninfracval = ref(0.25)
+
 const currentMatrixJobs = props.jobs?.filter(job => job.matrix_id == matrixId)
 const refresh = route.query.refresh
-const homeButtonClass = (refresh != true)? 'nav-link active' : 'nav-link'
-const buildatreeButtonClass = (refresh == true)? 'nav-link active' : 'nav-link'
-const homePanelClass = (refresh != true)? 'tab-pane fade show active' : 'tab-pane fade'
-const buildatreePanelClass = (refresh == true)? 'tab-pane fade show active' : 'tab-pane fade'
+const refreshId = route.query.refreshid
+const homeButtonClass = (refresh != 'true')? 'nav-link active' : ((refresh == 'true' && refreshId == matrixId)? 'nav-link' : 'nav-link active')
+const buildatreeButtonClass = (refresh == 'true' && refreshId == matrixId)? 'nav-link active' : 'nav-link'
+const homePanelClass = (refresh != 'true')? 'tab-pane fade show active' : ((refresh == 'true' && refreshId == matrixId)? 'tab-pane fade' : 'tab-pane fade show active')
+const buildatreePanelClass = (refresh == 'true' && refreshId == matrixId)? 'tab-pane fade show active' : 'tab-pane fade'
 
 async function onDownloadMatrix() {
   const url = new URL(`${baseUrl}/download`)
@@ -128,14 +149,35 @@ async function onRun() {
       if (jobNote.value) {
         searchParams.append('jobNote', jobNote.value)
       }
-      if (jobNumIterations.value && jobNumIterations.value > 0) {
-        searchParams.append('jobNumIterations', jobNumIterations.value)
+      if (tool.value == 'PAUPRAT') {
+        if (jobNumIterations.value && jobNumIterations.value > 0) {
+          searchParams.append('jobNumIterations', jobNumIterations.value)
+        }
+        if (jobCharsToPermute.value ) {
+          searchParams.append('jobCharsToPermute', jobCharsToPermute.value)
+        }
+        if (jobBranchSwappingAlgorithm.value ) {
+          searchParams.append('jobBranchSwappingAlgorithm', jobBranchSwappingAlgorithm.value)
+        }
       }
-      if (jobCharsToPermute.value ) {
-        searchParams.append('jobCharsToPermute', jobCharsToPermute.value)
-      }
-      if (jobBranchSwappingAlgorithm.value ) {
-        searchParams.append('jobBranchSwappingAlgorithm', jobBranchSwappingAlgorithm.value)
+      else if (tool.value == 'MRBAYES_XSEDE') {
+        searchParams.append('mrbayesblockquery', mrbayesblockquery.value)
+        if (mrbayesblockquery.value == '1') {
+          searchParams.append('nruns_specified', nruns_specified.value)
+          searchParams.append('nchains_specified', nchains_specified.value)
+          searchParams.append('runtime', runtime.value)
+        }
+        if (mrbayesblockquery.value == '0') {
+          if (set_outgroup != '') {
+            searchParams.append('set_outgroup', set_outgroup.value)
+          }
+          searchParams.append('ngenval', ngenval.value)
+          searchParams.append('nrunsval', nrunsval.value)
+          searchParams.append('nchainsval', nchainsval.value)
+          searchParams.append('samplefreqval', samplefreqval.value)
+          searchParams.append('specify_diagnfreqval', specify_diagnfreqval.value)
+          searchParams.append('burninfracval', burninfracval.value)
+        }
       }
       sendCipresRequest(url)
 }
@@ -148,9 +190,9 @@ async function sendCipresRequest(url) {
         let urlNew = window.location.href    
         if (urlNew.indexOf('?') > -1){
           if (urlNew.indexOf('refresh=true') < 0)
-            urlNew += '&refresh=true'
+            urlNew += '&refresh=true&refreshid=' + matrixId + "&toolvalue=" + tool.value
         } else {
-          urlNew += '?refresh=true'
+          urlNew += '?refresh=true&refreshid=' + matrixId + "&toolvalue=" + tool.value
         }
         window.location.href = urlNew
       }
@@ -183,11 +225,10 @@ async function onDownloadJobResults(url, filename, ck, cr) {
  
     if (!response.ok)
     {
-      throw new Error(`Failed to download results: ${response.statusText}`)
+      throw new Error(`Failed to download results: ${response.status}`)
     }
     const blob = await response.blob()
     const contentType = response.headers.get('Content-Type')
-
     const blobUrl = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = blobUrl
@@ -254,7 +295,7 @@ async function onDownloadJobResults(url, filename, ck, cr) {
     <ul class="nav nav-tabs" id="myTab" role="tablist">
       <li class="nav-item" role="presentation">
         <button
-          :class="(refresh != 'true')? 'nav-link active' : 'nav-link'"
+          :class="homeButtonClass"
           id="homeTab"
           data-bs-toggle="tab"
           :data-bs-target="'#home' + matrix.matrix_id"
@@ -281,7 +322,7 @@ async function onDownloadJobResults(url, filename, ck, cr) {
       </li>
       <li class="nav-item" role="presentation">
         <button
-          :class="(refresh == 'true')? 'nav-link active' : 'nav-link'"
+          :class="buildatreeButtonClass"
           id="buildTab"
           data-bs-toggle="tab"
           :data-bs-target="'#build' + matrix.matrix_id"
@@ -296,7 +337,7 @@ async function onDownloadJobResults(url, filename, ck, cr) {
     </ul>
     <div class="tab-content">
       <div
-        :class="(refresh != 'true')? 'tab-pane fade show active' : 'tab-pane fade'"
+        :class="homePanelClass"
         :id="'home' + matrix.matrix_id"
         role="tabpanel"
       >
@@ -420,7 +461,7 @@ async function onDownloadJobResults(url, filename, ck, cr) {
         </div>
       </div>
       <div
-        :class="(refresh == 'true')? 'tab-pane fade show active' : 'tab-pane fade'"
+        :class="buildatreePanelClass"
         :id="'build' + matrix.matrix_id"
         role="tabpanel"
       >
@@ -446,7 +487,7 @@ async function onDownloadJobResults(url, filename, ck, cr) {
               Run 
             </button> 
           </div>
-          <div class="read-only">
+          <div v-if="tool === 'PAUPRAT'" class="read-only">
              The Parsimony Ratchet (Kevin Nixon, 1999) improves the ability to find shortest trees during heuristic searches on larget database (it is ok to use on small ones too). You can use it to search for a tree or tree(s) based on your MorphoBank matrix. Set your parameters below and click "Run" and MorphoBank will write the commands for you to use the program PAUPRat (Sikes and Lewis, 2001) to execute the Parsimony Ratchet on in PAUP* via CIPRES<br>The commands tell PAUP* to to this:<br>
            <ol>
              <li>Conduct an heuristic search from scratch for a starting tree. This will use the Branch Swapping Algorithm that you select.</li>
@@ -456,7 +497,13 @@ async function onDownloadJobResults(url, filename, ck, cr) {
            </ol>
            <br>You can learn more about the Parsimony Ratchet <a href="http://onlinelibrary.wiley.com/doi/10.1111/j.1096-0031.1999.tb00277.x/abstract">here</a> and <a href="http://www.iab.uaf.edu/people/derek_sikes/PAUPRat_manual.pdf">here</a>.<br>Two default parameters are set verbose defaults to "terse" and starting seed to 0.
           </div>
-          <div>
+          <div v-if="tool === 'MRBAYES_XSEDE'" class="read-only">
+           <ul>
+             <li>MorphoBank runs Mr Bayes 3.2.7a at CIPRES</li>
+             <li>Substitution Model: gamma-shaped rate variation with all substitution rates equal</li>
+           </ul>
+          </div>
+          <div v-if="tool === 'PAUPRAT'">
            <table>
             <thead>
               <tr>
@@ -487,19 +534,105 @@ async function onDownloadJobResults(url, filename, ck, cr) {
             </tbody>
            </table>
           </div>
+          <div v-if="tool === 'MRBAYES_XSEDE'">
+            <div class="red">*required</div>
+            <div>
+              Matrix contains a Mr Bayes block<b class="red">*&nbsp;&nbsp;</b>
+              <label>
+                <input type="radio" v-model="mrbayesblockquery" value="1" name="blockRadioGroup">
+                Yes 
+              </label>
+              <label>
+                <input type="radio" v-model="mrbayesblockquery" value="0" name="blockRadioGroup">
+                No 
+              </label>
+            </div>
+            <div v-if="mrbayesblockquery === '1'">
+              <table>
+                <thead>
+                  <tr>
+                    <th>&nbsp;</th>
+                    <th>&nbsp;</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td title="The values entered for nruns and nchains influence the number of cpu's that can be used in parallel.  Please enter the value you specified for nruns in the MrBayes block of the Nexus file.  If you didn't specify a value for nruns, please leave this field at its default value of 2.">My Mr Bayes blcok specifies</td>
+                    <td title="The values entered for nruns and nchains influence the number of cpu's that can be used in parallel.  Please enter the value you specified for nruns in the MrBayes block of the Nexus file.  If you didn't specify a value for nruns, please leave this field at its default value of 2."><input type="number" v-model="nruns_specified" value=2 /> nruns</td>
+                  </tr>
+                  <tr>
+                    <td title="The values entered for nruns and nchains influence the number of cpu's that can be used in parallel.  Please enter the value you specified for nchains in the MrBayes block of the Nexus file.  If you didn't specify a value for nchains, please leave this field at its default value of 4.">My Mr Bayes blcok specifies</td>
+                    <td title="The values entered for nruns and nchains influence the number of cpu's that can be used in parallel.  Please enter the value you specified for nchains in the MrBayes block of the Nexus file.  If you didn't specify a value for nchains, please leave this field at its default value of 4."><input type="number" v-model="nchains_specified" value=2 /> nchains</td>
+                  </tr>
+                  <tr>
+                    <td>Maximum hours to run<b class="red">*</b></td>
+                    <td><input type="number" v-model="runtime" value=4 /></td>
+                  </tr>
+                </tbody>
+              </table>
+              <!--
+              My Mr Bayes blcok specifies&nbsp;&nbsp;<input type="number" v-model="nruns_specified" value=2 title="The values entered for nruns and nchains influence the number of cpu's that can be used in parallel.  Please enter the value you specified for nruns in the MrBayes block of the Nexus file.  If you didn't specify a value for nruns, please leave this field at its default value of 2."/> nruns<br>
+              My Mr Bayes blcok specifies&nbsp;&nbsp;<input type="number" v-model="nchains_specified" value=4 title="The values entered for nruns and nchains influence the number of cpu's that can be used in parallel.  Please enter the value you specified for nchains in the MrBayes block of the Nexus file.  If you didn't specify a value for nchains, please leave this field at its default value of 4."/> nchains<br>
+              Maximum hours to run<b class="red">*</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="number" v-model="runtime" value=4 />
+              -->
+            </div>
+            <div v-if="mrbayesblockquery === '0'">
+              <div>
+                <b>Simple parameters</b>
+              </div>
+              Outgroup&nbsp;
+              <select v-model="set_outgroup">
+                <option v-for="[val, name] in outgroups" v-bind:value="val">
+                  {{ name }}
+                </option>
+              </select>
+              <br><br>
+              <b>Parameters for MCMC</b>
+              <table>
+                <tbody>
+                  <tr>
+                    <td title="">MCMC number of generations<b class="red">*</b></td>
+                    <td title=""><input type="number" v-model="ngenval" min="5000" stop="1" value=20000 /></td>
+                  </tr>
+                  <tr>
+                    <td title="">Number of runs<b class="red">*</b></td>
+                    <td title=""><input type="number" v-model="nrunsval" value=2 /></td>
+                  </tr>
+                  <tr>
+                    <td title="">Heated chains<b class="red">*</b></td>
+                    <td title=""><input type="number" v-model="nchainsval" value=4 /></td>
+                  </tr>
+                  <tr>
+                    <td title="">Sampling frequency<b class="red">*</b>, every</td>
+                    <td title=""><input type="number" v-model="samplefreqval" value=1000 /></td>
+                  </tr>
+                  <tr>
+                    <td title="">Diagnostic run frequency<b class="red">*</b>, every</td>
+                    <td title=""><input type="number" v-model="specify_diagnfreqval" value=5000 /></td>
+                  </tr>
+                  <tr>
+                    <td title="">Burnin<b class="red">*</b></td>
+                    <td title=""><input type="number" v-model="burninfracval" value=0.25 min="0" max="1" step="0.01" /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
         <hr class="bold_hr" />
         <div v-if="currentMatrixJobs?.length > 0">
           <h6><b>Previous runs:</b></h6>
           <div v-for="job in currentMatrixJobs">
-             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <p><b>Job name</b>:{{ job.jobname }}: <b>Run on</b>: {{ job.created_on }} <b>Tool</b>: {{ job.cipres_tool }} <b>Status</b>: {{ job.cipres_last_status }}</p>
+             <div v-if="job.cipres_tool == tool" style="display: flex; justify-content: space-between; align-items: center;">
+                <p><b>Job name</b>:{{ job.jobname }} <b>Run on</b>: {{ job.created_on }} <b>Tool</b>: {{ job.cipres_tool }} <b>Status</b>: {{ job.cipres_last_status }}</p>
                 <p><button v-if="job.cipres_last_status == 'COMPLETED'" type="button" class="btn btn-sm btn-secondary" title="To see the commands MorphoBank sent to CIPRES open the file .nex that CIPRES returned to you." @click="onDownloadJob(job.user_id, job.jobname, job.cipres_job_id, job.request_id, job.cu, job.ck, job.cr, job.ca)">Download</button>
                 <button type="button" class="btn btn-sm btn-primary" @click="onDelete(job.jobname, job.cipres_job_id)">Delete</button></p>
              </div>
-             <b>Notes</b>: {{ job.notes }}<br>
-             <b>Parameters</b>: {{ job.cipres_settings }}
-             <hr/>
+             <div v-if="job.cipres_tool == tool">
+                <b>Notes</b>: {{ job.notes }}<br>
+                <b>Parameters</b>: {{ job.cipres_settings }}
+                <hr/>
+             </div>
           </div>
         </div>
       </div>
@@ -545,15 +678,20 @@ async function onDownloadJobResults(url, filename, ck, cr) {
   visibility: hidden;
 }
 
+.red {
+  color: red;
+}
+
 .read-only {
   background-color: silver;
 }
+
 textarea {
   width: 580px;
   height: 150px;
 }
 input[type='number']{
-    width: 55px;
+    width: 75px;
 } 
 th, td {
   padding-right: 25px;
