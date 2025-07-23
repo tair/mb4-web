@@ -19,6 +19,60 @@ app.use(createPinia())
 import router from './router'
 app.use(router)
 
+// Session Management Setup
+import sessionManager from './lib/session-manager.js'
+import axios from 'axios'
+
+// Set up axios interceptors for automatic session header injection
+axios.interceptors.request.use(
+  (config) => {
+    // Skip session headers for public endpoints (if explicitly marked)
+    if (config.skipSessionHeaders) {
+      return config
+    }
+    
+    // Auto-renew session if needed before making requests
+    sessionManager.autoRenewIfNeeded()
+    
+    // Add session key header to all requests
+    const sessionKey = sessionManager.getSessionKey()
+    if (sessionKey) {
+      config.headers['x-session-key'] = sessionKey
+    }
+    
+    // Add fingerprint header for bot detection
+    const fingerprint = sessionManager.getFingerprint()
+    if (fingerprint) {
+      config.headers['x-session-fingerprint'] = fingerprint
+    }
+    
+    // Update session activity on each request
+    sessionManager.updateSessionActivity()
+    
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
+
+// Optional: Set up response interceptor for session-related error handling
+axios.interceptors.response.use(
+  (response) => {
+    return response
+  },
+  (error) => {
+    // Handle session-related errors (e.g., if server requests session renewal)
+    if (error.response && error.response.status === 401 && error.response.data?.renewSession) {
+      sessionManager.renewSession()
+      // Optionally retry the request with new session
+    }
+    return Promise.reject(error)
+  }
+)
+
+console.log('Session Manager initialized:', sessionManager.getSessionMetadata())
+
 app.use(VueTippy, {
   defaultProps: {
     placement: 'bottom-end',
