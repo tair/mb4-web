@@ -72,32 +72,35 @@ export const useProjectsStore = defineStore({
         }
       }
     },
-    async createProject(projectData) {
+    async createProject(projectData, journalCoverFile = null) {
       try {
-        // Log the data being sent
-        // if (projectData instanceof FormData) {
-        //   const formDataObj = {}
-        //   for (const [key, value] of projectData.entries()) {
-        //     formDataObj[key] = value
-        //   }
-        //   console.log("Sending FormData to API:", formDataObj)
-        // } else {
-        //   console.log("Sending data to API:", projectData)
-        // }
+        let requestData
+        let headers = {}
+
+        if (journalCoverFile) {
+          // Use FormData for file upload
+          const formData = new FormData()
+          
+          // Add all project data as JSON string
+          formData.append('projectData', JSON.stringify(projectData))
+          
+          // Add journal cover file
+          formData.append('journal_cover', journalCoverFile)
+          
+          requestData = formData
+          // Don't set Content-Type header - let browser set it with boundary
+        } else {
+          // Use JSON for project data only
+          requestData = projectData
+          headers = {
+            'Content-Type': 'application/json',
+          }
+        }
 
         const response = await axios.post(
           `${import.meta.env.VITE_API_URL}/projects/create`,
-          projectData,
-          {
-            headers:
-              projectData instanceof FormData
-                ? {
-                    'Content-Type': 'multipart/form-data',
-                  }
-                : {
-                    'Content-Type': 'application/json',
-                  },
-          }
+          requestData,
+          { headers }
         )
 
         // Add the new project to the store's cache so it appears in the dashboard

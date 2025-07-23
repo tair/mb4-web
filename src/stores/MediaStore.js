@@ -64,13 +64,19 @@ export const useMediaStore = defineStore({
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/media/create/batch`
-      const response = await axios.post(url, mediaFormData)
-      if (response.status == 200) {
-        const media = response.data.media
-        this.addMedia(media)
-        return true
+      try {
+        const response = await axios.post(url, mediaFormData)
+        if (response.status == 200) {
+          const media = response.data.media
+          this.addMedia(media)
+          return true
+        }
+        return false
+      } catch (error) {
+        console.error('Error in createBatch:', error)
+        // Re-throw the error so the calling component can handle it
+        throw error
       }
-      return false
     },
     async edit(projectId, mediaId, mediaFormData) {
       const url = `${
@@ -88,16 +94,24 @@ export const useMediaStore = defineStore({
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/media/edit`
-      const response = await axios.post(url, {
-        media_ids: mediaIds,
-        media: json,
-      })
-      if (response.status == 200) {
-        const media = response.data.media
-        this.addMedia(media)
-        return true
+      
+      try {
+        const response = await axios.post(url, {
+          media_ids: mediaIds,
+          media: json,
+        })
+        
+        if (response.status == 200) {
+          const media = response.data.media
+          this.addMedia(media)
+          return true
+        }
+        return false
+      } catch (error) {
+        console.error('Error in editIds:', error)
+        console.error('Error response:', error.response?.data)
+        return false
       }
-      return false
     },
     async deleteIds(projectId, mediaIds, remappedMediaIds = []) {
       const url = `${
