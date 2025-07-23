@@ -16,7 +16,6 @@ const projectStore = usePublicProjectDetailsStore()
 const projectId = route.params.id
 
 onMounted(() => {
-  projectStore.fetchProject(projectId)
   // Track project overview view
   logView({ project_id: projectId, hit_type: HIT_TYPES.PROJECT })
 })
