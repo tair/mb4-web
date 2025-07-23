@@ -2,7 +2,7 @@
 import Tooltip from '@/components/main/Tooltip.vue'
 import { formatBytes, formatNumber } from '@/utils/format'
 import { buildMediaUrl } from '@/utils/mediaUtils.js'
-import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore'
+// import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore' // No longer needed
 import { ref, onMounted, computed } from 'vue'
 // import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 
@@ -48,31 +48,15 @@ const props = defineProps<{
   projectId: string | number
 }>()
 
-const overviewStore = useProjectOverviewStore()
+// const overviewStore = useProjectOverviewStore() // No longer needed
 const exemplarMedia = ref(null)
 
-// Computed property to get overview data
-// For published projects, use props.overview; for private projects, use store
-const overview = computed(() => {
-  // If we have overview data from props (published projects), use that
-  if (props.overview && Object.keys(props.overview).length > 0) {
-    return props.overview
-  }
-  // Otherwise use the store data (private projects)
-  return overviewStore.overview
-})
+// Computed property to get overview data - now always uses props
+const overview = computed(() => props.overview)
 
 onMounted(async () => {
-  // Only fetch from store if we don't have overview data from props
-  if (!props.overview || Object.keys(props.overview).length === 0) {
-    // This is a private project - load data from API
-    await overviewStore.fetchProject(props.projectId)
-  }
-  
-  // Use the image_props from the overview data (whether from props or store)
-  const currentOverview = props.overview && Object.keys(props.overview).length > 0 
-    ? props.overview 
-    : overviewStore.overview
+  // Use the image_props from the overview data (should come from props)
+  const currentOverview = props.overview
     
   if (currentOverview?.image_props && Object.keys(currentOverview.image_props).length > 0) {
     // Convert image_props to the format expected by the template
