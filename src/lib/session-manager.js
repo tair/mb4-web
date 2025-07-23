@@ -4,19 +4,104 @@
  * Based on existing infrastructure analysis from Specifications.txt
  */
 
+// Configuration constants
+const SESSION_CONFIG = {
+  MAX_AGE: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+  STORAGE_PREFIX: 'mb-session',
+  CANVAS_TEXT: 'Session fingerprint',
+  CANVAS_FONT: '14px Arial'
+}
+
 class SessionManager {
   constructor() {
     this.sessionKey = null
     this.fingerprint = null
-    this.init()
+    this.storageAvailable = false
+    this.initialized = false
+    // Don't auto-initialize - wait for explicit call
   }
 
   /**
-   * Initialize session manager
+   * Check if localStorage is available and working
+   */
+  checkStorageAvailability() {
+    try {
+      const testKey = '__storage_test__'
+      localStorage.setItem(testKey, 'test')
+      localStorage.removeItem(testKey)
+      this.storageAvailable = true
+      return true
+    } catch (error) {
+      console.warn('localStorage not available, using memory-only session:', error.message)
+      this.storageAvailable = false
+      return false
+    }
+  }
+
+  /**
+   * Safe localStorage operations with fallbacks
+   */
+  safeSetItem(key, value) {
+    if (this.storageAvailable) {
+      try {
+        localStorage.setItem(key, value)
+        return true
+      } catch (error) {
+        console.warn('Failed to write to localStorage:', error.message)
+        this.storageAvailable = false
+      }
+    }
+    // Fallback: store in memory (will not persist across page reloads)
+    this[`_memory_${key}`] = value
+    return false
+  }
+
+  safeGetItem(key) {
+    if (this.storageAvailable) {
+      try {
+        return localStorage.getItem(key)
+      } catch (error) {
+        console.warn('Failed to read from localStorage:', error.message)
+        this.storageAvailable = false
+      }
+    }
+    // Fallback: get from memory
+    return this[`_memory_${key}`] || null
+  }
+
+  safeRemoveItem(key) {
+    if (this.storageAvailable) {
+      try {
+        localStorage.removeItem(key)
+      } catch (error) {
+        console.warn('Failed to remove from localStorage:', error.message)
+        this.storageAvailable = false
+      }
+    }
+    // Fallback: remove from memory
+    delete this[`_memory_${key}`]
+  }
+
+  /**
+   * Initialize session manager (call explicitly when ready)
    */
   init() {
-    this.loadOrCreateSession()
-    this.generateFingerprint()
+    if (this.initialized) {
+      return // Already initialized
+    }
+
+    try {
+      this.checkStorageAvailability()
+      this.loadOrCreateSession()
+      this.generateFingerprint()
+      this.initialized = true
+    } catch (error) {
+      console.error('Session manager initialization failed:', error)
+      // Create minimal fallback session
+      this.sessionKey = this.generateSecureSessionId()
+      this.fingerprint = 'fallback-fingerprint'
+      this.initialized = true
+    }
   }
 
   /**
@@ -24,7 +109,7 @@ class SessionManager {
    */
   loadOrCreateSession() {
     // Try to load existing session from localStorage
-    const storedSession = localStorage.getItem('mb-session-key')
+    const storedSession = this.safeGetItem(`${SESSION_CONFIG.STORAGE_PREFIX}-key`)
     
     if (storedSession && this.isValidSessionKey(storedSession)) {
       this.sessionKey = storedSession
@@ -39,8 +124,8 @@ class SessionManager {
    */
   createNewSession() {
     this.sessionKey = this.generateSecureSessionId()
-    localStorage.setItem('mb-session-key', this.sessionKey)
-    localStorage.setItem('mb-session-created', Date.now().toString())
+    this.safeSetItem(`${SESSION_CONFIG.STORAGE_PREFIX}-key`, this.sessionKey)
+    this.safeSetItem(`${SESSION_CONFIG.STORAGE_PREFIX}-created`, Date.now().toString())
     this.updateSessionActivity()
   }
 
@@ -69,7 +154,7 @@ class SessionManager {
    * Update session activity timestamp
    */
   updateSessionActivity() {
-    localStorage.setItem('mb-session-activity', Date.now().toString())
+    this.safeSetItem(`${SESSION_CONFIG.STORAGE_PREFIX}-activity`, Date.now().toString())
   }
 
   /**
@@ -80,31 +165,84 @@ class SessionManager {
   }
 
   /**
-   * Generate browser fingerprint for bot detection
+   * Generate browser fingerprint for bot detection with error handling
    */
   generateFingerprint() {
-    const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d')
-    ctx.textBaseline = 'top'
-    ctx.font = '14px Arial'
-    ctx.fillText('Session fingerprint', 2, 2)
-    
-    const fingerprint = {
-      userAgent: navigator.userAgent,
-      language: navigator.language,
-      platform: navigator.platform,
-      screen: `${screen.width}x${screen.height}x${screen.colorDepth}`,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      canvas: canvas.toDataURL(),
-      memory: navigator.deviceMemory || 'unknown',
-      hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
-      cookieEnabled: navigator.cookieEnabled,
-      doNotTrack: navigator.doNotTrack,
-      timestamp: Date.now()
-    }
+    try {
+      let canvasData = 'unavailable'
+      
+      // Safely generate canvas fingerprint
+      try {
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          ctx.textBaseline = 'top'
+          ctx.font = SESSION_CONFIG.CANVAS_FONT
+          ctx.fillText(SESSION_CONFIG.CANVAS_TEXT, 2, 2)
+          canvasData = canvas.toDataURL()
+        }
+      } catch (canvasError) {
+        console.warn('Canvas fingerprinting failed:', canvasError.message)
+      }
+      
+      const fingerprint = {
+        userAgent: navigator.userAgent || 'unknown',
+        language: navigator.language || 'unknown',
+        platform: navigator.platform || 'unknown',
+        screen: this.safeGetScreenInfo(),
+        timezone: this.safeGetTimezone(),
+        canvas: canvasData,
+        memory: navigator.deviceMemory || 'unknown',
+        hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
+        cookieEnabled: this.safeCookieCheck(),
+        doNotTrack: navigator.doNotTrack || 'unknown',
+        timestamp: Date.now()
+      }
 
-    this.fingerprint = btoa(JSON.stringify(fingerprint))
-    return this.fingerprint
+      this.fingerprint = btoa(JSON.stringify(fingerprint))
+      return this.fingerprint
+    } catch (error) {
+      console.warn('Fingerprint generation failed, using fallback:', error.message)
+      this.fingerprint = btoa(JSON.stringify({
+        fallback: true,
+        timestamp: Date.now(),
+        error: error.message
+      }))
+      return this.fingerprint
+    }
+  }
+
+  /**
+   * Safely get screen information
+   */
+  safeGetScreenInfo() {
+    try {
+      return `${screen.width}x${screen.height}x${screen.colorDepth}`
+    } catch (error) {
+      return 'unknown'
+    }
+  }
+
+  /**
+   * Safely get timezone information
+   */
+  safeGetTimezone() {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone
+    } catch (error) {
+      return 'unknown'
+    }
+  }
+
+  /**
+   * Safely check cookie availability
+   */
+  safeCookieCheck() {
+    try {
+      return navigator.cookieEnabled
+    } catch (error) {
+      return false
+    }
   }
 
   /**
@@ -125,14 +263,15 @@ class SessionManager {
    * Get session metadata
    */
   getSessionMetadata() {
-    const created = localStorage.getItem('mb-session-created')
-    const activity = localStorage.getItem('mb-session-activity')
+    const created = this.safeGetItem(`${SESSION_CONFIG.STORAGE_PREFIX}-created`)
+    const activity = this.safeGetItem(`${SESSION_CONFIG.STORAGE_PREFIX}-activity`)
     
     return {
       sessionKey: this.sessionKey,
       created: created ? parseInt(created) : null,
       lastActivity: activity ? parseInt(activity) : null,
-      fingerprint: this.fingerprint
+      fingerprint: this.fingerprint,
+      storageAvailable: this.storageAvailable
     }
   }
 
@@ -140,9 +279,9 @@ class SessionManager {
    * Clear session
    */
   clearSession() {
-    localStorage.removeItem('mb-session-key')
-    localStorage.removeItem('mb-session-created')
-    localStorage.removeItem('mb-session-activity')
+    this.safeRemoveItem(`${SESSION_CONFIG.STORAGE_PREFIX}-key`)
+    this.safeRemoveItem(`${SESSION_CONFIG.STORAGE_PREFIX}-created`)
+    this.safeRemoveItem(`${SESSION_CONFIG.STORAGE_PREFIX}-activity`)
     this.sessionKey = null
   }
 
@@ -150,13 +289,11 @@ class SessionManager {
    * Check if session should be renewed (e.g., after 24 hours)
    */
   shouldRenewSession() {
-    const created = localStorage.getItem('mb-session-created')
+    const created = this.safeGetItem(`${SESSION_CONFIG.STORAGE_PREFIX}-created`)
     if (!created) return true
     
     const sessionAge = Date.now() - parseInt(created)
-    const maxAge = 24 * 60 * 60 * 1000 // 24 hours
-    
-    return sessionAge > maxAge
+    return sessionAge > SESSION_CONFIG.MAX_AGE
   }
 
   /**
