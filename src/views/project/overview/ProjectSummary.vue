@@ -2,7 +2,7 @@
 import Tooltip from '@/components/main/Tooltip.vue'
 import { formatBytes, formatNumber } from '@/utils/format'
 import { buildMediaUrl } from '@/utils/mediaUtils.js'
-import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore'
+// import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore' // No longer needed
 import { ref, onMounted, computed } from 'vue'
 // import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 
@@ -48,22 +48,21 @@ const props = defineProps<{
   projectId: string | number
 }>()
 
-const overviewStore = useProjectOverviewStore()
+// const overviewStore = useProjectOverviewStore() // No longer needed
 const exemplarMedia = ref(null)
 
-// Computed property to get overview data
-const overview = computed(() => overviewStore.overview)
+// Computed property to get overview data - now always uses props
+const overview = computed(() => props.overview)
 
 onMounted(async () => {
-  // Load the project overview data (which includes image_props for exemplar media)
-  await overviewStore.fetchProject(props.projectId)
-  
-  // Use the image_props from the overview data
-  if (overview.value?.image_props && Object.keys(overview.value.image_props).length > 0) {
+  // Use the image_props from the overview data (should come from props)
+  const currentOverview = props.overview
+    
+  if (currentOverview?.image_props && Object.keys(currentOverview.image_props).length > 0) {
     // Convert image_props to the format expected by the template
-    const imageProps = overview.value.image_props
+    const imageProps = currentOverview.image_props
     exemplarMedia.value = {
-      media_id: overview.value.exemplar_media_id, // Get media_id from the main overview
+      media_id: currentOverview.exemplar_media_id, // Get media_id from the main overview
       specimen_name: imageProps.specimen_name,
       view_name: imageProps.view_name,
     }

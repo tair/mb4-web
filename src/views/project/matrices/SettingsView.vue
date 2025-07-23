@@ -25,6 +25,7 @@ const formData = ref({
   otu: 'genus',
   DISABLE_SCORING: false,
   ENABLE_CELL_MEDIA_AUTOMATION: false,
+  ENABLE_STREAMING: false,
 })
 
 // Taxonomic unit options
@@ -36,6 +37,9 @@ const TOOLTIP_DISABLE_SCORING =
 
 const TOOLTIP_ENABLE_CELL_MEDIA_AUTOMATION =
   'Checking this box allows you to use a tool that automatically places media in cells (a huge time saver!). To use it, first be sure that your Media all have Views. Then affiliate exemplar Media with your character states and upload to MorphoBank Media for all your rows (taxa). If you then activate the arrow (in the matrix editor) the tool will first check what media Views are affiliated with your character states. If the taxa in your rows below have the same Media Views in the database the tool will automatically put those Media into cells. It does not score or label. It will not overwrite media that are already there. You can use the tool more than once and it will keep updating.'
+
+const TOOLTIP_ENABLE_STREAMING =
+  'Enables real-time synchronization of matrix changes across multiple users. When enabled, changes made by other users will appear in your matrix editor in real-time without needing to refresh.'
 
 const TOOLTIP_OPERATIONAL_TAXONOMIC_UNIT =
   'Sets the default Operational Taxonomic Unit (OTU) to use when importing a NEXUS or TNT file. The OTU is used to determine how to treat unary (one-word) taxa. For example, if the OTU is set to family, then all unary taxa in the uploaded NEXUS or TNT file will be treated as family names. Note that binomial and trinomials are always interpreted as genus/species and genus/species/subspecies respectively.'
@@ -94,6 +98,7 @@ async function loadData() {
         DISABLE_SCORING: otherOptions.DISABLE_SCORING || false,
         ENABLE_CELL_MEDIA_AUTOMATION:
           otherOptions.ENABLE_CELL_MEDIA_AUTOMATION || false,
+        ENABLE_STREAMING: otherOptions.ENABLE_STREAMING || false,
       }
 
       // Check if user has permission to delete this matrix
@@ -134,6 +139,7 @@ async function handleSubmit() {
     const matrixOptions = {
       DISABLE_SCORING: formData.value.DISABLE_SCORING,
       ENABLE_CELL_MEDIA_AUTOMATION: formData.value.ENABLE_CELL_MEDIA_AUTOMATION,
+      ENABLE_STREAMING: formData.value.ENABLE_STREAMING,
     }
 
     // Update matrix properties including other_options
@@ -316,6 +322,25 @@ onMounted(() => {
             />
             <span class="form-check-label"
               >Enable automatic media placement in cells</span
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            Enable Streaming
+            <Tooltip :content="TOOLTIP_ENABLE_STREAMING" />
+          </label>
+          <div class="form-check">
+            <input
+              type="checkbox"
+              name="ENABLE_STREAMING"
+              value="1"
+              v-model="formData.ENABLE_STREAMING"
+              class="form-check-input"
+            />
+            <span class="form-check-label"
+              >Enable real-time synchronization of matrix changes</span
             >
           </div>
         </div>
