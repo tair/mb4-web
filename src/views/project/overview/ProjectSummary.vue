@@ -52,18 +52,33 @@ const overviewStore = useProjectOverviewStore()
 const exemplarMedia = ref(null)
 
 // Computed property to get overview data
-const overview = computed(() => overviewStore.overview)
+// For published projects, use props.overview; for private projects, use store
+const overview = computed(() => {
+  // If we have overview data from props (published projects), use that
+  if (props.overview && Object.keys(props.overview).length > 0) {
+    return props.overview
+  }
+  // Otherwise use the store data (private projects)
+  return overviewStore.overview
+})
 
 onMounted(async () => {
-  // Load the project overview data (which includes image_props for exemplar media)
-  await overviewStore.fetchProject(props.projectId)
+  // Only fetch from store if we don't have overview data from props
+  if (!props.overview || Object.keys(props.overview).length === 0) {
+    // This is a private project - load data from API
+    await overviewStore.fetchProject(props.projectId)
+  }
   
-  // Use the image_props from the overview data
-  if (overview.value?.image_props && Object.keys(overview.value.image_props).length > 0) {
+  // Use the image_props from the overview data (whether from props or store)
+  const currentOverview = props.overview && Object.keys(props.overview).length > 0 
+    ? props.overview 
+    : overviewStore.overview
+    
+  if (currentOverview?.image_props && Object.keys(currentOverview.image_props).length > 0) {
     // Convert image_props to the format expected by the template
-    const imageProps = overview.value.image_props
+    const imageProps = currentOverview.image_props
     exemplarMedia.value = {
-      media_id: overview.value.exemplar_media_id, // Get media_id from the main overview
+      media_id: currentOverview.exemplar_media_id, // Get media_id from the main overview
       specimen_name: imageProps.specimen_name,
       view_name: imageProps.view_name,
     }
