@@ -71,7 +71,6 @@ axios.interceptors.response.use(
   }
 )
 
-console.log('Session Manager initialized:', sessionManager.getSessionMetadata())
 
 app.use(VueTippy, {
   defaultProps: {
