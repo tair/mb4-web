@@ -30,11 +30,15 @@ const validationErrors = ref<string[]>([])
 // Function to validate form data
 function validateForm(formData: any) {
   validationErrors.value = []
-  
-  if (!formData.specimen_id || formData.specimen_id === '0' || formData.specimen_id === 0) {
+
+  if (
+    !formData.specimen_id ||
+    formData.specimen_id === '0' ||
+    formData.specimen_id === 0
+  ) {
     validationErrors.value.push('Specimen must be assigned to release media')
   }
-  
+
   if (!formData.view_id || formData.view_id === '0' || formData.view_id === 0) {
     validationErrors.value.push('View must be assigned to release media')
   }
@@ -51,7 +55,9 @@ const specimenOptions = computed(() => {
   const options: Record<string, number> = { '- NONE - ': 0 }
   for (const specimen of specimensStore.specimens) {
     const taxon = taxaStore.getTaxonById(specimen.taxon_id)
-    const specimenName = `${specimen.specimen_id} - ${taxon ? taxon.scientific_name : 'Unknown Taxon'}`
+    const specimenName = `${specimen.specimen_id} - ${
+      taxon ? taxon.scientific_name : 'Unknown Taxon'
+    }`
     options[specimenName] = specimen.specimen_id
   }
   return options
@@ -69,17 +75,17 @@ async function handleSubmitClicked(event: Event) {
   const target = event.currentTarget as any
   const formData = new FormData(target)
   const json = Object.fromEntries(formData)
-  
+
   // Validate form data
   validateForm(json)
-  
+
   if (validationErrors.value.length > 0) {
     return // Don't submit if validation fails
   }
-  
+
   // Add cataloguing_status to release the media
   json.cataloguing_status = '0'
-  
+
   const success = await props.batchEdit(json)
   if (!success) {
     alert('Failed to assign and release media files')
@@ -120,7 +126,7 @@ onMounted(() => {
       element.addEventListener('hidden.bs.collapse', listener)
     }
   }
-  
+
   // Add event listeners to clear validation errors when form values change
   nextTick(() => {
     const form = document.querySelector('#curationBatchModal form')
@@ -155,17 +161,21 @@ onMounted(() => {
             <div v-if="validationErrors.length > 0" class="alert alert-warning">
               <strong>Please fix the following issues:</strong>
               <ul class="mb-0 mt-2">
-                <li v-for="error in validationErrors" :key="error">{{ error }}</li>
+                <li v-for="error in validationErrors" :key="error">
+                  {{ error }}
+                </li>
               </ul>
             </div>
-            
+
             <!-- Assignment Status -->
             <div class="alert alert-info">
               <strong>Assignment Status:</strong>
               <ul class="mb-0 mt-2">
                 <li>Specimen assigned: {{ selectedCount }} items</li>
                 <li>View assigned: {{ selectedCount }} items</li>
-                <li>Ready to release: {{ canRelease ? selectedCount : 0 }} items</li>
+                <li>
+                  Ready to release: {{ canRelease ? selectedCount : 0 }} items
+                </li>
               </ul>
             </div>
 
@@ -185,7 +195,10 @@ onMounted(() => {
                     View Assignment (Required for Release)
                   </button>
                 </h2>
-                <div id="mediaEditView" class="accordion-collapse collapse show">
+                <div
+                  id="mediaEditView"
+                  class="accordion-collapse collapse show"
+                >
                   <div class="accordion-body">
                     <div class="form-group">
                       <label class="form-label">
@@ -201,7 +214,7 @@ onMounted(() => {
                   </div>
                 </div>
               </div>
-              
+
               <!-- Specimen Assignment -->
               <div class="accordion-item">
                 <h2 class="accordion-header">
@@ -217,7 +230,10 @@ onMounted(() => {
                     Specimen Assignment (Required for Release)
                   </button>
                 </h2>
-                <div id="mediaEditSpecimen" class="accordion-collapse collapse show">
+                <div
+                  id="mediaEditSpecimen"
+                  class="accordion-collapse collapse show"
+                >
                   <div class="accordion-body">
                     <div class="form-group">
                       <label class="form-label">
@@ -243,8 +259,8 @@ onMounted(() => {
             >
               Cancel
             </button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               class="btn btn-success"
               :disabled="!canRelease"
             >
@@ -267,4 +283,4 @@ onMounted(() => {
 .accordion-button:focus {
   box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
 }
-</style> 
+</style>

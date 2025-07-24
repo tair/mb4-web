@@ -9,7 +9,7 @@ const SESSION_CONFIG = {
   MAX_AGE: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
   STORAGE_PREFIX: 'mb-session',
   CANVAS_TEXT: 'Session fingerprint',
-  CANVAS_FONT: '14px Arial'
+  CANVAS_FONT: '14px Arial',
 }
 
 class SessionManager {
@@ -32,7 +32,10 @@ class SessionManager {
       this.storageAvailable = true
       return true
     } catch (error) {
-      console.warn('localStorage not available, using memory-only session:', error.message)
+      console.warn(
+        'localStorage not available, using memory-only session:',
+        error.message
+      )
       this.storageAvailable = false
       return false
     }
@@ -109,8 +112,10 @@ class SessionManager {
    */
   loadOrCreateSession() {
     // Try to load existing session from localStorage
-    const storedSession = this.safeGetItem(`${SESSION_CONFIG.STORAGE_PREFIX}-key`)
-    
+    const storedSession = this.safeGetItem(
+      `${SESSION_CONFIG.STORAGE_PREFIX}-key`
+    )
+
     if (storedSession && this.isValidSessionKey(storedSession)) {
       this.sessionKey = storedSession
       this.updateSessionActivity()
@@ -125,7 +130,10 @@ class SessionManager {
   createNewSession() {
     this.sessionKey = this.generateSecureSessionId()
     this.safeSetItem(`${SESSION_CONFIG.STORAGE_PREFIX}-key`, this.sessionKey)
-    this.safeSetItem(`${SESSION_CONFIG.STORAGE_PREFIX}-created`, Date.now().toString())
+    this.safeSetItem(
+      `${SESSION_CONFIG.STORAGE_PREFIX}-created`,
+      Date.now().toString()
+    )
     this.updateSessionActivity()
   }
 
@@ -137,9 +145,11 @@ class SessionManager {
     // Use crypto.getRandomValues for secure random generation
     const array = new Uint8Array(16) // 16 bytes = 32 hex characters (to fit char(32))
     crypto.getRandomValues(array)
-    
+
     // Convert to hex string
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('')
+    return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join(
+      ''
+    )
   }
 
   /**
@@ -154,7 +164,10 @@ class SessionManager {
    * Update session activity timestamp
    */
   updateSessionActivity() {
-    this.safeSetItem(`${SESSION_CONFIG.STORAGE_PREFIX}-activity`, Date.now().toString())
+    this.safeSetItem(
+      `${SESSION_CONFIG.STORAGE_PREFIX}-activity`,
+      Date.now().toString()
+    )
   }
 
   /**
@@ -170,7 +183,7 @@ class SessionManager {
   generateFingerprint() {
     try {
       let canvasData = 'unavailable'
-      
+
       // Safely generate canvas fingerprint
       try {
         const canvas = document.createElement('canvas')
@@ -184,7 +197,7 @@ class SessionManager {
       } catch (canvasError) {
         console.warn('Canvas fingerprinting failed:', canvasError.message)
       }
-      
+
       const fingerprint = {
         userAgent: navigator.userAgent || 'unknown',
         language: navigator.language || 'unknown',
@@ -196,18 +209,23 @@ class SessionManager {
         hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
         cookieEnabled: this.safeCookieCheck(),
         doNotTrack: navigator.doNotTrack || 'unknown',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       }
 
       this.fingerprint = btoa(JSON.stringify(fingerprint))
       return this.fingerprint
     } catch (error) {
-      console.warn('Fingerprint generation failed, using fallback:', error.message)
-      this.fingerprint = btoa(JSON.stringify({
-        fallback: true,
-        timestamp: Date.now(),
-        error: error.message
-      }))
+      console.warn(
+        'Fingerprint generation failed, using fallback:',
+        error.message
+      )
+      this.fingerprint = btoa(
+        JSON.stringify({
+          fallback: true,
+          timestamp: Date.now(),
+          error: error.message,
+        })
+      )
       return this.fingerprint
     }
   }
@@ -264,14 +282,16 @@ class SessionManager {
    */
   getSessionMetadata() {
     const created = this.safeGetItem(`${SESSION_CONFIG.STORAGE_PREFIX}-created`)
-    const activity = this.safeGetItem(`${SESSION_CONFIG.STORAGE_PREFIX}-activity`)
-    
+    const activity = this.safeGetItem(
+      `${SESSION_CONFIG.STORAGE_PREFIX}-activity`
+    )
+
     return {
       sessionKey: this.sessionKey,
       created: created ? parseInt(created) : null,
       lastActivity: activity ? parseInt(activity) : null,
       fingerprint: this.fingerprint,
-      storageAvailable: this.storageAvailable
+      storageAvailable: this.storageAvailable,
     }
   }
 
@@ -291,7 +311,7 @@ class SessionManager {
   shouldRenewSession() {
     const created = this.safeGetItem(`${SESSION_CONFIG.STORAGE_PREFIX}-created`)
     if (!created) return true
-    
+
     const sessionAge = Date.now() - parseInt(created)
     return sessionAge > SESSION_CONFIG.MAX_AGE
   }
@@ -309,4 +329,4 @@ class SessionManager {
 // Create singleton instance
 const sessionManager = new SessionManager()
 
-export default sessionManager 
+export default sessionManager

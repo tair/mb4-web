@@ -1,7 +1,7 @@
 export function convertAuthors(form, type) {
   const authors = []
   let index = 0
-  
+
   // Look for author fields with the pattern: type[0].forename, type[1].surname, etc.
   while (
     form.has(`${type}[${index}].forename`) ||
@@ -11,12 +11,12 @@ export function convertAuthors(form, type) {
     const forename = form.get(`${type}[${index}].forename`) || ''
     const middlename = form.get(`${type}[${index}].middlename`) || ''
     const surname = form.get(`${type}[${index}].surname`) || ''
-    
+
     // Remove the form fields
     form.delete(`${type}[${index}].forename`)
     form.delete(`${type}[${index}].middlename`)
     form.delete(`${type}[${index}].surname`)
-    
+
     // Only add author if at least one field has content
     if (forename.trim() || middlename.trim() || surname.trim()) {
       authors.push({
@@ -25,10 +25,10 @@ export function convertAuthors(form, type) {
         surname: surname.trim(),
       })
     }
-    
+
     index++
   }
-  
+
   return authors.length ? authors : null
 }
 
@@ -45,7 +45,11 @@ export function validateBibliographyForm(formData) {
 
   // Check authors field - at least one author with surname required
   const authors = convertAuthors(validationFormData, 'authors')
-  if (!authors || authors.length === 0 || !authors.some(author => author.surname && author.surname.trim())) {
+  if (
+    !authors ||
+    authors.length === 0 ||
+    !authors.some((author) => author.surname && author.surname.trim())
+  ) {
     errors.authors = 'At least one author with a last name is required'
     isValid = false
   }
@@ -73,7 +77,11 @@ export function validateBibliographyForm(formData) {
 
   // Check reference type
   const referenceType = formData.get('reference_type')
-  if (referenceType === null || referenceType === undefined || referenceType === '') {
+  if (
+    referenceType === null ||
+    referenceType === undefined ||
+    referenceType === ''
+  ) {
     errors.reference_type = 'Reference Type is required'
     isValid = false
   }

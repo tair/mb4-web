@@ -51,15 +51,18 @@ const allSelected = computed({
 const someSelected = computed(() => filteredMedia.value.some((b) => b.selected))
 
 // Get selected media for batch operations
-const selectedMedia = computed(() => 
+const selectedMedia = computed(() =>
   filteredMedia.value.filter((media) => media.selected)
 )
 
 // Check if selected media can be released (have both specimen and view assigned)
 const canReleaseSelected = computed(() => {
-  return selectedMedia.value.every((media) => 
-    media.specimen_id && media.view_id && 
-    media.specimen_id !== 0 && media.view_id !== 0
+  return selectedMedia.value.every(
+    (media) =>
+      media.specimen_id &&
+      media.view_id &&
+      media.specimen_id !== 0 &&
+      media.view_id !== 0
   )
 })
 
@@ -78,21 +81,27 @@ function getMediaThumbnailUrl(media) {
 async function releaseSelectedMedia() {
   // Check if all selected media have specimen and view assigned
   if (!canReleaseSelected.value) {
-    alert('All selected media must have both specimen and view assigned before release.')
+    alert(
+      'All selected media must have both specimen and view assigned before release.'
+    )
     return
   }
-  
+
   // Confirm the action
-  if (!confirm(`Are you sure you want to release ${selectedMedia.value.length} media items?`)) {
+  if (
+    !confirm(
+      `Are you sure you want to release ${selectedMedia.value.length} media items?`
+    )
+  ) {
     return
   }
-  
+
   const mediaIds = selectedMedia.value.map((m) => m.media_id)
-  
+
   const success = await mediaStore.editIds(projectId, mediaIds, {
     cataloguing_status: 0,
   })
-    
+
   if (!success) {
     alert('Failed to release the media')
   } else {
@@ -106,10 +115,10 @@ async function releaseSelectedMedia() {
 
 async function batchEditMedia(formData) {
   const mediaIds = selectedMedia.value.map((m) => m.media_id)
-  
+
   // Convert form data to proper format
   const json = {}
-  
+
   // Handle both FormData and plain objects
   if (formData instanceof FormData) {
     for (const [key, value] of formData.entries()) {
@@ -125,14 +134,14 @@ async function batchEditMedia(formData) {
       }
     }
   }
-  
+
   const success = await mediaStore.editIds(projectId, mediaIds, json)
-  
+
   if (success) {
     // Refresh the media list to show updated assignments
     await mediaStore.fetchMedia(projectId)
   }
-  
+
   return success
 }
 
@@ -149,10 +158,10 @@ async function deleteSelectedMedia() {
 
 onMounted(() => {
   console.log('CurateView: Component mounted, refreshing data...')
-  
+
   // Invalidate the media store to ensure we get fresh data
   mediaStore.invalidate()
-  
+
   // Always refresh data when component mounts to ensure we have the latest data
   mediaStore.fetchMedia(projectId)
   specimensStore.fetchSpecimens(projectId)
@@ -161,13 +170,16 @@ onMounted(() => {
 })
 
 // Watch for route changes to refresh data when navigating to this view
-watch(() => route.path, (newPath, oldPath) => {
-  if (newPath !== oldPath && newPath.includes('/media/curate')) {
-    // Refresh data when navigating to curate view
-    mediaStore.invalidate()
-    mediaStore.fetchMedia(projectId)
+watch(
+  () => route.path,
+  (newPath, oldPath) => {
+    if (newPath !== oldPath && newPath.includes('/media/curate')) {
+      // Refresh data when navigating to curate view
+      mediaStore.invalidate()
+      mediaStore.fetchMedia(projectId)
+    }
   }
-})
+)
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded" :key="`curate-${projectId}`">
@@ -175,7 +187,9 @@ watch(() => route.path, (newPath, oldPath) => {
       <div class="alert alert-info">
         <h5><i class="fa fa-info-circle me-2"></i>Curation Workflow</h5>
         <p class="mb-2">
-          Your uploaded media need to be curated before they can be released. Each media item must have both a <strong>specimen</strong> and a <strong>view</strong> assigned.
+          Your uploaded media need to be curated before they can be released.
+          Each media item must have both a <strong>specimen</strong> and a
+          <strong>view</strong> assigned.
         </p>
         <div class="row">
           <div class="col-md-6">
@@ -195,13 +209,19 @@ watch(() => route.path, (newPath, oldPath) => {
             </ul>
           </div>
         </div>
-        <hr>
+        <hr />
         <p class="mb-0">
           <i class="fa fa-exclamation-triangle me-2"></i>
-          Make sure you have 
-          <RouterLink :to="`/myprojects/${projectId}/specimens/`" class="alert-link">specimens</RouterLink>
-          and 
-          <RouterLink :to="`/myprojects/${projectId}/views/`" class="alert-link">views</RouterLink>
+          Make sure you have
+          <RouterLink
+            :to="`/myprojects/${projectId}/specimens/`"
+            class="alert-link"
+            >specimens</RouterLink
+          >
+          and
+          <RouterLink :to="`/myprojects/${projectId}/views/`" class="alert-link"
+            >views</RouterLink
+          >
           created before starting curation.
         </p>
       </div>
@@ -217,7 +237,7 @@ watch(() => route.path, (newPath, oldPath) => {
             :indeterminate.prop="someSelected && !allSelected"
           />
         </label>
-        
+
         <!-- Batch Edit Button -->
         <button
           v-if="someSelected"
@@ -229,7 +249,7 @@ watch(() => route.path, (newPath, oldPath) => {
           <i class="fa fa-edit"></i>
           <span> Assign Specimen & View</span>
         </button>
-        
+
         <!-- Release Button (only enabled if all selected have specimen and view) -->
         <button
           v-if="someSelected"
@@ -237,12 +257,16 @@ watch(() => route.path, (newPath, oldPath) => {
           class="btn btn-outline-success btn-sm"
           @click="releaseSelectedMedia"
           :disabled="!canReleaseSelected"
-          :title="!canReleaseSelected ? 'All selected media must have specimen and view assigned' : 'Release selected media'"
+          :title="
+            !canReleaseSelected
+              ? 'All selected media must have specimen and view assigned'
+              : 'Release selected media'
+          "
         >
           <i class="fa fa-arrow-up-from-bracket"></i>
           <span> Release Media ({{ selectedMedia.length }})</span>
         </button>
-        
+
         <button
           v-if="someSelected"
           type="button"
@@ -253,7 +277,7 @@ watch(() => route.path, (newPath, oldPath) => {
           <span> Delete Media</span>
         </button>
       </div>
-      
+
       <!-- Curation Summary -->
       <div class="curation-summary mb-3">
         <div class="row">
@@ -265,27 +289,52 @@ watch(() => route.path, (newPath, oldPath) => {
           </div>
           <div class="col-md-3">
             <div class="summary-card">
-              <div class="summary-number">{{ filteredMedia.filter(m => m.specimen_id && m.specimen_id !== 0).length }}</div>
+              <div class="summary-number">
+                {{
+                  filteredMedia.filter(
+                    (m) => m.specimen_id && m.specimen_id !== 0
+                  ).length
+                }}
+              </div>
               <div class="summary-label">With Specimen</div>
             </div>
           </div>
           <div class="col-md-3">
             <div class="summary-card">
-              <div class="summary-number">{{ filteredMedia.filter(m => m.view_id && m.view_id !== 0).length }}</div>
+              <div class="summary-number">
+                {{
+                  filteredMedia.filter((m) => m.view_id && m.view_id !== 0)
+                    .length
+                }}
+              </div>
               <div class="summary-label">With View</div>
             </div>
           </div>
           <div class="col-md-3">
             <div class="summary-card ready">
-              <div class="summary-number">{{ filteredMedia.filter(m => m.specimen_id && m.specimen_id !== 0 && m.view_id && m.view_id !== 0).length }}</div>
+              <div class="summary-number">
+                {{
+                  filteredMedia.filter(
+                    (m) =>
+                      m.specimen_id &&
+                      m.specimen_id !== 0 &&
+                      m.view_id &&
+                      m.view_id !== 0
+                  ).length
+                }}
+              </div>
               <div class="summary-label">Ready to Release</div>
             </div>
           </div>
         </div>
       </div>
-      
+
       <div class="grid-group-items">
-        <div v-for="media in filteredMedia" :key="media.media_id" class="media-card-container">
+        <div
+          v-for="media in filteredMedia"
+          :key="media.media_id"
+          class="media-card-container"
+        >
           <MediaCard
             :mediaId="media.media_id"
             :image="getMediaThumbnailUrl(media)"
@@ -300,25 +349,43 @@ watch(() => route.path, (newPath, oldPath) => {
               />
             </template>
           </MediaCard>
-          
+
           <!-- Assignment Status Indicators -->
           <div class="assignment-status">
-            <div class="status-indicator" :class="{ 'assigned': media.specimen_id && media.specimen_id !== 0, 'missing': !media.specimen_id || media.specimen_id === 0 }">
+            <div
+              class="status-indicator"
+              :class="{
+                assigned: media.specimen_id && media.specimen_id !== 0,
+                missing: !media.specimen_id || media.specimen_id === 0,
+              }"
+            >
               <i class="fa fa-bone"></i>
-              <span class="status-text">{{ media.specimen_id && media.specimen_id !== 0 ? 'Specimen' : 'No Specimen' }}</span>
+              <span class="status-text">{{
+                media.specimen_id && media.specimen_id !== 0
+                  ? 'Specimen'
+                  : 'No Specimen'
+              }}</span>
             </div>
-            <div class="status-indicator" :class="{ 'assigned': media.view_id && media.view_id !== 0, 'missing': !media.view_id || media.view_id === 0 }">
+            <div
+              class="status-indicator"
+              :class="{
+                assigned: media.view_id && media.view_id !== 0,
+                missing: !media.view_id || media.view_id === 0,
+              }"
+            >
               <i class="fa fa-eye"></i>
-              <span class="status-text">{{ media.view_id && media.view_id !== 0 ? 'View' : 'No View' }}</span>
+              <span class="status-text">{{
+                media.view_id && media.view_id !== 0 ? 'View' : 'No View'
+              }}</span>
             </div>
           </div>
         </div>
       </div>
     </div>
   </LoadingIndicator>
-  
+
   <!-- Batch Edit Dialog -->
-  <CurationBatchDialog 
+  <CurationBatchDialog
     :batchEdit="batchEditMedia"
     :selectedMedia="selectedMedia"
   />
@@ -419,7 +486,7 @@ watch(() => route.path, (newPath, oldPath) => {
 
 .summary-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .summary-card.ready {

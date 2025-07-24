@@ -9,10 +9,11 @@ const props = defineProps({
 
 // Extract media ID from filename
 const mediaId = computed(() => {
-  const match = props.project.image_props.media.FILENAME.match(/media_files_media_(\d+)_preview/)
+  const match = props.project.image_props.media.FILENAME.match(
+    /media_files_media_(\d+)_preview/
+  )
   return match ? match[1] : null
 })
-
 </script>
 <style scoped>
 .thumb {

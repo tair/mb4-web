@@ -36,7 +36,7 @@ async function searchTaxa(text) {
       })
       .slice(0, 50) // Limit to first 50 results
   }
-  
+
   // For search text, use the search API
   const url = `${
     import.meta.env.VITE_API_URL

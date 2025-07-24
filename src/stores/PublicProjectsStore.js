@@ -104,22 +104,30 @@ export const usePublicProjectsStore = defineStore({
         delete getter.defaults.headers.common['Authorization']
 
         let res = await getter.get(
-          `${import.meta.env.VITE_API_URL}/s3/stats_files/projectViewsForLast30Days.json`
+          `${
+            import.meta.env.VITE_API_URL
+          }/s3/stats_files/projectViewsForLast30Days.json`
         )
         const projectViewsForLast30Days = res.data
 
         res = await getter.get(
-          `${import.meta.env.VITE_API_URL}/s3/stats_files/matrixDownloadsForLast30Days.json`
+          `${
+            import.meta.env.VITE_API_URL
+          }/s3/stats_files/matrixDownloadsForLast30Days.json`
         )
         const matrixDownloadsForLast30Days = res.data
 
         res = await getter.get(
-          `${import.meta.env.VITE_API_URL}/s3/stats_files/mediaViewsForLast30Days.json`
+          `${
+            import.meta.env.VITE_API_URL
+          }/s3/stats_files/mediaViewsForLast30Days.json`
         )
         const mediaViewsForLast30Days = res.data
 
         res = await getter.get(
-          `${import.meta.env.VITE_API_URL}/s3/stats_files/docDownloadsForLast30Days.json`
+          `${
+            import.meta.env.VITE_API_URL
+          }/s3/stats_files/docDownloadsForLast30Days.json`
         )
         const docDownloadsForLast30Days = res.data
 

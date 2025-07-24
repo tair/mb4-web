@@ -43,35 +43,38 @@ axios.interceptors.request.use(
     if (config.skipSessionHeaders) {
       return config
     }
-    
+
     // Ensure session manager is initialized before using it
     if (!sessionManager.initialized) {
       sessionManager.init()
     }
-    
+
     try {
       // Auto-renew session if needed before making requests
       sessionManager.autoRenewIfNeeded()
-      
+
       // Add session key header to all requests
       const sessionKey = sessionManager.getSessionKey()
       if (sessionKey) {
         config.headers['x-session-key'] = sessionKey
       }
-      
+
       // Add fingerprint header for bot detection
       const fingerprint = sessionManager.getFingerprint()
       if (fingerprint) {
         config.headers['x-session-fingerprint'] = fingerprint
       }
-      
+
       // Update session activity on each request
       sessionManager.updateSessionActivity()
     } catch (error) {
-      console.warn('Session management failed in request interceptor:', error.message)
+      console.warn(
+        'Session management failed in request interceptor:',
+        error.message
+      )
       // Continue with request even if session operations fail
     }
-    
+
     return config
   },
   (error) => {
@@ -86,14 +89,17 @@ axios.interceptors.response.use(
   },
   (error) => {
     // Handle session-related errors (e.g., if server requests session renewal)
-    if (error.response && error.response.status === 401 && error.response.data?.renewSession) {
+    if (
+      error.response &&
+      error.response.status === 401 &&
+      error.response.data?.renewSession
+    ) {
       sessionManager.renewSession()
       // Optionally retry the request with new session
     }
     return Promise.reject(error)
   }
 )
-
 
 app.use(VueTippy, {
   defaultProps: {

@@ -138,11 +138,11 @@ export default {
         const response = await fetch(url)
         const buffer = await response.arrayBuffer()
         const view = new Uint8Array(buffer)
-        
+
         // TIFF magic numbers: "II" (0x4949) for little-endian or "MM" (0x4D4D) for big-endian
         if (view.length >= 4) {
           const magic = (view[0] << 8) | view[1]
-          return magic === 0x4949 || magic === 0x4D4D
+          return magic === 0x4949 || magic === 0x4d4d
         }
         return false
       } catch (error) {
@@ -157,7 +157,7 @@ export default {
         this.actualFormat = 'standard'
         return
       }
-      
+
       if (this.isDicomFormat(this.imgSrc)) {
         this.actualFormat = 'dicom'
         this.renderDicomImage()
@@ -169,7 +169,9 @@ export default {
           this.renderTiffImage()
         } else {
           // Fallback: treat as regular image even if extension is wrong
-          console.warn('File extension suggests TIFF but content is not TIFF. Treating as regular image.')
+          console.warn(
+            'File extension suggests TIFF but content is not TIFF. Treating as regular image.'
+          )
           this.actualFormat = 'standard'
           // The image will render normally via the img tag
         }
@@ -228,7 +230,9 @@ export default {
         .catch((error) => {
           console.error('Error loading TIFF image:', error)
           // Fallback: try to render as regular image
-          console.warn('TIFF loading failed, attempting to render as regular image')
+          console.warn(
+            'TIFF loading failed, attempting to render as regular image'
+          )
         })
     },
     adjustZoomToFit() {

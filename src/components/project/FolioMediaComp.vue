@@ -17,8 +17,6 @@ const props = defineProps({
 })
 
 const showZoomModal = ref(false)
-
-
 </script>
 <template>
   <a href="#" class="nav-link" @click="showZoomModal = true">
@@ -31,6 +29,10 @@ const showZoomModal = ref(false)
     ></MediaCardComp>
   </a>
   <CustomModal :isVisible="showZoomModal" @close="showZoomModal = false">
-    <MediaViewPanel :imgSrc="buildMediaUrl(props.project_id, props.media_file?.media_id, 'large')" />
+    <MediaViewPanel
+      :imgSrc="
+        buildMediaUrl(props.project_id, props.media_file?.media_id, 'large')
+      "
+    />
   </CustomModal>
 </template>

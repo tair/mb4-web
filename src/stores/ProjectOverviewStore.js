@@ -27,7 +27,7 @@ export const useProjectOverviewStore = defineStore({
       const url = `${import.meta.env.VITE_API_URL}/projects/${id}/overview`
       this.isLoading = true
       this.currentProjectId = id
-      
+
       try {
         const response = await axios.get(url)
         this.overview = response.data.overview

@@ -12,9 +12,11 @@ export const useProjectsStore = defineStore({
   actions: {
     async fetchProjects(force = false) {
       // Smart caching: only fetch if data is stale (older than 30 seconds) or forced
-      const cacheAge = this.lastFetched ? Date.now() - this.lastFetched : Infinity
+      const cacheAge = this.lastFetched
+        ? Date.now() - this.lastFetched
+        : Infinity
       const isStale = cacheAge > 30000 // 30 seconds
-      
+
       if (!force && this.isLoaded && !isStale) {
         return // Use cached data
       }
@@ -80,13 +82,13 @@ export const useProjectsStore = defineStore({
         if (journalCoverFile) {
           // Use FormData for file upload
           const formData = new FormData()
-          
+
           // Add all project data as JSON string
           formData.append('projectData', JSON.stringify(projectData))
-          
+
           // Add journal cover file
           formData.append('journal_cover', journalCoverFile)
-          
+
           requestData = formData
           // Don't set Content-Type header - let browser set it with boundary
         } else {

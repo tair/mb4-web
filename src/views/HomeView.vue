@@ -58,7 +58,10 @@ onMounted(async () => {
     stats.value = statsResponse.data
 
     // Process media URLs for featured projects using enhanced function
-    featuredProjects.value = processItemsWithMediaLegacy(featuredProjectsData, 'large')
+    featuredProjects.value = processItemsWithMediaLegacy(
+      featuredProjectsData,
+      'large'
+    )
 
     // Process media URLs for matrix images using enhanced function
     matrixImages.value = processItemsWithMediaLegacy(matrixImagesData, 'large')

@@ -26,14 +26,17 @@ const showDownloadModal = ref(false)
 const viewStatsTooltipText = getViewStatsTooltipText()
 const downloadTooltipText = getDownloadTooltipText()
 
-
 async function confirmDownload(fileSize, fileName) {
   // if (!isCaptchaVerified) {
   //   alert("Please complete the CAPTCHA");
   //   return;
   // }
   // CAPTCHA is completed, proceed with the download
-  const imageUrl = buildMediaUrl(props.project_id, props.media_file?.media_id, fileSize)
+  const imageUrl = buildMediaUrl(
+    props.project_id,
+    props.media_file?.media_id,
+    fileSize
+  )
   let downloadFileName = fileName
   if (!downloadFileName) {
     downloadFileName = getLastElementFromUrl(imageUrl)
@@ -51,7 +54,11 @@ async function confirmDownload(fileSize, fileName) {
   // URL.revokeObjectURL(url);
 
   showDownloadModal.value = false
-  logDownload({ project_id: props.project_id, download_type: DOWNLOAD_TYPES.MEDIA, row_id: props.media_file.media_id })
+  logDownload({
+    project_id: props.project_id,
+    download_type: DOWNLOAD_TYPES.MEDIA,
+    row_id: props.media_file.media_id,
+  })
 }
 
 function getLastElementFromUrl(url) {
@@ -117,7 +124,13 @@ function getHitsMessage(mediaObj) {
     <div class="col">
       <div class="card shadow">
         <img
-          :src="buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')"
+          :src="
+            buildMediaUrl(
+              props.project_id,
+              props.media_file?.media_id,
+              'original'
+            )
+          "
           :style="{
             backgroundSize: '20px',
             backgroundRepeat: 'no-repeat',
@@ -138,7 +151,13 @@ function getHitsMessage(mediaObj) {
                 @close="showZoomModal = false"
               >
                 <MediaViewPanel
-                  :imgSrc="buildMediaUrl(props.project_id, props.media_file?.media_id, 'large')"
+                  :imgSrc="
+                    buildMediaUrl(
+                      props.project_id,
+                      props.media_file?.media_id,
+                      'large'
+                    )
+                  "
                 />
               </CustomModal>
               <a class="nav-link" href="#" @click="showDownloadModal = true">

@@ -13,8 +13,6 @@ const props = defineProps<{
   mediaId?: number | string
   fileSize?: string
 }>()
-
-
 </script>
 <template>
   <div
@@ -24,7 +22,13 @@ const props = defineProps<{
     }"
   >
     <img
-      :src="buildMediaUrl(props.projectId, props.mediaId, props.fileSize || 'original')"
+      :src="
+        buildMediaUrl(
+          props.projectId,
+          props.mediaId,
+          props.fileSize || 'original'
+        )
+      "
       :width="image?.width"
       :height="image?.height"
       class="loading"
