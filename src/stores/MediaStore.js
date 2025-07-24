@@ -94,13 +94,13 @@ export const useMediaStore = defineStore({
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/media/edit`
-      
+
       try {
         const response = await axios.post(url, {
           media_ids: mediaIds,
           media: json,
         })
-        
+
         if (response.status == 200) {
           const media = response.data.media
           this.addMedia(media)

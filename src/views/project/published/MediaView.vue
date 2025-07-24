@@ -231,7 +231,10 @@ watch(selectedPageSize, (currentValue, oldValue) => {
         aria-labelledby="nav-media-details-tab"
       >
         <!-- For: {{ mediaDetailsFor }} -->
-        <MediaDetailsComp :media_file="mediaDetailsFor" :project_id="projectId"></MediaDetailsComp>
+        <MediaDetailsComp
+          :media_file="mediaDetailsFor"
+          :project_id="projectId"
+        ></MediaDetailsComp>
       </div>
     </div>
   </ProjectLoaderComp>

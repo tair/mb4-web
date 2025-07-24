@@ -4,7 +4,10 @@ import { useRoute } from 'vue-router'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
 import router from '@/router'
 import { schema } from '@/views/project/bibliographies/schema.js'
-import { convertAuthors, validateBibliographyForm } from '@/views/project/bibliographies/utils.js'
+import {
+  convertAuthors,
+  validateBibliographyForm,
+} from '@/views/project/bibliographies/utils.js'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -25,7 +28,7 @@ const createSchema = computed(() => {
 
 async function createReference(event) {
   const formData = new FormData(event.currentTarget)
-  
+
   // Validate the form using the utility function
   const validation = validateBibliographyForm(formData)
   if (!validation.isValid) {

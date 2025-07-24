@@ -125,13 +125,16 @@ async function refreshProjects() {
                 Create New Project
               </button>
             </RouterLink>
-            <button 
-              type="button" 
+            <button
+              type="button"
               class="btn btn-outline-primary"
               @click="refreshProjects"
               :disabled="isRefreshing"
             >
-              <i class="fa-solid fa-refresh" :class="{ 'fa-spin': isRefreshing }"></i>
+              <i
+                class="fa-solid fa-refresh"
+                :class="{ 'fa-spin': isRefreshing }"
+              ></i>
               Refresh Projects
             </button>
           </div>

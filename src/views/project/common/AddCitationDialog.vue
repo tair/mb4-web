@@ -40,6 +40,11 @@ async function createCitation(event) {
     }
   }
 }
+
+function clearError() {
+  hasError.value = false
+  errorMessage.value = ''
+}
 </script>
 <template>
   <div
@@ -84,15 +89,13 @@ async function createCitation(event) {
               </div>
             </template>
           </div>
+          <!-- prettier-ignore -->
           <div class="modal-footer">
             <button
               type="reset"
               class="btn btn-outline-primary"
               data-bs-dismiss="modal"
-              @click="
-                hasError = false;
-                errorMessage = '';
-              "
+              @click="clearError"
             >
               Cancel
             </button>

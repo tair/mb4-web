@@ -29,7 +29,7 @@ const isLoaded = computed(
 
 async function createBatch(event) {
   const formData = new FormData(event.currentTarget)
-  
+
   try {
     const success = await mediaStore.createBatch(projectId, formData)
     if (!success) {
@@ -39,7 +39,9 @@ async function createBatch(event) {
 
     router.push({ path: `/myprojects/${projectId}/media` })
   } catch (error) {
-    const errorMessage = error.response?.data?.message || 'Failed to create media. Please try again.'
+    const errorMessage =
+      error.response?.data?.message ||
+      'Failed to create media. Please try again.'
     alert(errorMessage)
   }
 }

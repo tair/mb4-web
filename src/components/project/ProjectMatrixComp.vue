@@ -489,10 +489,10 @@ function resetMergeForm() {
 
 function formatDateWithTimezone(dateString) {
   if (!dateString) return ''
-  
+
   try {
     const date = new Date(dateString)
-    
+
     // Format the date with timezone
     const options = {
       year: 'numeric',
@@ -500,9 +500,9 @@ function formatDateWithTimezone(dateString) {
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      timeZoneName: 'short'
+      timeZoneName: 'short',
     }
-    
+
     return date.toLocaleString('en-US', options)
   } catch (error) {
     console.error('Error formatting date:', error)
@@ -512,14 +512,14 @@ function formatDateWithTimezone(dateString) {
 
 function getStatusClass(status) {
   if (!status) return 'status-unknown'
-  
+
   const normalizedStatus = status.toLowerCase()
   const knownStatuses = ['completed', 'running', 'failed', 'pending']
-  
+
   if (knownStatuses.includes(normalizedStatus)) {
     return `status-${normalizedStatus}`
   }
-  
+
   // Return default class for unknown statuses
   return 'status-unknown'
 }
@@ -627,13 +627,13 @@ function getStatusClass(status) {
         <br />
         <div class="tab-content-buttons">
           <RouterLink
-          :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/characters`"
-          target="_blank"
-        >
-          <button type="button" class="btn btn-primary">
-            Edit Characters
-          </button>
-        </RouterLink>
+            :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/characters`"
+            target="_blank"
+          >
+            <button type="button" class="btn btn-primary">
+              Edit Characters
+            </button>
+          </RouterLink>
         </div>
       </div>
       <div
@@ -947,18 +947,31 @@ function getStatusClass(status) {
         </div>
         <hr class="bold_hr" />
         <h6><b>Previous runs:</b></h6>
-        <div v-if="currentMatrixJobs?.length > 0" class="previous-runs-container">
-          <div v-for="job in currentMatrixJobs" :key="job.request_id" class="job-card">
+        <div
+          v-if="currentMatrixJobs?.length > 0"
+          class="previous-runs-container"
+        >
+          <div
+            v-for="job in currentMatrixJobs"
+            :key="job.request_id"
+            class="job-card"
+          >
             <div class="job-header">
               <div class="job-info">
                 <div class="job-title">
                   <strong>{{ job.jobname }}</strong>
-                  <span class="job-status" :class="getStatusClass(job.cipres_last_status)">
+                  <span
+                    class="job-status"
+                    :class="getStatusClass(job.cipres_last_status)"
+                  >
                     {{ job.cipres_last_status }}
                   </span>
                 </div>
                 <div class="job-details">
-                  <span><strong>Run on:</strong> {{ formatDateWithTimezone(job.created_on) }}</span>
+                  <span
+                    ><strong>Run on:</strong>
+                    {{ formatDateWithTimezone(job.created_on) }}</span
+                  >
                   <span><strong>Tool:</strong> {{ job.cipres_tool }}</span>
                 </div>
               </div>

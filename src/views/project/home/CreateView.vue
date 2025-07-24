@@ -816,7 +816,10 @@ async function handleSubmit() {
     }
 
     // Create project with optional journal cover in a single API call
-    const project = await projectsStore.createProject(projectData, formData.journal_cover)
+    const project = await projectsStore.createProject(
+      projectData,
+      formData.journal_cover
+    )
 
     if (!project) {
       throw new Error('Failed to create project')

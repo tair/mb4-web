@@ -73,7 +73,10 @@ function generateFoliosListRoute() {
         v-for="(mediaFile, n) in mediaFiles"
         :key="n"
       >
-        <FolioMediaComp :media_file="mediaFile" :project_id="projectId"></FolioMediaComp>
+        <FolioMediaComp
+          :media_file="mediaFile"
+          :project_id="projectId"
+        ></FolioMediaComp>
       </div>
     </div>
   </ProjectLoaderComp>

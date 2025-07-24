@@ -144,10 +144,14 @@ export const usePublicProjectDetailsStore = defineStore({
         delete getter.defaults.headers.common['Authorization']
 
         //const url = `https://mb4-data.s3.us-west-2.amazonaws.com/prj_details/prj_${id}.json`
-        const url = `${import.meta.env.VITE_API_URL}/s3/prj_details/prj_${id}.json`
+        const url = `${
+          import.meta.env.VITE_API_URL
+        }/s3/prj_details/prj_${id}.json`
         const res = await getter.get(url)
 
-        const urlStats = `${import.meta.env.VITE_API_URL}/s3/prj_stats/prj_${id}.json`
+        const urlStats = `${
+          import.meta.env.VITE_API_URL
+        }/s3/prj_stats/prj_${id}.json`
         const resStats = await getter.get(urlStats)
 
         this.overview = res.data.overview

@@ -14,21 +14,28 @@ const loading = ref(false)
 const showWarning = ref(false)
 
 // Check for citations when bibliographies change
-watch(() => props.bibliographies, async (newBibliographies) => {
-  if (newBibliographies && newBibliographies.length > 0) {
-    await checkCitations()
-  }
-}, { immediate: true })
+watch(
+  () => props.bibliographies,
+  async (newBibliographies) => {
+    if (newBibliographies && newBibliographies.length > 0) {
+      await checkCitations()
+    }
+  },
+  { immediate: true }
+)
 
 async function checkCitations() {
   if (!props.bibliographies?.length) return
-  
+
   loading.value = true
   try {
-    const referenceIds = props.bibliographies.map(b => b.reference_id)
-    const citations = await bibliographiesStore.checkCitations(props.projectId, referenceIds)
+    const referenceIds = props.bibliographies.map((b) => b.reference_id)
+    const citations = await bibliographiesStore.checkCitations(
+      props.projectId,
+      referenceIds
+    )
     citationInfo.value = citations
-    showWarning.value = citations.some(c => c.total_count > 0)
+    showWarning.value = citations.some((c) => c.total_count > 0)
   } catch (error) {
     console.error('Error checking citations:', error)
     citationInfo.value = []
@@ -39,13 +46,17 @@ async function checkCitations() {
 }
 
 function getBibliographyTitle(referenceId: number): string {
-  const bibliography = props.bibliographies.find(b => b.reference_id === referenceId)
+  const bibliography = props.bibliographies.find(
+    (b) => b.reference_id === referenceId
+  )
   if (!bibliography) return 'Unknown bibliography'
-  
-  return bibliography.article_title || 
-         bibliography.journal_title || 
-         bibliography.monograph_title || 
-         'Untitled bibliography'
+
+  return (
+    bibliography.article_title ||
+    bibliography.journal_title ||
+    bibliography.monograph_title ||
+    'Untitled bibliography'
+  )
 }
 
 async function deleteBibliographies(referenceIds: number[]) {
@@ -72,19 +83,50 @@ async function deleteBibliographies(referenceIds: number[]) {
             <i class="fa-solid fa-spinner fa-spin"></i>
             Checking for citations...
           </div>
-          
+
           <div v-else>
             <!-- Warning for bibliographies with citations -->
             <div v-if="showWarning" class="alert alert-warning mb-3">
-              <h6><i class="fa-solid fa-triangle-exclamation"></i> Warning: Citations will be deleted</h6>
+              <h6>
+                <i class="fa-solid fa-triangle-exclamation"></i> Warning:
+                Citations will be deleted
+              </h6>
               <p class="mb-2">
-                The following {{ bibliographies.length > 1 ? 'bibliographies have' : 'bibliography has' }} associated citations that will also be deleted:
+                The following
+                {{
+                  bibliographies.length > 1
+                    ? 'bibliographies have'
+                    : 'bibliography has'
+                }}
+                associated citations that will also be deleted:
               </p>
               <ul class="mb-0">
-                <li v-for="citation in citationInfo.filter(c => c.total_count > 0)" :key="citation.reference_id">
-                  <span v-if="citation.specimen_count > 0">{{ citation.specimen_count }} specimen citation{{ citation.specimen_count > 1 ? 's' : '' }}</span>
-                  <span v-if="citation.media_count > 0">{{ citation.specimen_count > 0 ? ', ' : '' }}{{ citation.media_count }} media citation{{ citation.media_count > 1 ? 's' : '' }}</span>
-                  <span v-if="citation.taxa_count > 0">{{ (citation.specimen_count + citation.media_count) > 0 ? ', ' : '' }}{{ citation.taxa_count }} taxa citation{{ citation.taxa_count > 1 ? 's' : '' }}</span>
+                <li
+                  v-for="citation in citationInfo.filter(
+                    (c) => c.total_count > 0
+                  )"
+                  :key="citation.reference_id"
+                >
+                  <span v-if="citation.specimen_count > 0"
+                    >{{ citation.specimen_count }} specimen citation{{
+                      citation.specimen_count > 1 ? 's' : ''
+                    }}</span
+                  >
+                  <span v-if="citation.media_count > 0"
+                    >{{ citation.specimen_count > 0 ? ', ' : ''
+                    }}{{ citation.media_count }} media citation{{
+                      citation.media_count > 1 ? 's' : ''
+                    }}</span
+                  >
+                  <span v-if="citation.taxa_count > 0"
+                    >{{
+                      citation.specimen_count + citation.media_count > 0
+                        ? ', '
+                        : ''
+                    }}{{ citation.taxa_count }} taxa citation{{
+                      citation.taxa_count > 1 ? 's' : ''
+                    }}</span
+                  >
                 </li>
               </ul>
             </div>
@@ -129,9 +171,7 @@ async function deleteBibliographies(referenceIds: number[]) {
               <i class="fa-solid fa-triangle-exclamation"></i>
               Delete Bibliography & Citations
             </span>
-            <span v-else>
-              Delete
-            </span>
+            <span v-else> Delete </span>
           </button>
         </div>
       </div>

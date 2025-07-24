@@ -1,5 +1,3 @@
-
-
 function getPasswordPattern() {
   // Updated pattern to be more compatible with browser auto-generation
   // Requires at least 8 characters and at least 3 of the following:

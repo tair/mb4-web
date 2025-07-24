@@ -57,8 +57,11 @@ const overview = computed(() => props.overview)
 onMounted(async () => {
   // Use the image_props from the overview data (should come from props)
   const currentOverview = props.overview
-    
-  if (currentOverview?.image_props && Object.keys(currentOverview.image_props).length > 0) {
+
+  if (
+    currentOverview?.image_props &&
+    Object.keys(currentOverview.image_props).length > 0
+  ) {
     // Convert image_props to the format expected by the template
     const imageProps = currentOverview.image_props
     exemplarMedia.value = {
@@ -73,7 +76,6 @@ onMounted(async () => {
 
 const downloadTooltipText =
   'This tool downloads the entire project, all media, matrices and documents, as a zipped file. Please click on the menu to the left, if you only want a Matrix, certain Media or Documents.'
-
 
 function getWidth(mediaObj: { [key: string]: any }): string {
   if (mediaObj?.media?.large?.PIXEL_X) {

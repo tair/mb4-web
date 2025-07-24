@@ -161,16 +161,17 @@ async function edit(event) {
                 title="Refresh taxa list"
                 :class="{ 'text-muted': isRefreshingTaxa }"
               >
-                <i 
+                <i
                   class="fa-solid"
-                  :class="isRefreshingTaxa ? 'fa-spinner fa-spin' : 'fa-arrow-rotate-right'"
+                  :class="
+                    isRefreshingTaxa
+                      ? 'fa-spinner fa-spin'
+                      : 'fa-arrow-rotate-right'
+                  "
                 ></i>
                 Refresh Taxa
               </a>
-              <span 
-                v-if="taxaRefreshed" 
-                class="text-success ms-2 small"
-              >
+              <span v-if="taxaRefreshed" class="text-success ms-2 small">
                 <i class="fa-solid fa-check"></i>
                 Refreshed!
               </span>

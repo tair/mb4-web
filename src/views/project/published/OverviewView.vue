@@ -34,7 +34,7 @@ onMounted(() => {
     <div class="pb-5 border-bottom">
       <div class="row">
         <div class="col border-end">
-          <ProjectSummary 
+          <ProjectSummary
             :overview="projectStore.overview"
             :projectId="projectId"
           ></ProjectSummary>

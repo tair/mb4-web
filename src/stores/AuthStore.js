@@ -57,10 +57,10 @@ export const useAuthStore = defineStore({
       this.err = null
       localStorage.removeItem('mb-user')
       localStorage.removeItem('orcid-user')
-      
+
       // Clear session on logout
       sessionManager.clearSession()
-      
+
       axios
         .post(`${import.meta.env.VITE_API_URL}/auth/logout`)
         .then((res) => {

@@ -58,17 +58,22 @@ function showEnlargedImage(event, imgId) {
 function hideEnlargedImage(imgId) {
   document.getElementById(imgId).style.display = 'none'
 }
-
 </script>
 
 <template>
   <div :class="[full_view ? 'card media-card shadow image-container' : 'card']">
     <div
       class="d-flex flex-column justify-content-between text-center thumbnail"
-    > 
+    >
       <div class="align-self-center media-image-top mt-2">
         <img
-          :src="buildMediaUrl(props.project_id, props.media_file?.media_id, 'thumbnail')"
+          :src="
+            buildMediaUrl(
+              props.project_id,
+              props.media_file?.media_id,
+              'thumbnail'
+            )
+          "
           :style="{
             width: media_file.media.thumbnail.WIDTH + 'px',
             height: media_file.media.thumbnail.HEIGHT + 'px',
@@ -93,7 +98,7 @@ function hideEnlargedImage(imgId) {
         </div>
       </div>
     </div>
-    
+
     <!-- ENLARGED IMAGE DIV - COMMENTED OUT (can be restored if needed) -->
     <!--
     <div
@@ -164,7 +169,8 @@ function hideEnlargedImage(imgId) {
   position: relative;
   display: inline-block;
 }
-.enlarged-image {}
+.enlarged-image {
+}
 /* ENLARGED IMAGE STYLES - COMMENTED OUT (can be restored if needed) */
 /*
 

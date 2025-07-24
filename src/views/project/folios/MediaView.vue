@@ -117,7 +117,7 @@ function getMediaThumbnailUrl(media: any) {
     return {
       url: buildMediaUrl(projectId, media.media_id, 'thumbnail'),
       width: media.thumbnail?.WIDTH || media.thumbnail?.width || 120,
-      height: media.thumbnail?.HEIGHT || media.thumbnail?.height || 120
+      height: media.thumbnail?.HEIGHT || media.thumbnail?.height || 120,
     }
   }
   // Fallback to existing thumbnail object

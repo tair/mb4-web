@@ -7,7 +7,10 @@ import BibliographyItem from '@/components/project/BibliographyItem.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import router from '@/router'
 import { schema } from '@/views/project/bibliographies/schema.js'
-import { convertAuthors, validateBibliographyForm } from '@/views/project/bibliographies/utils.js'
+import {
+  convertAuthors,
+  validateBibliographyForm,
+} from '@/views/project/bibliographies/utils.js'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id)
@@ -19,8 +22,8 @@ const reference = computed(() =>
   bibliographiesStore.getReferenceById(referenceId)
 )
 
-const isLoaded = computed(() => 
-  bibliographiesStore.isLoaded && projectUsersStore.isLoaded
+const isLoaded = computed(
+  () => bibliographiesStore.isLoaded && projectUsersStore.isLoaded
 )
 
 const errors = ref({})
@@ -36,7 +39,7 @@ onMounted(() => {
 
 async function editReference(event) {
   const formData = new FormData(event.currentTarget)
-  
+
   // Validate the form using the utility function
   const validation = validateBibliographyForm(formData)
   if (!validation.isValid) {
