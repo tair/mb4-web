@@ -30,7 +30,6 @@ export const useMatricesStore = defineStore({
       this.canEditMatrix = response.data.canEditMatrix
       this.jobs = response.data.jobs
       this.isLoaded = true
-      console.log('The length of jobs is: ', this.jobs?.length)
     },
   },
 })
