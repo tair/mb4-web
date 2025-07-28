@@ -74,20 +74,27 @@ export const useProjectsStore = defineStore({
         }
       }
     },
-    async createProject(projectData, journalCoverFile = null) {
+    async createProject(projectData, journalCoverFile = null, exemplarMediaFile = null) {
       try {
         let requestData
         let headers = {}
 
-        if (journalCoverFile) {
+        if (journalCoverFile || exemplarMediaFile) {
           // Use FormData for file upload
           const formData = new FormData()
 
           // Add all project data as JSON string
           formData.append('projectData', JSON.stringify(projectData))
 
-          // Add journal cover file
-          formData.append('journal_cover', journalCoverFile)
+          // Add journal cover file if provided
+          if (journalCoverFile) {
+            formData.append('journal_cover', journalCoverFile)
+          }
+
+          // Add exemplar media file if provided
+          if (exemplarMediaFile) {
+            formData.append('exemplar_media', exemplarMediaFile)
+          }
 
           requestData = formData
           // Don't set Content-Type header - let browser set it with boundary

@@ -13,7 +13,7 @@ type OverviewStats = {
   disk_usage: number
   stats: ProjectStats
   disk_usage_limit: number
-  institutions: string[]
+  institutions: (string | { name: string })[]
 }
 
 defineProps<{
@@ -111,7 +111,7 @@ const projectId = route.params.id
             v-for="(institution, index) in overview.institutions"
             :key="index"
           >
-            {{ institution.name }}
+            {{ typeof institution === 'string' ? institution : institution.name }}
           </li>
         </ul>
       </div>
