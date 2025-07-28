@@ -14,7 +14,7 @@ import FilterDialog from '@/views/project/media/FilterDialog.vue'
 import EditBatchDialog from '@/views/project/media/EditBatchDialog.vue'
 import DeleteDialog from '@/views/project/media/DeleteDialog.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
-import MediaCard from '@/components/project/MediaCard.vue'
+import MediaCardComp from '@/components/project/MediaCardComp.vue'
 import { buildMediaUrl } from '@/utils/mediaUtils.js'
 
 const route = useRoute()
@@ -41,13 +41,37 @@ const searchStr = ref('')
 const selectedPage = ref(1)
 const selectedPageSize = ref(25)
 
+// Track selection state using a reactive object keyed by media_id
+const selectedMedia = reactive({})
+
 const filters = reactive({
   released: (media) => media.cataloguing_status == 0,
 })
 
+// Convert media store data to match MediaView.vue format
+const convertedMediaList = computed(() => {
+  const mediaArray = Array.isArray(mediaStore.media) ? mediaStore.media : []
+  
+  return mediaArray.map(media => ({
+    ...media, // Keep all original data
+    // Add the structure MediaCardComp expects for S3 loading
+    media: {
+      thumbnail: {
+        WIDTH: 120,
+        HEIGHT: 120
+      }
+    },
+    // Add computed display fields
+    taxon_name: getTaxonName(media),
+    view_name: getViewName(media),
+    specimen_name: getSpecimenName(media),
+    user_name: getUserName(media)
+  }))
+})
+
 const filteredMedia = computed(() => {
   let media = Object.values(filters)
-    .reduce((media, filter) => media.filter(filter), mediaStore.media)
+    .reduce((media, filter) => media.filter(filter), convertedMediaList.value)
     .sort(sortFunction.value)
   
   // Apply search filter if search string exists
@@ -55,11 +79,9 @@ const filteredMedia = computed(() => {
     const searchLower = searchStr.value.toLowerCase().trim()
     media = media.filter(m => {
       const mediaIdStr = `M${m.media_id}`.toLowerCase()
-      const viewName = mediaViewsStore.getMediaViewById(m.view_id)?.name?.toLowerCase() || ''
-      const taxon = getTaxon(m)
-      const taxonName = taxon ? Object.values(taxon).join(' ').toLowerCase() : ''
-      const user = getUser(m)
-      const userName = user ? `${user.fname} ${user.lname}`.toLowerCase() : ''
+      const viewName = m.view_name?.toLowerCase() || ''
+      const taxonName = m.taxon_name?.toLowerCase() || ''
+      const userName = m.user_name?.toLowerCase() || ''
       
       return mediaIdStr.includes(searchLower) ||
              viewName.includes(searchLower) ||
@@ -71,37 +93,131 @@ const filteredMedia = computed(() => {
   return media
 })
 
-// Pagination
-const totalPages = computed(() => Math.ceil(filteredMedia.value.length / selectedPageSize.value))
+// Pagination - with safety checks
+const totalPages = computed(() => {
+  const pageSize = Math.max(1, selectedPageSize.value)
+  return Math.ceil(filteredMedia.value.length / pageSize)
+})
+
 const paginatedMedia = computed(() => {
   const start = (selectedPage.value - 1) * selectedPageSize.value
   const end = start + selectedPageSize.value
   return filteredMedia.value.slice(start, end)
 })
 
-const uncuratedMediaCount = computed(
-  () => mediaStore.media.filter((m) => m.cataloguing_status == 1).length
-)
+const uncuratedMediaCount = computed(() => {
+  const mediaArray = Array.isArray(mediaStore.media) ? mediaStore.media : []
+  return mediaArray.filter((m) => m.cataloguing_status == 1).length
+})
 
+// Selection computed properties for batch operations
 const allSelected = computed({
   get: function () {
-    return paginatedMedia.value.every((b) => b.selected)
+    return paginatedMedia.value.length > 0 && paginatedMedia.value.every((b) => selectedMedia[b.media_id])
   },
   set: function (value) {
     paginatedMedia.value.forEach((b) => {
-      b.selected = value
+      selectedMedia[b.media_id] = value
     })
   },
 })
 
-const someSelected = computed(() => paginatedMedia.value.some((b) => b.selected))
+const someSelected = computed(() => paginatedMedia.value.some((b) => selectedMedia[b.media_id]))
+
+// Order by options matching MediaView.vue
+const orderByOptions = {
+  mnumber: 'MorphoBank number',
+  snumber: 'specimen number',
+  view: 'view',
+  user: 'submitter',
+  phylum: 'taxonomic phylum',
+  class: 'taxonomic class',
+  order: 'taxonomic order',
+  superfamily: 'taxonomic superfamily',
+  family: 'taxonomic family',
+  subfamily: 'taxonomic subfamily',
+  genus: 'taxonomic genus'
+}
+
+let orderBySelection = ref('mnumber')
+
+// Helper functions to get formatted data
+function getTaxonName(media) {
+  const taxon = getTaxon(media)
+  if (!taxon) return ''
+  
+  // Build taxonomic name similar to MediaView
+  const parts = []
+  if (taxon.genus) parts.push(taxon.genus)
+  if (taxon.specific_epithet) parts.push(taxon.specific_epithet)
+  return parts.join(' ')
+}
+
+function getViewName(media) {
+  return mediaViewsStore.getMediaViewById(media.view_id)?.name || ''
+}
+
+function getSpecimenName(media) {
+  const specimen = specimensStore.getSpecimenById(media.specimen_id)
+  return specimen?.specimen_id ? `S${specimen.specimen_id}` : ''
+}
+
+function getUserName(media) {
+  const user = getUser(media)
+  return user ? `${user.fname} ${user.lname}` : ''
+}
+
+function searchByStr() {
+  selectedPage.value = 1
+}
+
+function onResetSearch() {
+  searchStr.value = ''
+  selectedPage.value = 1
+}
+
+// Watch for pagination changes
+watch(selectedPage, () => {
+  // No need to fetch from server as we handle pagination client-side
+})
+
+watch(selectedPageSize, () => {
+  selectedPage.value = 1
+})
+
+watch(orderBySelection, (newValue) => {
+  switch (newValue) {
+    case 'phylum':
+    case 'class':
+    case 'order':
+    case 'superfamily':
+    case 'family':
+    case 'subfamily':
+    case 'genus':
+      sortFunction.value = sortByTaxonRank(TaxaFriendlyNames[newValue.toUpperCase()] || newValue)
+      break
+    case 'view':
+      sortFunction.value = sortByViewName
+      break
+    case 'snumber':
+      sortFunction.value = sortBySpecimenId
+      break
+    case 'user':
+      sortFunction.value = sortByUserName
+      break
+    case 'mnumber':
+    default:
+      sortFunction.value = sortByMediaId
+      break
+  }
+})
 
 async function batchEdit(json) {
-  const mediaIds = filteredMedia.value
-    .filter((m) => m.selected)
-    .map((m) => m.media_id)
+  const mediaIds = filteredMedia.value.filter(m => selectedMedia[m.media_id]).map(m => m.media_id)
   return mediaStore.editIds(projectId, mediaIds, json)
 }
+
+
 
 onMounted(() => {
   if (!mediaStore.isLoaded) {
@@ -190,53 +306,29 @@ function sortByMediaId(a, b) {
 }
 
 function sortBySpecimenId(a, b) {
-  return a.specimen_id < b.specimen_id ? -1 : 1
+  return (a.specimen_id || 0) < (b.specimen_id || 0) ? -1 : 1
 }
 
 function sortByViewName(a, b) {
-  const viewA = getView(a)
-  const viewB = getView(b)
-
-  const nameA = viewA?.name ?? ''
-  const nameB = viewB?.name ?? ''
+  const nameA = a.view_name || ''
+  const nameB = b.view_name || ''
   const compare = nameA.localeCompare(nameB)
-  return compare ?? sortByMediaId(a, b)
+  return compare || sortByMediaId(a, b)
 }
 
 function sortByUserName(a, b) {
-  const userA = getUser(a)
-  const userB = getUser(b)
-
-  const fnameA = userA?.fname ?? ''
-  const fnameB = userB?.fname ?? ''
-  let compare = fnameA.localeCompare(fnameB)
-  if (compare) {
-    return compare
-  }
-
-  const lnameA = userA?.lname ?? ''
-  const lnameB = userB?.lname ?? ''
-  compare = lnameA.localeCompare(lnameB)
-  return compare ?? sortByMediaId(a, b)
+  const nameA = a.user_name || ''
+  const nameB = b.user_name || ''
+  const compare = nameA.localeCompare(nameB)
+  return compare || sortByMediaId(a, b)
 }
 
 function sortByTaxonRank(taxonRank) {
   return (a, b) => {
-    const taxonA = getTaxon(a)
-    if (taxonA == null) {
-      return 1
-    }
-
-    const taxonB = getTaxon(b)
-    if (taxonB == null) {
-      return -1
-    }
-
-    const column = nameColumnMap.get(taxonRank)
-    const nameA = taxonA[column] ?? ''
-    const nameB = taxonB[column] ?? ''
+    const nameA = a.taxon_name || ''
+    const nameB = b.taxon_name || ''
     const compare = nameA.localeCompare(nameB)
-    return compare ?? sortByMediaId(a, b)
+    return compare || sortByMediaId(a, b)
   }
 }
 
@@ -244,7 +336,6 @@ function getView(media) {
   if (media.view_id == null) {
     return null
   }
-
   return mediaViewsStore.getMediaViewById(media.view_id)
 }
 
@@ -252,7 +343,6 @@ function getUser(media) {
   if (media.user_id == null) {
     return null
   }
-
   return projectUsersStore.getUserById(media.user_id)
 }
 
@@ -281,15 +371,6 @@ function clearFilter(key) {
   delete filters[key]
 }
 
-function searchByStr() {
-  selectedPage.value = 1 // Reset to first page when searching
-}
-
-function onResetSearch() {
-  searchStr.value = ''
-  selectedPage.value = 1
-}
-
 // Watch for page size changes
 watch(selectedPageSize, () => {
   selectedPage.value = 1
@@ -299,37 +380,15 @@ watch(selectedPageSize, () => {
 watch(searchStr, () => {
   selectedPage.value = 1
 })
-
-// Helper function to create S3 media URLs for MediaCard
-function getMediaThumbnailUrl(media) {
-  if (media.media_id) {
-    return {
-      url: buildMediaUrl(projectId, media.media_id, 'thumbnail'),
-    }
-  }
-  // Fallback to existing thumbnail object
-  return media.thumbnail
-}
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
-    <header>
-      <p>
-        This project has {{ mediaStore.media?.length }} media files. 
-        <span v-if="searchStr || Object.keys(filters).length > 1">
-          Displaying {{ filteredMedia.length }} media files.
-        </span>
-        <span v-else>
-          Displaying {{ filteredMedia.length }} media files.
-        </span>
-      </p>
-      <p v-if="uncuratedMediaCount > 0" class="text-muted">
-        <i class="fa fa-info-circle"></i>
-        <em>{{ uncuratedMediaCount }} batch media still need to be curated and released to the general media pool. You must curate all your media before adding a new batch.</em>
-      </p>
-    </header>
+    <p>
+      This project has {{ mediaStore.media?.length }} media files. Displaying
+      {{ filteredMedia.length }} media files.
+    </p>
 
-    <!-- Action Bar -->
+    <!-- Action Bar - Keep the project-specific actions -->
     <div class="action-bar">
       <RouterLink :to="`/myprojects/${projectId}/media/create`">
         <button type="button" class="btn btn-m btn-outline-primary">
@@ -393,19 +452,21 @@ function getMediaThumbnailUrl(media) {
       </div>
     </div>
 
+    <div v-if="uncuratedMediaCount > 0" class="alert alert-info">
+      <i class="fa fa-info-circle"></i>
+      {{ uncuratedMediaCount }} batch media still need to be curated and released to the general media pool. You must curate all your media before adding a new batch.
+    </div>
+
     <div v-if="mediaStore.media?.length">
-      <!-- Search and Filter Controls -->
+      <!-- Controls matching MediaView.vue exactly -->
       <div class="row mb-3">
         <div class="col-5">
           <div class="mb-2">
-            <label for="search-filter" class="me-2">Search for:</label>
-            <input 
-              id="search-filter" 
-              v-model="searchStr" 
-              class="me-2" 
-              placeholder="Search media..."
-              @input="searchByStr"
-            />
+            <label for="filter" class="me-2">Search for:</label>
+            <input id="filter" v-model="searchStr" class="me-2" />
+            <button @click="searchByStr()" class="btn btn-primary me-2">
+              Submit
+            </button>
             <button @click="onResetSearch()" class="btn btn-primary btn-white">
               Clear
             </button>
@@ -422,70 +483,51 @@ function getMediaThumbnailUrl(media) {
           </div>
           <div>
             <label for="order-by" class="me-2">Order by:</label>
-            <select id="order-by" @change="onSelectSort">
-              <option value="mnumber" selected="true">MorphoBank number</option>
-              <option value="snumber">specimen number</option>
-              <option value="view">view</option>
-              <option value="user">submitter</option>
-              <option :value="TaxaFriendlyNames.PHYLUM">taxonomic phylum</option>
-              <option :value="TaxaFriendlyNames.CLASS">taxonomic class</option>
-              <option :value="TaxaFriendlyNames.ORDER">taxonomic order</option>
-              <option :value="TaxaFriendlyNames.SUPERFAMILY">taxonomic superfamily</option>
-              <option :value="TaxaFriendlyNames.FAMILY">taxonomic family</option>
-              <option :value="TaxaFriendlyNames.SUBFAMILY">taxonomic subfamily</option>
-              <option :value="TaxaFriendlyNames.GENUS">taxonomic genus</option>
+            <select id="order-by" v-model="orderBySelection">
+              <option
+                v-for="(label, value) in orderByOptions"
+                :key="value"
+                :value="value"
+              >
+                {{ label }}
+              </option>
             </select>
           </div>
         </div>
-        
-        <!-- Right Side Controls -->
-        <div class="d-flex col-7 justify-content-end align-items-start">
-          <div class="me-4">
-            <button
-              class="btn btn-small btn-secondary"
-              type="button"
-              data-bs-toggle="modal"
-              data-bs-target="#mediaFilterModal"
-            >
-              <i class="fa fa-filter"></i> Advanced Filter
-            </button>
-          </div>
-          
-          <!-- Pagination Controls -->
-          <div class="me-4">
-            <span>Showing page </span>
+        <div class="d-flex col-7 justify-content-end">
+          <div class="me-5">
+            Showing page
             <select v-model="selectedPage">
               <option
-                v-for="page in totalPages"
-                :key="page"
-                :value="page"
+                :selected="idx == 1"
+                v-for="idx in totalPages"
+                :key="idx"
+                :value="idx"
               >
-                {{ page }}
+                {{ idx }}
               </option>
             </select>
-            <span> of {{ totalPages }} pages.</span>
+            of {{ totalPages }} pages.
           </div>
 
-          <div class="me-3">
-            <span>Items per page: </span>
+          <div>
+            Items per page:
             <select v-model="selectedPageSize">
               <option
-                v-for="size in [10, 25, 50, 100]"
-                :key="size"
-                :value="size"
+                :selected="idx == 25"
+                v-for="idx in [10, 25, 50, 100]"
+                :key="idx"
+                :value="idx"
               >
-                {{ size }}
+                {{ idx }}
               </option>
             </select>
           </div>
-
-          <!-- View Mode Toggle -->
           <div class="ms-1">
             <button
               @click="thumbnailView = true"
               :style="{ backgroundColor: thumbnailView ? '#e0e0e0' : '#fff' }"
               title="thumbnail-view"
-              class="btn btn-sm"
             >
               <i class="fa-solid fa-border-all"></i>
             </button>
@@ -494,8 +536,7 @@ function getMediaThumbnailUrl(media) {
             <button
               @click="thumbnailView = false"
               :style="{ backgroundColor: thumbnailView ? '#fff' : '#e0e0e0' }"
-              title="compact-view"
-              class="btn btn-sm"
+              title="mosaic-view"
             >
               <i class="fa-solid fa-table-cells"></i>
             </button>
@@ -503,8 +544,8 @@ function getMediaThumbnailUrl(media) {
         </div>
       </div>
 
-      <!-- Selection Bar -->
-      <div class="selection-bar">
+      <!-- Selection Bar for batch operations -->
+      <div v-if="someSelected" class="selection-bar mb-3">
         <label class="item">
           <input
             type="checkbox"
@@ -512,13 +553,9 @@ function getMediaThumbnailUrl(media) {
             v-model="allSelected"
             :indeterminate.prop="someSelected && !allSelected"
           />
-          <span class="ms-1">{{ someSelected ? `${paginatedMedia.filter(m => m.selected).length} selected` : 'Select All' }}</span>
+          <span class="ms-1">{{ someSelected ? `${paginatedMedia.filter(m => selectedMedia[m.media_id]).length} selected` : 'Select All' }}</span>
         </label>
-        <span v-if="!someSelected" class="item" @click="refresh" title="Refresh">
-          <i class="fa-solid fa-arrow-rotate-right"></i>
-        </span>
         <span
-          v-if="someSelected"
           class="item"
           data-bs-toggle="modal"
           data-bs-target="#mediaEditModal"
@@ -527,88 +564,46 @@ function getMediaThumbnailUrl(media) {
           <i class="fa-regular fa-pen-to-square"></i>
         </span>
         <span
-          v-if="someSelected"
           class="item"
           data-bs-toggle="modal"
           data-bs-target="#mediaDeleteModal"
-          @click="mediaToDelete = filteredMedia.filter((b) => b.selected)"
+          @click="mediaToDelete = filteredMedia.filter((b) => selectedMedia[b.media_id])"
           title="Delete Selected"
         >
           <i class="fa-regular fa-trash-can"></i>
         </span>
       </div>
 
-      <!-- Media Grid -->
-      <div 
+      <!-- Media Grid matching MediaView.vue exactly -->
+      <div
         :class="[
           thumbnailView
-            ? 'row row-cols-auto g-4 py-3'
-            : 'row row-cols-auto g-2 py-2',
-          'justify-content-start'
+            ? 'row row-cols-auto g-4 py-5'
+            : 'row row-cols-auto g-2 py-3',
+          'justify-content-start',
         ]"
       >
         <div
           class="col d-flex align-items-stretch"
-          v-for="media in paginatedMedia"
-          :key="media.media_id"
+          v-for="(media_file, n) in paginatedMedia"
+          :key="n"
         >
-          <RouterLink
-            :to="`/myprojects/${projectId}/media/${media.media_id}/edit`"
-            class="nav-link p-0"
-          >
-            <MediaCard
-              :mediaId="media.media_id"
-              :image="getMediaThumbnailUrl(media)"
-              :viewName="mediaViewsStore.getMediaViewById(media.view_id)?.name"
-              :taxon="getTaxonForMediaId(media)"
-            >
-              <template #bar>
-                <input
-                  class="form-check-input media-checkbox"
-                  type="checkbox"
-                  v-model="media.selected"
-                  @click.stop=""
-                />
-              </template>
-            </MediaCard>
+          <RouterLink :to="`/myprojects/${projectId}/media/${media_file.media_id}/edit`" class="nav-link">
+            <!-- Checkbox for selection (project-specific feature) -->
+            <input
+              class="form-check-input media-checkbox"
+              type="checkbox"
+              v-model="selectedMedia[media_file.media_id]"
+              @click.stop=""
+            />
+            <MediaCardComp
+              :key="media_file.media_id"
+              :media_file="media_file"
+              :full_view="thumbnailView"
+              :project_id="projectId"
+            ></MediaCardComp>
           </RouterLink>
         </div>
-      </div>
-
-      <!-- Pagination Footer -->
-      <div v-if="totalPages > 1" class="d-flex justify-content-center mt-4">
-        <nav>
-          <ul class="pagination">
-            <li class="page-item" :class="{ disabled: selectedPage === 1 }">
-              <button 
-                class="page-link" 
-                @click="selectedPage = Math.max(1, selectedPage - 1)"
-                :disabled="selectedPage === 1"
-              >
-                Previous
-              </button>
-            </li>
-            <li 
-              v-for="page in Math.min(totalPages, 10)" 
-              :key="page"
-              class="page-item" 
-              :class="{ active: selectedPage === page }"
-            >
-              <button class="page-link" @click="selectedPage = page">
-                {{ page }}
-              </button>
-            </li>
-            <li class="page-item" :class="{ disabled: selectedPage === totalPages }">
-              <button 
-                class="page-link" 
-                @click="selectedPage = Math.min(totalPages, selectedPage + 1)"
-                :disabled="selectedPage === totalPages"
-              >
-                Next
-              </button>
-            </li>
-          </ul>
-        </nav>
       </div>
     </div>
     <div v-else class="text-center py-5">
@@ -627,14 +622,26 @@ function getMediaThumbnailUrl(media) {
 <style scoped>
 @import '@/views/project/styles.css';
 
-/* Enhanced styles for improved ListView UI */
+/* Position checkbox over card */
 .media-checkbox {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 12px;
+  left: 12px;
   z-index: 10;
+  margin: 0;
 }
 
+.nav-link {
+  position: relative; /* This allows absolute positioning of checkbox within the card link */
+  display: block;
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  text-decoration: none;
+}
+
+/* Button styles matching MediaView.vue */
 .btn-white {
   background-color: white;
   border: 1px solid #dee2e6;
@@ -646,22 +653,40 @@ function getMediaThumbnailUrl(media) {
   border-color: #adb5bd;
 }
 
+/* Selection bar styling */
+.selection-bar {
+  display: flex;
+  gap: 5px;
+  margin: 8px 0;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  border: 1px solid #dee2e6;
+}
+
 .selection-bar .item {
   cursor: pointer;
   border-radius: 4px;
   transition: all 0.2s ease;
+  padding: 5px 10px;
 }
 
 .selection-bar .item:hover {
   background-color: #e9ecef;
 }
 
-.nav-link {
-  text-decoration: none;
+/* Alert styling */
+.alert {
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  border: 1px solid transparent;
+  border-radius: 4px;
 }
 
-.nav-link:hover {
-  text-decoration: none;
+.alert-info {
+  color: #0c5460;
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
 }
 
 /* Responsive adjustments */
@@ -681,62 +706,6 @@ function getMediaThumbnailUrl(media) {
   .d-flex.col-7 > div {
     margin: 0.25rem 0;
   }
-}
-
-/* Pagination styling */
-.pagination {
-  margin-bottom: 0;
-}
-
-.page-link {
-  color: #ef782f;
-  border-color: #dee2e6;
-}
-
-.page-link:hover {
-  color: #c56426;
-  background-color: #fff4e6;
-  border-color: #ef782f;
-}
-
-.page-item.active .page-link {
-  background-color: #ef782f;
-  border-color: #ef782f;
-}
-
-/* View toggle buttons */
-.btn-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
-  border: 1px solid #dee2e6;
-}
-
-.btn-sm:hover {
-  border-color: #adb5bd;
-}
-
-/* Search and filter controls */
-#search-filter {
-  border: 1px solid #ced4da;
-  border-radius: 0.375rem;
-  padding: 0.375rem 0.75rem;
-}
-
-#search-filter:focus {
-  border-color: #ef782f;
-  box-shadow: 0 0 0 0.2rem rgba(239, 120, 47, 0.25);
-}
-
-select {
-  border: 1px solid #ced4da;
-  border-radius: 0.375rem;
-  padding: 0.375rem 0.75rem;
-  background-color: white;
-}
-
-select:focus {
-  border-color: #ef782f;
-  box-shadow: 0 0 0 0.2rem rgba(239, 120, 47, 0.25);
 }
 
 /* Empty state styling */
