@@ -41,6 +41,7 @@ type OverviewStats = {
   journal_url: string
   image_props?: ImageProperties
   stats: OverviewStat
+  exemplar_media_id?: number
 }
 
 const props = defineProps<{
@@ -69,8 +70,6 @@ onMounted(async () => {
       specimen_name: imageProps.specimen_name,
       view_name: imageProps.view_name,
     }
-  } else {
-    console.log('No exemplar media found for project')
   }
 })
 

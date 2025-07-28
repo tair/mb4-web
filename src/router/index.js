@@ -168,6 +168,15 @@ const router = createRouter({
           beforeEnter: requireSignIn,
         },
         {
+          path: '/myprojects/:id(\\d+)/edit',
+          name: 'MyProjectEditView',
+          component: () =>
+            import(
+              /* webpackChunkName: "unpublished" */ '@/views/project/home/EditProjectView.vue'
+            ),
+          beforeEnter: requireSignIn,
+        },
+        {
           path: '/myprojects/:id(\\d+)',
           name: 'MyProjectsView',
           component: MyProjectsView,

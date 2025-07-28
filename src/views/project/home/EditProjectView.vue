@@ -1,5 +1,5 @@
 <template>
-  <FormLayout title="CREATE PROJECT">
+  <FormLayout title="EDIT PROJECT">
     <form @submit.prevent="handleSubmit" class="list-form">
       <!-- Basic Project Information -->
       <div class="form-group">
@@ -15,7 +15,7 @@
         />
       </div>
 
-            <!-- Exemplar Media Upload -->
+      <!-- Exemplar Media Upload -->
       <div class="form-group">
         <label class="form-label">
           Exemplar Media
@@ -44,6 +44,11 @@
             Selected file: {{ formData.exemplar_media.name }}
           </div>
         </div>
+        <div v-else-if="existingExemplarMedia" class="media-result">
+          <div class="media-result-caption">
+            Current exemplar media (ID: {{ formData.exemplar_media_id }})
+          </div>
+        </div>
         <div v-else class="media-placeholder">
           <img src="/images/img_placeholder.jpg" alt="No media selected" />
         </div>
@@ -62,71 +67,6 @@
           <option value="0">No</option>
         </select>
       </div>
-
-      <!-- Exemplar Media Selection -->
-      <!--
-      <div class="form-group">
-        <label class="form-label">
-          Exemplar Media
-          <Tooltip :content="getExemplarMediaTooltip()"></Tooltip>
-        </label>
-        <div class="media-selection">
-          <input
-            v-model="mediaSearch"
-            type="text"
-            class="form-control"
-            placeholder="Search for media..."
-            @input="searchMedia"
-          />
-          <button type="button" @click="clearMedia" class="btn-link">
-            Clear
-          </button>
-          <button
-            v-if="projectMedia.length > 0"
-            type="button"
-            @click="toggleMediaBrowser"
-            class="btn-link"
-          >
-            Browse media
-          </button>
-        </div>
-
-        <div v-if="selectedMedia" class="media-result">
-          <div class="media-result-img">
-            <img :src="selectedMedia.thumbnail" :alt="selectedMedia.name" />
-          </div>
-          <div class="media-result-caption">
-            M{{ selectedMedia.id }}
-            <div v-if="selectedMedia.specimen">
-              <i>{{ selectedMedia.specimen.taxa }}</i>
-            </div>
-            <div v-if="selectedMedia.view">
-              {{ selectedMedia.view.name }}
-            </div>
-          </div>
-        </div>
-        <div v-else class="media-placeholder">
-          <img src="/images/img_placeholder.jpg" alt="No media selected" />
-        </div>
-      </div>
-      
-
-      <div class="form-group">
-        <label class="form-label">
-          Disk Space Usage
-          <Tooltip :content="getDiskSpaceUsageTooltip()"></Tooltip>
-        </label>
-        <input
-          v-model="formData.disk_space_usage"
-          type="number"
-          class="form-control"
-          placeholder="Enter maximum disk space in bytes"
-        />
-        <small class="form-text text-muted"
-          >Default: 5GB (5368709120 bytes)</small
-        >
-      </div>
-        -->
 
       <!-- Reviewer Access Section -->
       <h2 class="section-heading">
@@ -521,10 +461,10 @@
         <button type="button" @click="cancel" class="btn btn-outline-primary" :disabled="isLoading">
           Cancel
         </button>
-        <button type="submit" :class="projectCreated ? 'btn btn-success' : 'btn btn-primary'" :disabled="isLoading">
-          <span v-if="isLoading && !projectCreated" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-          <span v-if="projectCreated" class="me-2">✓</span>
-          {{ isLoading ? getLoadingText() : 'Save' }}
+        <button type="submit" :class="projectUpdated ? 'btn btn-success' : 'btn btn-primary'" :disabled="isLoading">
+          <span v-if="isLoading && !projectUpdated" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          <span v-if="projectUpdated" class="me-2">✓</span>
+          {{ isLoading ? getLoadingText() : 'Update' }}
         </button>
       </div>
     </form>
@@ -533,8 +473,9 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed, onUnmounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useProjectsStore } from '@/stores/ProjectsStore'
+import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore'
 import { useUserStore } from '@/stores/UserStore'
 import axios from 'axios'
 import {
@@ -553,7 +494,10 @@ import FormLayout from '@/components/main/FormLayout.vue'
 import '@/assets/css/form.css'
 
 const router = useRouter()
+const route = useRoute()
+const projectId = route.params.id
 const projectsStore = useProjectsStore()
+const projectOverviewStore = useProjectOverviewStore()
 const userStore = useUserStore()
 
 const formData = reactive({
@@ -576,6 +520,7 @@ const formData = reactive({
   publication_status: '2', // Default to "Article in prep or in review"
   journal_cover: null, // Journal cover file
   exemplar_media: null, // Exemplar media file
+  exemplar_media_id: null, // Existing exemplar media ID
 })
 
 const journalSearch = ref('')
@@ -583,6 +528,7 @@ const showNewJournal = ref(false)
 const journals = ref([])
 const journalCoverPath = ref(null)
 const isLoading = ref(false)
+const isLoadingProject = ref(true)
 const error = ref(null)
 const showJournalDropdown = ref(false)
 const journalCoverFile = ref(null)
@@ -590,6 +536,7 @@ const journalDropdownRef = ref(null)
 const selectedJournalIndex = ref(-1)
 const isLoadingJournals = ref(false)
 const showPassword = ref(false)
+const existingExemplarMedia = ref(false)
 
 // Computed property for filtered journals based on search
 const filteredJournals = computed(() => {
@@ -602,7 +549,10 @@ const filteredJournals = computed(() => {
 })
 
 onMounted(async () => {
-  await loadJournals()
+  await Promise.all([
+    loadJournals(),
+    loadProjectData()
+  ])
   // Add click outside event listener
   document.addEventListener('click', handleJournalClickOutside)
 })
@@ -611,6 +561,72 @@ onMounted(async () => {
 onUnmounted(() => {
   document.removeEventListener('click', handleJournalClickOutside)
 })
+
+async function loadProjectData() {
+  try {
+    isLoadingProject.value = true
+    
+    // Fetch project overview data which includes most fields we need
+    await projectOverviewStore.fetchProject(projectId)
+    const overview = projectOverviewStore.overview
+    
+    if (!overview) {
+      throw new Error('Project not found')
+    }
+
+    // Map the overview data to our form fields
+    formData.name = overview.name || ''
+    formData.description = overview.description || ''
+    formData.nsf_funded = overview.nsf_funded !== null ? String(overview.nsf_funded) : ''
+    formData.journal_title = overview.journal_title || ''
+    formData.journal_url = overview.journal_url || ''
+    formData.journal_volume = overview.journal_volume || ''
+    formData.journal_number = overview.journal_number || ''
+    formData.journal_year = overview.journal_year || ''
+    formData.article_authors = overview.article_authors || ''
+    formData.article_title = overview.article_title || ''
+    formData.article_pp = overview.article_pp || ''
+    formData.article_doi = overview.article_doi || ''
+    formData.exemplar_media_id = overview.exemplar_media_id || null
+    formData.disk_space_usage = overview.disk_usage_limit || 5368709120
+
+    // Set flags for existing media
+    existingExemplarMedia.value = !!overview.exemplar_media_id
+
+    // Determine publication status based on available data
+    if (overview.journal_url && overview.journal_volume && overview.article_pp) {
+      formData.publication_status = '0' // Published
+    } else if (overview.journal_title && overview.journal_year) {
+      formData.publication_status = '1' // In press
+    } else {
+      formData.publication_status = '2' // In prep or review
+    }
+
+    // Handle journal title - check if it exists in the journals list
+    if (formData.journal_title) {
+      const journalExists = journals.value.some(
+        (journal) => journal.toLowerCase() === formData.journal_title.toLowerCase()
+      )
+      
+      if (!journalExists) {
+        showNewJournal.value = true
+        formData.journal_title_other = formData.journal_title
+        formData.journal_title = ''
+      } else {
+        loadJournalCover(formData.journal_title)
+      }
+    }
+
+    // Note: reviewer settings are not exposed in overview, so we'll keep defaults
+    // Users can still update them if needed
+
+  } catch (err) {
+    console.error('Error loading project data:', err)
+    error.value = 'Failed to load project data'
+  } finally {
+    isLoadingProject.value = false
+  }
+}
 
 // Keyboard navigation for journal dropdown
 function navigateJournalDropdown(direction) {
@@ -649,14 +665,15 @@ function handleExemplarMediaUpload(event) {
   const file = event.target.files[0]
   if (file) {
     formData.exemplar_media = file
+    existingExemplarMedia.value = false
   }
 }
 
 function clearExemplarMedia() {
   formData.exemplar_media = null
+  existingExemplarMedia.value = false
+  formData.exemplar_media_id = null
 }
-
-
 
 function toggleJournalMode() {
   showNewJournal.value = !showNewJournal.value
@@ -755,15 +772,12 @@ async function retrieveDOI() {
       `${import.meta.env.VITE_API_URL}/projects/doi`,
       {
         article_doi: formData.article_doi,
-        newProject: true, // Since this is CreateView, we're always creating a new project
+        newProject: false, // Since this is EditView, we're editing an existing project
       }
     )
 
     if (response.data.status === 'ok') {
       const fields = response.data.fields
-
-      // Set project name to article title for new projects
-      formData.name = fields.article_title
 
       // Handle each field from the response
       for (const [field, value] of Object.entries(fields)) {
@@ -815,7 +829,7 @@ async function handleSubmit() {
       return
     }
 
-    // Create JSON object for project creation
+    // Create JSON object for project update
     const projectData = {}
 
     // Add all form fields to JSON
@@ -834,30 +848,80 @@ async function handleSubmit() {
       }
     }
 
-    // Create project with optional journal cover and exemplar media in a single API call
-    const project = await projectsStore.createProject(
+    // Update project with optional journal cover and exemplar media
+    const success = await updateProject(
       projectData,
       formData.journal_cover,
       formData.exemplar_media
     )
 
-    if (!project) {
-      throw new Error('Failed to create project')
+    if (!success) {
+      throw new Error('Failed to update project')
     }
 
     // Show success state briefly before redirecting
-    projectCreated.value = true
+    projectUpdated.value = true
     await new Promise(resolve => setTimeout(resolve, 800))
 
     // Force full page refresh to bypass any cached 404 responses
-    window.location.href = `/myprojects/${project.project_id}/overview`
+    window.location.href = `/myprojects/${projectId}/overview`
   } catch (err) {
     console.error('Error in handleSubmit:', err)
     error.value =
       err.response?.data?.message ||
-      'An error occurred while creating the project'
+      'An error occurred while updating the project'
   } finally {
     isLoading.value = false
+  }
+}
+
+async function updateProject(projectData, journalCoverFile = null, exemplarMediaFile = null) {
+  try {
+    let requestData
+    let headers = {}
+
+    if (journalCoverFile || exemplarMediaFile) {
+      // Use FormData for file upload
+      const formData = new FormData()
+
+      // Add all project data as JSON string
+      formData.append('projectData', JSON.stringify(projectData))
+
+      // Add journal cover file if provided
+      if (journalCoverFile) {
+        formData.append('journal_cover', journalCoverFile)
+      }
+
+      // Add exemplar media file if provided
+      if (exemplarMediaFile) {
+        formData.append('exemplar_media', exemplarMediaFile)
+      }
+
+      requestData = formData
+      // Don't set Content-Type header - let browser set it with boundary
+    } else {
+      // Use JSON for project data only
+      requestData = { project: projectData }
+      headers = {
+        'Content-Type': 'application/json',
+      }
+    }
+
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_URL}/projects/${projectId}/edit`,
+      requestData,
+      { headers }
+    )
+
+    // Refresh the projects cache
+    if (response.status === 200) {
+      await projectsStore.fetchProjects(true) // Force refresh
+    }
+
+    return response.status === 200
+  } catch (error) {
+    console.error('Error updating project:', error.response || error)
+    throw error
   }
 }
 
@@ -955,7 +1019,7 @@ function validateForm() {
 }
 
 function cancel() {
-  router.push('/myprojects')
+  router.push(`/myprojects/${projectId}/overview`)
 }
 
 // Add click outside handler for journal dropdown
@@ -968,8 +1032,6 @@ const handleJournalClickOutside = (event) => {
   }
 }
 
-
-
 // Update the handleJournalSearch function
 function handleJournalSearch() {
   showJournalDropdown.value = true
@@ -980,28 +1042,26 @@ function togglePasswordVisibility() {
   showPassword.value = !showPassword.value
 }
 
-const projectCreated = ref(false)
+const projectUpdated = ref(false)
 
 function getLoadingText() {
-  if (projectCreated.value) {
-    return 'Project created successfully!'
+  if (projectUpdated.value) {
+    return 'Project updated successfully!'
   }
   
   const hasJournalCover = formData.journal_cover
   const hasExemplarMedia = formData.exemplar_media
   
   if (hasJournalCover && hasExemplarMedia) {
-    return 'Uploading images and creating project...'
+    return 'Uploading images and updating project...'
   } else if (hasJournalCover) {
-    return 'Uploading journal cover and creating project...'
+    return 'Uploading journal cover and updating project...'
   } else if (hasExemplarMedia) {
-    return 'Uploading exemplar media and creating project...'
+    return 'Uploading exemplar media and updating project...'
   } else {
-    return 'Creating project...'
+    return 'Updating project...'
   }
 }
-
-
 </script>
 
 <style scoped>
@@ -1247,6 +1307,4 @@ function getLoadingText() {
   height: 1rem;
   border-width: 0.15em;
 }
-
-
-</style>
+</style> 
