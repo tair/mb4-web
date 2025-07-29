@@ -6,6 +6,7 @@ import EditBatchDialog from '@/views/project/taxa/EditBatchDialog.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import TaxonomicName from '@/components/project/TaxonomicName.vue'
 import DeleteDialog from '@/views/project/taxa/DeleteDialog.vue'
+import Tooltip from '@/components/main/Tooltip.vue'
 import {
   TAXA_COLUMN_NAMES,
   TaxaColumns,
@@ -24,6 +25,8 @@ const isLoaded = computed(() => taxaStore.isLoaded)
 
 const rank = ref(TaxaColumns.GENUS)
 const selectedLetter = ref(null)
+const searchStr = ref('')
+
 const letters = computed(() => {
   const letters = new Set()
   for (const taxon of taxaStore.taxa) {
@@ -40,9 +43,15 @@ const letters = computed(() => {
 
 const filters = reactive({})
 const filteredTaxa = computed(() => {
+  // Start with either search results or all taxa
+  let baseTaxa = searchStr.value.trim()
+    ? taxaStore.searchTaxa(searchStr.value)
+    : taxaStore.taxa
+
+  // Apply other filters (group, page/letter filters)
   const filtered = Object.values(filters).reduce(
     (taxa, filter) => taxa.filter(filter),
-    taxaStore.taxa
+    baseTaxa
   )
 
   return sortTaxaAlphabetically(filtered, TaxaColumns.GENUS)
@@ -87,6 +96,14 @@ async function batchEdit(json) {
 
 function refresh() {
   taxaStore.fetch(projectId)
+}
+
+function onSearch() {
+  // console.log('onSearch', searchStr.value)
+}
+
+function onClearSearch() {
+  searchStr.value = ''
 }
 
 const selectedGroup = ref({})
@@ -137,12 +154,9 @@ function setPage(event) {
   }
 }
 
-function setRank(event) {
+function setRank() {
   delete filters['page']
   selectedLetter.value = null
-
-  const text = event.target.value
-  rank.value = text
 }
 
 function clearSearch() {
@@ -154,6 +168,7 @@ function clearSearch() {
   rank.value = TaxaColumns.GENUS
   selectedGroup.value = {}
   selectedGroupName.value = null
+  searchStr.value = ''
 }
 </script>
 <template>
@@ -161,6 +176,7 @@ function clearSearch() {
     <header>
       There are {{ taxaStore.taxa?.length }} taxa associated with this project.
     </header>
+    <br />
     <div class="action-bar">
       <RouterLink :to="`/myprojects/${projectId}/taxa/create`">
         <button type="button" class="btn btn-m btn-outline-primary">
@@ -181,85 +197,126 @@ function clearSearch() {
         </button>
       </RouterLink>
     </div>
-    <button
-      class="btn btn-small btn-secondary"
-      type="button"
-      @click="clearSearch"
-    >
-      Clear Search
-    </button>
-    <div v-if="availableRanks.size > 0">
-      Browse By:
-      <select @change="setRank">
-        <template v-for="[column, name] in nameColumnMap">
-          <option
-            v-if="availableRanks.has(column)"
-            :value="column"
-            :selected="rank == column"
-          >
-            {{ name }}
-          </option>
-        </template>
-      </select>
-    </div>
-    <div
-      v-if="taxaStore.partitions.length > 0 || taxaStore.matrices.length > 0"
-    >
-      Show by taxa partition or matrix:
-      <select @change="setGroup">
-        <option value="0">-</option>
-        <optgroup label="Partition">
-          <template v-for="partition in taxaStore.partitions">
-            <option
-              :value="partition.partition_id"
-              :selected="selectedGroup.id == partition.partition_id"
-            >
-              {{ partition.name }}
-            </option>
-          </template>
-        </optgroup>
-        <optgroup label="Matrix">
-          <template v-for="matrix in taxaStore.matrices">
-            <option
-              :value="matrix.matrix_id"
-              :selected="selectedGroup.id == matrix.matrix_id"
-            >
-              {{ matrix.title }}
-            </option>
-          </template>
-        </optgroup>
-      </select>
-    </div>
     <div v-if="taxaStore.taxa?.length">
-      <div class="alphabet-bar">
-        Display taxa beginning with:
-        <template v-for="letter in letters">
-          <span
-            :class="{ selected: selectedLetter == letter }"
-            @click="setPage"
-            >{{ letter }}</span
-          >
-        </template>
-        <span class="separator">|</span>
-        <span @click="setPage" :class="{ selected: selectedLetter == null }"
-          >ALL</span
+      <div class="mb-3">
+        <div class="row mb-2">
+          <div class="col-8 d-flex align-items-center">
+            <label for="filter" class="me-2"
+              >Search for
+              <Tooltip
+                content="This search feature will retrieve taxa within your project only"
+              ></Tooltip>
+              :</label
+            >
+            <input id="filter" v-model="searchStr" class="me-2" />
+            <button @click="onSearch" class="btn btn-primary me-2">
+              Submit
+            </button>
+            <button
+              @click="onClearSearch"
+              class="btn btn-primary btn-white me-2"
+            >
+              Clear
+            </button>
+          </div>
+          <div class="col-4 d-flex justify-content-end align-items-center">
+            <button class="nav-link" @click="clearSearch">Show All Taxa</button>
+          </div>
+        </div>
+      </div>
+      <p class="text-black-50 fw-bold">- OR -</p>
+      <div class="filters-slim" v-if="availableRanks.size > 0">
+        <label for="filter-by" class="me-2">Browse by</label>
+        <select id="filter-by" v-model="rank" @change="setRank" class="me-2">
+          <template v-for="[column, name] in nameColumnMap">
+            <option v-if="availableRanks.has(column)" :value="column">
+              {{ name }}
+            </option>
+          </template>
+        </select>
+        beginning with:
+        <button
+          :class="[{ active: selectedLetter == letter }, 'fw-bold']"
+          v-for="letter in letters"
+          :key="letter"
+          @click="setPage"
         >
+          {{ letter }}
+        </button>
+        <span class="separator">|</span>
+        <button
+          :class="[{ active: selectedLetter == null }, 'fw-bold']"
+          @click="setPage"
+        >
+          ALL
+        </button>
       </div>
-      <div v-if="selectedGroupName && selectedLetter != null">
-        Showing {{ filteredTaxa?.length }} taxonomic names from
-        <i>{{ selectedGroupName }}</i> where
-        {{ nameColumnMap.get(rank) }} starts with '{{ selectedLetter }}'.
+      <p
+        class="text-black-50 fw-bold"
+        v-if="taxaStore.partitions.length > 0 || taxaStore.matrices.length > 0"
+      >
+        - OR -
+      </p>
+      <div
+        v-if="taxaStore.partitions.length > 0 || taxaStore.matrices.length > 0"
+      >
+        <label for="partition-by" class="me-2"
+          >Browse by taxa partition or matrix:</label
+        >
+        <select class="me-3" id="partition-by" @change="setGroup">
+          <option value="0">- Select A Partition -</option>
+          <optgroup label="Partition">
+            <template v-for="partition in taxaStore.partitions">
+              <option
+                :value="partition.partition_id"
+                :selected="selectedGroup.id == partition.partition_id"
+              >
+                {{ partition.name }}
+              </option>
+            </template>
+          </optgroup>
+          <optgroup label="Matrix">
+            <template v-for="matrix in taxaStore.matrices">
+              <option
+                :value="matrix.matrix_id"
+                :selected="selectedGroup.id == matrix.matrix_id"
+              >
+                {{ matrix.title }}
+              </option>
+            </template>
+          </optgroup>
+        </select>
       </div>
-      <div v-else-if="selectedGroupName">
-        Showing {{ filteredTaxa?.length }} taxonomic names from
-        <i>{{ selectedGroupName }}</i
-        >.
+      <div class="row mt-3 fw-bold text-black-50">
+        <div class="col-8">
+          <div v-if="selectedGroupName && selectedLetter != null">
+            <p>
+              Displaying {{ filteredTaxa?.length }} taxonomic names from
+              <i>{{ selectedGroupName }}</i> where
+              {{ nameColumnMap.get(rank) }} starts with '{{ selectedLetter }}'.
+            </p>
+          </div>
+          <div v-else-if="selectedGroupName">
+            <p>
+              Displaying {{ filteredTaxa?.length }} taxonomic names from
+              <i>{{ selectedGroupName }}</i
+              >.
+            </p>
+          </div>
+          <div v-else-if="selectedLetter != null">
+            <p>
+              Displaying {{ filteredTaxa?.length }} taxonomic names where
+              {{ nameColumnMap.get(rank) }} starts with '{{ selectedLetter }}'.
+            </p>
+          </div>
+          <div v-else>
+            <p>Displaying all {{ filteredTaxa?.length }} taxonomic names.</p>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="text-end"></div>
+        </div>
       </div>
-      <div v-else-if="selectedLetter != null">
-        Showing {{ filteredTaxa?.length }} taxonomic names where
-        {{ nameColumnMap.get(rank) }} starts with '{{ selectedLetter }}'.
-      </div>
-      <div v-else>Showing all {{ filteredTaxa?.length }} taxonomic names.</div>
       <div class="selection-bar">
         <label class="item">
           <input
