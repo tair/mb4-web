@@ -21,7 +21,7 @@
           Exemplar Media
           <Tooltip :content="getExemplarMediaTooltip()"></Tooltip>
         </label>
-        
+
         <div class="exemplar-upload">
           <input
             type="file"
@@ -29,10 +29,10 @@
             accept="image/*"
             class="form-control"
           />
-          <button 
-            v-if="formData.exemplar_media" 
-            type="button" 
-            @click="clearExemplarMedia" 
+          <button
+            v-if="formData.exemplar_media"
+            type="button"
+            @click="clearExemplarMedia"
             class="btn-link"
           >
             Clear
@@ -458,11 +458,25 @@
       </div>
 
       <div class="form-buttons">
-        <button type="button" @click="cancel" class="btn btn-outline-primary" :disabled="isLoading">
+        <button
+          type="button"
+          @click="cancel"
+          class="btn btn-outline-primary"
+          :disabled="isLoading"
+        >
           Cancel
         </button>
-        <button type="submit" :class="projectUpdated ? 'btn btn-success' : 'btn btn-primary'" :disabled="isLoading">
-          <span v-if="isLoading && !projectUpdated" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        <button
+          type="submit"
+          :class="projectUpdated ? 'btn btn-success' : 'btn btn-primary'"
+          :disabled="isLoading"
+        >
+          <span
+            v-if="isLoading && !projectUpdated"
+            class="spinner-border spinner-border-sm me-2"
+            role="status"
+            aria-hidden="true"
+          ></span>
           <span v-if="projectUpdated" class="me-2">✓</span>
           {{ isLoading ? getLoadingText() : 'Update' }}
         </button>
@@ -549,10 +563,7 @@ const filteredJournals = computed(() => {
 })
 
 onMounted(async () => {
-  await Promise.all([
-    loadJournals(),
-    loadProjectData()
-  ])
+  await Promise.all([loadJournals(), loadProjectData()])
   // Add click outside event listener
   document.addEventListener('click', handleJournalClickOutside)
 })
@@ -565,11 +576,11 @@ onUnmounted(() => {
 async function loadProjectData() {
   try {
     isLoadingProject.value = true
-    
+
     // Fetch project overview data which includes most fields we need
     await projectOverviewStore.fetchProject(projectId)
     const overview = projectOverviewStore.overview
-    
+
     if (!overview) {
       throw new Error('Project not found')
     }
@@ -577,7 +588,8 @@ async function loadProjectData() {
     // Map the overview data to our form fields
     formData.name = overview.name || ''
     formData.description = overview.description || ''
-    formData.nsf_funded = overview.nsf_funded !== null ? String(overview.nsf_funded) : ''
+    formData.nsf_funded =
+      overview.nsf_funded !== null ? String(overview.nsf_funded) : ''
     formData.journal_title = overview.journal_title || ''
     formData.journal_url = overview.journal_url || ''
     formData.journal_volume = overview.journal_volume || ''
@@ -594,7 +606,11 @@ async function loadProjectData() {
     existingExemplarMedia.value = !!overview.exemplar_media_id
 
     // Determine publication status based on available data
-    if (overview.journal_url && overview.journal_volume && overview.article_pp) {
+    if (
+      overview.journal_url &&
+      overview.journal_volume &&
+      overview.article_pp
+    ) {
       formData.publication_status = '0' // Published
     } else if (overview.journal_title && overview.journal_year) {
       formData.publication_status = '1' // In press
@@ -605,9 +621,10 @@ async function loadProjectData() {
     // Handle journal title - check if it exists in the journals list
     if (formData.journal_title) {
       const journalExists = journals.value.some(
-        (journal) => journal.toLowerCase() === formData.journal_title.toLowerCase()
+        (journal) =>
+          journal.toLowerCase() === formData.journal_title.toLowerCase()
       )
-      
+
       if (!journalExists) {
         showNewJournal.value = true
         formData.journal_title_other = formData.journal_title
@@ -619,7 +636,6 @@ async function loadProjectData() {
 
     // Note: reviewer settings are not exposed in overview, so we'll keep defaults
     // Users can still update them if needed
-
   } catch (err) {
     console.error('Error loading project data:', err)
     error.value = 'Failed to load project data'
@@ -861,7 +877,7 @@ async function handleSubmit() {
 
     // Show success state briefly before redirecting
     projectUpdated.value = true
-    await new Promise(resolve => setTimeout(resolve, 800))
+    await new Promise((resolve) => setTimeout(resolve, 800))
 
     // Force full page refresh to bypass any cached 404 responses
     window.location.href = `/myprojects/${projectId}/overview`
@@ -875,7 +891,11 @@ async function handleSubmit() {
   }
 }
 
-async function updateProject(projectData, journalCoverFile = null, exemplarMediaFile = null) {
+async function updateProject(
+  projectData,
+  journalCoverFile = null,
+  exemplarMediaFile = null
+) {
   try {
     let requestData
     let headers = {}
@@ -1048,10 +1068,10 @@ function getLoadingText() {
   if (projectUpdated.value) {
     return 'Project updated successfully!'
   }
-  
+
   const hasJournalCover = formData.journal_cover
   const hasExemplarMedia = formData.exemplar_media
-  
+
   if (hasJournalCover && hasExemplarMedia) {
     return 'Uploading images and updating project...'
   } else if (hasJournalCover) {
@@ -1307,4 +1327,4 @@ function getLoadingText() {
   height: 1rem;
   border-width: 0.15em;
 }
-</style> 
+</style>

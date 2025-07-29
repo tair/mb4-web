@@ -74,7 +74,11 @@ export const useProjectsStore = defineStore({
         }
       }
     },
-    async createProject(projectData, journalCoverFile = null, exemplarMediaFile = null) {
+    async createProject(
+      projectData,
+      journalCoverFile = null,
+      exemplarMediaFile = null
+    ) {
       try {
         let requestData
         let headers = {}

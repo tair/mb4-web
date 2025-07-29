@@ -15,13 +15,13 @@
         />
       </div>
 
-            <!-- Exemplar Media Upload -->
+      <!-- Exemplar Media Upload -->
       <div class="form-group">
         <label class="form-label">
           Exemplar Media
           <Tooltip :content="getExemplarMediaTooltip()"></Tooltip>
         </label>
-        
+
         <div class="exemplar-upload">
           <input
             type="file"
@@ -29,10 +29,10 @@
             accept="image/*"
             class="form-control"
           />
-          <button 
-            v-if="formData.exemplar_media" 
-            type="button" 
-            @click="clearExemplarMedia" 
+          <button
+            v-if="formData.exemplar_media"
+            type="button"
+            @click="clearExemplarMedia"
             class="btn-link"
           >
             Clear
@@ -518,11 +518,25 @@
       </div>
 
       <div class="form-buttons">
-        <button type="button" @click="cancel" class="btn btn-outline-primary" :disabled="isLoading">
+        <button
+          type="button"
+          @click="cancel"
+          class="btn btn-outline-primary"
+          :disabled="isLoading"
+        >
           Cancel
         </button>
-        <button type="submit" :class="projectCreated ? 'btn btn-success' : 'btn btn-primary'" :disabled="isLoading">
-          <span v-if="isLoading && !projectCreated" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        <button
+          type="submit"
+          :class="projectCreated ? 'btn btn-success' : 'btn btn-primary'"
+          :disabled="isLoading"
+        >
+          <span
+            v-if="isLoading && !projectCreated"
+            class="spinner-border spinner-border-sm me-2"
+            role="status"
+            aria-hidden="true"
+          ></span>
           <span v-if="projectCreated" class="me-2">✓</span>
           {{ isLoading ? getLoadingText() : 'Save' }}
         </button>
@@ -655,8 +669,6 @@ function handleExemplarMediaUpload(event) {
 function clearExemplarMedia() {
   formData.exemplar_media = null
 }
-
-
 
 function toggleJournalMode() {
   showNewJournal.value = !showNewJournal.value
@@ -847,7 +859,7 @@ async function handleSubmit() {
 
     // Show success state briefly before redirecting
     projectCreated.value = true
-    await new Promise(resolve => setTimeout(resolve, 800))
+    await new Promise((resolve) => setTimeout(resolve, 800))
 
     // Force full page refresh to bypass any cached 404 responses
     window.location.href = `/myprojects/${project.project_id}/overview`
@@ -968,8 +980,6 @@ const handleJournalClickOutside = (event) => {
   }
 }
 
-
-
 // Update the handleJournalSearch function
 function handleJournalSearch() {
   showJournalDropdown.value = true
@@ -986,10 +996,10 @@ function getLoadingText() {
   if (projectCreated.value) {
     return 'Project created successfully!'
   }
-  
+
   const hasJournalCover = formData.journal_cover
   const hasExemplarMedia = formData.exemplar_media
-  
+
   if (hasJournalCover && hasExemplarMedia) {
     return 'Uploading images and creating project...'
   } else if (hasJournalCover) {
@@ -1000,8 +1010,6 @@ function getLoadingText() {
     return 'Creating project...'
   }
 }
-
-
 </script>
 
 <style scoped>
@@ -1247,6 +1255,4 @@ function getLoadingText() {
   height: 1rem;
   border-width: 0.15em;
 }
-
-
 </style>
