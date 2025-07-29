@@ -65,8 +65,8 @@ export const useTaxaStore = defineStore({
       }/projects/${projectId}/taxa/${taxonId}/edit`
       const response = await axios.post(url, taxon)
       if (response.status == 200) {
-        const taxon = response.data.taxon
-        this.addTaxa([taxon])
+        const updatedTaxon = response.data.taxon
+        this.addTaxa([updatedTaxon])
         return true
       }
       return false

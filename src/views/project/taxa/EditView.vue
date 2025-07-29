@@ -1,6 +1,6 @@
 <script setup>
 import router from '@/router'
-import { onMounted, computed } from 'vue'
+import { onMounted, computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
@@ -18,9 +18,56 @@ const isLoaded = computed(
 )
 const taxon = computed(() => taxaStore.getTaxonById(taxonId))
 
+// Track whether additional taxonomic fields are expanded
+const showAdditionalFields = ref(false)
+
+// Define which fields are always visible (basic fields)
+const basicFields = ['is_extinct', 'genus', 'specific_epithet']
+
+const optionalFields = [
+  'scientific_name_author',
+  'scientific_name_year',
+  'use_parens_for_author',
+  'notes',
+]
+
+const metadataFields = ['user_id', 'access', 'created_on', 'last_modified_on']
+
+// Helper computed properties for different sections
+const taxonomicFieldsToShow = computed(() => {
+  if (!showAdditionalFields.value) return []
+
+  const excludedFields = [...basicFields, ...optionalFields, ...metadataFields]
+
+  return Object.keys(schema).filter((field) => !excludedFields.includes(field))
+})
+
+function toggleAdditionalFields() {
+  showAdditionalFields.value = !showAdditionalFields.value
+}
+
+// Helper function to convert values for checkbox components
+function getFieldValue(field, value) {
+  // Convert string values to boolean for checkbox fields
+  if (field === 'is_extinct' || field === 'use_parens_for_author') {
+    return !!value && value !== '0' && value !== 0
+  }
+  return value
+}
+
 async function editTaxon(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
+
+  // Explicitly handle checkbox values - ensure they're always included
+  const checkboxFields = ['is_extinct', 'use_parens_for_author']
+  checkboxFields.forEach((field) => {
+    // If checkbox field is not in form data, it means it was unchecked
+    if (!(field in json)) {
+      json[field] = '0'
+    }
+  })
+
   const success = await taxaStore.edit(projectId, taxonId, json)
   if (!success) {
     alert(response.data?.message || 'Failed to modify taxon')
@@ -42,21 +89,96 @@ onMounted(() => {
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
     <form @submit.prevent="editTaxon">
+      <p class="mt-2">
+        You must fill in at least one taxonomic field and indicate whether the
+        taxon is extinct.
+      </p>
       <div class="row setup-content">
-        <div
-          v-for="(definition, index) in schema"
-          :key="index"
-          class="form-group"
-        >
-          <label :for="index" class="form-label">
-            {{ definition.label }}
+        <!-- 1. Basic Fields Section -->
+        <div v-for="field in basicFields" :key="field" class="form-group">
+          <label :for="field" class="form-label">
+            {{ schema[field].label }}
           </label>
           <component
-            :key="index"
-            :is="definition.view"
-            :name="index"
-            :value="taxon[index]"
-            v-bind="definition.args"
+            :key="field"
+            :is="schema[field].view"
+            :name="field"
+            :value="getFieldValue(field, taxon[field])"
+            v-bind="schema[field].args"
+          >
+          </component>
+        </div>
+
+        <!-- 2. Expandable Taxonomic Fields Section -->
+        <div v-if="showAdditionalFields">
+          <div
+            v-for="field in taxonomicFieldsToShow"
+            :key="field"
+            class="form-group"
+          >
+            <label :for="field" class="form-label">
+              {{ schema[field].label }}
+            </label>
+            <component
+              :key="field"
+              :is="schema[field].view"
+              :name="field"
+              :value="getFieldValue(field, taxon[field])"
+              v-bind="schema[field].args"
+            >
+            </component>
+          </div>
+        </div>
+
+        <div class="form-group mb-3">
+          <button
+            type="button"
+            class="btn btn-outline-primary btn-sm"
+            @click="toggleAdditionalFields"
+          >
+            <i
+              :class="
+                showAdditionalFields ? 'fa-solid fa-minus' : 'fa-solid fa-plus'
+              "
+              class="me-1"
+            ></i>
+            {{
+              showAdditionalFields
+                ? 'Hide additional taxonomic ranks'
+                : 'Click here for additional taxonomic ranks or a rankless designation'
+            }}
+          </button>
+        </div>
+
+        <!-- 3. Optional Fields Section -->
+        <div class="mt-4">
+          <h5 class="mb-3">Optional Fields</h5>
+          <div v-for="field in optionalFields" :key="field" class="form-group">
+            <label :for="field" class="form-label">
+              {{ schema[field].label }}
+            </label>
+            <component
+              :key="field"
+              :is="schema[field].view"
+              :name="field"
+              :value="getFieldValue(field, taxon[field])"
+              v-bind="schema[field].args"
+            >
+            </component>
+          </div>
+        </div>
+
+        <!-- 4. Metadata Fields Section -->
+        <div v-for="field in metadataFields" :key="field" class="form-group">
+          <label :for="field" class="form-label">
+            {{ schema[field].label }}
+          </label>
+          <component
+            :key="field"
+            :is="schema[field].view"
+            :name="field"
+            :value="getFieldValue(field, taxon[field])"
+            v-bind="schema[field].args"
           >
           </component>
         </div>
