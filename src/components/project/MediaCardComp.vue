@@ -68,11 +68,13 @@ function hideEnlargedImage(imgId) {
       <div class="align-self-center media-image-top mt-2">
         <img
           :src="
-            buildMediaUrl(
-              props.project_id,
-              props.media_file?.media_id,
-              'thumbnail'
-            )
+            media_file.media.thumbnail?.USE_ICON === '3d' 
+              ? '/images/3DImage.png'
+              : buildMediaUrl(
+                  props.project_id,
+                  props.media_file?.media_id,
+                  'thumbnail'
+                )
           "
           :style="{
             width: media_file.media.thumbnail.WIDTH + 'px',
