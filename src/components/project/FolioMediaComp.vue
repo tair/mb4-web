@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import MediaCardComp from './MediaCardComp.vue'
 import CustomModal from './CustomModal.vue'
 import MediaViewPanel from './MediaViewPanel.vue'
-import { buildMediaUrl } from '@/utils/mediaUtils.js'
+import { buildMediaUrl } from '@/utils/fileUtils.js'
 
 const props = defineProps({
   media_file: {

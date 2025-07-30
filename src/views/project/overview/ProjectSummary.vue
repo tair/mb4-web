@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Tooltip from '@/components/main/Tooltip.vue'
 import { formatBytes, formatNumber } from '@/utils/format'
-import { buildMediaUrl } from '@/utils/mediaUtils.js'
+import { buildMediaUrl } from '@/utils/fileUtils.js'
 // import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore' // No longer needed
 import { ref, onMounted, computed } from 'vue'
 // import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
