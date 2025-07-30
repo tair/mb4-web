@@ -51,8 +51,8 @@ const filters = reactive({
 // Convert media store data to match MediaView.vue format
 const convertedMediaList = computed(() => {
   const mediaArray = Array.isArray(mediaStore.media) ? mediaStore.media : []
-  
-  return mediaArray.map(media => ({
+
+  return mediaArray.map((media) => ({
     ...media, // Keep all original data
     // Preserve original media data but ensure thumbnail has minimum required properties
     media: {
@@ -67,7 +67,7 @@ const convertedMediaList = computed(() => {
     taxon_name: getTaxonName(media),
     view_name: getViewName(media),
     specimen_name: getSpecimenName(media),
-    user_name: getUserName(media)
+    user_name: getUserName(media),
   }))
 })
 
@@ -75,23 +75,25 @@ const filteredMedia = computed(() => {
   let media = Object.values(filters)
     .reduce((media, filter) => media.filter(filter), convertedMediaList.value)
     .sort(sortFunction.value)
-  
+
   // Apply search filter if search string exists
   if (searchStr.value && searchStr.value.trim()) {
     const searchLower = searchStr.value.toLowerCase().trim()
-    media = media.filter(m => {
+    media = media.filter((m) => {
       const mediaIdStr = `M${m.media_id}`.toLowerCase()
       const viewName = m.view_name?.toLowerCase() || ''
       const taxonName = m.taxon_name?.toLowerCase() || ''
       const userName = m.user_name?.toLowerCase() || ''
-      
-      return mediaIdStr.includes(searchLower) ||
-             viewName.includes(searchLower) ||
-             taxonName.includes(searchLower) ||
-             userName.includes(searchLower)
+
+      return (
+        mediaIdStr.includes(searchLower) ||
+        viewName.includes(searchLower) ||
+        taxonName.includes(searchLower) ||
+        userName.includes(searchLower)
+      )
     })
   }
-  
+
   return media
 })
 
@@ -115,7 +117,10 @@ const uncuratedMediaCount = computed(() => {
 // Selection computed properties for batch operations
 const allSelected = computed({
   get: function () {
-    return paginatedMedia.value.length > 0 && paginatedMedia.value.every((b) => selectedMedia[b.media_id])
+    return (
+      paginatedMedia.value.length > 0 &&
+      paginatedMedia.value.every((b) => selectedMedia[b.media_id])
+    )
   },
   set: function (value) {
     paginatedMedia.value.forEach((b) => {
@@ -124,7 +129,9 @@ const allSelected = computed({
   },
 })
 
-const someSelected = computed(() => paginatedMedia.value.some((b) => selectedMedia[b.media_id]))
+const someSelected = computed(() =>
+  paginatedMedia.value.some((b) => selectedMedia[b.media_id])
+)
 
 // Order by options matching MediaView.vue
 const orderByOptions = {
@@ -138,7 +145,7 @@ const orderByOptions = {
   superfamily: 'taxonomic superfamily',
   family: 'taxonomic family',
   subfamily: 'taxonomic subfamily',
-  genus: 'taxonomic genus'
+  genus: 'taxonomic genus',
 }
 
 let orderBySelection = ref('mnumber')
@@ -147,7 +154,7 @@ let orderBySelection = ref('mnumber')
 function getTaxonName(media) {
   const taxon = getTaxon(media)
   if (!taxon) return ''
-  
+
   // Build taxonomic name similar to MediaView
   const parts = []
   if (taxon.genus) parts.push(taxon.genus)
@@ -196,7 +203,9 @@ watch(orderBySelection, (newValue) => {
     case 'family':
     case 'subfamily':
     case 'genus':
-      sortFunction.value = sortByTaxonRank(TaxaFriendlyNames[newValue.toUpperCase()] || newValue)
+      sortFunction.value = sortByTaxonRank(
+        TaxaFriendlyNames[newValue.toUpperCase()] || newValue
+      )
       break
     case 'view':
       sortFunction.value = sortByViewName
@@ -215,11 +224,11 @@ watch(orderBySelection, (newValue) => {
 })
 
 async function batchEdit(json) {
-  const mediaIds = filteredMedia.value.filter(m => selectedMedia[m.media_id]).map(m => m.media_id)
+  const mediaIds = filteredMedia.value
+    .filter((m) => selectedMedia[m.media_id])
+    .map((m) => m.media_id)
   return mediaStore.editIds(projectId, mediaIds, json)
 }
-
-
 
 onMounted(() => {
   if (!mediaStore.isLoaded) {
@@ -456,7 +465,9 @@ watch(searchStr, () => {
 
     <div v-if="uncuratedMediaCount > 0" class="alert alert-info">
       <i class="fa fa-info-circle"></i>
-      {{ uncuratedMediaCount }} batch media still need to be curated and released to the general media pool. You must curate all your media before adding a new batch.
+      {{ uncuratedMediaCount }} batch media still need to be curated and
+      released to the general media pool. You must curate all your media before
+      adding a new batch.
     </div>
 
     <div v-if="mediaStore.media?.length">
@@ -555,7 +566,13 @@ watch(searchStr, () => {
             v-model="allSelected"
             :indeterminate.prop="someSelected && !allSelected"
           />
-          <span class="ms-1">{{ someSelected ? `${paginatedMedia.filter(m => selectedMedia[m.media_id]).length} selected` : 'Select All' }}</span>
+          <span class="ms-1">{{
+            someSelected
+              ? `${
+                  paginatedMedia.filter((m) => selectedMedia[m.media_id]).length
+                } selected`
+              : 'Select All'
+          }}</span>
         </label>
         <span
           class="item"
@@ -569,7 +586,11 @@ watch(searchStr, () => {
           class="item"
           data-bs-toggle="modal"
           data-bs-target="#mediaDeleteModal"
-          @click="mediaToDelete = filteredMedia.filter((b) => selectedMedia[b.media_id])"
+          @click="
+            mediaToDelete = filteredMedia.filter(
+              (b) => selectedMedia[b.media_id]
+            )
+          "
           title="Delete Selected"
         >
           <i class="fa-regular fa-trash-can"></i>
@@ -590,7 +611,10 @@ watch(searchStr, () => {
           v-for="(media_file, n) in paginatedMedia"
           :key="n"
         >
-          <RouterLink :to="`/myprojects/${projectId}/media/${media_file.media_id}/edit`" class="nav-link">
+          <RouterLink
+            :to="`/myprojects/${projectId}/media/${media_file.media_id}/edit`"
+            class="nav-link"
+          >
             <!-- Checkbox for selection (project-specific feature) -->
             <input
               class="form-check-input media-checkbox"
@@ -698,13 +722,13 @@ watch(searchStr, () => {
     flex: 0 0 100%;
     max-width: 100%;
   }
-  
+
   .d-flex.col-7 {
     flex-direction: column;
     align-items: start !important;
     margin-top: 1rem;
   }
-  
+
   .d-flex.col-7 > div {
     margin: 0.25rem 0;
   }

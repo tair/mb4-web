@@ -111,7 +111,9 @@ const projectId = route.params.id
             v-for="(institution, index) in overview.institutions"
             :key="index"
           >
-            {{ typeof institution === 'string' ? institution : institution.name }}
+            {{
+              typeof institution === 'string' ? institution : institution.name
+            }}
           </li>
         </ul>
       </div>

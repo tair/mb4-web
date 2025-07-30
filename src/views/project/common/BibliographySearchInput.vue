@@ -28,6 +28,17 @@ function getBibliographyNumber(bibliography) {
 }
 
 async function searchBibliographies(text) {
+  // Ensure bibliographies are loaded before searching
+  if (!bibliographiesStore.isLoaded) {
+    await bibliographiesStore.fetchBibliographies(projectId)
+  }
+
+  // If search text is empty, return all bibliographies (for preloading dropdown)
+  if (!text || text.trim() === '') {
+    return bibliographiesStore.bibliographies
+  }
+
+  // Otherwise, perform the search API call and filter results
   const url = `${
     import.meta.env.VITE_API_URL
   }/projects/${projectId}/bibliography/search`
