@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { toDateString } from '@/utils/date'
 import {
   getViewStatsTooltipText,
@@ -10,6 +10,30 @@ import CustomModal from './CustomModal.vue'
 import MediaViewPanel from './MediaViewPanel.vue'
 import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 import { buildMediaUrl } from '@/utils/mediaUtils.js'
+import { defineAsyncComponent } from 'vue'
+
+// Lazy load the 3D viewer to improve initial page load performance
+const ThreeJSViewer = defineAsyncComponent({
+  loader: () => import('./ThreeJSViewer.vue'),
+  loadingComponent: {
+    template: `
+      <div class="lazy-loading-3d">
+        <div class="loading-spinner"></div>
+        <p>Loading 3D viewer...</p>
+      </div>
+    `
+  },
+  errorComponent: {
+    template: `
+      <div class="lazy-error-3d">
+        <p>Failed to load 3D viewer</p>
+        <button @click="$emit('retry')" class="btn btn-primary">Retry</button>
+      </div>
+    `
+  },
+  delay: 200,
+  timeout: 10000
+})
 
 const props = defineProps({
   media_file: {
@@ -26,27 +50,75 @@ const showDownloadModal = ref(false)
 const viewStatsTooltipText = getViewStatsTooltipText()
 const downloadTooltipText = getDownloadTooltipText()
 
+// Check if the media file is a 3D file
+const is3DFile = computed(() => {
+  return props.media_file?.media?.thumbnail?.USE_ICON === '3d' || 
+         props.media_file?.media?.original?.USE_ICON === '3d'
+})
+
+// Get the file extension from the original filename
+const fileExtension = computed(() => {
+  const filename = props.media_file?.media?.ORIGINAL_FILENAME || ''
+  const ext = filename.split('.').pop()?.toLowerCase()
+  return ext || ''
+})
+
+// Get the main display URL (3D icon for 3D files, actual image for 2D files)
+const mainDisplayUrl = computed(() => {
+  if (is3DFile.value) {
+    return '/images/3DImage.png'
+  }
+  return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
+})
+
+// Get the 3D model URL for model-viewer
+const modelUrl = computed(() => {
+  if (is3DFile.value) {
+    return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
+  }
+  return null
+})
+
+// Get the zoom display URL (3D model for 3D files, large image for 2D files)
+const zoomDisplayUrl = computed(() => {
+  if (is3DFile.value) {
+    return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
+  }
+  return buildMediaUrl(props.project_id, props.media_file?.media_id, 'large')
+})
+
+// Handle model loading events from ThreeJSViewer
+const onModelError = (error) => {
+  console.error('3D model loading error:', error)
+}
+
+const onModelLoad = (model) => {
+  console.log('3D model loaded successfully:', model)
+}
+
 async function confirmDownload(fileSize, fileName) {
   // if (!isCaptchaVerified) {
   //   alert("Please complete the CAPTCHA");
   //   return;
   // }
   // CAPTCHA is completed, proceed with the download
-  const imageUrl = buildMediaUrl(
+  // For 3D files, always download the original file regardless of requested size
+  const downloadSize = is3DFile.value ? 'original' : fileSize
+  const downloadUrl = buildMediaUrl(
     props.project_id,
     props.media_file?.media_id,
-    fileSize
+    downloadSize
   )
   let downloadFileName = fileName
   if (!downloadFileName) {
-    downloadFileName = getLastElementFromUrl(imageUrl)
+    downloadFileName = getLastElementFromUrl(downloadUrl)
   }
   // TODO: create download blob after put the media file behind the API
-  // const response = await fetch(imageUrl);
+  // const response = await fetch(downloadUrl);
   // const blob = await response.blob();
   // const url = URL.createObjectURL(blob);
   const link = document.createElement('a')
-  link.href = imageUrl
+  link.href = downloadUrl
   link.download = downloadFileName
   document.body.appendChild(link)
   link.click()
@@ -124,13 +196,7 @@ function getHitsMessage(mediaObj) {
     <div class="col">
       <div class="card shadow">
         <img
-          :src="
-            buildMediaUrl(
-              props.project_id,
-              props.media_file?.media_id,
-              'original'
-            )
-          "
+          :src="mainDisplayUrl"
           :style="{
             backgroundSize: '20px',
             backgroundRepeat: 'no-repeat',
@@ -150,14 +216,18 @@ function getHitsMessage(mediaObj) {
                 :isVisible="showZoomModal"
                 @close="showZoomModal = false"
               >
+                <!-- Three.js 3D Viewer for all 3D files -->
+                <ThreeJSViewer
+                  v-if="is3DFile"
+                  :modelUrl="modelUrl"
+                  :fileExtension="fileExtension"
+                  @load="onModelLoad"
+                  @error="onModelError"
+                />
+                <!-- Regular Image Viewer for 2D files -->
                 <MediaViewPanel
-                  :imgSrc="
-                    buildMediaUrl(
-                      props.project_id,
-                      props.media_file?.media_id,
-                      'large'
-                    )
-                  "
+                  v-else
+                  :imgSrc="zoomDisplayUrl"
                 />
               </CustomModal>
               <a class="nav-link" href="#" @click="showDownloadModal = true">
@@ -342,5 +412,31 @@ function getHitsMessage(mediaObj) {
 .card-title,
 p {
   margin: 0.5rem 0;
+}
+
+/* ThreeJSViewer handles all 3D rendering styles internally */
+
+.lazy-loading-3d, .lazy-error-3d {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 2rem;
+}
+
+.lazy-loading-3d .loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>

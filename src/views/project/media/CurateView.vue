@@ -69,7 +69,10 @@ const canReleaseSelected = computed(() => {
 // Helper function to create S3 media URLs for MediaCard
 function getMediaThumbnailUrl(media) {
   if (media.media_id) {
-    const url = buildMediaUrl(projectId, media.media_id, 'thumbnail')
+    // Check if this is a 3D file that should use the 3D icon
+    const url = media.media?.thumbnail?.USE_ICON === '3d' 
+      ? '/images/3DImage.png'
+      : buildMediaUrl(projectId, media.media_id, 'thumbnail')
     return {
       url: url,
     }

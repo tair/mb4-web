@@ -54,11 +54,13 @@ const convertedMediaList = computed(() => {
   
   return mediaArray.map(media => ({
     ...media, // Keep all original data
-    // Add the structure MediaCardComp expects for S3 loading
+    // Preserve original media data but ensure thumbnail has minimum required properties
     media: {
+      ...media.media, // Keep all original media data including USE_ICON
       thumbnail: {
-        WIDTH: 120,
-        HEIGHT: 120
+        WIDTH: media.media?.thumbnail?.WIDTH || 120,
+        HEIGHT: media.media?.thumbnail?.HEIGHT || 120,
+        ...media.media?.thumbnail // Preserve all original thumbnail properties including USE_ICON
       }
     },
     // Add computed display fields
