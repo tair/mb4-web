@@ -98,12 +98,12 @@ export const schema = {
     },
   },
   access: {
-    label: 'Access granted to this taxon',
+    label: 'Access granted to this media',
     view: SelectInput,
     args: {
       options: {
-        'Anyone may edit this taxon': 0,
-        'Only the owner may edit this taxon': 1,
+        'Anyone in my project may edit this media': 0,
+        'Only the owner may edit this media': 1,
       },
     },
   },

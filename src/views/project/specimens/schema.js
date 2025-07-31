@@ -56,7 +56,7 @@ export const schema = {
     view: SelectInput,
     args: {
       options: {
-        'Anyone may edit this specimen': 0,
+        'Anyone in my project may edit this specimen': 0,
         'Only the owner may edit this specimen': 1,
       },
     },

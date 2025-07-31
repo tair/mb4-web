@@ -62,12 +62,12 @@ export const folderSchema = {
     view: TextArea,
   },
   access: {
-    label: 'Access',
+    label: 'Access granted to this document',
     view: SelectInput,
     args: {
       options: {
-        'Anyone may edit this item': 0,
-        'Only the owner may edit this item': 1,
+        'Anyone in my project may edit this document': 0,
+        'Only the owner may edit this document': 1,
       },
     },
   },

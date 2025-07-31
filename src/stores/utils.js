@@ -13,6 +13,9 @@ import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaCitationsStore } from '@/stores/TaxaCitationsStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 
+// Track the current project ID to avoid unnecessary invalidation
+let currentProjectId = null
+
 export function invalidateAll() {
   const bibliographiesStore = useBibliographiesStore()
   const characterStore = useCharactersStore()
@@ -43,4 +46,19 @@ export function invalidateAll() {
   specimensStore.invalidate()
   taxaCitationStore.invalidate()
   taxaStore.invalidate()
+}
+
+// Smart invalidation that only clears stores when switching projects
+export function invalidateOnProjectChange(to, from, next) {
+  const newProjectId = to.params.id
+
+  // Only invalidate if we're switching to a different project
+  if (currentProjectId !== null && currentProjectId !== newProjectId) {
+    invalidateAll()
+  } else if (currentProjectId === null) {
+    invalidateAll()
+  }
+
+  currentProjectId = newProjectId
+  next()
 }

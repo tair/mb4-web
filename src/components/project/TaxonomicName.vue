@@ -85,7 +85,13 @@ function getAuthor() {
 <template>
   <span class="taxonName">
     <template v-if="showExtinctMarker">
-      {{ taxon['is_extinct'] ? '†' : '' }}
+      {{
+        taxon['is_extinct'] &&
+        taxon['is_extinct'] !== '0' &&
+        taxon['is_extinct'] !== 0
+          ? '†'
+          : ''
+      }}
     </template>
     <span v-if="higherOrderName">
       {{ higherOrderName }}
