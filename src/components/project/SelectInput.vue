@@ -8,7 +8,7 @@ defineProps<{
 }>()
 </script>
 <template>
-  <select class="form-control" :name="name">
+  <select class="form-select" :name="name">
     <template
       v-for="(option, index) in typeof options == 'function'
         ? options()
