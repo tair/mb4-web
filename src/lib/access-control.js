@@ -46,7 +46,7 @@ export class AccessControlService {
    * @param {number} params.projectId - ID of the project
    * @param {Object} params.entity - The entity object to check access for
    * @param {number} params.userId - ID of the current user (optional, will get from auth store)
-   * @returns {Promise<{canEdit: boolean, reason?: string, level?: string}>}
+   * @returns {Promise<{canEdit: boolean, shouldRedirect: boolean, reason?: string, level?: string}>}
    */
   static async canEditEntity({ entityType, projectId, entity, userId = null }) {
     const authStore = useAuthStore()
@@ -57,6 +57,7 @@ export class AccessControlService {
     if (!currentUserId) {
       return {
         canEdit: false,
+        shouldRedirect: true,
         reason: 'User not authenticated',
         level: 'authentication',
       }
@@ -70,6 +71,7 @@ export class AccessControlService {
       if (!authStore.user?.access) {
         return {
           canEdit: false,
+          shouldRedirect: true,
           reason: 'User authentication data incomplete',
           level: 'authentication',
         }
@@ -102,6 +104,7 @@ export class AccessControlService {
     if (!userMembership) {
       return {
         canEdit: false,
+        shouldRedirect: true,
         reason: 'User is not a member of this project',
         level: 'project_membership',
       }
@@ -129,6 +132,7 @@ export class AccessControlService {
     if (authStore.isUserCurator) {
       return {
         canEdit: true,
+        shouldRedirect: false,
         level: 'system_curator',
       }
     }
@@ -136,6 +140,7 @@ export class AccessControlService {
     if (authStore.isUserAdministrator) {
       return {
         canEdit: true,
+        shouldRedirect: false,
         level: 'system_admin',
       }
     }
@@ -151,6 +156,7 @@ export class AccessControlService {
     if (userMembership.admin === true) {
       return {
         canEdit: true,
+        shouldRedirect: false,
         level: 'project_admin',
       }
     }
@@ -166,12 +172,13 @@ export class AccessControlService {
     switch (membershipType) {
       case MembershipType.ADMIN:
         // Full membership - can edit everything
-        return { canEdit: true, level: 'full_member' }
+        return { canEdit: true, shouldRedirect: false, level: 'full_member' }
 
       case MembershipType.OBSERVER:
-        // Observer - cannot edit anything
+        // Observer - cannot edit anything and should be redirected
         return {
           canEdit: false,
+          shouldRedirect: false,
           reason: 'Observer members cannot edit any content',
           level: 'observer',
         }
@@ -188,10 +195,15 @@ export class AccessControlService {
           entityType === EntityType.PROJECT_DOCUMENT_FOLDER ||
           entityType === EntityType.FOLIO
         ) {
-          return { canEdit: true, level: 'character_annotator' }
+          return {
+            canEdit: true,
+            shouldRedirect: false,
+            level: 'character_annotator',
+          }
         } else {
           return {
             canEdit: false,
+            shouldRedirect: false, // Show read-only form with explanation
             reason: 'Character annotators cannot edit this type of content',
             level: 'character_annotator_restricted',
           }
@@ -200,10 +212,15 @@ export class AccessControlService {
       case MembershipType.BIBLIOGRAPHY_MAINTAINER:
         // Bibliography maintainer - can only edit bibliography
         if (entityType === EntityType.BIBLIOGRAPHIC_REFERENCE) {
-          return { canEdit: true, level: 'bibliography_maintainer' }
+          return {
+            canEdit: true,
+            shouldRedirect: false,
+            level: 'bibliography_maintainer',
+          }
         } else {
           return {
             canEdit: false,
+            shouldRedirect: false, // Show read-only form with explanation
             reason:
               'Bibliography maintainers can only edit bibliographic references',
             level: 'bibliography_maintainer_restricted',
@@ -213,6 +230,7 @@ export class AccessControlService {
       default:
         return {
           canEdit: false,
+          shouldRedirect: true, // Unknown state - redirect for safety
           reason: 'Unknown membership type',
           level: 'unknown_membership',
         }
@@ -232,11 +250,13 @@ export class AccessControlService {
       if (entity.user_id === currentUserId) {
         return {
           canEdit: true,
+          shouldRedirect: false,
           level: 'item_owner',
         }
       } else {
         return {
           canEdit: false,
+          shouldRedirect: false, // Show read-only form with owner restriction message
           reason: 'This item is restricted to owner-only editing',
           level: 'owner_restricted',
         }
@@ -245,6 +265,7 @@ export class AccessControlService {
       // Project editable - anyone with proper membership can edit
       return {
         canEdit: true,
+        shouldRedirect: false,
         level: 'project_editable',
       }
     }
@@ -363,6 +384,10 @@ export function createEntityEditGuard(entityType, entityLoader) {
         to.params.taxonId ||
         to.params.specimenId ||
         to.params.mediaId ||
+        to.params.documentId ||
+        to.params.folderId ||
+        to.params.referenceId ||
+        to.params.folioId ||
         to.params.entityId
       const entityId = parseInt(entityIdParam)
 
@@ -395,23 +420,47 @@ export function createEntityEditGuard(entityType, entityLoader) {
         entity,
       })
 
-      if (!accessResult.canEdit) {
+      if (accessResult.shouldRedirect) {
+        // Redirect for serious access violations (observers, non-members, auth issues)
+        // Map entity types to their correct list view route names
+        const listViewRouteMap = {
+          [EntityType.TAXON]: 'MyProjectTaxaView',
+          [EntityType.SPECIMEN]: 'MyProjectSpecimensListView',
+          [EntityType.MEDIA]: 'MyProjectMediaView',
+          [EntityType.MEDIA_VIEW]: 'MyProjectMediaViewsView',
+          [EntityType.PROJECT_DOCUMENT]: 'MyProjectDocumentsView',
+          [EntityType.PROJECT_DOCUMENT_FOLDER]: 'MyProjectDocumentsView',
+          [EntityType.BIBLIOGRAPHIC_REFERENCE]: 'MyProjectBibliographyListView',
+          [EntityType.FOLIO]: 'MyProjectFoliosView',
+        }
+
+        const listViewName = listViewRouteMap[entityType]
+        if (!listViewName) {
+          // Fallback to a generic error page if mapping is missing
+          next({
+            name: 'NotFoundView',
+            query: {
+              message: `You do not have permission to access this ${entityType.toLowerCase()}`,
+            },
+          })
+          return
+        }
+
         // Redirect to list view with error message
-        const listViewName = `MyProject${
-          entityType.charAt(0).toUpperCase() +
-          entityType.slice(1).replace('_', '')
-        }View`
         next({
           name: listViewName,
+          params: { id: projectId }, // Include the required project ID
           query: {
             error:
               accessResult.reason ||
-              `You do not have permission to edit this ${entityType}`,
+              `You do not have permission to access this ${entityType.toLowerCase()}`,
           },
         })
         return
       }
 
+      // Allow access to edit page - component will handle read-only display
+      // for owner-restricted items and membership-based restrictions
       next()
     } catch (error) {
       console.error('Access control guard error:', error)
