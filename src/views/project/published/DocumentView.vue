@@ -8,6 +8,7 @@ import {
   getCopyRightTooltipText,
   getCC0ImgTag,
 } from '@/utils/util.js'
+import { buildDocumentUrl } from '@/utils/fileUtils.js'
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
 import Tooltip from '@/components/main/Tooltip.vue'
 import {
@@ -30,8 +31,10 @@ const cc0Img = getCC0ImgTag()
 // TODO: ReCaptcha verification
 async function onDownloadDocuments(documentUrl, filename, docId = null) {
   try {
-    // Fetch the document as a blob
-    const response = await fetch(documentUrl)
+    // Build S3 document URL using the new pattern
+    const s3DocumentUrl = buildDocumentUrl(projectId, docId)
+    console.log('documentUrl', s3DocumentUrl)
+    const response = await fetch(s3DocumentUrl)
 
     if (!response.ok)
       throw new Error(`Failed to fetch the document: ${response.statusText}`)
@@ -68,7 +71,8 @@ async function onDownloadDocuments(documentUrl, filename, docId = null) {
   } catch (error) {
     console.error('Error downloading the file:', error)
     // Fallback to opening the file in a new tab
-    window.open(documentUrl, '_blank')
+    const s3DocumentUrl = buildDocumentUrl(projectId, docId)
+    window.open(s3DocumentUrl, '_blank')
   }
 }
 

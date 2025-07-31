@@ -15,6 +15,21 @@ function buildMediaUrl(projectId, mediaId, fileSize = 'large') {
 }
 
 /**
+ * Build S3 document URL for a given project and document ID
+ * @param {number|string} projectId - The project ID
+ * @param {number|string} documentId - The document ID
+ * @returns {string} - The S3 document URL
+ */
+function buildDocumentUrl(projectId, documentId) {
+  if (!projectId || !documentId) {
+    return null
+  }
+  return `${
+    import.meta.env.VITE_API_URL
+  }/public/documents/${projectId}/serve/${documentId}`
+}
+
+/**
  * Build image URL from media object, with both S3 and legacy support
  * @param {Object|string|null} mediaObj - the media data or a raw URL string
  * @param {string} [type] - optional size/type key (original, large, etc.)
@@ -146,6 +161,7 @@ function processItemsWithMediaLegacy(items, typeKey = null) {
 
 export {
   buildMediaUrl,
+  buildDocumentUrl,
   buildImageProps,
   processItemsWithMedia,
   processItemsWithMediaLegacy,

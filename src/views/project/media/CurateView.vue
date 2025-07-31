@@ -8,7 +8,7 @@ import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { getTaxonForMediaId } from '@/views/project/utils'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaCard from '@/components/project/MediaCard.vue'
-import { buildMediaUrl } from '@/utils/mediaUtils.js'
+import { buildMediaUrl } from '@/utils/fileUtils.js'
 import CurationBatchDialog from './CurationBatchDialog.vue'
 
 const route = useRoute()

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { buildMediaUrl } from '@/utils/mediaUtils.js'
+import { buildMediaUrl } from '@/utils/fileUtils.js'
 
 interface Image {
   url: string

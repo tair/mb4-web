@@ -2,7 +2,7 @@
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
-import { processItemsWithMediaLegacy } from '@/utils/mediaUtils.js'
+import { processItemsWithMediaLegacy } from '@/utils/fileUtils.js'
 
 const router = useRouter()
 

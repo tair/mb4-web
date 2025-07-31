@@ -15,7 +15,7 @@ import EditBatchDialog from '@/views/project/media/EditBatchDialog.vue'
 import DeleteDialog from '@/views/project/media/DeleteDialog.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaCardComp from '@/components/project/MediaCardComp.vue'
-import { buildMediaUrl } from '@/utils/mediaUtils.js'
+import { buildMediaUrl } from '@/utils/fileUtils.js'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id)

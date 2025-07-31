@@ -9,7 +9,7 @@ import Tooltip from '@/components/main/Tooltip.vue'
 import CustomModal from './CustomModal.vue'
 import MediaViewPanel from './MediaViewPanel.vue'
 import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
-import { buildMediaUrl } from '@/utils/mediaUtils.js'
+import { buildMediaUrl } from '@/utils/fileUtils.js'
 import { defineAsyncComponent } from 'vue'
 
 // Lazy load the 3D viewer to improve initial page load performance
