@@ -51,14 +51,14 @@ export function invalidateAll() {
 // Smart invalidation that only clears stores when switching projects
 export function invalidateOnProjectChange(to, from, next) {
   const newProjectId = to.params.id
-  
+
   // Only invalidate if we're switching to a different project
   if (currentProjectId !== null && currentProjectId !== newProjectId) {
     invalidateAll()
   } else if (currentProjectId === null) {
     invalidateAll()
   }
-  
+
   currentProjectId = newProjectId
   next()
 }

@@ -1,3 +1,10 @@
+import {
+  requireTaxonEditAccess,
+  requireSpecimenEditAccess,
+  requireMediaEditAccess,
+  requireDocumentEditAccess,
+} from '@/lib/route-guards.js'
+
 export const MY_PROJECT_VIEWS = [
   {
     path: 'overview',
@@ -235,6 +242,7 @@ export const MY_PROJECT_VIEWS = [
           import(
             /* webpackChunkName: "unpublished" */ '@/views/project/media/EditView.vue'
           ),
+        beforeEnter: requireMediaEditAccess,
       },
       {
         path: 'citations',
@@ -526,6 +534,7 @@ export const MY_PROJECT_VIEWS = [
           import(
             /* webpackChunkName: "unpublished" */ '@/views/project/specimens/EditView.vue'
           ),
+        beforeEnter: requireSpecimenEditAccess,
       },
       {
         path: 'citations',
@@ -672,6 +681,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/documents/EditView.vue'
       ),
+    beforeEnter: requireDocumentEditAccess,
   },
   {
     path: 'documents/folders/create',
@@ -799,6 +809,7 @@ export const MY_PROJECT_VIEWS = [
           import(
             /* webpackChunkName: "unpublished" */ '@/views/project/taxa/EditView.vue'
           ),
+        beforeEnter: requireTaxonEditAccess,
       },
       {
         path: 'citations',
