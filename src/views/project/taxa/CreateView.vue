@@ -47,10 +47,17 @@ function toggleAdditionalFields() {
 
 // Helper function to convert values for checkbox components
 function getFieldValue(field, value) {
+  // For NumberInput fields, return undefined instead of empty string
+  if (field === 'scientific_name_year') {
+    return value ? Number(value) : undefined
+  }
+
   // Convert string values to boolean for checkbox fields
   if (field === 'is_extinct' || field === 'use_parens_for_author') {
     return !!value && value !== '0' && value !== 0
   }
+
+  // For other fields, return empty string
   return value
 }
 
