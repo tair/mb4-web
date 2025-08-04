@@ -5,7 +5,9 @@ import { useRoute } from 'vue-router'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { schema } from '@/views/project/taxa/schema.js'
+import { TAXA_COLUMN_NAMES } from '@/utils/taxa'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
+import Alert from '@/components/main/Alert.vue'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id)
@@ -18,6 +20,11 @@ const isLoaded = computed(
 
 // Track whether additional taxonomic fields are expanded
 const showAdditionalFields = ref(false)
+
+// Validation error state
+const validationMessages = ref({
+  validation: '',
+})
 
 // Define which fields are always visible (basic fields)
 const basicFields = ['is_extinct', 'genus', 'specific_epithet']
@@ -61,8 +68,30 @@ function getFieldValue(field, value) {
   return value
 }
 
+function validateTaxonData(formData) {
+  // Check if at least one taxonomic rank field has content
+  for (const field of TAXA_COLUMN_NAMES) {
+    const value = formData.get(field)
+    if (value && value.toString().trim() !== '') {
+      return true // At least one taxonomic field has meaningful content
+    }
+  }
+  return false // All taxonomic fields are empty
+}
+
 async function createTaxon(event) {
   const formData = new FormData(event.currentTarget)
+
+  // Validate that at least one taxonomic field has content
+  if (!validateTaxonData(formData)) {
+    validationMessages.value.validation =
+      'Please fill in at least one taxonomic field before creating the taxon.'
+    return
+  }
+
+  // Clear validation error if validation passes
+  validationMessages.value.validation = ''
+
   const json = Object.fromEntries(formData)
 
   // Explicitly handle checkbox values - ensure they're always included
@@ -173,6 +202,12 @@ onMounted(() => {
             </component>
           </div>
         </div>
+
+        <Alert
+          :message="validationMessages"
+          messageName="validation"
+          alertType="danger"
+        />
 
         <div class="btn-form-group">
           <RouterLink :to="{ name: 'MyProjectTaxaView' }">
