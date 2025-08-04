@@ -159,6 +159,57 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
+    path: 'media/create/3d',
+    name: 'MyProjectMediaCreate3DView',
+    meta: {
+      itemName: 'media',
+      breadcrumbs: [
+        {
+          label: 'Media',
+          to: 'MyProjectMediaView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/media/Create3DView.vue'
+      ),
+  },
+  {
+    path: 'media/create/video',
+    name: 'MyProjectMediaCreateVideoView',
+    meta: {
+      itemName: 'media',
+      breadcrumbs: [
+        {
+          label: 'Media',
+          to: 'MyProjectMediaView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/media/CreateVideoView.vue'
+      ),
+  },
+  {
+    path: 'media/create/stacks',
+    name: 'MyProjectMediaCreateStacksView',
+    meta: {
+      itemName: 'media',
+      breadcrumbs: [
+        {
+          label: 'Media',
+          to: 'MyProjectMediaView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/media/CreateStacksView.vue'
+      ),
+  },
+  {
     path: 'media/curate',
     name: 'MyProjectMediaCurateView',
     meta: {

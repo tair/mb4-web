@@ -68,8 +68,10 @@ function hideEnlargedImage(imgId) {
       <div class="align-self-center media-image-top mt-2">
         <img
           :src="
-            media_file.media.thumbnail?.USE_ICON === '3d' 
+            media_file.media.thumbnail?.USE_ICON === '3d' || media_file.media_type === '3d'
               ? '/images/3DImage.png'
+              : media_file.media.thumbnail?.USE_ICON === 'video' || media_file.media_type === 'video'
+              ? '/images/image-not-found.png'
               : buildMediaUrl(
                   props.project_id,
                   props.media_file?.media_id,
@@ -77,8 +79,8 @@ function hideEnlargedImage(imgId) {
                 )
           "
           :style="{
-            width: media_file.media.thumbnail.WIDTH + 'px',
-            height: media_file.media.thumbnail.HEIGHT + 'px',
+            width: (media_file.media.thumbnail?.WIDTH || 120) + 'px',
+            height: (media_file.media.thumbnail?.HEIGHT || 120) + 'px',
             backgroundSize: '20px',
             backgroundRepeat: 'no-repeat',
             backgroundImage: 'url(' + '/images/loader.png' + ')',
@@ -164,14 +166,13 @@ function hideEnlargedImage(imgId) {
 .truncate-multiline {
   display: -webkit-box;
   -webkit-line-clamp: 2; /* Number of lines to display before truncating */
+  line-clamp: 2; /* Standard property for compatibility */
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 .image-container {
   position: relative;
   display: inline-block;
-}
-.enlarged-image {
 }
 /* ENLARGED IMAGE STYLES - COMMENTED OUT (can be restored if needed) */
 /*

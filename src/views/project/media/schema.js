@@ -134,3 +134,36 @@ export const batchSchema = {
     view: FileInput,
   },
 }
+
+export const videoSchema = {
+  ...schema,
+  file: {
+    label: 'Choose a video file (MP4, MOV, AVI, WebM, MKV, WMV, FLV, M4V)',
+    view: FileInput,
+    args: {
+      accept: '.mp4,.mov,.avi,.webm,.mkv,.wmv,.flv,.m4v,video/*',
+    },
+  },
+}
+
+export const schema3D = {
+  ...schema,
+  file: {
+    label: 'Choose a 3D file (PLY, STL, OBJ, GLB, GLTF, FBX)',
+    view: FileInput,
+    args: {
+      accept: '.ply,.stl,.obj,.glb,.gltf,.fbx,model/*',
+    },
+  },
+}
+
+export const stacksSchema = {
+  ...schema,
+  file: {
+    label: 'Choose a ZIP archive containing CT scan stacks (DICOM, TIFF)',
+    view: FileInput,
+    args: {
+      accept: '.zip,application/zip',
+    },
+  },
+}

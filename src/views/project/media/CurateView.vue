@@ -70,11 +70,18 @@ const canReleaseSelected = computed(() => {
 function getMediaThumbnailUrl(media) {
   if (media.media_id) {
     // Check if this is a 3D file that should use the 3D icon
-    const url = media.media?.thumbnail?.USE_ICON === '3d' 
-      ? '/images/3DImage.png'
-      : buildMediaUrl(projectId, media.media_id, 'thumbnail')
-    return {
-      url: url,
+    if (media.media_type === '3d') {
+      return {
+        url: '/images/3DImage.png',
+        width: 120,
+        height: 120,
+      }
+    } else {
+      return {
+        url: buildMediaUrl(projectId, media.media_id, 'thumbnail'),
+        width: 120,
+        height: 120,
+      }
     }
   }
   // Fallback to existing thumbnail object
@@ -201,7 +208,8 @@ watch(
               <li>Select one or more media items using the checkboxes</li>
               <li>Click "Assign Specimen & View" to open the batch editor</li>
               <li>Choose the specimen and view for the selected items</li>
-              <li>Click "Assign & Release Media" to complete the process</li>
+              <li>Click "Assign" to complete the process</li>
+              <li>Click "Release Media" to release the media</li>
             </ol>
           </div>
           <div class="col-md-6">

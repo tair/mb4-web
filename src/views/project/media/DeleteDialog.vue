@@ -2,6 +2,7 @@
 import { Modal } from 'bootstrap'
 import { useMediaStore } from '@/stores/MediaStore'
 import { useRoute } from 'vue-router'
+import { ref } from 'vue'
 
 const props = defineProps<{
   mediaToDelete: any[]
@@ -10,8 +11,12 @@ const props = defineProps<{
 const route = useRoute()
 const projectId = route.params.id
 const mediaStore = useMediaStore()
+const isDeleting = ref(false)
 
 async function handleDeleteButtonClicked() {
+  if (isDeleting.value) return // Prevent double clicks
+  
+  isDeleting.value = true
   try {
     const mediaIds = props.mediaToDelete.map((media) => media.media_id)
 
@@ -27,6 +32,8 @@ async function handleDeleteButtonClicked() {
   } catch (error) {
     console.error('Error deleting media:', error)
     alert('Failed to delete media')
+  } finally {
+    isDeleting.value = false
   }
 }
 </script>
@@ -77,6 +84,7 @@ async function handleDeleteButtonClicked() {
             type="button"
             class="btn btn-outline-secondary"
             data-bs-dismiss="modal"
+            :disabled="isDeleting"
           >
             Cancel
           </button>
@@ -84,11 +92,20 @@ async function handleDeleteButtonClicked() {
             type="button"
             class="btn btn-danger"
             @click="handleDeleteButtonClicked"
+            :disabled="isDeleting"
           >
-            <i class="fa fa-trash-can me-2"></i>
-            Delete {{ mediaToDelete.length }} Media Item{{
-              mediaToDelete.length !== 1 ? 's' : ''
-            }}
+            <span v-if="isDeleting">
+              <i class="fa fa-spinner fa-spin me-2"></i>
+              Deleting {{ mediaToDelete.length }} Media Item{{
+                mediaToDelete.length !== 1 ? 's' : ''
+              }}...
+            </span>
+            <span v-else>
+              <i class="fa fa-trash-can me-2"></i>
+              Delete {{ mediaToDelete.length }} Media Item{{
+                mediaToDelete.length !== 1 ? 's' : ''
+              }}
+            </span>
           </button>
         </div>
       </div>

@@ -265,7 +265,7 @@ onMounted(() => {
               :disabled="!canRelease"
             >
               <i class="fa fa-check me-2"></i>
-              Assign & Release {{ selectedCount }} Media Items
+              Assign {{ selectedCount }} Media Items
             </button>
           </div>
         </div>
