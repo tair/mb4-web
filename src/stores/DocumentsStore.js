@@ -14,7 +14,12 @@ export const useDocumentsStore = defineStore({
     },
   },
   actions: {
-    async fetchDocuments(projectId) {
+    async fetchDocuments(projectId, forceRefresh = false) {
+      // If force refresh is requested, reset the loaded state
+      if (forceRefresh) {
+        this.isLoaded = false
+      }
+      
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/documents`
@@ -23,54 +28,104 @@ export const useDocumentsStore = defineStore({
       this.folders = response.data.folders
       this.isLoaded = true
     },
+    
+    // Method to force refresh documents
+    async refreshDocuments(projectId) {
+      return this.fetchDocuments(projectId, true)
+    },
     async create(projectId, documentFormData) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/documents/create`
-      const response = await axios.post(url, documentFormData)
-      if (response.status == 200) {
-        const document = response.data.document
-        this.documents.push(document)
-        return true
+      try {
+        const url = `${
+          import.meta.env.VITE_API_URL
+        }/projects/${projectId}/documents/create`
+        const response = await axios.post(url, documentFormData)
+        
+        if (response.status == 200) {
+          // Invalidate cache so next list view shows fresh data
+          this.isLoaded = false
+          return { success: true }
+        }
+        return { success: false, error: 'Unexpected response status' }
+      } catch (error) {
+        console.error('Error creating document:', error)
+        // Prioritize the specific error field over the generic message field
+        const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to create document'
+        return { success: false, error: errorMessage }
       }
-      return false
     },
     async edit(projectId, documentId, documentFormData) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/documents/${documentId}/edit`
-      const response = await axios.post(url, documentFormData)
-      if (response.status == 200) {
-        const document = response.data.document
-        this.removeDocumentById([document.document_id])
-        this.documents.push(document)
-        return true
+      try {
+        const url = `${
+          import.meta.env.VITE_API_URL
+        }/projects/${projectId}/documents/${documentId}/edit`
+        const response = await axios.post(url, documentFormData)
+        
+        if (response.status == 200) {
+          // Invalidate cache so next list view shows fresh data
+          this.isLoaded = false
+          return { success: true }
+        }
+        return { success: false, error: 'Unexpected response status' }
+      } catch (error) {
+        console.error('Error editing document:', error)
+        // Prioritize the specific error field over the generic message field
+        const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to edit document'
+        return { success: false, error: errorMessage }
       }
-      return false
     },
     async deleteDocuments(projectId, documentIds) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/documents/delete`
-      const response = await axios.post(url, {
-        document_ids: documentIds,
-      })
-      if (response.status == 200) {
-        this.removeDocumentById(documentIds)
-        return true
+      try {
+        const url = `${
+          import.meta.env.VITE_API_URL
+        }/projects/${projectId}/documents/delete`
+        const response = await axios.post(url, {
+          document_ids: documentIds,
+        })
+        
+        if (response.status == 200) {
+          // Invalidate cache so next list view shows fresh data
+          this.isLoaded = false
+          
+          // Check for S3 cleanup warnings
+          const result = { success: true }
+          if (response.data.warnings) {
+            result.warnings = response.data.warnings
+          }
+          return result
+        }
+        return { success: false, error: 'Unexpected response status' }
+      } catch (error) {
+        console.error('Error deleting documents:', error)
+        // Prioritize the specific error field over the generic message field
+        const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to delete documents'
+        return { success: false, error: errorMessage }
       }
-      return false
     },
     async deleteFolder(projectId, folderId) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/documents/folder/${folderId}/delete`
-      const response = await axios.post(url)
-      if (response.status == 200) {
-        this.removeFolderById(folderId)
-        return true
+      try {
+        const url = `${
+          import.meta.env.VITE_API_URL
+        }/projects/${projectId}/documents/folder/${folderId}/delete`
+        const response = await axios.post(url)
+        
+        if (response.status == 200) {
+          // Invalidate cache so next list view shows fresh data
+          this.isLoaded = false
+          
+          // Check for S3 cleanup warnings
+          const result = { success: true }
+          if (response.data.warnings) {
+            result.warnings = response.data.warnings
+          }
+          return result
+        }
+        return { success: false, error: 'Unexpected response status' }
+      } catch (error) {
+        console.error('Error deleting folder:', error)
+        // Prioritize the specific error field over the generic message field
+        const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to delete folder'
+        return { success: false, error: errorMessage }
       }
-      return false
     },
     getDocumentById(documentId) {
       for (const document of this.documents) {
