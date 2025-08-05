@@ -11,6 +11,7 @@ import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
 import { useCharactersStore } from '@/stores/CharactersStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import TntAnalysisComp from './TntAnalysisComp.vue'
 
 const props = defineProps({
   matrix: {
@@ -74,6 +75,7 @@ const baseUrl = `${
 const tools = new Map()
 tools.set('PAUPRAT', 'PAUP Ratchet')
 tools.set('MRBAYES_XSEDE', 'Mr Bayes')
+// TNT moved to separate tab
 const toolvalue = route.query.toolvalue
 let tool = toolvalue == null ? ref(tools.keys()?.next()?.value) : toolvalue
 const jobName = ref('')
@@ -106,6 +108,8 @@ const nchainsval = ref(4)
 const samplefreqval = ref(1000)
 const specify_diagnfreqval = ref(5000)
 const burninfracval = ref(0.25)
+
+// TNT functionality moved to TntAnalysisComp.vue
 
 const currentMatrixJobs = props.jobs?.filter((job) => job.matrix_id == matrixId)
 const refresh = route.query.refresh
@@ -176,7 +180,7 @@ async function onDownloadOntology() {
   })
 }
 
-async function onRun() {
+async function onRunCipres() {
   const url = new URL(`${baseUrl}/run`)
   const searchParams = url.searchParams
   if (tool.value) {
@@ -221,6 +225,15 @@ async function onRun() {
     }
   }
   sendCipresRequest(url)
+}
+
+// TNT functionality completely moved to TntAnalysisComp.vue
+
+async function onRun() {
+  if (tool.value == 'PAUPRAT' || tool.value == 'MRBAYES_XSEDE') {
+    onRunCipres()
+  }
+  // TNT functionality moved to separate tab and component
 }
 
 async function sendCipresRequest(url) {
@@ -659,7 +672,21 @@ function getStatusClass(status) {
           aria-controls="contact"
           aria-selected="false"
         >
-          Build a Tree
+          Build a Tree (CIPRES)
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link"
+          id="tntTab"
+          data-bs-toggle="tab"
+          :data-bs-target="'#tnt' + matrix.matrix_id"
+          type="button"
+          role="tab"
+          aria-controls="tnt"
+          aria-selected="false"
+        >
+          TNT Analysis
         </button>
       </li>
     </ul>
@@ -699,7 +726,7 @@ function getStatusClass(status) {
         <div class="downloadOptions">
           <div>
             <label>Format:</label>
-            <select v-model="format">
+            <select v-model="format" class="form-select">
               <option v-for="[format, name] in formats" v-bind:value="format">
                 {{ name }}
               </option>
@@ -707,7 +734,7 @@ function getStatusClass(status) {
           </div>
           <div>
             <label>Partition:</label>
-            <select v-model="partitionId">
+            <select v-model="partitionId" class="form-select">
               <option value="" selected disabled>Entire Matrix</option>
               <option
                 v-for="partition in partitions"
@@ -799,7 +826,7 @@ function getStatusClass(status) {
 
           <div class="form-group mb-3">
             <label class="form-label">Operational taxonomic unit</label>
-            <select class="form-control" v-model="matrixFileData.otu">
+            <select class="form-select" v-model="matrixFileData.otu">
               <option
                 v-for="unit in taxonomicUnits"
                 :key="unit.value"
@@ -876,7 +903,7 @@ function getStatusClass(status) {
           <div class="form-row mb-3">
             <div class="col-md-6">
               <label class="form-label">Tool:</label>
-              <select v-model="tool" class="form-control">
+              <select v-model="tool" class="form-select">
                 <option v-for="[tool, name] in tools" v-bind:value="tool">
                   {{ name }}
                 </option>
@@ -1000,7 +1027,10 @@ function getStatusClass(status) {
                     />
                   </td>
                   <td>
-                    <select v-model="jobBranchSwappingAlgorithm">
+                    <select
+                      v-model="jobBranchSwappingAlgorithm"
+                      class="form-select"
+                    >
                       <option
                         v-for="[
                           jobBranchSwappingAlgorithm,
@@ -1094,7 +1124,7 @@ function getStatusClass(status) {
                 <b>Simple parameters</b>
               </div>
               Outgroup&nbsp;
-              <select v-model="set_outgroup">
+              <select v-model="set_outgroup" class="form-select">
                 <option v-for="[val, name] in outgroups" v-bind:value="val">
                   {{ name }}
                 </option>
@@ -1244,6 +1274,9 @@ function getStatusClass(status) {
           <i class="fa-solid fa-info-circle"></i>
           No previous runs found.
         </div>
+      </div>
+      <div class="tab-pane fade" :id="'tnt' + matrix.matrix_id" role="tabpanel">
+        <TntAnalysisComp :projectId="projectId" :matrixId="matrixId" />
       </div>
     </div>
   </div>
@@ -1529,4 +1562,6 @@ td {
 .radio-spacing {
   margin-left: 20px;
 }
+
+/* TNT styling moved to TntAnalysisComp.vue */
 </style>
