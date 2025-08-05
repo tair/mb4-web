@@ -404,7 +404,29 @@ watch(searchStr, () => {
       <RouterLink :to="`/myprojects/${projectId}/media/create`">
         <button type="button" class="btn btn-m btn-outline-primary">
           <i class="fa fa-plus"></i>
-          <span> Create Media</span>
+          <span> Upload 2D Media</span>
+        </button>
+      </RouterLink>
+      <RouterLink :to="`/myprojects/${projectId}/media/create/3d`">
+        <button type="button" class="btn btn-m btn-outline-primary">
+          <i class="fa fa-cube"></i>
+          <span> Upload 3D Media</span>
+        </button>
+      </RouterLink>
+      <RouterLink :to="`/myprojects/${projectId}/media/create/video`">
+        <button type="button" class="btn btn-m btn-outline-primary">
+          <i class="fa fa-video"></i>
+          <span> Upload Video</span>
+        </button>
+      </RouterLink>
+      <RouterLink :to="`/myprojects/${projectId}/media/create/stacks`">
+        <button 
+          type="button" 
+          class="btn btn-m btn-outline-primary"
+          title="Click here to load zipped archives of CT scan stacks (Dicom, TIFF)"
+        >
+          <i class="fa fa-layer-group"></i>
+          <span> Upload Stacks</span>
         </button>
       </RouterLink>
       <RouterLink
@@ -419,7 +441,7 @@ watch(searchStr, () => {
       <RouterLink v-else :to="`/myprojects/${projectId}/media/create/batch`">
         <button type="button" class="btn btn-m btn-outline-primary">
           <i class="fa fa-plus"></i>
-          <span> Upload Batch</span>
+          <span> Upload 2D Media Batch</span>
         </button>
       </RouterLink>
       <div class="btn-group">

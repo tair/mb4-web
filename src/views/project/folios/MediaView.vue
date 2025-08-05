@@ -114,8 +114,12 @@ async function refresh() {
 // Helper function to create S3 media URLs for MediaCard
 function getMediaThumbnailUrl(media: any) {
   if (media.media_id) {
+    // Check if this is a 3D file that should use the 3D icon
+    const url = media.media_type === '3d' 
+      ? '/images/3DImage.png'
+      : buildMediaUrl(projectId, media.media_id, 'thumbnail')
     return {
-      url: buildMediaUrl(projectId, media.media_id, 'thumbnail'),
+      url: url,
       width: media.thumbnail?.WIDTH || media.thumbnail?.width || 120,
       height: media.thumbnail?.HEIGHT || media.thumbnail?.height || 120,
     }

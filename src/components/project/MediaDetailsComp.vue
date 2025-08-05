@@ -47,6 +47,7 @@ const props = defineProps({
 
 const showZoomModal = ref(false)
 const showDownloadModal = ref(false)
+const videoPlayer = ref(null)
 const viewStatsTooltipText = getViewStatsTooltipText()
 const downloadTooltipText = getDownloadTooltipText()
 
@@ -56,6 +57,14 @@ const is3DFile = computed(() => {
          props.media_file?.media?.original?.USE_ICON === '3d'
 })
 
+// Check if the media file is a video file
+const isVideoFile = computed(() => {
+  const filename = props.media_file?.media?.ORIGINAL_FILENAME || ''
+  const ext = filename.split('.').pop()?.toLowerCase()
+  const videoExtensions = ['mp4', 'avi', 'mov', 'webm', 'mkv', 'wmv', 'flv', 'm4v']
+  return videoExtensions.includes(ext)
+})
+
 // Get the file extension from the original filename
 const fileExtension = computed(() => {
   const filename = props.media_file?.media?.ORIGINAL_FILENAME || ''
@@ -63,10 +72,14 @@ const fileExtension = computed(() => {
   return ext || ''
 })
 
-// Get the main display URL (3D icon for 3D files, actual image for 2D files)
+// Get the main display URL (3D icon for 3D files, video thumbnail for videos, actual image for 2D files)
 const mainDisplayUrl = computed(() => {
   if (is3DFile.value) {
     return '/images/3DImage.png'
+  }
+  if (isVideoFile.value) {
+    // For videos, show a thumbnail if available, otherwise show video icon
+    return buildMediaUrl(props.project_id, props.media_file?.media_id, 'thumbnail')
   }
   return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
 })
@@ -79,9 +92,36 @@ const modelUrl = computed(() => {
   return null
 })
 
-// Get the zoom display URL (3D model for 3D files, large image for 2D files)
+// Get the video URL for video player
+const videoUrl = computed(() => {
+  if (isVideoFile.value) {
+    return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
+  }
+  return null
+})
+
+// Get the MIME type for the video
+const videoMimeType = computed(() => {
+  const ext = fileExtension.value
+  const mimeTypes = {
+    'mp4': 'video/mp4',
+    'webm': 'video/webm',
+    'avi': 'video/x-msvideo',
+    'mov': 'video/quicktime',
+    'mkv': 'video/x-matroska',
+    'wmv': 'video/x-ms-wmv',
+    'flv': 'video/x-flv',
+    'm4v': 'video/x-m4v'
+  }
+  return mimeTypes[ext] || 'video/mp4'
+})
+
+// Get the zoom display URL (3D model for 3D files, video for videos, large image for 2D files)
 const zoomDisplayUrl = computed(() => {
   if (is3DFile.value) {
+    return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
+  }
+  if (isVideoFile.value) {
     return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
   }
   return buildMediaUrl(props.project_id, props.media_file?.media_id, 'large')
@@ -93,7 +133,58 @@ const onModelError = (error) => {
 }
 
 const onModelLoad = (model) => {
-  console.log('3D model loaded successfully:', model)
+  // 3D model loaded successfully
+}
+
+// Handle video loading events
+const onVideoError = (error) => {
+  console.error('Video loading error:', error)
+}
+
+const onVideoLoaded = (event) => {
+  // Video metadata loaded
+}
+
+const onVideoDataLoaded = (event) => {
+  // Video data loaded - seeking should now work
+}
+
+const onVideoCanPlay = (event) => {
+  // Video can play - seeking enabled
+  // Ensure the video element is properly configured for seeking
+  const video = event.target
+  if (video.seekable && video.seekable.length > 0) {
+    // Video is seekable
+  }
+}
+
+const onVideoProgress = (event) => {
+  // This helps track buffering progress which affects seeking
+  const video = event.target
+  if (video.buffered.length > 0) {
+    const bufferedEnd = video.buffered.end(video.buffered.length - 1)
+    // Video buffered progress tracked
+  }
+}
+
+const onVideoSeeking = (event) => {
+  // Video seeking in progress
+}
+
+const onVideoSeeked = (event) => {
+  // Video seek completed
+}
+
+const onVideoCanPlayThrough = (event) => {
+  // Video can play through - fully loaded and seekable
+}
+
+const onVideoTimeUpdate = (event) => {
+  // Track current time (useful for debugging seeking issues)
+  const video = event.target
+  if (video.seeking) {
+    // Currently seeking
+  }
 }
 
 async function confirmDownload(fileSize, fileName) {
@@ -102,8 +193,8 @@ async function confirmDownload(fileSize, fileName) {
   //   return;
   // }
   // CAPTCHA is completed, proceed with the download
-  // For 3D files, always download the original file regardless of requested size
-  const downloadSize = is3DFile.value ? 'original' : fileSize
+  // For 3D files and videos, always download the original file regardless of requested size
+  const downloadSize = (is3DFile.value || isVideoFile.value) ? 'original' : fileSize
   const downloadUrl = buildMediaUrl(
     props.project_id,
     props.media_file?.media_id,
@@ -224,6 +315,30 @@ function getHitsMessage(mediaObj) {
                   @load="onModelLoad"
                   @error="onModelError"
                 />
+                <!-- Video Player for video files -->
+                <div v-else-if="isVideoFile" class="video-player-container">
+                  <video
+                    ref="videoPlayer"
+                    controls
+                    preload="auto"
+                    class="video-player"
+                    crossorigin="anonymous"
+                    muted="false"
+                    playsinline
+                    @error="onVideoError"
+                    @loadedmetadata="onVideoLoaded"
+                    @loadeddata="onVideoDataLoaded"
+                    @canplay="onVideoCanPlay"
+                    @canplaythrough="onVideoCanPlayThrough"
+                    @progress="onVideoProgress"
+                    @seeking="onVideoSeeking"
+                    @seeked="onVideoSeeked"
+                    @timeupdate="onVideoTimeUpdate"
+                  >
+                    <source :src="videoUrl" :type="videoMimeType" />
+                    <p>Your browser doesn't support video playback.</p>
+                  </video>
+                </div>
                 <!-- Regular Image Viewer for 2D files -->
                 <MediaViewPanel
                   v-else
@@ -438,5 +553,24 @@ p {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Video Player Styles */
+.video-player-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  padding: 1rem;
+  background-color: #000;
+  border-radius: 8px;
+}
+
+.video-player {
+  max-width: 100%;
+  max-height: 80vh;
+  width: auto;
+  height: auto;
+  border-radius: 4px;
 }
 </style>
