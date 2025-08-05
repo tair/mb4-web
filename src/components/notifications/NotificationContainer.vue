@@ -31,9 +31,14 @@ function removeNotification(id: string) {
 .notification-container {
   position: fixed;
   top: 20px;
-  right: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 9999;
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 90vw;
 }
 
 .notification-container > * {
@@ -41,11 +46,13 @@ function removeNotification(id: string) {
 }
 
 /* Mobile responsiveness */
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .notification-container {
     top: 10px;
-    right: 10px;
     left: 10px;
+    right: 10px;
+    transform: none;
+    max-width: none;
   }
 }
 </style>
