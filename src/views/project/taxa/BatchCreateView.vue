@@ -103,13 +103,13 @@ function removeTaxon(index: number) {
 }
 </script>
 <template>
-  <div class="nav-link d-flex align-items-center fw-bold small m-0 p-0 mb-3">
-    <i class="fa-solid fa-chevron-left"></i>
+  <div>
     <RouterLink
-      class="nav-link m-0 p-0 pl-1"
       :to="`/myprojects/${projectId}/taxa`"
+      class="mb-3 d-inline-block"
     >
-      <span>Back to list</span>
+      <i class="fa fa-arrow-left"></i>
+      Back to Taxa
     </RouterLink>
   </div>
   <header>

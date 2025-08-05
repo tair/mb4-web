@@ -196,6 +196,12 @@ function clearSearch() {
           <span> Import File</span>
         </button>
       </RouterLink>
+      <RouterLink :to="`/myprojects/${projectId}/taxa/extinct/edit`">
+        <button type="button" class="btn btn-m btn-outline-primary">
+          <span class="extinct-icon">†</span>
+          <span> Edit Extinct Taxa</span>
+        </button>
+      </RouterLink>
     </div>
     <div v-if="taxaStore.taxa?.length">
       <div class="mb-3">
@@ -392,4 +398,10 @@ function clearSearch() {
 </template>
 <style scoped>
 @import '@/views/project/styles.css';
+
+.extinct-icon {
+  font-weight: bold;
+  font-size: 1.1em;
+  margin-right: 4px;
+}
 </style>

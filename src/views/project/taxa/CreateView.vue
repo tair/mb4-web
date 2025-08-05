@@ -123,6 +123,13 @@ onMounted(() => {
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
+    <RouterLink
+      :to="`/myprojects/${projectId}/taxa`"
+      class="mb-3 d-inline-block"
+    >
+      <i class="fa fa-arrow-left"></i>
+      Back to Taxa
+    </RouterLink>
     <form @submit.prevent="createTaxon">
       <p class="mt-2">
         You must fill in at least one taxonomic field and indicate whether the

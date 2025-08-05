@@ -786,6 +786,23 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
+    path: 'taxa/extinct/edit',
+    name: 'MyProjectTaxaExtinctEditView',
+    meta: {
+      itemName: 'taxa',
+      breadcrumbs: [
+        {
+          label: 'Taxa',
+          to: 'MyProjectTaxaView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/taxa/ExtinctTaxaEditView.vue'
+      ),
+  },
+  {
     path: 'taxa/:taxonId(\\d+)/',
     name: 'MyProjectTaxaBaseEditView',
     meta: {
