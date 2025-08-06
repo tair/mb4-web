@@ -5,8 +5,8 @@ const props = defineProps<{
 }>()
 
 function imagePath() {
-  // Copyright is expired so apply PDM - public domain mark
-  if (props.copyrightPermission) {
+  // Public domain - apply PDM (Public Domain Mark)
+  if (props.copyrightPermission === 4) {
     return 'PDM'
   }
 
@@ -31,6 +31,11 @@ function imagePath() {
 }
 
 function title() {
+  // Handle public domain first
+  if (props.copyrightPermission === 4) {
+    return 'Public Domain Mark - no copyright restrictions'
+  }
+  
   switch (props.copyrightLicense) {
     case 0:
       return 'Media reuse policy not set'
