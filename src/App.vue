@@ -2,6 +2,7 @@
 import { RouterView } from 'vue-router'
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/AuthStore.js'
+import NotificationContainer from '@/components/notifications/NotificationContainer.vue'
 import '@/assets/css/buttons.css'
 const authStore = useAuthStore()
 
@@ -11,6 +12,7 @@ onMounted(() => {
 </script>
 <template>
   <RouterView></RouterView>
+  <NotificationContainer />
 </template>
 <style>
 body {
