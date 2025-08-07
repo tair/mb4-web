@@ -1,5 +1,6 @@
 <script setup>
 import { useRoute } from 'vue-router'
+import router from '@/router'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import EditBatchDialog from '@/views/project/taxa/EditBatchDialog.vue'
@@ -11,7 +12,6 @@ import {
   TAXA_COLUMN_NAMES,
   TaxaColumns,
   nameColumnMap,
-  getTaxonName,
   sortTaxaAlphabetically,
 } from '@/utils/taxa'
 
@@ -170,6 +170,28 @@ function clearSearch() {
   selectedGroupName.value = null
   searchStr.value = ''
 }
+
+function validateSelectedTaxaAtPbdb() {
+  const selectedTaxaIds = filteredTaxa.value
+    .filter((t) => t.selected)
+    .map((t) => t.taxon_id)
+
+  if (selectedTaxaIds.length === 0) {
+    alert('Please select at least one taxon to validate.')
+    return
+  }
+
+  if (selectedTaxaIds.length > 100) {
+    alert('You can only validate up to 100 taxa at a time. Please select fewer taxa.')
+    return
+  }
+
+  // Store selected taxa IDs in sessionStorage for the PBDB wizard to access
+  sessionStorage.setItem('pbdb-preselected-taxa', JSON.stringify(selectedTaxaIds))
+
+  // Navigate to PBDB import view
+  router.push({ path: `/myprojects/${projectId}/taxa/pbdb/import` })
+}
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
@@ -200,6 +222,16 @@ function clearSearch() {
         <button type="button" class="btn btn-m btn-outline-primary">
           <span class="extinct-icon">†</span>
           <span> Edit Extinct Taxa</span>
+        </button>
+      </RouterLink>
+      <RouterLink :to="`/myprojects/${projectId}/taxa/pbdb/import`">
+        <button 
+          type="button" 
+          class="btn btn-m btn-outline-primary"
+          title="Validate taxa at the PBDB"
+        >
+          <i class="fa-solid fa-check-circle"></i>
+          <span> Validate taxa</span>
         </button>
       </RouterLink>
       <div class="btn-group">
@@ -366,6 +398,14 @@ function clearSearch() {
         <span
           v-if="someSelected"
           class="item"
+          @click="validateSelectedTaxaAtPbdb"
+          title="Validate taxa at the PBDB"
+        >
+          <i class="fa-solid fa-check-circle"></i>
+        </span>
+        <span
+          v-if="someSelected"
+          class="item"
           data-bs-toggle="modal"
           data-bs-target="#taxaDeleteModal"
           @click="taxaToDelete = filteredTaxa.filter((b) => b.selected)"
@@ -421,7 +461,6 @@ function clearSearch() {
 
 .extinct-icon {
   font-weight: bold;
-  font-size: 1.1em;
   margin-right: 4px;
 }
 </style>

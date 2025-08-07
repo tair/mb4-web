@@ -109,7 +109,7 @@ async function createTaxon(event) {
     return
   }
 
-  router.push({ path: `/myprojects/${projectId}/taxa` })
+  router.replace({ path: `/myprojects/${projectId}/taxa` })
 }
 
 onMounted(() => {

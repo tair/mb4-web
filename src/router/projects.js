@@ -803,6 +803,23 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
+    path: 'taxa/pbdb/import',
+    name: 'MyProjectTaxaPbdbImportView',
+    meta: {
+      itemName: 'taxa',
+      breadcrumbs: [
+        {
+          label: 'Taxa',
+          to: 'MyProjectTaxaView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/taxa/PbdbImportView.vue'
+      ),
+  },
+  {
     path: 'taxa/:taxonId(\\d+)/',
     name: 'MyProjectTaxaBaseEditView',
     meta: {

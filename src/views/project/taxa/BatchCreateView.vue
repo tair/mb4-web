@@ -62,7 +62,7 @@ async function createTaxonBatch() {
     const created = await taxaStore.createBatch(projectId, validTaxa)
 
     if (created) {
-      router.push({ path: `/myprojects/${projectId}/taxa` })
+      router.replace({ path: `/myprojects/${projectId}/taxa` })
     } else {
       validationMessages.value.validation =
         'Failed to create taxa. Please try again.'
