@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { nameColumnMap } from '@/utils/taxa'
 import { csvToArray } from '@/utils/csv'
+import { ref } from 'vue'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id as string)
@@ -11,10 +12,13 @@ const taxaStore = useTaxaStore()
 
 // The list of taxa that will be set when the file is uploaded.
 const taxa = new Set()
+const isProcessing = ref(false)
 
 function readFile(event: Event) {
   const target = event.target as HTMLInputElement
   const file = target.files[0]
+  if (!file) return
+  
   const reader = new FileReader()
 
   reader.addEventListener('load', () => {
@@ -48,7 +52,10 @@ function parseContent(content: string) {
     for (let x = 0, l = row.length; x < l; ++x) {
       const value = row[x]
       if (value) {
-        taxon[columnLabels[x]] = value
+        const fieldName = columnsMap.get(columnLabels[x])
+        if (fieldName) {
+          taxon[fieldName] = value
+        }
       }
     }
     taxa.add(taxon)
@@ -57,18 +64,74 @@ function parseContent(content: string) {
 
 async function createBatch() {
   if (taxa.size == 0) {
-    alert('There is no taxa specified in the upload file')
+    alert('There are no taxa specified in the upload file')
     return
   }
 
-  const created = await taxaStore.createBatch(projectId, Array.from(taxa))
-  if (created) {
-    await router.replace(`/myprojects/${projectId}/taxa`)
+  isProcessing.value = true
+  try {
+    const created = await taxaStore.createBatch(projectId, Array.from(taxa))
+    if (created) {
+      router.replace({ path: `/myprojects/${projectId}/taxa` })
+    }
+  } catch (error) {
+    console.error('Error creating batch:', error)
+    alert('Failed to upload taxa. Please try again.')
+  } finally {
+    isProcessing.value = false
   }
 }
 </script>
 <template>
   <div>
+    <RouterLink
+      :to="`/myprojects/${projectId}/taxa`"
+      class="mb-3 d-inline-block"
+    >
+      <i class="fa fa-arrow-left"></i>
+      Back to Taxa
+    </RouterLink>
+    <form @submit.prevent="createBatch">
+      <div class="mb-3">
+        <label for="file" class="form-label font-weight-bold"
+          >Choose a Taxa file</label
+        >
+        <input
+          type="file"
+          class="form-control"
+          id="file"
+          accept=".csv"
+          @change="readFile"
+          :disabled="isProcessing"
+        />
+      </div>
+      <div class="mt-3">
+        <b>Note:</b> Large batches can take a few minutes to process. Be
+        patient!
+      </div>
+      <div class="btn-form-group">
+        <RouterLink :to="`/myprojects/${projectId}/taxa`">
+          <button
+            class="btn btn-outline-primary"
+            type="button"
+            :disabled="isProcessing"
+          >
+            Cancel
+          </button>
+        </RouterLink>
+        <button class="btn btn-primary" type="submit" :disabled="isProcessing">
+          <span
+            v-if="isProcessing"
+            class="spinner-border spinner-border-sm me-2"
+            role="status"
+            aria-hidden="true"
+          ></span>
+          {{ isProcessing ? 'Processing...' : 'Upload taxonomy file' }}
+        </button>
+      </div>
+    </form>
+  </div>
+  <div class="mt-4">
     <header>Taxa may be uploaded in a batch instead of one at a time.</header>
     <ol type="1">
       <li>
@@ -147,20 +210,6 @@ async function createBatch() {
       "Schwartzenegger, 1879"), or you may place the year in the separate "year"
       column. Surround the author's name with parentheses if you wish it to
       display the year with the author name.
-    </div>
-    <div>
-      <div>
-        Choose taxonomy file<br />
-        <input type="file" name="file" @change="readFile" accept=".csv" />
-      </div>
-      <div class="formButtons">
-        <button class="button" @click="createBatch">
-          Upload taxonomy file
-        </button>
-      </div>
-    </div>
-    <div>
-      <b>Note:</b> Large batches can take a few minutes to process. Be patient!
     </div>
   </div>
 </template>
