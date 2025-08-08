@@ -117,7 +117,7 @@ async function makeRequest(event) {
             </div>
             
             <div v-else>
-              <div v-if="isPublished.value">
+              <div v-if="isPublished">
                 <p class="mb-0">
                   Because this project has already been published, the onetime use
                   media can not be copied to the duplicated project.
