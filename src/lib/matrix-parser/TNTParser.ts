@@ -137,7 +137,7 @@ export class TNTParser extends AbstractParser {
       const characterNumber = this.convertNumber(
         this.tokenizer.assertToken(Token.NUMBER)
       )
-      const characterName = this.tokenizer.getTokenValue().getValue()
+      const characterName = this.tokenizer.getTokenValue().getValue().replace(/_/g, ' ')
       const newCharacterName = this.matrixObject.addCharacter(
         characterNumber,
         characterName
@@ -145,7 +145,7 @@ export class TNTParser extends AbstractParser {
 
       while (this.untilToken([Token.SEMICOLON])) {
         this.tokenizer.consumeTokenIfMatch([Token.COLON])
-        const stateName = this.tokenizer.getTokenValue().getValue()
+        const stateName = this.tokenizer.getTokenValue().getValue().replace(/_/g, ' ')
         this.matrixObject.addCharacterState(newCharacterName, stateName)
 
         if (this.tokenizer.isToken([Token.OPEN_SBRACKET])) {
