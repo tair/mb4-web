@@ -1,9 +1,11 @@
 <script setup>
 import axios from 'axios'
-import { ref, watch } from 'vue'
+
+import { ref, watch, onMounted  } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMatricesStore } from '@/stores/MatricesStore'
 import { useFileTransferStore } from '@/stores/FileTransferStore'
+import { useDocumentsStore } from '@/stores/DocumentsStore'
 import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import { getTaxonomicUnitOptions } from '@/utils/taxa'
@@ -30,6 +32,8 @@ const props = defineProps({
     required: false,
   },
 })
+
+const documentsStore = useDocumentsStore()
 
 const formats = new Map()
 const matrix = props.matrix
@@ -74,8 +78,11 @@ const baseUrl = `${
 const tools = new Map()
 tools.set('PAUPRAT', 'PAUP Ratchet')
 tools.set('MRBAYES_XSEDE', 'Mr Bayes')
+//tools.set('RAXMLHPC8_REST_XSEDE', 'RaXML')
 const toolvalue = route.query.toolvalue
-let tool = toolvalue == null ? ref(tools.keys()?.next()?.value) : toolvalue
+//const tool = (toolvalue == null) ? ref(tools.keys()?.next()?.value) : toolvalue
+let tool =  ref(tools.keys()?.next()?.value)
+let clickedRun = 0 
 const jobName = ref('')
 const jobNote = ref('')
 
@@ -90,7 +97,10 @@ const jobBranchSwappingAlgorithm = ref(
 )
 
 // MrBayes specific variables
+const SEP='^'
+const BLOCK_BEGIN='begin mrbayes;'
 const mrbayesblockquery = ref('1')
+const entermrbayesblock = ref('1')
 const nruns_specified = ref(2)
 const nchains_specified = ref(4)
 const outgroups = new Map()
@@ -106,6 +116,38 @@ const nchainsval = ref(4)
 const samplefreqval = ref(1000)
 const specify_diagnfreqval = ref(5000)
 const burninfracval = ref(0.25)
+
+const mrbayesblock = ref('begin mrbayes;\n\nend;')
+
+// RaXML specific variables
+const nchar = ref(1000)
+const outsuffix = ref('output')
+const mlsearch_cat = ref('-F')
+const outgroup = ref('')
+const number_cats = ref(25)
+const disable_ratehet = ref('-V')
+const treetops = new Map()
+if (!documentsStore.isLoaded) {
+  documentsStore.fetchDocuments(projectId)
+}
+for (const doc of documentsStore.uncategorizedDocuments) {
+  treetops.set(doc.documentId, doc.title)
+}
+const treetop = ref(treetops.keys()?.next()?.value) 
+let validateMsg = ''
+
+const jobstatuses = new Map()
+jobstatuses.set('NEW', 'A new job with specified parameters has created')
+jobstatuses.set('READY', 'The newly created job is ready to be put in queue')
+jobstatuses.set('QUEUE', 'The nwe job has been queued')
+jobstatuses.set('INPUTCHECK', 'The input file(s) and parameters are being checked')
+jobstatuses.set('COMMANDRENDERING', 'A commandline is being generated according to the parameters specified')
+jobstatuses.set('INPUTSTAGING', 'The input file(s) and other related files are being transferred to the working directory on HPC side')
+jobstatuses.set('SUBMITTING', 'The job is being submitted to HPC')
+jobstatuses.set('SUBMITTED', 'The job has been submitted to HPC')
+jobstatuses.set('RUNNING', 'The job has been started and is running on HPC')
+jobstatuses.set('LOAD_RESULTS', 'The job has finished running and the results are being transferred back to CIPRES')
+jobstatuses.set('COMPLETED', 'The job is done and resluts have been transferred and stored on CIPRES')
 
 const currentMatrixJobs = props.jobs?.filter((job) => job.matrix_id == matrixId)
 const refresh = route.query.refresh
@@ -176,7 +218,155 @@ async function onDownloadOntology() {
   })
 }
 
+let nruns_specified_parsed = 0 
+let nchains_specified_parsed = 0 
+
+function validateJobParameters()
+{
+  nruns_specified_parsed = 0 
+  nchains_specified_parsed = 0 
+  validateMsg = ''
+  if (jobName)
+  {
+      if (!jobName.value.trim())
+      {
+        alert(jobName.value.trim())
+        return false
+      }
+  }
+  else
+    return false 
+  if (tool.value == 'MRBAYES_XSEDE') {
+    if (mrbayesblockquery.value == '1') {
+      if (!checkNumber(runtime, 0.1, "Maximum hours to run"))
+        return false
+      if (((parseInt(nruns_specified.value) * parseInt(nchains_specified.value))%2) != 0)
+      {
+        validateMsg += "nruns x nchains must be a multiple of 2 \n"
+        return false
+      }
+    }
+    else
+    {
+      if (entermrbayesblock.value == '0') {
+        if (!checkNumber(ngenval, 5000, "MCMC number of generations"))
+          return false
+        if (!checkNumber(nrunsval, 1, "Number of runs"))
+          return false
+        if (!checkNumber(nchainsval, 1, "Heated chains"))
+          return false
+        if (!checkNumber(samplefreqval, 1, "Samplig frequency"))
+          return false
+        if (!checkNumber(specify_diagnfreqval, 1, "Diagnostic run frequency"))
+          return false
+        if (!checkNumber(burninfracval, 0, "Burnin"))
+          return false
+        if (((parseInt(nrunsval.value) * parseInt(nchainsval.value))%2) != 0)
+        {
+          validateMsg += "nruns x nchains must be a multiple of 2 \n"
+          return false
+        }
+      }
+      if (entermrbayesblock.value == '1') {
+        if (mrbayesblock)
+        {
+          if (!mrbayesblock.value.trim())
+          {
+            return false
+          }
+          let hasError = false
+          const lines = mrbayesblock.value.split('\n')
+          let i = 0
+          if (lines[i].trim() != "begin mrbayes;")
+          {
+            validateMsg += "MrBayes block (line " + (i+1) + "): first line should be 'begin mrbayes;' \n"
+            hasError = true 
+          }
+          const middleLineRegex = /^(set |prset |lset |mcmcp ).*?;$/
+          i++ 
+          for (i; i < (lines.length - 1); i++) {
+            if (!middleLineRegex.test(lines[i].trim())) {
+              validateMsg += "MrBayes block (line " + (i+1) + "): must start with 'set', 'prset', 'lset', or 'mcmcp' and end with ';'"
+              hasError = true 
+            }
+            else {
+              if (lines[i].trim().startsWith("mcmcp "))
+              {
+                const params = lines[i].trim().split(' ')
+                for (let j = 0; j < params.length; j++)
+                {
+                  let isnrun = params[j].startsWith("nruns=") 
+                  if (isnrun  || params[j].startsWith("nchains="))
+                  {
+                    const ns = params[j].split('=')
+                    if (ns != null && ns.length > 1)
+                    {
+                      if (isnrun)
+                        nruns_specified_parsed = parseInt(ns[1]) 
+                      else
+                        nchains_specified_parsed = parseInt(ns[1]) 
+                    }
+                  }
+                }
+                if (nruns_specified_parsed < 1 || nchains_specified_parsed < 1)
+                {
+                  validateMsg += "MrBayes block (Line " + (i+1) + "): nruns and nchains must be bigger than 0 \n"
+                  hasError = true 
+                }
+                if (((nruns_specified_parsed * nchains_specified_parsed)%2) != 0)
+                {
+                  validateMsg += "MrBayes block (Line " + (i+1) + "): nruns x nchains must be a multiple of 2 \n"
+                  hasError = true 
+                }
+              }
+            }
+          }
+          if (lines[i].trim() != "end;")
+          {
+            validateMsg += "MrBayes block (Line " + (i+1) + "): last line should be 'end;' \n"
+            hasError = true 
+          }
+          if (hasError)
+            return false
+        }
+        else
+          return false 
+      }
+    }
+  }
+  return true;
+}
+
+function checkNumber(numToCheck, limit, fieldName)
+{
+  if (numToCheck)
+  {
+    if (numToCheck.value < limit)
+    {
+      validateMsg += "\n" + fieldName + " cannot be smaller than " + limit + "\n"
+      return false
+    }
+    return true;
+  }
+  else
+    return false
+}
+
+function markFieldAsTouched() {
+  clickedRun += 1
+}
 async function onRun() {
+  //clickedRun += 1 
+  //jobName = ref('')
+  if (!validateJobParameters())
+  {
+    //if (validateMsg != null && validateMsg.startsWith("MrBayes block"))
+    if (validateMsg)
+      alert(validateMsg)
+    else
+      alert("Please fill out all the required fields")
+    return
+  }
   const url = new URL(`${baseUrl}/run`)
   const searchParams = url.searchParams
   if (tool.value) {
@@ -202,23 +392,35 @@ async function onRun() {
       )
     }
   } else if (tool.value == 'MRBAYES_XSEDE') {
-    searchParams.append('mrbayesblockquery', mrbayesblockquery.value)
+    let setmrbayesblockquery = mrbayesblockquery.value
+    //searchParams.append('mrbayesblockquery', mrbayesblockquery.value)
     if (mrbayesblockquery.value == '1') {
       searchParams.append('nruns_specified', nruns_specified.value)
       searchParams.append('nchains_specified', nchains_specified.value)
       searchParams.append('runtime', runtime.value)
     }
     if (mrbayesblockquery.value == '0') {
-      if (set_outgroup != '') {
+      if (set_outgroup.value != '') {
         searchParams.append('set_outgroup', set_outgroup.value)
       }
-      searchParams.append('ngenval', ngenval.value)
-      searchParams.append('nrunsval', nrunsval.value)
-      searchParams.append('nchainsval', nchainsval.value)
-      searchParams.append('samplefreqval', samplefreqval.value)
-      searchParams.append('specify_diagnfreqval', specify_diagnfreqval.value)
-      searchParams.append('burninfracval', burninfracval.value)
+      if (entermrbayesblock.value == '0') {
+        searchParams.append('ngenval', ngenval.value)
+        searchParams.append('nrunsval', nrunsval.value)
+        searchParams.append('nchainsval', nchainsval.value)
+        searchParams.append('samplefreqval', samplefreqval.value)
+        searchParams.append('specify_diagnfreqval', specify_diagnfreqval.value)
+        searchParams.append('burninfracval', burninfracval.value)
+      }
+      if (entermrbayesblock.value == '1') {
+        setmrbayesblockquery = '1' 
+        if (nruns_specified_parsed > 0)
+          searchParams.append('nruns_specified', nruns_specified_parsed)
+        if (nchains_specified_parsed > 0)
+          searchParams.append('nchains_specified', nchains_specified_parsed)
+        searchParams.append('mrbayesblock', mrbayesblock.value)
+      }
     }
+    searchParams.append('mrbayesblockquery', setmrbayesblockquery)
   }
   sendCipresRequest(url)
 }
@@ -230,9 +432,14 @@ async function sendCipresRequest(url) {
   if (!msg.includes('fail') && !msg.includes('Fail')) {
     let urlNew = window.location.href
     if (urlNew.indexOf('?') > -1) {
-      if (urlNew.indexOf('refresh=true') < 0)
+      const beginIndex = urlNew.indexOf('refresh=true')
+      if (beginIndex < 0)
         urlNew +=
           '&refresh=true&refreshid=' + matrixId + '&toolvalue=' + tool.value
+      else {
+        urlNew = urlNew.substring(0, beginIndex) + 
+          '&refresh=true&refreshid=' + matrixId + '&toolvalue=' + tool.value
+      }
     } else {
       urlNew +=
         '?refresh=true&refreshid=' + matrixId + '&toolvalue=' + tool.value
@@ -579,6 +786,25 @@ function getStatusClass(status) {
   // Return default class for unknown statuses
   return 'status-unknown'
 }
+
+function removeDoubleQuote(str) {
+  if (str.endsWith('"')) {
+    str = str.slice(0, -1);
+  }
+  if (str.length > 0 && str[0] === '"') {
+    return str.slice(1)
+  }
+  return str
+}
+
+function formatText(text) {
+   return removeDoubleQuote(text.replace(/(\\r\\n|\\n|\\r)+/g, '<br>'));
+}
+onMounted(() => {
+  if (!documentsStore.isLoaded) {
+    documentsStore.fetchDocuments(projectId)
+  }
+})
 </script>
 <template>
   <div class="p-2 card shadow matrix-card">
@@ -884,13 +1110,13 @@ function getStatusClass(status) {
             </div>
             <div class="col-md-6">
               <label class="form-label"
-                >Job name
+                >Job name<b class="red">*&nbsp;&nbsp;</b>
                 <Tooltip
                   content="Enter a short name for this job, to make it easy to track over time."
                 ></Tooltip
                 >:</label
               >
-              <input type="text" v-model="jobName" class="form-control" />
+              <input type="text" v-model="jobName" class="form-control" :class="{ 'is-invalid': !jobName }" required />
             </div>
           </div>
           <div class="form-row mb-3">
@@ -957,6 +1183,14 @@ function getStatusClass(status) {
               <li>
                 Substitution Model: gamma-shaped rate variation with all
                 substitution rates equal
+              </li>
+            </ul>
+          </div>
+          <div v-if="tool === 'RAXMLHPC8_REST_XSEDE'" class="read-only">
+            <ul>
+              <li>MorphoBank runs RAxMLHPC v8.1.24 at CIPRES</li>
+              <li>
+                Phylogenetic tree inference using maximum likelihood/rapid bootstrapping 
               </li>
             </ul>
           </div>
@@ -1045,6 +1279,7 @@ function getStatusClass(status) {
                   <tr>
                     <th>&nbsp;</th>
                     <th>&nbsp;</th>
+                    <th>&nbsp;</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1052,16 +1287,19 @@ function getStatusClass(status) {
                     <td
                       title="The values entered for nruns and nchains influence the number of cpu's that can be used in parallel.  Please enter the value you specified for nruns in the MrBayes block of the Nexus file.  If you didn't specify a value for nruns, please leave this field at its default value of 2."
                     >
-                      My Mr Bayes blcok specifies
+                      My Mr Bayes block specifies
                     </td>
                     <td
                       title="The values entered for nruns and nchains influence the number of cpu's that can be used in parallel.  Please enter the value you specified for nruns in the MrBayes block of the Nexus file.  If you didn't specify a value for nruns, please leave this field at its default value of 2."
                     >
                       <input
                         type="number"
+                        class="form-control"
                         v-model="nruns_specified"
                         value="2"
                       />
+                    </td>
+                    <td>
                       nruns
                     </td>
                   </tr>
@@ -1076,15 +1314,19 @@ function getStatusClass(status) {
                     >
                       <input
                         type="number"
+                        class="form-control"
                         v-model="nchains_specified"
                         value="2"
                       />
+                    </td>
+                    <td>
                       nchains
                     </td>
                   </tr>
                   <tr>
                     <td>Maximum hours to run<b class="red">*</b></td>
-                    <td><input type="number" v-model="runtime" value="4" /></td>
+                    <td><input type="number" v-model="runtime" class="form-control" :class="{ 'is-invalid': (!runtime || runtime < 0.1) }" value="4" min="0.01" step="0.1" required /></td>
+                    <td></td>
                   </tr>
                 </tbody>
               </table>
@@ -1100,75 +1342,134 @@ function getStatusClass(status) {
                 </option>
               </select>
               <br /><br />
-              <b>Parameters for MCMC</b>
-              <table>
-                <tbody>
-                  <tr>
-                    <td title="">
-                      MCMC number of generations<b class="red">*</b>
-                    </td>
-                    <td title="">
-                      <input
-                        type="number"
-                        v-model="ngenval"
-                        min="5000"
-                        stop="1"
-                        value="20000"
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td title="">Number of runs<b class="red">*</b></td>
-                    <td title="">
-                      <input type="number" v-model="nrunsval" value="2" />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td title="">Heated chains<b class="red">*</b></td>
-                    <td title="">
-                      <input type="number" v-model="nchainsval" value="4" />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td title="">
-                      Sampling frequency<b class="red">*</b>, every
-                    </td>
-                    <td title="">
-                      <input
-                        type="number"
-                        v-model="samplefreqval"
-                        value="1000"
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td title="">
-                      Diagnostic run frequency<b class="red">*</b>, every
-                    </td>
-                    <td title="">
-                      <input
-                        type="number"
-                        v-model="specify_diagnfreqval"
-                        value="5000"
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td title="">Burnin<b class="red">*</b></td>
-                    <td title="">
-                      <input
-                        type="number"
-                        v-model="burninfracval"
-                        value="0.25"
-                        min="0"
-                        max="1"
-                        step="0.01"
-                      />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <div>
+                Would you like to enter a Mr Bayes block?
+                <label>
+                  <input
+                    type="radio"
+                    v-model="entermrbayesblock"
+                    value="1"
+                    name="blockRadioGroup2"
+                  />
+                  Yes
+                </label>
+                <label class="radio-spacing">
+                  <input
+                    type="radio"
+                    v-model="entermrbayesblock"
+                    value="0"
+                    name="blockRadioGroup2"
+                  />
+                  No
+                </label>
+              </div>
+              <div v-if="entermrbayesblock === '1'">
+                <textarea v-model="mrbayesblock" class="form-control" :class="{ 'is-invalid': !mrbayesblock }" rows="9" cols="80"/> 
+              </div>
+              <div v-if="entermrbayesblock === '0'">
+                <b>Parameters for MCMC</b>
+                <table>
+                  <tbody>
+                    <tr>
+                      <td title="">
+                        MCMC number of generations<b class="red">*</b>
+                      </td>
+                      <td title="">
+                        <input
+                          type="number"
+                          v-model="ngenval"
+                          class="form-control"
+                          :class="{ 'is-invalid': (!ngenval || ngenval < 5000) }"
+                          min="5000"
+                          step="1"
+                          value="20000"
+                          required
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td title="">Number of runs<b class="red">*</b></td>
+                      <td title="">
+                        <input type="number" v-model="nrunsval" class="form-control" :class="{ 'is-invalid': (!nrunsval || nrunsval < 1) }" value="2" required />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td title="">Heated chains<b class="red">*</b></td>
+                      <td title="">
+                        <input type="number" v-model="nchainsval" class="form-control" :class="{ 'is-invalid': (!nchainsval || nchainsval < 1) }" value="4" required />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td title="">
+                        Sampling frequency<b class="red">*</b>, every
+                      </td>
+                      <td title="">
+                        <input
+                          type="number"
+                          v-model="samplefreqval"
+                          class="form-control"
+                          :class="{ 'is-invalid': (!samplefreqval || samplefreqval < 1) }"
+                          value="1000"
+                          required
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td title="">
+                        Diagnostic run frequency<b class="red">*</b>, every
+                      </td>
+                      <td title="">
+                        <input
+                          type="number"
+                          v-model="specify_diagnfreqval"
+                          class="form-control"
+                          :class="{ 'is-invalid': (!specify_diagnfreqval || specify_diagnfreqval < 1) }"
+                          value="5000"
+                          required
+                        />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td title="">Burnin<b class="red">*</b></td>
+                      <td title="">
+                        <input
+                          type="number"
+                          v-model="burninfracval"
+                          value="0.25"
+                          class="form-control"
+                          :class="{ 'is-invalid': (!burninfracval || burninfracval < 0) }"
+                          min="0"
+                          max="1"
+                          step="0.01"
+                          required
+                        />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
+          </div>
+          <div v-if="tool === 'RAXMLHPC8_REST_XSEDE'">
+            <div class="red">*required</div>
+            How many patterns in yuor data set?&nbsp;<input type="number" v-model="nchar" />
+            <br>
+            Set a name for output files(-n)&nbsp;<input type="text" v-model="outsuffix"  />
+            <br>          
+            Enable ML searches under CAT (-F)&nbsp;<input type="checkbox" v-model="mlsearch_cat"  />
+            <br>          
+            Outgroup (-o) ()one or more comma-separated outgroups, see comment for syntax)&nbsp;<input type="text" v-model="outgroup"  />
+            <br>          
+            Specify the number of distinct rate categories (-c)<b class="red">*</b>&nbsp;<input type="number" v-model="number_cats" />
+            <br>
+            Disable Rate Heterogeneity (-V)<b class="red">*</b>&nbsp;<input type="checkbox" v-model="disable_ratehet"  />
+            <br>          
+            Supply a tree (Not available when doing rapid bootstrapping, -x) (-t)
+            <select v-model="treetop">
+              <option v-for="[val, name] in treetops" v-bind:value="val">
+                {{ name }}
+              </option>
+            </select>
           </div>
         </div>
         <hr class="bold_hr" />
@@ -1189,6 +1490,9 @@ function getStatusClass(status) {
                   >
                     {{ job.cipres_last_status }}
                   </span>
+                <Tooltip
+                  :content="jobstatuses.get(job.cipres_last_status)"
+                ></Tooltip>
                 </div>
                 <div class="job-details">
                   <span
@@ -1231,11 +1535,20 @@ function getStatusClass(status) {
               </div>
             </div>
             <div class="job-metadata">
-              <div v-if="job.notes" class="job-notes">
+              <div v-if="job.notes && (!job.block || job.block.startsWith(BLOCK_BEGIN))" class="job-notes">
                 <strong>Notes:</strong> {{ job.notes }}
+              </div>
+              <div v-if="job.notes && (job.block && !job.block.startsWith(BLOCK_BEGIN))" class="job-notes">
+                <strong>Notes:</strong> {{ job.notes + SEP + job.block }}
               </div>
               <div v-if="job.cipres_settings" class="job-parameters">
                 <strong>Parameters:</strong> {{ job.cipres_settings }}
+              </div>
+              <div v-if="job.cipres_tool == 'MRBAYES_XSEDE' && job.block && job.block.startsWith(BLOCK_BEGIN)" class="job-notes">
+                <strong>MRBAYES block:</strong> {{ job.block }}
+              </div>
+              <div v-if="job.errors" class="read-only">
+                <strong>Errors from job submission/analysis:</strong> <div v-html="formatText(job.errors)"></div>
               </div>
             </div>
           </div>
@@ -1359,12 +1672,12 @@ function getStatusClass(status) {
 }
 
 textarea {
-  width: 580px;
+  width: 780px;
   height: 150px;
 }
 
 input[type='number'] {
-  width: 75px;
+  width: 102px;
 }
 
 th,
@@ -1528,5 +1841,9 @@ td {
 
 .radio-spacing {
   margin-left: 20px;
+}
+
+.input-cell {
+  width: 200px;
 }
 </style>
