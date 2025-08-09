@@ -80,7 +80,6 @@ tools.set('PAUPRAT', 'PAUP Ratchet')
 tools.set('MRBAYES_XSEDE', 'Mr Bayes')
 //tools.set('RAXMLHPC8_REST_XSEDE', 'RaXML')
 const toolvalue = route.query.toolvalue
-//const tool = (toolvalue == null) ? ref(tools.keys()?.next()?.value) : toolvalue
 let tool =  ref(tools.keys()?.next()?.value)
 let clickedRun = 0 
 const jobName = ref('')
@@ -139,7 +138,7 @@ let validateMsg = ''
 const jobstatuses = new Map()
 jobstatuses.set('NEW', 'A new job with specified parameters has created')
 jobstatuses.set('READY', 'The newly created job is ready to be put in queue')
-jobstatuses.set('QUEUE', 'The nwe job has been queued')
+jobstatuses.set('QUEUE', 'The new job has been created and queued within CIPRES, waiting for further processing')
 jobstatuses.set('INPUTCHECK', 'The input file(s) and parameters are being checked')
 jobstatuses.set('COMMANDRENDERING', 'A commandline is being generated according to the parameters specified')
 jobstatuses.set('INPUTSTAGING', 'The input file(s) and other related files are being transferred to the working directory on HPC side')
@@ -147,7 +146,7 @@ jobstatuses.set('SUBMITTING', 'The job is being submitted to HPC')
 jobstatuses.set('SUBMITTED', 'The job has been submitted to HPC')
 jobstatuses.set('RUNNING', 'The job has been started and is running on HPC')
 jobstatuses.set('LOAD_RESULTS', 'The job has finished running and the results are being transferred back to CIPRES')
-jobstatuses.set('COMPLETED', 'The job is done and resluts have been transferred and stored on CIPRES')
+jobstatuses.set('COMPLETED', 'The job is done and resluts have been transferred back and stored on CIPRES')
 
 const currentMatrixJobs = props.jobs?.filter((job) => job.matrix_id == matrixId)
 const refresh = route.query.refresh
@@ -230,12 +229,29 @@ function validateJobParameters()
   {
       if (!jobName.value.trim())
       {
-        alert(jobName.value.trim())
         return false
       }
   }
   else
     return false 
+  if (tool.value == 'PAUPRAT') {
+    if (jobCharsToPermute.value) {
+      const numberRegex = /^\d+(\%)?$/;
+      if (!numberRegex.test(jobCharsToPermute.value))
+      {
+        validateMsg += "# or % chars to permute must be an integer or integer with percentage sign \n"
+        return false
+      }
+      if (jobCharsToPermute.value.endsWith('%')) 
+      {
+        if (Number(jobCharsToPermute.value.substring(0, jobCharsToPermute.value.length-1))>100)
+        {
+          validateMsg += "% chars to permute must not be bigger than 100% \n"
+          return false
+        }
+      }
+    }
+  }
   if (tool.value == 'MRBAYES_XSEDE') {
     if (mrbayesblockquery.value == '1') {
       if (!checkNumber(runtime, 0.1, "Maximum hours to run"))
@@ -282,17 +298,25 @@ function validateJobParameters()
             validateMsg += "MrBayes block (line " + (i+1) + "): first line should be 'begin mrbayes;' \n"
             hasError = true 
           }
-          const middleLineRegex = /^(set |prset |lset |mcmcp ).*?;$/
+          const middleLineRegex = /^(set |prset |lset |mcmcp |mcmc |log |constrain |sumt |sump |charset |partition |unlink |append=).*?;$/
           i++ 
-          for (i; i < (lines.length - 1); i++) {
-            if (!middleLineRegex.test(lines[i].trim())) {
-              validateMsg += "MrBayes block (line " + (i+1) + "): must start with 'set', 'prset', 'lset', or 'mcmcp' and end with ';'"
+          let endLine = lines.length -1
+          for (endLine; endLine >= 0; endLine--) {
+            if (lines[endLine].trim() != '')
+              break;
+          } 
+          for (i; i < endLine; i++) {
+            if (lines[i].trim() == '')
+              continue;
+            if (!middleLineRegex.test(lines[i].trim()) && lines[i].trim() != "mcmc;" && lines[i].trim() != "sumt;" && !lines[i].trim().startsWith("[")) {
+              validateMsg += "MrBayes block (line " + (i+1) + "): must start with 'set', 'prset', 'lset', 'mcmcp', 'log', 'constrain', 'sumt' or  'sump'  and end with ';' \n"
               hasError = true 
             }
             else {
-              if (lines[i].trim().startsWith("mcmcp "))
+              if (lines[i].trim().startsWith("mcmcp ") || lines[i].trim().startsWith("mcmc "))
               {
-                const params = lines[i].trim().split(' ')
+                const shrink = lines[i].trim().replace(/ =/g, "=").replace(/= /g, "=")
+                const params = shrink.split(' ')
                 for (let j = 0; j < params.length; j++)
                 {
                   let isnrun = params[j].startsWith("nruns=") 
@@ -310,7 +334,7 @@ function validateJobParameters()
                 }
                 if (nruns_specified_parsed < 1 || nchains_specified_parsed < 1)
                 {
-                  validateMsg += "MrBayes block (Line " + (i+1) + "): nruns and nchains must be bigger than 0 \n"
+                  validateMsg += "MrBayes block (Line " + (i+1) + "): nruns and nchains must be specified and bigger than 0 \n"
                   hasError = true 
                 }
                 if (((nruns_specified_parsed * nchains_specified_parsed)%2) != 0)
@@ -426,25 +450,33 @@ async function onRun() {
 }
 
 async function sendCipresRequest(url) {
-  const response = await axios.post(url)
-  const msg = response.data?.message || 'Failed to submit job to CIPRES'
-  alert(msg)
-  if (!msg.includes('fail') && !msg.includes('Fail')) {
-    let urlNew = window.location.href
-    if (urlNew.indexOf('?') > -1) {
-      const beginIndex = urlNew.indexOf('refresh=true')
-      if (beginIndex < 0)
+  try {
+    document.body.style.cursor = 'wait'
+    const response = await axios.post(url)
+    document.body.style.cursor = 'default'
+    const msg = response.data?.message || 'Failed to submit job to CIPRES'
+    alert(msg)
+    if (!msg.includes('fail') && !msg.includes('Fail')) {
+      let urlNew = window.location.href
+      if (urlNew.indexOf('?') > -1) {
+        const beginIndex = urlNew.indexOf('refresh=true')
+        if (beginIndex < 0)
+          urlNew +=
+            '&refresh=true&refreshid=' + matrixId + '&toolvalue=' + tool.value
+        else {
+          urlNew = urlNew.substring(0, beginIndex) + 
+            '&refresh=true&refreshid=' + matrixId + '&toolvalue=' + tool.value
+        }
+      } else {
         urlNew +=
-          '&refresh=true&refreshid=' + matrixId + '&toolvalue=' + tool.value
-      else {
-        urlNew = urlNew.substring(0, beginIndex) + 
-          '&refresh=true&refreshid=' + matrixId + '&toolvalue=' + tool.value
+          '?refresh=true&refreshid=' + matrixId + '&toolvalue=' + tool.value
       }
-    } else {
-      urlNew +=
-        '?refresh=true&refreshid=' + matrixId + '&toolvalue=' + tool.value
+      window.location.href = urlNew
     }
-    window.location.href = urlNew
+  }
+  finally
+  {
+    document.body.style.cursor = 'default'
   }
 }
 
