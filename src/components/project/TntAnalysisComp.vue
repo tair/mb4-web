@@ -28,6 +28,22 @@ const availableSpecies = ref([])
 const isExtractingSpecies = ref(false)
 const speciesExtractionError = ref('')
 
+// TNT search type variables
+const searchType = ref('implicit') // 'implicit', 'traditional', 'newtech'
+const searchValidationError = ref('')
+
+// Traditional search parameters
+const traditionalReplications = ref(10)
+const traditionalTreesPerReplication = ref(1)
+const traditionalSwapAlgorithm = ref('tbr') // tbr, spr, nni
+
+// New technology search parameters
+const newtechIterations = ref(100)
+const newtechSectorial = ref(true)
+const newtechRatchet = ref(true)
+const newtechDrift = ref(true)
+const newtechFusing = ref(true)
+
 // TNT file upload handling functions
 async function handleTntFileChange(event) {
   const file = event.target.files[0]
@@ -109,6 +125,18 @@ function resetTntUpload() {
   availableSpecies.value = []
   speciesExtractionError.value = ''
 
+  // Reset search parameters
+  searchType.value = 'implicit'
+  searchValidationError.value = ''
+  traditionalReplications.value = 10
+  traditionalTreesPerReplication.value = 1
+  traditionalSwapAlgorithm.value = 'tbr'
+  newtechIterations.value = 100
+  newtechSectorial.value = true
+  newtechRatchet.value = true
+  newtechDrift.value = true
+  newtechFusing.value = true
+
   // Clear file input
   const fileInput = document.getElementById('tnt-file-upload')
   if (fileInput) {
@@ -187,6 +215,22 @@ async function downloadFileFromUrl(downloadUrl, filename) {
   }
 }
 
+// Function to validate search type based on number of taxa
+function validateSearchType() {
+  searchValidationError.value = ''
+
+  // For implicit enumeration, check if taxa count > 30
+  if (searchType.value === 'implicit' && availableSpecies.value.length > 30) {
+    searchValidationError.value =
+      'Implicit enumeration can only be used for matrices with up to 30 taxa. Your file has ' +
+      availableSpecies.value.length +
+      ' taxa. Please select Traditional or New Technology search.'
+    return false
+  }
+
+  return true
+}
+
 async function onRunTnt() {
   try {
     // Check if a TNT file has been uploaded
@@ -195,8 +239,14 @@ async function onRunTnt() {
       return
     }
 
+    // Validate search type
+    if (!validateSearchType()) {
+      return
+    }
+
     isUploadingTnt.value = true
     tntUploadErrors.value = {}
+    searchValidationError.value = ''
 
     // Create FormData to send as form-data (matching your API requirements)
     const formData = new FormData()
@@ -207,6 +257,23 @@ async function onRunTnt() {
     // Add other parameters from the form
     formData.append('outgroup', tntOutgroup.value)
     formData.append('hold_value', tntHoldValue.value)
+    formData.append('search_type', searchType.value)
+
+    // Add search-specific parameters
+    if (searchType.value === 'traditional') {
+      formData.append('replications', traditionalReplications.value)
+      formData.append(
+        'trees_per_replication',
+        traditionalTreesPerReplication.value
+      )
+      formData.append('swap_algorithm', traditionalSwapAlgorithm.value)
+    } else if (searchType.value === 'newtech') {
+      formData.append('iterations', newtechIterations.value)
+      formData.append('sectorial', newtechSectorial.value)
+      formData.append('ratchet', newtechRatchet.value)
+      formData.append('drift', newtechDrift.value)
+      formData.append('fusing', newtechFusing.value)
+    }
 
     console.log('Submitting TNT file:', tntFile.value.name)
 
@@ -274,6 +341,11 @@ async function onRunTnt() {
     <!-- Species Extraction Error -->
     <div v-if="speciesExtractionError" class="alert alert-warning mb-3">
       {{ speciesExtractionError }}
+    </div>
+
+    <!-- Search Type Validation Error -->
+    <div v-if="searchValidationError" class="alert alert-danger mb-3">
+      {{ searchValidationError }}
     </div>
 
     <div class="merge-file-section">
@@ -351,6 +423,192 @@ async function onRunTnt() {
           Upload a TNT file to automatically populate available species, or
           enter manually.
         </small>
+      </div>
+
+      <!-- Search Type Selection -->
+      <div class="form-group mb-4">
+        <label class="form-label">
+          <strong>Search Type</strong>
+          <i
+            class="fa-solid fa-info-circle ms-1"
+            title="Choose the appropriate search method based on your matrix size"
+          ></i>
+        </label>
+
+        <div class="search-type-options">
+          <!-- Implicit Enumeration -->
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="radio"
+              name="searchType"
+              id="searchImplicit"
+              value="implicit"
+              v-model="searchType"
+              @change="validateSearchType"
+            />
+            <label class="form-check-label" for="searchImplicit">
+              <strong>Implicit Enumeration</strong>
+              <span class="search-description">
+                (≤30 taxa) - Guarantees the most parsimonious tree(s). No user
+                decisions required.
+              </span>
+            </label>
+          </div>
+
+          <!-- Traditional Search -->
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="radio"
+              name="searchType"
+              id="searchTraditional"
+              value="traditional"
+              v-model="searchType"
+              @change="validateSearchType"
+            />
+            <label class="form-check-label" for="searchTraditional">
+              <strong>Traditional Heuristic Search</strong>
+              <span class="search-description">
+                (>30 taxa) - Standard heuristic approach with customizable
+                parameters.
+              </span>
+            </label>
+          </div>
+
+          <!-- New Technology Search -->
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="radio"
+              name="searchType"
+              id="searchNewtech"
+              value="newtech"
+              v-model="searchType"
+              @change="validateSearchType"
+            />
+            <label class="form-check-label" for="searchNewtech">
+              <strong>New Technology Search</strong>
+              <span class="search-description">
+                (>30 taxa) - Advanced search with multiple optimization
+                algorithms.
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Traditional Search Parameters -->
+      <div v-if="searchType === 'traditional'" class="search-parameters mb-4">
+        <h6 class="parameters-title">
+          <i class="fa-solid fa-cog"></i> Traditional Search Parameters
+        </h6>
+        <div class="row">
+          <div class="col-md-4">
+            <label class="form-label">Replications</label>
+            <input
+              type="number"
+              v-model="traditionalReplications"
+              class="form-control"
+              min="1"
+              max="1000"
+            />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Trees per Replication</label>
+            <input
+              type="number"
+              v-model="traditionalTreesPerReplication"
+              class="form-control"
+              min="1"
+              max="100"
+            />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Swap Algorithm</label>
+            <select v-model="traditionalSwapAlgorithm" class="form-select">
+              <option value="tbr">TBR - Tree Bisection Reconnection</option>
+              <option value="spr">SPR - Subtree Pruning Regrafting</option>
+              <option value="nni">NNI - Nearest Neighbor Interchange</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- New Technology Search Parameters -->
+      <div v-if="searchType === 'newtech'" class="search-parameters mb-4">
+        <h6 class="parameters-title">
+          <i class="fa-solid fa-microchip"></i> New Technology Search Parameters
+        </h6>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Iterations</label>
+            <input
+              type="number"
+              v-model="newtechIterations"
+              class="form-control"
+              min="10"
+              max="10000"
+            />
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="sectorial"
+                v-model="newtechSectorial"
+              />
+              <label class="form-check-label" for="sectorial">
+                Sectorial searches
+              </label>
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="ratchet"
+                v-model="newtechRatchet"
+              />
+              <label class="form-check-label" for="ratchet"> Ratchet </label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="drift"
+                v-model="newtechDrift"
+              />
+              <label class="form-check-label" for="drift">
+                Tree drifting
+              </label>
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="fusing"
+                v-model="newtechFusing"
+              />
+              <label class="form-check-label" for="fusing"> Tree fusing </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Implicit Enumeration Info -->
+      <div v-if="searchType === 'implicit'" class="search-info mb-4">
+        <div class="alert alert-info">
+          <i class="fa-solid fa-lightbulb"></i>
+          <strong>Implicit Enumeration</strong> will examine all possible trees
+          and guarantee the most parsimonious solution. No additional parameters
+          are needed - the command <code>ienum</code> will be executed
+          automatically.
+        </div>
       </div>
 
       <div class="form-group mb-3">
@@ -644,5 +902,97 @@ async function onRunTnt() {
   background-color: #e7f3ff;
   border-color: #b8daff;
   color: #004085;
+}
+
+/* Search Type Selection Styling */
+.search-type-options {
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.search-type-options .form-check {
+  margin-bottom: 15px;
+  padding: 10px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.search-type-options .form-check:hover {
+  background-color: #e9ecef;
+}
+
+.search-type-options .form-check:last-child {
+  margin-bottom: 0;
+}
+
+.search-type-options .form-check-label {
+  display: block;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.search-description {
+  display: block;
+  font-size: 0.9em;
+  color: #6c757d;
+  font-weight: normal;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* Search Parameters Styling */
+.search-parameters {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.parameters-title {
+  color: #495057;
+  font-weight: 600;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-parameters .row {
+  margin-bottom: 15px;
+}
+
+.search-parameters .row:last-child {
+  margin-bottom: 0;
+}
+
+.search-parameters .form-check {
+  margin-bottom: 10px;
+}
+
+.search-parameters .form-check:last-child {
+  margin-bottom: 0;
+}
+
+/* Search Info Styling */
+.search-info .alert {
+  border-left: 4px solid #17a2b8;
+  background-color: #e3f2fd;
+  border-color: #bee5eb;
+  color: #0c5460;
+}
+
+.search-info .alert i {
+  margin-right: 8px;
+  color: #17a2b8;
+}
+
+.search-info code {
+  background-color: #f1f3f4;
+  color: #d63384;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 }
 </style>
