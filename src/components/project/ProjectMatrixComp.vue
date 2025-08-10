@@ -1,7 +1,7 @@
 <script setup>
 import axios from 'axios'
 
-import { ref, watch, onMounted  } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMatricesStore } from '@/stores/MatricesStore'
 import { useFileTransferStore } from '@/stores/FileTransferStore'
@@ -80,10 +80,11 @@ tools.set('PAUPRAT', 'PAUP Ratchet')
 tools.set('MRBAYES_XSEDE', 'Mr Bayes')
 //tools.set('RAXMLHPC8_REST_XSEDE', 'RaXML')
 const toolvalue = route.query.toolvalue
-let tool =  ref(tools.keys()?.next()?.value)
-let clickedRun = 0 
+let tool = ref(tools.keys()?.next()?.value)
+let clickedRun = 0
 const jobName = ref('')
 const jobNote = ref('')
+const jobNameShouldValidate = ref(false)
 
 const jobNumIterations = ref(200)
 const jobCharsToPermute = ref('')
@@ -96,8 +97,8 @@ const jobBranchSwappingAlgorithm = ref(
 )
 
 // MrBayes specific variables
-const SEP='^'
-const BLOCK_BEGIN='begin mrbayes;'
+const SEP = '^'
+const BLOCK_BEGIN = 'begin mrbayes;'
 const mrbayesblockquery = ref('1')
 const entermrbayesblock = ref('1')
 const nruns_specified = ref(2)
@@ -132,21 +133,39 @@ if (!documentsStore.isLoaded) {
 for (const doc of documentsStore.uncategorizedDocuments) {
   treetops.set(doc.documentId, doc.title)
 }
-const treetop = ref(treetops.keys()?.next()?.value) 
+const treetop = ref(treetops.keys()?.next()?.value)
 let validateMsg = ''
 
 const jobstatuses = new Map()
 jobstatuses.set('NEW', 'A new job with specified parameters has created')
 jobstatuses.set('READY', 'The newly created job is ready to be put in queue')
-jobstatuses.set('QUEUE', 'The new job has been created and queued within CIPRES, waiting for further processing')
-jobstatuses.set('INPUTCHECK', 'The input file(s) and parameters are being checked')
-jobstatuses.set('COMMANDRENDERING', 'A commandline is being generated according to the parameters specified')
-jobstatuses.set('INPUTSTAGING', 'The input file(s) and other related files are being transferred to the working directory on HPC side')
+jobstatuses.set(
+  'QUEUE',
+  'The new job has been created and queued within CIPRES, waiting for further processing'
+)
+jobstatuses.set(
+  'INPUTCHECK',
+  'The input file(s) and parameters are being checked'
+)
+jobstatuses.set(
+  'COMMANDRENDERING',
+  'A commandline is being generated according to the parameters specified'
+)
+jobstatuses.set(
+  'INPUTSTAGING',
+  'The input file(s) and other related files are being transferred to the working directory on HPC side'
+)
 jobstatuses.set('SUBMITTING', 'The job is being submitted to HPC')
 jobstatuses.set('SUBMITTED', 'The job has been submitted to HPC')
 jobstatuses.set('RUNNING', 'The job has been started and is running on HPC')
-jobstatuses.set('LOAD_RESULTS', 'The job has finished running and the results are being transferred back to CIPRES')
-jobstatuses.set('COMPLETED', 'The job is done and resluts have been transferred back and stored on CIPRES')
+jobstatuses.set(
+  'LOAD_RESULTS',
+  'The job has finished running and the results are being transferred back to CIPRES'
+)
+jobstatuses.set(
+  'COMPLETED',
+  'The job is done and resluts have been transferred back and stored on CIPRES'
+)
 
 const currentMatrixJobs = props.jobs?.filter((job) => job.matrix_id == matrixId)
 const refresh = route.query.refresh
@@ -217,36 +236,36 @@ async function onDownloadOntology() {
   })
 }
 
-let nruns_specified_parsed = 0 
-let nchains_specified_parsed = 0 
+let nruns_specified_parsed = 0
+let nchains_specified_parsed = 0
 
-function validateJobParameters()
-{
-  nruns_specified_parsed = 0 
-  nchains_specified_parsed = 0 
+function validateJobParameters() {
+  nruns_specified_parsed = 0
+  nchains_specified_parsed = 0
   validateMsg = ''
-  if (jobName)
-  {
-      if (!jobName.value.trim())
-      {
-        return false
-      }
-  }
-  else
-    return false 
+  if (jobName) {
+    if (!jobName.value.trim()) {
+      return false
+    }
+  } else return false
   if (tool.value == 'PAUPRAT') {
     if (jobCharsToPermute.value) {
-      const numberRegex = /^\d+(\%)?$/;
-      if (!numberRegex.test(jobCharsToPermute.value))
-      {
-        validateMsg += "# or % chars to permute must be an integer or integer with percentage sign \n"
+      const numberRegex = /^\d+(\%)?$/
+      if (!numberRegex.test(jobCharsToPermute.value)) {
+        validateMsg +=
+          '# or % chars to permute must be an integer or integer with percentage sign \n'
         return false
       }
-      if (jobCharsToPermute.value.endsWith('%')) 
-      {
-        if (Number(jobCharsToPermute.value.substring(0, jobCharsToPermute.value.length-1))>100)
-        {
-          validateMsg += "% chars to permute must not be bigger than 100% \n"
+      if (jobCharsToPermute.value.endsWith('%')) {
+        if (
+          Number(
+            jobCharsToPermute.value.substring(
+              0,
+              jobCharsToPermute.value.length - 1
+            )
+          ) > 100
+        ) {
+          validateMsg += '% chars to permute must not be bigger than 100% \n'
           return false
         }
       }
@@ -254,141 +273,144 @@ function validateJobParameters()
   }
   if (tool.value == 'MRBAYES_XSEDE') {
     if (mrbayesblockquery.value == '1') {
-      if (!checkNumber(runtime, 0.1, "Maximum hours to run"))
-        return false
-      if (((parseInt(nruns_specified.value) * parseInt(nchains_specified.value))%2) != 0)
-      {
-        validateMsg += "nruns x nchains must be a multiple of 2 \n"
+      if (!checkNumber(runtime, 0.1, 'Maximum hours to run')) return false
+      if (
+        (parseInt(nruns_specified.value) * parseInt(nchains_specified.value)) %
+          2 !=
+        0
+      ) {
+        validateMsg += 'nruns x nchains must be a multiple of 2 \n'
         return false
       }
-    }
-    else
-    {
+    } else {
       if (entermrbayesblock.value == '0') {
-        if (!checkNumber(ngenval, 5000, "MCMC number of generations"))
+        if (!checkNumber(ngenval, 5000, 'MCMC number of generations'))
           return false
-        if (!checkNumber(nrunsval, 1, "Number of runs"))
+        if (!checkNumber(nrunsval, 1, 'Number of runs')) return false
+        if (!checkNumber(nchainsval, 1, 'Heated chains')) return false
+        if (!checkNumber(samplefreqval, 1, 'Samplig frequency')) return false
+        if (!checkNumber(specify_diagnfreqval, 1, 'Diagnostic run frequency'))
           return false
-        if (!checkNumber(nchainsval, 1, "Heated chains"))
-          return false
-        if (!checkNumber(samplefreqval, 1, "Samplig frequency"))
-          return false
-        if (!checkNumber(specify_diagnfreqval, 1, "Diagnostic run frequency"))
-          return false
-        if (!checkNumber(burninfracval, 0, "Burnin"))
-          return false
-        if (((parseInt(nrunsval.value) * parseInt(nchainsval.value))%2) != 0)
-        {
-          validateMsg += "nruns x nchains must be a multiple of 2 \n"
+        if (!checkNumber(burninfracval, 0, 'Burnin')) return false
+        if ((parseInt(nrunsval.value) * parseInt(nchainsval.value)) % 2 != 0) {
+          validateMsg += 'nruns x nchains must be a multiple of 2 \n'
           return false
         }
       }
       if (entermrbayesblock.value == '1') {
-        if (mrbayesblock)
-        {
-          if (!mrbayesblock.value.trim())
-          {
+        if (mrbayesblock) {
+          if (!mrbayesblock.value.trim()) {
             return false
           }
           let hasError = false
           const lines = mrbayesblock.value.split('\n')
           let i = 0
-          if (lines[i].trim() != "begin mrbayes;")
-          {
-            validateMsg += "MrBayes block (line " + (i+1) + "): first line should be 'begin mrbayes;' \n"
-            hasError = true 
+          if (lines[i].trim() != 'begin mrbayes;') {
+            validateMsg +=
+              'MrBayes block (line ' +
+              (i + 1) +
+              "): first line should be 'begin mrbayes;' \n"
+            hasError = true
           }
-          const middleLineRegex = /^(set |prset |lset |mcmcp |mcmc |log |constrain |sumt |sump |charset |partition |unlink |append=).*?;$/
-          i++ 
-          let endLine = lines.length -1
+          const middleLineRegex =
+            /^(set |prset |lset |mcmcp |mcmc |log |constrain |sumt |sump |charset |partition |unlink |append=).*?;$/
+          i++
+          let endLine = lines.length - 1
           for (endLine; endLine >= 0; endLine--) {
-            if (lines[endLine].trim() != '')
-              break;
-          } 
+            if (lines[endLine].trim() != '') break
+          }
           for (i; i < endLine; i++) {
-            if (lines[i].trim() == '')
-              continue;
-            if (!middleLineRegex.test(lines[i].trim()) && lines[i].trim() != "mcmc;" && lines[i].trim() != "sumt;" && !lines[i].trim().startsWith("[")) {
-              validateMsg += "MrBayes block (line " + (i+1) + "): must start with 'set', 'prset', 'lset', 'mcmcp', 'log', 'constrain', 'sumt' or  'sump'  and end with ';' \n"
-              hasError = true 
-            }
-            else {
-              if (lines[i].trim().startsWith("mcmcp ") || lines[i].trim().startsWith("mcmc "))
-              {
-                const shrink = lines[i].trim().replace(/ =/g, "=").replace(/= /g, "=")
+            if (lines[i].trim() == '') continue
+            if (
+              !middleLineRegex.test(lines[i].trim()) &&
+              lines[i].trim() != 'mcmc;' &&
+              lines[i].trim() != 'sumt;' &&
+              !lines[i].trim().startsWith('[')
+            ) {
+              validateMsg +=
+                'MrBayes block (line ' +
+                (i + 1) +
+                "): must start with 'set', 'prset', 'lset', 'mcmcp', 'log', 'constrain', 'sumt' or  'sump'  and end with ';' \n"
+              hasError = true
+            } else {
+              if (
+                lines[i].trim().startsWith('mcmcp ') ||
+                lines[i].trim().startsWith('mcmc ')
+              ) {
+                const shrink = lines[i]
+                  .trim()
+                  .replace(/ =/g, '=')
+                  .replace(/= /g, '=')
                 const params = shrink.split(' ')
-                for (let j = 0; j < params.length; j++)
-                {
-                  let isnrun = params[j].startsWith("nruns=") 
-                  if (isnrun  || params[j].startsWith("nchains="))
-                  {
+                for (let j = 0; j < params.length; j++) {
+                  let isnrun = params[j].startsWith('nruns=')
+                  if (isnrun || params[j].startsWith('nchains=')) {
                     const ns = params[j].split('=')
-                    if (ns != null && ns.length > 1)
-                    {
-                      if (isnrun)
-                        nruns_specified_parsed = parseInt(ns[1]) 
-                      else
-                        nchains_specified_parsed = parseInt(ns[1]) 
+                    if (ns != null && ns.length > 1) {
+                      if (isnrun) nruns_specified_parsed = parseInt(ns[1])
+                      else nchains_specified_parsed = parseInt(ns[1])
                     }
                   }
                 }
-                if (nruns_specified_parsed < 1 || nchains_specified_parsed < 1)
-                {
-                  validateMsg += "MrBayes block (Line " + (i+1) + "): nruns and nchains must be specified and bigger than 0 \n"
-                  hasError = true 
+                if (
+                  nruns_specified_parsed < 1 ||
+                  nchains_specified_parsed < 1
+                ) {
+                  validateMsg +=
+                    'MrBayes block (Line ' +
+                    (i + 1) +
+                    '): nruns and nchains must be specified and bigger than 0 \n'
+                  hasError = true
                 }
-                if (((nruns_specified_parsed * nchains_specified_parsed)%2) != 0)
-                {
-                  validateMsg += "MrBayes block (Line " + (i+1) + "): nruns x nchains must be a multiple of 2 \n"
-                  hasError = true 
+                if (
+                  (nruns_specified_parsed * nchains_specified_parsed) % 2 !=
+                  0
+                ) {
+                  validateMsg +=
+                    'MrBayes block (Line ' +
+                    (i + 1) +
+                    '): nruns x nchains must be a multiple of 2 \n'
+                  hasError = true
                 }
               }
             }
           }
-          if (lines[i].trim() != "end;")
-          {
-            validateMsg += "MrBayes block (Line " + (i+1) + "): last line should be 'end;' \n"
-            hasError = true 
+          if (lines[i].trim() != 'end;') {
+            validateMsg +=
+              'MrBayes block (Line ' +
+              (i + 1) +
+              "): last line should be 'end;' \n"
+            hasError = true
           }
-          if (hasError)
-            return false
-        }
-        else
-          return false 
+          if (hasError) return false
+        } else return false
       }
     }
   }
-  return true;
+  return true
 }
 
-function checkNumber(numToCheck, limit, fieldName)
-{
-  if (numToCheck)
-  {
-    if (numToCheck.value < limit)
-    {
-      validateMsg += "\n" + fieldName + " cannot be smaller than " + limit + "\n"
+function checkNumber(numToCheck, limit, fieldName) {
+  if (numToCheck) {
+    if (numToCheck.value < limit) {
+      validateMsg +=
+        '\n' + fieldName + ' cannot be smaller than ' + limit + '\n'
       return false
     }
-    return true;
-  }
-  else
-    return false
+    return true
+  } else return false
 }
 
-function markFieldAsTouched() {
-  clickedRun += 1
+function validateJobName() {
+  jobNameShouldValidate.value = true
+  return jobName.value?.trim()
 }
+
 async function onRun() {
-  //clickedRun += 1 
-  //jobName = ref('')
-  if (!validateJobParameters())
-  {
+  if (!validateJobParameters()) {
     //if (validateMsg != null && validateMsg.startsWith("MrBayes block"))
-    if (validateMsg)
-      alert(validateMsg)
-    else
-      alert("Please fill out all the required fields")
+    if (validateMsg) alert(validateMsg)
+    else alert('Please fill out all the required fields')
     return
   }
   const url = new URL(`${baseUrl}/run`)
@@ -436,7 +458,7 @@ async function onRun() {
         searchParams.append('burninfracval', burninfracval.value)
       }
       if (entermrbayesblock.value == '1') {
-        setmrbayesblockquery = '1' 
+        setmrbayesblockquery = '1'
         if (nruns_specified_parsed > 0)
           searchParams.append('nruns_specified', nruns_specified_parsed)
         if (nchains_specified_parsed > 0)
@@ -464,8 +486,12 @@ async function sendCipresRequest(url) {
           urlNew +=
             '&refresh=true&refreshid=' + matrixId + '&toolvalue=' + tool.value
         else {
-          urlNew = urlNew.substring(0, beginIndex) + 
-            '&refresh=true&refreshid=' + matrixId + '&toolvalue=' + tool.value
+          urlNew =
+            urlNew.substring(0, beginIndex) +
+            '&refresh=true&refreshid=' +
+            matrixId +
+            '&toolvalue=' +
+            tool.value
         }
       } else {
         urlNew +=
@@ -473,9 +499,7 @@ async function sendCipresRequest(url) {
       }
       window.location.href = urlNew
     }
-  }
-  finally
-  {
+  } finally {
     document.body.style.cursor = 'default'
   }
 }
@@ -821,7 +845,7 @@ function getStatusClass(status) {
 
 function removeDoubleQuote(str) {
   if (str.endsWith('"')) {
-    str = str.slice(0, -1);
+    str = str.slice(0, -1)
   }
   if (str.length > 0 && str[0] === '"') {
     return str.slice(1)
@@ -830,7 +854,7 @@ function removeDoubleQuote(str) {
 }
 
 function formatText(text) {
-   return removeDoubleQuote(text.replace(/(\\r\\n|\\n|\\r)+/g, '<br>'));
+  return removeDoubleQuote(text.replace(/(\\r\\n|\\n|\\r)+/g, '<br>'))
 }
 onMounted(() => {
   if (!documentsStore.isLoaded) {
@@ -1112,12 +1136,12 @@ onMounted(() => {
         :id="'build' + matrix.matrix_id"
         role="tabpanel"
       >
-        <!-- TODO(kenzley): Create the text when working on the CIPRES integration. -->
         <h6>
-          Tree-building options:
+          Tree-building options
           <Tooltip
             content="MorphoBank now offers the option to run your matrix without leaving the Web by sending it to the online algorithms at CIPRES. It doesn't matter what computer you are using or where you are in the world.  CIPRES works by notifying you when your job is complete, so please check back on this page below for results."
-          ></Tooltip>
+          ></Tooltip
+          >:
         </h6>
         <p>
           Please try this BETA tool and send any feedback to
@@ -1142,13 +1166,22 @@ onMounted(() => {
             </div>
             <div class="col-md-6">
               <label class="form-label"
-                >Job name<b class="red">*&nbsp;&nbsp;</b>
+                >Job name<b class="red">*&nbsp;</b>
                 <Tooltip
                   content="Enter a short name for this job, to make it easy to track over time."
                 ></Tooltip
                 >:</label
               >
-              <input type="text" v-model="jobName" class="form-control" :class="{ 'is-invalid': !jobName }" required />
+              <input
+                type="text"
+                v-model="jobName"
+                class="form-control"
+                :class="{
+                  'is-invalid': jobNameShouldValidate && !validateJobName(),
+                }"
+                @blur="jobNameShouldValidate = true"
+                required
+              />
             </div>
           </div>
           <div class="form-row mb-3">
@@ -1222,7 +1255,8 @@ onMounted(() => {
             <ul>
               <li>MorphoBank runs RAxMLHPC v8.1.24 at CIPRES</li>
               <li>
-                Phylogenetic tree inference using maximum likelihood/rapid bootstrapping 
+                Phylogenetic tree inference using maximum likelihood/rapid
+                bootstrapping
               </li>
             </ul>
           </div>
@@ -1326,14 +1360,11 @@ onMounted(() => {
                     >
                       <input
                         type="number"
-                        class="form-control"
                         v-model="nruns_specified"
                         value="2"
                       />
                     </td>
-                    <td>
-                      nruns
-                    </td>
+                    <td>nruns</td>
                   </tr>
                   <tr>
                     <td
@@ -1346,18 +1377,25 @@ onMounted(() => {
                     >
                       <input
                         type="number"
-                        class="form-control"
                         v-model="nchains_specified"
                         value="2"
                       />
                     </td>
-                    <td>
-                      nchains
-                    </td>
+                    <td>nchains</td>
                   </tr>
                   <tr>
                     <td>Maximum hours to run<b class="red">*</b></td>
-                    <td><input type="number" v-model="runtime" class="form-control" :class="{ 'is-invalid': (!runtime || runtime < 0.1) }" value="4" min="0.01" step="0.1" required /></td>
+                    <td>
+                      <input
+                        type="number"
+                        v-model="runtime"
+                        :class="{ 'is-invalid': !runtime || runtime < 0.1 }"
+                        value="4"
+                        min="0.01"
+                        step="0.1"
+                        required
+                      />
+                    </td>
                     <td></td>
                   </tr>
                 </tbody>
@@ -1396,7 +1434,13 @@ onMounted(() => {
                 </label>
               </div>
               <div v-if="entermrbayesblock === '1'">
-                <textarea v-model="mrbayesblock" class="form-control" :class="{ 'is-invalid': !mrbayesblock }" rows="9" cols="80"/> 
+                <textarea
+                  v-model="mrbayesblock"
+                  class="form-control"
+                  :class="{ 'is-invalid': !mrbayesblock }"
+                  rows="9"
+                  cols="80"
+                />
               </div>
               <div v-if="entermrbayesblock === '0'">
                 <b>Parameters for MCMC</b>
@@ -1411,7 +1455,7 @@ onMounted(() => {
                           type="number"
                           v-model="ngenval"
                           class="form-control"
-                          :class="{ 'is-invalid': (!ngenval || ngenval < 5000) }"
+                          :class="{ 'is-invalid': !ngenval || ngenval < 5000 }"
                           min="5000"
                           step="1"
                           value="20000"
@@ -1422,13 +1466,29 @@ onMounted(() => {
                     <tr>
                       <td title="">Number of runs<b class="red">*</b></td>
                       <td title="">
-                        <input type="number" v-model="nrunsval" class="form-control" :class="{ 'is-invalid': (!nrunsval || nrunsval < 1) }" value="2" required />
+                        <input
+                          type="number"
+                          v-model="nrunsval"
+                          class="form-control"
+                          :class="{ 'is-invalid': !nrunsval || nrunsval < 1 }"
+                          value="2"
+                          required
+                        />
                       </td>
                     </tr>
                     <tr>
                       <td title="">Heated chains<b class="red">*</b></td>
                       <td title="">
-                        <input type="number" v-model="nchainsval" class="form-control" :class="{ 'is-invalid': (!nchainsval || nchainsval < 1) }" value="4" required />
+                        <input
+                          type="number"
+                          v-model="nchainsval"
+                          class="form-control"
+                          :class="{
+                            'is-invalid': !nchainsval || nchainsval < 1,
+                          }"
+                          value="4"
+                          required
+                        />
                       </td>
                     </tr>
                     <tr>
@@ -1440,7 +1500,9 @@ onMounted(() => {
                           type="number"
                           v-model="samplefreqval"
                           class="form-control"
-                          :class="{ 'is-invalid': (!samplefreqval || samplefreqval < 1) }"
+                          :class="{
+                            'is-invalid': !samplefreqval || samplefreqval < 1,
+                          }"
                           value="1000"
                           required
                         />
@@ -1455,7 +1517,10 @@ onMounted(() => {
                           type="number"
                           v-model="specify_diagnfreqval"
                           class="form-control"
-                          :class="{ 'is-invalid': (!specify_diagnfreqval || specify_diagnfreqval < 1) }"
+                          :class="{
+                            'is-invalid':
+                              !specify_diagnfreqval || specify_diagnfreqval < 1,
+                          }"
                           value="5000"
                           required
                         />
@@ -1469,7 +1534,9 @@ onMounted(() => {
                           v-model="burninfracval"
                           value="0.25"
                           class="form-control"
-                          :class="{ 'is-invalid': (!burninfracval || burninfracval < 0) }"
+                          :class="{
+                            'is-invalid': !burninfracval || burninfracval < 0,
+                          }"
                           min="0"
                           max="1"
                           step="0.01"
@@ -1484,19 +1551,35 @@ onMounted(() => {
           </div>
           <div v-if="tool === 'RAXMLHPC8_REST_XSEDE'">
             <div class="red">*required</div>
-            How many patterns in yuor data set?&nbsp;<input type="number" v-model="nchar" />
-            <br>
-            Set a name for output files(-n)&nbsp;<input type="text" v-model="outsuffix"  />
-            <br>          
-            Enable ML searches under CAT (-F)&nbsp;<input type="checkbox" v-model="mlsearch_cat"  />
-            <br>          
-            Outgroup (-o) ()one or more comma-separated outgroups, see comment for syntax)&nbsp;<input type="text" v-model="outgroup"  />
-            <br>          
-            Specify the number of distinct rate categories (-c)<b class="red">*</b>&nbsp;<input type="number" v-model="number_cats" />
-            <br>
-            Disable Rate Heterogeneity (-V)<b class="red">*</b>&nbsp;<input type="checkbox" v-model="disable_ratehet"  />
-            <br>          
-            Supply a tree (Not available when doing rapid bootstrapping, -x) (-t)
+            How many patterns in yuor data set?&nbsp;<input
+              type="number"
+              v-model="nchar"
+            />
+            <br />
+            Set a name for output files(-n)&nbsp;<input
+              type="text"
+              v-model="outsuffix"
+            />
+            <br />
+            Enable ML searches under CAT (-F)&nbsp;<input
+              type="checkbox"
+              v-model="mlsearch_cat"
+            />
+            <br />
+            Outgroup (-o) ()one or more comma-separated outgroups, see comment
+            for syntax)&nbsp;<input type="text" v-model="outgroup" />
+            <br />
+            Specify the number of distinct rate categories (-c)<b class="red"
+              >*</b
+            >&nbsp;<input type="number" v-model="number_cats" />
+            <br />
+            Disable Rate Heterogeneity (-V)<b class="red">*</b>&nbsp;<input
+              type="checkbox"
+              v-model="disable_ratehet"
+            />
+            <br />
+            Supply a tree (Not available when doing rapid bootstrapping, -x)
+            (-t)
             <select v-model="treetop">
               <option v-for="[val, name] in treetops" v-bind:value="val">
                 {{ name }}
@@ -1522,9 +1605,9 @@ onMounted(() => {
                   >
                     {{ job.cipres_last_status }}
                   </span>
-                <Tooltip
-                  :content="jobstatuses.get(job.cipres_last_status)"
-                ></Tooltip>
+                  <Tooltip
+                    :content="jobstatuses.get(job.cipres_last_status)"
+                  ></Tooltip>
                 </div>
                 <div class="job-details">
                   <span
@@ -1567,20 +1650,38 @@ onMounted(() => {
               </div>
             </div>
             <div class="job-metadata">
-              <div v-if="job.notes && (!job.block || job.block.startsWith(BLOCK_BEGIN))" class="job-notes">
+              <div
+                v-if="
+                  job.notes && (!job.block || job.block.startsWith(BLOCK_BEGIN))
+                "
+                class="job-notes"
+              >
                 <strong>Notes:</strong> {{ job.notes }}
               </div>
-              <div v-if="job.notes && (job.block && !job.block.startsWith(BLOCK_BEGIN))" class="job-notes">
+              <div
+                v-if="
+                  job.notes && job.block && !job.block.startsWith(BLOCK_BEGIN)
+                "
+                class="job-notes"
+              >
                 <strong>Notes:</strong> {{ job.notes + SEP + job.block }}
               </div>
               <div v-if="job.cipres_settings" class="job-parameters">
                 <strong>Parameters:</strong> {{ job.cipres_settings }}
               </div>
-              <div v-if="job.cipres_tool == 'MRBAYES_XSEDE' && job.block && job.block.startsWith(BLOCK_BEGIN)" class="job-notes">
+              <div
+                v-if="
+                  job.cipres_tool == 'MRBAYES_XSEDE' &&
+                  job.block &&
+                  job.block.startsWith(BLOCK_BEGIN)
+                "
+                class="job-notes"
+              >
                 <strong>MRBAYES block:</strong> {{ job.block }}
               </div>
               <div v-if="job.errors" class="read-only">
-                <strong>Errors from job submission/analysis:</strong> <div v-html="formatText(job.errors)"></div>
+                <strong>Errors from job submission/analysis:</strong>
+                <div v-html="formatText(job.errors)"></div>
               </div>
             </div>
           </div>
