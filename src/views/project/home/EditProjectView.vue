@@ -946,7 +946,7 @@ async function updateProject(
       // Don't set Content-Type header - let browser set it with boundary
     } else {
       // Use JSON for project data only
-      requestData = { project: projectData }
+      requestData = projectData
       headers = {
         'Content-Type': 'application/json',
       }
