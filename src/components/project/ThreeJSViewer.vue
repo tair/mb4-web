@@ -174,7 +174,7 @@ function initThreeJS() {
 
   // Scene
   scene = new THREE.Scene()
-  scene.background = new THREE.Color(0xf8f8f8) // Lighter background to contrast with cream models
+  scene.background = new THREE.Color(0x000000) // Black background
 
   // Camera
   camera = new THREE.PerspectiveCamera(
@@ -188,7 +188,8 @@ function initThreeJS() {
   // Renderer
   renderer = new THREE.WebGLRenderer({ 
     antialias: true,
-    powerPreference: "high-performance"
+    powerPreference: "high-performance",
+    alpha: false
   })
   renderer.setSize(containerWidth, containerHeight)
   renderer.shadowMap.enabled = true
@@ -211,17 +212,25 @@ function initThreeJS() {
   // Lighting
   setupLighting()
 
+  // Add grid helper for visual reference (subtle gray on black)
+  const gridHelper = new THREE.GridHelper(20, 20, 0x333333, 0x222222)
+  scene.add(gridHelper)
+  
+  // Add axis helper
+  const axesHelper = new THREE.AxesHelper(5)
+  scene.add(axesHelper)
+
   // Start render loop
   animate()
 }
 
 function setupLighting() {
-  // Brighter ambient light to ensure cream color is visible
-  const ambientLight = new THREE.AmbientLight(0x404040, 0.8)
+  // Ambient light for overall illumination
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6)
   scene.add(ambientLight)
 
   // Main directional light
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2)
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0)
   directionalLight.position.set(10, 10, 5)
   directionalLight.castShadow = true
   directionalLight.shadow.mapSize.width = 2048
@@ -238,7 +247,7 @@ function setupLighting() {
   scene.add(fillLight2)
 
   // Add a hemisphere light for more natural lighting
-  const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6)
+  const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.5)
   hemisphereLight.position.set(0, 20, 0)
   scene.add(hemisphereLight)
 }
@@ -250,14 +259,20 @@ async function loadModel() {
   error.value = null
 
   try {
-    // Check file size before loading (optional warning)
-    await checkFileSize()
-
     // Remove existing model
     if (currentModel) {
       scene.remove(currentModel)
       currentModel = null
     }
+    
+    // Remove any debug helpers (BoxHelper, etc.)
+    const objectsToRemove = []
+    scene.traverse(child => {
+      if (child.type === 'BoxHelper') {
+        objectsToRemove.push(child)
+      }
+    })
+    objectsToRemove.forEach(obj => scene.remove(obj))
 
     const extension = props.fileExtension.toLowerCase()
     let model = null
@@ -286,12 +301,15 @@ async function loadModel() {
     if (model) {
       currentModel = model
       scene.add(model)
+      model.visible = true
       
       // Center and scale the model
       centerAndScaleModel(model)
       
       loading.value = false
       emit('load', model)
+    } else {
+      throw new Error('Model loaded but is null/undefined')
     }
   } catch (err) {
     error.value = err.message || 'Failed to load 3D model'
@@ -300,23 +318,7 @@ async function loadModel() {
   }
 }
 
-async function checkFileSize() {
-  try {
-    const response = await fetch(props.modelUrl, { method: 'HEAD' })
-    const contentLength = response.headers.get('content-length')
-    
-    if (contentLength) {
-      const fileSizeMB = parseInt(contentLength) / (1024 * 1024)
-      
-      // Large files will take longer to load, but we don't need to warn about it
-      if (fileSizeMB > 10) {
-        // Removed warning
-      }
-    }
-  } catch (err) {
-    // File size check failed, but continue loading silently
-  }
-}
+
 
 async function loadPLY() {
   const loader = await getLoader('ply')
@@ -353,16 +355,20 @@ async function loadPLY() {
             })
           } else {
             // Colors are too dark/black, use default cream color
-            material = new THREE.MeshLambertMaterial({ 
-              color: 0xFFFFCC, // Light cream/beige
-              side: THREE.DoubleSide
+            material = new THREE.MeshPhongMaterial({ 
+              color: 0xFFF8DC, // Cream color
+              side: THREE.DoubleSide,
+              shininess: 30,
+              specular: 0x111111
             })
           }
         } else {
-          // Use default light cream/beige color
-          material = new THREE.MeshLambertMaterial({ 
-            color: 0xFFFFCC, // Light cream/beige
-            side: THREE.DoubleSide
+          // Use default cream color
+          material = new THREE.MeshPhongMaterial({ 
+            color: 0xFFF8DC, // Cream color
+            side: THREE.DoubleSide,
+            shininess: 30,
+            specular: 0x111111
           })
         }
         
@@ -373,7 +379,7 @@ async function loadPLY() {
         resolve(mesh)
       },
       (progress) => {
-        // Progress callback - no logging needed
+        // Progress callback - can be used for progress bar if needed
       },
       (error) => {
         reject(new Error(`Failed to load PLY file: ${error.message}`))
@@ -384,40 +390,66 @@ async function loadPLY() {
 
 async function loadSTL() {
   const loader = await getLoader('stl')
-  return new Promise((resolve, reject) => {
-    loader.load(
-      props.modelUrl,
-      (geometry) => {
-        // Check if STL file has vertex colors (Magics format or similar)
-        const hasVertexColors = geometry.attributes.color !== undefined
-        
-        let material
-        if (hasVertexColors) {
-          // Use vertex colors from STL file (Magics format)
-          material = new THREE.MeshLambertMaterial({ 
-            vertexColors: true,
-            side: THREE.DoubleSide
-          })
-        } else {
-          // Use default light cream/beige color
-          material = new THREE.MeshLambertMaterial({ 
-            color: 0xFFFFCC, // Light cream/beige
-            side: THREE.DoubleSide
-          })
+  
+  return new Promise(async (resolve, reject) => {
+    
+    const onLoad = (geometry) => {
+      // Check if STL file has vertex colors (Magics format or similar)
+      const hasVertexColors = geometry.attributes.color !== undefined
+      
+      let material
+      if (hasVertexColors) {
+        // Use vertex colors from STL file (Magics format)
+        material = new THREE.MeshLambertMaterial({ 
+          vertexColors: true,
+          side: THREE.DoubleSide
+        })
+      } else {
+        // Use cream color for STL model
+        material = new THREE.MeshPhongMaterial({ 
+          color: 0xFFF8DC, // Cream color
+          side: THREE.DoubleSide,
+          shininess: 30,
+          specular: 0x111111
+        })
+      }
+      
+      const mesh = new THREE.Mesh(geometry, material)
+      mesh.castShadow = true
+      mesh.receiveShadow = true
+      resolve(mesh)
+    }
+    
+    const onProgress = (progress) => {
+      // Progress callback - can be used for progress bar if needed
+    }
+    
+    const onError = async (error) => {
+      // Try fallback loading method
+      try {
+        const response = await fetch(props.modelUrl)
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
         }
         
-        const mesh = new THREE.Mesh(geometry, material)
-        mesh.castShadow = true
-        mesh.receiveShadow = true
-        resolve(mesh)
-      },
-      (progress) => {
-        // Progress callback - no logging needed
-      },
-      (error) => {
-        reject(new Error(`Failed to load STL file: ${error.message}`))
+        const arrayBuffer = await response.arrayBuffer()
+        const geometry = loader.parse(arrayBuffer)
+        onLoad(geometry)
+      } catch (fallbackErr) {
+        reject(new Error(`Failed to load STL file: ${error.message || error}`))
       }
-    )
+    }
+    
+    try {
+      // Configure loader for cross-origin requests
+      if (loader.setCrossOrigin) {
+        loader.setCrossOrigin('anonymous')
+      }
+      
+      loader.load(props.modelUrl, onLoad, onProgress, onError)
+    } catch (err) {
+      await onError(err)
+    }
   })
 }
 
@@ -450,10 +482,12 @@ async function loadOBJ() {
                 side: THREE.DoubleSide
               })
             } else {
-              // Use default light cream/beige color
-              child.material = new THREE.MeshLambertMaterial({ 
-                color: 0xFFFFCC, // Light cream/beige
-                side: THREE.DoubleSide
+              // Use default cream color
+              child.material = new THREE.MeshPhongMaterial({ 
+                color: 0xFFF8DC, // Cream color
+                side: THREE.DoubleSide,
+                shininess: 30,
+                specular: 0x111111
               })
             }
             
@@ -464,7 +498,7 @@ async function loadOBJ() {
         resolve(object)
       },
       (progress) => {
-        // Progress callback - no logging needed
+        // Progress callback - can be used for progress bar if needed
       },
       (error) => {
         reject(new Error(`Failed to load OBJ file: ${error.message}`))
@@ -492,10 +526,12 @@ async function loadGLTF() {
                  child.material.vertexColors)) {
               hasOriginalColors = true
             } else {
-              // Apply default color if no material colors exist
-              child.material = new THREE.MeshLambertMaterial({ 
-                color: 0xFFFFCC, // Light cream/beige
-                side: THREE.DoubleSide
+              // Apply default cream color if no material colors exist
+              child.material = new THREE.MeshPhongMaterial({ 
+                color: 0xFFF8DC, // Cream color
+                side: THREE.DoubleSide,
+                shininess: 30,
+                specular: 0x111111
               })
             }
             
@@ -507,7 +543,7 @@ async function loadGLTF() {
         resolve(model)
       },
       (progress) => {
-        // Progress callback - no logging needed
+        // Progress callback - can be used for progress bar if needed
       },
       (error) => {
         reject(new Error(`Failed to load GLTF file: ${error.message}`))
@@ -535,10 +571,12 @@ async function loadFBX() {
                  Array.isArray(child.material))) {
               hasOriginalColors = true
             } else {
-              // Apply default color if no material colors exist
-              child.material = new THREE.MeshLambertMaterial({ 
-                color: 0xFFFFCC, // Light cream/beige
-                side: THREE.DoubleSide
+              // Apply default cream color if no material colors exist
+              child.material = new THREE.MeshPhongMaterial({ 
+                color: 0xFFF8DC, // Cream color
+                side: THREE.DoubleSide,
+                shininess: 30,
+                specular: 0x111111
               })
             }
             
@@ -550,7 +588,7 @@ async function loadFBX() {
         resolve(object)
       },
       (progress) => {
-        // Progress callback - no logging needed
+        // Progress callback - can be used for progress bar if needed
       },
       (error) => {
         reject(new Error(`Failed to load FBX file: ${error.message}`))
@@ -560,25 +598,42 @@ async function loadFBX() {
 }
 
 function centerAndScaleModel(model) {
-  // Get bounding box
-  const box = new THREE.Box3().setFromObject(model)
+  // Reset the model position to origin
+  model.position.set(0, 0, 0)
+  
+  // Compute the bounding box of the model's geometry
+  const geometry = model.geometry
+  geometry.computeBoundingBox()
+  const box = geometry.boundingBox
   const center = box.getCenter(new THREE.Vector3())
   const size = box.getSize(new THREE.Vector3())
+  
+  // Translate geometry to center it
+  geometry.translate(-center.x, -center.y, -center.z)
 
-  // Center the model
-  model.position.sub(center)
-
-  // Scale to fit in view
+  // Calculate appropriate scale
   const maxDim = Math.max(size.x, size.y, size.z)
-  const scale = 4 / maxDim
+  
+  // Scale model to fit nicely in view (target size of 4 units)
+  const targetSize = 4
+  const scale = targetSize / maxDim
   model.scale.setScalar(scale)
+  
+  // Update the model's matrix
+  model.updateMatrix()
+  model.updateMatrixWorld(true)
 
-  // Update camera position
-  const distance = maxDim * 2
+  // Position camera to view the model
+  const distance = targetSize * 2.5
   camera.position.set(distance, distance, distance)
   camera.lookAt(0, 0, 0)
+  
+  // Update controls
   controls.target.set(0, 0, 0)
   controls.update()
+  
+  // Force a render
+  renderer.render(scene, camera)
 }
 
 function animate() {
