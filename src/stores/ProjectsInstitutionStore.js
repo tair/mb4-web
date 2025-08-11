@@ -62,32 +62,32 @@ export const useProjectInstitutionStore = defineStore({
       return false
     },
 
-    async editInstitution(
-      projectId,
-      institutionId,
-      name,
-      selectedInstitutionId
-    ) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/institutions/edit`
+    // async editInstitution(
+    //   projectId,
+    //   institutionId,
+    //   name,
+    //   selectedInstitutionId
+    // ) {
+    //   const url = `${
+    //     import.meta.env.VITE_API_URL
+    //   }/projects/${projectId}/institutions/edit`
 
-      const response = await axios.post(url, {
-        institutionId,
-        name,
-        selectedInstitutionId,
-      })
+    //   const response = await axios.post(url, {
+    //     institutionId,
+    //     name,
+    //     selectedInstitutionId,
+    //   })
 
-      if (response.status == 200) {
-        this.removeByInstitutionIds([institutionId])
+    //   if (response.status == 200) {
+    //     this.removeByInstitutionIds([institutionId])
 
-        const institution = response.data.institution
-        this.institutions.push(institution)
+    //     const institution = response.data.institution
+    //     this.institutions.push(institution)
 
-        return true
-      }
+    //     return true
+    //   }
 
-      return false
-    },
+    //   return false
+    // },
   },
 })
