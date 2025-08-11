@@ -163,16 +163,6 @@ function editMedia(mediaId) {
         </button>
 
         <button
-          @click="validateMedia"
-          class="btn btn-primary"
-          :disabled="isValidating"
-        >
-          <i v-if="isValidating" class="fa-solid fa-spinner fa-spin"></i>
-          <i v-else class="fa-solid fa-sync"></i>
-          {{ isValidating ? 'Validating...' : 'Re-check Media' }}
-        </button>
-
-        <button
           @click="proceedToPreferences"
           class="large orange morphobutton"
           :disabled="!canProceed || isValidating"

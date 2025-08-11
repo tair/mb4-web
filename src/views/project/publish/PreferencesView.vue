@@ -24,6 +24,15 @@ const preferences = reactive({
   allowCommercialUse: false, // CC0 preference
   allowDerivatives: true, // Include downloadable files
   requireAttribution: true,
+  // General publishing preferences
+  publishCharacterComments: true,
+  publishCellComments: true,
+  publishChangeLogs: true,
+  publishCellNotes: true,
+  publishCharacterNotes: true,
+  publishMediaNotes: true,
+  publishMatrixMediaOnly: false,
+  publishInactiveMembers: true,
 })
 
 // Mock data for unpublished items
@@ -46,7 +55,20 @@ onMounted(async () => {
 
   publishStore.setCurrentStep('preferences')
 
-  // Load existing preferences if any
+  // Try to load existing preferences from backend
+  try {
+    const result = await publishStore.loadPreferences(projectId)
+    if (result.redirect) {
+      // Backend says we should redirect (e.g., incomplete citation)
+      router.push(`/myprojects/${projectId}/publish`)
+      return
+    }
+  } catch (error) {
+    console.error('Error loading preferences:', error)
+    // Continue with demo mode
+  }
+
+  // Load existing preferences from store
   Object.assign(preferences, publishStore.preferences)
 
   // Simulate loading delay
@@ -88,12 +110,24 @@ async function savePreferences() {
     return false
   }
 
-  isSaving.value = true
-  await publishStore.savePreferences(preferences)
-  isSaving.value = false
+  try {
+    isSaving.value = true
+    // console.log(preferences)
+    const result = await publishStore.savePreferences(projectId, preferences)
 
-  // Proceed to final step
-  router.push(`/myprojects/${projectId}/publish/final`)
+    if (result.success) {
+      // Proceed to final step
+      router.push(`/myprojects/${projectId}/publish/final`)
+    } else {
+      alert('Error saving preferences: ' + result.message)
+    }
+  } catch (error) {
+    console.error('Error saving preferences:', error)
+    alert('An error occurred while saving preferences. Please try again.')
+  } finally {
+    isSaving.value = false
+  }
+
   return true
 }
 
@@ -305,7 +339,9 @@ function updateCopyrightPreference(preference) {
         </p>
         <div class="formLabel">
           <input type="checkbox" v-model="preferences.allowCommercialUse" />
-          &nbsp;Place a CC0 tag on non-media data (this is optional)
+          &nbsp;Publish project matrix, documents, character list and ontologies
+          with CC0 copyright license
+          <i>NOTE: media copyright is handled separately</i>
         </div>
 
         <br />
@@ -315,6 +351,41 @@ function updateCopyrightPreference(preference) {
         <div class="formLabel">
           <input type="checkbox" v-model="preferences.allowDerivatives" />
           &nbsp;Include downloadable data files
+        </div>
+        <div class="formLabel">
+          <input
+            type="checkbox"
+            v-model="preferences.publishCharacterComments"
+          />
+          &nbsp;Publish character comments
+        </div>
+        <div class="formLabel">
+          <input type="checkbox" v-model="preferences.publishCellComments" />
+          &nbsp;Publish cell comments
+        </div>
+        <div class="formLabel">
+          <input type="checkbox" v-model="preferences.publishChangeLogs" />
+          &nbsp;Publish change logs
+        </div>
+        <div class="formLabel">
+          <input type="checkbox" v-model="preferences.publishCellNotes" />
+          &nbsp;Publish cell notes
+        </div>
+        <div class="formLabel">
+          <input type="checkbox" v-model="preferences.publishCharacterNotes" />
+          &nbsp;Publish character notes
+        </div>
+        <div class="formLabel">
+          <input type="checkbox" v-model="preferences.publishMediaNotes" />
+          &nbsp;Publish media notes
+        </div>
+        <div class="formLabel">
+          <input type="checkbox" v-model="preferences.publishMatrixMediaOnly" />
+          &nbsp;Only publish media used in matrices
+        </div>
+        <div class="formLabel">
+          <input type="checkbox" v-model="preferences.publishInactiveMembers" />
+          &nbsp;Publish inactive project members
         </div>
 
         <br />

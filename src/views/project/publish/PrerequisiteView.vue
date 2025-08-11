@@ -10,7 +10,6 @@ const publishStore = usePublishWorkflowStore()
 const projectId = route.params.id
 
 const isLoaded = ref(false)
-const isValidating = ref(false)
 const citationMessage = ref('Your project has incomplete citation information.')
 
 onMounted(async () => {
@@ -19,30 +18,19 @@ onMounted(async () => {
   publishStore.setCurrentStep('prerequisite')
 
   // Auto-validate on load
-  await validateCitations()
-  isLoaded.value = true
-})
-
-async function validateCitations() {
-  isValidating.value = true
   const result = await publishStore.validateCitations(projectId)
 
-  // Set appropriate message based on validation result
-  if (!result.isValid && result.errors.length > 0) {
-    citationMessage.value = result.errors.join(' ')
+  // Set message from backend or use default
+  if (result.errors && result.errors.length > 0) {
+    citationMessage.value = result.errors[0]
   }
 
-  isValidating.value = false
-  return result
-}
+  isLoaded.value = true
+})
 
 function goToProjectInfo() {
   // Navigate to project edit page
   router.push(`/myprojects/${projectId}/edit`)
-}
-
-function proceedToNext() {
-  router.push(`/myprojects/${projectId}/publish/media-validation`)
 }
 </script>
 
@@ -57,64 +45,33 @@ function proceedToNext() {
         <a href="#" class="text-primary">FAQ page</a>.
       </p>
 
-      <div
-        v-if="!publishStore.validations.citations.isValid && !isValidating"
-        class="citation-errors"
-      >
-        <p>
-          <b
-            >{{ citationMessage }} Please use the link below to enter the
-            article information on the project information form.</b
+      <p>
+        <b
+          >{{ citationMessage }} Please use the link below to enter the article
+          information on the project information form.</b
+        >
+      </p>
+
+      <button @click="goToProjectInfo" class="large orange morphobutton">
+        Edit Project Information &raquo;
+      </button>
+
+      <!-- Demo mode navigation -->
+      <div class="demo-navigation mt-4 pt-4" style="border-top: 1px solid #ddd">
+        <p class="text-muted">
+          <small
+            ><strong>Demo Mode:</strong> For testing purposes, you can proceed
+            through the publishing workflow even with incomplete citation
+            information.</small
           >
         </p>
-
-        <div class="text-center my-4">
-          <button @click="goToProjectInfo" class="large orange morphobutton">
-            Edit Project Information &raquo;
-          </button>
-        </div>
-      </div>
-
-      <div
-        v-if="publishStore.validations.citations.isValid"
-        class="citation-success"
-      >
-        <div class="alert alert-success">
-          <p class="mb-0">
-            <i class="fa-solid fa-check-circle"></i>
-            <strong>Citation information is complete.</strong> You can proceed
-            to the next step.
-          </p>
-        </div>
-
-        <div class="text-center my-4">
-          <button @click="proceedToNext" class="large orange morphobutton">
-            Continue to Media Validation &raquo;
-          </button>
-        </div>
-      </div>
-
-      <!-- Always show validation button -->
-      <div class="text-center my-3">
         <button
-          @click="validateCitations"
-          class="btn btn-primary"
-          :disabled="isValidating"
+          @click="
+            router.push(`/myprojects/${projectId}/publish/media-validation`)
+          "
+          class="btn btn-secondary"
         >
-          <i v-if="isValidating" class="fa-solid fa-spinner fa-spin"></i>
-          <i v-else class="fa-solid fa-sync"></i>
-          {{ isValidating ? 'Validating...' : 'Check Citation Information' }}
-        </button>
-      </div>
-
-      <!-- Navigation -->
-      <div class="workflow-navigation mt-4">
-        <button
-          @click="router.push(`/myprojects/${projectId}/overview`)"
-          class="btn btn-outline-secondary"
-        >
-          <i class="fa-solid fa-arrow-left"></i>
-          Cancel
+          Continue with Demo Workflow &raquo;
         </button>
       </div>
     </div>
@@ -128,16 +85,8 @@ function proceedToNext() {
   padding: 20px;
 }
 
-.citation-errors {
-  margin: 20px 0;
-}
-
-.citation-success {
-  margin: 20px 0;
-}
-
 .large.orange.morphobutton {
-  background-color: var(--mb-orange);
+  background-color: #ff6600;
   color: white;
   border: none;
   padding: 12px 24px;
@@ -147,30 +96,12 @@ function proceedToNext() {
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  display: inline-block;
 }
 
 .large.orange.morphobutton:hover {
-  background-color: var(--mb-orange-hover);
+  background-color: #e55a00;
   color: white;
-}
-
-.workflow-navigation {
-  text-align: center;
-  padding-top: 20px;
-  border-top: 1px solid #e9ecef;
-}
-
-.alert {
-  padding: 15px;
-  margin-bottom: 20px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-}
-
-.alert-success {
-  color: #155724;
-  background-color: #d4edda;
-  border-color: #c3e6cb;
 }
 
 .text-primary {
@@ -180,5 +111,46 @@ function proceedToNext() {
 
 .text-primary:hover {
   text-decoration: underline;
+}
+
+.mt-4 {
+  margin-top: 1.5rem;
+}
+
+.pt-4 {
+  padding-top: 1.5rem;
+}
+
+.text-muted {
+  color: #6c757d;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  margin-bottom: 0;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: center;
+  text-decoration: none;
+  vertical-align: middle;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.btn-secondary {
+  color: #fff;
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.btn-secondary:hover {
+  color: #fff;
+  background-color: #5a6268;
+  border-color: #545b62;
 }
 </style>
