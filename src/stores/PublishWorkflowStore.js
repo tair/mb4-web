@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 export const usePublishWorkflowStore = defineStore('publishWorkflow', {
   state: () => ({
     // Current step in the workflow
-    currentStep: 'prerequisite', // prerequisite, media-validation, preferences, final, confirmation
+    currentStep: 'validation', // validation, preferences, final
 
     // Validation states
     validations: {
@@ -55,8 +55,7 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
     publicationResult: {
       success: false,
       projectId: null,
-      publicUrl: '',
-      doi: '',
+      publishedOn: null,
       message: '',
     },
 
@@ -67,22 +66,18 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
   }),
 
   getters: {
-    canProceedToMediaValidation: (state) => {
-      // For demo purposes, allow progression even with citation issues
-      // In production, this would check citations, but for testing workflow we allow it
-      return true
-    },
-
+    // Check if both citations and media validation are complete
     canProceedToPreferences: (state) => {
-      // For demo purposes, allow progression even with citation/media issues
-      // In production, this would check validations, but for testing workflow we allow it
-      return true
+      return (
+        state.validations.citations.isValid && state.validations.media.isValid
+      )
     },
 
     canProceedToFinal: (state) => {
-      // Allow progression if preferences are filled out (for demo)
-      // Citation validation is bypassed for demo purposes
+      // Allow progression if validations are complete and preferences are filled out
       return (
+        state.validations.citations.isValid &&
+        state.validations.media.isValid &&
         state.preferences.nsfFunded !== null &&
         state.preferences.extinctTaxaIdentified !== null &&
         state.preferences.noPersonalInfo === true
@@ -90,9 +85,10 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
     },
 
     canPublish: (state) => {
-      // Allow publishing if preferences and final data are complete (for demo)
-      // Citation validation is bypassed for demo purposes
+      // Allow publishing if all validations, preferences and final data are complete
       return (
+        state.validations.citations.isValid &&
+        state.validations.media.isValid &&
         state.preferences.nsfFunded !== null &&
         state.preferences.extinctTaxaIdentified !== null &&
         state.preferences.noPersonalInfo === true &&
@@ -100,12 +96,33 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         state.finalData.confirmDataAccuracy
       )
     },
+
+    // Get validation status for UI display
+    getValidationStatus: (state) => {
+      return {
+        citations: {
+          isValid: state.validations.citations.isValid,
+          hasErrors: state.validations.citations.errors.length > 0,
+          errors: state.validations.citations.errors,
+          warnings: state.validations.citations.warnings,
+        },
+        media: {
+          isValid: state.validations.media.isValid,
+          hasErrors: state.validations.media.errors.length > 0,
+          hasWarnings: state.validations.media.warnings.length > 0,
+          errors: state.validations.media.errors,
+          warnings: state.validations.media.warnings,
+          hasMedia: state.validations.media.hasMedia,
+          incompleteMedia: state.validations.media.incompleteMedia,
+        },
+      }
+    },
   },
 
   actions: {
     // Reset workflow state
     resetWorkflow() {
-      this.currentStep = 'prerequisite'
+      this.currentStep = 'validation'
       this.validations.citations = { isValid: false, errors: [], warnings: [] }
       this.validations.media = {
         isValid: false,
@@ -143,8 +160,7 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
       this.publicationResult = {
         success: false,
         projectId: null,
-        publicUrl: '',
-        doi: '',
+        publishedOn: null,
         message: '',
       }
     },
@@ -158,7 +174,7 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         const response = await fetch(
           `${
             import.meta.env.VITE_API_URL
-          }/projects/${projectId}/publishing/status`,
+          }/projects/${projectId}/publishing/validate/citation`,
           {
             method: 'GET',
             headers: {
@@ -191,10 +207,11 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         }
       } catch (error) {
         console.error('Citation validation error:', error)
-        // For demo purposes, simulate the original PHP behavior - show error message
         this.validations.citations = {
-          isValid: false, // Always show error in demo mode to match original
-          errors: ['Your project has incomplete citation information.'],
+          isValid: false,
+          errors: [
+            'Citation validation service unavailable - please try again',
+          ],
           warnings: [],
         }
       } finally {
@@ -213,7 +230,7 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         const response = await fetch(
           `${
             import.meta.env.VITE_API_URL
-          }/projects/${projectId}/publishing/form`,
+          }/projects/${projectId}/publishing/validate/media`,
           {
             method: 'GET',
             headers: {
@@ -231,44 +248,52 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         console.log(data)
 
         // Process media validation results
+        const canPublish = data.canPublish !== false // Default to true if not specified
+
         if (data.warning === 'no_media') {
           this.validations.media = {
-            isValid: true, // Allow progression with warning
+            isValid: canPublish,
             hasMedia: false,
             incompleteMedia: [],
-            errors: [],
-            warnings: [
-              'No media files found in project - projects without media may have limited visibility',
-            ],
+            errors: canPublish
+              ? []
+              : ['This project has no media files to publish.'],
+            warnings: canPublish
+              ? [
+                  'No media files found in project - projects without media may have limited visibility',
+                ]
+              : [],
           }
         } else if (data.warning === 'media_warnings') {
           this.validations.media = {
-            isValid: true, // Allow progression with warning
+            isValid: canPublish,
             hasMedia: true,
             incompleteMedia: data.incomplete_media || [],
-            errors: [],
-            warnings: ['Some media files have incomplete information'],
+            errors: canPublish
+              ? []
+              : ['Some media files have incomplete information'],
+            warnings: canPublish
+              ? ['Some media files have incomplete information']
+              : [],
           }
         } else {
           this.validations.media = {
-            isValid: true,
+            isValid: canPublish,
             hasMedia: true,
             incompleteMedia: [],
-            errors: [],
+            errors: canPublish ? [] : ['Media validation failed'],
             warnings: [],
           }
         }
       } catch (error) {
         console.error('Media validation error:', error)
-        // Allow fallback for demo - don't block workflow
+        // Fallback for when API is unavailable - block progression
         this.validations.media = {
-          isValid: true, // Allow progression in demo mode
-          hasMedia: true,
+          isValid: false,
+          hasMedia: false,
           incompleteMedia: [],
-          errors: [],
-          warnings: [
-            'Media validation service unavailable - proceeding with demo',
-          ],
+          errors: ['Media validation service unavailable - please try again'],
+          warnings: [],
         }
       } finally {
         this.isValidating = false
@@ -337,7 +362,6 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         return { redirect: false }
       } catch (error) {
         console.error('Load preferences error:', error)
-        // Allow fallback for demo
         return { redirect: false }
       }
     },
@@ -413,11 +437,10 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
           return { success: false, message: error.message }
         }
 
-        // Network error or service unavailable - use demo fallback
-        this.preferences = { ...this.preferences, ...preferences }
+        // Network error or service unavailable
         return {
-          success: true,
-          message: 'Preferences saved (demo mode - API unavailable)',
+          success: false,
+          message: 'Network error - please check your connection and try again',
         }
       } finally {
         this.isLoading = false
@@ -432,7 +455,6 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         if (finalData) {
           this.finalData = { ...this.finalData, ...finalData }
         }
-        console.log(this.finalData)
         const response = await fetch(
           `${
             import.meta.env.VITE_API_URL
@@ -455,15 +477,9 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
 
         this.publicationResult = {
           success: true,
-          projectId:
-            data.project_id || `P${Math.floor(Math.random() * 10000) + 1000}`,
-          publicUrl:
-            data.public_url ||
-            `https://morphobank.org/project/${
-              Math.floor(Math.random() * 1000) + 100
-            }`,
-          doi: data.doi || `10.7934/P${Math.floor(Math.random() * 1000) + 100}`,
-          message: data.message || 'Project published successfully!',
+          projectId: data.projectId,
+          publishedOn: data.publishedOn,
+          message: data.message,
         }
 
         this.currentStep = 'confirmation'
@@ -485,8 +501,7 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
     // Get authentication token
     getAuthToken() {
       // This would typically come from your auth store
-      // For now, return a placeholder or get from localStorage
-      return localStorage.getItem('authToken') || 'demo-token'
+      return localStorage.getItem('authToken') || ''
     },
 
     // Navigation helpers
@@ -495,13 +510,7 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
     },
 
     proceedToNextStep() {
-      const steps = [
-        'prerequisite',
-        'media-validation',
-        'preferences',
-        'final',
-        'confirmation',
-      ]
+      const steps = ['validation', 'preferences', 'final']
       const currentIndex = steps.indexOf(this.currentStep)
       if (currentIndex < steps.length - 1) {
         this.currentStep = steps[currentIndex + 1]

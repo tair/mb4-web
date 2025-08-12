@@ -13,6 +13,8 @@ const isLoaded = ref(false)
 const isSaving = ref(false)
 const formValid = ref(false)
 
+const validationStatus = computed(() => publishStore.getValidationStatus)
+
 const preferences = reactive({
   fundingAcknowledgment: '',
   nsfFunded: null, // null, true, false
@@ -200,6 +202,28 @@ function updateCopyrightPreference(preference) {
         If your project contains character ontologies within a matrix (see
         manual) those will automatically be published.
       </p>
+
+      <!-- Validation Status -->
+      <div class="validation-status-section">
+        <h3>Validation Status</h3>
+        <div class="validation-checks">
+          <div class="validation-check">
+            <span class="validation-icon success">✅</span>
+            <span class="validation-text">Citation Information - Complete</span>
+          </div>
+          <div class="validation-check">
+            <span class="validation-icon success">✅</span>
+            <span class="validation-text">Media Validation - Complete</span>
+          </div>
+        </div>
+        <p class="validation-note">
+          <small
+            >All validations have been completed successfully. You can now
+            configure your publishing preferences.</small
+          >
+        </p>
+      </div>
+
       <hr style="height: 2px; background-color: #dedede; border: 0px" />
       <br />
       <div class="formError">* indicates mandatory field</div>
@@ -572,5 +596,50 @@ hr {
 
 #extinctTaxa {
   margin-bottom: 5px;
+}
+
+/* Validation Status Styles */
+.validation-status-section {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.validation-status-section h3 {
+  color: #333;
+  margin: 0 0 15px 0;
+  font-size: 18px;
+}
+
+.validation-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.validation-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.validation-icon {
+  font-size: 16px;
+}
+
+.validation-icon.success {
+  color: #28a745;
+}
+
+.validation-text {
+  font-weight: 500;
+  color: #333;
+}
+
+.validation-note {
+  margin: 15px 0 0 0;
+  color: #6c757d;
 }
 </style>

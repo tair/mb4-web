@@ -1009,27 +1009,7 @@ export const MY_PROJECT_VIEWS = [
         /* webpackChunkName: "unpublished" */ '@/views/project/publish/PrerequisiteView.vue'
       ),
   },
-  {
-    path: 'publish/media-validation',
-    name: 'MyProjectPublishMediaValidationView',
-    meta: {
-      itemName: 'publish',
-      breadcrumbs: [
-        {
-          label: 'Publish Project',
-          to: 'MyProjectPublishView',
-        },
-        {
-          label: 'Media Validation',
-          to: 'MyProjectPublishMediaValidationView',
-        },
-      ],
-    },
-    component: () =>
-      import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/publish/MediaValidationView.vue'
-      ),
-  },
+
   {
     path: 'publish/preferences',
     name: 'MyProjectPublishPreferencesView',
@@ -1070,27 +1050,6 @@ export const MY_PROJECT_VIEWS = [
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/publish/FinalView.vue'
-      ),
-  },
-  {
-    path: 'publish/confirmation',
-    name: 'MyProjectPublishConfirmationView',
-    meta: {
-      itemName: 'publish',
-      breadcrumbs: [
-        {
-          label: 'Publish Project',
-          to: 'MyProjectPublishView',
-        },
-        {
-          label: 'Confirmation',
-          to: 'MyProjectPublishConfirmationView',
-        },
-      ],
-    },
-    component: () =>
-      import(
-        /* webpackChunkName: "unpublished" */ '@/views/project/publish/ConfirmationView.vue'
       ),
   },
 ]
