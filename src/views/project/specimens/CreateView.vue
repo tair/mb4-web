@@ -94,7 +94,7 @@ async function create(event) {
 </script>
 <template>
   <header>
-    <b>Create new</b>
+    <b>Create new specimen</b>
   </header>
   <form @submit.prevent="create">
     <template v-for="(definition, index) in schema" :key="index">
