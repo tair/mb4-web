@@ -2,6 +2,7 @@
 import { toDMYDate } from '@/utils/date'
 import { getProjectCitation } from '@/utils/project'
 import { type Media } from '@/types/media'
+import { buildMediaUrl } from '@/utils/fileUtils.js'
 
 type Project = {
   project_id: number
@@ -12,6 +13,7 @@ type Project = {
   user_last_accessed_on: number
   media: Media
   members: { name: string }[]
+  administrator: string
 }
 
 const props = defineProps<{
@@ -24,6 +26,13 @@ function getOverviewUrl() {
   }
   return `/myprojects/${props.project.project_id}/overview`
 }
+
+// Helper function to get media URL using S3 endpoint
+function getMediaUrl() {
+  // For now, use the existing URL since this component doesn't have media_id
+  // This would need to be updated when the backend provides media_id in the project data
+  return props.project?.media?.url || null
+}
 </script>
 <template>
   <div class="card mb-3">
@@ -32,7 +41,7 @@ function getOverviewUrl() {
         <div class="card-image">
           <img
             v-if="project.media"
-            :src="project.media.url"
+            :src="getMediaUrl()"
             :width="project.media.width"
             :height="project.media.height"
             class="img-fluid rounded-start"
@@ -42,12 +51,19 @@ function getOverviewUrl() {
       </div>
       <div class="col-md-9">
         <div class="card-body">
-          <h5 class="card-title">
-            {{ `Project ${project.project_id}: ${project.name}` }}
-          </h5>
+          <h5
+            class="card-title"
+            v-html="`Project ${project.project_id}: ${project.name}`"
+          ></h5>
           <p class="card-text">
             {{ getProjectCitation(project) }}
           </p>
+          <div class="card-text mb-2">
+            <b class="me-2">Administrator:</b>
+            <small class="text-muted">
+              {{ project.administrator || 'Unknown' }}
+            </small>
+          </div>
           <div class="card-text mb-2">
             <b class="me-2">{{ project.members?.length ?? 0 }} members:</b>
             <small class="text-muted" v-if="project.members">
@@ -58,12 +74,6 @@ function getOverviewUrl() {
             <b class="me-2">Creation Date:</b>
             <small class="text-muted">
               {{ toDMYDate(project.created_on) }}
-            </small>
-          </div>
-          <div class="card-text">
-            <b class="me-2">Last Modified Date:</b>
-            <small class="text-muted">
-              {{ toDMYDate(project.last_accessed_on) }}
             </small>
           </div>
           <div class="card-text">

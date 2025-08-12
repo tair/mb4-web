@@ -60,7 +60,7 @@ function setInstitutionData(name: string, id: number) {
         <div class="modal-footer">
           <button
             type="button"
-            class="btn btn-secondary"
+            class="btn btn-outline-primary"
             data-bs-dismiss="modal"
           >
             Cancel

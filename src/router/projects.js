@@ -1,3 +1,10 @@
+import {
+  requireTaxonEditAccess,
+  requireSpecimenEditAccess,
+  requireMediaEditAccess,
+  requireDocumentEditAccess,
+} from '@/lib/route-guards.js'
+
 export const MY_PROJECT_VIEWS = [
   {
     path: 'overview',
@@ -74,6 +81,40 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
+    path: 'matrices/create-manual',
+    name: 'MyProjectMatrixCreateManualView',
+    meta: {
+      itemName: 'matrices',
+      breadcrumbs: [
+        {
+          label: 'Matrices',
+          to: 'MyProjectMatrixView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/matrices/CreateManualView.vue'
+      ),
+  },
+  {
+    path: 'matrices/:matrixId(\\d+)/settings',
+    name: 'MyProjectMatrixSettingsView',
+    meta: {
+      itemName: 'matrices',
+      breadcrumbs: [
+        {
+          label: 'Matrices',
+          to: 'MyProjectMatrixView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/matrices/SettingsView.vue'
+      ),
+  },
+  {
     path: 'media',
     name: 'MyProjectMediaView',
     meta: {
@@ -122,6 +163,57 @@ export const MY_PROJECT_VIEWS = [
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/media/CreateBatchView.vue'
+      ),
+  },
+  {
+    path: 'media/create/3d',
+    name: 'MyProjectMediaCreate3DView',
+    meta: {
+      itemName: 'media',
+      breadcrumbs: [
+        {
+          label: 'Media',
+          to: 'MyProjectMediaView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/media/Create3DView.vue'
+      ),
+  },
+  {
+    path: 'media/create/video',
+    name: 'MyProjectMediaCreateVideoView',
+    meta: {
+      itemName: 'media',
+      breadcrumbs: [
+        {
+          label: 'Media',
+          to: 'MyProjectMediaView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/media/CreateVideoView.vue'
+      ),
+  },
+  {
+    path: 'media/create/stacks',
+    name: 'MyProjectMediaCreateStacksView',
+    meta: {
+      itemName: 'media',
+      breadcrumbs: [
+        {
+          label: 'Media',
+          to: 'MyProjectMediaView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/media/CreateStacksView.vue'
       ),
   },
   {
@@ -201,6 +293,7 @@ export const MY_PROJECT_VIEWS = [
           import(
             /* webpackChunkName: "unpublished" */ '@/views/project/media/EditView.vue'
           ),
+        beforeEnter: requireMediaEditAccess,
       },
       {
         path: 'citations',
@@ -492,6 +585,7 @@ export const MY_PROJECT_VIEWS = [
           import(
             /* webpackChunkName: "unpublished" */ '@/views/project/specimens/EditView.vue'
           ),
+        beforeEnter: requireSpecimenEditAccess,
       },
       {
         path: 'citations',
@@ -535,6 +629,23 @@ export const MY_PROJECT_VIEWS = [
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/bibliographies/ListView.vue'
+      ),
+  },
+  {
+    path: 'bibliography/upload',
+    name: 'MyProjectBibliographyUploadView',
+    meta: {
+      itemName: 'bibliography',
+      breadcrumbs: [
+        {
+          label: 'Bibliographies',
+          to: 'MyProjectBibliographyListView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/bibliographies/UploadView.vue'
       ),
   },
   {
@@ -621,6 +732,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/documents/EditView.vue'
       ),
+    beforeEnter: requireDocumentEditAccess,
   },
   {
     path: 'documents/folders/create',
@@ -725,6 +837,40 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
+    path: 'taxa/extinct/edit',
+    name: 'MyProjectTaxaExtinctEditView',
+    meta: {
+      itemName: 'taxa',
+      breadcrumbs: [
+        {
+          label: 'Taxa',
+          to: 'MyProjectTaxaView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/taxa/ExtinctTaxaEditView.vue'
+      ),
+  },
+  {
+    path: 'taxa/pbdb/import',
+    name: 'MyProjectTaxaPbdbImportView',
+    meta: {
+      itemName: 'taxa',
+      breadcrumbs: [
+        {
+          label: 'Taxa',
+          to: 'MyProjectTaxaView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/taxa/PbdbImportView.vue'
+      ),
+  },
+  {
     path: 'taxa/:taxonId(\\d+)/',
     name: 'MyProjectTaxaBaseEditView',
     meta: {
@@ -748,6 +894,7 @@ export const MY_PROJECT_VIEWS = [
           import(
             /* webpackChunkName: "unpublished" */ '@/views/project/taxa/EditView.vue'
           ),
+        beforeEnter: requireTaxonEditAccess,
       },
       {
         path: 'citations',

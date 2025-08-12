@@ -1,5 +1,5 @@
 import { useAuthStore } from '@/stores/AuthStore.js'
-import { invalidateAll } from '@/stores/utils.js'
+import { invalidateOnProjectChange } from '@/stores/utils.js'
 import { createRouter, createWebHistory } from 'vue-router'
 import { MY_PROJECT_VIEWS } from '@/router/projects.js'
 import {
@@ -168,12 +168,21 @@ const router = createRouter({
           beforeEnter: requireSignIn,
         },
         {
+          path: '/myprojects/:id(\\d+)/edit',
+          name: 'MyProjectEditView',
+          component: () =>
+            import(
+              /* webpackChunkName: "unpublished" */ '@/views/project/home/EditProjectView.vue'
+            ),
+          beforeEnter: requireSignIn,
+        },
+        {
           path: '/myprojects/:id(\\d+)',
           name: 'MyProjectsView',
           component: MyProjectsView,
           beforeEnter: [
             requireSignIn,
-            invalidateAll,
+            invalidateOnProjectChange,
             async (to, from, next) => {
               const projectId = to.params.id
               const isPublished = await checkUnpublishedProjectStatus(projectId)

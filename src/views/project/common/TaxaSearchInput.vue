@@ -25,6 +25,19 @@ function getTaxonNumber(taxon) {
 }
 
 async function searchTaxa(text) {
+  // If no search text, return first 50 taxa sorted alphabetically
+  if (!text || text.length < 1) {
+    return taxaStore.taxa
+      .slice() // Create a copy to avoid mutating original array
+      .sort((a, b) => {
+        const nameA = getTaxonName(a).toLowerCase()
+        const nameB = getTaxonName(b).toLowerCase()
+        return nameA.localeCompare(nameB)
+      })
+      .slice(0, 50) // Limit to first 50 results
+  }
+
+  // For search text, use the search API
   const url = `${
     import.meta.env.VITE_API_URL
   }/projects/${projectId}/taxa/search`

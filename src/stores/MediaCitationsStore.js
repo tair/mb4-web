@@ -41,30 +41,36 @@ export const useMediaCitationsStore = defineStore({
 
       this.isLoaded = true
     },
-    async create(projectId, mediaId, citation) {
+    async create(projectId, mediaId, citationData) {
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/media/${mediaId}/citations/create`
-      const response = await axios.post(url, { citation })
-      if (response.status == 200) {
-        const citation = response.data.citation
-        this.addCitations([citation])
+      try {
+        const response = await axios.post(url, { citation: citationData })
+        const newCitation = response.data.citation
+        this.addCitations([newCitation])
         return true
+      } catch (error) {
+        throw error
       }
-      return false
     },
     async edit(projectId, mediaId, citationId, citation) {
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/media/${mediaId}/citations/${citationId}/edit`
-      const response = await axios.post(url, { citation })
-      if (response.status == 200) {
-        const citation = response.data.citation
-        this.removeCitationsByIds([citation.link_id])
-        this.addCitations([citation])
-        return true
+
+      try {
+        const response = await axios.post(url, { citation })
+        if (response.status == 200) {
+          const updatedCitation = response.data.citation
+          this.removeCitationsByIds([updatedCitation.link_id])
+          this.addCitations([updatedCitation])
+          return true
+        }
+        return false
+      } catch (error) {
+        throw error
       }
-      return false
     },
     async deleteIds(projectId, mediaId, citationIds) {
       const url = `${

@@ -4,7 +4,7 @@ import { useSearchResultsStore } from '@/stores/SearchResultsStore'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/AuthStore.js'
 import ToggleLinks from '@/components/ToggleLinks.vue'
-import { getBestMediaUrl } from '@/utils/mediaUtils'
+import { getBestMediaUrl } from '@/utils/fileUtils.js'
 
 const searchResultsStore = useSearchResultsStore()
 const route = useRoute()
@@ -272,7 +272,14 @@ function formatAuthors(authors) {
           >
             <img
               v-if="item.media"
-              :src="getBestMediaUrl(item.media, ['thumbnail'])"
+              :src="
+                getBestMediaUrl(
+                  item.media,
+                  ['thumbnail'],
+                  item.project_id,
+                  item.media_id
+                )
+              "
               alt="thumb"
               class="me-2 flex-shrink-0 bg-light border"
               style="width: 60px; height: 60px; object-fit: contain"

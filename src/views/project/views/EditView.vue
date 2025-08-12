@@ -58,7 +58,7 @@ async function edit(event) {
       </div>
       <div class="btn-form-group">
         <button
-          class="btn btn-primary btn-white"
+          class="btn btn-outline-primary"
           type="button"
           @click="$router.go(-1)"
         >

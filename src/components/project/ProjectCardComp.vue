@@ -1,9 +1,18 @@
 <script setup>
 import { RouterLink } from 'vue-router'
-import { buildImageProps } from '@/utils/util.js'
+import { buildMediaUrl } from '@/utils/fileUtils.js'
+import { computed } from 'vue'
 
 const props = defineProps({
   project: Object,
+})
+
+// Extract media ID from filename
+const mediaId = computed(() => {
+  const match = props.project.image_props.media.FILENAME.match(
+    /media_files_media_(\d+)_preview/
+  )
+  return match ? match[1] : null
 })
 </script>
 <style scoped>
@@ -60,7 +69,7 @@ const props = defineProps({
         </div>
         <div class="col d-flex align-items-stretch thumb">
           <img
-            :src="buildImageProps(project.image_props, 'media')"
+            :src="buildMediaUrl(props.project.project_id, mediaId, 'large')"
             class="card-img-top"
           />
         </div>

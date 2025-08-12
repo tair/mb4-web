@@ -28,15 +28,13 @@ const items = ref([])
 const item = computed(() => props.getItem(props.initialValue))
 const text = ref(props.getText(item.value))
 const currentValue = ref(props.initialValue)
+const isSearching = ref(false)
 
 async function handleInput(event: any) {
   const text = event.target.value
-  if (text.length < 3) {
-    items.value = []
-  } else {
-    items.value = await props.search(text)
-    emit('updateTextboxString', text)
-  }
+  isSearching.value = true
+  items.value = await props.search(text)
+  emit('updateTextboxString', text)
 }
 
 function handleSearch(event: Event) {
@@ -56,7 +54,16 @@ function handleSelect(item: any) {
   text.value = itemText
 
   items.value = []
+  isSearching.value = false
   emit('select', item)
+}
+
+async function handleFocus(event: any) {
+  // Show dropdown with initial results when focused
+  if (items.value.length === 0) {
+    isSearching.value = true
+    items.value = await props.search('')
+  }
 }
 
 function handleBlur() {
@@ -65,6 +72,7 @@ function handleBlur() {
     const itemText = props.getText(item)
     text.value = itemText
     items.value = []
+    isSearching.value = false
   }
 }
 </script>
@@ -80,6 +88,7 @@ function handleBlur() {
     <input
       @input="handleInput"
       @search="handleSearch"
+      @focus="handleFocus"
       @blur="handleBlur"
       v-model="text"
       :disabled="disabled"
@@ -92,6 +101,9 @@ function handleBlur() {
           <slot name="item" v-bind="item"></slot>
         </li>
       </template>
+    </ul>
+    <ul v-else-if="isSearching" class="results">
+      <li class="no-results">No matching search results found</li>
     </ul>
   </div>
 </template>
@@ -121,5 +133,12 @@ ul.results li {
 ul.results li:hover {
   background: #eee;
   cursor: pointer;
+}
+
+ul.results li.no-results {
+  color: #666;
+  font-style: italic;
+  text-align: center;
+  padding: 10px;
 }
 </style>

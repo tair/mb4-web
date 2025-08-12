@@ -42,17 +42,20 @@ function getUsageText(usage: { [key: string]: number }): string {
   const text: string[] = []
   for (const [number, count] of Object.entries(usage)) {
     switch (number) {
-      case '1':
+      case '53': // taxa_x_media
         text.push(count + ' Media')
         break
-      case '2':
+      case '11': // taxa_x_specimens
         text.push(count + (count > 1 ? ' Specimens' : ' Specimen'))
         break
-      case '24':
+      case '24': // matrix_taxa_order
         text.push(count + (count > 1 ? ' Matrices' : ' Matrix'))
         break
-      case '61':
+      case '61': // taxa_x_partitions
         text.push(count + (count > 1 ? ' Partitions' : ' Partition'))
+        break
+      case '45': // taxa_x_bibliographic_references
+        text.push(count + (count > 1 ? ' Citations' : ' Citation'))
         break
     }
   }
@@ -162,7 +165,7 @@ async function handleDelete() {
         <div class="modal-footer">
           <button
             type="button"
-            class="btn btn-secondary"
+            class="btn btn-outline-primary"
             data-bs-dismiss="modal"
           >
             Cancel

@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { defineStore } from 'pinia'
 import { useMessageStore } from './MessageStore'
+import sessionManager from '@/lib/session-manager.js'
 
 export const useAuthStore = defineStore({
   id: 'auth',
@@ -56,6 +57,10 @@ export const useAuthStore = defineStore({
       this.err = null
       localStorage.removeItem('mb-user')
       localStorage.removeItem('orcid-user')
+
+      // Clear session on logout
+      sessionManager.clearSession()
+
       axios
         .post(`${import.meta.env.VITE_API_URL}/auth/logout`)
         .then((res) => {

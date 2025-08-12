@@ -15,6 +15,40 @@
         />
       </div>
 
+      <!-- Exemplar Media Upload -->
+      <div class="form-group">
+        <label class="form-label">
+          Exemplar Media
+          <Tooltip :content="getExemplarMediaTooltip()"></Tooltip>
+        </label>
+
+        <div class="exemplar-upload">
+          <input
+            type="file"
+            @change="handleExemplarMediaUpload"
+            accept="image/*"
+            class="form-control"
+          />
+          <button
+            v-if="formData.exemplar_media"
+            type="button"
+            @click="clearExemplarMedia"
+            class="btn-link"
+          >
+            Clear
+          </button>
+        </div>
+
+        <div v-if="formData.exemplar_media" class="media-result">
+          <div class="media-result-caption">
+            Selected file: {{ formData.exemplar_media.name }}
+          </div>
+        </div>
+        <div v-else class="media-placeholder">
+          <img src="/images/img_placeholder.jpg" alt="No media selected" />
+        </div>
+      </div>
+
       <div class="form-group">
         <label class="form-label">
           Is your research project supported by the U.S. National Science
@@ -443,7 +477,7 @@
 
       <div class="form-group">
         <label class="form-label">
-          Journal cover image or another image from your project
+          Journal cover image
           <Tooltip :content="getJournalCoverTooltip()"></Tooltip>
         </label>
         <div class="journal-cover-upload">
@@ -484,10 +518,28 @@
       </div>
 
       <div class="form-buttons">
-        <button type="button" @click="cancel" class="btn btn-primary btn-white">
+        <button
+          type="button"
+          @click="cancel"
+          class="btn btn-outline-primary"
+          :disabled="isLoading"
+        >
           Cancel
         </button>
-        <button type="submit" class="btn btn-primary">Save</button>
+        <button
+          type="submit"
+          :class="projectCreated ? 'btn btn-success' : 'btn btn-primary'"
+          :disabled="isLoading"
+        >
+          <span
+            v-if="isLoading && !projectCreated"
+            class="spinner-border spinner-border-sm me-2"
+            role="status"
+            aria-hidden="true"
+          ></span>
+          <span v-if="projectCreated" class="me-2">✓</span>
+          {{ isLoading ? getLoadingText() : 'Save' }}
+        </button>
       </div>
     </form>
   </FormLayout>
@@ -509,6 +561,7 @@ import {
   getJournalCoverTooltip,
   TOOLTIP_ARTICLE_DOI,
 } from '@/utils/util.js'
+
 import Tooltip from '@/components/main/Tooltip.vue'
 import FormLayout from '@/components/main/FormLayout.vue'
 import '@/assets/css/form.css'
@@ -520,7 +573,6 @@ const userStore = useUserStore()
 const formData = reactive({
   name: '',
   nsf_funded: '',
-  // exemplar_media_id: null,
   allow_reviewer_login: false,
   reviewer_login_password: '',
   journal_title: '',
@@ -536,13 +588,11 @@ const formData = reactive({
   description: '',
   disk_space_usage: 5368709120, // Default 5GB in bytes
   publication_status: '2', // Default to "Article in prep or in review"
-  journal_cover: null, // Add journal cover to form data
+  journal_cover: null, // Journal cover file
+  exemplar_media: null, // Exemplar media file
 })
 
-const mediaSearch = ref('')
 const journalSearch = ref('')
-const selectedMedia = ref(null)
-const projectMedia = ref([])
 const showNewJournal = ref(false)
 const journals = ref([])
 const journalCoverPath = ref(null)
@@ -609,29 +659,15 @@ async function loadJournals() {
   }
 }
 
-async function searchMedia() {
-  if (mediaSearch.value.length < 3) return
-
-  try {
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/media/search`,
-      {
-        params: { query: mediaSearch.value },
-      }
-    )
-    projectMedia.value = response.data
-  } catch (error) {
-    console.error('Error searching media:', error)
+function handleExemplarMediaUpload(event) {
+  const file = event.target.files[0]
+  if (file) {
+    formData.exemplar_media = file
   }
 }
 
-function clearMedia() {
-  selectedMedia.value = null
-  formData.exemplar_media_id = null
-}
-
-function toggleMediaBrowser() {
-  // Implementation for media browser toggle
+function clearExemplarMedia() {
+  formData.exemplar_media = null
 }
 
 function toggleJournalMode() {
@@ -665,14 +701,9 @@ const loadJournalCover = async (journalTitle) => {
       }
     )
 
-    // Check if the cover path exists and is not a 404
+    // Set the journal cover path directly without verification
     if (response.data.coverPath) {
-      const coverResponse = await axios.head(response.data.coverPath)
-      if (coverResponse.status === 200) {
-        journalCoverPath.value = response.data.coverPath
-      } else {
-        journalCoverPath.value = null
-      }
+      journalCoverPath.value = response.data.coverPath
     } else {
       journalCoverPath.value = null
     }
@@ -796,35 +827,42 @@ async function handleSubmit() {
       return
     }
 
-    // Create FormData object for multipart/form-data submission
-    const projectFormData = new FormData()
+    // Create JSON object for project creation
+    const projectData = {}
 
-    // Add all form fields to FormData
+    // Add all form fields to JSON
     for (const [key, value] of Object.entries(formData)) {
-      if (key === 'journal_cover') {
-        if (value) {
-          projectFormData.append('journal_cover', value)
-        }
+      if (key === 'journal_cover' || key === 'exemplar_media') {
+        // Skip file uploads - will be passed separately
+        continue
       } else if (key === 'allow_reviewer_login') {
         // Ensure allow_reviewer_login is sent as 0 or 1
-        projectFormData.append(key, value === true || value === '1' ? '1' : '0')
+        projectData[key] = value === true || value === '1' ? '1' : '0'
       } else {
         // Convert all values to strings to ensure proper transmission
         const stringValue =
           value !== null && value !== undefined ? String(value) : ''
-        projectFormData.append(key, stringValue)
+        projectData[key] = stringValue
       }
     }
 
-    // Create project with FormData
-    const project = await projectsStore.createProject(projectFormData)
+    // Create project with optional journal cover and exemplar media in a single API call
+    const project = await projectsStore.createProject(
+      projectData,
+      formData.journal_cover,
+      formData.exemplar_media
+    )
 
     if (!project) {
       throw new Error('Failed to create project')
     }
 
-    // Redirect to project overview
-    router.push(`/myprojects/${project.project_id}/overview`)
+    // Show success state briefly before redirecting
+    projectCreated.value = true
+    await new Promise((resolve) => setTimeout(resolve, 800))
+
+    // Force full page refresh to bypass any cached 404 responses
+    window.location.href = `/myprojects/${project.project_id}/overview`
   } catch (err) {
     console.error('Error in handleSubmit:', err)
     error.value =
@@ -837,7 +875,7 @@ async function handleSubmit() {
 
 function validateForm() {
   // Basic validation
-  if (!formData.name || !formData.nsf_funded) {
+  if (!formData.name || formData.nsf_funded === '') {
     alert('Please fill in all required fields')
     return false
   }
@@ -950,6 +988,27 @@ function handleJournalSearch() {
 
 function togglePasswordVisibility() {
   showPassword.value = !showPassword.value
+}
+
+const projectCreated = ref(false)
+
+function getLoadingText() {
+  if (projectCreated.value) {
+    return 'Project created successfully!'
+  }
+
+  const hasJournalCover = formData.journal_cover
+  const hasExemplarMedia = formData.exemplar_media
+
+  if (hasJournalCover && hasExemplarMedia) {
+    return 'Uploading images and creating project...'
+  } else if (hasJournalCover) {
+    return 'Uploading journal cover and creating project...'
+  } else if (hasExemplarMedia) {
+    return 'Uploading exemplar media and creating project...'
+  } else {
+    return 'Creating project...'
+  }
 }
 </script>
 
@@ -1168,5 +1227,32 @@ function togglePasswordVisibility() {
 
 .password-toggle-btn:hover:not(:disabled) {
   color: var(--mb-orange);
+}
+
+.exemplar-upload {
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.exemplar-upload .form-control {
+  flex: 1;
+}
+
+.exemplar-upload .form-label {
+  margin-bottom: 5px;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.15em;
 }
 </style>

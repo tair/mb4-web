@@ -5,6 +5,7 @@ import { usePublicMediaStore } from '@/stores/PublicMediaStore.js'
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
 import FolioMediaComp from '@/components/project/FolioMediaComp.vue'
+import { logView, HIT_TYPES } from '@/lib/analytics.js'
 
 const route = useRoute()
 
@@ -28,6 +29,15 @@ onMounted(() => {
         )
       })
     })
+
+  // Track folio view only when there's a specific folio ID
+  if (projectId && folioId) {
+    logView({
+      project_id: projectId,
+      hit_type: HIT_TYPES.FOLIO,
+      row_id: folioId,
+    })
+  }
 })
 
 function generateFoliosListRoute() {
@@ -63,7 +73,10 @@ function generateFoliosListRoute() {
         v-for="(mediaFile, n) in mediaFiles"
         :key="n"
       >
-        <FolioMediaComp :media_file="mediaFile"></FolioMediaComp>
+        <FolioMediaComp
+          :media_file="mediaFile"
+          :project_id="projectId"
+        ></FolioMediaComp>
       </div>
     </div>
   </ProjectLoaderComp>

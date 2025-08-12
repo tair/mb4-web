@@ -1,25 +1,49 @@
 <script setup>
 import axios from 'axios'
 import router from '@/router'
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDocumentsStore } from '@/stores/DocumentsStore'
 import { documentSchema } from '@/views/project/documents/schema.js'
+import { useNotifications } from '@/composables/useNotifications'
 
 const route = useRoute()
 const projectId = route.params.id
 
 const documentsStore = useDocumentsStore()
+const { showError, showSuccess } = useNotifications()
+
+const isCreating = ref(false)
 
 async function createDocument(event) {
-  const formData = new FormData(event.currentTarget)
-  const success = await documentsStore.create(projectId, formData)
-  if (!success) {
-    alert(response.data?.message || 'Failed to create media')
-    return
-  }
+  if (isCreating.value) return // Prevent double-clicking
+  
+  isCreating.value = true
+  
+  try {
+    const formData = new FormData(event.currentTarget)
+    const result = await documentsStore.create(projectId, formData)
+    
+    if (!result.success) {
+      showError(result.error || 'Failed to create document')
+      isCreating.value = false // Reset loading state on error
+      return
+    }
 
-  router.push({ path: `/myprojects/${projectId}/documents` })
+    // Success - show notification and navigate away
+    showSuccess('Document created successfully!')
+    try {
+      await router.push({ path: `/myprojects/${projectId}/documents` })
+    } catch (navError) {
+      console.error('Navigation failed:', navError)
+      // Reset loading state if navigation fails
+      isCreating.value = false
+    }
+  } catch (error) {
+    console.error('Error creating document:', error)
+    showError('Failed to create document. Please try again.')
+    isCreating.value = false // Reset loading state on error
+  }
 }
 
 onMounted(() => {
@@ -44,10 +68,22 @@ onMounted(() => {
         </div>
       </template>
       <div class="btn-form-group">
-        <button class="btn btn-primary" type="button" @click="$router.go(-1)">
+        <button
+          class="btn btn-outline-primary"
+          type="button"
+          @click="$router.go(-1)"
+          :disabled="isCreating"
+        >
           Cancel
         </button>
-        <button class="btn btn-primary" type="submit">Create</button>
+        <button 
+          class="btn btn-primary" 
+          type="submit"
+          :disabled="isCreating"
+        >
+          <span v-if="isCreating" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          {{ isCreating ? 'Creating...' : 'Create' }}
+        </button>
       </div>
     </div>
   </form>

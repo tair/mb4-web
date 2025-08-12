@@ -29,13 +29,21 @@ const isLoaded = computed(
 
 async function createBatch(event) {
   const formData = new FormData(event.currentTarget)
-  const success = await mediaStore.createBatch(projectId, formData)
-  if (!success) {
-    alert(response.data?.message || 'Failed to create media')
-    return
-  }
 
-  router.push({ path: `/myprojects/${projectId}/media` })
+  try {
+    const success = await mediaStore.createBatch(projectId, formData)
+    if (!success) {
+      alert('Failed to create media. Please check your input and try again.')
+      return
+    }
+
+    router.push({ path: `/myprojects/${projectId}/media` })
+  } catch (error) {
+    const errorMessage =
+      error.response?.data?.message ||
+      'Failed to create media. Please try again.'
+    alert(errorMessage)
+  }
 }
 
 onMounted(() => {

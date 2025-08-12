@@ -65,8 +65,8 @@ export const useTaxaStore = defineStore({
       }/projects/${projectId}/taxa/${taxonId}/edit`
       const response = await axios.post(url, taxon)
       if (response.status == 200) {
-        const taxon = response.data.taxon
-        this.addTaxa([taxon])
+        const updatedTaxon = response.data.taxon
+        this.addTaxa([updatedTaxon])
         return true
       }
       return false
@@ -122,6 +122,35 @@ export const useTaxaStore = defineStore({
       for (const taxonId of taxonIds) {
         this.map.delete(taxonId)
       }
+    },
+    searchTaxa(searchTerm) {
+      if (!searchTerm || !searchTerm.trim()) {
+        return this.taxa
+      }
+
+      const normalizedSearchTerm = searchTerm.toLowerCase().trim()
+
+      // Define searchable fields for taxa
+      const searchableFields = [
+        'genus',
+        'subgenus',
+        'specific_epithet',
+        'subspecific_epithet',
+        'scientific_name_author',
+        'scientific_name_year',
+        'higher_taxon_family',
+        'higher_taxon_order',
+        'higher_taxon_class',
+        'higher_taxon_phylum',
+        'higher_taxon_kingdom',
+      ]
+
+      return this.taxa.filter((taxon) => {
+        return searchableFields.some((field) => {
+          const value = taxon[field]
+          return value && value.toLowerCase().includes(normalizedSearchTerm)
+        })
+      })
     },
     invalidate() {
       this.map.clear()

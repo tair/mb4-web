@@ -211,7 +211,7 @@ async function editCitation(linkId, json) {
         data-bs-target="#addCitationModal"
       >
         <i class="fa fa-plus"></i>
-        <span> Create Citation</span>
+        <span> Add Citation</span>
       </button>
     </div>
     <div v-if="specimenCitationsStore.citations?.length">

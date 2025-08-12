@@ -50,26 +50,63 @@ function setInstitutionData(name, id) {
 
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
-    <h1>Select an institution to add</h1>
+    <h1>Add Institution</h1>
+
+    <header>
+      To add an institution fill out the text field and select save.
+    </header>
+
+    <div class="action-bar">
+      <RouterLink :to="`/myProjects/${projectId}/institutions`">
+        <button type="button" class="btn btn-m btn-outline-primary">
+          <i class="fa fa-arrow-left"></i>
+          <span>Back to Institutions</span>
+        </button>
+      </RouterLink>
+    </div>
+
     <form>
-      <div class="form-class">
-        <p>To add an institution fill out the text field and select save.</p>
+      <div class="form-section">
+        <InstitutionSearchInput
+          :projectId="Number(projectId)"
+          @updateParent="setInstitutionData"
+        >
+        </InstitutionSearchInput>
+        <div class="form-actions">
+          <button
+            type="button"
+            class="btn btn-primary"
+            @click="createInstitution(institutionId, institutionName)"
+          >
+            <i class="fa fa-save"></i>
+            Save
+          </button>
+        </div>
       </div>
-      <InstitutionSearchInput
-        :projectId="Number(projectId)"
-        @updateParent="setInstitutionData"
-      >
-      </InstitutionSearchInput>
-      <button
-        type="button"
-        @click="createInstitution(institutionId, institutionName)"
-      >
-        Save
-      </button>
     </form>
   </LoadingIndicator>
 </template>
 
 <style scoped>
 @import '@/views/project/styles.css';
+
+.form-section {
+  margin: 32px 0;
+  padding: 20px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+}
+
+.form-actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.form-actions .btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 </style>

@@ -41,29 +41,36 @@ export const useTaxaCitationsStore = defineStore({
 
       this.isLoaded = true
     },
-    async create(projectId, taxonId, citation) {
+    async create(projectId, taxonId, citationData) {
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/taxa/${taxonId}/citations/create`
-      const response = await axios.post(url, { citation })
-      if (response.status == 200) {
-        const citation = response.data.citation
-        this.addCitations([citation])
+      try {
+        const response = await axios.post(url, { citation: citationData })
+        const newCitation = response.data.citation
+        this.addCitations([newCitation])
         return true
+      } catch (error) {
+        throw error
       }
-      return false
     },
     async edit(projectId, taxonId, citationId, citation) {
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/taxa/${taxonId}/citations/${citationId}/edit`
-      const response = await axios.post(url, { citation })
-      if (response.status == 200) {
-        const citation = response.data.citation
-        this.addCitations([citation])
-        return true
+
+      try {
+        const response = await axios.post(url, { citation })
+        if (response.status == 200) {
+          const updatedCitation = response.data.citation
+          this.removeCitationsByIds([updatedCitation.link_id])
+          this.addCitations([updatedCitation])
+          return true
+        }
+        return false
+      } catch (error) {
+        throw error
       }
-      return false
     },
     async deleteIds(projectId, taxonId, citationIds) {
       const url = `${

@@ -13,7 +13,7 @@ type OverviewStats = {
   disk_usage: number
   stats: ProjectStats
   disk_usage_limit: number
-  institutions: string[]
+  institutions: (string | { name: string })[]
 }
 
 defineProps<{
@@ -84,6 +84,9 @@ const projectId = route.params.id
               <RouterLink :to="`/myprojects/${projectId}/members/groups`">
                 Manage members groups
               </RouterLink>
+              <Tooltip
+                content="Member Groups allow you to limit the access for scoring a row to only certain members of a Project. First name the Member Groups for particular rows of taxa by clicking here. Then go to Manage Members - where you can add particular users to these Member Groups. Then in the Matrix Editor click on the name of the taxon in a given row and add it to the Member Group in question."
+              ></Tooltip>
             </span>
           </li>
           <li class="list-group-item">
@@ -111,7 +114,9 @@ const projectId = route.params.id
             v-for="(institution, index) in overview.institutions"
             :key="index"
           >
-            {{ institution.name }}
+            {{
+              typeof institution === 'string' ? institution : institution.name
+            }}
           </li>
         </ul>
       </div>

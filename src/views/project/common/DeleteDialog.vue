@@ -10,6 +10,13 @@ async function handleDeleteButtonClicked() {
   if (deleted) {
     const element = document.getElementById('deleteModal')
     const modal = Modal.getInstance(element)
+
+    // Remove focus from any focused element inside the modal before hiding
+    const focusedElement = element.querySelector(':focus') as HTMLElement
+    if (focusedElement) {
+      focusedElement.blur()
+    }
+
     modal.hide()
   } else {
     alert('Failed to Delete')
@@ -34,7 +41,7 @@ async function handleDeleteButtonClicked() {
         <div class="modal-footer">
           <button
             type="button"
-            class="btn btn-secondary"
+            class="btn btn-outline-primary"
             data-bs-dismiss="modal"
           >
             Cancel

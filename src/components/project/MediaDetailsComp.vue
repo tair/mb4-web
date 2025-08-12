@@ -1,43 +1,215 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { toDateString } from '@/utils/date'
 import {
   getViewStatsTooltipText,
   getDownloadTooltipText,
-  buildImageProps,
 } from '@/utils/util.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import CustomModal from './CustomModal.vue'
 import MediaViewPanel from './MediaViewPanel.vue'
+import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
+import { buildMediaUrl } from '@/utils/fileUtils.js'
+import { defineAsyncComponent } from 'vue'
+
+// Lazy load the 3D viewer to improve initial page load performance
+const ThreeJSViewer = defineAsyncComponent({
+  loader: () => import('./ThreeJSViewer.vue'),
+  loadingComponent: {
+    template: `
+      <div class="lazy-loading-3d">
+        <div class="loading-spinner"></div>
+        <p>Loading 3D viewer...</p>
+      </div>
+    `
+  },
+  errorComponent: {
+    template: `
+      <div class="lazy-error-3d">
+        <p>Failed to load 3D viewer</p>
+        <button @click="$emit('retry')" class="btn btn-primary">Retry</button>
+      </div>
+    `
+  },
+  delay: 200,
+  timeout: 10000
+})
 
 const props = defineProps({
   media_file: {
     type: Object,
   },
+  project_id: {
+    type: [Number, String],
+    required: false,
+  },
 })
 
 const showZoomModal = ref(false)
 const showDownloadModal = ref(false)
+const videoPlayer = ref(null)
 const viewStatsTooltipText = getViewStatsTooltipText()
 const downloadTooltipText = getDownloadTooltipText()
 
-async function confirmDownload(mediaObj, fileName) {
+// Check if the media file is a 3D file
+const is3DFile = computed(() => {
+  return props.media_file?.media?.thumbnail?.USE_ICON === '3d' || 
+         props.media_file?.media?.original?.USE_ICON === '3d'
+})
+
+// Check if the media file is a video file
+const isVideoFile = computed(() => {
+  const filename = props.media_file?.media?.ORIGINAL_FILENAME || ''
+  const ext = filename.split('.').pop()?.toLowerCase()
+  const videoExtensions = ['mp4', 'avi', 'mov', 'webm', 'mkv', 'wmv', 'flv', 'm4v']
+  return videoExtensions.includes(ext)
+})
+
+// Get the file extension from the original filename
+const fileExtension = computed(() => {
+  const filename = props.media_file?.media?.ORIGINAL_FILENAME || ''
+  const ext = filename.split('.').pop()?.toLowerCase()
+  return ext || ''
+})
+
+// Get the main display URL (3D icon for 3D files, video thumbnail for videos, actual image for 2D files)
+const mainDisplayUrl = computed(() => {
+  if (is3DFile.value) {
+    return '/images/3DImage.png'
+  }
+  if (isVideoFile.value) {
+    // For videos, show a thumbnail if available, otherwise show video icon
+    return buildMediaUrl(props.project_id, props.media_file?.media_id, 'thumbnail')
+  }
+  return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
+})
+
+// Get the 3D model URL for model-viewer
+const modelUrl = computed(() => {
+  if (is3DFile.value) {
+    return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
+  }
+  return null
+})
+
+// Get the video URL for video player
+const videoUrl = computed(() => {
+  if (isVideoFile.value) {
+    return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
+  }
+  return null
+})
+
+// Get the MIME type for the video
+const videoMimeType = computed(() => {
+  const ext = fileExtension.value
+  const mimeTypes = {
+    'mp4': 'video/mp4',
+    'webm': 'video/webm',
+    'avi': 'video/x-msvideo',
+    'mov': 'video/quicktime',
+    'mkv': 'video/x-matroska',
+    'wmv': 'video/x-ms-wmv',
+    'flv': 'video/x-flv',
+    'm4v': 'video/x-m4v'
+  }
+  return mimeTypes[ext] || 'video/mp4'
+})
+
+// Get the zoom display URL (3D model for 3D files, video for videos, large image for 2D files)
+const zoomDisplayUrl = computed(() => {
+  if (is3DFile.value) {
+    return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
+  }
+  if (isVideoFile.value) {
+    return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
+  }
+  return buildMediaUrl(props.project_id, props.media_file?.media_id, 'large')
+})
+
+// Handle model loading events from ThreeJSViewer
+const onModelError = (error) => {
+  console.error('3D model loading error:', error)
+}
+
+const onModelLoad = (model) => {
+  // 3D model loaded successfully
+}
+
+// Handle video loading events
+const onVideoError = (error) => {
+  console.error('Video loading error:', error)
+}
+
+const onVideoLoaded = (event) => {
+  // Video metadata loaded
+}
+
+const onVideoDataLoaded = (event) => {
+  // Video data loaded - seeking should now work
+}
+
+const onVideoCanPlay = (event) => {
+  // Video can play - seeking enabled
+  // Ensure the video element is properly configured for seeking
+  const video = event.target
+  if (video.seekable && video.seekable.length > 0) {
+    // Video is seekable
+  }
+}
+
+const onVideoProgress = (event) => {
+  // This helps track buffering progress which affects seeking
+  const video = event.target
+  if (video.buffered.length > 0) {
+    const bufferedEnd = video.buffered.end(video.buffered.length - 1)
+    // Video buffered progress tracked
+  }
+}
+
+const onVideoSeeking = (event) => {
+  // Video seeking in progress
+}
+
+const onVideoSeeked = (event) => {
+  // Video seek completed
+}
+
+const onVideoCanPlayThrough = (event) => {
+  // Video can play through - fully loaded and seekable
+}
+
+const onVideoTimeUpdate = (event) => {
+  // Track current time (useful for debugging seeking issues)
+  const video = event.target
+  if (video.seeking) {
+    // Currently seeking
+  }
+}
+
+async function confirmDownload(fileSize, fileName) {
   // if (!isCaptchaVerified) {
   //   alert("Please complete the CAPTCHA");
   //   return;
   // }
   // CAPTCHA is completed, proceed with the download
-  const imageUrl = buildImageProps(mediaObj)
+  // For 3D files and videos, always download the original file regardless of requested size
+  const downloadSize = (is3DFile.value || isVideoFile.value) ? 'original' : fileSize
+  const downloadUrl = buildMediaUrl(
+    props.project_id,
+    props.media_file?.media_id,
+    downloadSize
+  )
   let downloadFileName = fileName
   if (!downloadFileName) {
-    downloadFileName = getLastElementFromUrl(imageUrl)
+    downloadFileName = getLastElementFromUrl(downloadUrl)
   }
   // TODO: create download blob after put the media file behind the API
-  // const response = await fetch(imageUrl);
+  // const response = await fetch(downloadUrl);
   // const blob = await response.blob();
   // const url = URL.createObjectURL(blob);
   const link = document.createElement('a')
-  link.href = imageUrl
+  link.href = downloadUrl
   link.download = downloadFileName
   document.body.appendChild(link)
   link.click()
@@ -45,6 +217,11 @@ async function confirmDownload(mediaObj, fileName) {
   // URL.revokeObjectURL(url);
 
   showDownloadModal.value = false
+  logDownload({
+    project_id: props.project_id,
+    download_type: DOWNLOAD_TYPES.MEDIA,
+    row_id: props.media_file.media_id,
+  })
 }
 
 function getLastElementFromUrl(url) {
@@ -110,10 +287,8 @@ function getHitsMessage(mediaObj) {
     <div class="col">
       <div class="card shadow">
         <img
-          :src="buildImageProps(media_file.media['medium'])"
+          :src="mainDisplayUrl"
           :style="{
-            width: media_file.media['medium'].WIDTH + 'px',
-            height: media_file.media['medium'].HEIGHT + 'px',
             backgroundSize: '20px',
             backgroundRepeat: 'no-repeat',
             backgroundImage: 'url(' + '/images/loader.png' + ')',
@@ -132,8 +307,42 @@ function getHitsMessage(mediaObj) {
                 :isVisible="showZoomModal"
                 @close="showZoomModal = false"
               >
+                <!-- Three.js 3D Viewer for all 3D files -->
+                <ThreeJSViewer
+                  v-if="is3DFile"
+                  :modelUrl="modelUrl"
+                  :fileExtension="fileExtension"
+                  @load="onModelLoad"
+                  @error="onModelError"
+                />
+                <!-- Video Player for video files -->
+                <div v-else-if="isVideoFile" class="video-player-container">
+                  <video
+                    ref="videoPlayer"
+                    controls
+                    preload="auto"
+                    class="video-player"
+                    crossorigin="anonymous"
+                    muted="false"
+                    playsinline
+                    @error="onVideoError"
+                    @loadedmetadata="onVideoLoaded"
+                    @loadeddata="onVideoDataLoaded"
+                    @canplay="onVideoCanPlay"
+                    @canplaythrough="onVideoCanPlayThrough"
+                    @progress="onVideoProgress"
+                    @seeking="onVideoSeeking"
+                    @seeked="onVideoSeeked"
+                    @timeupdate="onVideoTimeUpdate"
+                  >
+                    <source :src="videoUrl" :type="videoMimeType" />
+                    <p>Your browser doesn't support video playback.</p>
+                  </video>
+                </div>
+                <!-- Regular Image Viewer for 2D files -->
                 <MediaViewPanel
-                  :imgSrc="buildImageProps(media_file.media['original'])"
+                  v-else
+                  :imgSrc="zoomDisplayUrl"
                 />
               </CustomModal>
               <a class="nav-link" href="#" @click="showDownloadModal = true">
@@ -157,7 +366,7 @@ function getHitsMessage(mediaObj) {
                     class="btn btn-primary"
                     @click="
                       confirmDownload(
-                        media_file.media['original'],
+                        'original',
                         media_file.media['ORIGINAL_FILENAME']
                       )
                     "
@@ -275,10 +484,16 @@ function getHitsMessage(mediaObj) {
   justify-content: center;
   align-items: center;
   margin: 0;
+  padding: 1rem;
 }
 
 .card-img {
   margin: 1rem;
+  max-width: 100%;
+  max-height: 500px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
 }
 
 .card-body {
@@ -312,5 +527,50 @@ function getHitsMessage(mediaObj) {
 .card-title,
 p {
   margin: 0.5rem 0;
+}
+
+/* ThreeJSViewer handles all 3D rendering styles internally */
+
+.lazy-loading-3d, .lazy-error-3d {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 2rem;
+}
+
+.lazy-loading-3d .loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Video Player Styles */
+.video-player-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  padding: 1rem;
+  background-color: #000;
+  border-radius: 8px;
+}
+
+.video-player {
+  max-width: 100%;
+  max-height: 80vh;
+  width: auto;
+  height: auto;
+  border-radius: 4px;
 }
 </style>

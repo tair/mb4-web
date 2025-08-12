@@ -18,10 +18,9 @@ const publish_cc0 = ref()
 const documentToDelete = ref({})
 const folderToDelete = ref({})
 
+// Always fetch fresh data on mount (force refresh)
 onMounted(() => {
-  if (!documentsStore.isLoaded) {
-    documentsStore.fetchDocuments(projectId)
-  }
+  documentsStore.refreshDocuments(projectId)
 })
 </script>
 <template>

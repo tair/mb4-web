@@ -491,6 +491,15 @@ export function htmlEscape(str: string): string {
 }
 
 /**
+ * Escapes a string and converts line breaks to HTML <br/> tags.
+ * @param str The string to escape and convert.
+ * @returns The escaped string with line breaks converted to HTML.
+ */
+export function htmlEscapeWithLineBreaks(str: string): string {
+  return htmlEscape(str).replace(/\n/g, '<br/>')
+}
+
+/**
  * Normalizes whitespace in a string, replacing all whitespace chars with
  * a space.
  * @param str The string in which to normalize whitespace.

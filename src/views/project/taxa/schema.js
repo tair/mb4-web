@@ -68,6 +68,10 @@ export const schema = {
     label: 'Superfamily',
     view: TextInput,
   },
+  higher_taxon_family: {
+    label: 'Family',
+    view: TextInput,
+  },
   higher_taxon_subfamily: {
     label: 'Subfamily',
     view: TextInput,
@@ -117,7 +121,7 @@ export const schema = {
     view: SelectInput,
     args: {
       options: {
-        'Anyone may edit this taxon': 0,
+        'Anyone in my project may edit this taxon': 0,
         'Only the owner may edit this taxon': 1,
       },
     },

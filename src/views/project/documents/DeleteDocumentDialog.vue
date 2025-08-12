@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useDocumentsStore } from '@/stores/DocumentsStore'
+import type { S3Warning } from '@/types/documents'
+import { useNotifications } from '@/composables/useNotifications'
 
 const props = defineProps<{
   projectId: number | string
@@ -7,12 +10,35 @@ const props = defineProps<{
 }>()
 
 const documentsStore = useDocumentsStore()
+const { showError, showWarning } = useNotifications()
+
+const isDeleting = ref(false)
+
 async function deleteDocument(documentId: number) {
-  const deleted = documentsStore.deleteDocuments(props.projectId, [documentId])
-  if (deleted) {
-    documentsStore.removeDocumentById([documentId])
-  } else {
-    alert('Failed to delete document')
+  if (isDeleting.value) return // Prevent double-clicking
+  
+  isDeleting.value = true
+  
+  try {
+    const result = await documentsStore.deleteDocuments(props.projectId, [documentId])
+    
+    if (result.success) {
+      // Refresh the list to show updated data
+      await documentsStore.refreshDocuments(props.projectId)
+      
+      // Show warnings if there were S3 cleanup issues
+      if ('warnings' in result && result.warnings) {
+        const warnings = result.warnings as S3Warning
+        showWarning('Document deleted successfully', warnings.message)
+      }
+    } else {
+      showError(('error' in result ? result.error : null) || 'Failed to delete document')
+    }
+  } catch (error) {
+    console.error('Error deleting document:', error)
+    showError('Failed to delete document. Please try again.')
+  } finally {
+    isDeleting.value = false
   }
 }
 </script>
@@ -29,18 +55,21 @@ async function deleteDocument(documentId: number) {
         <div class="modal-footer">
           <button
             type="button"
-            class="btn btn-secondary"
+            class="btn btn-outline-primary"
             data-bs-dismiss="modal"
+            :disabled="isDeleting"
           >
             Cancel
           </button>
           <button
             type="button"
             class="btn btn-primary"
-            data-bs-dismiss="modal"
+            :data-bs-dismiss="isDeleting ? '' : 'modal'"
+            :disabled="isDeleting"
             @click="deleteDocument(document.document_id)"
           >
-            Delete
+            <span v-if="isDeleting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            {{ isDeleting ? 'Deleting...' : 'Delete' }}
           </button>
         </div>
       </div>

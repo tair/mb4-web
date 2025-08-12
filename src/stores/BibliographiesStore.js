@@ -60,21 +60,6 @@ export const useBibliographiesStore = defineStore({
       }
       return false
     },
-    async batchEdit(projectId, referenceIds, changes) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/bibliography/edit`
-      const response = await axios.post(url, {
-        referenceIds: referenceIds,
-        changes: changes,
-      })
-      if (response.status == 200) {
-        const bibliographies = response.data.bibliographies
-        this.addReferences(bibliographies)
-        return true
-      }
-      return false
-    },
     addReferences(bibliographies) {
       for (const bibliography of bibliographies) {
         const referenceId = bibliography.reference_id
@@ -102,9 +87,36 @@ export const useBibliographiesStore = defineStore({
         this.map.delete(referenceId)
       }
     },
+    async checkCitations(projectId, referenceIds) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/bibliography/check-citations`
+      const response = await axios.post(url, { reference_ids: referenceIds })
+      if (response.status === 200) {
+        return response.data.citations
+      }
+      return []
+    },
     invalidate() {
       this.map.clear()
       this.isLoaded = false
+    },
+    async upload(projectId, formData) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/bibliography/upload`
+      const response = await axios.post(url, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+
+      if (response.status === 200) {
+        // Refresh the bibliography list after successful upload
+        await this.fetchBibliographies(projectId)
+        return response.data.import_info
+      }
+      return null
     },
   },
 })

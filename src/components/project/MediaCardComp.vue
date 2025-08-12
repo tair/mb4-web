@@ -1,5 +1,5 @@
 <script setup>
-import { buildImageProps } from '@/utils/util.js'
+import { buildMediaUrl } from '@/utils/fileUtils.js'
 
 const props = defineProps({
   media_file: {
@@ -13,6 +13,10 @@ const props = defineProps({
   show_copy_right: {
     type: Boolean,
     default: true,
+  },
+  project_id: {
+    type: [Number, String],
+    required: false,
   },
 })
 
@@ -28,6 +32,7 @@ function expandLength(length) {
   return length + 240
 }
 
+// HOVER FUNCTIONALITY - COMMENTED OUT (can be restored if needed)
 function showEnlargedImage(event, imgId) {
   const enlargedImage = document.getElementById(imgId)
   enlargedImage.style.display = 'block'
@@ -59,15 +64,23 @@ function hideEnlargedImage(imgId) {
   <div :class="[full_view ? 'card media-card shadow image-container' : 'card']">
     <div
       class="d-flex flex-column justify-content-between text-center thumbnail"
-      @mouseenter="showEnlargedImage($event, media_file.media_id)"
-      @mouseleave="hideEnlargedImage(media_file.media_id)"
     >
       <div class="align-self-center media-image-top mt-2">
         <img
-          :src="buildImageProps(media_file.media.thumbnail)"
+          :src="
+            media_file.media.thumbnail?.USE_ICON === '3d' || media_file.media_type === '3d'
+              ? '/images/3DImage.png'
+              : media_file.media.thumbnail?.USE_ICON === 'video' || media_file.media_type === 'video'
+              ? '/images/image-not-found.png'
+              : buildMediaUrl(
+                  props.project_id,
+                  props.media_file?.media_id,
+                  'thumbnail'
+                )
+          "
           :style="{
-            width: media_file.media.thumbnail.WIDTH + 'px',
-            height: media_file.media.thumbnail.HEIGHT + 'px',
+            width: (media_file.media.thumbnail?.WIDTH || 120) + 'px',
+            height: (media_file.media.thumbnail?.HEIGHT || 120) + 'px',
             backgroundSize: '20px',
             backgroundRepeat: 'no-repeat',
             backgroundImage: 'url(' + '/images/loader.png' + ')',
@@ -89,18 +102,21 @@ function hideEnlargedImage(imgId) {
         </div>
       </div>
     </div>
+
+    <!-- ENLARGED IMAGE DIV - COMMENTED OUT (can be restored if needed) -->
+    <!--
     <div
       class="enlarged-image p-2 text-center"
       :id="media_file.media_id"
       :style="{
-        width: expandLength(media_file.media.medium.WIDTH) + 'px',
+        width: expandLength(media_file.media.large.WIDTH) + 'px',
       }"
     >
       <img
-        :src="buildImageProps(media_file.media.medium)"
+        :src="getMediaUrl('large')"
         :style="{
-          width: media_file.media.medium.WIDTH + 'px',
-          height: media_file.media.medium.HEIGHT + 'px',
+          width: media_file.media.large.WIDTH + 'px',
+          height: media_file.media.large.HEIGHT + 'px',
           backgroundSize: '20px',
           backgroundRepeat: 'no-repeat',
           backgroundImage: 'url(' + '/images/loader.png' + ')',
@@ -134,6 +150,7 @@ function hideEnlargedImage(imgId) {
         ></div>
       </div>
     </div>
+    -->
   </div>
 </template>
 
@@ -149,6 +166,7 @@ function hideEnlargedImage(imgId) {
 .truncate-multiline {
   display: -webkit-box;
   -webkit-line-clamp: 2; /* Number of lines to display before truncating */
+  line-clamp: 2; /* Standard property for compatibility */
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -156,6 +174,9 @@ function hideEnlargedImage(imgId) {
   position: relative;
   display: inline-block;
 }
+/* ENLARGED IMAGE STYLES - COMMENTED OUT (can be restored if needed) */
+/*
+
 .enlarged-image {
   display: none;
   position: absolute;
@@ -165,6 +186,7 @@ function hideEnlargedImage(imgId) {
   background-color: white;
   max-width: 600px;
 }
+*/
 .cc-icon {
   width: 88;
   height: 31;

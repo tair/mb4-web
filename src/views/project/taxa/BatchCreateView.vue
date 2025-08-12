@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import router from '@/router'
 import { useTaxaStore } from '@/stores/TaxaStore'
-import { TaxaColumns, nameColumnMap } from '@/utils/taxa'
+import { TaxaColumns, nameColumnMap, TAXA_COLUMN_NAMES } from '@/utils/taxa'
 import { capitalizeFirstLetter } from '@/utils/string'
+import Alert from '@/components/main/Alert.vue'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id as string)
@@ -19,10 +20,57 @@ const taxa = reactive<Taxon[]>([
   },
 ])
 
+const validationMessages = ref<{ [key: string]: string }>({
+  validation: '',
+})
+
+function validateTaxon(taxon: Taxon): boolean {
+  // Check if at least one taxonomic rank field has content
+  for (const field of TAXA_COLUMN_NAMES) {
+    const value = taxon[field as keyof Taxon]
+    if (value && value.trim() !== '') {
+      return true // At least one taxonomic field has content
+    }
+  }
+  return false // All taxonomic fields are empty
+}
+
+function validateAllTaxa(): boolean {
+  // Check if any taxon has completely empty taxonomic fields
+  const emptyTaxa = taxa.filter((taxon: Taxon) => !validateTaxon(taxon))
+
+  if (emptyTaxa.length > 0) {
+    const taxonWord = emptyTaxa.length === 1 ? 'taxon' : 'taxa'
+    const hasWord = emptyTaxa.length === 1 ? 'has' : 'have'
+    validationMessages.value.validation = `Please fill in at least one taxonomic field for each taxon. ${emptyTaxa.length} ${taxonWord} ${hasWord} no taxonomic data.`
+    return false
+  }
+
+  validationMessages.value.validation = ''
+  return true
+}
+
 async function createTaxonBatch() {
-  const created = await taxaStore.createBatch(projectId, taxa)
-  if (created) {
-    await router.replace(`/myprojects/${projectId}/taxa`)
+  if (!validateAllTaxa()) {
+    return
+  }
+
+  // All taxa should be valid at this point, but filter just to be safe
+  const validTaxa = taxa.filter((taxon: Taxon) => validateTaxon(taxon))
+
+  try {
+    const created = await taxaStore.createBatch(projectId, validTaxa)
+
+    if (created) {
+      router.replace({ path: `/myprojects/${projectId}/taxa` })
+    } else {
+      validationMessages.value.validation =
+        'Failed to create taxa. Please try again.'
+    }
+  } catch (error) {
+    console.error('Error during batch creation:', error)
+    validationMessages.value.validation =
+      'Failed to create taxa. Please try again.'
   }
 }
 
@@ -55,13 +103,13 @@ function removeTaxon(index: number) {
 }
 </script>
 <template>
-  <div class="nav-link d-flex align-items-center fw-bold small m-0 p-0 mb-3">
-    <i class="fa-solid fa-chevron-left"></i>
+  <div>
     <RouterLink
-      class="nav-link m-0 p-0 pl-1"
       :to="`/myprojects/${projectId}/taxa`"
+      class="mb-3 d-inline-block"
     >
-      <span>Back to list</span>
+      <i class="fa fa-arrow-left"></i>
+      Back to Taxa
     </RouterLink>
   </div>
   <header>
@@ -106,25 +154,37 @@ function removeTaxon(index: number) {
               </option>
             </template>
           </select>
-          <label class="extinct">
-            Extinct
+          <label class="extinct mt-3 d-flex align-items-center">
             <input
               name="is_extinct"
               value="1"
               type="checkbox"
               v-model="taxon.is_extinct"
+              class="me-2"
             />
+            Extinct
           </label>
         </div>
       </div>
-      <div class="taxon-form-remove" @click="removeTaxon(index)">Remove</div>
+      <div
+        class="taxon-form-remove"
+        @click="removeTaxon(index)"
+        v-if="taxa.length > 1"
+      >
+        Remove
+      </div>
     </div>
     <p class="taxa-form-add-button">
-      <button type="button" class="btn btn-secondary btn-sm" @click="addTaxon">
+      <button type="button" class="btn btn-primary btn-sm" @click="addTaxon">
         Add another taxon
       </button>
     </p>
     <hr />
+    <Alert
+      :message="validationMessages"
+      messageName="validation"
+      alertType="danger"
+    />
     <div class="formButtons">
       <button class="btn btn-primary" @click="createTaxonBatch">Save</button>
     </div>
@@ -158,7 +218,7 @@ function removeTaxon(index: number) {
 }
 
 .taxon-form-remove-field {
-  color: rgb(238, 122, 25);
+  color: var(--theme-orange, #ef782f);
   cursor: pointer;
   padding-left: 0.5rem;
 }
@@ -168,6 +228,7 @@ function removeTaxon(index: number) {
 }
 
 .taxon-form-remove {
+  color: var(--theme-orange, #ef782f);
   font-weight: bold;
   cursor: pointer;
 }

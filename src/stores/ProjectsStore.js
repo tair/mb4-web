@@ -6,14 +6,25 @@ export const useProjectsStore = defineStore({
   state: () => ({
     isLoaded: false,
     projects: [],
+    lastFetched: null, // Timestamp of last fetch
   }),
   getters: {},
   actions: {
-    async fetchProjects() {
+    async fetchProjects(force = false) {
+      // Smart caching: only fetch if data is stale (older than 30 seconds) or forced
+      const cacheAge = this.lastFetched
+        ? Date.now() - this.lastFetched
+        : Infinity
+      const isStale = cacheAge > 30000 // 30 seconds
+
+      if (!force && this.isLoaded && !isStale) {
+        return // Use cached data
+      }
+
       const url = `${import.meta.env.VITE_API_URL}/projects/`
       const response = await axios.get(url)
       this.projects = response.data.projects
-
+      this.lastFetched = Date.now()
       this.isLoaded = true
     },
     async create(project) {
@@ -63,33 +74,54 @@ export const useProjectsStore = defineStore({
         }
       }
     },
-    async createProject(projectData) {
+    async createProject(
+      projectData,
+      journalCoverFile = null,
+      exemplarMediaFile = null
+    ) {
       try {
-        // Log the data being sent
-        // if (projectData instanceof FormData) {
-        //   const formDataObj = {}
-        //   for (const [key, value] of projectData.entries()) {
-        //     formDataObj[key] = value
-        //   }
-        //   console.log("Sending FormData to API:", formDataObj)
-        // } else {
-        //   console.log("Sending data to API:", projectData)
-        // }
+        let requestData
+        let headers = {}
+
+        if (journalCoverFile || exemplarMediaFile) {
+          // Use FormData for file upload
+          const formData = new FormData()
+
+          // Add all project data as JSON string
+          formData.append('projectData', JSON.stringify(projectData))
+
+          // Add journal cover file if provided
+          if (journalCoverFile) {
+            formData.append('journal_cover', journalCoverFile)
+          }
+
+          // Add exemplar media file if provided
+          if (exemplarMediaFile) {
+            formData.append('exemplar_media', exemplarMediaFile)
+          }
+
+          requestData = formData
+          // Don't set Content-Type header - let browser set it with boundary
+        } else {
+          // Use JSON for project data only
+          requestData = projectData
+          headers = {
+            'Content-Type': 'application/json',
+          }
+        }
 
         const response = await axios.post(
           `${import.meta.env.VITE_API_URL}/projects/create`,
-          projectData,
-          {
-            headers:
-              projectData instanceof FormData
-                ? {
-                    'Content-Type': 'multipart/form-data',
-                  }
-                : {
-                    'Content-Type': 'application/json',
-                  },
-          }
+          requestData,
+          { headers }
         )
+
+        // Add the new project to the store's cache so it appears in the dashboard
+        if (response.data && response.status === 201) {
+          // For newly created projects, we need to fetch fresh project data
+          // since the user needs to see it with proper administrator info
+          await this.fetchProjects()
+        }
 
         return response.data
       } catch (error) {

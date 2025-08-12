@@ -4,9 +4,11 @@ import { useRoute } from 'vue-router'
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
 import SpecimenDetailsComp from '@/components/project/SpecimenDetailsComp.vue'
+import { logView, HIT_TYPES } from '@/lib/analytics.js'
 
 const route = useRoute()
 const projectId = route.params.id
+const specimenId = route.params.specimenId
 const projectStore = usePublicProjectDetailsStore()
 
 const filterByOptions = computed(() => {
@@ -85,6 +87,14 @@ const specimenDetailsFor = ref(null)
 function onShowDetails(specimen_detail) {
   isDetailsActive.value = true
   specimenDetailsFor.value = specimen_detail
+  // Track specimen view when a specific specimen is clicked
+  if (projectId && specimen_detail.specimen_id) {
+    logView({
+      project_id: projectId,
+      hit_type: HIT_TYPES.SPECIMEN,
+      row_id: specimen_detail.specimen_id,
+    })
+  }
 }
 
 onMounted(() => {

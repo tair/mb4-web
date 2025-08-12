@@ -37,6 +37,7 @@ onMounted(() => {
         :matrix="matrix"
         :canEditMatrix="matricesStore.canEditMatrix"
         :partitions="matricesStore.partitions"
+        :jobs="matricesStore.jobs"
       >
       </ProjectMatrixComp>
     </div>

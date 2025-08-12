@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import Tooltip from '@/components/main/Tooltip.vue'
 import { formatBytes, formatNumber } from '@/utils/format'
+import { buildMediaUrl } from '@/utils/fileUtils.js'
+// import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore' // No longer needed
+import { ref, onMounted, computed } from 'vue'
+// import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 
 type OverviewStat = {
   taxon_name: string
@@ -37,48 +41,60 @@ type OverviewStats = {
   journal_url: string
   image_props?: ImageProperties
   stats: OverviewStat
+  exemplar_media_id?: number
 }
 
-defineProps<{
+const props = defineProps<{
   overview: OverviewStats
+  projectId: string | number
 }>()
+
+// const overviewStore = useProjectOverviewStore() // No longer needed
+const exemplarMedia = ref(null)
+
+// Computed property to get overview data - now always uses props
+const overview = computed(() => props.overview)
+
+onMounted(async () => {
+  // Use the image_props from the overview data (should come from props)
+  const currentOverview = props.overview
+
+  if (
+    currentOverview?.image_props &&
+    Object.keys(currentOverview.image_props).length > 0
+  ) {
+    // Convert image_props to the format expected by the template
+    const imageProps = currentOverview.image_props
+    exemplarMedia.value = {
+      media_id: currentOverview.exemplar_media_id, // Get media_id from the main overview
+      specimen_name: imageProps.specimen_name,
+      view_name: imageProps.view_name,
+    }
+  }
+})
 
 const downloadTooltipText =
   'This tool downloads the entire project, all media, matrices and documents, as a zipped file. Please click on the menu to the left, if you only want a Matrix, certain Media or Documents.'
 
-function getUrl(mediaObj: { [key: string]: string }): string {
-  try {
-    const media = mediaObj
-    if (media.url) {
-      return media.url
-    }
-
-    // TODO: Only return the url and the width and height for media.
-    if (!media.HASH || !media.MAGIC || !media.FILENAME) return null
-    const url =
-      `https://morphobank.org/media/morphobank3/` +
-      `images/${media.HASH}/${media.MAGIC}_${media.FILENAME}`
-    return url
-  } catch (e) {
-    console.error(e)
-    return null
+function getWidth(mediaObj: { [key: string]: any }): string {
+  if (mediaObj?.media?.large?.PIXEL_X) {
+    return mediaObj.media.large.PIXEL_X + 'px'
   }
+  return 'auto'
 }
 
-function getWidth(mediaObj: { [key: string]: string }): string {
-  // TODO: Only return the url and the width and height for media.
-  return mediaObj.width ?? mediaObj.WIDTH
-}
-
-function getHeight(mediaObj: { [key: string]: string }): string {
-  // TODO: Only return the url and the width and height for media.
-  return mediaObj.height ?? mediaObj.HEIGHT
+function getHeight(mediaObj: { [key: string]: any }): string {
+  if (mediaObj?.media?.large?.PIXEL_Y) {
+    return mediaObj.media.large.PIXEL_Y + 'px'
+  }
+  return 'auto'
 }
 
 function popDownloadAlert() {
   alert(
     "You are downloading data from MorphoBank. If you plan to reuse these items you must check the copyright reuse policies for the individual media, matrix, document or character list. Note - policies are often different for different media. By downloading from MorphoBank, you agree to the site's Terms of Use & Privacy Policy."
   )
+  // logDownload({ project_id: props.projectId, download_type: DOWNLOAD_TYPES.PROJECT })
 }
 </script>
 
@@ -86,13 +102,17 @@ function popDownloadAlert() {
   <div class="row">
     <div class="col">
       <div class="thumbnil-block p-2">
-        <div v-if="overview.image_props.media" class="d-flex flex-column">
+        <!-- Use exemplar media from overview data -->
+        <div v-if="exemplarMedia" class="d-flex flex-column">
           <div class="d-flex justify-content-center">
             <img
-              :src="getUrl(overview.image_props.media)"
+              :src="buildMediaUrl(projectId, exemplarMedia.media_id, 'large')"
               :style="{
-                width: getWidth(overview.image_props.media) + 'px',
-                height: getHeight(overview.image_props.media) + 'px',
+                width: getWidth(exemplarMedia),
+                height: getHeight(exemplarMedia),
+                maxWidth: '100%',
+                maxHeight: '300px',
+                objectFit: 'contain',
                 backgroundSize: '20px',
                 backgroundRepeat: 'no-repeat',
                 backgroundImage: 'url(' + '/images/loader.png' + ')',
@@ -103,11 +123,11 @@ function popDownloadAlert() {
           </div>
           <div class="text-block">
             <div
-              v-if="overview.image_props.specimen_name"
-              v-html="'Specimen: ' + overview.image_props.specimen_name"
+              v-if="exemplarMedia.specimen_name"
+              v-html="'Specimen: ' + exemplarMedia.specimen_name"
             ></div>
-            <div v-if="overview.image_props.view_name">
-              View: {{ overview.image_props.view_name }}
+            <div v-if="exemplarMedia.view_name">
+              View: {{ exemplarMedia.view_name }}
             </div>
           </div>
         </div>
@@ -122,23 +142,43 @@ function popDownloadAlert() {
       <h4>Abstract</h4>
       <p v-html="overview.description"></p>
 
-      <div class="mt-5" v-if="overview.article_doi">
-        <span class="fw-bold">Article DOI:</span>
-        {{ overview.article_doi }}
-        <a
-          v-if="overview.journal_url"
-          :href="overview.journal_url"
-          target="_blank"
-        >
-          <button class="btn btn-primary btn-ml">Read the article</button>
-        </a>
+      <!-- Always show Article DOI section -->
+      <div class="mt-5">
+        <!-- Button shown first if applicable -->
+        <!-- Case 1: DOI starts with '10.' - show Read the article button that goes to doi.org -->
+        <div v-if="overview.article_doi && overview.article_doi.startsWith('10.')" class="mb-2">
+          <a
+            :href="`https://doi.org/${overview.article_doi}`"
+            target="_blank"
+          >
+            <button class="btn btn-primary">Read the article</button>
+          </a>
+        </div>
+        
+        <!-- Case 2: DOI is 'none' and journal_url exists - show Read the Article button with journal_url -->
+        <div v-else-if="(!overview.article_doi || overview.article_doi === 'none') && overview.journal_url" class="mb-2">
+          <a
+            :href="overview.journal_url"
+            target="_blank"
+          >
+            <button class="btn btn-primary">Read the article</button>
+          </a>
+        </div>
+        
+        <!-- DOI information shown below button -->
+        <div>
+          <span class="fw-bold">Article DOI:</span>
+          {{ overview.article_doi || 'None' }}
+        </div>
       </div>
 
       <div v-if="overview.project_doi">
-        <span class="fw-bold">Project DOI:</span>
-        {{ overview.project_doi }},
-        <a :href="`http://dx.doi.org/${overview.project_doi}`">
-          http://dx.doi.org/{{ overview.project_doi }}
+        <span class="fw-bold">Project DOI: </span>
+        <a 
+          :href="`http://dx.doi.org/${overview.project_doi}`"
+          target="_blank"
+        >
+          {{ overview.project_doi }}
         </a>
       </div>
     </div>
@@ -260,5 +300,13 @@ function popDownloadAlert() {
 }
 .imgPlaceholderOverview {
   height: 200px;
+}
+.thumbnil-block img {
+  display: block;
+  max-width: 100%;
+  max-height: 300px;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 </style>

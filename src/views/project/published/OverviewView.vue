@@ -9,13 +9,15 @@ import ProjectSummary from '@/views/project/overview/ProjectSummary.vue'
 import ProjectSummarySidePanel from '@/views/project/overview/ProjectSummarySidePanel.vue'
 import ProjectViews from '@/views/project/overview/ProjectViews.vue'
 import ProjectTaxa from '@/views/project/overview/ProjectTaxa.vue'
+import { logView, HIT_TYPES } from '@/lib/analytics.js'
 
 const route = useRoute()
 const projectStore = usePublicProjectDetailsStore()
 const projectId = route.params.id
 
 onMounted(() => {
-  projectStore.fetchProject(projectId)
+  // Track project overview view
+  logView({ project_id: projectId, hit_type: HIT_TYPES.PROJECT })
 })
 </script>
 <template>
@@ -32,7 +34,10 @@ onMounted(() => {
     <div class="pb-5 border-bottom">
       <div class="row">
         <div class="col border-end">
-          <ProjectSummary :overview="projectStore.overview"></ProjectSummary>
+          <ProjectSummary
+            :overview="projectStore.overview"
+            :projectId="projectId"
+          ></ProjectSummary>
         </div>
         <div class="col-3">
           <ProjectSummarySidePanel

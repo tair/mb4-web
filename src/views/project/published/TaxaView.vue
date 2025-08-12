@@ -4,9 +4,11 @@ import { useRoute } from 'vue-router'
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
 import Tooltip from '@/components/main/Tooltip.vue'
+import { logView, HIT_TYPES } from '@/lib/analytics.js'
 
 const route = useRoute()
 const projectId = route.params.id
+const taxaId = route.params.taxaId
 const projectStore = usePublicProjectDetailsStore()
 
 const filterByOptions = computed(() => {
@@ -98,6 +100,8 @@ function getTaxonNameDisplay(taxonName, lookupFailed, pbdbVerified) {
 
 onMounted(() => {
   projectStore.fetchProject(projectId)
+  // Track taxa page view
+  logView({ project_id: projectId, hit_type: HIT_TYPES.TAXA })
 })
 </script>
 

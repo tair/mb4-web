@@ -14,6 +14,7 @@
     "@fortawesome/fontawesome-free": "^6.6.0",
     "@popperjs/core": "^2.11.8",
     "@types/bootstrap": "^5.2.10",
+    "@types/three": "^0.178.1",
     "axios": "^1.7.7",
     "bootstrap": "^5.3.3",
     "cornerstone-core": "^2.6.1",
@@ -28,12 +29,14 @@
     "rollup": "^4.24.3",
     "sass": "^1.80.5",
     "spam-detection": "^1.0.3",
+    "three": "^0.178.0",
     "tiff.js": "^1.0.0",
     "tippy.js": "^6.3.7",
     "typescript": "^4.9.5",
     "vue": "^3.2.47",
     "vue-router": "^4.4.5",
-    "vue-tippy": "^6.5.0"
+    "vue-tippy": "^6.5.0",
+    "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
     "@types/d3": "^7.4.3",

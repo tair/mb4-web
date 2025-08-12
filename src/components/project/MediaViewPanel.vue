@@ -9,7 +9,7 @@
       @wheel="onWheel"
     >
       <img
-        v-if="isImageFormat(imgSrc)"
+        v-if="actualFormat === 'standard' || isImageFormat(imgSrc)"
         :src="imgSrc"
         :style="{
           transform: `scale(${zoom}) translate(${offset.x}px, ${offset.y}px) rotate(${rotation}deg)`,
@@ -19,7 +19,7 @@
         @load="adjustZoomToFit"
       />
       <canvas
-        v-else
+        v-else-if="actualFormat === 'tiff' || actualFormat === 'dicom'"
         ref="canvas"
         :style="{
           transform: `scale(${zoom}) translate(${offset.x}px, ${offset.y}px) rotate(${rotation}deg)`,
@@ -118,6 +118,7 @@ export default {
       isDragging: false,
       startDragOffset: { x: 0, y: 0 },
       isThumbnailVisible: false,
+      actualFormat: null, // NEW: track the actual format
     }
   },
   watch: {
@@ -125,18 +126,54 @@ export default {
   },
   methods: {
     isImageFormat(src) {
-      return /\.(jpe?g|png|gif|bmp|webp)$/i.test(src)
+      // Check both extension and common image patterns
+      return /\.(jpe?g|png|gif|bmp|webp|tiff?)$/i.test(src)
     },
     isDicomFormat(src) {
       return /\.dcm$/i.test(src)
     },
-    renderImage() {
-      if (!this.isImageFormat(this.imgSrc)) {
-        if (this.isDicomFormat(this.imgSrc)) {
-          // Handle DICOM files
-          this.renderDicomImage()
-        } else {
+    // NEW: Check if file is actually a TIFF by examining the first few bytes
+    async isActuallyTiff(url) {
+      try {
+        const response = await fetch(url)
+        const buffer = await response.arrayBuffer()
+        const view = new Uint8Array(buffer)
+
+        // TIFF magic numbers: "II" (0x4949) for little-endian or "MM" (0x4D4D) for big-endian
+        if (view.length >= 4) {
+          const magic = (view[0] << 8) | view[1]
+          return magic === 0x4949 || magic === 0x4d4d
+        }
+        return false
+      } catch (error) {
+        console.warn('Could not check TIFF magic number:', error)
+        return false
+      }
+    },
+    // UPDATED: Better format detection
+    async renderImage() {
+      // First, check if it's a standard image format by extension
+      if (this.isImageFormat(this.imgSrc)) {
+        this.actualFormat = 'standard'
+        return
+      }
+
+      if (this.isDicomFormat(this.imgSrc)) {
+        this.actualFormat = 'dicom'
+        this.renderDicomImage()
+      } else {
+        // Check if it's actually a TIFF file
+        const isTiff = await this.isActuallyTiff(this.imgSrc)
+        if (isTiff) {
+          this.actualFormat = 'tiff'
           this.renderTiffImage()
+        } else {
+          // Fallback: treat as regular image even if extension is wrong
+          console.warn(
+            'File extension suggests TIFF but content is not TIFF. Treating as regular image.'
+          )
+          this.actualFormat = 'standard'
+          // The image will render normally via the img tag
         }
       }
     },
@@ -171,6 +208,7 @@ export default {
           console.error('Error loading DICOM image:', error)
         })
     },
+    // UPDATED: Better error handling
     renderTiffImage() {
       const canvas = this.$refs.canvas
       const ctx = canvas.getContext('2d')
@@ -191,6 +229,10 @@ export default {
         })
         .catch((error) => {
           console.error('Error loading TIFF image:', error)
+          // Fallback: try to render as regular image
+          console.warn(
+            'TIFF loading failed, attempting to render as regular image'
+          )
         })
     },
     adjustZoomToFit() {

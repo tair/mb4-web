@@ -199,6 +199,10 @@ export class MatrixObject {
     }
   }
 
+  getParameters(): { [key: string]: any } {
+    return this.parameters
+  }
+
   getParameter(parameter: string): any {
     return this.parameters[parameter]
   }
@@ -216,6 +220,10 @@ export class MatrixObject {
       name: name,
       content: content,
     })
+  }
+
+  getBlocks(): Block[] {
+    return this.blocks
   }
 
   private generateNameWithPostfix(

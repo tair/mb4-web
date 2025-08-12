@@ -3,12 +3,16 @@ import { ref } from 'vue'
 import MediaCardComp from './MediaCardComp.vue'
 import CustomModal from './CustomModal.vue'
 import MediaViewPanel from './MediaViewPanel.vue'
-import { buildImageProps } from '@/utils/util.js'
+import { buildMediaUrl } from '@/utils/fileUtils.js'
 
 const props = defineProps({
   media_file: {
     type: Object,
     required: true,
+  },
+  project_id: {
+    type: [Number, String],
+    required: false,
   },
 })
 
@@ -21,9 +25,14 @@ const showZoomModal = ref(false)
       :media_file="media_file"
       :full_view="true"
       :show_copy_right="false"
+      :project_id="project_id"
     ></MediaCardComp>
   </a>
   <CustomModal :isVisible="showZoomModal" @close="showZoomModal = false">
-    <MediaViewPanel :imgSrc="buildImageProps(media_file.media['original'])" />
+    <MediaViewPanel
+      :imgSrc="
+        buildMediaUrl(props.project_id, props.media_file?.media_id, 'large')
+      "
+    />
   </CustomModal>
 </template>
