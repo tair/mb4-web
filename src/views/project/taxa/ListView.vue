@@ -231,29 +231,9 @@ function validateSelectedTaxaAtPbdb() {
           title="Validate taxa at the PBDB"
         >
           <i class="fa-solid fa-check-circle"></i>
-          <span> Validate taxa</span>
+          <span> Validate taxa at the PBDB</span>
         </button>
       </RouterLink>
-      <div class="btn-group">
-        <button
-          type="button"
-          class="btn btn-m btn-outline-primary dropdown-toggle"
-          data-bs-toggle="dropdown"
-        >
-          <i class="fa fa-file-arrow-up"></i>
-          <span> Import Media </span>
-        </button>
-        <div class="dropdown-menu">
-          <RouterLink :to="`/myprojects/${projectId}/media/import/eol`">
-            <button type="button" class="dropdown-item">Import from EOL</button>
-          </RouterLink>
-          <RouterLink :to="`/myprojects/${projectId}/media/import/idigbio`">
-            <button type="button" class="dropdown-item">
-              Import from iDigBio
-            </button>
-          </RouterLink>
-        </div>
-      </div>
     </div>
     <div v-if="taxaStore.taxa?.length">
       <div class="mb-3">
