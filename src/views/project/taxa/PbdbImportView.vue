@@ -49,7 +49,7 @@ const filteredTaxa = computed(() => {
 
 const isLoaded = computed(() => taxaStore.isLoaded)
 const hasNoResult = computed(() =>
-  Array.from(validationResults.value.values()).some((v) => v.pbdb_pulled_on && !v.pbdb_taxon_id)
+  Array.from(validationResults.value.values()).some((v) => v.pbdb_pulled_on && (v.pbdb_taxon_id === 0 || v.pbdb_taxon_id === '0'))
 )
 const selectedTaxaSize = ref(0)
 const validationResults = ref<Map<number, PbdbValidationInfo>>(
@@ -116,7 +116,9 @@ function selectNoResult() {
   unselectAll()
   const noResultTaxa = filteredTaxa.value.filter(taxon => {
     const result = validationResults.value.get(taxon.taxon_id)
-    return result && result.pbdb_pulled_on && !result.pbdb_taxon_id
+    // Only select taxa with absolutely no PBDB results (pbdb_taxon_id = 0)
+    // NOT taxa that have results but are not imported (pbdb_taxon_id = null)
+    return result && result.pbdb_pulled_on && (result.pbdb_taxon_id === 0 || result.pbdb_taxon_id === '0')
   })
   
   const maxToSelect = Math.min(noResultTaxa.length, maxSelectedTaxa)
