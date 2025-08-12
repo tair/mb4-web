@@ -12,10 +12,10 @@ const projectId = route.params.id
 const isLoaded = ref(false)
 const isValidating = ref(false)
 
-const canProceed = computed(() => {
-  // Allow proceeding even with no media or incomplete media (with warning)
-  return publishStore.validations.citations.isValid
-})
+// const canProceed = computed(() => {
+//   // Allow proceeding even with no media or incomplete media (with warning)
+//   return publishStore.validations.citations.isValid
+// })
 
 onMounted(async () => {
   // Check if we can access this step
@@ -165,7 +165,7 @@ function editMedia(mediaId) {
         <button
           @click="proceedToPreferences"
           class="large orange morphobutton"
-          :disabled="!canProceed || isValidating"
+          :disabled="isValidating"
         >
           Continue to Preferences &raquo;
         </button>

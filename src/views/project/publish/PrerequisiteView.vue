@@ -19,6 +19,7 @@ onMounted(async () => {
 
   // Auto-validate on load
   const result = await publishStore.validateCitations(projectId)
+  console.log(result)
 
   // Set message from backend or use default
   if (result.errors && result.errors.length > 0) {
@@ -26,6 +27,10 @@ onMounted(async () => {
   }
 
   isLoaded.value = true
+
+  if (result.isValid) {
+    router.push(`/myprojects/${projectId}/publish/media-validation`)
+  }
 })
 
 function goToProjectInfo() {

@@ -11,6 +11,8 @@ const projectId = route.params.id
 
 const isLoaded = ref(false)
 const isPublishing = ref(false)
+const errorMessage = ref(null)
+const successMessage = ref(null)
 
 // Mock data for unpublished items (same as preferences)
 const unpublishedItems = reactive({
@@ -43,9 +45,9 @@ onMounted(async () => {
   isLoaded.value = true
 })
 
-const canPublish = computed(() => {
-  return publishStore.canPublish
-})
+// const canPublish = computed(() => {
+//   return publishStore.canPublish
+// })
 
 const hasUnpublishedItems = computed(() => {
   return (
@@ -77,10 +79,9 @@ function confirmAndPublish() {
 }
 
 async function publishProject() {
-  if (!canPublish.value) {
-    return
-  }
-
+  // Clear previous messages
+  errorMessage.value = null
+  successMessage.value = null
   isPublishing.value = true
 
   try {
@@ -88,16 +89,26 @@ async function publishProject() {
     const result = await publishStore.publishProject(projectId)
 
     if (result.success) {
-      // Navigate to confirmation page
-      router.push(`/myprojects/${projectId}/publish/confirmation`)
+      successMessage.value = 'Project published successfully!'
+      // Navigate to confirmation page after a brief delay
+      setTimeout(() => {
+        router.push(`/myprojects/${projectId}/publish/confirmation`)
+      }, 1500)
     } else {
-      alert('Publishing failed: ' + (result.error || 'Unknown error'))
+      errorMessage.value = result.message || 'Publishing failed: Unknown error'
+      // Small delay to prevent DOM race condition
+      setTimeout(() => {
+        isPublishing.value = false
+      }, 100)
     }
   } catch (error) {
     console.error('Error publishing project:', error)
-    alert('An error occurred during publishing. Please try again.')
-  } finally {
-    isPublishing.value = false
+    errorMessage.value =
+      'An error occurred during publishing. Please try again.'
+    // Small delay to prevent DOM race condition
+    setTimeout(() => {
+      isPublishing.value = false
+    }, 100)
   }
 }
 </script>
@@ -105,12 +116,24 @@ async function publishProject() {
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
     <div id="formArea" class="publish-final">
+      <!-- Error Message -->
+      <div v-if="errorMessage" class="alert alert-danger" role="alert">
+        <i class="fa-solid fa-exclamation-triangle me-2"></i>
+        {{ errorMessage }}
+      </div>
+
+      <!-- Success Message -->
+      <div v-if="successMessage" class="alert alert-success" role="alert">
+        <i class="fa-solid fa-check-circle me-2"></i>
+        {{ successMessage }}
+      </div>
+
       <!-- Primary Action Buttons (centered) -->
       <p style="text-align: center">
         <button
           @click="confirmAndPublish"
           class="large orange morphobutton"
-          :disabled="!canPublish || isPublishing"
+          :disabled="isPublishing"
         >
           <i v-if="isPublishing" class="fa-solid fa-spinner fa-spin"></i>
           <i v-else class="fa-solid fa-rocket"></i>
@@ -261,7 +284,7 @@ async function publishProject() {
       </div>
 
       <!-- Publishing Status -->
-      <div v-if="isPublishing" class="publishing-status mt-3">
+      <div v-if="isPublishing && !errorMessage" class="publishing-status mt-3">
         <div class="alert alert-info">
           <i class="fa-solid fa-clock"></i>
           <strong>Publishing in progress...</strong>
@@ -345,5 +368,28 @@ async function publishProject() {
 
 .mb-0 {
   margin-bottom: 0;
+}
+
+.alert {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+}
+
+.alert-danger {
+  color: #721c24;
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+}
+
+.alert-success {
+  color: #155724;
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+}
+
+.me-2 {
+  margin-right: 0.5rem;
 }
 </style>

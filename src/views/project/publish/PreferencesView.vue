@@ -114,7 +114,7 @@ async function savePreferences() {
     isSaving.value = true
     // console.log(preferences)
     const result = await publishStore.savePreferences(projectId, preferences)
-
+    // console.log(result)
     if (result.success) {
       // Proceed to final step
       router.push(`/myprojects/${projectId}/publish/final`)
@@ -188,45 +188,6 @@ function updateCopyrightPreference(preference) {
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
     <div id="formArea" class="publish-preferences">
-      <!-- Warning for no published media -->
-      <div
-        v-if="!publishStore.validations.media.hasMedia"
-        class="media-warning-box"
-      >
-        <div class="formError">
-          <b>Warning:</b> Your project has no published media.
-        </div>
-        <br />
-        <p>
-          MorphoBank requires at least one image per project to help communicate
-          science. If you would like to pull an image from the Encyclopedia of
-          Life
-          <a href="#" class="text-primary">click here</a> or upload one from
-          your desktop in the
-          <a
-            href="#"
-            @click="router.push(`/myprojects/${projectId}/media`)"
-            class="text-primary"
-            >media tab</a
-          >. Be sure to add the
-          <a
-            href="#"
-            @click="router.push(`/myprojects/${projectId}/taxa`)"
-            class="text-primary"
-            >taxon</a
-          >
-          and
-          <a
-            href="#"
-            @click="router.push(`/myprojects/${projectId}/specimens`)"
-            class="text-primary"
-            >specimen</a
-          >
-          information first. If you are completely confused -
-          <a href="#" class="text-primary">Ask Us</a> and we will help you.
-        </p>
-      </div>
-
       <p>
         Before publishing your project, please confirm your publishing
         preferences and click the "Save Publishing Preferences" button.

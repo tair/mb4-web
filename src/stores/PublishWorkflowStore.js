@@ -355,13 +355,13 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
               ? preferences.nsfFunded
                 ? 1
                 : 0
-              : null,
+              : 0,
           extinct_taxa_identified:
             preferences.extinctTaxaIdentified !== null
               ? preferences.extinctTaxaIdentified
                 ? 1
                 : 0
-              : null,
+              : 0,
           publish_character_comments: preferences.publishCharacterComments
             ? 1
             : 0,
@@ -374,6 +374,8 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
           publish_inactive_members: preferences.publishInactiveMembers ? 1 : 0,
           no_personal_identifiable_info: preferences.noPersonalInfo ? 1 : 0,
         }
+
+        console.log('Sending preferences payload:', backendData)
 
         const response = await fetch(
           `${
@@ -404,9 +406,19 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         }
       } catch (error) {
         console.error('Save preferences error:', error)
-        // Allow fallback for demo
+
+        // Check if this is a real API server error vs network/unavailable service
+        if (error.message.includes('500') || error.message.includes('400')) {
+          // Real API error - don't use fallback, show the error
+          return { success: false, message: error.message }
+        }
+
+        // Network error or service unavailable - use demo fallback
         this.preferences = { ...this.preferences, ...preferences }
-        return { success: true, message: 'Preferences saved (demo mode)' }
+        return {
+          success: true,
+          message: 'Preferences saved (demo mode - API unavailable)',
+        }
       } finally {
         this.isLoading = false
       }
@@ -420,7 +432,7 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         if (finalData) {
           this.finalData = { ...this.finalData, ...finalData }
         }
-
+        console.log(this.finalData)
         const response = await fetch(
           `${
             import.meta.env.VITE_API_URL
@@ -439,6 +451,7 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         }
 
         const data = await response.json()
+        console.log(data)
 
         this.publicationResult = {
           success: true,
@@ -456,17 +469,12 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         this.currentStep = 'confirmation'
       } catch (error) {
         console.error('Publishing error:', error)
-        // Allow fallback for demo - still proceed to confirmation
+
+        // Set error result
         this.publicationResult = {
-          success: true, // Allow demo to continue
-          projectId: `P${Math.floor(Math.random() * 10000) + 1000}`,
-          publicUrl: `https://morphobank.org/project/${
-            Math.floor(Math.random() * 1000) + 100
-          }`,
-          doi: `10.7934/P${Math.floor(Math.random() * 1000) + 100}`,
-          message: 'Project published successfully (demo mode)',
+          success: false,
+          message: error.message || 'Publishing failed',
         }
-        this.currentStep = 'confirmation'
       } finally {
         this.isPublishing = false
       }
