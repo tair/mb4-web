@@ -21,6 +21,13 @@ async function handleAdd() {
   if (added) {
     const element = document.getElementById('addMediaModal')
     const modal = Modal.getInstance(element)
+
+    // Remove focus from any focused element inside the modal before hiding
+    const focusedElement = element.querySelector(':focus') as HTMLElement
+    if (focusedElement) {
+      focusedElement.blur()
+    }
+
     modal.hide()
     reset()
   } else {
