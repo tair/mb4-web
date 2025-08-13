@@ -7,6 +7,7 @@ import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useProjectsStore } from '@/stores/ProjectsStore'
 import { schema } from '@/views/project/media/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import '@/assets/css/form.css'
@@ -19,7 +20,9 @@ const mediaStore = useMediaStore()
 const specimensStore = useSpecimensStore()
 const taxaStore = useTaxaStore()
 const mediaViewsStore = useMediaViewsStore()
+const projectsStore = useProjectsStore()
 const validationErrors = ref([])
+const forceRerender = ref(0)
 const isLoaded = computed(
   () =>
     projectUsersStore.isLoaded &&
@@ -58,13 +61,49 @@ async function createMedia(event) {
   // Clear any previous validation errors
   validationErrors.value = []
   
-  const success = await mediaStore.create(projectId, formData)
-  if (!success) {
-    alert(response.data?.message || 'Failed to create media')
+  // Check if this should be set as project exemplar
+  const exemplarValue = formData.get('is_exemplar')
+  const isExemplar = exemplarValue === 'on' || exemplarValue === '1' || exemplarValue === 1 || exemplarValue === true
+  
+  // Remove the is_exemplar field from formData as the backend doesn't expect it
+  formData.delete('is_exemplar')
+  
+  const result = await mediaStore.create(projectId, formData)
+  
+  if (!result) {
+    alert('Failed to create media')
     return
   }
 
+  // If the media was created successfully and should be set as exemplar
+  if (isExemplar && result && result.media_id) {
+    try {
+      // Set this media as the project exemplar
+      const success = await projectsStore.setExemplarMedia(projectId, result.media_id)
+      if (!success) {
+        alert('Media created successfully, but failed to set as project exemplar')
+      }
+    } catch (error) {
+      console.error('Failed to set exemplar media:', error)
+      alert('Media created successfully, but failed to set as project exemplar')
+    }
+  }
+
   window.location.href = `/myprojects/${projectId}/media`
+}
+
+// Handle when a new specimen is created
+function onSpecimenCreated() {
+  // Refresh specimens store to get the new specimen
+  specimensStore.fetchSpecimens(projectId)
+  // Force re-render of form components
+  forceRerender.value += 1
+}
+
+// Handle when a new view is created  
+function onViewCreated() {
+  // Force re-render of form components
+  forceRerender.value += 1
 }
 
 onMounted(() => {
@@ -96,17 +135,19 @@ onMounted(() => {
           </ul>
         </div>
         
-        <template v-for="(definition, index) in schema" :key="index">
+        <template v-for="(definition, index) in schema" :key="`${index}-${forceRerender}`">
           <div v-if="!definition.existed" class="form-group">
             <label :for="index" class="form-label">
               {{ definition.label }}
               <span v-if="definition.required" class="required">Required</span>
             </label>
             <component
-              :key="index"
+              :key="`${index}-${forceRerender}`"
               :is="definition.view"
               :name="index"
               v-bind="definition.args"
+              @specimen-created="onSpecimenCreated"
+              @view-created="onViewCreated"
             >
             </component>
           </div>

@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useMediaStore } from '@/stores/MediaStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
@@ -12,6 +12,7 @@ import { buildMediaUrl } from '@/utils/fileUtils.js'
 import CurationBatchDialog from './CurationBatchDialog.vue'
 
 const route = useRoute()
+const router = useRouter()
 const projectId = route.params.id
 
 const mediaStore = useMediaStore()
@@ -189,6 +190,17 @@ watch(
       mediaStore.fetchMedia(projectId)
     }
   }
+)
+
+// Redirect to media list if there's no media to curate
+watch(
+  [isLoaded, filteredMedia],
+  ([loaded, media]) => {
+    if (loaded && media.length === 0) {
+      router.push(`/myprojects/${projectId}/media`)
+    }
+  },
+  { immediate: true }
 )
 </script>
 <template>

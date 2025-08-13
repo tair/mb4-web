@@ -2,8 +2,10 @@ import Checkbox from '@/components/project/Checkbox.vue'
 import DateText from '@/components/project/DateText.vue'
 import FileInput from '@/components/project/FileInput.vue'
 import MediaViewSelect from '@/views/project/common/MediaViewSelect.vue'
+import EnhancedMediaViewSelect from '@/views/project/common/EnhancedMediaViewSelect.vue'
 import SelectInput from '@/components/project/SelectInput.vue'
 import SpecimenSearchInput from '@/views/project/common/SpecimenSearchInput.vue'
+import EnhancedSpecimenSearchInput from '@/views/project/common/EnhancedSpecimenSearchInput.vue'
 import TextArea from '@/components/project/TextArea.vue'
 import TextContent from '@/components/project/TextContent.vue'
 import { getUserName } from '@/views/project/utils'
@@ -28,13 +30,13 @@ export const schema = {
   },
   specimen_id: {
     label: 'Specimen',
-    view: SpecimenSearchInput,
+    view: EnhancedSpecimenSearchInput,
     type: Number,
     required: true,
   },
   view_id: {
     label: 'View',
-    view: MediaViewSelect,
+    view: EnhancedMediaViewSelect,
     type: Number,
     required: true,
   },
@@ -109,6 +111,10 @@ export const schema = {
         'Only the owner may edit this media': 1,
       },
     },
+  },
+  is_exemplar: {
+    label: 'Make this image the project exemplar',
+    view: Checkbox,
   },
   user_id: {
     label: 'Media loaded by',
