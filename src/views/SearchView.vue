@@ -22,7 +22,7 @@ const charactersFilter = ref('all')
 const taxaFilter = ref('all')
 const matricesFilter = ref('all')
 const referencesFilter = ref('all')
-const membersFilter = ref('all')
+const authorsFilter = ref('all')
 
 onMounted(() => {
   doSearch(route.query.q || '')
@@ -129,10 +129,10 @@ const filteredMatrices = computed(() =>
 const filteredTaxa = computed(() =>
   filterByPublished(searchResultsStore.results.taxa || [], taxaFilter.value)
 )
-const filteredMembers = computed(() =>
+const filteredAuthors = computed(() =>
   filterByPublished(
     searchResultsStore.results.members || [],
-    membersFilter.value
+    authorsFilter.value
   )
 )
 
@@ -152,7 +152,7 @@ const searchingReferences = computed(
 )
 const searchingMatrices = computed(() => searchResultsStore.searching?.matrices)
 const searchingTaxa = computed(() => searchResultsStore.searching?.taxa)
-const searchingMembers = computed(() => searchResultsStore.searching?.members)
+const searchingAuthors = computed(() => searchResultsStore.searching?.members)
 
 // Helper to format authors array as a string
 function formatAuthors(authors) {
@@ -199,8 +199,10 @@ function getProjectUrl(projectId, path = 'overview', isPublished = true) {
     <div class="mb-3">
       <template v-if="route.query.q">
         You searched for <i>{{ route.query.q }}</i> in all
-        <b v-if="!authStore.isUserAdministrator">published</b>
-        <b v-else>published and unpublished</b>
+        <b v-if="authStore.isUserAdministrator || authStore.isUserCurator"
+          >published and unpublished</b
+        >
+        <b v-else>published</b>
         projects.
       </template>
       <template v-else> Please enter a search term to see results. </template>
@@ -238,7 +240,7 @@ function getProjectUrl(projectId, path = 'overview', isPublished = true) {
               rel="noopener noreferrer"
             >
               <span class="text-mb fw-bold"
-                >M{{ project.project_id }}- {{ project.name }}</span
+                >P{{ project.project_id }}- {{ project.name }}</span
               >
               <span
                 v-if="!(project.published == 1 || project.published === true)"
@@ -271,60 +273,111 @@ function getProjectUrl(projectId, path = 'overview', isPublished = true) {
       </template>
     </div>
 
-    <!-- Project Members Section -->
+    <!-- Project Authors Section -->
     <div class="bg-light p-2 mb-2">
-      <b>Project Members ({{ filteredMembers.length }})</b>
+      <b>Project Authors ({{ filteredAuthors.length }})</b>
       <ToggleLinks
         v-if="authStore.isUserAdministrator || authStore.isUserCurator"
-        v-model="membersFilter"
+        v-model="authorsFilter"
       />
     </div>
     <div class="border p-2 mb-3" style="max-height: 400px; overflow-y: auto">
-      <template v-if="searchingMembers">
-        <i class="fas fa-spinner fa-spin"></i> Searching members...
+      <template v-if="searchingAuthors">
+        <i class="fas fa-spinner fa-spin"></i> Searching authors...
       </template>
       <template v-else>
-        <div v-if="!filteredMembers.length">No members were found</div>
+        <div v-if="!filteredAuthors.length">No authors were found</div>
         <div v-else>
           <div
-            v-for="member in filteredMembers"
-            :key="member.user_id"
-            class="mb-3 pb-2 border-bottom"
+            v-for="(author, authorIndex) in filteredAuthors"
+            :key="author.user_id"
+            class="mb-2"
           >
-            <div class="fw-bold">
-              {{ member.fname }} {{ member.lname }}
-              <span class="text-muted small">({{ member.email }})</span>
-            </div>
-            <div class="mt-1">
-              <div
-                v-for="project in member.projects"
-                :key="`${member.user_id}-${project.project_id}`"
-                class="text-muted small mb-1"
-              >
-                <a
-                  :href="
-                    getProjectUrl(
-                      project.project_id,
-                      'members',
-                      project.published == 1 || project.published === true
-                    )
-                  "
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="text-decoration-none"
+            <div class="accordion" :id="`authorAccordion${authorIndex}`">
+              <div class="accordion-item">
+                <h2
+                  class="accordion-header"
+                  :id="`authorHeading${authorIndex}`"
                 >
-                  <span class="text-mb fw-bold">P{{ project.project_id }}</span>
-                  - {{ truncateProjectName(project.project_name, 40) }}
-                </a>
-                <span
-                  v-if="!(project.published == 1 || project.published === true)"
-                  class="badge bg-warning text-dark ms-1"
-                  style="font-size: 0.6rem"
-                  >UNPUBLISHED</span
+                  <button
+                    class="accordion-button collapsed"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    :data-bs-target="`#authorCollapse${authorIndex}`"
+                    aria-expanded="false"
+                    :aria-controls="`authorCollapse${authorIndex}`"
+                  >
+                    <div class="text-mb fw-bold">
+                      {{ author.fname }} {{ author.lname }}
+                    </div>
+                    <div style="width: 5px"></div>
+                    <small>
+                      ({{ author.projects?.length || 0 }} projects)
+                    </small>
+                  </button>
+                </h2>
+                <div
+                  :id="`authorCollapse${authorIndex}`"
+                  class="accordion-collapse collapse"
+                  :aria-labelledby="`authorHeading${authorIndex}`"
                 >
-                <span class="text-muted ms-1"
-                  >({{ project.membership_type }})</span
-                >
+                  <div class="accordion-body p-2">
+                    <div
+                      v-for="project in author.projects"
+                      :key="`${author.user_id}-${project.project_id}`"
+                      class="mb-2"
+                    >
+                      <a
+                        :href="
+                          getProjectUrl(
+                            project.project_id,
+                            'overview',
+                            project.published == 1 || project.published === true
+                          )
+                        "
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <span class="text-mb fw-bold"
+                          >P{{ project.project_id }}-
+                          {{
+                            truncateProjectName(project.project_name, 40)
+                          }}</span
+                        >
+                        <span
+                          v-if="
+                            !(
+                              project.published == 1 ||
+                              project.published === true
+                            )
+                          "
+                          class="badge bg-warning text-dark ms-2"
+                          >UNPUBLISHED</span
+                        >
+                      </a>
+                      <template
+                        v-if="
+                          project.article_authors ||
+                          project.journal_year ||
+                          project.journal_title
+                        "
+                      >
+                        <br />
+                        <span class="text-muted small">
+                          <template v-if="project.article_authors">{{
+                            project.article_authors
+                          }}</template>
+                          <template v-if="project.journal_year">
+                            ({{ project.journal_year }})</template
+                          >
+                          <template v-if="project.journal_title"
+                            >. {{ project.journal_title }}</template
+                          >
+                        </span>
+                      </template>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

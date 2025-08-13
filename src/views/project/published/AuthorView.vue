@@ -92,30 +92,42 @@ let prev_char = ''
               class="accordion-collapse collapse"
               :aria-labelledby="`heading${idx++}`"
             >
-              <div class="accordion-body p-0">
-                <ul
-                  class="list-group list-group-flush"
+              <div class="accordion-body p-2">
+                <div
                   v-for="(project, n) in projectsStore.authors['authors'][n]"
                   :key="n"
+                  class="mb-2"
                 >
-                  <li
-                    class="list-group-item py-2"
-                    style="background-color: #f8f8f8"
+                  <a
+                    :href="`/project/${project.id}/overview`"
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
-                    <div class="row">
-                      <div class="col-2">Project {{ project.id }}:</div>
-
-                      <div class="col">
-                        <RouterLink
-                          :to="`/project/${project.id}/overview`"
-                          class="nav-link p-0"
-                        >
-                          <div v-html="project.name"></div>
-                        </RouterLink>
-                      </div>
-                    </div>
-                  </li>
-                </ul>
+                    <span class="text-mb fw-bold"
+                      >P{{ project.id }}- {{ project.name }}</span
+                    >
+                  </a>
+                  <template
+                    v-if="
+                      project.article_authors ||
+                      project.journal_year ||
+                      project.journal_title
+                    "
+                  >
+                    <br />
+                    <span class="text-muted small">
+                      <template v-if="project.article_authors">{{
+                        project.article_authors
+                      }}</template>
+                      <template v-if="project.journal_year">
+                        ({{ project.journal_year }})</template
+                      >
+                      <template v-if="project.journal_title"
+                        >. {{ project.journal_title }}</template
+                      >
+                    </span>
+                  </template>
+                </div>
               </div>
             </div>
           </div>
