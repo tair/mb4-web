@@ -57,10 +57,10 @@ function getItem(specimenId) {
 <template>
   <SearchSelectInput
     :name="name"
-    :initialValue="value"
+    :initial-value="value"
     :disabled="disabled"
-    :getText="getText"
-    :getId="getSpecimenNumber"
+    :get-text="getText"
+    :get-id="getSpecimenNumber"
     :getItem="getItem"
     :search="searchSpecimen"
   >

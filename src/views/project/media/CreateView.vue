@@ -92,8 +92,6 @@ async function createMedia(event) {
   window.location.href = `/myprojects/${projectId}/media`
 }
 
-
-
 onMounted(() => {
   if (!mediaStore.isLoaded) {
     mediaStore.fetchMedia(projectId)
