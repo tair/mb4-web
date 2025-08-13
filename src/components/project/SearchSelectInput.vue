@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 const props = defineProps<{
   // The name of the input field.
   name?: string
@@ -26,9 +26,41 @@ const props = defineProps<{
 const emit = defineEmits(['select', 'updateTextboxString'])
 const items = ref([])
 const item = computed(() => props.getItem(props.initialValue))
-const text = ref(props.getText(item.value))
+
+// Initialize text as empty, will be updated by watcher
+const text = ref('')
 const currentValue = ref(props.initialValue)
 const isSearching = ref(false)
+
+// Watch for changes to the computed item and update text
+watch(item, (newItem: any) => {
+  if (newItem) {
+    try {
+      const newText = props.getText(newItem)
+      text.value = newText
+    } catch (error) {
+      text.value = `Item ${props.getId ? props.getId(newItem) : 'unknown'}`
+    }
+  } else {
+    text.value = ''
+  }
+}, { immediate: true })
+
+// Watch for changes to initialValue prop
+watch(() => props.initialValue, (newValue: number | undefined, oldValue: number | undefined) => {
+  if (newValue !== oldValue) {
+    currentValue.value = newValue
+    // Force re-evaluation of item
+    const newItem = props.getItem(newValue)
+    if (newItem) {
+      text.value = props.getText(newItem)
+    } else {
+      text.value = ''
+    }
+  }
+})
+
+
 
 async function handleInput(event: any) {
   const text = event.target.value
@@ -68,11 +100,17 @@ async function handleFocus(event: any) {
 
 function handleBlur() {
   if (items.value.length) {
-    const item = props.getItem(currentValue.value)
-    const itemText = props.getText(item)
-    text.value = itemText
     items.value = []
     isSearching.value = false
+  }
+  // Restore the current value's text
+  if (currentValue.value) {
+    const item = props.getItem(currentValue.value)
+    if (item) {
+      text.value = props.getText(item)
+    }
+  } else {
+    text.value = ''
   }
 }
 </script>
@@ -94,6 +132,7 @@ function handleBlur() {
       :disabled="disabled"
       class="form-control border"
       type="search"
+
     />
     <ul v-if="items.length > 0" class="results">
       <template v-for="item in items">

@@ -12,6 +12,7 @@ export const schema = {
   file: {
     label: 'Media file to upload',
     view: FileInput,
+    required: true,
   },
   is_sided: {
     label: 'Which side is represented',
@@ -29,11 +30,13 @@ export const schema = {
     label: 'Specimen',
     view: SpecimenSearchInput,
     type: Number,
+    required: true,
   },
   view_id: {
     label: 'View',
     view: MediaViewSelect,
     type: Number,
+    required: true,
   },
   is_copyrighted: {
     label: 'Is under copyright?',
@@ -106,6 +109,10 @@ export const schema = {
         'Only the owner may edit this media': 1,
       },
     },
+  },
+  is_exemplar: {
+    label: 'Make this image the project exemplar',
+    view: Checkbox,
   },
   user_id: {
     label: 'Media loaded by',

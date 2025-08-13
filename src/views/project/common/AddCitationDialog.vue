@@ -22,6 +22,13 @@ async function createCitation(event) {
     if (created) {
       const element = document.getElementById('addCitationModal')
       const modal = Modal.getInstance(element)
+
+      // Remove focus from any focused element inside the modal before hiding
+      const focusedElement = element.querySelector(':focus')
+      if (focusedElement && 'blur' in focusedElement) {
+        focusedElement.blur()
+      }
+
       modal.hide()
       target.reset()
     }

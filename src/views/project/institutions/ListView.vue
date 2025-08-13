@@ -5,13 +5,13 @@ import { useRoute } from 'vue-router'
 import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import DeleteDialog from '@/views/project/institutions/DeleteDialog.vue'
-import EditDialog from '@/views/project/institutions/EditDialog.vue'
+// import EditDialog from '@/views/project/institutions/EditDialog.vue'
 
 const route = useRoute()
 const projectId = route.params.id
 const projectInstitutionsStore = useProjectInstitutionStore()
 const institutionsToDelete = ref([])
-const institutionToEdit = ref([])
+// const institutionToEdit = ref([])
 
 const isLoaded = computed(() => projectInstitutionsStore.isLoaded)
 
@@ -120,7 +120,7 @@ function refresh() {
                 {{ institution.name }}
               </div>
               <div class="list-group-item-buttons">
-                <button
+                <!-- <button
                   type="button"
                   class="btn btn-sm btn-secondary"
                   data-bs-toggle="modal"
@@ -128,7 +128,7 @@ function refresh() {
                   @click="institutionToEdit = institution"
                 >
                   <i class="fa-regular fa-pen-to-square"></i>
-                </button>
+                </button> -->
                 <button
                   type="button"
                   class="btn btn-sm btn-secondary"
@@ -145,10 +145,10 @@ function refresh() {
       </div>
     </div>
   </LoadingIndicator>
-  <EditDialog
+  <!-- <EditDialog
     :projectId="projectId"
     :institution="institutionToEdit"
-  ></EditDialog>
+  ></EditDialog> -->
   <DeleteDialog
     :institutions="institutionsToDelete"
     :projectId="projectId"

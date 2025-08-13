@@ -148,7 +148,7 @@ export const useTaxaStore = defineStore({
       return this.taxa.filter((taxon) => {
         return searchableFields.some((field) => {
           const value = taxon[field]
-          return value && value.toLowerCase().includes(normalizedSearchTerm)
+          return value && String(value).toLowerCase().includes(normalizedSearchTerm)
         })
       })
     },

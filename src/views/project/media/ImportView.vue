@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import router from '@/router'
 import axios from 'axios'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { TaxaColumns, sortTaxaAlphabetically } from '@/utils/taxa'
@@ -55,6 +55,28 @@ const isLoaded = computed(() => taxaStore.isLoaded)
 const hasNoResult = computed(() =>
   Array.from(importResults.value.values()).some((v) => v.no_results_on > 0)
 )
+const hasUnselectedUnsearchedRecords = computed(() => {
+  return taxaStore.taxa.some((taxon: any) => {
+    const importResult = importResults.value.get(taxon.taxon_id)
+    return !taxon.selected && (!importResult || (!importResult.set_on && !importResult.no_results_on))
+  })
+})
+
+// Pagination
+const selectedPage = ref(1)
+const selectedPageSize = ref(50)
+
+const totalPages = computed(() => {
+  const pageSize = Math.max(1, selectedPageSize.value)
+  return Math.ceil(filteredTaxa.value.length / pageSize)
+})
+
+const paginatedTaxa = computed(() => {
+  const start = (selectedPage.value - 1) * selectedPageSize.value
+  const end = start + selectedPageSize.value
+  return filteredTaxa.value.slice(start, end)
+})
+
 const importResults = ref<Map<number, ImportInfo>>(
   new Map<number, ImportInfo>()
 )
@@ -125,14 +147,66 @@ function selectFirst100() {
 }
 
 function selectNoResult() {
+  // Don't clear existing selections - make this additive
   let total = 0
   for (const taxon of taxaStore.taxa) {
     const taxonId = taxon.taxon_id
     const importResult = importResults.value.get(taxonId)
-    if (importResult.no_results_on > 0) {
-      taxon.selected = true
-      if (++total >= 100) {
-        break
+    // Select taxa that were searched but had no results
+    if (importResult && importResult.no_results_on > 0) {
+      if (!taxon.selected) {
+        taxon.selected = true
+        total++
+        if (total >= 100) break
+      }
+    }
+  }
+  return false
+}
+
+function selectUnsearchedRecords() {
+  // Don't clear existing selections - make this additive
+  let total = 0
+  for (const taxon of taxaStore.taxa) {
+    const taxonId = taxon.taxon_id
+    const importResult = importResults.value.get(taxonId)
+    // Select taxa that have never been searched (no set_on and no no_results_on)
+    if (!importResult || (!importResult.set_on && !importResult.no_results_on)) {
+      if (!taxon.selected) {
+        taxon.selected = true
+        total++
+        if (total >= 100) break
+      }
+    }
+  }
+  return false
+}
+
+function selectNext100UnsearchedRecords() {
+  // Get count of currently selected unsearched taxa to determine offset
+  const alreadySelectedUnsearched = taxaStore.taxa.filter((taxon: any) => {
+    const importResult = importResults.value.get(taxon.taxon_id)
+    return taxon.selected && (!importResult || (!importResult.set_on && !importResult.no_results_on))
+  }).length
+  
+  // Find unsearched taxa and select the next batch
+  let skippedCount = 0
+  let selectedCount = 0
+  
+  for (const taxon of taxaStore.taxa) {
+    const taxonId = taxon.taxon_id
+    const importResult = importResults.value.get(taxonId)
+    // Find unsearched taxa
+    if (!importResult || (!importResult.set_on && !importResult.no_results_on)) {
+      if (!taxon.selected) {
+        // This is an unselected unsearched taxon
+        if (skippedCount < alreadySelectedUnsearched) {
+          skippedCount++
+        } else {
+          taxon.selected = true
+          selectedCount++
+          if (selectedCount >= 100) break
+        }
       }
     }
   }
@@ -163,6 +237,11 @@ function selectAllForImport(shouldImport = true, shouldAddAsExemplar = true) {
   }
 }
 
+// Watch for page size changes
+watch(selectedPageSize, () => {
+  selectedPage.value = 1
+})
+
 async function fecthMediaForSelectedTaxa() {
   const selectedTaxaIds = taxaStore.taxa
     .filter((taxon: any) => taxon.selected)
@@ -182,6 +261,11 @@ async function fecthMediaForSelectedTaxa() {
   fetchError.value = null
   failedTaxaIds.value = []
   
+  // Clear any previous media results for the selected taxa to ensure fresh state
+  for (const taxonId of selectedTaxaIds) {
+    mediaResults.value.delete(taxonId)
+  }
+
   try {
     const response = await axios.post(
       `${import.meta.env.VITE_API_URL}/projects/${projectId}/${importType}/media`,
@@ -414,7 +498,15 @@ function getTaxonDisplayName(taxon: any): string {
 // Helper function to retry failed taxa
 async function retryFailedTaxa() {
   if (failedTaxaIds.value.length === 0) return
-  
+
+  // Clear any stale error state before retry
+  fetchError.value = null
+
+  // Clear any stale media results for failed taxa
+  for (const taxonId of failedTaxaIds.value) {
+    mediaResults.value.delete(taxonId)
+  }
+
   // Temporarily select only the failed taxa
   for (const taxon of taxaStore.taxa) {
     taxon.selected = failedTaxaIds.value.includes(taxon.taxon_id)
@@ -537,6 +629,34 @@ function getTimestampInfo(taxon: any) {
                   </Tooltip>
                 </button>
               </div>
+              <div v-if="taxaStore.taxa.length > 100">
+                <button 
+                  type="button" 
+                  :class="hasUnselectedUnsearchedRecords ? 'btn btn-sm btn-outline-primary' : 'btn btn-sm btn-outline-secondary'"
+                  @click="selectNext100UnsearchedRecords"
+                  :disabled="!hasUnselectedUnsearchedRecords"
+                >
+                  Select next 100 unsearched records
+                  <Tooltip
+                    :content="hasUnselectedUnsearchedRecords ? `Select the next batch of 100 taxa that have not been searched in ${importText}` : 'No more unsearched records available'"
+                  >
+                  </Tooltip>
+                </button>
+              </div>
+              <div v-else>
+                <button 
+                  type="button" 
+                  :class="hasUnselectedUnsearchedRecords ? 'btn btn-sm btn-outline-primary' : 'btn btn-sm btn-outline-secondary'"
+                  @click="selectUnsearchedRecords"
+                  :disabled="!hasUnselectedUnsearchedRecords"
+                >
+                  Select unsearched records
+                  <Tooltip
+                    :content="hasUnselectedUnsearchedRecords ? `Select taxa that have not been searched in ${importText}` : 'No more unsearched records available'"
+                  >
+                  </Tooltip>
+                </button>
+              </div>
               <div>
                 <button type="button" class="btn btn-sm btn-outline-primary" @click="unselectAll">Unselect all</button>
               </div>
@@ -559,12 +679,42 @@ function getTimestampInfo(taxon: any) {
                 {{ importText }} will appear gray.
               </i>
             </p>
-            <div class="grid">
-              <div
-                v-for="taxon in filteredTaxa"
-                :key="taxon.taxon_id"
-                class="grid-item"
-              >
+            
+            <!-- EOL-specific performance warning -->
+            <div v-if="importType === 'eol'" class="alert alert-info mb-3" role="alert">
+              <i class="fa fa-info-circle me-2"></i>
+              <strong>Performance Note:</strong> Please note that EOL's response time is considerably slower if more than 10 taxa are selected.
+            </div>
+
+            <!-- Pagination Controls -->
+            <div class="d-flex justify-content-between align-items-center mb-3" v-if="filteredTaxa.length > 25">
+              <div class="pagination-controls-left">
+                <span class="me-2">Items per page:</span>
+                <select v-model="selectedPageSize" class="form-select form-select-sm pagination-select">
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                  <option value="200">200</option>
+                </select>
+              </div>
+              <div class="pagination-controls-right">
+                <span class="me-2">Page:</span>
+                <select v-model="selectedPage" class="form-select form-select-sm pagination-select">
+                  <option v-for="page in totalPages" :key="page" :value="page">
+                    {{ page }}
+                  </option>
+                </select>
+                <span class="ms-2">of {{ totalPages }} ({{ filteredTaxa.length }} total taxa)</span>
+              </div>
+            </div>
+
+            <div class="taxa-container">
+              <div class="grid">
+                <div
+                  v-for="taxon in paginatedTaxa"
+                  :key="taxon.taxon_id"
+                  class="grid-item"
+                >
                 <input
                   class="form-check-input"
                   :id="'ci' + taxon.taxon_id"
@@ -603,6 +753,7 @@ function getTimestampInfo(taxon: any) {
                     </div>
                   </div>
                 </label>
+              </div>
               </div>
             </div>
             <div class="btn-step-group">
@@ -780,6 +931,14 @@ function getTimestampInfo(taxon: any) {
 <style scoped>
 @import '@/views/project/steps.css';
 
+.taxa-container {
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  overflow: visible;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -865,6 +1024,20 @@ function getTimestampInfo(taxon: any) {
 
 .taxon-name-container {
   flex-grow: 1;
+}
+
+.pagination-controls-left,
+.pagination-controls-right {
+  position: relative;
+  z-index: 1000;
+}
+
+.pagination-select {
+  width: auto !important;
+  display: inline-block !important;
+  min-width: 70px;
+  position: relative;
+  z-index: 1001;
 }
 
 .timestamp-info {

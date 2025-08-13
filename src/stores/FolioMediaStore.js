@@ -78,6 +78,27 @@ export const useFolioMediaStore = defineStore({
       }
       return false
     },
+    async reorderMedia(projectId, folioId, linkIds, index) {
+      const url = `${
+        import.meta.env.VITE_API_URL
+      }/projects/${projectId}/folios/${folioId}/media/reorder`
+
+      try {
+        const response = await axios.post(url, {
+          link_ids: linkIds,
+          index: index,
+        })
+
+        if (response.status == 200) {
+          await this.fetch(projectId, folioId)
+          return true
+        }
+        return false
+      } catch (error) {
+        console.error('Reorder API error:', error)
+        throw error
+      }
+    },
     async find(projectId, folioId, text) {
       const url = `${
         import.meta.env.VITE_API_URL
