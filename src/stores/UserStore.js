@@ -12,6 +12,7 @@ export const useUserStore = defineStore({
       email: null,
       orcid: null,
       institutions: null,
+      isInstitutionUnaffiliated: false,
     },
     userForm: {
       firstName: null,
@@ -20,6 +21,7 @@ export const useUserStore = defineStore({
       newPassword: null,
       newPasswordConfirm: null,
       institutions: null,
+      isInstitutionUnaffiliated: false,
     },
   }),
   getters: {},
@@ -74,6 +76,7 @@ export const useUserStore = defineStore({
       this.originalUser.email = responseData.email
       this.originalUser.orcid = responseData.orcid
       this.originalUser.institutions = responseData.institutions
+      this.originalUser.isInstitutionUnaffiliated = responseData.is_institution_unaffiliated || false
     },
 
     initUserFormValue() {
@@ -81,6 +84,7 @@ export const useUserStore = defineStore({
       this.userForm.lastName = this.originalUser.lastName
       this.userForm.email = this.originalUser.email
       this.userForm.institutions = [...this.originalUser.institutions]
+      this.userForm.isInstitutionUnaffiliated = this.originalUser.isInstitutionUnaffiliated
     },
   },
 })

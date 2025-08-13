@@ -32,6 +32,8 @@ const emailTooltipText =
   'The e-mail address of this user. The address will be used for all mail-based system notifications and alerts to this user'
 const insititutionalTootipText =
   'Scientists on MorphoBank are often affiliated with more than one institution and those can be entered here. When you change institutions, your older, published projects will remain credited to the institution you belonged to at the time the paper was published on MorphoBank'
+const independentResearcherTooltipText = 
+  'Mark this if you are not affiliated with an institution. If you previously were affiliated with an institution, it will be removed when this form is saved.'
 const passwordTooltipText = getPasswordRule()
 
 onMounted(async () => {
@@ -53,6 +55,19 @@ onBeforeUnmount(() => {
 const submitForm = async () => {
   try {
     if (!validatePassword() || !confirmPassword()) return
+    
+    // Handle independent researcher logic
+    if (userData.userForm.isInstitutionUnaffiliated) {
+      // Clear all institutions if independent researcher is checked
+      userData.userForm.institutions = []
+    } else {
+      // Validate that user has at least one institution if not independent
+      if (!userData.userForm.institutions || userData.userForm.institutions.length === 0) {
+        error.updateUser = 'You must have at least one institutional affiliation or mark yourself as an independent researcher.'
+        return
+      }
+    }
+    
     await userStore.updateUser()
     message.updateUser = 'Update user profile succeed!'
   } catch (e) {
@@ -86,10 +101,13 @@ const searchInstitutions = async () => {
 }
 
 const removeInstitution = function (institutionId) {
-  if (userData.userForm.institutions?.length <= 1) {
+  if (userData.userForm.institutions?.length <= 1 && !userData.userForm.isInstitutionUnaffiliated) {
     error.removeInstitution =
-      'The user must have at least one affiliated institutions'
+      'The user must have at least one affiliated institution, or check "Independent Researcher, Unaffiliated"'
   } else {
+    // Clear any previous remove institution error
+    error.removeInstitution = null
+    
     for (let i = 0; i < userData.userForm.institutions.length; i++) {
       const institution = userData.userForm.institutions[i]
 
@@ -316,6 +334,18 @@ const confirmPassword = function () {
               {{ institution.name }}
             </option>
           </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <input
+              type="checkbox"
+              v-model="userData.userForm.isInstitutionUnaffiliated"
+              class="form-checkbox"
+            />
+            Independent Researcher, Unaffiliated
+            <Tooltip :content="independentResearcherTooltipText"></Tooltip>
+          </label>
         </div>
 
         <!-- ORCID Section -->
