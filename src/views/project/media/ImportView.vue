@@ -679,6 +679,12 @@ function getTimestampInfo(taxon: any) {
                 {{ importText }} will appear gray.
               </i>
             </p>
+            
+            <!-- EOL-specific performance warning -->
+            <div v-if="importType === 'eol'" class="alert alert-info mb-3" role="alert">
+              <i class="fa fa-info-circle me-2"></i>
+              <strong>Performance Note:</strong> Please note that EOL's response time is considerably slower if more than 10 taxa are selected.
+            </div>
 
             <!-- Pagination Controls -->
             <div class="d-flex justify-content-between align-items-center mb-3" v-if="filteredTaxa.length > 25">
