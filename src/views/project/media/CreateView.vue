@@ -22,7 +22,7 @@ const taxaStore = useTaxaStore()
 const mediaViewsStore = useMediaViewsStore()
 const projectsStore = useProjectsStore()
 const validationErrors = ref([])
-const forceRerender = ref(0)
+
 const isLoaded = computed(
   () =>
     projectUsersStore.isLoaded &&
@@ -92,19 +92,7 @@ async function createMedia(event) {
   window.location.href = `/myprojects/${projectId}/media`
 }
 
-// Handle when a new specimen is created
-function onSpecimenCreated() {
-  // Refresh specimens store to get the new specimen
-  specimensStore.fetchSpecimens(projectId)
-  // Force re-render of form components
-  forceRerender.value += 1
-}
 
-// Handle when a new view is created  
-function onViewCreated() {
-  // Force re-render of form components
-  forceRerender.value += 1
-}
 
 onMounted(() => {
   if (!mediaStore.isLoaded) {
@@ -135,19 +123,17 @@ onMounted(() => {
           </ul>
         </div>
         
-        <template v-for="(definition, index) in schema" :key="`${index}-${forceRerender}`">
+        <template v-for="(definition, index) in schema" :key="index">
           <div v-if="!definition.existed" class="form-group">
             <label :for="index" class="form-label">
               {{ definition.label }}
               <span v-if="definition.required" class="required">Required</span>
             </label>
             <component
-              :key="`${index}-${forceRerender}`"
+              :key="index"
               :is="definition.view"
               :name="index"
               v-bind="definition.args"
-              @specimen-created="onSpecimenCreated"
-              @view-created="onViewCreated"
             >
             </component>
           </div>
