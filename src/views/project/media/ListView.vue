@@ -262,6 +262,33 @@ function onClickDownloadOriginalFilenames() {
   // logDownload({ project_id: projectId, download_type: DOWNLOAD_TYPES.MEDIA })
 }
 
+function downloadSelected() {
+  const selectedMediaFiles = filteredMedia.value
+    .filter((m) => selectedMedia[m.media_id])
+  
+  if (selectedMediaFiles.length === 0) {
+    return
+  }
+  
+  // Download each selected media file individually using the existing serve endpoint
+  // This approach uses the already established pattern for media serving from S3
+  selectedMediaFiles.forEach((mediaFile, index) => {
+    // Add a small delay between downloads to avoid overwhelming the browser
+    setTimeout(() => {
+      const downloadUrl = `${import.meta.env.VITE_API_URL}/public/media/${projectId}/serve/${mediaFile.media_id}/original`
+      // Create a temporary link element to trigger download
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      // Use a more descriptive filename with media ID
+      link.download = `M${mediaFile.media_id}_${mediaFile.view_name || 'media'}_original`
+      link.style.display = 'none'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    }, index * 100) // 100ms delay between each download
+  })
+}
+
 function onSelectShow(event) {
   const value = event.target.value
   switch (value) {
@@ -603,6 +630,13 @@ watch(searchStr, () => {
           title="Edit Selected"
         >
           <i class="fa-regular fa-pen-to-square"></i>
+        </span>
+        <span
+          class="item"
+          @click="downloadSelected"
+          title="Download Selected"
+        >
+          <i class="fa-solid fa-download"></i>
         </span>
         <span
           class="item"

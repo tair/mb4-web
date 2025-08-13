@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import axios from 'axios'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { TaxaColumns, sortTaxaAlphabetically } from '@/utils/taxa'
@@ -51,6 +51,28 @@ const isLoaded = computed(() => taxaStore.isLoaded)
 const hasNoResult = computed(() =>
   Array.from(validationResults.value.values()).some((v) => v.pbdb_pulled_on && (v.pbdb_taxon_id === 0 || v.pbdb_taxon_id === '0'))
 )
+const hasUnselectedUnsearchedRecords = computed(() => {
+  return filteredTaxa.value.some(taxon => {
+    const result = validationResults.value.get(taxon.taxon_id)
+    return !taxon.selected && (!result || !result.pbdb_pulled_on)
+  })
+})
+
+// Pagination
+const selectedPage = ref(1)
+const selectedPageSize = ref(50)
+
+const totalPages = computed(() => {
+  const pageSize = Math.max(1, selectedPageSize.value)
+  return Math.ceil(filteredTaxa.value.length / pageSize)
+})
+
+const paginatedTaxa = computed(() => {
+  const start = (selectedPage.value - 1) * selectedPageSize.value
+  const end = start + selectedPageSize.value
+  return filteredTaxa.value.slice(start, end)
+})
+
 const selectedTaxaSize = ref(0)
 const validationResults = ref<Map<number, PbdbValidationInfo>>(
   new Map<number, PbdbValidationInfo>()
@@ -112,18 +134,71 @@ function selectFirst100() {
   }
 }
 
+// Watch for page size changes
+watch(selectedPageSize, () => {
+  selectedPage.value = 1
+})
+
 function selectNoResult() {
-  unselectAll()
-  const noResultTaxa = filteredTaxa.value.filter(taxon => {
+  // Don't clear existing selections - make this additive
+  let selectedCount = 0
+  
+  for (const taxon of filteredTaxa.value) {
     const result = validationResults.value.get(taxon.taxon_id)
     // Only select taxa with absolutely no PBDB results (pbdb_taxon_id = 0)
     // NOT taxa that have results but are not imported (pbdb_taxon_id = null)
-    return result && result.pbdb_pulled_on && (result.pbdb_taxon_id === 0 || result.pbdb_taxon_id === '0')
-  })
+    if (result && result.pbdb_pulled_on && (result.pbdb_taxon_id === 0 || result.pbdb_taxon_id === '0')) {
+      if (!taxon.selected) {
+        taxon.selected = true
+        selectedCount++
+        if (selectedCount >= 100) break
+      }
+    }
+  }
+}
+
+function selectUnsearchedRecords() {
+  // Don't clear existing selections - make this additive
+  let selectedCount = 0
   
-  const maxToSelect = Math.min(noResultTaxa.length, maxSelectedTaxa)
-  for (let i = 0; i < maxToSelect; i++) {
-    noResultTaxa[i].selected = true
+  for (const taxon of filteredTaxa.value) {
+    const result = validationResults.value.get(taxon.taxon_id)
+    // Select taxa that have never been searched
+    if (!result || !result.pbdb_pulled_on) {
+      if (!taxon.selected) {
+        taxon.selected = true
+        selectedCount++
+        if (selectedCount >= 100) break
+      }
+    }
+  }
+}
+
+function selectNext100UnsearchedRecords() {
+  // Get currently selected unsearched taxa to determine offset
+  const alreadySelectedUnsearched = filteredTaxa.value.filter(taxon => {
+    const result = validationResults.value.get(taxon.taxon_id)
+    return taxon.selected && (!result || !result.pbdb_pulled_on)
+  }).length
+  
+  // Find unsearched taxa and select the next batch
+  let skippedCount = 0
+  let selectedCount = 0
+  
+  for (const taxon of filteredTaxa.value) {
+    const result = validationResults.value.get(taxon.taxon_id)
+    if (!result || !result.pbdb_pulled_on) {
+      if (!taxon.selected) {
+        // This is an unselected unsearched taxon
+        if (skippedCount < alreadySelectedUnsearched) {
+          skippedCount++
+        } else {
+          taxon.selected = true
+          selectedCount++
+          if (selectedCount >= 100) break
+        }
+      }
+    }
   }
 }
 
@@ -544,6 +619,34 @@ onMounted(async () => {
                   </Tooltip>
                 </button>
               </div>
+              <div v-if="taxaStore.taxa.length > 100">
+                <button 
+                  type="button" 
+                  :class="hasUnselectedUnsearchedRecords ? 'btn btn-sm btn-outline-primary' : 'btn btn-sm btn-outline-secondary'"
+                  @click="selectNext100UnsearchedRecords"
+                  :disabled="!hasUnselectedUnsearchedRecords"
+                >
+                  Select next 100 unsearched records
+                  <Tooltip
+                    :content="hasUnselectedUnsearchedRecords ? 'Select the next batch of 100 taxa that have not been searched in PBDB' : 'No more unsearched records available'"
+                  >
+                  </Tooltip>
+                </button>
+              </div>
+              <div v-else>
+                <button 
+                  type="button" 
+                  :class="hasUnselectedUnsearchedRecords ? 'btn btn-sm btn-outline-primary' : 'btn btn-sm btn-outline-secondary'"
+                  @click="selectUnsearchedRecords"
+                  :disabled="!hasUnselectedUnsearchedRecords"
+                >
+                  Select unsearched records
+                  <Tooltip
+                    :content="hasUnselectedUnsearchedRecords ? 'Select taxa that have not been searched in PBDB' : 'No more unsearched records available'"
+                  >
+                  </Tooltip>
+                </button>
+              </div>
               <div>
                 <button type="button" class="btn btn-sm btn-outline-primary" @click="unselectAll">Unselect all</button>
               </div>
@@ -562,6 +665,28 @@ onMounted(async () => {
                 a red "No PBDB results" indicator.
               </i>
             </p>
+
+            <!-- Pagination Controls -->
+            <div class="d-flex justify-content-between align-items-center mb-3" v-if="filteredTaxa.length > 25">
+              <div class="pagination-controls-left">
+                <span class="me-2">Items per page:</span>
+                <select v-model="selectedPageSize" class="form-select form-select-sm pagination-select">
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                  <option value="200">200</option>
+                </select>
+              </div>
+              <div class="pagination-controls-right">
+                <span class="me-2">Page:</span>
+                <select v-model="selectedPage" class="form-select form-select-sm pagination-select">
+                  <option v-for="page in totalPages" :key="page" :value="page">
+                    {{ page }}
+                  </option>
+                </select>
+                <span class="ms-2">of {{ totalPages }} ({{ filteredTaxa.length }} total taxa)</span>
+              </div>
+            </div>
 
             <div v-if="isValidating" class="text-center py-5">
               <div class="spinner-border text-primary" role="status">
@@ -596,12 +721,13 @@ onMounted(async () => {
               </div>
             </div>
 
-            <div v-else class="grid">
-              <div
-                v-for="taxon in filteredTaxa"
-                :key="taxon.taxon_id"
-                class="grid-item"
-              >
+            <div v-else class="taxa-container">
+              <div class="grid">
+                <div
+                  v-for="taxon in paginatedTaxa"
+                  :key="taxon.taxon_id"
+                  class="grid-item"
+                >
                 <input
                   class="form-check-input"
                   :id="'ci' + taxon.taxon_id"
@@ -627,6 +753,7 @@ onMounted(async () => {
                     </div>
                   </div>
                 </label>
+              </div>
               </div>
             </div>
 
@@ -828,15 +955,18 @@ onMounted(async () => {
   display: block !important;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 0.75rem;
-  max-height: 400px;
-  overflow-y: auto;
+.taxa-container {
   border: 1px solid #dee2e6;
   border-radius: 0.375rem;
   padding: 1rem;
+  background-color: #f8f9fa;
+  overflow: visible;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
 }
 
 .grid-item {
@@ -876,6 +1006,20 @@ onMounted(async () => {
 .greyed {
   color: #6c757d !important;
   opacity: 0.7;
+}
+
+.pagination-controls-left,
+.pagination-controls-right {
+  position: relative;
+  z-index: 1000;
+}
+
+.pagination-select {
+  width: auto !important;
+  display: inline-block !important;
+  min-width: 70px;
+  position: relative;
+  z-index: 1001;
 }
 
 .btn-step-group {

@@ -70,8 +70,6 @@ function hideEnlargedImage(imgId) {
           :src="
             media_file.media.thumbnail?.USE_ICON === '3d' || media_file.media_type === '3d'
               ? '/images/3DImage.png'
-              : media_file.media.thumbnail?.USE_ICON === 'video' || media_file.media_type === 'video'
-              ? '/images/image-not-found.png'
               : buildMediaUrl(
                   props.project_id,
                   props.media_file?.media_id,

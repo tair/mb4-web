@@ -129,5 +129,37 @@ export const useProjectsStore = defineStore({
         throw error
       }
     },
+    async setExemplarMedia(projectId, mediaId) {
+      try {
+        const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/edit`
+        const response = await axios.post(url, { 
+          exemplar_media_id: mediaId 
+        })
+        
+        if (response.status === 200) {
+          // Update the project in our store if we have it
+          const project = this.getProjectById(projectId)
+          if (project) {
+            project.exemplar_media_id = mediaId
+          }
+          
+          // Invalidate project overview cache so it refreshes with new exemplar
+          const { useProjectOverviewStore } = await import('@/stores/ProjectOverviewStore')
+          const projectOverviewStore = useProjectOverviewStore()
+          projectOverviewStore.invalidate()
+          
+          // Also trigger a fresh fetch if the overview was for this project
+          if (projectOverviewStore.currentProjectId === projectId) {
+            await projectOverviewStore.fetchProject(projectId)
+          }
+          
+          return true
+        }
+        return false
+      } catch (error) {
+        console.error('Error setting exemplar media:', error.response?.data || error)
+        throw error
+      }
+    },
   },
 })
