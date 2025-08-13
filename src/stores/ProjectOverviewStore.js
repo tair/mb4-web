@@ -40,5 +40,11 @@ export const useProjectOverviewStore = defineStore({
         this.isLoading = false
       }
     },
+    invalidate() {
+      this.isLoaded = false
+      this.isLoading = false
+      this.overview = null
+      // Keep currentProjectId so we can re-fetch if needed
+    },
   },
 })

@@ -110,6 +110,10 @@ export const schema = {
       },
     },
   },
+  is_exemplar: {
+    label: 'Make this image the project exemplar',
+    view: Checkbox,
+  },
   user_id: {
     label: 'Media loaded by',
     view: TextContent,

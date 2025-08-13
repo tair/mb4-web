@@ -56,7 +56,7 @@ export const useMediaStore = defineStore({
       if (response.status == 200) {
         const media = response.data.media
         this.addMedia([media])
-        return true
+        return media // Return the created media object instead of just true
       }
       return false
     },
@@ -122,7 +122,7 @@ export const useMediaStore = defineStore({
         const response = await axios.post(url, mediaFormData)
         if (response.status == 200) {
           const media = response.data.media
-          this.addMedia(media) // Stacks creates multiple media files from ZIP
+          this.addMedia([media]) // Stack creates a single media file containing the ZIP
           return true
         }
         return false

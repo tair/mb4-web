@@ -19,6 +19,7 @@ const specimensStore = useSpecimensStore()
 const taxaStore = useTaxaStore()
 const mediaViewsStore = useMediaViewsStore()
 const isUploading = ref(false)
+const validationErrors = ref([])
 
 const isLoaded = computed(
   () =>
@@ -29,12 +30,39 @@ const isLoaded = computed(
     mediaViewsStore.isLoaded
 )
 
+function validateRequiredFields(formData) {
+  const errors = []
+  
+  // Check required fields based on schema
+  Object.entries(schema3D).forEach(([fieldName, fieldDef]) => {
+    if (fieldDef.required) {
+      const value = formData.get(fieldName)
+      if (!value || (typeof value === 'string' && value.trim() === '')) {
+        errors.push(`${fieldDef.label} is required`)
+      }
+    }
+  })
+  
+  return errors
+}
+
 async function create3DMedia(event) {
   if (isUploading.value) return // Prevent double submission
   
+  const formData = new FormData(event.currentTarget)
+  
+  // Validate required fields
+  const errors = validateRequiredFields(formData)
+  if (errors.length > 0) {
+    validationErrors.value = errors
+    return
+  }
+  
+  // Clear any previous validation errors
+  validationErrors.value = []
+  
   isUploading.value = true
   try {
-    const formData = new FormData(event.currentTarget)
     const success = await mediaStore.create3D(projectId, formData)
     if (!success) {
       alert('Failed to create 3D media')
@@ -82,7 +110,7 @@ onMounted(() => {
           >
           and
           <RouterLink :to="`/myprojects/${projectId}/views/`">views</RouterLink>
-          first?
+          first? <strong>Both specimen and view are required</strong> for automatic media release.
         </span>
         <div>
           <strong>Note:</strong> Supported 3D file formats include PLY, STL, OBJ, GLB, GLTF, and FBX.
@@ -92,10 +120,17 @@ onMounted(() => {
     </header>
     <form @submit.prevent="create3DMedia">
       <div class="row setup-content">
+        <!-- Display validation errors -->
+        <div v-if="validationErrors.length > 0" class="alert alert-danger" role="alert">
+          <ul class="mb-0">
+            <li v-for="error in validationErrors" :key="error">{{ error }}</li>
+          </ul>
+        </div>
         <template v-for="(definition, index) in schema3D" :key="index">
           <div v-if="!definition.existed" class="form-group">
             <label :for="index" class="form-label">
               {{ definition.label }}
+              <span v-if="definition.required" class="required">Required</span>
             </label>
             <component
               :key="index"
