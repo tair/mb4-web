@@ -261,6 +261,11 @@ async function fecthMediaForSelectedTaxa() {
   fetchError.value = null
   failedTaxaIds.value = []
   
+  // Clear any previous media results for the selected taxa to ensure fresh state
+  for (const taxonId of selectedTaxaIds) {
+    mediaResults.value.delete(taxonId)
+  }
+
   try {
     const response = await axios.post(
       `${import.meta.env.VITE_API_URL}/projects/${projectId}/${importType}/media`,
@@ -493,7 +498,15 @@ function getTaxonDisplayName(taxon: any): string {
 // Helper function to retry failed taxa
 async function retryFailedTaxa() {
   if (failedTaxaIds.value.length === 0) return
-  
+
+  // Clear any stale error state before retry
+  fetchError.value = null
+
+  // Clear any stale media results for failed taxa
+  for (const taxonId of failedTaxaIds.value) {
+    mediaResults.value.delete(taxonId)
+  }
+
   // Temporarily select only the failed taxa
   for (const taxon of taxaStore.taxa) {
     taxon.selected = failedTaxaIds.value.includes(taxon.taxon_id)
