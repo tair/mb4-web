@@ -47,7 +47,7 @@ defineProps<{
 }
 
 .card-image {
-  height: 120px;
+  height: 8rem;
   margin: 5px auto;
 }
 
@@ -55,10 +55,25 @@ defineProps<{
   align-items: center;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+  padding: 0.25rem 0.5rem;
+}
+
+.card-text > div {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-align: center;
+  width: 100%;
 }
 
 .mediaCard {
   background-color: rgba(248, 249, 250);
-  width: 175px;
+  width: 12rem;
+  height: 15rem;
+  font-size: 12px;
 }
 </style>
