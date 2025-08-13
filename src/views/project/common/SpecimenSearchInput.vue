@@ -7,7 +7,8 @@ import { useTaxaStore } from '@/stores/TaxaStore'
 import SearchSelectInput from '@/components/project/SearchSelectInput.vue'
 import SpecimenName from '@/components/project/SpecimenName.vue'
 
-defineProps({
+
+const props = defineProps({
   name: {
     type: String,
   },
@@ -24,6 +25,8 @@ const projectId = route.params.id
 
 const specimenStore = useSpecimensStore()
 const taxaStore = useTaxaStore()
+
+
 
 function getSpecimenNumber(specimen) {
   return specimen.specimen_id
@@ -53,6 +56,8 @@ async function searchSpecimen(text) {
 function getItem(specimenId) {
   return specimenStore.getSpecimenById(specimenId)
 }
+
+
 </script>
 <template>
   <SearchSelectInput
