@@ -12,6 +12,7 @@ export const schema = {
   file: {
     label: 'Media file to upload',
     view: FileInput,
+    required: true,
   },
   is_sided: {
     label: 'Which side is represented',
@@ -29,11 +30,13 @@ export const schema = {
     label: 'Specimen',
     view: SpecimenSearchInput,
     type: Number,
+    required: true,
   },
   view_id: {
     label: 'View',
     view: MediaViewSelect,
     type: Number,
+    required: true,
   },
   is_copyrighted: {
     label: 'Is under copyright?',
@@ -107,6 +110,10 @@ export const schema = {
       },
     },
   },
+  is_exemplar: {
+    label: 'Make this image the project exemplar',
+    view: Checkbox,
+  },
   user_id: {
     label: 'Media loaded by',
     view: TextContent,
@@ -132,5 +139,38 @@ export const batchSchema = {
   file: {
     label: 'Choose a ZIP, TAR, TAR+gzip, TAR+bzip archive or individual file',
     view: FileInput,
+  },
+}
+
+export const videoSchema = {
+  ...schema,
+  file: {
+    label: 'Choose a video file (MP4, MOV, AVI, WebM, MKV, WMV, FLV, M4V)',
+    view: FileInput,
+    args: {
+      accept: '.mp4,.mov,.avi,.webm,.mkv,.wmv,.flv,.m4v,video/*',
+    },
+  },
+}
+
+export const schema3D = {
+  ...schema,
+  file: {
+    label: 'Choose a 3D file (PLY, STL, OBJ, GLB, GLTF, FBX)',
+    view: FileInput,
+    args: {
+      accept: '.ply,.stl,.obj,.glb,.gltf,.fbx,model/*',
+    },
+  },
+}
+
+export const stacksSchema = {
+  ...schema,
+  file: {
+    label: 'Choose a ZIP archive containing CT scan stacks (DICOM, TIFF)',
+    view: FileInput,
+    args: {
+      accept: '.zip,application/zip',
+    },
   },
 }

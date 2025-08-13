@@ -105,6 +105,18 @@ function getBestMediaUrl(
 ) {
   if (!media) return '/images/image-not-found.png'
 
+  // Check if this is a 3D file that should use the 3D icon
+  if (media.thumbnail?.USE_ICON === '3d' || media.media_type === '3d') {
+    return '/images/3DImage.png'
+  }
+
+  // For videos, we want to show generated thumbnails if they exist, 
+  // only fall back to icon if no thumbnails were generated
+  if ((media.thumbnail?.USE_ICON === 'video' || media.media_type === 'video') && !media.thumbnail?.s3_key) {
+    // No actual thumbnail was generated, use a placeholder
+    return '/images/image-not-found.png' // Generic placeholder for videos without thumbnails
+  }
+
   // Use S3 endpoint with built-in null handling
   for (const size of sizePreference) {
     if (media[size]) {

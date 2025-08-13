@@ -1,6 +1,29 @@
 <template>
-  <FormLayout title="EDIT PROJECT">
-    <form @submit.prevent="handleSubmit" class="list-form">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <RouterLink to="/myprojects">My Projects</RouterLink>
+      </li>
+      <li class="breadcrumb-item">
+        <RouterLink :to="`/myprojects/${projectId}/overview`">
+          P{{ projectId }}
+        </RouterLink>
+      </li>
+      <li class="breadcrumb-item">
+        <RouterLink :to="{ name: 'MyProjectEditView', params: { id: projectId } }">
+          Edit Project
+        </RouterLink>
+      </li>
+    </ol>
+  </nav>
+  <ProjectContainerComp
+    :projectId="projectId"
+    :isLoading="isLoadingProject"
+    :errorMessage="error || ''"
+    basePath="myprojects"
+  >
+    <FormLayout title="EDIT PROJECT">
+      <form @submit.prevent="handleSubmit" class="list-form">
       <!-- Basic Project Information -->
       <div class="form-group">
         <label class="form-label">
@@ -481,8 +504,9 @@
           {{ isLoading ? getLoadingText() : 'Update' }}
         </button>
       </div>
-    </form>
-  </FormLayout>
+      </form>
+    </FormLayout>
+  </ProjectContainerComp>
 </template>
 
 <script setup>
@@ -491,6 +515,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useProjectsStore } from '@/stores/ProjectsStore'
 import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore'
 import { useUserStore } from '@/stores/UserStore'
+import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
 import axios from 'axios'
 import {
   getNSFFundedTooltip,
@@ -921,7 +946,7 @@ async function updateProject(
       // Don't set Content-Type header - let browser set it with boundary
     } else {
       // Use JSON for project data only
-      requestData = { project: projectData }
+      requestData = projectData
       headers = {
         'Content-Type': 'application/json',
       }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { useFoliosStore } from '@/stores/FoliosStore'
 import { useFolioMediaStore } from '@/stores/FolioMediaStore'
@@ -13,6 +13,8 @@ import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaCard from '@/components/project/MediaCard.vue'
 import DeleteDialog from '@/views/project/common/DeleteDialog.vue'
 import { buildMediaUrl } from '@/utils/fileUtils.js'
+// @ts-ignore
+import Draggable from 'vuedraggable'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id as string)
@@ -35,35 +37,87 @@ const isLoaded = computed(
     mediaViewsStore.isLoaded
 )
 
-const folioMedia = computed(() => {
-  const mediaIds = folioMediaStore.mediaIds
-  return Array.from(mediaStore.getMediaByIds(mediaIds).values())
+const folioMedia = ref<any[]>([])
+
+// Drag and drop functionality - declare these before using them
+const isDragging = ref(false)
+const isUpdatingOrder = ref(false)
+
+// Watch for changes in the stores and update folioMedia
+function updateFolioMedia() {
+  // Don't update if we're in the middle of a drag operation
+  if (isUpdatingOrder.value || isDragging.value) {
+    console.log('Skipping updateFolioMedia - drag operation in progress')
+    return
+  }
+
+  if (!folioMediaStore.isLoaded || !mediaStore.isLoaded) {
+    folioMedia.value = []
+    return
+  }
+
+  // Get the media with position information from the folio store
+  const folioMediaWithPositions = folioMediaStore.media
+
+  // Create a map of current selected states to preserve them
+  const selectedStates = new Map()
+  folioMedia.value.forEach((item: any) => {
+    if (item.media_id && item.selected) {
+      selectedStates.set(item.media_id, true)
+    }
+  })
+
+  // Get the actual media data and merge with folio info
+  const media = folioMediaWithPositions.map((folioMediaItem: any) => {
+    const mediaData = mediaStore.getMediaById(folioMediaItem.media_id)
+    return {
+      ...mediaData,
+      link_id: folioMediaItem.link_id,
+      position: folioMediaItem.position,
+      folio_id: folioMediaItem.folio_id,
+      selected: selectedStates.get(folioMediaItem.media_id) || false,
+    }
+  })
+  // Sort by position to maintain order
+  folioMedia.value = media.sort(
+    (a: any, b: any) => (a.position || 0) - (b.position || 0)
+  )
+}
+
+// Watch for store changes
+watchEffect(() => {
+  // Only update if not dragging
+  if (!isDragging.value && !isUpdatingOrder.value) {
+    updateFolioMedia()
+  }
 })
 
 const filioMediaToDelete = ref([])
 
 const allSelected = computed({
   get: function () {
-    return folioMedia.value.every((b) => b.selected)
+    return folioMedia.value.every((b: any) => b.selected)
   },
-  set: function (value) {
-    folioMedia.value.forEach((b) => {
+  set: function (value: any) {
+    folioMedia.value.forEach((b: any) => {
       b.selected = value
     })
   },
 })
 
-const someSelected = computed(() => folioMedia.value.some((b) => b.selected))
+const someSelected = computed(() =>
+  folioMedia.value.some((b: any) => b.selected)
+)
 
-onMounted(() => {
+onMounted(async () => {
   if (!folioMediaStore.isLoaded) {
-    folioMediaStore.fetch(projectId, folioId)
+    await folioMediaStore.fetch(projectId, folioId)
   }
   if (!foliosStore.isLoaded) {
     foliosStore.fetch(projectId)
   }
   if (!mediaStore.isLoaded) {
-    mediaStore.fetchMedia(projectId)
+    await mediaStore.fetchMedia(projectId)
   }
   if (!specimensStore.isLoaded) {
     specimensStore.fetchSpecimens(projectId)
@@ -74,6 +128,9 @@ onMounted(() => {
   if (!mediaViewsStore.isLoaded) {
     mediaViewsStore.fetchMediaViews(projectId)
   }
+
+  // Update folioMedia after stores are loaded
+  updateFolioMedia()
 })
 
 onUnmounted(() => {
@@ -84,14 +141,14 @@ async function addMedia(mediaIds: number[]): Promise<boolean> {
   return folioMediaStore.create(projectId, folioId, mediaIds)
 }
 
-async function findMedia(text: string): Promise<number[]> {
-  const mediaIds = await folioMediaStore.find(projectId, folioId, text)
-  return mediaIds
+function handleMediaAdded() {
+  // Refresh the folio media store to get the updated list
+  folioMediaStore.fetch(projectId, folioId)
 }
 
 async function deleteFolioMedia(): Promise<boolean> {
   const mediaIds: number[] = filioMediaToDelete.value
-  const linkIds = folioMediaStore.media
+  const linkIds = folioMedia.value
     .filter((m: any) => mediaIds.includes(m.media_id))
     .map((m: any) => m.link_id)
   const deleted = folioMediaStore.deleteIds(projectId, folioId, linkIds)
@@ -114,14 +171,66 @@ async function refresh() {
 // Helper function to create S3 media URLs for MediaCard
 function getMediaThumbnailUrl(media: any) {
   if (media.media_id) {
+    // Check if this is a 3D file that should use the 3D icon
+    const url =
+      media.media_type === '3d'
+        ? '/images/3DImage.png'
+        : buildMediaUrl(projectId, media.media_id, 'thumbnail')
     return {
-      url: buildMediaUrl(projectId, media.media_id, 'thumbnail'),
+      url: url,
       width: media.thumbnail?.WIDTH || media.thumbnail?.width || 120,
       height: media.thumbnail?.HEIGHT || media.thumbnail?.height || 120,
     }
   }
   // Fallback to existing thumbnail object
   return media.thumbnail
+}
+
+async function onDragEnd(event: any) {
+  if (event.oldIndex !== event.newIndex) {
+    // Get the moved item from the current array (after draggable has reordered it)
+    const movedItem = folioMedia.value[event.newIndex]
+    const linkId = movedItem?.link_id
+
+    if (linkId) {
+      // Keep the update flag on to prevent store updates
+      isUpdatingOrder.value = true
+
+      // Convert from 0-based array index to 1-based position
+      const newPosition = event.newIndex + 1
+
+      try {
+        // Update the server
+        const result = await folioMediaStore.reorderMedia(
+          projectId,
+          folioId,
+          [linkId],
+          newPosition
+        )
+
+        // Wait for the store to update with the new positions
+        await folioMediaStore.fetch(projectId, folioId)
+      } catch (error) {
+        console.error('Failed to reorder media:', error)
+        // On error, revert by fetching fresh data
+        await folioMediaStore.fetch(projectId, folioId)
+      } finally {
+        // Clear the flags and update the local array
+        isUpdatingOrder.value = false
+        // Force update after clearing the flag
+        updateFolioMedia()
+      }
+    } else {
+      console.error('No link_id found for moved item:', movedItem)
+    }
+  }
+
+  // Always clear the dragging flag
+  isDragging.value = false
+}
+
+function onDragStart() {
+  isDragging.value = true
 }
 </script>
 <template>
@@ -139,9 +248,7 @@ function getMediaThumbnailUrl(media: any) {
     </div>
     <div>
       Drag and drop images into desired order. Your changes are saved
-      automatically. Click the X button to remove media. You can batch load
-      media into your folios in the Media tab by clicking the Folio Options
-      link.
+      automatically.
     </div>
     <div v-if="folioMedia?.length">
       <div class="selection-bar">
@@ -163,37 +270,56 @@ function getMediaThumbnailUrl(media: any) {
           data-bs-target="#deleteModal"
           @click="
             filioMediaToDelete = folioMedia
-              .filter((m) => m.selected)
-              .map((m) => m.media_id)
+              .filter((m: any) => m.selected)
+              .map((m: any) => m.media_id)
           "
         >
           <i class="fa-regular fa-trash-can"></i>
         </span>
       </div>
-      <div class="grid-group-items">
-        <div v-for="media in folioMedia" :key="media.media_id">
-          <MediaCard
-            :mediaId="media.media_id"
-            :image="getMediaThumbnailUrl(media)"
-            :viewName="mediaViewsStore.getMediaViewById(media.view_id)?.name"
-            :taxon="getTaxonForMediaId(media)"
-          >
-            <template #bar>
-              <input
-                class="form-check-input media-checkbox"
-                type="checkbox"
-                v-model="media.selected"
-              />
-            </template>
-          </MediaCard>
-        </div>
-      </div>
+      <Draggable
+        v-model="folioMedia"
+        item-key="media_id"
+        class="grid-group-items"
+        :class="{ dragging: isDragging }"
+        @start="onDragStart"
+        @end="onDragEnd"
+        :animation="200"
+        :force-fallback="true"
+        ghost-class="ghost"
+        chosen-class="chosen"
+        drag-class="drag"
+      >
+        <template #item="{ element: media }">
+          <div>
+            <MediaCard
+              :mediaId="media.media_id"
+              :image="getMediaThumbnailUrl(media)"
+              :viewName="mediaViewsStore.getMediaViewById(media.view_id)?.name"
+              :taxon="getTaxonForMediaId(media)"
+            >
+              <template #bar>
+                <input
+                  class="form-check-input media-checkbox"
+                  type="checkbox"
+                  v-model="media.selected"
+                />
+              </template>
+            </MediaCard>
+          </div>
+        </template>
+      </Draggable>
     </div>
   </LoadingIndicator>
-  <AddMediaDialog :findMedia="findMedia" :addMedia="addMedia" />
+  <AddMediaDialog
+    :addMedia="addMedia"
+    :projectId="projectId"
+    :excludeMediaIds="folioMedia.map((m: any) => m.media_id)"
+    @mediaAdded="handleMediaAdded"
+  />
   <DeleteDialog :delete="deleteFolioMedia">
     <template #modal-body>
-      Really delete {{ filioMediaToDelete.length }} media?
+      Really delete {{ filioMediaToDelete.length }} media from this folio?
     </template>
   </DeleteDialog>
 </template>
@@ -203,5 +329,37 @@ function getMediaThumbnailUrl(media: any) {
 .media-checkbox {
   border: var(--bs-card-border-width) solid var(--bs-card-border-color);
   margin: 5px 10px 0;
+}
+
+/* Drag and drop styles */
+.dragging {
+  cursor: grabbing;
+}
+
+.grid-group-items .ghost {
+  opacity: 0.5;
+  background: #f0f0f0;
+  border: 2px dashed #ccc;
+}
+
+.grid-group-items .chosen {
+  opacity: 0.8;
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.grid-group-items .drag {
+  transform: rotate(5deg);
+  opacity: 0.9;
+}
+
+.grid-group-items > div {
+  cursor: grab;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.grid-group-items > div:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 </style>

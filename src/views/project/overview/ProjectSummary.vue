@@ -142,23 +142,43 @@ function popDownloadAlert() {
       <h4>Abstract</h4>
       <p v-html="overview.description"></p>
 
-      <div class="mt-5" v-if="overview.article_doi">
-        <span class="fw-bold">Article DOI:</span>
-        {{ overview.article_doi }}
-        <a
-          v-if="overview.journal_url"
-          :href="overview.journal_url"
-          target="_blank"
-        >
-          <button class="btn btn-primary btn-ml">Read the article</button>
-        </a>
+      <!-- Always show Article DOI section -->
+      <div class="mt-5">
+        <!-- Button shown first if applicable -->
+        <!-- Case 1: DOI starts with '10.' - show Read the article button that goes to doi.org -->
+        <div v-if="overview.article_doi && overview.article_doi.startsWith('10.')" class="mb-2">
+          <a
+            :href="`https://doi.org/${overview.article_doi}`"
+            target="_blank"
+          >
+            <button class="btn btn-primary">Read the article</button>
+          </a>
+        </div>
+        
+        <!-- Case 2: DOI is 'none' and journal_url exists - show Read the Article button with journal_url -->
+        <div v-else-if="(!overview.article_doi || overview.article_doi === 'none') && overview.journal_url" class="mb-2">
+          <a
+            :href="overview.journal_url"
+            target="_blank"
+          >
+            <button class="btn btn-primary">Read the article</button>
+          </a>
+        </div>
+        
+        <!-- DOI information shown below button -->
+        <div>
+          <span class="fw-bold">Article DOI:</span>
+          {{ overview.article_doi || 'None' }}
+        </div>
       </div>
 
       <div v-if="overview.project_doi">
-        <span class="fw-bold">Project DOI:</span>
-        {{ overview.project_doi }},
-        <a :href="`http://dx.doi.org/${overview.project_doi}`">
-          http://dx.doi.org/{{ overview.project_doi }}
+        <span class="fw-bold">Project DOI: </span>
+        <a 
+          :href="`http://dx.doi.org/${overview.project_doi}`"
+          target="_blank"
+        >
+          {{ overview.project_doi }}
         </a>
       </div>
     </div>

@@ -7,10 +7,8 @@ import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
-import { useProjectsStore } from '@/stores/ProjectsStore'
-import { schema } from '@/views/project/media/schema.js'
+import { schema3D } from '@/views/project/media/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
-import '@/assets/css/form.css'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -20,7 +18,7 @@ const mediaStore = useMediaStore()
 const specimensStore = useSpecimensStore()
 const taxaStore = useTaxaStore()
 const mediaViewsStore = useMediaViewsStore()
-const projectsStore = useProjectsStore()
+const isUploading = ref(false)
 const validationErrors = ref([])
 
 const isLoaded = computed(
@@ -36,7 +34,7 @@ function validateRequiredFields(formData) {
   const errors = []
   
   // Check required fields based on schema
-  Object.entries(schema).forEach(([fieldName, fieldDef]) => {
+  Object.entries(schema3D).forEach(([fieldName, fieldDef]) => {
     if (fieldDef.required) {
       const value = formData.get(fieldName)
       if (!value || (typeof value === 'string' && value.trim() === '')) {
@@ -48,7 +46,9 @@ function validateRequiredFields(formData) {
   return errors
 }
 
-async function createMedia(event) {
+async function create3DMedia(event) {
+  if (isUploading.value) return // Prevent double submission
+  
   const formData = new FormData(event.currentTarget)
   
   // Validate required fields
@@ -61,35 +61,21 @@ async function createMedia(event) {
   // Clear any previous validation errors
   validationErrors.value = []
   
-  // Check if this should be set as project exemplar
-  const exemplarValue = formData.get('is_exemplar')
-  const isExemplar = exemplarValue === 'on' || exemplarValue === '1' || exemplarValue === 1 || exemplarValue === true
-  
-  // Remove the is_exemplar field from formData as the backend doesn't expect it
-  formData.delete('is_exemplar')
-  
-  const result = await mediaStore.create(projectId, formData)
-  
-  if (!result) {
-    alert('Failed to create media')
-    return
-  }
-
-  // If the media was created successfully and should be set as exemplar
-  if (isExemplar && result && result.media_id) {
-    try {
-      // Set this media as the project exemplar
-      const success = await projectsStore.setExemplarMedia(projectId, result.media_id)
-      if (!success) {
-        alert('Media created successfully, but failed to set as project exemplar')
-      }
-    } catch (error) {
-      console.error('Failed to set exemplar media:', error)
-      alert('Media created successfully, but failed to set as project exemplar')
+  isUploading.value = true
+  try {
+    const success = await mediaStore.create3D(projectId, formData)
+    if (!success) {
+      alert('Failed to create 3D media')
+      return
     }
-  }
 
-  window.location.href = `/myprojects/${projectId}/media`
+    router.push({ path: `/myprojects/${projectId}/media` })
+  } catch (error) {
+    console.error('3D upload error:', error)
+    alert('Failed to create 3D media')
+  } finally {
+    isUploading.value = false
+  }
 }
 
 onMounted(() => {
@@ -112,7 +98,27 @@ onMounted(() => {
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
-    <form @submit.prevent="createMedia">
+    <header>
+      <div class="text_block">
+        <span style="font-size: 18px">
+          <b>Upload 3D Media</b>
+        </span>
+        <span>
+          Did you add your
+          <RouterLink :to="`/myprojects/${projectId}/specimens/`"
+            >specimens</RouterLink
+          >
+          and
+          <RouterLink :to="`/myprojects/${projectId}/views/`">views</RouterLink>
+          first? <strong>Both specimen and view are required</strong> for automatic media release.
+        </span>
+        <div>
+          <strong>Note:</strong> Supported 3D file formats include PLY, STL, OBJ, GLB, GLTF, and FBX.
+          Files will be stored in the same S3 bucket as 2D media (mb4-data/media_files/images).
+        </div>
+      </div>
+    </header>
+    <form @submit.prevent="create3DMedia">
       <div class="row setup-content">
         <!-- Display validation errors -->
         <div v-if="validationErrors.length > 0" class="alert alert-danger" role="alert">
@@ -120,8 +126,7 @@ onMounted(() => {
             <li v-for="error in validationErrors" :key="error">{{ error }}</li>
           </ul>
         </div>
-        
-        <template v-for="(definition, index) in schema" :key="index">
+        <template v-for="(definition, index) in schema3D" :key="index">
           <div v-if="!definition.existed" class="form-group">
             <label :for="index" class="form-label">
               {{ definition.label }}
@@ -141,10 +146,17 @@ onMounted(() => {
             class="btn btn-outline-primary"
             type="button"
             @click="$router.go(-1)"
+            :disabled="isUploading"
           >
             Cancel
           </button>
-          <button class="btn btn-primary" type="submit">Create</button>
+          <button class="btn btn-primary" type="submit" :disabled="isUploading">
+            <span v-if="isUploading">
+              <i class="fa fa-spinner fa-spin"></i>
+              Uploading 3D Media...
+            </span>
+            <span v-else>Upload 3D Media</span>
+          </button>
         </div>
       </div>
     </form>

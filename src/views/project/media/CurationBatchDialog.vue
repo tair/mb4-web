@@ -51,6 +51,26 @@ const canRelease = computed(() => {
 
 const selectedCount = computed(() => props.selectedMedia.length)
 
+// Get the current specimen_id if all selected media have the same specimen
+const currentSpecimenId = computed(() => {
+  if (props.selectedMedia.length === 0) return undefined
+  
+  const firstSpecimenId = props.selectedMedia[0]?.specimen_id
+  const allSameSpecimen = props.selectedMedia.every(media => media.specimen_id === firstSpecimenId)
+  
+  return allSameSpecimen ? firstSpecimenId : undefined
+})
+
+// Get the current view_id if all selected media have the same view
+const currentViewId = computed(() => {
+  if (props.selectedMedia.length === 0) return undefined
+  
+  const firstViewId = props.selectedMedia[0]?.view_id
+  const allSameView = props.selectedMedia.every(media => media.view_id === firstViewId)
+  
+  return allSameView ? firstViewId : undefined
+})
+
 const specimenOptions = computed(() => {
   const options: Record<string, number> = { '- NONE - ': 0 }
   for (const specimen of specimensStore.specimens) {
@@ -207,6 +227,7 @@ onMounted(() => {
                       <component
                         :is="schema.view_id.view"
                         :disabled="menuCollapsed['mediaEditView']"
+                        :value="currentViewId"
                         name="view_id"
                       >
                       </component>
@@ -242,6 +263,7 @@ onMounted(() => {
                       <component
                         :is="schema.specimen_id.view"
                         :disabled="menuCollapsed['mediaEditSpecimen']"
+                        :value="currentSpecimenId"
                         name="specimen_id"
                       >
                       </component>
@@ -265,7 +287,7 @@ onMounted(() => {
               :disabled="!canRelease"
             >
               <i class="fa fa-check me-2"></i>
-              Assign & Release {{ selectedCount }} Media Items
+              Assign {{ selectedCount }} Media Items
             </button>
           </div>
         </div>

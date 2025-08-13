@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useMediaStore } from '@/stores/MediaStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
@@ -12,6 +12,7 @@ import { buildMediaUrl } from '@/utils/fileUtils.js'
 import CurationBatchDialog from './CurationBatchDialog.vue'
 
 const route = useRoute()
+const router = useRouter()
 const projectId = route.params.id
 
 const mediaStore = useMediaStore()
@@ -70,11 +71,18 @@ const canReleaseSelected = computed(() => {
 function getMediaThumbnailUrl(media) {
   if (media.media_id) {
     // Check if this is a 3D file that should use the 3D icon
-    const url = media.media?.thumbnail?.USE_ICON === '3d' 
-      ? '/images/3DImage.png'
-      : buildMediaUrl(projectId, media.media_id, 'thumbnail')
-    return {
-      url: url,
+    if (media.media_type === '3d') {
+      return {
+        url: '/images/3DImage.png',
+        width: 120,
+        height: 120,
+      }
+    } else {
+      return {
+        url: buildMediaUrl(projectId, media.media_id, 'thumbnail'),
+        width: 120,
+        height: 120,
+      }
     }
   }
   // Fallback to existing thumbnail object
@@ -183,6 +191,17 @@ watch(
     }
   }
 )
+
+// Redirect to media list if there's no media to curate
+watch(
+  [isLoaded, filteredMedia],
+  ([loaded, media]) => {
+    if (loaded && media.length === 0) {
+      router.push(`/myprojects/${projectId}/media`)
+    }
+  },
+  { immediate: true }
+)
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded" :key="`curate-${projectId}`">
@@ -201,7 +220,8 @@ watch(
               <li>Select one or more media items using the checkboxes</li>
               <li>Click "Assign Specimen & View" to open the batch editor</li>
               <li>Choose the specimen and view for the selected items</li>
-              <li>Click "Assign & Release Media" to complete the process</li>
+              <li>Click "Assign" to complete the process</li>
+              <li>Click "Release Media" to release the media</li>
             </ol>
           </div>
           <div class="col-md-6">

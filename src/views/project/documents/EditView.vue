@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/AuthStore'
 import { AccessControlService, EntityType } from '@/lib/access-control.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { documentSchema } from '@/views/project/documents/schema.js'
+import { useNotifications } from '@/composables/useNotifications'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -16,6 +17,9 @@ const documentId = parseInt(route.params.documentId)
 const documentsStore = useDocumentsStore()
 const projectUsersStore = useProjectUsersStore()
 const authStore = useAuthStore()
+const { showError, showSuccess } = useNotifications()
+
+const isSaving = ref(false)
 
 const isLoaded = computed(
   () => documentsStore.isLoaded && projectUsersStore.isLoaded
@@ -104,26 +108,45 @@ function isFieldDisabled(field) {
 }
 
 async function editDocument(event) {
-  // Prevent submission if user doesn't have access
-  if (!canEditDocument.value) {
-    alert('You do not have permission to edit this document.')
+  // Prevent double-clicking or submission if user doesn't have access
+  if (isSaving.value || !canEditDocument.value) {
+    if (!canEditDocument.value) {
+      showError('You do not have permission to edit this document.')
+    }
     return
   }
 
-  const formData = new FormData(event.currentTarget)
+  isSaving.value = true
 
-  // Remove restricted fields from the submission for security
-  restrictedFields.value.forEach((field) => {
-    formData.delete(field)
-  })
+  try {
+    const formData = new FormData(event.currentTarget)
 
-  const success = await documentsStore.edit(projectId, documentId, formData)
-  if (!success) {
-    alert(response.data?.message || 'Failed to modify document')
-    return
+    // Remove restricted fields from the submission for security
+    restrictedFields.value.forEach((field) => {
+      formData.delete(field)
+    })
+
+    const result = await documentsStore.edit(projectId, documentId, formData)
+    if (!result.success) {
+      showError(result.error || 'Failed to modify document')
+      isSaving.value = false // Reset loading state on error
+      return
+    }
+
+    // Success - show notification and navigate away
+    showSuccess('Document updated successfully!')
+    try {
+      await router.push({ path: `/myprojects/${projectId}/documents` })
+    } catch (navError) {
+      console.error('Navigation failed:', navError)
+      // Reset loading state if navigation fails
+      isSaving.value = false
+    }
+  } catch (error) {
+    console.error('Error editing document:', error)
+    showError('Failed to edit document. Please try again.')
+    isSaving.value = false // Reset loading state on error
   }
-
-  router.push({ path: `/myprojects/${projectId}/documents` })
 }
 
 onMounted(() => {
@@ -195,14 +218,17 @@ onMounted(() => {
             <button
               class="btn btn-primary"
               type="submit"
-              :disabled="!canEditDocument"
+              :disabled="!canEditDocument || isSaving"
               :title="
                 !canEditDocument
                   ? 'You do not have permission to edit this document'
+                  : isSaving
+                  ? 'Saving document...'
                   : ''
               "
             >
-              Save
+              <span v-if="isSaving" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              {{ isSaving ? 'Saving...' : 'Save' }}
             </button>
           </div>
         </div>
