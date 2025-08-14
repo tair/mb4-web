@@ -43,6 +43,28 @@ function validateRequiredFields(formData) {
     }
   })
   
+  // Conditional validation for copyright fields
+  const copyrightCheckbox = formData.get('is_copyrighted')
+  const isCopyrighted = copyrightCheckbox === '1' || copyrightCheckbox === 1
+  
+  if (isCopyrighted) {
+    // Check copyright_permission - must not be the default "not set" option (value 0)
+    const copyrightPermission = formData.get('copyright_permission')
+    const copyrightPermissionValue = parseInt(String(copyrightPermission), 10)
+    
+    if (isNaN(copyrightPermissionValue) || copyrightPermissionValue === 0) {
+      errors.push('Copyright permission must be selected when media is under copyright (cannot use "Copyright permission not set")')
+    }
+    
+    // Check copyright_license - must not be the default "not set" option (value 0)
+    const copyrightLicense = formData.get('copyright_license')
+    const copyrightLicenseValue = parseInt(String(copyrightLicense), 10)
+    
+    if (isNaN(copyrightLicenseValue) || copyrightLicenseValue === 0) {
+      errors.push('Media reuse license must be selected when media is under copyright (cannot use "Media reuse policy not set")')
+    }
+  }
+  
   return errors
 }
 
@@ -162,4 +184,8 @@ onMounted(() => {
     </form>
   </LoadingIndicator>
 </template>
-<style scoped></style>
+<style scoped>
+.form-label {
+  font-weight: bold;
+}
+</style>

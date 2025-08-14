@@ -1,6 +1,6 @@
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted, onBeforeUnmount, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAuthStore } from '@/stores/AuthStore'
 import { useMediaStore } from '@/stores/MediaStore'
 import { useMediaViewsStore } from '@/stores/MediaViewsStore'
@@ -121,6 +121,14 @@ function hideTooltipOnClick(event) {
       tooltip.hide()
     }
   }
+  
+  // Also hide any other visible tooltips
+  const visibleTooltips = document.querySelectorAll('.tooltip.show')
+  visibleTooltips.forEach(tooltipEl => {
+    if (tooltipEl.parentNode) {
+      tooltipEl.parentNode.removeChild(tooltipEl)
+    }
+  })
 }
 
 // Function to initialize or reinitialize tooltips with fast delays
@@ -133,13 +141,38 @@ function initializeFastTooltips() {
       existingTooltip.dispose()
     }
     
+    // Check if this element should render HTML content
+    const allowHtml = tooltipTriggerEl.hasAttribute('data-bs-html') && 
+                     tooltipTriggerEl.getAttribute('data-bs-html') === 'true'
+    
     // Create new tooltip with fast configuration
     new Tooltip(tooltipTriggerEl, {
       delay: { show: 150, hide: 50 }, // Very fast delays
       trigger: 'hover focus',
       placement: 'auto', // Auto placement for better positioning
-      fallbackPlacements: ['bottom', 'top', 'right', 'left']
+      fallbackPlacements: ['bottom', 'top', 'right', 'left'],
+      html: allowHtml // Enable HTML rendering when data-bs-html="true"
     })
+  })
+}
+
+// Function to dispose of all tooltips to prevent persistent tooltips
+function disposeAllTooltips() {
+  // Find all elements with tooltips and dispose them
+  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+  tooltipTriggerList.forEach(tooltipTriggerEl => {
+    const existingTooltip = Tooltip.getInstance(tooltipTriggerEl)
+    if (existingTooltip) {
+      existingTooltip.dispose()
+    }
+  })
+  
+  // Also check for any orphaned tooltip elements in the DOM
+  const tooltipElements = document.querySelectorAll('.tooltip')
+  tooltipElements.forEach(tooltipEl => {
+    if (tooltipEl.parentNode) {
+      tooltipEl.parentNode.removeChild(tooltipEl)
+    }
   })
 }
 
@@ -204,6 +237,40 @@ function getActiveFiltersText(filters) {
 const showFolioOptions = ref(false)
 const selectedFolioId = ref('')
 const folioToolsTooltip = 'Folios are annotated booklets of media that you may wish to make as part of your Project. To make one, start by clicking on Folios at the left, name your Folio and then go to Folio Tools to fill the Folio with media.'
+
+// Tooltip constants for batch edit/selection bar
+const batchEditTooltip = 'Edit all selected media items at the same time. You can modify copyright information, views, specimens, and other metadata for multiple files simultaneously.'
+const downloadSelectedTooltip = 'Download original files for all selected media items.'
+const addToFolioTooltip = 'Add selected media items to a folio for organization and annotation.'
+const deleteSelectedTooltip = 'Permanently delete all selected media items. This action cannot be undone.'
+
+// Upload button tooltips
+const uploadTooltips = {
+  upload2D: 'Upload images (JPG, PNG, GIF, etc.) to your project',
+  upload3D: 'Upload 3D models (PLY, OBJ, STL, etc.) for interactive viewing',
+  uploadVideo: 'Upload video files (MP4, MOV, AVI, etc.) to your project',
+  uploadStacks: 'Upload zipped archives of CT scan stacks (Dicom, TIFF)',
+  uploadBatch: 'Upload multiple 2D images at once with batch metadata editing',
+  importEOL: 'Import images directly from Encyclopedia of Life (EOL)',
+  importIDigBio: 'Import specimen images from iDigBio collections'
+}
+
+// Download options tooltips
+const downloadTooltips = {
+  originalFilenames: 'Download a CSV file containing the original filenames of all media in this project'
+}
+
+// Control tooltips
+const controlTooltips = {
+  showFilter: 'Filter media by identification status or copyright information',
+  orderBy: 'Sort media by different criteria including taxonomic classification'
+}
+
+// Educational tooltip about views
+const whatIsViewTooltip = 'A View should indicate both the orientation and element in your 2D or 3D image (Media), for example \'dorsal skull\' or \'cross-section of leaf\' or \'CT scan of insect body\'. The best practice for using the MorphoBank database, and one that will make your work maximally searchable, is to include only one View per image (Media) rather than multi-image plates.'
+
+// View tools tooltip
+const viewToolsTooltip = 'Click here to display your media without views and batch curate them.<br/><br/>A View should indicate both the orientation and element in your 2D or 3D image (Media), for example \'dorsal skull\' or \'cross-section of leaf\' or \'CT scan of insect body\'. The best practice for using the MorphoBank database, and one that will make your work maximally searchable, is to include only one View per image (Media) rather than multi-image plates.'
 
 const filters = reactive({
   released: (media) => media.cataloguing_status == 0,
@@ -273,6 +340,11 @@ const paginatedMedia = computed(() => {
 const uncuratedMediaCount = computed(() => {
   const mediaArray = Array.isArray(mediaStore.media) ? mediaStore.media : []
   return mediaArray.filter((m) => m.cataloguing_status == 1).length
+})
+
+// Computed property for media without views
+const mediaWithoutViews = computed(() => {
+  return filteredMedia.value.filter(m => !m.view_id).length
 })
 
 // Selection computed properties for batch operations
@@ -428,6 +500,33 @@ onMounted(async () => {
   setTimeout(() => {
     initializeFastTooltips()
   }, 100)
+  
+  // Add global cleanup for tooltips on page unload
+  const handleBeforeUnload = () => {
+    disposeAllTooltips()
+  }
+  
+  window.addEventListener('beforeunload', handleBeforeUnload)
+  
+  // Store the cleanup function for removal in onBeforeUnmount
+  window._tooltipCleanupHandler = handleBeforeUnload
+})
+
+// Cleanup tooltips when component unmounts to prevent persistent tooltips
+onBeforeUnmount(() => {
+  disposeAllTooltips()
+  
+  // Remove the global event listener if it exists
+  if (window._tooltipCleanupHandler) {
+    window.removeEventListener('beforeunload', window._tooltipCleanupHandler)
+    delete window._tooltipCleanupHandler
+  }
+})
+
+// Cleanup tooltips when navigating away using Vue Router
+onBeforeRouteLeave((to, from) => {
+  disposeAllTooltips()
+  return true
 })
 
 function refresh() {
@@ -662,6 +761,74 @@ watch(activeFilters, () => {
     initializeFastTooltips()
   }, 50)
 })
+
+// Watch for paginated media changes to reinitialize tooltips for new media cards
+watch(paginatedMedia, () => {
+  setTimeout(() => {
+    initializeFastTooltips()
+  }, 100)
+}, { deep: true })
+
+// Function to generate detailed tooltip content for media cards
+function getMediaTooltipContent(media_file) {
+  if (!media_file) return ''
+  
+  const specimen = specimensStore.getSpecimenById(media_file.specimen_id)
+  const view = mediaViewsStore.getMediaViewById(media_file.view_id)
+  const user = projectUsersStore.getUserById(media_file.user_id)
+  const taxon = getTaxon(media_file)
+  
+  // Helper function to escape HTML characters in tooltip content
+  const escapeHtml = (text) => {
+    if (!text) return ''
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+  }
+  
+  let tooltip = `<strong>Media ID:</strong> M${media_file.media_id}<br/>`
+  
+  if (specimen && specimen.specimen_id) {
+    tooltip += `<strong>Specimen:</strong> S${specimen.specimen_id}<br/>`
+  }
+  
+  if (view && view.name) {
+    tooltip += `<strong>View:</strong> ${escapeHtml(view.name)}<br/>`
+  }
+  
+  if (taxon) {
+    const taxonName = getTaxonName(media_file)
+    if (taxonName) {
+      tooltip += `<strong>Taxon:</strong> ${escapeHtml(taxonName)}<br/>`
+    }
+  }
+  
+  if (user && user.fname && user.lname) {
+    tooltip += `<strong>Submitter:</strong> ${escapeHtml(user.fname)} ${escapeHtml(user.lname)}<br/>`
+  }
+  
+  if (media_file.is_copyrighted) {
+    tooltip += `<strong>Copyright:</strong> Yes<br/>`
+  }
+  
+  if (media_file.media && media_file.media.original) {
+    const width = media_file.media.original.WIDTH || 'N/A'
+    const height = media_file.media.original.HEIGHT || 'N/A'
+    tooltip += `<strong>File:</strong> ${width}x${height}<br/>`
+  }
+  
+  // Remove trailing <br/> if present
+  return tooltip.replace(/<br\/>$/, '')
+}
+
+// Function to navigate to curate view for media without views
+function fixMediaWithoutViews() {
+  // Navigate to the curate view which is designed for batch editing media
+  window.location.href = `/myprojects/${projectId}/media/curate`
+}
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
@@ -673,19 +840,37 @@ watch(activeFilters, () => {
     <!-- Action Bar - Keep the project-specific actions -->
     <div class="action-bar">
       <RouterLink :to="`/myprojects/${projectId}/media/create`">
-        <button type="button" class="btn btn-m btn-outline-primary">
+        <button 
+          type="button" 
+          class="btn btn-m btn-outline-primary"
+          data-bs-toggle="tooltip"
+          :data-bs-title="uploadTooltips.upload2D"
+          :title="uploadTooltips.upload2D"
+        >
           <i class="fa fa-plus"></i>
           <span> Upload 2D Media</span>
         </button>
       </RouterLink>
       <RouterLink :to="`/myprojects/${projectId}/media/create/3d`">
-        <button type="button" class="btn btn-m btn-outline-primary">
+        <button 
+          type="button" 
+          class="btn btn-m btn-outline-primary"
+          data-bs-toggle="tooltip"
+          :data-bs-title="uploadTooltips.upload3D"
+          :title="uploadTooltips.upload3D"
+        >
           <i class="fa fa-cube"></i>
           <span> Upload 3D Media</span>
         </button>
       </RouterLink>
       <RouterLink :to="`/myprojects/${projectId}/media/create/video`">
-        <button type="button" class="btn btn-m btn-outline-primary">
+        <button 
+          type="button" 
+          class="btn btn-m btn-outline-primary"
+          data-bs-toggle="tooltip"
+          :data-bs-title="uploadTooltips.uploadVideo"
+          :title="uploadTooltips.uploadVideo"
+        >
           <i class="fa fa-video"></i>
           <span> Upload Video</span>
         </button>
@@ -694,10 +879,12 @@ watch(activeFilters, () => {
         <button 
           type="button" 
           class="btn btn-m btn-outline-primary"
-          title="Click here to load zipped archives of CT scan stacks (Dicom, TIFF)"
+          data-bs-toggle="tooltip"
+          :data-bs-title="uploadTooltips.uploadStacks"
+          :title="uploadTooltips.uploadStacks"
         >
           <i class="fa fa-layer-group"></i>
-          <span> Upload Stacks</span>
+          <span> Upload CT Stacks</span>
         </button>
       </RouterLink>
       <RouterLink
@@ -710,7 +897,13 @@ watch(activeFilters, () => {
         </button>
       </RouterLink>
       <RouterLink v-else :to="`/myprojects/${projectId}/media/create/batch`">
-        <button type="button" class="btn btn-m btn-outline-primary">
+        <button 
+          type="button" 
+          class="btn btn-m btn-outline-primary"
+          data-bs-toggle="tooltip"
+          :data-bs-title="uploadTooltips.uploadBatch"
+          :title="uploadTooltips.uploadBatch"
+        >
           <i class="fa fa-plus"></i>
           <span> Upload 2D Media Batch</span>
         </button>
@@ -720,16 +913,31 @@ watch(activeFilters, () => {
           type="button"
           class="btn btn-m btn-outline-primary dropdown-toggle"
           data-bs-toggle="dropdown"
+          title="Import media from external sources"
         >
           <i class="fa fa-file-arrow-up"></i>
           <span> Import Media </span>
         </button>
         <div class="dropdown-menu">
           <RouterLink :to="`/myprojects/${projectId}/media/import/eol`">
-            <button type="button" class="dropdown-item">Import from EOL</button>
+            <button 
+              type="button" 
+              class="dropdown-item"
+              data-bs-toggle="tooltip"
+              :data-bs-title="uploadTooltips.importEOL"
+              :title="uploadTooltips.importEOL"
+            >
+              Import from EOL
+            </button>
           </RouterLink>
           <RouterLink :to="`/myprojects/${projectId}/media/import/idigbio`">
-            <button type="button" class="dropdown-item">
+            <button 
+              type="button" 
+              class="dropdown-item"
+              data-bs-toggle="tooltip"
+              :data-bs-title="uploadTooltips.importIDigBio"
+              :title="uploadTooltips.importIDigBio"
+            >
               Import from iDigBio
             </button>
           </RouterLink>
@@ -740,6 +948,7 @@ watch(activeFilters, () => {
           type="button"
           class="btn btn-m btn-outline-primary dropdown-toggle"
           data-bs-toggle="dropdown"
+          title="Download project media data"
         >
           <i class="fa fa-download"></i>
           <span> Download </span>
@@ -749,6 +958,9 @@ watch(activeFilters, () => {
             type="button"
             class="dropdown-item"
             @click="onClickDownloadOriginalFilenames"
+            data-bs-toggle="tooltip"
+            :data-bs-title="downloadTooltips.originalFilenames"
+            :title="downloadTooltips.originalFilenames"
           >
             Original Filenames
           </button>
@@ -761,6 +973,32 @@ watch(activeFilters, () => {
       {{ uncuratedMediaCount }} batch media still need to be curated and
       released to the general media pool. You must curate all your media before
       adding a new batch.
+    </div>
+
+    <!-- Media without views warning -->
+    <div v-if="mediaWithoutViews > 0" class="alert alert-warning">
+      <i class="fa fa-exclamation-triangle"></i>
+      {{ mediaWithoutViews }} of your images do not have Views 
+      <span 
+        class="text-primary cursor-pointer"
+        data-bs-toggle="tooltip"
+        data-bs-html="true"
+        :data-bs-title="whatIsViewTooltip"
+        :title="whatIsViewTooltip"
+        style="text-decoration: underline; cursor: pointer;"
+      >
+        (what's a view?)
+      </span>
+      <button 
+        class="btn btn-sm btn-warning ms-2"
+        @click="fixMediaWithoutViews"
+        data-bs-toggle="tooltip"
+        data-bs-html="true"
+        :data-bs-title="viewToolsTooltip"
+        :title="viewToolsTooltip"
+      >
+        Fix this now, it's easy.
+      </button>
     </div>
 
     <!-- Folio Selection Dropdown -->
@@ -821,7 +1059,13 @@ watch(activeFilters, () => {
           </div>
           <div class="mb-2">
             <label for="show-filter" class="me-2">Show:</label>
-            <select id="show-filter" @change="onSelectShow">
+            <select 
+              id="show-filter" 
+              @change="onSelectShow"
+              data-bs-toggle="tooltip"
+              :data-bs-title="controlTooltips.showFilter"
+              :title="controlTooltips.showFilter"
+            >
               <option value="all">all media</option>
               <option value="identified">identified media</option>
               <option value="unidentified">unidentified media</option>
@@ -831,7 +1075,13 @@ watch(activeFilters, () => {
           </div>
           <div>
             <label for="order-by" class="me-2">Order by:</label>
-            <select id="order-by" v-model="orderBySelection">
+            <select 
+              id="order-by" 
+              v-model="orderBySelection"
+              data-bs-toggle="tooltip"
+              :data-bs-title="controlTooltips.orderBy"
+              :title="controlTooltips.orderBy"
+            >
               <option
                 v-for="(label, value) in orderByOptions"
                 :key="value"
@@ -1003,14 +1253,16 @@ watch(activeFilters, () => {
           class="item"
           data-bs-toggle="modal"
           data-bs-target="#mediaEditModal"
-          title="Edit Selected"
+          :title="batchEditTooltip"
         >
           <i class="fa-regular fa-pen-to-square"></i>
         </span>
         <span
           class="item"
           @click="downloadSelected"
-          title="Download Selected"
+          data-bs-toggle="tooltip"
+          :data-bs-title="downloadSelectedTooltip"
+          :title="downloadSelectedTooltip"
         >
           <i class="fa-solid fa-download"></i>
         </span>
@@ -1018,7 +1270,9 @@ watch(activeFilters, () => {
           v-if="foliosStore.folios.length > 0"
           class="item"
           @click="toggleFolioOptions"
-          title="Add to Folio"
+          data-bs-toggle="tooltip"
+          :data-bs-title="addToFolioTooltip"
+          :title="addToFolioTooltip"
         >
           <i class="fa-solid fa-book"></i>
         </span>
@@ -1031,7 +1285,7 @@ watch(activeFilters, () => {
               (b) => selectedMedia[b.media_id]
             )
           "
-          title="Delete Selected"
+          :title="deleteSelectedTooltip"
         >
           <i class="fa-regular fa-trash-can"></i>
         </span>
@@ -1067,6 +1321,10 @@ watch(activeFilters, () => {
               :media_file="media_file"
               :full_view="thumbnailView"
               :project_id="projectId"
+              data-bs-toggle="tooltip"
+              data-bs-html="true"
+              :data-bs-title="getMediaTooltipContent(media_file)"
+              :title="getMediaTooltipContent(media_file)"
             ></MediaCardComp>
           </RouterLink>
         </div>
@@ -1255,5 +1513,10 @@ watch(activeFilters, () => {
 .badge.bg-warning.text-dark {
   background-color: #ffc107 !important;
   color: #000 !important;
+}
+
+/* Cursor pointer utility class */
+.cursor-pointer {
+  cursor: pointer;
 }
 </style>

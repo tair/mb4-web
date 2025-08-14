@@ -3,6 +3,7 @@ import router from '@/router'
 import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
+import { useAuthStore } from '@/stores/AuthStore'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { userSchema } from '@/views/project/members/schema.js'
 
@@ -11,9 +12,25 @@ const projectId = route.params.id
 const userId = parseInt(route.params.userId)
 
 const projectUsersStore = useProjectUsersStore()
+const authStore = useAuthStore()
 const user = computed(() => projectUsersStore.getUserById(userId))
 
+// Check if current user is project admin
+const isCurrentUserProjectAdmin = computed(() => {
+  const currentUserId = authStore.user?.userId
+  if (!currentUserId) return false
+  
+  const userMembership = projectUsersStore.getUserById(currentUserId)
+  return userMembership?.admin === true
+})
+
 async function edit(event) {
+  // Check if current user is project admin before allowing edit
+  if (!isCurrentUserProjectAdmin.value) {
+    alert('Only project administrators can edit member permissions')
+    return
+  }
+  
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
   json.group_ids = formData.getAll('group_ids')
@@ -45,7 +62,20 @@ onMounted(() => {
         <p class="fw-bold">Editing:&nbsp;</p>
         {{ `${user.fname} ${user.lname}` }}
       </div>
-      <form @submit.prevent="edit">
+      
+      <div v-if="!isCurrentUserProjectAdmin" class="alert alert-warning">
+        <h5>Access Denied</h5>
+        <p>Only project administrators can edit member permissions.</p>
+        <button
+          class="btn btn-primary"
+          type="button"
+          @click="$router.go(-1)"
+        >
+          Go Back
+        </button>
+      </div>
+      
+      <form v-else @submit.prevent="edit">
         <div class="row setup-content">
           <div
             v-for="(definition, index) in userSchema"
