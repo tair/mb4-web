@@ -49,6 +49,85 @@ const newtechRatchet = ref(true)
 const newtechDrift = ref(true)
 const newtechFusing = ref(true)
 
+// =============================================================================
+// API FUNCTIONS
+// =============================================================================
+
+/**
+ * Validates a TNT file using the server validation endpoint
+ * @param {File} file - The TNT file to validate
+ * @returns {Promise<Object>} - Validation response data
+ */
+const baseUrl = import.meta.env.VITE_API_URL
+async function apiValidateTntFile(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await axios.post(`${baseUrl}/tnt/validate`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+
+  return response.data
+}
+
+/**
+ * Extracts species names from a TNT file
+ * @param {File} file - The TNT file to extract species from
+ * @returns {Promise<Object>} - Species extraction response data
+ */
+async function apiExtractSpeciesFromFile(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await axios.post(`${baseUrl}/tnt/species`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+
+  return response.data
+}
+
+/**
+ * Analyzes a TNT file with specified parameters
+ * @param {File} file - The TNT file to analyze
+ * @param {Object} params - Analysis parameters
+ * @returns {Promise<Object>} - Analysis response data
+ */
+async function apiAnalyzeTntFile(file, params) {
+  const formData = new FormData()
+
+  // Append the uploaded TNT file directly
+  formData.append('file', file)
+
+  // Add other parameters from the form
+  formData.append('outgroup', params.outgroup)
+  formData.append('hold_value', params.holdValue)
+  formData.append('search_type', params.searchType)
+
+  // Add search-specific parameters
+  if (params.searchType === 'traditional') {
+    formData.append('replications', params.replications)
+    formData.append('trees_per_replication', params.treesPerReplication)
+  } else if (params.searchType === 'new_technology') {
+    formData.append('iterations', params.iterations)
+  }
+
+  const response = await axios.post(`${baseUrl}/tnt/analyze`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+
+  return response.data
+}
+
+// =============================================================================
+// BUSINESS LOGIC FUNCTIONS
+// =============================================================================
+
 // TNT file upload handling functions
 async function handleTntFileChange(event) {
   const file = event.target.files[0]
@@ -89,27 +168,16 @@ async function validateTntFile(file) {
     tntValidationError.value = ''
     tntValidationStatus.value = null
 
-    const formData = new FormData()
-    formData.append('file', file)
+    const responseData = await apiValidateTntFile(file)
 
-    const response = await axios.post(
-      'http://localhost:8000/tnt/validate',
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    )
-
-    if (response.data) {
-      if (response.data.valid) {
+    if (responseData) {
+      if (responseData.valid) {
         tntValidationStatus.value = 'valid'
         console.log('TNT file validation passed')
       } else {
         tntValidationStatus.value = 'invalid'
         tntValidationError.value = 'TNT file validation failed'
-        console.log('TNT file validation failed:', response.data.issues)
+        console.log('TNT file validation failed:', responseData.issues)
       }
     }
   } catch (error) {
@@ -127,29 +195,18 @@ async function extractSpeciesFromFile(file) {
     isExtractingSpecies.value = true
     speciesExtractionError.value = ''
 
-    const formData = new FormData()
-    formData.append('file', file)
+    const responseData = await apiExtractSpeciesFromFile(file)
 
-    const response = await axios.post(
-      'http://localhost:8000/tnt/species',
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    )
-
-    if (response.data && response.data.species_names) {
-      availableSpecies.value = response.data.species_names
+    if (responseData && responseData.species_names) {
+      availableSpecies.value = responseData.species_names
 
       // Set suggested outgroup if available
-      if (response.data.suggested_outgroup) {
-        tntOutgroup.value = response.data.suggested_outgroup
+      if (responseData.suggested_outgroup) {
+        tntOutgroup.value = responseData.suggested_outgroup
       }
 
       console.log(
-        `Extracted ${response.data.species_count} species from TNT file`
+        `Extracted ${responseData.species_count} species from TNT file`
       )
     }
   } catch (error) {
@@ -209,9 +266,6 @@ function downloadResultFile(resultItem) {
   }
 }
 
-// Legacy function - now handled by session results
-// function downloadTntResults() - removed in favor of downloadResultFile()
-
 // Download helper functions for TNT analysis results
 function downloadNexusFile(content, filename) {
   try {
@@ -235,35 +289,6 @@ function downloadNexusFile(content, filename) {
     console.log(`Downloaded: ${filename}`)
   } catch (error) {
     console.error('Error downloading nexus file:', error)
-    alert('Failed to download the analysis results file.')
-  }
-}
-
-async function downloadFileFromUrl(downloadUrl, filename) {
-  try {
-    const response = await fetch(downloadUrl)
-
-    if (!response.ok) {
-      throw new Error(`Failed to download file: ${response.statusText}`)
-    }
-
-    const blob = await response.blob()
-    const url = URL.createObjectURL(blob)
-
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    link.style.display = 'none'
-
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-
-    URL.revokeObjectURL(url)
-
-    console.log(`Downloaded: ${filename}`)
-  } catch (error) {
-    console.error('Error downloading file from URL:', error)
     alert('Failed to download the analysis results file.')
   }
 }
@@ -308,51 +333,32 @@ async function onRunTnt() {
     tntUploadErrors.value = {}
     searchValidationError.value = ''
 
-    // Create FormData to send as form-data (matching your API requirements)
-    const formData = new FormData()
-
-    // Append the uploaded TNT file directly
-    formData.append('file', tntFile.value)
-
-    // Add other parameters from the form
-    formData.append('outgroup', tntOutgroup.value)
-    formData.append('hold_value', tntHoldValue.value)
-    formData.append('search_type', searchType.value)
+    // Prepare analysis parameters
+    const analysisParams = {
+      outgroup: tntOutgroup.value,
+      holdValue: tntHoldValue.value,
+      searchType: searchType.value,
+    }
 
     // Add search-specific parameters
     if (searchType.value === 'traditional') {
-      formData.append('replications', traditionalReplications.value)
-      formData.append(
-        'trees_per_replication',
-        traditionalTreesPerReplication.value
-      )
-      formData.append('swap_algorithm', traditionalSwapAlgorithm.value)
+      analysisParams.replications = traditionalReplications.value
+      analysisParams.treesPerReplication = traditionalTreesPerReplication.value
+      analysisParams.swapAlgorithm = traditionalSwapAlgorithm.value
     } else if (searchType.value === 'new_technology') {
-      formData.append('iterations', newtechIterations.value)
-      formData.append('sectorial', newtechSectorial.value)
-      formData.append('ratchet', newtechRatchet.value)
-      formData.append('drift', newtechDrift.value)
-      formData.append('fusing', newtechFusing.value)
+      analysisParams.iterations = newtechIterations.value
     }
 
     console.log('Submitting TNT file:', tntFile.value.name)
 
-    // Make POST request to your TNT analyze endpoint
-    const response = await axios.post(
-      'http://localhost:8000/tnt/analyze',
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    )
+    // Make API call to analyze TNT file
+    const responseData = await apiAnalyzeTntFile(tntFile.value, analysisParams)
 
-    console.log('TNT analysis submitted:', response.data)
+    console.log('TNT analysis submitted:', responseData)
 
     // Process the response data
-    if (response.data) {
-      console.log('TNT analysis results:', response.data)
+    if (responseData) {
+      console.log('TNT analysis results:', responseData)
 
       // Create result entry for session list
       const timestamp = Date.now()
@@ -367,7 +373,7 @@ async function onRunTnt() {
         outgroup: tntOutgroup.value,
         holdValue: tntHoldValue.value,
         status: 'completed',
-        nex_content: response.data,
+        nex_content: responseData,
       }
 
       // Add to session results
@@ -376,7 +382,7 @@ async function onRunTnt() {
       downloadNexusFile(resultEntry.nex_content, resultEntry.filename)
 
       // Store current results for compatibility
-      tntAnalysisResults.value = response.data
+      tntAnalysisResults.value = responseData
       showTntResults.value = true
     }
   } catch (error) {
@@ -724,9 +730,7 @@ async function onRunTnt() {
               for larger datasets with customizable parameters
             </li>
             <li>
-              <strong>New Technology Search:</strong> Advanced algorithms
-              including sectorial searches, ratchet, tree drifting, and tree
-              fusing
+              <strong>New Technology Search:</strong>
             </li>
           </ul>
           Results are returned as NEXUS files containing the optimal tree(s) and
