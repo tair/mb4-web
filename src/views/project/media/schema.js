@@ -134,6 +134,24 @@ export const schema = {
   },
 }
 
+export const createSchema = {
+  ...schema,
+  file: {
+    label: 'Select media file',
+    view: FileInput,
+    required: true,
+  },
+}
+
+export const editSchema = {
+  ...schema,
+  file: {
+    label: 'Update media file with',
+    view: FileInput,
+    required: false, // Optional for editing
+  },
+}
+
 export const batchSchema = {
   ...schema,
   file: {

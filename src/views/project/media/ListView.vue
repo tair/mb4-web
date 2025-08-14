@@ -7,6 +7,9 @@ import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useFoliosStore } from '@/stores/FoliosStore'
+import { useFolioMediaStore } from '@/stores/FolioMediaStore'
+import { useNotifications } from '@/composables/useNotifications'
 import { getTaxonForMediaId } from '@/views/project/utils'
 import { TaxaFriendlyNames, nameColumnMap } from '@/utils/taxa'
 // import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
@@ -16,6 +19,7 @@ import DeleteDialog from '@/views/project/media/DeleteDialog.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaCardComp from '@/components/project/MediaCardComp.vue'
 import { buildMediaUrl } from '@/utils/fileUtils.js'
+import { Tooltip } from 'bootstrap'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id)
@@ -25,13 +29,17 @@ const specimensStore = useSpecimensStore()
 const taxaStore = useTaxaStore()
 const mediaViewsStore = useMediaViewsStore()
 const projectUsersStore = useProjectUsersStore()
+const foliosStore = useFoliosStore()
+const folioMediaStore = useFolioMediaStore()
+const { showSuccess, showError } = useNotifications()
 const isLoaded = computed(
   () =>
     mediaStore.isLoaded &&
     specimensStore.isLoaded &&
     taxaStore.isLoaded &&
     mediaViewsStore.isLoaded &&
-    projectUsersStore.isLoaded
+    projectUsersStore.isLoaded &&
+    foliosStore.isLoaded
 )
 
 const mediaToDelete = ref([])
@@ -43,6 +51,159 @@ const selectedPageSize = ref(25)
 
 // Track selection state using a reactive object keyed by media_id
 const selectedMedia = reactive({})
+
+// Filter state management - make it reactive
+const serializedFilterName = `mediaFilter[${projectId}]`
+const filterUpdateTrigger = ref(0) // Trigger for reactivity
+
+const activeFilters = computed(() => {
+  // Access the trigger to ensure reactivity
+  filterUpdateTrigger.value
+  
+  const existingFilter = sessionStorage.getItem(serializedFilterName)
+  if (!existingFilter) return null
+  
+  try {
+    const filter = JSON.parse(existingFilter)
+    const hasActiveFilters = 
+      (filter.filterTaxa && filter.filterTaxa.length > 0) ||
+      (filter.filterView && filter.filterView.length > 0) ||
+      (filter.filterSubmitter && filter.filterSubmitter.length > 0) ||
+      (filter.filterCopyrightLicense && filter.filterCopyrightLicense.length > 0) ||
+      (filter.filterCopyrightPermission && filter.filterCopyrightPermission.length > 0) ||
+      (filter.filterSpecimenRepository && filter.filterSpecimenRepository.length > 0) ||
+      (filter.filterStatus && filter.filterStatus.length > 0) ||
+      (filter.filterOther && Object.keys(filter.filterOther).length > 0)
+    
+    return hasActiveFilters ? filter : null
+  } catch (e) {
+    console.error('Error parsing filter from sessionStorage:', e)
+    return null
+  }
+})
+
+function clearAllFilters(event) {
+  sessionStorage.removeItem(serializedFilterName)
+  // Clear all existing filters
+  Object.keys(filters).forEach(key => {
+    if (key !== 'released') { // Keep the released filter as it's the default
+      clearFilter(key)
+    }
+  })
+  // Trigger reactivity update
+  filterUpdateTrigger.value++
+  
+  // Also clear any checkboxes in the modal if it's open
+  setTimeout(() => {
+    const modalElement = document.getElementById('mediaFilterModal')
+    if (modalElement) {
+      const checkboxes = modalElement.querySelectorAll<HTMLInputElement>('input[type=checkbox]')
+      for (const checkbox of checkboxes) {
+        checkbox.checked = false
+      }
+    }
+  }, 0)
+  
+  // Hide tooltip after click
+  hideTooltipOnClick(event)
+}
+
+// Function to trigger filter updates (called by FilterDialog)
+function onFiltersUpdated() {
+  filterUpdateTrigger.value++
+}
+
+// Helper function to hide tooltip after button click
+function hideTooltipOnClick(event) {
+  if (event && event.target) {
+    const tooltip = Tooltip.getInstance(event.target)
+    if (tooltip) {
+      tooltip.hide()
+    }
+  }
+}
+
+// Function to initialize or reinitialize tooltips with fast delays
+function initializeFastTooltips() {
+  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+  tooltipTriggerList.forEach(tooltipTriggerEl => {
+    // Dispose existing tooltip if it exists
+    const existingTooltip = Tooltip.getInstance(tooltipTriggerEl)
+    if (existingTooltip) {
+      existingTooltip.dispose()
+    }
+    
+    // Create new tooltip with fast configuration
+    new Tooltip(tooltipTriggerEl, {
+      delay: { show: 150, hide: 50 }, // Very fast delays
+      trigger: 'hover focus',
+      placement: 'auto', // Auto placement for better positioning
+      fallbackPlacements: ['bottom', 'top', 'right', 'left']
+    })
+  })
+}
+
+// View toggle functions with tooltip hiding
+function setThumbnailView(event) {
+  thumbnailView.value = true
+  hideTooltipOnClick(event)
+}
+
+function setCompactView(event) {
+  thumbnailView.value = false
+  hideTooltipOnClick(event)
+}
+
+// Function to build active filters text for display
+function getActiveFiltersText(filters) {
+  if (!filters) return ''
+  
+  const filterParts = []
+  
+  if (filters.filterTaxa && filters.filterTaxa.length > 0) {
+    filterParts.push(`${filters.filterTaxa.length} taxa`)
+  }
+  if (filters.filterView && filters.filterView.length > 0) {
+    filterParts.push(`${filters.filterView.length} views`)
+  }
+  if (filters.filterSubmitter && filters.filterSubmitter.length > 0) {
+    filterParts.push(`${filters.filterSubmitter.length} submitters`)
+  }
+  if (filters.filterCopyrightLicense && filters.filterCopyrightLicense.length > 0) {
+    filterParts.push(`${filters.filterCopyrightLicense.length} licenses`)
+  }
+  if (filters.filterCopyrightPermission && filters.filterCopyrightPermission.length > 0) {
+    filterParts.push(`${filters.filterCopyrightPermission.length} permissions`)
+  }
+  if (filters.filterSpecimenRepository && filters.filterSpecimenRepository.length > 0) {
+    filterParts.push(`${filters.filterSpecimenRepository.length} repositories`)
+  }
+  if (filters.filterStatus && filters.filterStatus.length > 0) {
+    filterParts.push(`${filters.filterStatus.length} status filters`)
+  }
+  if (filters.filterOther && Object.keys(filters.filterOther).length > 0) {
+    filterParts.push(`${Object.keys(filters.filterOther).length} other criteria`)
+  }
+  
+  if (filterParts.length === 0) return 'No filters active'
+  if (filterParts.length === 1) return filterParts[0]
+  if (filterParts.length === 2) return `${filterParts[0]} and ${filterParts[1]}`
+  
+  // For 3+ filters, use more compact display
+  if (filterParts.length > 4) {
+    const totalCategories = filterParts.length
+    return `${totalCategories} filter categories active`
+  }
+  
+  // For 3-4 filters, show "X, Y, and Z"
+  const lastFilter = filterParts.pop()
+  return `${filterParts.join(', ')}, and ${lastFilter}`
+}
+
+// Folio tools state
+const showFolioOptions = ref(false)
+const selectedFolioId = ref('')
+const folioToolsTooltip = 'Folios are annotated booklets of media that you may wish to make as part of your Project. To make one, start by clicking on Folios at the left, name your Folio and then go to Folio Tools to fill the Folio with media.'
 
 const filters = reactive({
   released: (media) => media.cataloguing_status == 0,
@@ -230,7 +391,7 @@ async function batchEdit(json) {
   return mediaStore.editIds(projectId, mediaIds, json)
 }
 
-onMounted(() => {
+onMounted(async () => {
   if (!mediaStore.isLoaded) {
     mediaStore.fetchMedia(projectId)
   }
@@ -246,6 +407,27 @@ onMounted(() => {
   if (!projectUsersStore.isLoaded) {
     projectUsersStore.fetchUsers(projectId)
   }
+  if (!foliosStore.isLoaded) {
+    foliosStore.fetch(projectId)
+  }
+  
+  // Initialize filters from sessionStorage if they exist
+  const existingFilter = sessionStorage.getItem(serializedFilterName)
+  if (existingFilter) {
+    try {
+      const { applyFilter } = await import('@/views/project/media/filter')
+      const filter = JSON.parse(existingFilter)
+      await applyFilter(projectId, filter, setFilter, clearFilter)
+      filterUpdateTrigger.value++
+    } catch (e) {
+      console.error('Error applying existing filters:', e)
+    }
+  }
+  
+  // Initialize fast-responding tooltips
+  setTimeout(() => {
+    initializeFastTooltips()
+  }, 100)
 })
 
 function refresh() {
@@ -253,6 +435,7 @@ function refresh() {
   specimensStore.fetchSpecimens(projectId)
   taxaStore.fetch(projectId)
   mediaViewsStore.fetchMediaViews(projectId)
+  foliosStore.fetch(projectId)
 }
 
 const baseUrl = `${import.meta.env.VITE_API_URL}/projects/${projectId}/media`
@@ -287,6 +470,53 @@ function downloadSelected() {
       document.body.removeChild(link)
     }, index * 100) // 100ms delay between each download
   })
+}
+
+// Folio tools functions
+function toggleFolioOptions(event) {
+  showFolioOptions.value = !showFolioOptions.value
+  // If hiding folio options, reset selected folio
+  if (!showFolioOptions.value) {
+    selectedFolioId.value = ''
+  }
+  
+  // Hide tooltip after click to prevent it from staying visible
+  hideTooltipOnClick(event)
+}
+
+async function addToFolio() {
+  if (!selectedFolioId.value) {
+    showError('Please select a folio')
+    return
+  }
+
+  const selectedMediaFiles = filteredMedia.value
+    .filter((m) => selectedMedia[m.media_id])
+    .map((m) => m.media_id)
+  
+  if (selectedMediaFiles.length === 0) {
+    showError('Please select media files to add to folio')
+    return
+  }
+
+  try {
+    const success = await folioMediaStore.create(projectId, selectedFolioId.value, selectedMediaFiles)
+    if (success) {
+      showSuccess(`Added ${selectedMediaFiles.length} media files to folio`)
+      // Clear selections
+      Object.keys(selectedMedia).forEach(key => {
+        selectedMedia[key] = false
+      })
+      // Hide folio options
+      showFolioOptions.value = false
+      selectedFolioId.value = ''
+    } else {
+      showError('Failed to add media to folio')
+    }
+  } catch (error) {
+    console.error('Error adding media to folio:', error)
+    showError('An error occurred while adding media to folio')
+  }
 }
 
 function onSelectShow(event) {
@@ -418,6 +648,20 @@ watch(selectedPageSize, () => {
 watch(searchStr, () => {
   selectedPage.value = 1
 })
+
+// Watch for folio options changes to reinitialize tooltips
+watch(showFolioOptions, () => {
+  setTimeout(() => {
+    initializeFastTooltips()
+  }, 50)
+})
+
+// Watch for active filters changes to reinitialize tooltips
+watch(activeFilters, () => {
+  setTimeout(() => {
+    initializeFastTooltips()
+  }, 50)
+})
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
@@ -519,6 +763,48 @@ watch(searchStr, () => {
       adding a new batch.
     </div>
 
+    <!-- Folio Selection Dropdown -->
+    <div v-if="showFolioOptions && foliosStore.folios.length > 0" class="folio-options mb-3">
+      <div class="alert alert-light border">
+        <p class="mb-2">
+          <i class="fa fa-info-circle text-primary"></i>
+          Use the checkboxes below to select media to add to the following folio:
+        </p>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <label for="folio-select" class="form-label mb-0">Select Folio:</label>
+          <select
+            id="folio-select"
+            v-model="selectedFolioId"
+            class="form-select"
+            style="width: auto;"
+          >
+            <option value="">Choose a folio...</option>
+            <option
+              v-for="folio in foliosStore.folios"
+              :key="folio.folio_id"
+              :value="folio.folio_id"
+            >
+              {{ folio.name }}
+            </option>
+          </select>
+          <button
+            @click="addToFolio"
+            :disabled="!selectedFolioId || !someSelected"
+            class="btn btn-primary"
+          >
+            <i class="fa fa-plus"></i>
+            Add Media to Folio
+          </button>
+          <button
+            @click="toggleFolioOptions"
+            class="btn btn-secondary"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div v-if="mediaStore.media?.length">
       <!-- Controls matching MediaView.vue exactly -->
       <div class="row mb-3">
@@ -556,10 +842,10 @@ watch(searchStr, () => {
             </select>
           </div>
         </div>
-        <div class="d-flex col-7 justify-content-end">
-          <div class="me-5">
+        <div class="d-flex col-7 justify-content-end align-items-center flex-wrap gap-2">
+          <div class="pagination-info">
             Showing page
-            <select v-model="selectedPage">
+            <select v-model="selectedPage" class="form-select form-select-sm d-inline-block" style="width: auto;">
               <option
                 :selected="idx == 1"
                 v-for="idx in totalPages"
@@ -572,9 +858,9 @@ watch(searchStr, () => {
             of {{ totalPages }} pages.
           </div>
 
-          <div>
+          <div class="items-per-page">
             Items per page:
-            <select v-model="selectedPageSize">
+            <select v-model="selectedPageSize" class="form-select form-select-sm d-inline-block" style="width: auto;">
               <option
                 :selected="idx == 25"
                 v-for="idx in [10, 25, 50, 100]"
@@ -585,22 +871,112 @@ watch(searchStr, () => {
               </option>
             </select>
           </div>
-          <div class="ms-1">
+
+          <!-- Filter Button -->
+          <div class="position-relative">
             <button
-              @click="thumbnailView = true"
+              type="button"
+              class="btn btn-sm btn-outline-secondary"
+              :class="{ 'btn-warning': activeFilters, 'text-dark': activeFilters }"
+              data-bs-toggle="modal"
+              data-bs-target="#mediaFilterModal"
+              data-bs-title="Filter media by taxa, views, submitters, and more"
+              title="Filter Media"
+            >
+              <i class="fa fa-filter"></i>
+              <span class="d-none d-md-inline"> 
+                {{ activeFilters ? 'Filtered' : 'Filter' }}
+              </span>
+              <!-- Active filter indicator -->
+              <span 
+                v-if="activeFilters" 
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark"
+                style="font-size: 0.6rem; padding: 0.2rem 0.4rem;"
+              >
+                !
+              </span>
+            </button>
+            <!-- Clear filters button when filters are active -->
+            <button
+              v-if="activeFilters"
+              type="button"
+              class="btn btn-sm btn-outline-danger ms-1"
+              @click="clearAllFilters($event)"
+              data-bs-toggle="tooltip"
+              data-bs-title="Remove all active filters"
+              title="Clear All Filters"
+            >
+              <i class="fa fa-times"></i>
+              <span class="d-none d-lg-inline"> Clear</span>
+            </button>
+          </div>
+
+          <!-- Folio Tools Button -->
+          <div v-if="foliosStore.folios.length > 0">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary"
+              @click="toggleFolioOptions($event)"
+              :class="{ active: showFolioOptions }"
+              data-bs-toggle="tooltip"
+              :data-bs-title="folioToolsTooltip"
+              :title="folioToolsTooltip"
+            >
+              <i class="fa fa-book"></i>
+              <span class="d-none d-lg-inline"> Folio Tools</span>
+            </button>
+          </div>
+
+          <div class="view-toggles d-flex">
+            <button
+              @click="setThumbnailView($event)"
               :style="{ backgroundColor: thumbnailView ? '#e0e0e0' : '#fff' }"
+              data-bs-toggle="tooltip"
+              data-bs-title="Thumbnail view"
               title="thumbnail-view"
+              class="btn btn-sm btn-outline-secondary me-1"
             >
               <i class="fa-solid fa-border-all"></i>
             </button>
-          </div>
-          <div class="ms-1">
             <button
-              @click="thumbnailView = false"
+              @click="setCompactView($event)"
               :style="{ backgroundColor: thumbnailView ? '#fff' : '#e0e0e0' }"
+              data-bs-toggle="tooltip"
+              data-bs-title="Compact view"
               title="mosaic-view"
+              class="btn btn-sm btn-outline-secondary"
             >
               <i class="fa-solid fa-table-cells"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active filters indicator -->
+      <div v-if="activeFilters" class="active-filters-bar mb-3">
+        <div class="alert alert-warning d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <i class="fa fa-filter me-2"></i>
+            <span class="fw-bold">Filters Active:</span>
+            <span class="ms-2">
+              {{ getActiveFiltersText(activeFilters) }}
+            </span>
+          </div>
+          <div class="d-flex gap-2">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-warning"
+              data-bs-toggle="modal"
+              data-bs-target="#mediaFilterModal"
+            >
+              <i class="fa fa-edit"></i> Edit Filters
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-danger"
+              @click="clearAllFilters($event)"
+            >
+              <i class="fa fa-times"></i> Clear All
             </button>
           </div>
         </div>
@@ -637,6 +1013,14 @@ watch(searchStr, () => {
           title="Download Selected"
         >
           <i class="fa-solid fa-download"></i>
+        </span>
+        <span
+          v-if="foliosStore.folios.length > 0"
+          class="item"
+          @click="toggleFolioOptions"
+          title="Add to Folio"
+        >
+          <i class="fa-solid fa-book"></i>
         </span>
         <span
           class="item"
@@ -699,6 +1083,8 @@ watch(searchStr, () => {
   <FilterDialog
     :setFilter="setFilter"
     :clearFilter="clearFilter"
+    :onFiltersUpdated="onFiltersUpdated"
+    :clearAllFilters="clearAllFilters"
   ></FilterDialog>
 </template>
 <style scoped>
@@ -783,15 +1169,91 @@ watch(searchStr, () => {
     flex-direction: column;
     align-items: start !important;
     margin-top: 1rem;
+    gap: 0.5rem !important;
   }
 
-  .d-flex.col-7 > div {
-    margin: 0.25rem 0;
+  .pagination-info,
+  .items-per-page {
+    font-size: 0.9rem;
+  }
+
+  /* Stack controls vertically on small screens */
+  .view-toggles {
+    margin-top: 0.25rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  /* Hide text on medium screens, keep icon */
+  .folio-tools-text {
+    display: none;
   }
 }
 
 /* Empty state styling */
 .fa-images {
   opacity: 0.5;
+}
+
+/* Folio tools styling */
+.btn.active {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  color: white;
+}
+
+.btn-outline-secondary.active {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: white;
+}
+
+.folio-options .form-select {
+  min-width: 200px;
+}
+
+.folio-options .alert {
+  margin-bottom: 0;
+}
+
+/* Control section styling */
+.pagination-info,
+.items-per-page {
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.view-toggles button {
+  border-radius: 0.375rem;
+}
+
+/* Filter button styling */
+.btn-warning.text-dark {
+  border-color: #ffc107;
+  background-color: #fff3cd;
+}
+
+.btn-warning.text-dark:hover {
+  background-color: #ffc107;
+  border-color: #ffca2c;
+  color: #000;
+}
+
+/* Active filters bar styling */
+.active-filters-bar .alert {
+  margin-bottom: 0;
+  font-size: 0.9rem;
+}
+
+.active-filters-bar .alert-warning {
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+  color: #856404;
+}
+
+/* Filter button badge */
+.badge.bg-warning.text-dark {
+  background-color: #ffc107 !important;
+  color: #000 !important;
 }
 </style>

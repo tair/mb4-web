@@ -21,6 +21,8 @@ import {
 const props = defineProps<{
   setFilter: (key: string, value: (media: any) => boolean) => void
   clearFilter: (key: string) => void
+  onFiltersUpdated?: () => void
+  clearAllFilters?: () => void
 }>()
 
 const route = useRoute()
@@ -184,6 +186,11 @@ async function handleSubmitClicked(event: Event) {
   sessionStorage.setItem(serializedfilterName, JSON.stringify(filter))
 
   applyFilter(projectId, filter, props.setFilter, props.clearFilter)
+  
+  // Notify parent component of filter changes
+  if (props.onFiltersUpdated) {
+    props.onFiltersUpdated()
+  }
 
   const element = document.getElementById('mediaFilterModal')
   if (!element) {
@@ -198,17 +205,125 @@ async function handleSubmitClicked(event: Event) {
 
 function setCheckboxes(id: string, value: boolean) {
   const element = document.getElementById(id)
-  const checkboxes = element.querySelectorAll<HTMLInputElement>(
-    'input[type=checkbox]'
-  )
-  for (const checkbox of checkboxes) {
-    checkbox.checked = value
+  if (element) {
+    const checkboxes = element.querySelectorAll<HTMLInputElement>(
+      'input[type=checkbox]'
+    )
+    for (const checkbox of checkboxes) {
+      checkbox.checked = value
+    }
   }
   return false
 }
 
 function hasFilter(filter: any, key: string) {
   return filter[key].length > 0 || Object.keys(filter[key]).length > 0
+}
+
+function clearAllFiltersInModal() {
+  // Reset the filter object to empty state
+  Object.assign(filter, {
+    filterTaxa: [],
+    filterView: [],
+    filterSubmitter: [],
+    filterCopyrightLicense: [],
+    filterCopyrightPermission: [],
+    filterSpecimenRepository: [],
+    filterStatus: [],
+    filterOther: {}
+  })
+  
+  // Clear sessionStorage
+  sessionStorage.removeItem(serializedfilterName)
+  
+  // Apply empty filters to clear the actual filtering
+  applyFilter(projectId, filter, props.setFilter, props.clearFilter)
+  
+  // Clear all checkboxes in the modal immediately
+  setTimeout(() => {
+    const modalElement = document.getElementById('mediaFilterModal')
+    if (modalElement) {
+      const checkboxes = modalElement.querySelectorAll<HTMLInputElement>('input[type=checkbox]')
+      for (const checkbox of checkboxes) {
+        checkbox.checked = false
+      }
+    }
+  }, 0)
+  
+  // Use parent's clear function if available
+  if (props.clearAllFilters) {
+    props.clearAllFilters()
+  }
+  
+  // Notify parent component
+  if (props.onFiltersUpdated) {
+    props.onFiltersUpdated()
+  }
+}
+
+function updateCheckboxStates() {
+  // Update checkboxes to match current filter state
+  setTimeout(() => {
+    const modalElement = document.getElementById('mediaFilterModal')
+    if (!modalElement) return
+    
+    // First, uncheck ALL checkboxes
+    const allCheckboxes = modalElement.querySelectorAll('input[type="checkbox"]') as NodeListOf<HTMLInputElement>
+    allCheckboxes.forEach(checkbox => {
+      checkbox.checked = false
+    })
+    
+    // Then check only the ones that should be checked based on current filter state
+    // Taxa checkboxes
+    filter.filterTaxa.forEach(taxonId => {
+      const checkbox = modalElement.querySelector(`input[name="filterTaxa"][value="${taxonId}"]`) as HTMLInputElement
+      if (checkbox) checkbox.checked = true
+    })
+    
+    // View checkboxes
+    filter.filterView.forEach(viewId => {
+      const checkbox = modalElement.querySelector(`input[name="filterView"][value="${viewId}"]`) as HTMLInputElement
+      if (checkbox) checkbox.checked = true
+    })
+    
+    // Submitter checkboxes
+    filter.filterSubmitter.forEach(userId => {
+      const checkbox = modalElement.querySelector(`input[name="filterSubmitter"][value="${userId}"]`) as HTMLInputElement
+      if (checkbox) checkbox.checked = true
+    })
+    
+    // Copyright license checkboxes
+    filter.filterCopyrightLicense.forEach(license => {
+      const checkbox = modalElement.querySelector(`input[name="filterCopyrightLicense"][value="${license}"]`) as HTMLInputElement
+      if (checkbox) checkbox.checked = true
+    })
+    
+    // Copyright permission checkboxes
+    filter.filterCopyrightPermission.forEach(permission => {
+      const checkbox = modalElement.querySelector(`input[name="filterCopyrightPermission"][value="${permission}"]`) as HTMLInputElement
+      if (checkbox) checkbox.checked = true
+    })
+    
+    // Repository checkboxes
+    filter.filterSpecimenRepository.forEach(repo => {
+      const checkbox = modalElement.querySelector(`input[name="filterSpecimenRepository"][value="${repo}"]`) as HTMLInputElement
+      if (checkbox) checkbox.checked = true
+    })
+    
+    // Status checkboxes
+    filter.filterStatus.forEach(status => {
+      const checkbox = modalElement.querySelector(`input[name="filterStatus"][value="${status}"]`) as HTMLInputElement
+      if (checkbox) checkbox.checked = true
+    })
+    
+    // Other filter checkboxes
+    Object.keys(filter.filterOther).forEach(key => {
+      if (filter.filterOther[key]) {
+        const checkbox = modalElement.querySelector(`input[name="filterOther_${key}"]`) as HTMLInputElement
+        if (checkbox) checkbox.checked = true
+      }
+    })
+  }, 100)
 }
 
 onMounted(() => {
@@ -253,6 +368,36 @@ onMounted(() => {
       element.addEventListener('hidden.bs.collapse', listener)
     }
   }
+  
+  // Add event listener for when modal is shown to update checkbox states
+  const modalElement = document.getElementById('mediaFilterModal')
+  if (modalElement) {
+    modalElement.addEventListener('shown.bs.modal', () => {
+      // Reload filter from sessionStorage when modal opens
+      const existingFilter = sessionStorage.getItem(serializedfilterName)
+      if (existingFilter) {
+        try {
+          const sessionFilter = JSON.parse(existingFilter)
+          Object.assign(filter, sessionFilter)
+        } catch (e) {
+          console.error('Error loading filter from sessionStorage:', e)
+        }
+      } else {
+        // If no filter in sessionStorage, reset to empty
+        Object.assign(filter, {
+          filterTaxa: [],
+          filterView: [],
+          filterSubmitter: [],
+          filterCopyrightLicense: [],
+          filterCopyrightPermission: [],
+          filterSpecimenRepository: [],
+          filterStatus: [],
+          filterOther: {}
+        })
+      }
+      updateCheckboxStates()
+    })
+  }
 })
 </script>
 <template>
@@ -267,8 +412,9 @@ onMounted(() => {
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">
-              Applying batch changes to media search results
+              Filter Media Files
             </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <div class="accordion" id="accordionmediaFilterModal">
@@ -667,7 +813,7 @@ onMounted(() => {
             <button
               type="button"
               class="btn btn-primary"
-              @click="setCheckboxes('mediaFilterModal', false)"
+              @click="clearAllFiltersInModal"
             >
               Clear All
             </button>
