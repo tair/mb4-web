@@ -1,6 +1,7 @@
 <script setup>
 import axios from 'axios'
-import { reactive, ref, onMounted, onBeforeUnmount } from 'vue'
+import { reactive, ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/UserStore.js'
 import { useAuthStore } from '@/stores/AuthStore.js'
 import { useMessageStore } from '@/stores/MessageStore.js'
@@ -10,12 +11,14 @@ import Alert from '@/components/main/Alert.vue'
 import FormLayout from '@/components/main/FormLayout.vue'
 import '@/assets/css/form.css'
 
+const route = useRoute()
 const userStore = useUserStore()
 const authStore = useAuthStore()
 const messageStore = useMessageStore()
 const errorMsg = reactive({
   message: messageStore.getMessage(),
 })
+const profileConfirmationRequired = ref(false)
 const user = reactive({})
 const userForm = reactive({})
 const userData = reactive({
@@ -24,6 +27,7 @@ const userData = reactive({
 })
 const error = reactive({})
 const message = reactive({})
+const hasUserInteracted = ref(false)
 const orcidLoginUrl = ref(null)
 const searchTerm = ref(null)
 const institutionList = ref([])
@@ -38,10 +42,24 @@ const passwordTooltipText = getPasswordRule()
 
 onMounted(async () => {
   try {
+    // Check if user was redirected here for profile confirmation
+    if (route.query.confirm_profile === '1') {
+      profileConfirmationRequired.value = true
+      message.profileConfirmation = route.query.message || 'Please confirm your profile details to continue accessing MorphoBank features.'
+    } else {
+      // Check profile confirmation status for informational purposes
+      const confirmationStatus = await authStore.checkProfileConfirmation()
+      if (confirmationStatus.profile_confirmation_required) {
+        profileConfirmationRequired.value = true
+        message.profileConfirmation = 'Your profile details need to be confirmed. Please update your profile to keep your information current.'
+      }
+    }
+    
     orcidLoginUrl.value = await authStore.getOrcidLoginUrl()
     await userStore.fetchCurrentUser()
     userData.user = userStore.originalUser
     userData.userForm = userStore.userForm
+
   } catch (e) {
     error.fetchUser = 'Error fetching user profile. Please try again later.'
     console.error('Error fetching current user:', e)
@@ -70,6 +88,15 @@ const submitForm = async () => {
     
     await userStore.updateUser()
     message.updateUser = 'Update user profile succeed!'
+    
+    // Reset interaction tracking after successful update
+    hasUserInteracted.value = false
+    
+    // Clear profile confirmation flag if it was set
+    if (profileConfirmationRequired.value) {
+      profileConfirmationRequired.value = false
+      message.profileConfirmation = null
+    }
   } catch (e) {
     error.updateUser = 'Error updating user profile.'
     console.error('Error updating user profile:', e)
@@ -168,16 +195,44 @@ const confirmPassword = function () {
     return true
   }
 }
+
+// Track user interaction with form fields
+const handleFieldFocus = () => {
+  hasUserInteracted.value = true
+}
+
+// Computed button text
+const submitButtonText = computed(() => {
+  if (profileConfirmationRequired.value && !hasUserInteracted.value) {
+    return 'Confirm'
+  }
+  return 'Update'
+})
 </script>
 
 <template>
   <FormLayout title="USER PROFILE">
     <div v-if="!error.fetchUser && userForm">
+      <!-- Profile Confirmation Alert -->
+      <Alert
+        v-if="profileConfirmationRequired"
+        :message="message"
+        messageName="profileConfirmation"
+        alertType="warning"
+      ></Alert>
+      
       <form @submit.prevent="submitForm" class="list-form">
         <Alert
           :message="errorMsg"
           messageName="message"
           :alertType="messageStore.getMessageType()"
+        ></Alert>
+        
+        <!-- Success Message for Profile Update -->
+        <Alert
+          :message="message"
+          messageName="updateUser"
+          alertType="success"
         ></Alert>
 
         <!-- Basic Information -->
@@ -187,6 +242,7 @@ const confirmPassword = function () {
             type="text"
             class="form-control"
             v-model="userData.userForm.firstName"
+            @focus="handleFieldFocus"
             required
           />
         </div>
@@ -197,6 +253,7 @@ const confirmPassword = function () {
             type="text"
             class="form-control"
             v-model="userData.userForm.lastName"
+            @focus="handleFieldFocus"
             required
           />
         </div>
@@ -210,6 +267,7 @@ const confirmPassword = function () {
             type="email"
             class="form-control"
             v-model="userData.userForm.email"
+            @focus="handleFieldFocus"
             required
           />
         </div>
@@ -231,6 +289,7 @@ const confirmPassword = function () {
             autocomplete="new-password"
             class="form-control"
             v-model="userData.userForm.newPassword"
+            @focus="handleFieldFocus"
             @blur="validatePassword"
           />
           <Alert
@@ -250,6 +309,7 @@ const confirmPassword = function () {
             autocomplete="new-password-confirm"
             class="form-control"
             v-model="userData.userForm.newPasswordConfirm"
+            @focus="handleFieldFocus"
             @blur="confirmPassword"
           />
           <Alert
@@ -311,6 +371,7 @@ const confirmPassword = function () {
               type="text"
               v-model="searchTerm"
               @input="searchInstitutions"
+              @focus="handleFieldFocus"
               class="form-control"
               placeholder="Search for institutions..."
             />
@@ -322,7 +383,7 @@ const confirmPassword = function () {
               v-if="searchLoading"
             />
           </div>
-          <select v-if="institutionList.length" :size="10" class="form-control">
+          <select v-if="institutionList.length" :size="10" class="form-control" @focus="handleFieldFocus">
             <option
               v-for="institution in institutionList"
               :key="institution.institution_id"
@@ -341,6 +402,7 @@ const confirmPassword = function () {
             <input
               type="checkbox"
               v-model="userData.userForm.isInstitutionUnaffiliated"
+              @focus="handleFieldFocus"
               class="form-checkbox"
             />
             Independent Researcher, Unaffiliated
@@ -388,7 +450,9 @@ const confirmPassword = function () {
         ></Alert>
 
         <div class="form-buttons">
-          <button class="btn btn-primary" type="submit">Update</button>
+          <button class="btn btn-primary" type="submit">
+            {{ submitButtonText }}
+          </button>
           <button
             type="button"
             class="btn btn-outline-primary"
@@ -396,6 +460,9 @@ const confirmPassword = function () {
           >
             Cancel
           </button>
+          <small v-if="profileConfirmationRequired && !hasUserInteracted" class="text-muted ms-2">
+            Click "Confirm" to validate your profile details
+          </small>
         </div>
       </form>
     </div>
