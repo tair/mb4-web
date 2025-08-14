@@ -9,6 +9,8 @@ import { getPasswordPattern, getPasswordRule } from '@/utils/util.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import Alert from '@/components/main/Alert.vue'
 import FormLayout from '@/components/main/FormLayout.vue'
+import AddInstitutionDialog from '@/components/dialogs/AddInstitutionDialog.vue'
+import { Modal } from 'bootstrap'
 import '@/assets/css/form.css'
 
 const route = useRoute()
@@ -201,6 +203,35 @@ const handleFieldFocus = () => {
   hasUserInteracted.value = true
 }
 
+// Open add institution dialog
+const openAddInstitutionDialog = () => {
+  const modalElement = document.getElementById('addInstitutionModal')
+  const modal = new Modal(modalElement)
+  modal.show()
+}
+
+// Handle institution creation from dialog
+const handleInstitutionCreated = (institution) => {
+  // Add the new institution to user's institutions
+  if (!userData.userForm.institutions) {
+    userData.userForm.institutions = []
+  }
+  
+  userData.userForm.institutions.push({
+    institution_id: institution.institution_id,
+    name: institution.name
+  })
+  
+  // Mark as interacted since we're modifying the form
+  hasUserInteracted.value = true
+  
+  // Show success message
+  message.addInstitution = `Institution "${institution.name}" has been added to your profile.`
+  
+  // Clear any previous errors
+  error.addInstitution = null
+}
+
 // Computed button text
 const submitButtonText = computed(() => {
   if (profileConfirmationRequired.value && !hasUserInteracted.value) {
@@ -232,6 +263,13 @@ const submitButtonText = computed(() => {
         <Alert
           :message="message"
           messageName="updateUser"
+          alertType="success"
+        ></Alert>
+        
+        <!-- Success Message for Institution Added -->
+        <Alert
+          :message="message"
+          messageName="addInstitution"
           alertType="success"
         ></Alert>
 
@@ -395,6 +433,18 @@ const submitButtonText = computed(() => {
               {{ institution.name }}
             </option>
           </select>
+          
+          <!-- Add Institution Link -->
+          <div class="mt-2">
+            <a 
+              href="#" 
+              @click.prevent="openAddInstitutionDialog"
+              class="text-primary"
+              style="font-size: 0.9em;"
+            >
+              Can't find your institution? Add new institution
+            </a>
+          </div>
         </div>
 
         <div class="form-group">
@@ -467,6 +517,9 @@ const submitButtonText = computed(() => {
       </form>
     </div>
     <Alert :message="error" messageName="fetchUser" alertType="danger"></Alert>
+    
+    <!-- Add Institution Dialog -->
+    <AddInstitutionDialog :onInstitutionCreated="handleInstitutionCreated" />
   </FormLayout>
 </template>
 
