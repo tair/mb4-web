@@ -1,6 +1,7 @@
 <script setup>
 import axios from 'axios'
-import { reactive, ref, onMounted, onBeforeUnmount } from 'vue'
+import { reactive, ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/UserStore.js'
 import { useAuthStore } from '@/stores/AuthStore.js'
 import { useMessageStore } from '@/stores/MessageStore.js'
@@ -8,14 +9,18 @@ import { getPasswordPattern, getPasswordRule } from '@/utils/util.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import Alert from '@/components/main/Alert.vue'
 import FormLayout from '@/components/main/FormLayout.vue'
+import AddInstitutionDialog from '@/components/dialogs/AddInstitutionDialog.vue'
+import { Modal } from 'bootstrap'
 import '@/assets/css/form.css'
 
+const route = useRoute()
 const userStore = useUserStore()
 const authStore = useAuthStore()
 const messageStore = useMessageStore()
 const errorMsg = reactive({
   message: messageStore.getMessage(),
 })
+const profileConfirmationRequired = ref(false)
 const user = reactive({})
 const userForm = reactive({})
 const userData = reactive({
@@ -24,6 +29,7 @@ const userData = reactive({
 })
 const error = reactive({})
 const message = reactive({})
+const hasUserInteracted = ref(false)
 const orcidLoginUrl = ref(null)
 const searchTerm = ref(null)
 const institutionList = ref([])
@@ -32,14 +38,30 @@ const emailTooltipText =
   'The e-mail address of this user. The address will be used for all mail-based system notifications and alerts to this user'
 const insititutionalTootipText =
   'Scientists on MorphoBank are often affiliated with more than one institution and those can be entered here. When you change institutions, your older, published projects will remain credited to the institution you belonged to at the time the paper was published on MorphoBank'
+const independentResearcherTooltipText = 
+  'Mark this if you are not affiliated with an institution. If you previously were affiliated with an institution, it will be removed when this form is saved.'
 const passwordTooltipText = getPasswordRule()
 
 onMounted(async () => {
   try {
+    // Check if user was redirected here for profile confirmation
+    if (route.query.confirm_profile === '1') {
+      profileConfirmationRequired.value = true
+      message.profileConfirmation = route.query.message || 'Please confirm your profile details to continue accessing MorphoBank features.'
+    } else {
+      // Check profile confirmation status for informational purposes
+      const confirmationStatus = await authStore.checkProfileConfirmation()
+      if (confirmationStatus.profile_confirmation_required) {
+        profileConfirmationRequired.value = true
+        message.profileConfirmation = 'Your profile details need to be confirmed. Please update your profile to keep your information current.'
+      }
+    }
+    
     orcidLoginUrl.value = await authStore.getOrcidLoginUrl()
     await userStore.fetchCurrentUser()
     userData.user = userStore.originalUser
     userData.userForm = userStore.userForm
+
   } catch (e) {
     error.fetchUser = 'Error fetching user profile. Please try again later.'
     console.error('Error fetching current user:', e)
@@ -53,8 +75,30 @@ onBeforeUnmount(() => {
 const submitForm = async () => {
   try {
     if (!validatePassword() || !confirmPassword()) return
+    
+    // Handle independent researcher logic
+    if (userData.userForm.isInstitutionUnaffiliated) {
+      // Clear all institutions if independent researcher is checked
+      userData.userForm.institutions = []
+    } else {
+      // Validate that user has at least one institution if not independent
+      if (!userData.userForm.institutions || userData.userForm.institutions.length === 0) {
+        error.updateUser = 'You must have at least one institutional affiliation or mark yourself as an independent researcher.'
+        return
+      }
+    }
+    
     await userStore.updateUser()
     message.updateUser = 'Update user profile succeed!'
+    
+    // Reset interaction tracking after successful update
+    hasUserInteracted.value = false
+    
+    // Clear profile confirmation flag if it was set
+    if (profileConfirmationRequired.value) {
+      profileConfirmationRequired.value = false
+      message.profileConfirmation = null
+    }
   } catch (e) {
     error.updateUser = 'Error updating user profile.'
     console.error('Error updating user profile:', e)
@@ -86,10 +130,13 @@ const searchInstitutions = async () => {
 }
 
 const removeInstitution = function (institutionId) {
-  if (userData.userForm.institutions?.length <= 1) {
+  if (userData.userForm.institutions?.length <= 1 && !userData.userForm.isInstitutionUnaffiliated) {
     error.removeInstitution =
-      'The user must have at least one affiliated institutions'
+      'The user must have at least one affiliated institution, or check "Independent Researcher, Unaffiliated"'
   } else {
+    // Clear any previous remove institution error
+    error.removeInstitution = null
+    
     for (let i = 0; i < userData.userForm.institutions.length; i++) {
       const institution = userData.userForm.institutions[i]
 
@@ -150,16 +197,80 @@ const confirmPassword = function () {
     return true
   }
 }
+
+// Track user interaction with form fields
+const handleFieldFocus = () => {
+  hasUserInteracted.value = true
+}
+
+// Open add institution dialog
+const openAddInstitutionDialog = () => {
+  const modalElement = document.getElementById('addInstitutionModal')
+  const modal = new Modal(modalElement)
+  modal.show()
+}
+
+// Handle institution creation from dialog
+const handleInstitutionCreated = (institution) => {
+  // Add the new institution to user's institutions
+  if (!userData.userForm.institutions) {
+    userData.userForm.institutions = []
+  }
+  
+  userData.userForm.institutions.push({
+    institution_id: institution.institution_id,
+    name: institution.name
+  })
+  
+  // Mark as interacted since we're modifying the form
+  hasUserInteracted.value = true
+  
+  // Show success message
+  message.addInstitution = `Institution "${institution.name}" has been added to your profile.`
+  
+  // Clear any previous errors
+  error.addInstitution = null
+}
+
+// Computed button text
+const submitButtonText = computed(() => {
+  if (profileConfirmationRequired.value && !hasUserInteracted.value) {
+    return 'Confirm'
+  }
+  return 'Update'
+})
 </script>
 
 <template>
   <FormLayout title="USER PROFILE">
     <div v-if="!error.fetchUser && userForm">
+      <!-- Profile Confirmation Alert -->
+      <Alert
+        v-if="profileConfirmationRequired"
+        :message="message"
+        messageName="profileConfirmation"
+        alertType="warning"
+      ></Alert>
+      
       <form @submit.prevent="submitForm" class="list-form">
         <Alert
           :message="errorMsg"
           messageName="message"
           :alertType="messageStore.getMessageType()"
+        ></Alert>
+        
+        <!-- Success Message for Profile Update -->
+        <Alert
+          :message="message"
+          messageName="updateUser"
+          alertType="success"
+        ></Alert>
+        
+        <!-- Success Message for Institution Added -->
+        <Alert
+          :message="message"
+          messageName="addInstitution"
+          alertType="success"
         ></Alert>
 
         <!-- Basic Information -->
@@ -169,6 +280,7 @@ const confirmPassword = function () {
             type="text"
             class="form-control"
             v-model="userData.userForm.firstName"
+            @focus="handleFieldFocus"
             required
           />
         </div>
@@ -179,6 +291,7 @@ const confirmPassword = function () {
             type="text"
             class="form-control"
             v-model="userData.userForm.lastName"
+            @focus="handleFieldFocus"
             required
           />
         </div>
@@ -192,6 +305,7 @@ const confirmPassword = function () {
             type="email"
             class="form-control"
             v-model="userData.userForm.email"
+            @focus="handleFieldFocus"
             required
           />
         </div>
@@ -213,6 +327,7 @@ const confirmPassword = function () {
             autocomplete="new-password"
             class="form-control"
             v-model="userData.userForm.newPassword"
+            @focus="handleFieldFocus"
             @blur="validatePassword"
           />
           <Alert
@@ -232,6 +347,7 @@ const confirmPassword = function () {
             autocomplete="new-password-confirm"
             class="form-control"
             v-model="userData.userForm.newPasswordConfirm"
+            @focus="handleFieldFocus"
             @blur="confirmPassword"
           />
           <Alert
@@ -293,6 +409,7 @@ const confirmPassword = function () {
               type="text"
               v-model="searchTerm"
               @input="searchInstitutions"
+              @focus="handleFieldFocus"
               class="form-control"
               placeholder="Search for institutions..."
             />
@@ -304,7 +421,7 @@ const confirmPassword = function () {
               v-if="searchLoading"
             />
           </div>
-          <select v-if="institutionList.length" :size="10" class="form-control">
+          <select v-if="institutionList.length" :size="10" class="form-control" @focus="handleFieldFocus">
             <option
               v-for="institution in institutionList"
               :key="institution.institution_id"
@@ -316,6 +433,31 @@ const confirmPassword = function () {
               {{ institution.name }}
             </option>
           </select>
+          
+          <!-- Add Institution Link -->
+          <div class="mt-2">
+            <a 
+              href="#" 
+              @click.prevent="openAddInstitutionDialog"
+              class="text-primary"
+              style="font-size: 0.9em;"
+            >
+              Can't find your institution? Add new institution
+            </a>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <input
+              type="checkbox"
+              v-model="userData.userForm.isInstitutionUnaffiliated"
+              @focus="handleFieldFocus"
+              class="form-checkbox"
+            />
+            Independent Researcher, Unaffiliated
+            <Tooltip :content="independentResearcherTooltipText"></Tooltip>
+          </label>
         </div>
 
         <!-- ORCID Section -->
@@ -358,7 +500,9 @@ const confirmPassword = function () {
         ></Alert>
 
         <div class="form-buttons">
-          <button class="btn btn-primary" type="submit">Update</button>
+          <button class="btn btn-primary" type="submit">
+            {{ submitButtonText }}
+          </button>
           <button
             type="button"
             class="btn btn-outline-primary"
@@ -366,10 +510,16 @@ const confirmPassword = function () {
           >
             Cancel
           </button>
+          <small v-if="profileConfirmationRequired && !hasUserInteracted" class="text-muted ms-2">
+            Click "Confirm" to validate your profile details
+          </small>
         </div>
       </form>
     </div>
     <Alert :message="error" messageName="fetchUser" alertType="danger"></Alert>
+    
+    <!-- Add Institution Dialog -->
+    <AddInstitutionDialog :onInstitutionCreated="handleInstitutionCreated" />
   </FormLayout>
 </template>
 

@@ -13,7 +13,6 @@ import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
 import { useCharactersStore } from '@/stores/CharactersStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
-import TntAnalysisComp from './TntAnalysisComp.vue'
 
 const props = defineProps({
   matrix: {
@@ -314,7 +313,7 @@ function validateJobParameters() {
             hasError = true
           }
           const middleLineRegex =
-            /^(set |prset |lset |mcmcp |mcmc |log |constrain |sumt |sump |charset |partition |unlink |append=).*?;$/
+            /^(set |prset |lset |outgroup |mcmcp |mcmc |log |constrain |sumt |sump |charset |partition |unlink |append=).*?;$/
           i++
           let endLine = lines.length - 1
           for (endLine; endLine >= 0; endLine--) {
@@ -331,9 +330,32 @@ function validateJobParameters() {
               validateMsg +=
                 'MrBayes block (line ' +
                 (i + 1) +
-                "): must start with 'set', 'prset', 'lset', 'mcmcp', 'log', 'constrain', 'sumt' or  'sump'  and end with ';' \n"
+                "): must start with 'set', 'prset', 'lset', outgroup', 'mcmcp', 'log', 'constrain', 'sumt' or  'sump'  and end with ';' \n"
               hasError = true
             } else {
+              if (
+                lines[i].trim().startsWith("outgroup ")
+              ) {
+                const params = lines[i].trim().split(' ')
+                if (params.length > 1) {
+                  const numberOnlyRegex = /^\d+$/;
+                  let og = params[1]
+                  if (params[1].endsWith(';')) {
+                    og = params[1].substring(0, params[1].length-1)
+                  }
+                  if (
+                    !outgroups.has(og) &&
+                    !numberOnlyRegex.test(og)
+                  ) {
+                    validateMsg += "MrBayes block (Line " + (i+1) + "): outgroup must be either a taxon's name or a number to indicate the location in the taxon list \n"
+                    hasError = true
+                  }
+                }
+                else {
+                  validateMsg += "MrBayes block (Line " + (i+1) + "): outgroup must be followed by either a taxon's name or a number to indicate the location in the taxon list \n"
+                  hasError = true
+                }
+              }
               if (
                 lines[i].trim().startsWith('mcmcp ') ||
                 lines[i].trim().startsWith('mcmc ')
@@ -447,10 +469,10 @@ async function onRun() {
       searchParams.append('runtime', runtime.value)
     }
     if (mrbayesblockquery.value == '0') {
-      if (set_outgroup.value != '') {
-        searchParams.append('set_outgroup', set_outgroup.value)
-      }
       if (entermrbayesblock.value == '0') {
+        if (set_outgroup.value != '') {
+          searchParams.append('set_outgroup', set_outgroup.value)
+        }
         searchParams.append('ngenval', ngenval.value)
         searchParams.append('nrunsval', nrunsval.value)
         searchParams.append('nchainsval', nchainsval.value)
@@ -942,21 +964,7 @@ onMounted(() => {
           aria-controls="contact"
           aria-selected="false"
         >
-          Build a Tree (CIPRES)
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button
-          class="nav-link"
-          id="tntTab"
-          data-bs-toggle="tab"
-          :data-bs-target="'#tnt' + matrix.matrix_id"
-          type="button"
-          role="tab"
-          aria-controls="tnt"
-          aria-selected="false"
-        >
-          TNT Analysis
+          Build a Tree
         </button>
       </li>
     </ul>
@@ -996,7 +1004,7 @@ onMounted(() => {
         <div class="downloadOptions">
           <div>
             <label>Format:</label>
-            <select v-model="format" class="form-select">
+            <select v-model="format">
               <option v-for="[format, name] in formats" v-bind:value="format">
                 {{ name }}
               </option>
@@ -1004,7 +1012,7 @@ onMounted(() => {
           </div>
           <div>
             <label>Partition:</label>
-            <select v-model="partitionId" class="form-select">
+            <select v-model="partitionId">
               <option value="" selected disabled>Entire Matrix</option>
               <option
                 v-for="partition in partitions"
@@ -1096,7 +1104,7 @@ onMounted(() => {
 
           <div class="form-group mb-3">
             <label class="form-label">Operational taxonomic unit</label>
-            <select class="form-select" v-model="matrixFileData.otu">
+            <select class="form-control" v-model="matrixFileData.otu">
               <option
                 v-for="unit in taxonomicUnits"
                 :key="unit.value"
@@ -1173,7 +1181,7 @@ onMounted(() => {
           <div class="form-row mb-3">
             <div class="col-md-6">
               <label class="form-label">Tool:</label>
-              <select v-model="tool" class="form-select">
+              <select v-model="tool" class="form-control">
                 <option v-for="[tool, name] in tools" v-bind:value="tool">
                   {{ name }}
                 </option>
@@ -1315,10 +1323,7 @@ onMounted(() => {
                     />
                   </td>
                   <td>
-                    <select
-                      v-model="jobBranchSwappingAlgorithm"
-                      class="form-select"
-                    >
+                    <select v-model="jobBranchSwappingAlgorithm">
                       <option
                         v-for="[
                           jobBranchSwappingAlgorithm,
@@ -1357,6 +1362,28 @@ onMounted(() => {
                 No
               </label>
             </div>
+            <div v-if="mrbayesblockquery === '0'">
+              Would you like to enter a Mr Bayes block?
+              <label>
+                 <input
+                   type="radio"
+                   v-model="entermrbayesblock"
+                   value="1"
+                   name="blockRadioGroup2"
+                 />
+                 Yes
+              </label>
+              <label class="radio-spacing">
+                 <input
+                   type="radio"
+                   v-model="entermrbayesblock"
+                   value="0"
+                   name="blockRadioGroup2"
+                 />
+                 No
+              </label>
+            </div>
+            <br />
             <div v-if="mrbayesblockquery === '1'">
               <table>
                 <thead>
@@ -1420,37 +1447,6 @@ onMounted(() => {
               </table>
             </div>
             <div v-if="mrbayesblockquery === '0'">
-              <div>
-                <b>Simple parameters</b>
-              </div>
-              Outgroup&nbsp;
-              <select v-model="set_outgroup" class="form-select">
-                <option v-for="[val, name] in outgroups" v-bind:value="val">
-                  {{ name }}
-                </option>
-              </select>
-              <br /><br />
-              <div>
-                Would you like to enter a Mr Bayes block?
-                <label>
-                  <input
-                    type="radio"
-                    v-model="entermrbayesblock"
-                    value="1"
-                    name="blockRadioGroup2"
-                  />
-                  Yes
-                </label>
-                <label class="radio-spacing">
-                  <input
-                    type="radio"
-                    v-model="entermrbayesblock"
-                    value="0"
-                    name="blockRadioGroup2"
-                  />
-                  No
-                </label>
-              </div>
               <div v-if="entermrbayesblock === '1'">
                 <textarea
                   v-model="mrbayesblock"
@@ -1461,6 +1457,16 @@ onMounted(() => {
                 />
               </div>
               <div v-if="entermrbayesblock === '0'">
+                <div>
+                <b>Simple parameters</b>
+                </div>
+                  Outgroup&nbsp;
+                <select v-model="set_outgroup">
+                  <option v-for="[val, name] in outgroups" v-bind:value="val">
+                    {{ name }}
+                  </option>
+                </select>
+                <br /><br />
                 <b>Parameters for MCMC</b>
                 <table>
                   <tbody>
@@ -1708,9 +1714,6 @@ onMounted(() => {
           <i class="fa-solid fa-info-circle"></i>
           No previous runs found.
         </div>
-      </div>
-      <div class="tab-pane fade" :id="'tnt' + matrix.matrix_id" role="tabpanel">
-        <TntAnalysisComp :projectId="projectId" :matrixId="matrixId" />
       </div>
     </div>
   </div>
