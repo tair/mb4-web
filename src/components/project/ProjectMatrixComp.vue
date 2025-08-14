@@ -13,6 +13,7 @@ import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
 import { useCharactersStore } from '@/stores/CharactersStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import TntAnalysisComp from '@/components/project/TntAnalysisComp.vue'
 
 const props = defineProps({
   matrix: {
@@ -333,26 +334,26 @@ function validateJobParameters() {
                 "): must start with 'set', 'prset', 'lset', outgroup', 'mcmcp', 'log', 'constrain', 'sumt' or  'sump'  and end with ';' \n"
               hasError = true
             } else {
-              if (
-                lines[i].trim().startsWith("outgroup ")
-              ) {
+              if (lines[i].trim().startsWith('outgroup ')) {
                 const params = lines[i].trim().split(' ')
                 if (params.length > 1) {
-                  const numberOnlyRegex = /^\d+$/;
+                  const numberOnlyRegex = /^\d+$/
                   let og = params[1]
                   if (params[1].endsWith(';')) {
-                    og = params[1].substring(0, params[1].length-1)
+                    og = params[1].substring(0, params[1].length - 1)
                   }
-                  if (
-                    !outgroups.has(og) &&
-                    !numberOnlyRegex.test(og)
-                  ) {
-                    validateMsg += "MrBayes block (Line " + (i+1) + "): outgroup must be either a taxon's name or a number to indicate the location in the taxon list \n"
+                  if (!outgroups.has(og) && !numberOnlyRegex.test(og)) {
+                    validateMsg +=
+                      'MrBayes block (Line ' +
+                      (i + 1) +
+                      "): outgroup must be either a taxon's name or a number to indicate the location in the taxon list \n"
                     hasError = true
                   }
-                }
-                else {
-                  validateMsg += "MrBayes block (Line " + (i+1) + "): outgroup must be followed by either a taxon's name or a number to indicate the location in the taxon list \n"
+                } else {
+                  validateMsg +=
+                    'MrBayes block (Line ' +
+                    (i + 1) +
+                    "): outgroup must be followed by either a taxon's name or a number to indicate the location in the taxon list \n"
                   hasError = true
                 }
               }
@@ -967,6 +968,20 @@ onMounted(() => {
           Build a Tree
         </button>
       </li>
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link"
+          id="tntTab"
+          data-bs-toggle="tab"
+          :data-bs-target="'#tnt' + matrix.matrix_id"
+          type="button"
+          role="tab"
+          aria-controls="tnt"
+          aria-selected="false"
+        >
+          TNT Analysis
+        </button>
+      </li>
     </ul>
     <div class="tab-content">
       <div
@@ -1365,22 +1380,22 @@ onMounted(() => {
             <div v-if="mrbayesblockquery === '0'">
               Would you like to enter a Mr Bayes block?
               <label>
-                 <input
-                   type="radio"
-                   v-model="entermrbayesblock"
-                   value="1"
-                   name="blockRadioGroup2"
-                 />
-                 Yes
+                <input
+                  type="radio"
+                  v-model="entermrbayesblock"
+                  value="1"
+                  name="blockRadioGroup2"
+                />
+                Yes
               </label>
               <label class="radio-spacing">
-                 <input
-                   type="radio"
-                   v-model="entermrbayesblock"
-                   value="0"
-                   name="blockRadioGroup2"
-                 />
-                 No
+                <input
+                  type="radio"
+                  v-model="entermrbayesblock"
+                  value="0"
+                  name="blockRadioGroup2"
+                />
+                No
               </label>
             </div>
             <br />
@@ -1458,9 +1473,9 @@ onMounted(() => {
               </div>
               <div v-if="entermrbayesblock === '0'">
                 <div>
-                <b>Simple parameters</b>
+                  <b>Simple parameters</b>
                 </div>
-                  Outgroup&nbsp;
+                Outgroup&nbsp;
                 <select v-model="set_outgroup">
                   <option v-for="[val, name] in outgroups" v-bind:value="val">
                     {{ name }}
@@ -1714,6 +1729,9 @@ onMounted(() => {
           <i class="fa-solid fa-info-circle"></i>
           No previous runs found.
         </div>
+      </div>
+      <div class="tab-pane fade" :id="'tnt' + matrix.matrix_id" role="tabpanel">
+        <TntAnalysisComp :projectId="projectId" :matrixId="matrixId" />
       </div>
     </div>
   </div>
