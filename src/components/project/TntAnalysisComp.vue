@@ -18,7 +18,7 @@ const tntFile = ref(null)
 const tntUploadErrors = ref({})
 const isUploadingTnt = ref(false)
 const tntOutgroup = ref('Akromystax')
-const tntHoldValue = ref('100')
+const tntHoldValue = ref('1000')
 const tntAnalysisResults = ref(null)
 const showTntResults = ref(false)
 const sessionResults = ref([]) // Store all session results
@@ -28,8 +28,13 @@ const availableSpecies = ref([])
 const isExtractingSpecies = ref(false)
 const speciesExtractionError = ref('')
 
+// TNT validation variables
+const isValidatingTnt = ref(false)
+const tntValidationError = ref('')
+const tntValidationStatus = ref(null) // null, 'valid', 'invalid'
+
 // TNT search type variables
-const searchType = ref('implicit') // 'implicit', 'traditional', 'newtech'
+const searchType = ref('implicit') // 'implicit', 'traditional', 'new_technology'
 const searchValidationError = ref('')
 
 // Traditional search parameters
@@ -38,7 +43,7 @@ const traditionalTreesPerReplication = ref(1)
 const traditionalSwapAlgorithm = ref('tbr') // tbr, spr, nni
 
 // New technology search parameters
-const newtechIterations = ref(100)
+const newtechIterations = ref(10)
 const newtechSectorial = ref(true)
 const newtechRatchet = ref(true)
 const newtechDrift = ref(true)
@@ -67,8 +72,52 @@ async function handleTntFileChange(event) {
     tntFile.value = file
     console.log('TNT file selected:', file.name, file.size, 'bytes')
 
-    // Extract species names from the uploaded file
-    await extractSpeciesFromFile(file)
+    // First validate the TNT file
+    await validateTntFile(file)
+
+    // Only extract species if validation passed
+    if (tntValidationStatus.value === 'valid') {
+      await extractSpeciesFromFile(file)
+    }
+  }
+}
+
+// Function to validate TNT file
+async function validateTntFile(file) {
+  try {
+    isValidatingTnt.value = true
+    tntValidationError.value = ''
+    tntValidationStatus.value = null
+
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const response = await axios.post(
+      'http://localhost:8000/tnt/validate',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    )
+
+    if (response.data) {
+      if (response.data.valid) {
+        tntValidationStatus.value = 'valid'
+        console.log('TNT file validation passed')
+      } else {
+        tntValidationStatus.value = 'invalid'
+        tntValidationError.value = 'TNT file validation failed'
+        console.log('TNT file validation failed:', response.data.issues)
+      }
+    }
+  } catch (error) {
+    console.error('Error validating TNT file:', error)
+    tntValidationStatus.value = 'invalid'
+    tntValidationError.value = 'Failed to validate TNT file'
+  } finally {
+    isValidatingTnt.value = false
   }
 }
 
@@ -117,7 +166,7 @@ function resetTntUpload() {
   tntFile.value = null
   tntUploadErrors.value = {}
   tntOutgroup.value = 'Akromystax'
-  tntHoldValue.value = '100'
+  tntHoldValue.value = '1000'
   tntAnalysisResults.value = null
   showTntResults.value = false
 
@@ -125,13 +174,17 @@ function resetTntUpload() {
   availableSpecies.value = []
   speciesExtractionError.value = ''
 
+  // Clear validation data
+  tntValidationError.value = ''
+  tntValidationStatus.value = null
+
   // Reset search parameters
   searchType.value = 'implicit'
   searchValidationError.value = ''
   traditionalReplications.value = 10
   traditionalTreesPerReplication.value = 1
   traditionalSwapAlgorithm.value = 'tbr'
-  newtechIterations.value = 100
+  newtechIterations.value = 10
   newtechSectorial.value = true
   newtechRatchet.value = true
   newtechDrift.value = true
@@ -239,6 +292,13 @@ async function onRunTnt() {
       return
     }
 
+    // Check if file validation passed
+    if (tntValidationStatus.value !== 'valid') {
+      tntUploadErrors.value.general =
+        'Please upload a valid TNT file before running analysis'
+      return
+    }
+
     // Validate search type
     if (!validateSearchType()) {
       return
@@ -267,7 +327,7 @@ async function onRunTnt() {
         traditionalTreesPerReplication.value
       )
       formData.append('swap_algorithm', traditionalSwapAlgorithm.value)
-    } else if (searchType.value === 'newtech') {
+    } else if (searchType.value === 'new_technology') {
       formData.append('iterations', newtechIterations.value)
       formData.append('sectorial', newtechSectorial.value)
       formData.append('ratchet', newtechRatchet.value)
@@ -332,6 +392,10 @@ async function onRunTnt() {
 <template>
   <div class="tnt-analysis-container">
     <h6>TNT (Tree analysis using New Technology) Analysis</h6>
+    <p>
+      Please try this BETA tool and send any feedback to
+      <router-link to="/askus">Contact Support</router-link>
+    </p>
 
     <!-- Error Messages -->
     <div v-if="tntUploadErrors.general" class="alert alert-danger mb-3">
@@ -343,308 +407,334 @@ async function onRunTnt() {
       {{ speciesExtractionError }}
     </div>
 
+    <!-- TNT Validation Error -->
+    <div v-if="tntValidationError" class="alert alert-danger mb-3">
+      {{ tntValidationError }}
+    </div>
+
     <!-- Search Type Validation Error -->
     <div v-if="searchValidationError" class="alert alert-danger mb-3">
       {{ searchValidationError }}
     </div>
 
-    <div class="merge-file-section">
-      <div class="alert alert-secondary mb-3">
-        <strong>Note</strong> – Upload your TNT file to perform phylogenetic
-        analysis independently from CIPRES. This tool provides direct access to
-        TNT algorithms for tree building and analysis. TNT files should be in
-        .tnt or .txt format.
-      </div>
+    <div class="tab-content">
+      <div class="tnt-file-section">
+        <div class="alert alert-secondary mb-3">
+          <strong>Note</strong> – Upload your TNT file to perform phylogenetic
+          analysis independently from CIPRES. This tool provides direct access
+          to TNT algorithms for tree building and analysis. TNT files should be
+          in .tnt or .txt format.
+        </div>
 
-      <div class="form-group mb-3">
-        <label class="form-label">TNT file to analyze</label>
-        <input
-          type="file"
-          id="tnt-file-upload"
-          class="form-control"
-          accept=".tnt,.txt"
-          @change="handleTntFileChange"
-        />
-        <div v-if="tntFile" class="mt-2">
-          <small class="text-success">
-            <i class="fa-solid fa-check-circle"></i>
-            File selected: <strong>{{ tntFile.name }}</strong> ({{
-              Math.round(tntFile.size / 1024)
-            }}
-            KB)
-          </small>
-          <!-- Species extraction loading -->
-          <div v-if="isExtractingSpecies" class="mt-1">
-            <small class="text-info">
-              <i class="fa-solid fa-spinner fa-spin"></i>
-              Extracting species names...
-            </small>
-          </div>
-          <!-- Species extraction success -->
-          <div v-else-if="availableSpecies.length > 0" class="mt-1">
-            <small class="text-info">
-              <i class="fa-solid fa-info-circle"></i>
-              Found {{ availableSpecies.length }} species in file
-            </small>
+        <div class="form-row mb-3">
+          <div class="col-md-12">
+            <label class="form-label">TNT file to analyze</label>
+            <input
+              type="file"
+              id="tnt-file-upload"
+              class="form-control"
+              accept=".tnt,.txt"
+              @change="handleTntFileChange"
+            />
+            <div v-if="tntFile" class="mt-2">
+              <small class="text-success">
+                <i class="fa-solid fa-check-circle"></i>
+                File selected: <strong>{{ tntFile.name }}</strong> ({{
+                  Math.round(tntFile.size / 1024)
+                }}
+                KB)
+              </small>
+
+              <!-- TNT validation loading -->
+              <div v-if="isValidatingTnt" class="mt-1">
+                <small class="text-info">
+                  <i class="fa-solid fa-spinner fa-spin"></i>
+                  Validating TNT file...
+                </small>
+              </div>
+
+              <!-- TNT validation status -->
+              <div v-else-if="tntValidationStatus" class="mt-1">
+                <small
+                  v-if="tntValidationStatus === 'valid'"
+                  class="text-success"
+                >
+                  <i class="fa-solid fa-check-circle"></i>
+                  TNT file validation passed
+                </small>
+                <small
+                  v-else-if="tntValidationStatus === 'invalid'"
+                  class="text-danger"
+                >
+                  <i class="fa-solid fa-times-circle"></i>
+                  TNT file validation failed
+                </small>
+              </div>
+
+              <!-- Species extraction loading -->
+              <div v-if="isExtractingSpecies" class="mt-1">
+                <small class="text-info">
+                  <i class="fa-solid fa-spinner fa-spin"></i>
+                  Extracting species names...
+                </small>
+              </div>
+              <!-- Species extraction success -->
+              <div v-else-if="availableSpecies.length > 0" class="mt-1">
+                <small class="text-info">
+                  <i class="fa-solid fa-info-circle"></i>
+                  Found {{ availableSpecies.length }} species in file
+                </small>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="form-group mb-3">
-        <label class="form-label">Outgroup</label>
-        <!-- Show dropdown if species are available, otherwise show text input -->
-        <select
-          v-if="availableSpecies.length > 0"
-          v-model="tntOutgroup"
-          class="form-select"
-        >
-          <option value="" disabled>Select an outgroup species</option>
-          <option
-            v-for="species in availableSpecies"
-            :key="species"
-            :value="species"
+        <!-- General parameters -->
+        <div class="mb-4">
+          <h6><strong>General parameters</strong></h6>
+          <div class="form-row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Outgroup</label>
+              <!-- Show dropdown if species are available, otherwise show text input -->
+              <select
+                v-if="availableSpecies.length > 0"
+                v-model="tntOutgroup"
+                class="form-select"
+              >
+                <option value="" disabled>Select an outgroup species</option>
+                <option
+                  v-for="species in availableSpecies"
+                  :key="species"
+                  :value="species"
+                >
+                  {{ species }}
+                </option>
+              </select>
+              <input
+                v-else
+                type="text"
+                v-model="tntOutgroup"
+                class="form-control"
+                placeholder="Enter outgroup name"
+              />
+              <!-- Helper text -->
+              <small
+                v-if="availableSpecies.length > 0"
+                class="form-text text-muted"
+              >
+                Species extracted from your TNT file. Select the appropriate
+                outgroup for your analysis.
+              </small>
+              <small v-else class="form-text text-muted">
+                Upload a TNT file to automatically populate available species,
+                or enter manually.
+              </small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">
+                Number of trees to hold in memory
+                <small class="text-muted">(range: 100- 250,000)</small>
+              </label>
+              <input
+                type="number"
+                v-model="tntHoldValue"
+                class="form-control"
+                min="100"
+                max="250000"
+                placeholder="1000"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Type Selection -->
+        <div class="form-row mb-4">
+          <div class="col-md-12">
+            <label class="form-label">
+              <strong>Search Type</strong>
+              <i
+                class="fa-solid fa-info-circle ms-1"
+                title="Choose the appropriate search method based on your matrix size"
+              ></i>
+            </label>
+
+            <div class="search-type-options">
+              <!-- Implicit Enumeration -->
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="searchType"
+                  id="searchImplicit"
+                  value="implicit"
+                  v-model="searchType"
+                  @change="validateSearchType"
+                />
+                <label class="form-check-label" for="searchImplicit">
+                  Implicit Enumeration (Exact Search, <=30 taxa only)
+                </label>
+              </div>
+
+              <!-- Traditional Search -->
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="searchType"
+                  id="searchTraditional"
+                  value="traditional"
+                  v-model="searchType"
+                  @change="validateSearchType"
+                />
+                <label class="form-check-label" for="searchTraditional">
+                  Traditional Search (heuristic)
+                </label>
+              </div>
+
+              <!-- New Technology Search -->
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="searchType"
+                  id="searchNewtech"
+                  value="new_technology"
+                  v-model="searchType"
+                  @change="validateSearchType"
+                />
+                <label class="form-check-label" for="searchNewtech">
+                  New Technology (heuristic)
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Traditional Search Parameters -->
+        <div v-if="searchType === 'traditional'" class="mb-4">
+          <div class="form-row">
+            <div class="col-md-6">
+              <label class="form-label">
+                Number of replicates
+                <small class="text-muted">(range: 1-100)</small>
+              </label>
+              <input
+                type="number"
+                v-model="traditionalReplications"
+                class="form-control"
+                min="1"
+                max="100"
+                placeholder="10"
+              />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">
+                Number of trees to hold in memory per replicate
+                <small class="text-muted">(range: 1-100)</small>
+              </label>
+              <input
+                type="number"
+                v-model="traditionalTreesPerReplication"
+                class="form-control"
+                min="1"
+                max="100"
+                placeholder="10"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- New Technology Search Parameters -->
+        <div v-if="searchType === 'new_technology'" class="mb-4">
+          <div class="form-row">
+            <div class="col-md-6">
+              <label class="form-label">
+                Number of independent findings of the minimum length that will
+                stop the search
+                <small class="text-muted">(range: 5-50)</small>
+              </label>
+              <input
+                type="number"
+                v-model="newtechIterations"
+                class="form-control"
+                min="5"
+                max="50"
+                placeholder="10"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Implicit Enumeration Info -->
+        <div v-if="searchType === 'implicit'" class="search-info mb-4">
+          <div class="alert alert-info">
+            <i class="fa-solid fa-lightbulb"></i>
+            <strong>Implicit Enumeration</strong> will examine all possible
+            trees and guarantee the most parsimonious solution. No additional
+            parameters are needed - the command <code>ienum</code> will be
+            executed automatically.
+          </div>
+        </div>
+
+        <div class="form-row mb-3">
+          <div class="col-md-9">
+            <!-- Empty space for layout consistency -->
+          </div>
+          <div class="col-md-3 d-flex align-items-end">
+            <button
+              type="button"
+              class="btn btn-primary"
+              @click="onRunTnt"
+              :disabled="
+                isUploadingTnt || !tntFile || tntValidationStatus !== 'valid'
+              "
+            >
+              <span
+                v-if="isUploadingTnt"
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              {{ isUploadingTnt ? 'Analyzing...' : 'Analyze TNT File' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="tab-content-buttons">
+          <button
+            type="button"
+            class="btn btn-outline-primary"
+            @click="resetTntUpload"
+            :disabled="isUploadingTnt"
           >
-            {{ species }}
-          </option>
-        </select>
-        <input
-          v-else
-          type="text"
-          v-model="tntOutgroup"
-          class="form-control"
-          placeholder="Enter outgroup name"
-        />
-        <!-- Helper text -->
-        <small v-if="availableSpecies.length > 0" class="form-text text-muted">
-          Species extracted from your TNT file. Select the appropriate outgroup
-          for your analysis.
-        </small>
-        <small v-else class="form-text text-muted">
-          Upload a TNT file to automatically populate available species, or
-          enter manually.
-        </small>
-      </div>
+            Reset
+          </button>
+        </div>
 
-      <!-- Search Type Selection -->
-      <div class="form-group mb-4">
-        <label class="form-label">
-          <strong>Search Type</strong>
-          <i
-            class="fa-solid fa-info-circle ms-1"
-            title="Choose the appropriate search method based on your matrix size"
-          ></i>
-        </label>
-
-        <div class="search-type-options">
-          <!-- Implicit Enumeration -->
-          <div class="form-check">
-            <input
-              class="form-check-input"
-              type="radio"
-              name="searchType"
-              id="searchImplicit"
-              value="implicit"
-              v-model="searchType"
-              @change="validateSearchType"
-            />
-            <label class="form-check-label" for="searchImplicit">
-              <strong>Implicit Enumeration</strong>
-              <span class="search-description">
-                (≤30 taxa) - Guarantees the most parsimonious tree(s). No user
-                decisions required.
-              </span>
-            </label>
-          </div>
-
-          <!-- Traditional Search -->
-          <div class="form-check">
-            <input
-              class="form-check-input"
-              type="radio"
-              name="searchType"
-              id="searchTraditional"
-              value="traditional"
-              v-model="searchType"
-              @change="validateSearchType"
-            />
-            <label class="form-check-label" for="searchTraditional">
-              <strong>Traditional Heuristic Search</strong>
-              <span class="search-description">
-                (>30 taxa) - Standard heuristic approach with customizable
-                parameters.
-              </span>
-            </label>
-          </div>
-
-          <!-- New Technology Search -->
-          <div class="form-check">
-            <input
-              class="form-check-input"
-              type="radio"
-              name="searchType"
-              id="searchNewtech"
-              value="newtech"
-              v-model="searchType"
-              @change="validateSearchType"
-            />
-            <label class="form-check-label" for="searchNewtech">
-              <strong>New Technology Search</strong>
-              <span class="search-description">
-                (>30 taxa) - Advanced search with multiple optimization
-                algorithms.
-              </span>
-            </label>
-          </div>
+        <div class="read-only">
+          TNT (Tree analysis using New Technology) provides advanced
+          phylogenetic analysis capabilities:
+          <ul>
+            <li>
+              <strong>Implicit Enumeration:</strong> Guarantees finding the most
+              parsimonious tree(s) for small datasets (≤30 taxa)
+            </li>
+            <li>
+              <strong>Traditional Heuristic Search:</strong> Standard approach
+              for larger datasets with customizable parameters
+            </li>
+            <li>
+              <strong>New Technology Search:</strong> Advanced algorithms
+              including sectorial searches, ratchet, tree drifting, and tree
+              fusing
+            </li>
+          </ul>
+          Results are returned as NEXUS files containing the optimal tree(s) and
+          analysis details.
         </div>
       </div>
 
-      <!-- Traditional Search Parameters -->
-      <div v-if="searchType === 'traditional'" class="search-parameters mb-4">
-        <h6 class="parameters-title">
-          <i class="fa-solid fa-cog"></i> Traditional Search Parameters
-        </h6>
-        <div class="row">
-          <div class="col-md-4">
-            <label class="form-label">Replications</label>
-            <input
-              type="number"
-              v-model="traditionalReplications"
-              class="form-control"
-              min="1"
-              max="1000"
-            />
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Trees per Replication</label>
-            <input
-              type="number"
-              v-model="traditionalTreesPerReplication"
-              class="form-control"
-              min="1"
-              max="100"
-            />
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Swap Algorithm</label>
-            <select v-model="traditionalSwapAlgorithm" class="form-select">
-              <option value="tbr">TBR - Tree Bisection Reconnection</option>
-              <option value="spr">SPR - Subtree Pruning Regrafting</option>
-              <option value="nni">NNI - Nearest Neighbor Interchange</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- New Technology Search Parameters -->
-      <div v-if="searchType === 'newtech'" class="search-parameters mb-4">
-        <h6 class="parameters-title">
-          <i class="fa-solid fa-microchip"></i> New Technology Search Parameters
-        </h6>
-        <div class="row mb-3">
-          <div class="col-md-6">
-            <label class="form-label">Iterations</label>
-            <input
-              type="number"
-              v-model="newtechIterations"
-              class="form-control"
-              min="10"
-              max="10000"
-            />
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-6">
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                id="sectorial"
-                v-model="newtechSectorial"
-              />
-              <label class="form-check-label" for="sectorial">
-                Sectorial searches
-              </label>
-            </div>
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                id="ratchet"
-                v-model="newtechRatchet"
-              />
-              <label class="form-check-label" for="ratchet"> Ratchet </label>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                id="drift"
-                v-model="newtechDrift"
-              />
-              <label class="form-check-label" for="drift">
-                Tree drifting
-              </label>
-            </div>
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                id="fusing"
-                v-model="newtechFusing"
-              />
-              <label class="form-check-label" for="fusing"> Tree fusing </label>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Implicit Enumeration Info -->
-      <div v-if="searchType === 'implicit'" class="search-info mb-4">
-        <div class="alert alert-info">
-          <i class="fa-solid fa-lightbulb"></i>
-          <strong>Implicit Enumeration</strong> will examine all possible trees
-          and guarantee the most parsimonious solution. No additional parameters
-          are needed - the command <code>ienum</code> will be executed
-          automatically.
-        </div>
-      </div>
-
-      <div class="form-group mb-3">
-        <label class="form-label">Hold Value</label>
-        <input
-          type="number"
-          v-model="tntHoldValue"
-          class="form-control"
-          placeholder="Enter hold value"
-        />
-      </div>
-
-      <div class="tab-content-buttons">
-        <button
-          type="button"
-          class="btn btn-primary"
-          @click="onRunTnt"
-          :disabled="isUploadingTnt || !tntFile"
-        >
-          <span
-            v-if="isUploadingTnt"
-            class="spinner-border spinner-border-sm me-2"
-            role="status"
-            aria-hidden="true"
-          ></span>
-          {{ isUploadingTnt ? 'Analyzing...' : 'Analyze TNT File' }}
-        </button>
-        <button
-          type="button"
-          class="btn btn-outline-primary"
-          @click="resetTntUpload"
-          :disabled="isUploadingTnt"
-        >
-          Reset
-        </button>
-      </div>
+      <hr class="bold_hr" />
 
       <!-- Session Results Section -->
       <div class="session-results-section mt-4">
@@ -723,16 +813,14 @@ async function onRunTnt() {
   width: 100%;
 }
 
-/* Form styling removed - using simple layout like merge form */
-
 .tab-content-buttons {
   display: flex;
   gap: 8px;
 }
 
-/* TNT form styling - matching merge form */
-.merge-file-section {
-  max-width: 600px;
+/* TNT form styling - matching CIPRES form */
+.tnt-file-section {
+  max-width: none;
 }
 
 .form-group {
@@ -743,6 +831,57 @@ async function onRunTnt() {
   font-weight: 500;
   margin-bottom: 0.5rem;
   display: block;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.form-row .col-md-3,
+.form-row .col-md-4,
+.form-row .col-md-6,
+.form-row .col-md-9,
+.form-row .col-md-12 {
+  flex: 1;
+}
+
+.form-row .col-md-3 {
+  flex: 0 0 25%;
+}
+
+.form-row .col-md-4 {
+  flex: 0 0 33.333%;
+}
+
+.form-row .col-md-6 {
+  flex: 0 0 50%;
+}
+
+.form-row .col-md-9 {
+  flex: 0 0 75%;
+}
+
+.form-row .col-md-12 {
+  flex: 0 0 100%;
+}
+
+.read-only {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 4px;
+}
+
+.bold_hr {
+  text-align: left;
+  margin-left: 0;
+  height: 5px;
+  background-color: silver;
+}
+
+.red {
+  color: red;
 }
 
 /* TNT Results section styling */

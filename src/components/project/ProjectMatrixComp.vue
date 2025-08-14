@@ -472,15 +472,6 @@ async function onRun() {
   sendCipresRequest(url)
 }
 
-// TNT functionality completely moved to TntAnalysisComp.vue
-
-async function onRun() {
-  if (tool.value == 'PAUPRAT' || tool.value == 'MRBAYES_XSEDE') {
-    onRunCipres()
-  }
-  // TNT functionality moved to separate tab and component
-}
-
 async function sendCipresRequest(url) {
   try {
     document.body.style.cursor = 'wait'
