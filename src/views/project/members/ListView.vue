@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
+import { useAuthStore } from '@/stores/AuthStore'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MembersComp from '@/components/project/MembersComp.vue'
 import DeleteUserDialog from '@/views/project/members/DeleteUserDialog.vue'
@@ -10,8 +11,18 @@ const route = useRoute()
 const projectId = route.params.id
 
 const projectUsersStore = useProjectUsersStore()
+const authStore = useAuthStore()
 const numOfUsers = computed(() => projectUsersStore.users?.length)
 const userToDelete = ref({})
+
+// Check if current user is project admin
+const isCurrentUserProjectAdmin = computed(() => {
+  const currentUserId = authStore.user?.userId
+  if (!currentUserId) return false
+  
+  const userMembership = projectUsersStore.getUserById(currentUserId)
+  return userMembership?.admin === true
+})
 const users = computed(() =>
   projectUsersStore.users.sort((a, b) => {
     const nameA = a.fname
@@ -51,7 +62,7 @@ onMounted(() => {
       There are {{ numOfUsers }} members associated with this project.
     </header>
     <br />
-    <div class="action-bar">
+    <div class="action-bar" v-if="isCurrentUserProjectAdmin">
       <RouterLink :to="`/myprojects/${projectId}/members/create`">
         <button type="button" class="btn btn-m btn-outline-primary">
           <i class="fa fa-plus"></i>

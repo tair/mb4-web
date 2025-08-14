@@ -1,18 +1,20 @@
 <script setup>
 import router from '@/router'
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore'
 import InstitutionSearchInput from '@/views/project/common/InstitutionSearchInput.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
+import AddInstitutionDialog from '@/components/dialogs/AddInstitutionDialog.vue'
+import { Modal } from 'bootstrap'
 
 const route = useRoute()
 const projectId = route.params.id
 const projectInstitutionsStore = useProjectInstitutionStore()
 const isLoaded = computed(() => projectInstitutionsStore.isLoaded)
 
-let institutionId = null
-let institutionName = null
+const institutionId = ref(null)
+const institutionName = ref(null)
 
 onMounted(() => {
   if (!projectInstitutionsStore.isLoaded) {
@@ -20,16 +22,16 @@ onMounted(() => {
   }
 })
 
-async function createInstitution(institutionId, name) {
+async function createInstitution() {
   const institutionXProject = projectInstitutionsStore.institutions.find(
-    (institution) => institution.name == name
+    (institution) => institution.name == institutionName.value
   )
 
   if (institutionXProject == null) {
     const result = await projectInstitutionsStore.addInstitution(
       projectId,
-      institutionId,
-      name
+      institutionId.value,
+      institutionName.value
     )
 
     if (!result) {
@@ -43,8 +45,21 @@ async function createInstitution(institutionId, name) {
 }
 
 function setInstitutionData(name, id) {
-  institutionName = name
-  institutionId = id
+  institutionName.value = name
+  institutionId.value = id
+}
+
+// Open add institution dialog
+const openAddInstitutionDialog = () => {
+  const modalElement = document.getElementById('addInstitutionModal')
+  const modal = new Modal(modalElement)
+  modal.show()
+}
+
+// Handle institution creation from dialog
+const handleInstitutionCreated = (institution) => {
+  // Set the selected institution data
+  setInstitutionData(institution.name, institution.institution_id)
 }
 </script>
 
@@ -69,14 +84,30 @@ function setInstitutionData(name, id) {
       <div class="form-section">
         <InstitutionSearchInput
           :projectId="Number(projectId)"
+          :selectedInstitutionId="institutionId"
+          :selectedInstitutionName="institutionName"
           @updateParent="setInstitutionData"
         >
         </InstitutionSearchInput>
+        
+        <!-- Add Institution Link -->
+        <div class="mt-2">
+          <a 
+            href="#" 
+            @click.prevent="openAddInstitutionDialog"
+            class="text-primary"
+            style="font-size: 0.9em;"
+          >
+            Can't find your institution? Add new institution
+          </a>
+        </div>
+        
         <div class="form-actions">
           <button
             type="button"
             class="btn btn-primary"
-            @click="createInstitution(institutionId, institutionName)"
+            @click="createInstitution()"
+            :disabled="!institutionName || !institutionId"
           >
             <i class="fa fa-save"></i>
             Save
@@ -84,6 +115,9 @@ function setInstitutionData(name, id) {
         </div>
       </div>
     </form>
+    
+    <!-- Add Institution Modal -->
+    <AddInstitutionDialog :onInstitutionCreated="handleInstitutionCreated" />
   </LoadingIndicator>
 </template>
 
