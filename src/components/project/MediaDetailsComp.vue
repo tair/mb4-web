@@ -72,6 +72,12 @@ const fileExtension = computed(() => {
   return ext || ''
 })
 
+// Check if the original file is a TIFF file (for download logic)
+const isOriginalTiffFile = computed(() => {
+  const originalMedia = props.media_file?.media?.original
+  return originalMedia && (originalMedia.MIMETYPE === 'image/tiff' || originalMedia.MIMETYPE === 'image/tif')
+})
+
 // Get the main display URL (3D icon for 3D files, video thumbnail for videos, actual image for 2D files)
 const mainDisplayUrl = computed(() => {
   if (is3DFile.value) {
@@ -81,6 +87,21 @@ const mainDisplayUrl = computed(() => {
     // For videos, show a thumbnail if available, otherwise show video icon
     return buildMediaUrl(props.project_id, props.media_file?.media_id, 'thumbnail')
   }
+  
+  // For regular images, prefer JPEG variants for browser compatibility
+  // CANT FIGURE OUT WHY THIS WORKS.... BUT IT DOES SO KEEPING IT
+  const media = props.media_file?.media
+  if (media) {
+    // Try large first (usually JPEG), finally original
+    const sizePreference = ['large', 'original']
+    for (const size of sizePreference) {
+      if (media[size] && media[size].MIMETYPE !== 'image/tiff' && media[size].MIMETYPE !== 'image/tif') {
+        return buildMediaUrl(props.project_id, props.media_file?.media_id, size)
+      }
+    }
+  }
+  
+  // Fallback to original if no JPEG variants found
   return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
 })
 
@@ -124,7 +145,22 @@ const zoomDisplayUrl = computed(() => {
   if (isVideoFile.value) {
     return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
   }
-  return buildMediaUrl(props.project_id, props.media_file?.media_id, 'large')
+  
+  // For zoom modal, use same smart logic as main display - prefer JPEG variants
+  // CANT FIGURE OUT WHY THIS WORKS.... BUT IT DOES SO KEEPING IT FOR NOW
+  const media = props.media_file?.media
+  if (media) {
+    // Try large first (usually JPEG), finally original
+    const sizePreference = ['large', 'original']
+    for (const size of sizePreference) {
+      if (media[size] && media[size].MIMETYPE !== 'image/tiff' && media[size].MIMETYPE !== 'image/tif') {
+        return buildMediaUrl(props.project_id, props.media_file?.media_id, size)
+      }
+    }
+  }
+  
+  // Fallback to original if no JPEG variants found
+  return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
 })
 
 // Handle model loading events from ThreeJSViewer
@@ -187,14 +223,23 @@ const onVideoTimeUpdate = (event) => {
   }
 }
 
+// Image loading event handlers
+const onImageError = (event) => {
+  // Handle image loading errors if needed
+}
+
+const onImageLoad = (event) => {
+  // Handle successful image loading if needed
+}
+
 async function confirmDownload(fileSize, fileName) {
   // if (!isCaptchaVerified) {
   //   alert("Please complete the CAPTCHA");
   //   return;
   // }
   // CAPTCHA is completed, proceed with the download
-  // For 3D files and videos, always download the original file regardless of requested size
-  const downloadSize = (is3DFile.value || isVideoFile.value) ? 'original' : fileSize
+  // For 3D files, videos, and TIFF files, always download the original file regardless of requested size
+  const downloadSize = (is3DFile.value || isVideoFile.value || isOriginalTiffFile.value) ? 'original' : fileSize
   const downloadUrl = buildMediaUrl(
     props.project_id,
     props.media_file?.media_id,
@@ -295,6 +340,8 @@ function getHitsMessage(mediaObj) {
             backgroundPosition: '10px 10px',
           }"
           class="card-img"
+          @error="onImageError"
+          @load="onImageLoad"
         />
 
         <div class="card-body">
