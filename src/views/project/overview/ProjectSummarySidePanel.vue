@@ -56,16 +56,16 @@ const viewTooltipText = getViewStatsTooltipText()
             <router-link class="fw-bold" to="#project-view"
               >Project Views </router-link
             ><Tooltip :content="viewTooltipText"></Tooltip>:
-            {{ overview.project_views.total }}
+            {{ overview.project_views?.total || 0 }}
           </li>
-          <li class="list-group-item" v-if="overview.project_downloads.M">
+          <li class="list-group-item" v-if="overview.project_downloads?.M">
             <router-link class="fw-bold" to="#project-download"
               >Media downloads
             </router-link>
             <Tooltip :content="viewTooltipText"></Tooltip>:
             {{ overview.project_downloads.M }}
           </li>
-          <li class="list-group-item" v-if="overview.project_downloads.X">
+          <li class="list-group-item" v-if="overview.project_downloads?.X">
             <router-link class="fw-bold" to="#project-download"
               >Matrix downloads
             </router-link>
