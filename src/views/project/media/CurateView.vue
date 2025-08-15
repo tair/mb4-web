@@ -259,6 +259,7 @@ watch(
             v-model="allSelected"
             :indeterminate.prop="someSelected && !allSelected"
           />
+          <span class="ms-2">Select All</span>
         </label>
 
         <!-- Batch Edit Button -->

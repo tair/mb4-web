@@ -13,6 +13,7 @@ export const useSearchResultsStore = defineStore({
       references: [],
       matrices: [],
       taxa: [],
+      members: [],
     },
     searching: {
       projects: false,
@@ -23,6 +24,7 @@ export const useSearchResultsStore = defineStore({
       references: false,
       matrices: false,
       taxa: false,
+      members: false,
     },
   }),
   getters: {},
@@ -37,6 +39,7 @@ export const useSearchResultsStore = defineStore({
       this.searching.references = true
       this.searching.matrices = true
       this.searching.taxa = true
+      this.searching.members = true
       // Clear previous results
       this.results.projects = []
       this.results.media = []
@@ -46,6 +49,7 @@ export const useSearchResultsStore = defineStore({
       this.results.references = []
       this.results.matrices = []
       this.results.taxa = []
+      this.results.members = []
 
       // Fetch projects
       axios
@@ -150,6 +154,19 @@ export const useSearchResultsStore = defineStore({
         })
         .finally(() => {
           this.searching.taxa = false
+        })
+
+      // Fetch members
+      axios
+        .get(`${baseUrl}/search/members`, { params: query })
+        .then((res) => {
+          this.results.members = res.data.members
+        })
+        .catch(() => {
+          this.results.members = []
+        })
+        .finally(() => {
+          this.searching.members = false
         })
     },
   },

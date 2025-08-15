@@ -1,12 +1,15 @@
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted, onBeforeUnmount, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { useAuthStore } from '@/stores/AuthStore'
 import { useMediaStore } from '@/stores/MediaStore'
 import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useFoliosStore } from '@/stores/FoliosStore'
+import { useFolioMediaStore } from '@/stores/FolioMediaStore'
+import { useNotifications } from '@/composables/useNotifications'
 import { getTaxonForMediaId } from '@/views/project/utils'
 import { TaxaFriendlyNames, nameColumnMap } from '@/utils/taxa'
 // import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
@@ -16,6 +19,7 @@ import DeleteDialog from '@/views/project/media/DeleteDialog.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaCardComp from '@/components/project/MediaCardComp.vue'
 import { buildMediaUrl } from '@/utils/fileUtils.js'
+import { Tooltip } from 'bootstrap'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id)
@@ -25,13 +29,17 @@ const specimensStore = useSpecimensStore()
 const taxaStore = useTaxaStore()
 const mediaViewsStore = useMediaViewsStore()
 const projectUsersStore = useProjectUsersStore()
+const foliosStore = useFoliosStore()
+const folioMediaStore = useFolioMediaStore()
+const { showSuccess, showError } = useNotifications()
 const isLoaded = computed(
   () =>
     mediaStore.isLoaded &&
     specimensStore.isLoaded &&
     taxaStore.isLoaded &&
     mediaViewsStore.isLoaded &&
-    projectUsersStore.isLoaded
+    projectUsersStore.isLoaded &&
+    foliosStore.isLoaded
 )
 
 const mediaToDelete = ref([])
@@ -43,6 +51,226 @@ const selectedPageSize = ref(25)
 
 // Track selection state using a reactive object keyed by media_id
 const selectedMedia = reactive({})
+
+// Filter state management - make it reactive
+const serializedFilterName = `mediaFilter[${projectId}]`
+const filterUpdateTrigger = ref(0) // Trigger for reactivity
+
+const activeFilters = computed(() => {
+  // Access the trigger to ensure reactivity
+  filterUpdateTrigger.value
+  
+  const existingFilter = sessionStorage.getItem(serializedFilterName)
+  if (!existingFilter) return null
+  
+  try {
+    const filter = JSON.parse(existingFilter)
+    const hasActiveFilters = 
+      (filter.filterTaxa && filter.filterTaxa.length > 0) ||
+      (filter.filterView && filter.filterView.length > 0) ||
+      (filter.filterSubmitter && filter.filterSubmitter.length > 0) ||
+      (filter.filterCopyrightLicense && filter.filterCopyrightLicense.length > 0) ||
+      (filter.filterCopyrightPermission && filter.filterCopyrightPermission.length > 0) ||
+      (filter.filterSpecimenRepository && filter.filterSpecimenRepository.length > 0) ||
+      (filter.filterStatus && filter.filterStatus.length > 0) ||
+      (filter.filterOther && Object.keys(filter.filterOther).length > 0)
+    
+    return hasActiveFilters ? filter : null
+  } catch (e) {
+    console.error('Error parsing filter from sessionStorage:', e)
+    return null
+  }
+})
+
+function clearAllFilters(event) {
+  sessionStorage.removeItem(serializedFilterName)
+  // Clear all existing filters
+  Object.keys(filters).forEach(key => {
+    if (key !== 'released') { // Keep the released filter as it's the default
+      clearFilter(key)
+    }
+  })
+  // Trigger reactivity update
+  filterUpdateTrigger.value++
+  
+  // Also clear any checkboxes in the modal if it's open
+  setTimeout(() => {
+    const modalElement = document.getElementById('mediaFilterModal')
+    if (modalElement) {
+      const checkboxes = modalElement.querySelectorAll<HTMLInputElement>('input[type=checkbox]')
+      for (const checkbox of checkboxes) {
+        checkbox.checked = false
+      }
+    }
+  }, 0)
+  
+  // Hide tooltip after click
+  hideTooltipOnClick(event)
+}
+
+// Function to trigger filter updates (called by FilterDialog)
+function onFiltersUpdated() {
+  filterUpdateTrigger.value++
+}
+
+// Helper function to hide tooltip after button click
+function hideTooltipOnClick(event) {
+  if (event && event.target) {
+    const tooltip = Tooltip.getInstance(event.target)
+    if (tooltip) {
+      tooltip.hide()
+    }
+  }
+  
+  // Also hide any other visible tooltips
+  const visibleTooltips = document.querySelectorAll('.tooltip.show')
+  visibleTooltips.forEach(tooltipEl => {
+    if (tooltipEl.parentNode) {
+      tooltipEl.parentNode.removeChild(tooltipEl)
+    }
+  })
+}
+
+// Function to initialize or reinitialize tooltips with fast delays
+function initializeFastTooltips() {
+  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+  tooltipTriggerList.forEach(tooltipTriggerEl => {
+    // Dispose existing tooltip if it exists
+    const existingTooltip = Tooltip.getInstance(tooltipTriggerEl)
+    if (existingTooltip) {
+      existingTooltip.dispose()
+    }
+    
+    // Check if this element should render HTML content
+    const allowHtml = tooltipTriggerEl.hasAttribute('data-bs-html') && 
+                     tooltipTriggerEl.getAttribute('data-bs-html') === 'true'
+    
+    // Create new tooltip with fast configuration
+    new Tooltip(tooltipTriggerEl, {
+      delay: { show: 150, hide: 50 }, // Very fast delays
+      trigger: 'hover focus',
+      placement: 'auto', // Auto placement for better positioning
+      fallbackPlacements: ['bottom', 'top', 'right', 'left'],
+      html: allowHtml // Enable HTML rendering when data-bs-html="true"
+    })
+  })
+}
+
+// Function to dispose of all tooltips to prevent persistent tooltips
+function disposeAllTooltips() {
+  // Find all elements with tooltips and dispose them
+  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+  tooltipTriggerList.forEach(tooltipTriggerEl => {
+    const existingTooltip = Tooltip.getInstance(tooltipTriggerEl)
+    if (existingTooltip) {
+      existingTooltip.dispose()
+    }
+  })
+  
+  // Also check for any orphaned tooltip elements in the DOM
+  const tooltipElements = document.querySelectorAll('.tooltip')
+  tooltipElements.forEach(tooltipEl => {
+    if (tooltipEl.parentNode) {
+      tooltipEl.parentNode.removeChild(tooltipEl)
+    }
+  })
+}
+
+// View toggle functions with tooltip hiding
+function setThumbnailView(event) {
+  thumbnailView.value = true
+  hideTooltipOnClick(event)
+}
+
+function setCompactView(event) {
+  thumbnailView.value = false
+  hideTooltipOnClick(event)
+}
+
+// Function to build active filters text for display
+function getActiveFiltersText(filters) {
+  if (!filters) return ''
+  
+  const filterParts = []
+  
+  if (filters.filterTaxa && filters.filterTaxa.length > 0) {
+    filterParts.push(`${filters.filterTaxa.length} taxa`)
+  }
+  if (filters.filterView && filters.filterView.length > 0) {
+    filterParts.push(`${filters.filterView.length} views`)
+  }
+  if (filters.filterSubmitter && filters.filterSubmitter.length > 0) {
+    filterParts.push(`${filters.filterSubmitter.length} submitters`)
+  }
+  if (filters.filterCopyrightLicense && filters.filterCopyrightLicense.length > 0) {
+    filterParts.push(`${filters.filterCopyrightLicense.length} licenses`)
+  }
+  if (filters.filterCopyrightPermission && filters.filterCopyrightPermission.length > 0) {
+    filterParts.push(`${filters.filterCopyrightPermission.length} permissions`)
+  }
+  if (filters.filterSpecimenRepository && filters.filterSpecimenRepository.length > 0) {
+    filterParts.push(`${filters.filterSpecimenRepository.length} repositories`)
+  }
+  if (filters.filterStatus && filters.filterStatus.length > 0) {
+    filterParts.push(`${filters.filterStatus.length} status filters`)
+  }
+  if (filters.filterOther && Object.keys(filters.filterOther).length > 0) {
+    filterParts.push(`${Object.keys(filters.filterOther).length} other criteria`)
+  }
+  
+  if (filterParts.length === 0) return 'No filters active'
+  if (filterParts.length === 1) return filterParts[0]
+  if (filterParts.length === 2) return `${filterParts[0]} and ${filterParts[1]}`
+  
+  // For 3+ filters, use more compact display
+  if (filterParts.length > 4) {
+    const totalCategories = filterParts.length
+    return `${totalCategories} filter categories active`
+  }
+  
+  // For 3-4 filters, show "X, Y, and Z"
+  const lastFilter = filterParts.pop()
+  return `${filterParts.join(', ')}, and ${lastFilter}`
+}
+
+// Folio tools state
+const showFolioOptions = ref(false)
+const selectedFolioId = ref('')
+const folioToolsTooltip = 'Folios are annotated booklets of media that you may wish to make as part of your Project. To make one, start by clicking on Folios at the left, name your Folio and then go to Folio Tools to fill the Folio with media.'
+
+// Tooltip constants for batch edit/selection bar
+const batchEditTooltip = 'Edit all selected media items at the same time. You can modify copyright information, views, specimens, and other metadata for multiple files simultaneously.'
+const downloadSelectedTooltip = 'Download original files for all selected media items.'
+const addToFolioTooltip = 'Add selected media items to a folio for organization and annotation.'
+const deleteSelectedTooltip = 'Permanently delete all selected media items. This action cannot be undone.'
+
+// Upload button tooltips
+const uploadTooltips = {
+  upload2D: 'Upload images (JPG, PNG, GIF, etc.) to your project',
+  upload3D: 'Upload 3D models (PLY, OBJ, STL, etc.) for interactive viewing',
+  uploadVideo: 'Upload video files (MP4, MOV, AVI, etc.) to your project',
+  uploadStacks: 'Upload zipped archives of CT scan stacks (Dicom, TIFF)',
+  uploadBatch: 'Upload multiple 2D images at once with batch metadata editing',
+  importEOL: 'Import images directly from Encyclopedia of Life (EOL)',
+  importIDigBio: 'Import specimen images from iDigBio collections'
+}
+
+// Download options tooltips
+const downloadTooltips = {
+  originalFilenames: 'Download a CSV file containing the original filenames of all media in this project'
+}
+
+// Control tooltips
+const controlTooltips = {
+  showFilter: 'Filter media by identification status or copyright information',
+  orderBy: 'Sort media by different criteria including taxonomic classification'
+}
+
+// Educational tooltip about views
+const whatIsViewTooltip = 'A View should indicate both the orientation and element in your 2D or 3D image (Media), for example \'dorsal skull\' or \'cross-section of leaf\' or \'CT scan of insect body\'. The best practice for using the MorphoBank database, and one that will make your work maximally searchable, is to include only one View per image (Media) rather than multi-image plates.'
+
+// View tools tooltip
+const viewToolsTooltip = 'Click here to display your media without views and batch curate them.<br/><br/>A View should indicate both the orientation and element in your 2D or 3D image (Media), for example \'dorsal skull\' or \'cross-section of leaf\' or \'CT scan of insect body\'. The best practice for using the MorphoBank database, and one that will make your work maximally searchable, is to include only one View per image (Media) rather than multi-image plates.'
 
 const filters = reactive({
   released: (media) => media.cataloguing_status == 0,
@@ -112,6 +340,11 @@ const paginatedMedia = computed(() => {
 const uncuratedMediaCount = computed(() => {
   const mediaArray = Array.isArray(mediaStore.media) ? mediaStore.media : []
   return mediaArray.filter((m) => m.cataloguing_status == 1).length
+})
+
+// Computed property for media without views
+const mediaWithoutViews = computed(() => {
+  return filteredMedia.value.filter(m => !m.view_id).length
 })
 
 // Selection computed properties for batch operations
@@ -230,7 +463,7 @@ async function batchEdit(json) {
   return mediaStore.editIds(projectId, mediaIds, json)
 }
 
-onMounted(() => {
+onMounted(async () => {
   if (!mediaStore.isLoaded) {
     mediaStore.fetchMedia(projectId)
   }
@@ -246,6 +479,54 @@ onMounted(() => {
   if (!projectUsersStore.isLoaded) {
     projectUsersStore.fetchUsers(projectId)
   }
+  if (!foliosStore.isLoaded) {
+    foliosStore.fetch(projectId)
+  }
+  
+  // Initialize filters from sessionStorage if they exist
+  const existingFilter = sessionStorage.getItem(serializedFilterName)
+  if (existingFilter) {
+    try {
+      const { applyFilter } = await import('@/views/project/media/filter')
+      const filter = JSON.parse(existingFilter)
+      await applyFilter(projectId, filter, setFilter, clearFilter)
+      filterUpdateTrigger.value++
+    } catch (e) {
+      console.error('Error applying existing filters:', e)
+    }
+  }
+  
+  // Initialize fast-responding tooltips
+  setTimeout(() => {
+    initializeFastTooltips()
+  }, 100)
+  
+  // Add global cleanup for tooltips on page unload
+  const handleBeforeUnload = () => {
+    disposeAllTooltips()
+  }
+  
+  window.addEventListener('beforeunload', handleBeforeUnload)
+  
+  // Store the cleanup function for removal in onBeforeUnmount
+  window._tooltipCleanupHandler = handleBeforeUnload
+})
+
+// Cleanup tooltips when component unmounts to prevent persistent tooltips
+onBeforeUnmount(() => {
+  disposeAllTooltips()
+  
+  // Remove the global event listener if it exists
+  if (window._tooltipCleanupHandler) {
+    window.removeEventListener('beforeunload', window._tooltipCleanupHandler)
+    delete window._tooltipCleanupHandler
+  }
+})
+
+// Cleanup tooltips when navigating away using Vue Router
+onBeforeRouteLeave((to, from) => {
+  disposeAllTooltips()
+  return true
 })
 
 function refresh() {
@@ -253,6 +534,7 @@ function refresh() {
   specimensStore.fetchSpecimens(projectId)
   taxaStore.fetch(projectId)
   mediaViewsStore.fetchMediaViews(projectId)
+  foliosStore.fetch(projectId)
 }
 
 const baseUrl = `${import.meta.env.VITE_API_URL}/projects/${projectId}/media`
@@ -287,6 +569,53 @@ function downloadSelected() {
       document.body.removeChild(link)
     }, index * 100) // 100ms delay between each download
   })
+}
+
+// Folio tools functions
+function toggleFolioOptions(event) {
+  showFolioOptions.value = !showFolioOptions.value
+  // If hiding folio options, reset selected folio
+  if (!showFolioOptions.value) {
+    selectedFolioId.value = ''
+  }
+  
+  // Hide tooltip after click to prevent it from staying visible
+  hideTooltipOnClick(event)
+}
+
+async function addToFolio() {
+  if (!selectedFolioId.value) {
+    showError('Please select a folio')
+    return
+  }
+
+  const selectedMediaFiles = filteredMedia.value
+    .filter((m) => selectedMedia[m.media_id])
+    .map((m) => m.media_id)
+  
+  if (selectedMediaFiles.length === 0) {
+    showError('Please select media files to add to folio')
+    return
+  }
+
+  try {
+    const success = await folioMediaStore.create(projectId, selectedFolioId.value, selectedMediaFiles)
+    if (success) {
+      showSuccess(`Added ${selectedMediaFiles.length} media files to folio`)
+      // Clear selections
+      Object.keys(selectedMedia).forEach(key => {
+        selectedMedia[key] = false
+      })
+      // Hide folio options
+      showFolioOptions.value = false
+      selectedFolioId.value = ''
+    } else {
+      showError('Failed to add media to folio')
+    }
+  } catch (error) {
+    console.error('Error adding media to folio:', error)
+    showError('An error occurred while adding media to folio')
+  }
 }
 
 function onSelectShow(event) {
@@ -418,6 +747,88 @@ watch(selectedPageSize, () => {
 watch(searchStr, () => {
   selectedPage.value = 1
 })
+
+// Watch for folio options changes to reinitialize tooltips
+watch(showFolioOptions, () => {
+  setTimeout(() => {
+    initializeFastTooltips()
+  }, 50)
+})
+
+// Watch for active filters changes to reinitialize tooltips
+watch(activeFilters, () => {
+  setTimeout(() => {
+    initializeFastTooltips()
+  }, 50)
+})
+
+// Watch for paginated media changes to reinitialize tooltips for new media cards
+watch(paginatedMedia, () => {
+  setTimeout(() => {
+    initializeFastTooltips()
+  }, 100)
+}, { deep: true })
+
+// Function to generate detailed tooltip content for media cards
+function getMediaTooltipContent(media_file) {
+  if (!media_file) return ''
+  
+  const specimen = specimensStore.getSpecimenById(media_file.specimen_id)
+  const view = mediaViewsStore.getMediaViewById(media_file.view_id)
+  const user = projectUsersStore.getUserById(media_file.user_id)
+  const taxon = getTaxon(media_file)
+  
+  // Helper function to escape HTML characters in tooltip content
+  const escapeHtml = (text) => {
+    if (!text) return ''
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+  }
+  
+  let tooltip = `<strong>Media ID:</strong> M${media_file.media_id}<br/>`
+  
+  if (specimen && specimen.specimen_id) {
+    tooltip += `<strong>Specimen:</strong> S${specimen.specimen_id}<br/>`
+  }
+  
+  if (view && view.name) {
+    tooltip += `<strong>View:</strong> ${escapeHtml(view.name)}<br/>`
+  }
+  
+  if (taxon) {
+    const taxonName = getTaxonName(media_file)
+    if (taxonName) {
+      tooltip += `<strong>Taxon:</strong> ${escapeHtml(taxonName)}<br/>`
+    }
+  }
+  
+  if (user && user.fname && user.lname) {
+    tooltip += `<strong>Submitter:</strong> ${escapeHtml(user.fname)} ${escapeHtml(user.lname)}<br/>`
+  }
+  
+  if (media_file.is_copyrighted) {
+    tooltip += `<strong>Copyright:</strong> Yes<br/>`
+  }
+  
+  if (media_file.media && media_file.media.original) {
+    const width = media_file.media.original.WIDTH || 'N/A'
+    const height = media_file.media.original.HEIGHT || 'N/A'
+    tooltip += `<strong>File:</strong> ${width}x${height}<br/>`
+  }
+  
+  // Remove trailing <br/> if present
+  return tooltip.replace(/<br\/>$/, '')
+}
+
+// Function to navigate to curate view for media without views
+function fixMediaWithoutViews() {
+  // Navigate to the curate view which is designed for batch editing media
+  window.location.href = `/myprojects/${projectId}/media/curate`
+}
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
@@ -429,19 +840,37 @@ watch(searchStr, () => {
     <!-- Action Bar - Keep the project-specific actions -->
     <div class="action-bar">
       <RouterLink :to="`/myprojects/${projectId}/media/create`">
-        <button type="button" class="btn btn-m btn-outline-primary">
+        <button 
+          type="button" 
+          class="btn btn-m btn-outline-primary"
+          data-bs-toggle="tooltip"
+          :data-bs-title="uploadTooltips.upload2D"
+          :title="uploadTooltips.upload2D"
+        >
           <i class="fa fa-plus"></i>
           <span> Upload 2D Media</span>
         </button>
       </RouterLink>
       <RouterLink :to="`/myprojects/${projectId}/media/create/3d`">
-        <button type="button" class="btn btn-m btn-outline-primary">
+        <button 
+          type="button" 
+          class="btn btn-m btn-outline-primary"
+          data-bs-toggle="tooltip"
+          :data-bs-title="uploadTooltips.upload3D"
+          :title="uploadTooltips.upload3D"
+        >
           <i class="fa fa-cube"></i>
           <span> Upload 3D Media</span>
         </button>
       </RouterLink>
       <RouterLink :to="`/myprojects/${projectId}/media/create/video`">
-        <button type="button" class="btn btn-m btn-outline-primary">
+        <button 
+          type="button" 
+          class="btn btn-m btn-outline-primary"
+          data-bs-toggle="tooltip"
+          :data-bs-title="uploadTooltips.uploadVideo"
+          :title="uploadTooltips.uploadVideo"
+        >
           <i class="fa fa-video"></i>
           <span> Upload Video</span>
         </button>
@@ -450,10 +879,12 @@ watch(searchStr, () => {
         <button 
           type="button" 
           class="btn btn-m btn-outline-primary"
-          title="Click here to load zipped archives of CT scan stacks (Dicom, TIFF)"
+          data-bs-toggle="tooltip"
+          :data-bs-title="uploadTooltips.uploadStacks"
+          :title="uploadTooltips.uploadStacks"
         >
           <i class="fa fa-layer-group"></i>
-          <span> Upload Stacks</span>
+          <span> Upload CT Stacks</span>
         </button>
       </RouterLink>
       <RouterLink
@@ -466,7 +897,13 @@ watch(searchStr, () => {
         </button>
       </RouterLink>
       <RouterLink v-else :to="`/myprojects/${projectId}/media/create/batch`">
-        <button type="button" class="btn btn-m btn-outline-primary">
+        <button 
+          type="button" 
+          class="btn btn-m btn-outline-primary"
+          data-bs-toggle="tooltip"
+          :data-bs-title="uploadTooltips.uploadBatch"
+          :title="uploadTooltips.uploadBatch"
+        >
           <i class="fa fa-plus"></i>
           <span> Upload 2D Media Batch</span>
         </button>
@@ -476,16 +913,31 @@ watch(searchStr, () => {
           type="button"
           class="btn btn-m btn-outline-primary dropdown-toggle"
           data-bs-toggle="dropdown"
+          title="Import media from external sources"
         >
           <i class="fa fa-file-arrow-up"></i>
           <span> Import Media </span>
         </button>
         <div class="dropdown-menu">
           <RouterLink :to="`/myprojects/${projectId}/media/import/eol`">
-            <button type="button" class="dropdown-item">Import from EOL</button>
+            <button 
+              type="button" 
+              class="dropdown-item"
+              data-bs-toggle="tooltip"
+              :data-bs-title="uploadTooltips.importEOL"
+              :title="uploadTooltips.importEOL"
+            >
+              Import from EOL
+            </button>
           </RouterLink>
           <RouterLink :to="`/myprojects/${projectId}/media/import/idigbio`">
-            <button type="button" class="dropdown-item">
+            <button 
+              type="button" 
+              class="dropdown-item"
+              data-bs-toggle="tooltip"
+              :data-bs-title="uploadTooltips.importIDigBio"
+              :title="uploadTooltips.importIDigBio"
+            >
               Import from iDigBio
             </button>
           </RouterLink>
@@ -496,6 +948,7 @@ watch(searchStr, () => {
           type="button"
           class="btn btn-m btn-outline-primary dropdown-toggle"
           data-bs-toggle="dropdown"
+          title="Download project media data"
         >
           <i class="fa fa-download"></i>
           <span> Download </span>
@@ -505,6 +958,9 @@ watch(searchStr, () => {
             type="button"
             class="dropdown-item"
             @click="onClickDownloadOriginalFilenames"
+            data-bs-toggle="tooltip"
+            :data-bs-title="downloadTooltips.originalFilenames"
+            :title="downloadTooltips.originalFilenames"
           >
             Original Filenames
           </button>
@@ -517,6 +973,74 @@ watch(searchStr, () => {
       {{ uncuratedMediaCount }} batch media still need to be curated and
       released to the general media pool. You must curate all your media before
       adding a new batch.
+    </div>
+
+    <!-- Media without views warning -->
+    <div v-if="mediaWithoutViews > 0" class="alert alert-warning">
+      <i class="fa fa-exclamation-triangle"></i>
+      {{ mediaWithoutViews }} of your images do not have Views 
+      <span 
+        class="text-primary cursor-pointer"
+        data-bs-toggle="tooltip"
+        data-bs-html="true"
+        :data-bs-title="whatIsViewTooltip"
+        :title="whatIsViewTooltip"
+        style="text-decoration: underline; cursor: pointer;"
+      >
+        (what's a view?)
+      </span>
+      <button 
+        class="btn btn-sm btn-warning ms-2"
+        @click="fixMediaWithoutViews"
+        data-bs-toggle="tooltip"
+        data-bs-html="true"
+        :data-bs-title="viewToolsTooltip"
+        :title="viewToolsTooltip"
+      >
+        Fix this now, it's easy.
+      </button>
+    </div>
+
+    <!-- Folio Selection Dropdown -->
+    <div v-if="showFolioOptions && foliosStore.folios.length > 0" class="folio-options mb-3">
+      <div class="alert alert-light border">
+        <p class="mb-2">
+          <i class="fa fa-info-circle text-primary"></i>
+          Use the checkboxes below to select media to add to the following folio:
+        </p>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <label for="folio-select" class="form-label mb-0">Select Folio:</label>
+          <select
+            id="folio-select"
+            v-model="selectedFolioId"
+            class="form-select"
+            style="width: auto;"
+          >
+            <option value="">Choose a folio...</option>
+            <option
+              v-for="folio in foliosStore.folios"
+              :key="folio.folio_id"
+              :value="folio.folio_id"
+            >
+              {{ folio.name }}
+            </option>
+          </select>
+          <button
+            @click="addToFolio"
+            :disabled="!selectedFolioId || !someSelected"
+            class="btn btn-primary"
+          >
+            <i class="fa fa-plus"></i>
+            Add Media to Folio
+          </button>
+          <button
+            @click="toggleFolioOptions"
+            class="btn btn-secondary"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
 
     <div v-if="mediaStore.media?.length">
@@ -535,7 +1059,13 @@ watch(searchStr, () => {
           </div>
           <div class="mb-2">
             <label for="show-filter" class="me-2">Show:</label>
-            <select id="show-filter" @change="onSelectShow">
+            <select 
+              id="show-filter" 
+              @change="onSelectShow"
+              data-bs-toggle="tooltip"
+              :data-bs-title="controlTooltips.showFilter"
+              :title="controlTooltips.showFilter"
+            >
               <option value="all">all media</option>
               <option value="identified">identified media</option>
               <option value="unidentified">unidentified media</option>
@@ -545,7 +1075,13 @@ watch(searchStr, () => {
           </div>
           <div>
             <label for="order-by" class="me-2">Order by:</label>
-            <select id="order-by" v-model="orderBySelection">
+            <select 
+              id="order-by" 
+              v-model="orderBySelection"
+              data-bs-toggle="tooltip"
+              :data-bs-title="controlTooltips.orderBy"
+              :title="controlTooltips.orderBy"
+            >
               <option
                 v-for="(label, value) in orderByOptions"
                 :key="value"
@@ -556,10 +1092,10 @@ watch(searchStr, () => {
             </select>
           </div>
         </div>
-        <div class="d-flex col-7 justify-content-end">
-          <div class="me-5">
+        <div class="d-flex col-7 justify-content-end align-items-center flex-wrap gap-2">
+          <div class="pagination-info">
             Showing page
-            <select v-model="selectedPage">
+            <select v-model="selectedPage" class="form-select form-select-sm d-inline-block" style="width: auto;">
               <option
                 :selected="idx == 1"
                 v-for="idx in totalPages"
@@ -572,9 +1108,9 @@ watch(searchStr, () => {
             of {{ totalPages }} pages.
           </div>
 
-          <div>
+          <div class="items-per-page">
             Items per page:
-            <select v-model="selectedPageSize">
+            <select v-model="selectedPageSize" class="form-select form-select-sm d-inline-block" style="width: auto;">
               <option
                 :selected="idx == 25"
                 v-for="idx in [10, 25, 50, 100]"
@@ -585,22 +1121,112 @@ watch(searchStr, () => {
               </option>
             </select>
           </div>
-          <div class="ms-1">
+
+          <!-- Filter Button -->
+          <div class="position-relative">
             <button
-              @click="thumbnailView = true"
+              type="button"
+              class="btn btn-sm btn-outline-secondary"
+              :class="{ 'btn-warning': activeFilters, 'text-dark': activeFilters }"
+              data-bs-toggle="modal"
+              data-bs-target="#mediaFilterModal"
+              data-bs-title="Filter media by taxa, views, submitters, and more"
+              title="Filter Media"
+            >
+              <i class="fa fa-filter"></i>
+              <span class="d-none d-md-inline"> 
+                {{ activeFilters ? 'Filtered' : 'Filter' }}
+              </span>
+              <!-- Active filter indicator -->
+              <span 
+                v-if="activeFilters" 
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark"
+                style="font-size: 0.6rem; padding: 0.2rem 0.4rem;"
+              >
+                !
+              </span>
+            </button>
+            <!-- Clear filters button when filters are active -->
+            <button
+              v-if="activeFilters"
+              type="button"
+              class="btn btn-sm btn-outline-danger ms-1"
+              @click="clearAllFilters($event)"
+              data-bs-toggle="tooltip"
+              data-bs-title="Remove all active filters"
+              title="Clear All Filters"
+            >
+              <i class="fa fa-times"></i>
+              <span class="d-none d-lg-inline"> Clear</span>
+            </button>
+          </div>
+
+          <!-- Folio Tools Button -->
+          <div v-if="foliosStore.folios.length > 0">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary"
+              @click="toggleFolioOptions($event)"
+              :class="{ active: showFolioOptions }"
+              data-bs-toggle="tooltip"
+              :data-bs-title="folioToolsTooltip"
+              :title="folioToolsTooltip"
+            >
+              <i class="fa fa-book"></i>
+              <span class="d-none d-lg-inline"> Folio Tools</span>
+            </button>
+          </div>
+
+          <div class="view-toggles d-flex">
+            <button
+              @click="setThumbnailView($event)"
               :style="{ backgroundColor: thumbnailView ? '#e0e0e0' : '#fff' }"
+              data-bs-toggle="tooltip"
+              data-bs-title="Thumbnail view"
               title="thumbnail-view"
+              class="btn btn-sm btn-outline-secondary me-1"
             >
               <i class="fa-solid fa-border-all"></i>
             </button>
-          </div>
-          <div class="ms-1">
             <button
-              @click="thumbnailView = false"
+              @click="setCompactView($event)"
               :style="{ backgroundColor: thumbnailView ? '#fff' : '#e0e0e0' }"
+              data-bs-toggle="tooltip"
+              data-bs-title="Compact view"
               title="mosaic-view"
+              class="btn btn-sm btn-outline-secondary"
             >
               <i class="fa-solid fa-table-cells"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active filters indicator -->
+      <div v-if="activeFilters" class="active-filters-bar mb-3">
+        <div class="alert alert-warning d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <i class="fa fa-filter me-2"></i>
+            <span class="fw-bold">Filters Active:</span>
+            <span class="ms-2">
+              {{ getActiveFiltersText(activeFilters) }}
+            </span>
+          </div>
+          <div class="d-flex gap-2">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-warning"
+              data-bs-toggle="modal"
+              data-bs-target="#mediaFilterModal"
+            >
+              <i class="fa fa-edit"></i> Edit Filters
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-danger"
+              @click="clearAllFilters($event)"
+            >
+              <i class="fa fa-times"></i> Clear All
             </button>
           </div>
         </div>
@@ -627,16 +1253,28 @@ watch(searchStr, () => {
           class="item"
           data-bs-toggle="modal"
           data-bs-target="#mediaEditModal"
-          title="Edit Selected"
+          :title="batchEditTooltip"
         >
           <i class="fa-regular fa-pen-to-square"></i>
         </span>
         <span
           class="item"
           @click="downloadSelected"
-          title="Download Selected"
+          data-bs-toggle="tooltip"
+          :data-bs-title="downloadSelectedTooltip"
+          :title="downloadSelectedTooltip"
         >
           <i class="fa-solid fa-download"></i>
+        </span>
+        <span
+          v-if="foliosStore.folios.length > 0"
+          class="item"
+          @click="toggleFolioOptions"
+          data-bs-toggle="tooltip"
+          :data-bs-title="addToFolioTooltip"
+          :title="addToFolioTooltip"
+        >
+          <i class="fa-solid fa-book"></i>
         </span>
         <span
           class="item"
@@ -647,7 +1285,7 @@ watch(searchStr, () => {
               (b) => selectedMedia[b.media_id]
             )
           "
-          title="Delete Selected"
+          :title="deleteSelectedTooltip"
         >
           <i class="fa-regular fa-trash-can"></i>
         </span>
@@ -683,6 +1321,10 @@ watch(searchStr, () => {
               :media_file="media_file"
               :full_view="thumbnailView"
               :project_id="projectId"
+              data-bs-toggle="tooltip"
+              data-bs-html="true"
+              :data-bs-title="getMediaTooltipContent(media_file)"
+              :title="getMediaTooltipContent(media_file)"
             ></MediaCardComp>
           </RouterLink>
         </div>
@@ -699,6 +1341,8 @@ watch(searchStr, () => {
   <FilterDialog
     :setFilter="setFilter"
     :clearFilter="clearFilter"
+    :onFiltersUpdated="onFiltersUpdated"
+    :clearAllFilters="clearAllFilters"
   ></FilterDialog>
 </template>
 <style scoped>
@@ -783,15 +1427,96 @@ watch(searchStr, () => {
     flex-direction: column;
     align-items: start !important;
     margin-top: 1rem;
+    gap: 0.5rem !important;
   }
 
-  .d-flex.col-7 > div {
-    margin: 0.25rem 0;
+  .pagination-info,
+  .items-per-page {
+    font-size: 0.9rem;
+  }
+
+  /* Stack controls vertically on small screens */
+  .view-toggles {
+    margin-top: 0.25rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  /* Hide text on medium screens, keep icon */
+  .folio-tools-text {
+    display: none;
   }
 }
 
 /* Empty state styling */
 .fa-images {
   opacity: 0.5;
+}
+
+/* Folio tools styling */
+.btn.active {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  color: white;
+}
+
+.btn-outline-secondary.active {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: white;
+}
+
+.folio-options .form-select {
+  min-width: 200px;
+}
+
+.folio-options .alert {
+  margin-bottom: 0;
+}
+
+/* Control section styling */
+.pagination-info,
+.items-per-page {
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.view-toggles button {
+  border-radius: 0.375rem;
+}
+
+/* Filter button styling */
+.btn-warning.text-dark {
+  border-color: #ffc107;
+  background-color: #fff3cd;
+}
+
+.btn-warning.text-dark:hover {
+  background-color: #ffc107;
+  border-color: #ffca2c;
+  color: #000;
+}
+
+/* Active filters bar styling */
+.active-filters-bar .alert {
+  margin-bottom: 0;
+  font-size: 0.9rem;
+}
+
+.active-filters-bar .alert-warning {
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+  color: #856404;
+}
+
+/* Filter button badge */
+.badge.bg-warning.text-dark {
+  background-color: #ffc107 !important;
+  color: #000 !important;
+}
+
+/* Cursor pointer utility class */
+.cursor-pointer {
+  cursor: pointer;
 }
 </style>

@@ -313,7 +313,7 @@ function validateJobParameters() {
             hasError = true
           }
           const middleLineRegex =
-            /^(set |prset |lset |mcmcp |mcmc |log |constrain |sumt |sump |charset |partition |unlink |append=).*?;$/
+            /^(set |prset |lset |outgroup |mcmcp |mcmc |log |constrain |sumt |sump |charset |partition |unlink |append=).*?;$/
           i++
           let endLine = lines.length - 1
           for (endLine; endLine >= 0; endLine--) {
@@ -330,9 +330,32 @@ function validateJobParameters() {
               validateMsg +=
                 'MrBayes block (line ' +
                 (i + 1) +
-                "): must start with 'set', 'prset', 'lset', 'mcmcp', 'log', 'constrain', 'sumt' or  'sump'  and end with ';' \n"
+                "): must start with 'set', 'prset', 'lset', outgroup', 'mcmcp', 'log', 'constrain', 'sumt' or  'sump'  and end with ';' \n"
               hasError = true
             } else {
+              if (
+                lines[i].trim().startsWith("outgroup ")
+              ) {
+                const params = lines[i].trim().split(' ')
+                if (params.length > 1) {
+                  const numberOnlyRegex = /^\d+$/;
+                  let og = params[1]
+                  if (params[1].endsWith(';')) {
+                    og = params[1].substring(0, params[1].length-1)
+                  }
+                  if (
+                    !outgroups.has(og) &&
+                    !numberOnlyRegex.test(og)
+                  ) {
+                    validateMsg += "MrBayes block (Line " + (i+1) + "): outgroup must be either a taxon's name or a number to indicate the location in the taxon list \n"
+                    hasError = true
+                  }
+                }
+                else {
+                  validateMsg += "MrBayes block (Line " + (i+1) + "): outgroup must be followed by either a taxon's name or a number to indicate the location in the taxon list \n"
+                  hasError = true
+                }
+              }
               if (
                 lines[i].trim().startsWith('mcmcp ') ||
                 lines[i].trim().startsWith('mcmc ')
@@ -446,10 +469,10 @@ async function onRun() {
       searchParams.append('runtime', runtime.value)
     }
     if (mrbayesblockquery.value == '0') {
-      if (set_outgroup.value != '') {
-        searchParams.append('set_outgroup', set_outgroup.value)
-      }
       if (entermrbayesblock.value == '0') {
+        if (set_outgroup.value != '') {
+          searchParams.append('set_outgroup', set_outgroup.value)
+        }
         searchParams.append('ngenval', ngenval.value)
         searchParams.append('nrunsval', nrunsval.value)
         searchParams.append('nchainsval', nchainsval.value)
@@ -1339,6 +1362,28 @@ onMounted(() => {
                 No
               </label>
             </div>
+            <div v-if="mrbayesblockquery === '0'">
+              Would you like to enter a Mr Bayes block?
+              <label>
+                 <input
+                   type="radio"
+                   v-model="entermrbayesblock"
+                   value="1"
+                   name="blockRadioGroup2"
+                 />
+                 Yes
+              </label>
+              <label class="radio-spacing">
+                 <input
+                   type="radio"
+                   v-model="entermrbayesblock"
+                   value="0"
+                   name="blockRadioGroup2"
+                 />
+                 No
+              </label>
+            </div>
+            <br />
             <div v-if="mrbayesblockquery === '1'">
               <table>
                 <thead>
@@ -1402,37 +1447,6 @@ onMounted(() => {
               </table>
             </div>
             <div v-if="mrbayesblockquery === '0'">
-              <div>
-                <b>Simple parameters</b>
-              </div>
-              Outgroup&nbsp;
-              <select v-model="set_outgroup">
-                <option v-for="[val, name] in outgroups" v-bind:value="val">
-                  {{ name }}
-                </option>
-              </select>
-              <br /><br />
-              <div>
-                Would you like to enter a Mr Bayes block?
-                <label>
-                  <input
-                    type="radio"
-                    v-model="entermrbayesblock"
-                    value="1"
-                    name="blockRadioGroup2"
-                  />
-                  Yes
-                </label>
-                <label class="radio-spacing">
-                  <input
-                    type="radio"
-                    v-model="entermrbayesblock"
-                    value="0"
-                    name="blockRadioGroup2"
-                  />
-                  No
-                </label>
-              </div>
               <div v-if="entermrbayesblock === '1'">
                 <textarea
                   v-model="mrbayesblock"
@@ -1443,6 +1457,16 @@ onMounted(() => {
                 />
               </div>
               <div v-if="entermrbayesblock === '0'">
+                <div>
+                <b>Simple parameters</b>
+                </div>
+                  Outgroup&nbsp;
+                <select v-model="set_outgroup">
+                  <option v-for="[val, name] in outgroups" v-bind:value="val">
+                    {{ name }}
+                  </option>
+                </select>
+                <br /><br />
                 <b>Parameters for MCMC</b>
                 <table>
                   <tbody>

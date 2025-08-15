@@ -305,4 +305,8 @@ onMounted(() => {
 .accordion-button:focus {
   box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
 }
+
+.form-label {
+  font-weight: bold;
+}
 </style>

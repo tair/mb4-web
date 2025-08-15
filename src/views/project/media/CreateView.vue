@@ -8,7 +8,7 @@ import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useProjectsStore } from '@/stores/ProjectsStore'
-import { schema } from '@/views/project/media/schema.js'
+import { createSchema } from '@/views/project/media/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import '@/assets/css/form.css'
 
@@ -22,6 +22,7 @@ const taxaStore = useTaxaStore()
 const mediaViewsStore = useMediaViewsStore()
 const projectsStore = useProjectsStore()
 const validationErrors = ref([])
+const formData = ref(new FormData())
 
 const isLoaded = computed(
   () =>
@@ -35,8 +36,8 @@ const isLoaded = computed(
 function validateRequiredFields(formData) {
   const errors = []
   
-  // Check required fields based on schema
-  Object.entries(schema).forEach(([fieldName, fieldDef]) => {
+  // Check required fields based on createSchema
+  Object.entries(createSchema).forEach(([fieldName, fieldDef]) => {
     if (fieldDef.required) {
       const value = formData.get(fieldName)
       if (!value || (typeof value === 'string' && value.trim() === '')) {
@@ -44,6 +45,28 @@ function validateRequiredFields(formData) {
       }
     }
   })
+  
+  // Conditional validation for copyright fields
+  const copyrightCheckbox = formData.get('is_copyrighted')
+  const isCopyrighted = copyrightCheckbox === '1' || copyrightCheckbox === 1
+  
+  if (isCopyrighted) {
+    // Check copyright_permission - must not be the default "not set" option (value 0)
+    const copyrightPermission = formData.get('copyright_permission')
+    const copyrightPermissionValue = parseInt(String(copyrightPermission), 10)
+    
+    if (isNaN(copyrightPermissionValue) || copyrightPermissionValue === 0) {
+      errors.push('Copyright permission must be selected when media is under copyright (cannot use "Copyright permission not set")')
+    }
+    
+    // Check copyright_license - must not be the default "not set" option (value 0)
+    const copyrightLicense = formData.get('copyright_license')
+    const copyrightLicenseValue = parseInt(String(copyrightLicense), 10)
+    
+    if (isNaN(copyrightLicenseValue) || copyrightLicenseValue === 0) {
+      errors.push('Media reuse license must be selected when media is under copyright (cannot use "Media reuse policy not set")')
+    }
+  }
   
   return errors
 }
@@ -113,15 +136,8 @@ onMounted(() => {
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
     <form @submit.prevent="createMedia">
-      <div class="row setup-content">
-        <!-- Display validation errors -->
-        <div v-if="validationErrors.length > 0" class="alert alert-danger" role="alert">
-          <ul class="mb-0">
-            <li v-for="error in validationErrors" :key="error">{{ error }}</li>
-          </ul>
-        </div>
-        
-        <template v-for="(definition, index) in schema" :key="index">
+      <div class="row setup-content">        
+        <template v-for="(definition, index) in createSchema" :key="index">
           <div v-if="!definition.existed" class="form-group">
             <label :for="index" class="form-label">
               {{ definition.label }}
@@ -136,6 +152,14 @@ onMounted(() => {
             </component>
           </div>
         </template>
+        
+        <!-- Display validation errors -->
+        <div v-if="validationErrors.length > 0" class="alert alert-danger" role="alert">
+          <ul class="mb-0">
+            <li v-for="error in validationErrors" :key="error">{{ error }}</li>
+          </ul>
+        </div>
+        
         <div class="btn-form-group">
           <button
             class="btn btn-outline-primary"
@@ -150,4 +174,8 @@ onMounted(() => {
     </form>
   </LoadingIndicator>
 </template>
-<style scoped></style>
+<style scoped>
+.form-label {
+  font-weight: bold;
+}
+</style>

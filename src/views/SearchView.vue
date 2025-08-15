@@ -22,6 +22,7 @@ const charactersFilter = ref('all')
 const taxaFilter = ref('all')
 const matricesFilter = ref('all')
 const referencesFilter = ref('all')
+const authorsFilter = ref('all')
 
 onMounted(() => {
   doSearch(route.query.q || '')
@@ -128,6 +129,12 @@ const filteredMatrices = computed(() =>
 const filteredTaxa = computed(() =>
   filterByPublished(searchResultsStore.results.taxa || [], taxaFilter.value)
 )
+const filteredAuthors = computed(() =>
+  filterByPublished(
+    searchResultsStore.results.members || [],
+    authorsFilter.value
+  )
+)
 
 const searchingProjects = computed(() => searchResultsStore.searching?.projects)
 const searchingMedia = computed(() => searchResultsStore.searching?.media)
@@ -145,6 +152,7 @@ const searchingReferences = computed(
 )
 const searchingMatrices = computed(() => searchResultsStore.searching?.matrices)
 const searchingTaxa = computed(() => searchResultsStore.searching?.taxa)
+const searchingAuthors = computed(() => searchResultsStore.searching?.members)
 
 // Helper to format authors array as a string
 function formatAuthors(authors) {
@@ -156,6 +164,12 @@ function formatAuthors(authors) {
       return name
     })
     .join('; ')
+}
+
+// Helper to get the correct project URL based on publication status
+function getProjectUrl(projectId, path = 'overview', isPublished = true) {
+  const baseRoute = isPublished ? 'project' : 'myprojects'
+  return `/${baseRoute}/${projectId}/${path}`
 }
 </script>
 
@@ -185,8 +199,10 @@ function formatAuthors(authors) {
     <div class="mb-3">
       <template v-if="route.query.q">
         You searched for <i>{{ route.query.q }}</i> in all
-        <b v-if="!authStore.isUserAdministrator">published</b>
-        <b v-else>published and unpublished</b>
+        <b v-if="authStore.isUserAdministrator || authStore.isUserCurator"
+          >published and unpublished</b
+        >
+        <b v-else>published</b>
         projects.
       </template>
       <template v-else> Please enter a search term to see results. </template>
@@ -213,12 +229,23 @@ function formatAuthors(authors) {
             class="mb-2"
           >
             <a
-              :href="`/project/${project.project_id}/overview`"
+              :href="
+                getProjectUrl(
+                  project.project_id,
+                  'overview',
+                  project.published == 1 || project.published === true
+                )
+              "
               target="_blank"
               rel="noopener noreferrer"
             >
               <span class="text-mb fw-bold"
-                >M{{ project.project_id }}- {{ project.name }}</span
+                >P{{ project.project_id }}- {{ project.name }}</span
+              >
+              <span
+                v-if="!(project.published == 1 || project.published === true)"
+                class="badge bg-warning text-dark ms-2"
+                >UNPUBLISHED</span
               >
             </a>
             <template
@@ -241,6 +268,118 @@ function formatAuthors(authors) {
                 >
               </span>
             </template>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Project Authors Section -->
+    <div class="bg-light p-2 mb-2">
+      <b>Project Authors ({{ filteredAuthors.length }})</b>
+      <ToggleLinks
+        v-if="authStore.isUserAdministrator || authStore.isUserCurator"
+        v-model="authorsFilter"
+      />
+    </div>
+    <div class="border p-2 mb-3" style="max-height: 400px; overflow-y: auto">
+      <template v-if="searchingAuthors">
+        <i class="fas fa-spinner fa-spin"></i> Searching authors...
+      </template>
+      <template v-else>
+        <div v-if="!filteredAuthors.length">No authors were found</div>
+        <div v-else>
+          <div
+            v-for="(author, authorIndex) in filteredAuthors"
+            :key="author.user_id"
+            class="mb-2"
+          >
+            <div class="accordion" :id="`authorAccordion${authorIndex}`">
+              <div class="accordion-item">
+                <h2
+                  class="accordion-header"
+                  :id="`authorHeading${authorIndex}`"
+                >
+                  <button
+                    class="accordion-button collapsed"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    :data-bs-target="`#authorCollapse${authorIndex}`"
+                    aria-expanded="false"
+                    :aria-controls="`authorCollapse${authorIndex}`"
+                  >
+                    <div class="text-mb fw-bold">
+                      {{ author.fname }} {{ author.lname }}
+                    </div>
+                    <div style="width: 5px"></div>
+                    <small>
+                      ({{ author.projects?.length || 0 }} projects)
+                    </small>
+                  </button>
+                </h2>
+                <div
+                  :id="`authorCollapse${authorIndex}`"
+                  class="accordion-collapse collapse"
+                  :aria-labelledby="`authorHeading${authorIndex}`"
+                >
+                  <div class="accordion-body p-2">
+                    <div
+                      v-for="project in author.projects"
+                      :key="`${author.user_id}-${project.project_id}`"
+                      class="mb-2"
+                    >
+                      <a
+                        :href="
+                          getProjectUrl(
+                            project.project_id,
+                            'overview',
+                            project.published == 1 || project.published === true
+                          )
+                        "
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <span class="text-mb fw-bold"
+                          >P{{ project.project_id }}-
+                          {{
+                            truncateProjectName(project.project_name, 40)
+                          }}</span
+                        >
+                        <span
+                          v-if="
+                            !(
+                              project.published == 1 ||
+                              project.published === true
+                            )
+                          "
+                          class="badge bg-warning text-dark ms-2"
+                          >UNPUBLISHED</span
+                        >
+                      </a>
+                      <template
+                        v-if="
+                          project.article_authors ||
+                          project.journal_year ||
+                          project.journal_title
+                        "
+                      >
+                        <br />
+                        <span class="text-muted small">
+                          <template v-if="project.article_authors">{{
+                            project.article_authors
+                          }}</template>
+                          <template v-if="project.journal_year">
+                            ({{ project.journal_year }})</template
+                          >
+                          <template v-if="project.journal_title"
+                            >. {{ project.journal_title }}</template
+                          >
+                        </span>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </template>
@@ -286,11 +425,25 @@ function formatAuthors(authors) {
             />
             <div class="flex-grow-1">
               <a
-                :href="`/project/${item.project_id}/overview`"
+                :href="
+                  getProjectUrl(
+                    item.project_id,
+                    'media',
+                    item.published == 1 || item.published === true
+                  )
+                "
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <div class="fw-bold">M{{ item.media_id }}</div>
+                <div class="fw-bold">
+                  M{{ item.media_id }}
+                  <span
+                    v-if="!(item.published == 1 || item.published === true)"
+                    class="badge bg-warning text-dark ms-1"
+                    style="font-size: 0.6rem"
+                    >UNPUBLISHED</span
+                  >
+                </div>
               </a>
               <div class="text-muted fst-italic">
                 {{ item.genus }} {{ item.specific_epithet }}
@@ -337,10 +490,22 @@ function formatAuthors(authors) {
             class="mb-1"
           >
             <a
-              :href="`/project/${item.project_id}/overview`"
+              :href="
+                getProjectUrl(
+                  item.project_id,
+                  'overview',
+                  item.published == 1 || item.published === true
+                )
+              "
               target="_blank"
               rel="noopener noreferrer"
               ><span class="text-mb fw-bold">{{ item.view_name }}</span></a
+            >
+            <span
+              v-if="!(item.published == 1 || item.published === true)"
+              class="badge bg-warning text-dark ms-1"
+              style="font-size: 0.6rem"
+              >UNPUBLISHED</span
             >
 
             <span class="text-muted small fw-bold">
@@ -375,7 +540,13 @@ function formatAuthors(authors) {
             class="mb-1"
           >
             <a
-              :href="`/project/${item.project_id}/specimens`"
+              :href="
+                getProjectUrl(
+                  item.project_id,
+                  'specimens',
+                  item.published == 1 || item.published === true
+                )
+              "
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -399,6 +570,12 @@ function formatAuthors(authors) {
                 </template>
               </span>
             </a>
+            <span
+              v-if="!(item.published == 1 || item.published === true)"
+              class="badge bg-warning text-dark ms-1"
+              style="font-size: 0.6rem"
+              >UNPUBLISHED</span
+            >
             <span v-if="!item.reference_source != 1" class="text-mb small"
               >&nbsp;(unvouchered)</span
             >
@@ -434,12 +611,24 @@ function formatAuthors(authors) {
             class="mb-1"
           >
             <a
-              :href="`/project/${item.project_id}/overview`"
+              :href="
+                getProjectUrl(
+                  item.project_id,
+                  'overview',
+                  item.published == 1 || item.published === true
+                )
+              "
               target="_blank"
               rel="noopener noreferrer"
             >
               <span class="text-mb fw-bold">{{ item.name }}</span>
             </a>
+            <span
+              v-if="!(item.published == 1 || item.published === true)"
+              class="badge bg-warning text-dark ms-1"
+              style="font-size: 0.6rem"
+              >UNPUBLISHED</span
+            >
             <span class="text-muted small fw-bold">
               from P{{ item.project_id }}
             </span>
@@ -468,7 +657,13 @@ function formatAuthors(authors) {
         <div v-else>
           <div v-for="item in filteredTaxa" :key="item.taxon_id" class="mb-1">
             <a
-              :href="`/project/${item.project_id}/taxa`"
+              :href="
+                getProjectUrl(
+                  item.project_id,
+                  'taxa',
+                  item.published == 1 || item.published === true
+                )
+              "
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -476,6 +671,12 @@ function formatAuthors(authors) {
                 >{{ item.genus }} {{ item.specific_epithet }}</span
               >
             </a>
+            <span
+              v-if="!(item.published == 1 || item.published === true)"
+              class="badge bg-warning text-dark ms-1"
+              style="font-size: 0.6rem"
+              >UNPUBLISHED</span
+            >
             <span class="text-muted small fw-bold">
               from P{{ item.project_id }}
             </span>
@@ -508,7 +709,13 @@ function formatAuthors(authors) {
             class="mb-1"
           >
             <a
-              :href="`/project/${item.project_id}/overview`"
+              :href="
+                getProjectUrl(
+                  item.project_id,
+                  'matrices',
+                  item.published == 1 || item.published === true
+                )
+              "
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -516,6 +723,12 @@ function formatAuthors(authors) {
                 >M{{ item.matrix_id }} {{ item.title }}</span
               >
             </a>
+            <span
+              v-if="!(item.published == 1 || item.published === true)"
+              class="badge bg-warning text-dark ms-1"
+              style="font-size: 0.6rem"
+              >UNPUBLISHED</span
+            >
             <span class="text-muted small fw-bold">
               from P{{ item.project_id }}
             </span>
@@ -548,12 +761,24 @@ function formatAuthors(authors) {
             class="mb-1"
           >
             <a
-              :href="`/project/${item.project_id}/specimens`"
+              :href="
+                getProjectUrl(
+                  item.project_id,
+                  'bibliography',
+                  item.published == 1 || item.published === true
+                )
+              "
               target="_blank"
               rel="noopener noreferrer"
               ><span class="text-mb fw-bold" v-if="item.article_title">
                 {{ truncate(item.article_title, 50) }}</span
               ></a
+            >
+            <span
+              v-if="!(item.published == 1 || item.published === true)"
+              class="badge bg-warning text-dark ms-1"
+              style="font-size: 0.6rem"
+              >UNPUBLISHED</span
             >
             <br />
             <span class="text-muted small">

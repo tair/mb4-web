@@ -216,7 +216,7 @@ async function refreshProjects() {
       <div v-if="unpublishedProjects.length">
         <hr />
         <a name="unpublished"></a>
-        <h3 class="mb-3">Unpublished Projects</h3>
+        <h3 class="mb-3">Unpublished Projects ({{ unpublishedProjects.length }})</h3>
 
         <ProjectCard
           v-for="project in unpublishedProjects"
@@ -228,7 +228,7 @@ async function refreshProjects() {
       <div v-if="publishedProjects.length">
         <hr />
         <a name="published"></a>
-        <h3 class="mb-3">Published Projects</h3>
+        <h3 class="mb-3">Published Projects ({{ publishedProjects.length }})</h3>
         <ProjectCard
           v-for="project in publishedProjects"
           :key="project.project_id"

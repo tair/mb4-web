@@ -87,6 +87,23 @@ export const useAuthStore = defineStore({
       return true
     },
 
+    async checkProfileConfirmation() {
+      try {
+        if (!this.hasValidAuthToken()) {
+          return { profile_confirmation_required: false }
+        }
+
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL}/users/check-profile-confirmation`
+        )
+        return response.data
+      } catch (error) {
+        console.error('Error checking profile confirmation:', error)
+        // If we can't check, assume no confirmation required to avoid blocking user
+        return { profile_confirmation_required: false }
+      }
+    },
+
     fetchLocalStore() {
       const storedUser = localStorage.getItem('mb-user')
       if (!storedUser) {

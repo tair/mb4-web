@@ -14,6 +14,7 @@ type Project = {
   media: Media
   members: { name: string }[]
   administrator: string
+  exemplar_media_id?: number
 }
 
 const props = defineProps<{
@@ -29,8 +30,12 @@ function getOverviewUrl() {
 
 // Helper function to get media URL using S3 endpoint
 function getMediaUrl() {
-  // For now, use the existing URL since this component doesn't have media_id
-  // This would need to be updated when the backend provides media_id in the project data
+  // If we have exemplar_media_id, use S3 endpoint
+  if (props.project.exemplar_media_id) {
+    return buildMediaUrl(props.project.project_id, props.project.exemplar_media_id, 'large')
+  }
+  
+  // Fall back to legacy URL if no media_id available
   return props.project?.media?.url || null
 }
 </script>
@@ -59,15 +64,15 @@ function getMediaUrl() {
             {{ getProjectCitation(project) }}
           </p>
           <div class="card-text mb-2">
-            <b class="me-2">Administrator:</b>
+            <b class="me-2">Project Administrator:</b>
             <small class="text-muted">
               {{ project.administrator || 'Unknown' }}
             </small>
           </div>
           <div class="card-text mb-2">
-            <b class="me-2">{{ project.members?.length ?? 0 }} members:</b>
+            <b class="me-2">{{ project.members?.length ?? 0 }} {{ (project.members?.length ?? 0) === 1 ? 'member' : 'members' }}:</b>
             <small class="text-muted" v-if="project.members">
-              {{ project.members.map((m) => m.name).join(', ') }}
+              {{ project.members.map((m: { name: string }) => m.name).join(', ') }}
             </small>
           </div>
           <div class="card-text">
