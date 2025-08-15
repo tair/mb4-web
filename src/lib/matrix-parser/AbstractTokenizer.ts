@@ -38,7 +38,7 @@ export abstract class AbstractBaseTokenizer extends Tokenizer {
     Token.UNDERSCORE,
   ])
 
-  private static readonly stringTerminatingTokens: Set<Token> = new Set([
+  protected static readonly stringTerminatingTokens: Set<Token> = new Set([
     Token.COLON,
     Token.COMMA,
     Token.EQUAL,
@@ -56,7 +56,7 @@ export abstract class AbstractBaseTokenizer extends Tokenizer {
    * for strings.
    */
   protected isTerminatingToken(token: Token): boolean {
-    return AbstractBaseTokenizer.stringTerminatingTokens.has(token)
+    return (this.constructor as typeof AbstractBaseTokenizer).stringTerminatingTokens.has(token)
   }
 
   /**
