@@ -203,7 +203,7 @@ async function onDownloadMatrix() {
   }
   window.location.href = url
   logDownload({
-    project_id: projectStore.project_id,
+    project_id: projectId,
     download_type: DOWNLOAD_TYPES.MATRIX,
     row_id: matrixId,
   })
@@ -220,7 +220,7 @@ async function onDownloadCharacters() {
   }
   window.location.href = url
   logDownload({
-    project_id: projectStore.project_id,
+    project_id: projectId,
     download_type: DOWNLOAD_TYPES.MATRIX,
     row_id: matrixId,
   })
