@@ -291,6 +291,17 @@ async function validateMatrix() {
           tntOutgroup.value = matrixSpecies.value[0]
         }
 
+        // Auto-switch from implicit search if too many taxa
+        if (
+          searchType.value === 'implicit' &&
+          matrixSpecies.value.length > 30
+        ) {
+          searchType.value = 'traditional'
+          console.log(
+            `Auto-switched to traditional search due to ${matrixSpecies.value.length} taxa`
+          )
+        }
+
         console.log(
           'Matrix validation passed, cache key:',
           matrixCacheKey.value
@@ -310,6 +321,16 @@ async function validateMatrix() {
   } finally {
     isValidatingMatrix.value = false
   }
+}
+
+// Function to re-validate matrix (useful when cache expires)
+async function revalidateMatrix() {
+  // Reset validation status and re-run validation
+  matrixValidationStatus.value = null
+  matrixCacheKey.value = ''
+  matrixSpecies.value = []
+  availableSpecies.value = []
+  await validateMatrix()
 }
 
 function resetTntUpload() {
@@ -397,6 +418,7 @@ function validateSearchType() {
   searchValidationError.value = ''
 
   // For implicit enumeration, check if taxa count > 30
+  // Note: This should rarely trigger now since we disable the option in UI
   if (searchType.value === 'implicit' && availableSpecies.value.length > 30) {
     searchValidationError.value =
       'Implicit enumeration can only be used for matrices with up to 30 taxa. Your matrix has ' +
@@ -418,14 +440,15 @@ async function onRunMatrixTnt() {
       return
     }
 
+    // Clear previous errors before validation
+    tntUploadErrors.value = {}
+
     // Validate search type
     if (!validateSearchType()) {
       return
     }
 
     isAnalyzingMatrix.value = true
-    tntUploadErrors.value = {}
-    searchValidationError.value = ''
 
     // Prepare analysis parameters
     const analysisParams = {
@@ -454,12 +477,8 @@ async function onRunMatrixTnt() {
       analysisParams
     )
 
-    console.log('Matrix TNT analysis submitted:', responseData)
-
     // Process the response data
     if (responseData) {
-      console.log('Matrix TNT analysis results:', responseData)
-
       // Create result entry for session list
       const timestamp = Date.now()
       const resultEntry = {
@@ -484,6 +503,23 @@ async function onRunMatrixTnt() {
     }
   } catch (error) {
     console.error('Error running matrix TNT analysis:', error)
+
+    // Check if it's a cache expiration error
+    if (error.response && error.response.data && error.response.data.error) {
+      const errorMessage = error.response.data.error
+      if (
+        errorMessage.includes('TNT content not found in cache') ||
+        errorMessage.includes('expired')
+      ) {
+        matrixValidationError.value =
+          'TNT content has expired. Please re-validate the matrix.'
+        // Reset validation status to allow re-validation
+        matrixValidationStatus.value = 'invalid'
+        matrixCacheKey.value = ''
+        return
+      }
+    }
+
     tntUploadErrors.value.general =
       'Failed to submit matrix TNT analysis. Please try again.'
   } finally {
@@ -506,14 +542,15 @@ async function onRunTnt() {
       return
     }
 
+    // Clear previous errors before validation
+    tntUploadErrors.value = {}
+
     // Validate search type
     if (!validateSearchType()) {
       return
     }
 
     isUploadingTnt.value = true
-    tntUploadErrors.value = {}
-    searchValidationError.value = ''
 
     // Prepare analysis parameters
     const analysisParams = {
@@ -656,6 +693,7 @@ async function onRunTnt() {
           </div>
           <div class="col-md-3 d-flex align-items-end">
             <button
+              v-if="matrixValidationStatus !== 'valid'"
               type="button"
               class="btn btn-outline-primary"
               @click="validateMatrix"
@@ -668,6 +706,15 @@ async function onRunTnt() {
                 aria-hidden="true"
               ></span>
               {{ isValidatingMatrix ? 'Validating...' : 'Validate Matrix' }}
+            </button>
+            <button
+              v-else
+              type="button"
+              class="btn btn-outline-secondary btn-sm"
+              @click="revalidateMatrix"
+              title="Re-validate matrix (useful if cache expires)"
+            >
+              <i class="fa-solid fa-refresh"></i> Re-validate
             </button>
           </div>
         </div>
@@ -734,8 +781,8 @@ async function onRunTnt() {
         </div>
         -->
 
-        <!-- General parameters -->
-        <div class="mb-4">
+        <!-- General parameters - only show after validation -->
+        <div v-if="matrixValidationStatus === 'valid'" class="mb-4">
           <h6><strong>General parameters</strong></h6>
           <div class="form-row mb-3">
             <div class="col-md-6">
@@ -792,8 +839,8 @@ async function onRunTnt() {
           </div>
         </div>
 
-        <!-- Search Type Selection -->
-        <div class="form-row mb-4">
+        <!-- Search Type Selection - only show after validation -->
+        <div v-if="matrixValidationStatus === 'valid'" class="form-row mb-4">
           <div class="col-md-12">
             <label class="form-label">
               <strong>Search Type</strong>
@@ -814,9 +861,17 @@ async function onRunTnt() {
                   value="implicit"
                   v-model="searchType"
                   @change="validateSearchType"
+                  :disabled="availableSpecies.length > 30"
                 />
-                <label class="form-check-label" for="searchImplicit">
-                  Implicit Enumeration (Exact Search, <=30 taxa only)
+                <label
+                  class="form-check-label"
+                  for="searchImplicit"
+                  :class="{ 'text-muted': availableSpecies.length > 30 }"
+                >
+                  Implicit Enumeration (Exact Search, ≤30 taxa only)
+                  <span v-if="availableSpecies.length > 30" class="text-danger">
+                    - Disabled ({{ availableSpecies.length }} taxa)
+                  </span>
                 </label>
               </div>
 
@@ -855,8 +910,13 @@ async function onRunTnt() {
           </div>
         </div>
 
-        <!-- Traditional Search Parameters -->
-        <div v-if="searchType === 'traditional'" class="mb-4">
+        <!-- Traditional Search Parameters - only show after validation -->
+        <div
+          v-if="
+            matrixValidationStatus === 'valid' && searchType === 'traditional'
+          "
+          class="mb-4"
+        >
           <div class="form-row">
             <div class="col-md-6">
               <label class="form-label">
@@ -889,8 +949,14 @@ async function onRunTnt() {
           </div>
         </div>
 
-        <!-- New Technology Search Parameters -->
-        <div v-if="searchType === 'new_technology'" class="mb-4">
+        <!-- New Technology Search Parameters - only show after validation -->
+        <div
+          v-if="
+            matrixValidationStatus === 'valid' &&
+            searchType === 'new_technology'
+          "
+          class="mb-4"
+        >
           <div class="form-row">
             <div class="col-md-6">
               <label class="form-label">
@@ -910,8 +976,11 @@ async function onRunTnt() {
           </div>
         </div>
 
-        <!-- Implicit Enumeration Info -->
-        <div v-if="searchType === 'implicit'" class="search-info mb-4">
+        <!-- Implicit Enumeration Info - only show after validation -->
+        <div
+          v-if="matrixValidationStatus === 'valid' && searchType === 'implicit'"
+          class="search-info mb-4"
+        >
           <div class="alert alert-info">
             <i class="fa-solid fa-lightbulb"></i>
             <strong>Implicit Enumeration</strong> will examine all possible
@@ -921,39 +990,49 @@ async function onRunTnt() {
           </div>
         </div>
 
-        <div class="form-row mb-3">
-          <div class="col-md-9">
-            <!-- Empty space for layout consistency -->
+        <!-- Analysis Section - separate section that appears after validation -->
+        <div v-if="matrixValidationStatus === 'valid'" class="analysis-section">
+          <hr class="analysis-separator" />
+          <h6 class="analysis-title">
+            <i class="fa-solid fa-play-circle"></i> Run TNT Analysis
+          </h6>
+
+          <div class="form-row mb-3">
+            <div class="col-md-9">
+              <p class="analysis-description">
+                Matrix validated successfully. Configure your analysis
+                parameters above and click "Analyze Matrix" to run the TNT
+                analysis.
+              </p>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+              <button
+                type="button"
+                class="btn btn-primary"
+                @click="onRunMatrixTnt"
+                :disabled="isAnalyzingMatrix"
+              >
+                <span
+                  v-if="isAnalyzingMatrix"
+                  class="spinner-border spinner-border-sm me-2"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                {{ isAnalyzingMatrix ? 'Analyzing...' : 'Analyze Matrix' }}
+              </button>
+            </div>
           </div>
-          <div class="col-md-3 d-flex align-items-end">
+
+          <div class="tab-content-buttons">
             <button
               type="button"
-              class="btn btn-primary"
-              @click="onRunMatrixTnt"
-              :disabled="
-                isAnalyzingMatrix || matrixValidationStatus !== 'valid'
-              "
+              class="btn btn-outline-primary"
+              @click="resetTntUpload"
+              :disabled="isAnalyzingMatrix"
             >
-              <span
-                v-if="isAnalyzingMatrix"
-                class="spinner-border spinner-border-sm me-2"
-                role="status"
-                aria-hidden="true"
-              ></span>
-              {{ isAnalyzingMatrix ? 'Analyzing...' : 'Analyze Matrix' }}
+              Reset
             </button>
           </div>
-        </div>
-
-        <div class="tab-content-buttons">
-          <button
-            type="button"
-            class="btn btn-outline-primary"
-            @click="resetTntUpload"
-            :disabled="isAnalyzingMatrix"
-          >
-            Reset
-          </button>
         </div>
 
         <div class="read-only">
@@ -1315,6 +1394,15 @@ async function onRunTnt() {
   font-weight: 500;
 }
 
+.search-type-options .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.search-type-options .form-check-input:disabled {
+  cursor: not-allowed;
+}
+
 .search-description {
   display: block;
   font-size: 0.9em;
@@ -1389,5 +1477,33 @@ async function onRunTnt() {
 .matrix-info p {
   margin-bottom: 8px;
   color: #495057;
+}
+
+/* Analysis section styling */
+.analysis-section {
+  margin-top: 20px;
+}
+
+.analysis-separator {
+  border: none;
+  height: 2px;
+  background: linear-gradient(to right, #007bff, #28a745);
+  margin: 20px 0;
+}
+
+.analysis-title {
+  color: #007bff;
+  font-weight: 600;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.analysis-description {
+  color: #6c757d;
+  font-size: 0.95em;
+  margin-bottom: 0;
+  line-height: 1.4;
 }
 </style>
