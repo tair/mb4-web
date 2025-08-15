@@ -157,6 +157,19 @@ export const batchSchema = {
   file: {
     label: 'Choose a ZIP, TAR, TAR+gzip, TAR+bzip archive or individual file',
     view: FileInput,
+    required: true,
+  },
+  specimen_id: {
+    label: 'Specimen',
+    view: SpecimenSearchInput,
+    type: Number,
+    required: false, // Not required for batch upload
+  },
+  view_id: {
+    label: 'View',
+    view: MediaViewSelect,
+    type: Number,
+    required: false, // Not required for batch upload
   },
 }
 
@@ -165,6 +178,7 @@ export const videoSchema = {
   file: {
     label: 'Choose a video file (MP4, MOV, AVI, WebM, MKV, WMV, FLV, M4V)',
     view: FileInput,
+    required: true,
     args: {
       accept: '.mp4,.mov,.avi,.webm,.mkv,.wmv,.flv,.m4v,video/*',
     },
@@ -176,6 +190,7 @@ export const schema3D = {
   file: {
     label: 'Choose a 3D file (PLY, STL, OBJ, GLB, GLTF, FBX)',
     view: FileInput,
+    required: true,
     args: {
       accept: '.ply,.stl,.obj,.glb,.gltf,.fbx,model/*',
     },
@@ -187,6 +202,7 @@ export const stacksSchema = {
   file: {
     label: 'Choose a ZIP archive containing CT scan stacks (DICOM, TIFF)',
     view: FileInput,
+    required: true,
     args: {
       accept: '.zip,application/zip',
     },

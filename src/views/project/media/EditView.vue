@@ -8,6 +8,7 @@ import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useAuthStore } from '@/stores/AuthStore'
+import { useProjectsStore } from '@/stores/ProjectsStore'
 import { AccessControlService, EntityType } from '@/lib/access-control.js'
 import { editSchema } from '@/views/project/media/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
@@ -23,6 +24,7 @@ const specimensStore = useSpecimensStore()
 const taxaStore = useTaxaStore()
 const mediaViewsStore = useMediaViewsStore()
 const authStore = useAuthStore()
+const projectsStore = useProjectsStore()
 const validationErrors = ref([])
 const isSubmitting = ref(false)
 const thumbnailError = ref(false)
@@ -193,6 +195,13 @@ async function editMedia(event) {
     return
   }
   
+  // Check if this should be set as project exemplar
+  const exemplarValue = formData.get('is_exemplar')
+  const isExemplar = exemplarValue === 'on' || exemplarValue === '1' || exemplarValue === 1 || exemplarValue === true
+  
+  // Remove the is_exemplar field from formData as the backend doesn't expect it
+  formData.delete('is_exemplar')
+  
   // Clear any previous validation errors and errors
   validationErrors.value = []
   thumbnailError.value = false
@@ -208,6 +217,20 @@ async function editMedia(event) {
     if (!success) {
       alert('Failed to modify media')
       return
+    }
+
+    // If the media was edited successfully and should be set as exemplar
+    if (isExemplar) {
+      try {
+        // Set this media as the project exemplar
+        const exemplarSuccess = await projectsStore.setExemplarMedia(projectId, mediaId)
+        if (!exemplarSuccess) {
+          alert('Media updated successfully, but failed to set as project exemplar')
+        }
+      } catch (error) {
+        console.error('Failed to set exemplar media:', error)
+        alert('Media updated successfully, but failed to set as project exemplar')
+      }
     }
 
     router.push({ path: `/myprojects/${projectId}/media` })
@@ -359,4 +382,8 @@ onMounted(() => {
     </form>
   </LoadingIndicator>
 </template>
-<style scoped></style>
+<style scoped>
+.form-label {
+  font-weight: bold;
+}
+</style>

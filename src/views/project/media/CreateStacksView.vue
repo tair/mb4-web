@@ -19,6 +19,7 @@ const specimensStore = useSpecimensStore()
 const taxaStore = useTaxaStore()
 const mediaViewsStore = useMediaViewsStore()
 const isUploading = ref(false)
+const validationErrors = ref([])
 
 const isLoaded = computed(
   () =>
@@ -29,12 +30,61 @@ const isLoaded = computed(
     mediaViewsStore.isLoaded
 )
 
+function validateRequiredFields(formData) {
+  const errors = []
+  
+  // Check required fields based on schema
+  Object.entries(stacksSchema).forEach(([fieldName, fieldDef]) => {
+    if (fieldDef.required) {
+      const value = formData.get(fieldName)
+      if (!value || (typeof value === 'string' && value.trim() === '')) {
+        errors.push(`${fieldDef.label} is required`)
+      }
+    }
+  })
+  
+  // Conditional validation for copyright fields
+  const copyrightCheckbox = formData.get('is_copyrighted')
+  const isCopyrighted = copyrightCheckbox === '1' || copyrightCheckbox === 1
+  
+  if (isCopyrighted) {
+    // Check copyright_permission - must not be the default "not set" option (value 0)
+    const copyrightPermission = formData.get('copyright_permission')
+    const copyrightPermissionValue = parseInt(String(copyrightPermission), 10)
+    
+    if (isNaN(copyrightPermissionValue) || copyrightPermissionValue === 0) {
+      errors.push('Copyright permission must be selected when media is under copyright (cannot use "Copyright permission not set")')
+    }
+    
+    // Check copyright_license - must not be the default "not set" option (value 0)
+    const copyrightLicense = formData.get('copyright_license')
+    const copyrightLicenseValue = parseInt(String(copyrightLicense), 10)
+    
+    if (isNaN(copyrightLicenseValue) || copyrightLicenseValue === 0) {
+      errors.push('Media reuse license must be selected when media is under copyright (cannot use "Media reuse policy not set")')
+    }
+  }
+  
+  return errors
+}
+
 async function createStacksMedia(event) {
   if (isUploading.value) return // Prevent double submission
   
+  const formData = new FormData(event.currentTarget)
+  
+  // Validate required fields
+  const errors = validateRequiredFields(formData)
+  if (errors.length > 0) {
+    validationErrors.value = errors
+    return
+  }
+  
+  // Clear any previous validation errors
+  validationErrors.value = []
+  
   isUploading.value = true
   try {
-    const formData = new FormData(event.currentTarget)
     const success = await mediaStore.createStacks(projectId, formData)
     if (!success) {
       alert('Failed to create stacks media')
@@ -93,10 +143,18 @@ onMounted(() => {
     </div>
     <form @submit.prevent="createStacksMedia">
       <div class="row setup-content">
+        <!-- Display validation errors -->
+        <div v-if="validationErrors.length > 0" class="alert alert-danger" role="alert">
+          <ul class="mb-0">
+            <li v-for="error in validationErrors" :key="error">{{ error }}</li>
+          </ul>
+        </div>
+        
         <template v-for="(definition, index) in stacksSchema" :key="index">
           <div v-if="!definition.existed" class="form-group">
             <label :for="index" class="form-label">
               {{ definition.label }}
+              <span v-if="definition.required" class="required">Required</span>
             </label>
             <component
               :key="index"
@@ -167,5 +225,9 @@ onMounted(() => {
 .btn[disabled] {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.form-label {
+  font-weight: bold;
 }
 </style>

@@ -174,4 +174,8 @@ onMounted(() => {
     </form>
   </LoadingIndicator>
 </template>
-<style scoped></style>
+<style scoped>
+.form-label {
+  font-weight: bold;
+}
+</style>

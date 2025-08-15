@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useAuthStore } from '@/stores/AuthStore'
+import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
+
 type User = {
   user_id: number
   link_id: number
@@ -13,6 +17,18 @@ defineProps<{
   deleteUser: User
   projectId: string
 }>()
+
+const authStore = useAuthStore()
+const projectUsersStore = useProjectUsersStore()
+
+// Check if current user is project admin
+const isCurrentUserProjectAdmin = computed(() => {
+  const currentUserId = authStore.user?.userId
+  if (!currentUserId) return false
+  
+  const userMembership = projectUsersStore.getUserById(currentUserId)
+  return userMembership?.admin === true
+})
 </script>
 <template>
   <ul v-for="user in users" :key="user.user_id" class="list-group pt-3">
@@ -21,7 +37,7 @@ defineProps<{
         <div class="list-group-item-name">
           {{ `${user.fname} ${user.lname}` }} {{ `(${user.email})` }}
         </div>
-        <div class="list-group-item-buttons">
+        <div class="list-group-item-buttons" v-if="isCurrentUserProjectAdmin">
           <RouterLink
             :to="`/myprojects/${projectId}/members/${user.user_id}/edit`"
           >
