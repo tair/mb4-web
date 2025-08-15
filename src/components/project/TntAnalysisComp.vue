@@ -33,6 +33,14 @@ const isValidatingTnt = ref(false)
 const tntValidationError = ref('')
 const tntValidationStatus = ref(null) // null, 'valid', 'invalid'
 
+// Matrix-based analysis variables
+const isValidatingMatrix = ref(false)
+const matrixValidationError = ref('')
+const matrixValidationStatus = ref(null) // null, 'valid', 'invalid'
+const matrixCacheKey = ref('')
+const matrixSpecies = ref([])
+const isAnalyzingMatrix = ref(false)
+
 // TNT search type variables
 const searchType = ref('implicit') // 'implicit', 'traditional', 'new_technology'
 const searchValidationError = ref('')
@@ -120,6 +128,45 @@ async function apiAnalyzeTntFile(file, params) {
       'Content-Type': 'multipart/form-data',
     },
   })
+
+  return response.data
+}
+
+/**
+ * Validates a matrix for TNT conversion and gets species + cache key
+ * @param {string} matrixId - The matrix ID to validate
+ * @returns {Promise<Object>} - Validation response data with species and cache key
+ */
+async function apiValidateMatrix(matrixId) {
+  const response = await axios.post(
+    `${baseUrl}/tnt/matrices/${matrixId}/validate`
+  )
+  return response.data
+}
+
+/**
+ * Analyzes a matrix using cached TNT content
+ * @param {string} cacheKey - The cache key from matrix validation
+ * @param {Object} params - Analysis parameters
+ * @returns {Promise<string>} - Analysis results
+ */
+async function apiAnalyzeCachedMatrix(cacheKey, params) {
+  const response = await axios.post(
+    `${baseUrl}/tnt/cached/${cacheKey}/analyze`,
+    {
+      outgroup: params.outgroup,
+      hold_value: params.holdValue,
+      search_type: params.searchType,
+      replications: params.replications,
+      trees_per_replication: params.treesPerReplication,
+      iterations: params.iterations,
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  )
 
   return response.data
 }
@@ -219,6 +266,52 @@ async function extractSpeciesFromFile(file) {
   }
 }
 
+// Function to validate matrix for TNT conversion
+async function validateMatrix() {
+  try {
+    isValidatingMatrix.value = true
+    matrixValidationError.value = ''
+    matrixValidationStatus.value = null
+    matrixCacheKey.value = ''
+    matrixSpecies.value = []
+
+    const responseData = await apiValidateMatrix(props.matrixId)
+
+    if (responseData) {
+      if (responseData.valid) {
+        matrixValidationStatus.value = 'valid'
+        matrixCacheKey.value = responseData.cacheKey
+        matrixSpecies.value = responseData.species || []
+
+        // Set available species for outgroup selection
+        availableSpecies.value = matrixSpecies.value
+
+        // Set suggested outgroup if available
+        if (matrixSpecies.value.length > 0) {
+          tntOutgroup.value = matrixSpecies.value[0]
+        }
+
+        console.log(
+          'Matrix validation passed, cache key:',
+          matrixCacheKey.value
+        )
+        console.log('Found species:', matrixSpecies.value.length)
+      } else {
+        matrixValidationStatus.value = 'invalid'
+        matrixValidationError.value =
+          responseData.error || 'Matrix validation failed'
+        console.log('Matrix validation failed:', responseData.error)
+      }
+    }
+  } catch (error) {
+    console.error('Error validating matrix:', error)
+    matrixValidationStatus.value = 'invalid'
+    matrixValidationError.value = 'Failed to validate matrix for TNT conversion'
+  } finally {
+    isValidatingMatrix.value = false
+  }
+}
+
 function resetTntUpload() {
   tntFile.value = null
   tntUploadErrors.value = {}
@@ -234,6 +327,12 @@ function resetTntUpload() {
   // Clear validation data
   tntValidationError.value = ''
   tntValidationStatus.value = null
+
+  // Clear matrix validation data
+  matrixValidationError.value = ''
+  matrixValidationStatus.value = null
+  matrixCacheKey.value = ''
+  matrixSpecies.value = []
 
   // Reset search parameters
   searchType.value = 'implicit'
@@ -300,13 +399,96 @@ function validateSearchType() {
   // For implicit enumeration, check if taxa count > 30
   if (searchType.value === 'implicit' && availableSpecies.value.length > 30) {
     searchValidationError.value =
-      'Implicit enumeration can only be used for matrices with up to 30 taxa. Your file has ' +
+      'Implicit enumeration can only be used for matrices with up to 30 taxa. Your matrix has ' +
       availableSpecies.value.length +
       ' taxa. Please select Traditional or New Technology search.'
     return false
   }
 
   return true
+}
+
+// Function to run matrix-based TNT analysis
+async function onRunMatrixTnt() {
+  try {
+    // Check if matrix validation passed
+    if (matrixValidationStatus.value !== 'valid' || !matrixCacheKey.value) {
+      matrixValidationError.value =
+        'Please validate the matrix first before running analysis'
+      return
+    }
+
+    // Validate search type
+    if (!validateSearchType()) {
+      return
+    }
+
+    isAnalyzingMatrix.value = true
+    tntUploadErrors.value = {}
+    searchValidationError.value = ''
+
+    // Prepare analysis parameters
+    const analysisParams = {
+      outgroup: tntOutgroup.value,
+      holdValue: tntHoldValue.value,
+      searchType: searchType.value,
+    }
+
+    // Add search-specific parameters
+    if (searchType.value === 'traditional') {
+      analysisParams.replications = traditionalReplications.value
+      analysisParams.treesPerReplication = traditionalTreesPerReplication.value
+      analysisParams.swapAlgorithm = traditionalSwapAlgorithm.value
+    } else if (searchType.value === 'new_technology') {
+      analysisParams.iterations = newtechIterations.value
+    }
+
+    console.log(
+      'Submitting matrix TNT analysis with cache key:',
+      matrixCacheKey.value
+    )
+
+    // Make API call to analyze cached matrix
+    const responseData = await apiAnalyzeCachedMatrix(
+      matrixCacheKey.value,
+      analysisParams
+    )
+
+    console.log('Matrix TNT analysis submitted:', responseData)
+
+    // Process the response data
+    if (responseData) {
+      console.log('Matrix TNT analysis results:', responseData)
+
+      // Create result entry for session list
+      const timestamp = Date.now()
+      const resultEntry = {
+        id: timestamp,
+        filename: `matrix_${props.matrixId}_analysis_${timestamp}.nex`,
+        originalFile: `Matrix ${props.matrixId}`,
+        timestamp: new Date().toLocaleString(),
+        outgroup: tntOutgroup.value,
+        holdValue: tntHoldValue.value,
+        status: 'completed',
+        nex_content: responseData,
+      }
+
+      // Add to session results
+      sessionResults.value.unshift(resultEntry) // Add to beginning of array
+
+      downloadNexusFile(resultEntry.nex_content, resultEntry.filename)
+
+      // Store current results for compatibility
+      tntAnalysisResults.value = responseData
+      showTntResults.value = true
+    }
+  } catch (error) {
+    console.error('Error running matrix TNT analysis:', error)
+    tntUploadErrors.value.general =
+      'Failed to submit matrix TNT analysis. Please try again.'
+  } finally {
+    isAnalyzingMatrix.value = false
+  }
 }
 
 async function onRunTnt() {
@@ -413,6 +595,11 @@ async function onRunTnt() {
       {{ speciesExtractionError }}
     </div>
 
+    <!-- Matrix Validation Error -->
+    <div v-if="matrixValidationError" class="alert alert-danger mb-3">
+      {{ matrixValidationError }}
+    </div>
+
     <!-- TNT Validation Error -->
     <div v-if="tntValidationError" class="alert alert-danger mb-3">
       {{ tntValidationError }}
@@ -426,12 +613,67 @@ async function onRunTnt() {
     <div class="tab-content">
       <div class="tnt-file-section">
         <div class="alert alert-secondary mb-3">
-          <strong>Note</strong> – Upload your TNT file to perform phylogenetic
-          analysis independently from CIPRES. This tool provides direct access
-          to TNT algorithms for tree building and analysis. TNT files should be
-          in .tnt or .txt format.
+          <strong>Note</strong> – Analyze your matrix using TNT (Tree analysis
+          using New Technology) for phylogenetic analysis. This tool converts
+          your matrix to TNT format and provides direct access to TNT algorithms
+          for tree building and analysis.
         </div>
 
+        <!-- Matrix validation section -->
+        <div class="form-row mb-3">
+          <div class="col-md-9">
+            <label class="form-label">Matrix Analysis</label>
+            <div class="matrix-info">
+              <p class="mb-2"><strong>Matrix ID:</strong> {{ matrixId }}</p>
+
+              <!-- Matrix validation loading -->
+              <div v-if="isValidatingMatrix" class="mt-1">
+                <small class="text-info">
+                  <i class="fa-solid fa-spinner fa-spin"></i>
+                  Validating matrix for TNT conversion...
+                </small>
+              </div>
+
+              <!-- Matrix validation status -->
+              <div v-else-if="matrixValidationStatus" class="mt-1">
+                <small
+                  v-if="matrixValidationStatus === 'valid'"
+                  class="text-success"
+                >
+                  <i class="fa-solid fa-check-circle"></i>
+                  Matrix validation passed - Found
+                  {{ matrixSpecies.length }} species
+                </small>
+                <small
+                  v-else-if="matrixValidationStatus === 'invalid'"
+                  class="text-danger"
+                >
+                  <i class="fa-solid fa-times-circle"></i>
+                  Matrix validation failed
+                </small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 d-flex align-items-end">
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              @click="validateMatrix"
+              :disabled="isValidatingMatrix"
+            >
+              <span
+                v-if="isValidatingMatrix"
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              {{ isValidatingMatrix ? 'Validating...' : 'Validate Matrix' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- File upload section - COMMENTED OUT -->
+        <!--
         <div class="form-row mb-3">
           <div class="col-md-12">
             <label class="form-label">TNT file to analyze</label>
@@ -451,7 +693,6 @@ async function onRunTnt() {
                 KB)
               </small>
 
-              <!-- TNT validation loading -->
               <div v-if="isValidatingTnt" class="mt-1">
                 <small class="text-info">
                   <i class="fa-solid fa-spinner fa-spin"></i>
@@ -459,7 +700,6 @@ async function onRunTnt() {
                 </small>
               </div>
 
-              <!-- TNT validation status -->
               <div v-else-if="tntValidationStatus" class="mt-1">
                 <small
                   v-if="tntValidationStatus === 'valid'"
@@ -477,14 +717,12 @@ async function onRunTnt() {
                 </small>
               </div>
 
-              <!-- Species extraction loading -->
               <div v-if="isExtractingSpecies" class="mt-1">
                 <small class="text-info">
                   <i class="fa-solid fa-spinner fa-spin"></i>
                   Extracting species names...
                 </small>
               </div>
-              <!-- Species extraction success -->
               <div v-else-if="availableSpecies.length > 0" class="mt-1">
                 <small class="text-info">
                   <i class="fa-solid fa-info-circle"></i>
@@ -494,6 +732,7 @@ async function onRunTnt() {
             </div>
           </div>
         </div>
+        -->
 
         <!-- General parameters -->
         <div class="mb-4">
@@ -528,11 +767,11 @@ async function onRunTnt() {
                 v-if="availableSpecies.length > 0"
                 class="form-text text-muted"
               >
-                Species extracted from your TNT file. Select the appropriate
+                Species extracted from your matrix. Select the appropriate
                 outgroup for your analysis.
               </small>
               <small v-else class="form-text text-muted">
-                Upload a TNT file to automatically populate available species,
+                Validate the matrix to automatically populate available species,
                 or enter manually.
               </small>
             </div>
@@ -690,18 +929,18 @@ async function onRunTnt() {
             <button
               type="button"
               class="btn btn-primary"
-              @click="onRunTnt"
+              @click="onRunMatrixTnt"
               :disabled="
-                isUploadingTnt || !tntFile || tntValidationStatus !== 'valid'
+                isAnalyzingMatrix || matrixValidationStatus !== 'valid'
               "
             >
               <span
-                v-if="isUploadingTnt"
+                v-if="isAnalyzingMatrix"
                 class="spinner-border spinner-border-sm me-2"
                 role="status"
                 aria-hidden="true"
               ></span>
-              {{ isUploadingTnt ? 'Analyzing...' : 'Analyze TNT File' }}
+              {{ isAnalyzingMatrix ? 'Analyzing...' : 'Analyze Matrix' }}
             </button>
           </div>
         </div>
@@ -711,7 +950,7 @@ async function onRunTnt() {
             type="button"
             class="btn btn-outline-primary"
             @click="resetTntUpload"
-            :disabled="isUploadingTnt"
+            :disabled="isAnalyzingMatrix"
           >
             Reset
           </button>
@@ -752,8 +991,8 @@ async function onRunTnt() {
         <div v-if="sessionResults.length === 0" class="no-results-message">
           <div class="alert alert-info">
             <i class="fa-solid fa-info-circle"></i>
-            No analysis results yet. Upload a TNT file and run analysis to see
-            results here.
+            No analysis results yet. Validate your matrix and run analysis to
+            see results here.
           </div>
         </div>
 
@@ -1137,5 +1376,18 @@ async function onRunTnt() {
   padding: 2px 4px;
   border-radius: 3px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+/* Matrix info styling */
+.matrix-info {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+}
+
+.matrix-info p {
+  margin-bottom: 8px;
+  color: #495057;
 }
 </style>
