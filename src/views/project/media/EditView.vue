@@ -233,7 +233,7 @@ async function editMedia(event) {
       }
     }
 
-    router.push({ path: `/myprojects/${projectId}/media` })
+    window.location.href = `/myprojects/${projectId}/media`
   } catch (error) {
     console.error('Error editing media:', error)
     alert('Failed to modify media')

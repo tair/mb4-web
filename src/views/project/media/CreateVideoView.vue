@@ -37,7 +37,13 @@ function validateRequiredFields(formData) {
   Object.entries(videoSchema).forEach(([fieldName, fieldDef]) => {
     if (fieldDef.required) {
       const value = formData.get(fieldName)
-      if (!value || (typeof value === 'string' && value.trim() === '')) {
+      
+      // Special handling for file uploads
+      if (fieldName === 'file') {
+        if (!value || (value instanceof File && value.size === 0)) {
+          errors.push(`${fieldDef.label} is required`)
+        }
+      } else if (!value || (typeof value === 'string' && value.trim() === '')) {
         errors.push(`${fieldDef.label} is required`)
       }
     }
@@ -87,14 +93,27 @@ async function createVideoMedia(event) {
   try {
     const success = await mediaStore.createVideo(projectId, formData)
     if (!success) {
-      alert('Failed to create video media')
+      validationErrors.value = ['Failed to create video media. Please check your input and try again.']
       return
     }
 
     router.push({ path: `/myprojects/${projectId}/media` })
   } catch (error) {
     console.error('Video upload error:', error)
-    alert('Failed to create video media')
+    
+    // Extract specific error messages from backend response
+    let errorMessage = 'Failed to create video media. Please try again.'
+    
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message
+    } else if (error.response?.data?.error) {
+      errorMessage = error.response.data.error
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+    
+    // Display the error in the validation errors section
+    validationErrors.value = [errorMessage]
   } finally {
     isUploading.value = false
   }
