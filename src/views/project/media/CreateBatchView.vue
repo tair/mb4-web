@@ -35,7 +35,13 @@ function validateRequiredFields(formData) {
   Object.entries(batchSchema).forEach(([fieldName, fieldDef]) => {
     if (fieldDef.required) {
       const value = formData.get(fieldName)
-      if (!value || (typeof value === 'string' && value.trim() === '')) {
+      
+      // Special handling for file uploads
+      if (fieldName === 'file') {
+        if (!value || (value instanceof File && value.size === 0)) {
+          errors.push(`${fieldDef.label} is required`)
+        }
+      } else if (!value || (typeof value === 'string' && value.trim() === '')) {
         errors.push(`${fieldDef.label} is required`)
       }
     }
@@ -82,16 +88,27 @@ async function createBatch(event) {
   try {
     const success = await mediaStore.createBatch(projectId, formData)
     if (!success) {
-      alert('Failed to create media. Please check your input and try again.')
+      validationErrors.value = ['Failed to create media. Please check your input and try again.']
       return
     }
 
     router.push({ path: `/myprojects/${projectId}/media` })
   } catch (error) {
-    const errorMessage =
-      error.response?.data?.message ||
-      'Failed to create media. Please try again.'
-    alert(errorMessage)
+    console.error('Batch upload error:', error)
+    
+    // Extract specific error messages from backend response
+    let errorMessage = 'Failed to create media. Please try again.'
+    
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message
+    } else if (error.response?.data?.error) {
+      errorMessage = error.response.data.error
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+    
+    // Display the error in the validation errors section
+    validationErrors.value = [errorMessage]
   }
 }
 
