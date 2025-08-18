@@ -8,6 +8,7 @@ const props = defineProps<{
   importText: string
   results: any
   fetchMoreMedia: () => void
+  setUniqueExemplar: (mediaId: string) => void
 }>()
 
 const isLoadingMore = ref(false)
@@ -33,10 +34,29 @@ watch(() => props.results.media?.length, (newCount: number, oldCount: number) =>
   }
 })
 
-function selectAllForImport(shouldImport = true, shouldAddAsExemplar = true) {
+function selectAllForImport(shouldImport = true, shouldAddAsExemplar = false) {
   for (const result of props.results.media) {
     result.should_import = shouldImport
-    result.should_add_as_exemplar = shouldAddAsExemplar
+    if (!shouldImport) {
+      // If deselecting for import, also deselect as exemplar
+      result.should_add_as_exemplar = false
+    }
+    // Note: We no longer allow bulk exemplar selection here
+  }
+}
+
+function selectAllForImportAndExemplar() {
+  // Select ALL media files for import, but only make the first one exemplar
+  if (props.results.media && props.results.media.length > 0) {
+    // First, select all media for import and clear exemplars
+    for (const result of props.results.media) {
+      result.should_import = true
+      result.should_add_as_exemplar = false
+    }
+    
+    // Then make only the first media the exemplar
+    const firstMedia = props.results.media[0]
+    props.setUniqueExemplar(firstMedia.id)
   }
 }
 
@@ -48,7 +68,8 @@ function selectedImport(media: any) {
 
 function selectedAddAsExemplar(media: any) {
   if (media.should_add_as_exemplar) {
-    media.should_import = true
+    // Use the parent's unique exemplar function to ensure only one exemplar is selected
+    props.setUniqueExemplar(media.id)
   }
 }
 
@@ -106,7 +127,7 @@ async function handleFetchMoreMedia() {
           <i class="fa fa-check"></i>
           <span> Select for import</span>
         </button>
-        <button type="button" class="btn btn-outline-primary btn-sm" @click="selectAllForImport(true, true)">
+        <button type="button" class="btn btn-outline-primary btn-sm" @click="selectAllForImportAndExemplar()">
           <i class="fa fa-star"></i>
           <span> Select for import/exemplar</span>
         </button>
