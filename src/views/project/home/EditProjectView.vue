@@ -440,7 +440,7 @@
 
       <div class="form-group">
         <label class="form-label">
-          Journal cover image
+          Journal cover image (if missing above)
           <Tooltip :content="getJournalCoverTooltip()"></Tooltip>
         </label>
         <div class="journal-cover-upload">
@@ -449,7 +449,11 @@
             @change="handleJournalCoverUpload"
             accept="image/*"
             class="form-control"
+            :disabled="isJournalCoverUploadDisabled"
           />
+          <small v-if="isJournalCoverUploadDisabled" class="form-text text-muted">
+            Journal cover already available from selected journal
+          </small>
         </div>
       </div>
 
@@ -490,6 +494,15 @@
           Cancel
         </button>
         <button
+          type="button"
+          @click="showDeleteConfirmation"
+          class="btn btn-outline-danger"
+          :disabled="isLoading"
+        >
+          <i class="fas fa-trash-alt me-2"></i>
+          Delete Project
+        </button>
+        <button
           type="submit"
           :class="projectUpdated ? 'btn btn-success' : 'btn btn-primary'"
           :disabled="isLoading"
@@ -503,6 +516,59 @@
           <span v-if="projectUpdated" class="me-2">✓</span>
           {{ isLoading ? getLoadingText() : 'Update' }}
         </button>
+      </div>
+
+      <!-- Delete Confirmation Modal -->
+      <div
+        v-if="showDeleteDialog"
+        class="modal-overlay"
+        @click="hideDeleteConfirmation"
+      >
+        <div class="modal-dialog" @click.stop>
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">
+                <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                Delete Project
+              </h5>
+            </div>
+            <div class="modal-body">
+              <p>
+                Are you sure you want to delete this project?
+              </p>
+              <div class="alert alert-warning">
+                <strong>Warning:</strong> This action cannot be undone. The project will be permanently deleted.
+              </div>
+              <p class="mb-0">
+                <strong>Project:</strong> {{ formData.name }}
+              </p>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                @click="hideDeleteConfirmation"
+                :disabled="isDeleting"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger"
+                @click="deleteProject"
+                :disabled="isDeleting"
+              >
+                <span
+                  v-if="isDeleting"
+                  class="spinner-border spinner-border-sm me-2"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                {{ isDeleting ? 'Deleting...' : 'Delete Project' }}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
       </form>
     </FormLayout>
@@ -576,6 +642,8 @@ const selectedJournalIndex = ref(-1)
 const isLoadingJournals = ref(false)
 const showPassword = ref(false)
 const existingExemplarMedia = ref(false)
+const showDeleteDialog = ref(false)
+const isDeleting = ref(false)
 
 // Computed property for filtered journals based on search
 const filteredJournals = computed(() => {
@@ -585,6 +653,13 @@ const filteredJournals = computed(() => {
   return journals.value.filter((journal) =>
     journal.toLowerCase().includes(searchTerm)
   )
+})
+
+// Computed property to determine if journal cover upload should be disabled
+const isJournalCoverUploadDisabled = computed(() => {
+  // Only disable if we're in journal selection mode AND we have a valid journal cover 
+  // that's actually being displayed (matches the v-if condition in template)
+  return !showNewJournal.value && !!journalCoverPath.value
 })
 
 onMounted(async () => {
@@ -747,9 +822,18 @@ const loadJournalCover = async (journalTitle) => {
       }
     )
 
-    // Set the journal cover path directly without verification
-    if (response.data.coverPath) {
-      journalCoverPath.value = response.data.coverPath
+    // Check if we have a path and verify the image actually exists
+    if (response.data.coverPath && response.data.coverPath.trim() !== '') {
+      const coverPath = response.data.coverPath.trim()
+      
+      // Test if the image actually loads
+      const imageExists = await testImageExists(coverPath)
+      
+      if (imageExists) {
+        journalCoverPath.value = coverPath
+      } else {
+        journalCoverPath.value = null
+      }
     } else {
       journalCoverPath.value = null
     }
@@ -757,6 +841,19 @@ const loadJournalCover = async (journalTitle) => {
     console.error('Error loading journal cover:', err)
     journalCoverPath.value = null
   }
+}
+
+// Helper function to test if an image URL actually loads
+const testImageExists = (url) => {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => resolve(true)
+    img.onerror = () => resolve(false)
+    img.src = url
+    
+    // Set a timeout to avoid hanging
+    setTimeout(() => resolve(false), 5000)
+  })
 }
 
 // Update handleJournalChange to handle both modes
@@ -859,6 +956,14 @@ function handleJournalCoverUpload(event) {
   }
 }
 
+// Watch for changes in journal cover availability and clear uploaded file if disabled
+watch(isJournalCoverUploadDisabled, (newValue) => {
+  if (newValue && formData.journal_cover) {
+    // Clear the uploaded journal cover file when field becomes disabled (existing cover found)
+    formData.journal_cover = null
+  }
+})
+
 async function handleSubmit() {
   isLoading.value = true
   error.value = null
@@ -889,10 +994,13 @@ async function handleSubmit() {
       }
     }
 
-    // Update project with optional journal cover and exemplar media
+    // Only send journal cover file if user uploaded one (existing covers already available)
+    const journalCoverToSend = isJournalCoverUploadDisabled.value ? null : formData.journal_cover
+    
+    // Update project - journal covers processed immediately (cataloguing_status: 0)
     const success = await updateProject(
       projectData,
-      formData.journal_cover,
+      journalCoverToSend,
       formData.exemplar_media
     )
 
@@ -1087,6 +1195,44 @@ function togglePasswordVisibility() {
   showPassword.value = !showPassword.value
 }
 
+function showDeleteConfirmation() {
+  showDeleteDialog.value = true
+}
+
+function hideDeleteConfirmation() {
+  if (!isDeleting.value) {
+    showDeleteDialog.value = false
+  }
+}
+
+async function deleteProject() {
+  isDeleting.value = true
+  error.value = null
+
+  try {
+    const response = await axios.delete(
+      `${import.meta.env.VITE_API_URL}/projects/${projectId}`
+    )
+
+    if (response.status === 200) {
+      // Show success message briefly before redirecting
+      showDeleteDialog.value = false
+      
+      // Force full page refresh to bypass any cached responses
+      window.location.href = '/myprojects'
+    } else {
+      throw new Error('Failed to delete project')
+    }
+  } catch (err) {
+    console.error('Error deleting project:', err)
+    error.value = 
+      err.response?.data?.message || 
+      'An error occurred while deleting the project'
+  } finally {
+    isDeleting.value = false
+  }
+}
+
 const projectUpdated = ref(false)
 
 function getLoadingText() {
@@ -1094,13 +1240,14 @@ function getLoadingText() {
     return 'Project updated successfully!'
   }
 
-  const hasJournalCover = formData.journal_cover
+  // Journal covers processed immediately, exemplar media goes to curation
+  const hasJournalCover = !isJournalCoverUploadDisabled.value && formData.journal_cover
   const hasExemplarMedia = formData.exemplar_media
 
   if (hasJournalCover && hasExemplarMedia) {
-    return 'Uploading images and updating project...'
+    return 'Processing images and updating project...'
   } else if (hasJournalCover) {
-    return 'Uploading journal cover and updating project...'
+    return 'Processing journal cover and updating project...'
   } else if (hasExemplarMedia) {
     return 'Uploading exemplar media and updating project...'
   } else {
@@ -1351,5 +1498,116 @@ function getLoadingText() {
   width: 1rem;
   height: 1rem;
   border-width: 0.15em;
+}
+
+/* Delete Confirmation Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal-dialog {
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.modal-body {
+  padding: 20px 24px;
+}
+
+.modal-footer {
+  padding: 16px 24px 20px;
+  border-top: 1px solid #dee2e6;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.alert {
+  padding: 12px 16px;
+  margin: 16px 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.alert-warning {
+  color: #856404;
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+}
+
+.text-warning {
+  color: #f39c12 !important;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 32px;
+}
+
+.btn-outline-danger {
+  color: #dc3545;
+  border-color: #dc3545;
+  background-color: transparent;
+}
+
+.btn-outline-danger:hover {
+  color: white;
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-outline-danger:disabled {
+  color: #dc3545;
+  background-color: transparent;
+  opacity: 0.65;
+}
+
+.btn-danger {
+  color: white;
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+}
+
+.btn-danger:disabled {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  opacity: 0.65;
 }
 </style>
