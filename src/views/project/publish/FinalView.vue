@@ -155,7 +155,9 @@ function formatDate(timestamp) {
           </button>
           <button
             v-if="publicationResult?.projectId"
-            @click="router.push(`/project/${publicationResult.projectId}`)"
+            @click="
+              router.push(`/project/${publicationResult.projectId}/overview`)
+            "
             class="btn btn-secondary btn-large"
           >
             View Published Project
