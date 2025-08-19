@@ -27,6 +27,13 @@ export class TNTTokenizer extends AbstractBaseTokenizer {
     Token.XREAD,
   ])
 
+  protected static readonly stringTerminatingTokens: Set<Token> = new Set([
+    Token.COLON,
+    Token.EQUAL,
+    Token.OPEN_SBRACKET,
+    Token.SEMICOLON,
+  ])
+
   protected override isKeyword(token: Token): boolean {
     return TNTTokenizer.keywordsTokens.has(token)
   }
