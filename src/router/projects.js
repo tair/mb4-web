@@ -941,6 +941,23 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
+    path: 'download',
+    name: 'MyProjectDownloadView',
+    meta: {
+      itemName: 'download',
+      breadcrumbs: [
+        {
+          label: 'Download Project',
+          to: 'MyProjectDownloadView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/DownloadView.vue'
+      ),
+  },
+  {
     path: 'duplication/request',
     name: 'MyProjectDuplicationRequestView',
     meta: {
