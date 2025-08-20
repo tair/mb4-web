@@ -2,6 +2,7 @@ import {
   Character,
   CharacterState,
   CharacterStateIncompleteType,
+  CharacterType,
   MatrixObject,
 } from './MatrixObject'
 
@@ -18,7 +19,13 @@ function validateCells(matrixObject: MatrixObject) {
   const characters = matrixObject.getCharacters()
   const allStateNames: Set<string>[] = []
   for (const character of characters) {
-    allStateNames.push(new Set(character.states.map((s) => s.name)))
+    // Only discrete characters have states, continuous characters have numeric values
+    // Handle case where character or character.type might be undefined
+    if (character && character.type === CharacterType.DISCRETE && character.states) {
+      allStateNames.push(new Set(character.states.map((s) => s.name)))
+    } else {
+      allStateNames.push(new Set()) // Empty set for continuous characters or undefined characters
+    }
   }
 
   const taxonNames = matrixObject.getTaxaNames()
@@ -29,6 +36,12 @@ function validateCells(matrixObject: MatrixObject) {
     const cells = matrixObject.getCells(taxonName)
     for (let x = 0; x < cells.length; ++x) {
       const character = characters[x]
+      
+      // Skip validation if character is undefined or doesn't exist
+      if (!character) {
+        continue
+      }
+      
       const stateNames = allStateNames[x]
       const cell = cells[x]
       const scores = cell.score.split('')
@@ -40,33 +53,41 @@ function validateCells(matrixObject: MatrixObject) {
           continue
         }
 
-        let index
-        if (symbols) {
-          index = symbols.get(score)
-        } else if (score >= '0' && score <= '9') {
-          index = parseInt(score)
-        } else {
-          index = score.toUpperCase().charCodeAt(0) - 65 // A
-        }
+        // Only validate states for discrete characters, continuous characters have numeric values
+        // Default to DISCRETE if type is not set
+        const characterType = character.type ?? CharacterType.DISCRETE
+        if (characterType === CharacterType.DISCRETE) {
+          let index
+          if (symbols) {
+            index = symbols.get(score)
+          } else if (score >= '0' && score <= '9') {
+            index = parseInt(score)
+          } else {
+            index = score.toUpperCase().charCodeAt(0) - 65 // A
+          }
 
-        if (character.states.length <= index) {
-          // In order to ensure that the targetted state index is available,
-          // we'll have to create all the states up to the targeted state index.
-          // The states are zero-indexed so it's fine to use the sizeof method
-          // to figure out the next state name.
-          for (let c = character.states.length; c <= index; ++c) {
-            let i = c
-            let stateName
-            do {
-              stateName = 'State ' + i++
-            } while (stateNames.has(stateName))
+          if (character.states && character.states.length <= index) {
+            // In order to ensure that the targetted state index is available,
+            // we'll have to create all the states up to the targeted state index.
+            // The states are zero-indexed so it's fine to use the sizeof method
+            // to figure out the next state name.
+            for (let c = character.states.length; c <= index; ++c) {
+              let i = c
+              let stateName
+              do {
+                stateName = 'State ' + i++
+              } while (stateNames.has(stateName))
 
-            const state = character.addState(stateName)
-            state.incompleteType = CharacterStateIncompleteType.CREATED_STATE
-            stateNames.add(stateName)
+              const state = character.addState(stateName)
+              state.incompleteType = CharacterStateIncompleteType.CREATED_STATE
+              stateNames.add(stateName)
+            }
+          }
+          if (character.maybeSetMaxScoreStateIndex) {
+            character.maybeSetMaxScoreStateIndex(index)
           }
         }
-        character.maybeSetMaxScoreStateIndex(index)
+        // For continuous characters, we don't need to validate states since they contain numeric values
       }
     }
   }

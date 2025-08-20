@@ -1731,7 +1731,7 @@ onMounted(() => {
         </div>
       </div>
       <div class="tab-pane fade" :id="'tnt' + matrix.matrix_id" role="tabpanel">
-        <TntAnalysisComp :projectId="projectId" :matrixId="matrixId" />
+        <TntAnalysisComp :projectId="projectId" :matrixId="matrixId.toString()" />
       </div>
     </div>
   </div>
