@@ -115,8 +115,8 @@
 
       <div class="form-group">
         <label class="form-label">
-          Reviewer Login Password
-          <span class="required" v-if="formData.allow_reviewer_login"
+          Reviewer Login Password (password not displayed for privacy)
+          <span class="required" v-if="formData.allow_reviewer_login && !originalAllowReviewerLogin"
             >Required</span
           >
         </label>
@@ -125,8 +125,8 @@
             v-model="formData.reviewer_login_password"
             :type="showPassword ? 'text' : 'password'"
             class="form-control"
-            :required="formData.allow_reviewer_login"
             :disabled="!formData.allow_reviewer_login"
+            placeholder="Leave empty to keep existing password"
           />
           <button
             type="button"
@@ -644,6 +644,7 @@ const showPassword = ref(false)
 const existingExemplarMedia = ref(false)
 const showDeleteDialog = ref(false)
 const isDeleting = ref(false)
+const originalAllowReviewerLogin = ref(false)
 
 // Computed property for filtered journals based on search
 const filteredJournals = computed(() => {
@@ -705,6 +706,13 @@ async function loadProjectData() {
     // Set flags for existing media
     existingExemplarMedia.value = !!overview.exemplar_media_id
 
+    // Set reviewer login settings
+    const reviewerLoginEnabled = overview.allow_reviewer_login === 1 || overview.allow_reviewer_login === true
+    formData.allow_reviewer_login = reviewerLoginEnabled
+    originalAllowReviewerLogin.value = reviewerLoginEnabled
+    // Never populate the password field for security reasons - always leave empty
+    formData.reviewer_login_password = ''
+
     // Determine publication status based on available data
     if (
       overview.journal_url &&
@@ -734,8 +742,7 @@ async function loadProjectData() {
       }
     }
 
-    // Note: reviewer settings are not exposed in overview, so we'll keep defaults
-    // Users can still update them if needed
+
   } catch (err) {
     console.error('Error loading project data:', err)
     error.value = 'Failed to load project data'
@@ -983,6 +990,13 @@ async function handleSubmit() {
       if (key === 'journal_cover' || key === 'exemplar_media') {
         // Skip file uploads - will be passed separately
         continue
+      } else if (key === 'reviewer_login_password') {
+        // Only send password if user has entered one (don't send empty string)
+        if (value && value.trim() !== '') {
+          projectData[key] = value.trim()
+        }
+        // If empty, skip sending it entirely to preserve existing password
+        continue
       } else if (key === 'allow_reviewer_login') {
         // Ensure allow_reviewer_login is sent as 0 or 1
         projectData[key] = value === true || value === '1' ? '1' : '0'
@@ -1085,16 +1099,20 @@ function validateForm() {
     return false
   }
 
-  // Reviewer password validation
-  if (
-    formData.allow_reviewer_login &&
-    (!formData.reviewer_login_password ||
-      formData.reviewer_login_password.trim() === '')
-  ) {
-    alert(
-      'Please enter a reviewer login password when reviewer access is enabled'
-    )
-    return false
+  // Reviewer password validation - only require password if:
+  // 1. User is enabling reviewer login for the first time (wasn't enabled before), OR
+  // 2. User is enabling reviewer login and there's no existing password in the database
+  if (formData.allow_reviewer_login) {
+    const isEnablingForFirstTime = !originalAllowReviewerLogin.value
+    const hasEnteredNewPassword = formData.reviewer_login_password && formData.reviewer_login_password.trim() !== ''
+    
+    // If enabling for the first time, require a password
+    if (isEnablingForFirstTime && !hasEnteredNewPassword) {
+      alert(
+        'Please enter a reviewer login password when enabling reviewer access'
+      )
+      return false
+    }
   }
 
   // Journal validation based on publication status
