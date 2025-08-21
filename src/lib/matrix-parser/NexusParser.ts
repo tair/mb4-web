@@ -59,6 +59,8 @@ export class NexusParser extends AbstractParser {
   }
 
   private doTaxaBlock(): void {
+    // Consume any comments before expecting the semicolon
+    while (this.tokenizer.consumeTokenIfMatch([Token.COMMENT]));
     this.tokenizer.assertToken(Token.SEMICOLON)
 
     while (this.untilToken([Token.END, Token.ENDBLOCK])) {
@@ -77,6 +79,8 @@ export class NexusParser extends AbstractParser {
   }
 
   private doCharactersBlock(): void {
+    // Consume any comments before expecting the semicolon
+    while (this.tokenizer.consumeTokenIfMatch([Token.COMMENT]));
     this.tokenizer.assertToken(Token.SEMICOLON)
 
     while (this.untilToken([Token.END, Token.ENDBLOCK])) {
@@ -109,6 +113,8 @@ export class NexusParser extends AbstractParser {
   }
 
   private doDataBlock(): void {
+    // Consume any comments before expecting the semicolon
+    while (this.tokenizer.consumeTokenIfMatch([Token.COMMENT]));
     this.tokenizer.assertToken(Token.SEMICOLON)
 
     while (this.untilToken([Token.END, Token.ENDBLOCK])) {
@@ -139,6 +145,8 @@ export class NexusParser extends AbstractParser {
   }
 
   private doAssumptionsBlock(): void {
+    // Consume any comments before expecting the semicolon
+    while (this.tokenizer.consumeTokenIfMatch([Token.COMMENT]));
     this.tokenizer.assertToken(Token.SEMICOLON)
     while (this.untilToken([Token.END, Token.ENDBLOCK])) {
       if (this.tokenizer.consumeTokenIfMatch([Token.OPTIONS])) {
@@ -155,6 +163,8 @@ export class NexusParser extends AbstractParser {
   }
 
   private doNotesBlock(): void {
+    // Consume any comments before expecting the semicolon
+    while (this.tokenizer.consumeTokenIfMatch([Token.COMMENT]));
     this.tokenizer.assertToken(Token.SEMICOLON)
     const taxaNames = this.matrixObject.getTaxaNames()
     const characterNames = this.matrixObject.getCharacterNames()
@@ -231,6 +241,8 @@ export class NexusParser extends AbstractParser {
 
   private doUnknownBlock(): void {
     const blockName = this.tokenizer.getTokenValue().getValue()
+    // Consume any comments before expecting the semicolon
+    while (this.tokenizer.consumeTokenIfMatch([Token.COMMENT]));
     this.tokenizer.assertToken(Token.SEMICOLON)
 
     const startPosition = this.reader.getPosition()

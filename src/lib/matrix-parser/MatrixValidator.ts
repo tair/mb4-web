@@ -208,8 +208,8 @@ function getSymbolsMap(symbols: string): Map<string, number> {
 
 function arrayFlip(arr: string[]): Map<string, number> {
   const map = new Map()
-  for (const key in arr) {
-    map.set(arr[key], key)
+  for (let i = 0; i < arr.length; i++) {
+    map.set(arr[i], i)
   }
   return map
 }

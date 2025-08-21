@@ -7,7 +7,7 @@ import { TokenValue } from './TokenValue'
  */
 export abstract class AbstractBaseTokenizer extends Tokenizer {
   /** An array of allowed tokens for keywords. **/
-  private static readonly singleTokens: Set<Token> = new Set([
+  protected static readonly singleTokens: Set<Token> = new Set([
     Token.AMPERSAND,
     Token.ASTERISK,
     Token.AT,
