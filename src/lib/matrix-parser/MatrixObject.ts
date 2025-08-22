@@ -101,7 +101,15 @@ export class MatrixObject {
     )
 
     const character = new Character(characterNumber, serializedCharacterName)
-    character.type = this.determineCharacterType(characterNumber)
+    
+    // Check if DATATYPE=CONTINUOUS was specified in FORMAT command
+    const dataType = this.getParameter('DATATYPE')
+    if (dataType && dataType.toUpperCase() === 'CONTINUOUS') {
+      character.type = CharacterType.CONTINUOUS
+    } else {
+      character.type = this.determineCharacterType(characterNumber)
+    }
+    
     if (isDuplicateCharacter) {
       character.duplicateCharacter = characterName
     }

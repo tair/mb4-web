@@ -72,7 +72,7 @@ export class SubstringReader implements Reader {
     let minMaxPosition = content.length
     for (const terminatingCharacter of this.terminatingCharacters) {
       const position = content.indexOf(terminatingCharacter, startPosition)
-      if (position > 0 && position < minMaxPosition) {
+      if (position >= 0 && position < minMaxPosition) {
         minMaxPosition = position + 1
       }
     }

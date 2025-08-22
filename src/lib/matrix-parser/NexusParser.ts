@@ -2,7 +2,7 @@ import { AbstractParser } from './AbstractParser'
 import { CellTokenizer } from './CellTokenizer'
 import { CharacterOrderingTokenizer } from './CharacterOrderingTokenizer'
 import { ContinuousCellTokenizer } from './ContinuousCellTokenizer'
-import { Cell, CharacterOrdering, type MatrixObject } from './MatrixObject'
+import { Cell, CharacterOrdering, CharacterType, type MatrixObject } from './MatrixObject'
 import { NexusTokenizer } from './NexusTokenizer'
 import { type Reader } from './Reader'
 import { SubstringReader } from './SubstringReader'
@@ -28,6 +28,15 @@ export class NexusParser extends AbstractParser {
   public isNexus() {
     while (this.tokenizer.consumeTokenIfMatch([Token.COMMENT]));
     return this.tokenizer.isToken([Token.NEXUS])
+  }
+
+  /**
+   * Check if the matrix has continuous characters by checking the character parameter
+   */
+  private hasContinuousCharacters(): boolean {
+    // Check if DATATYPE parameter is set to CONTINUOUS
+    const dataType = this.matrixObject.getParameter('DATATYPE')
+    return dataType && dataType.toUpperCase() === 'CONTINUOUS'
   }
 
   private doBlock(): void {
@@ -110,6 +119,15 @@ export class NexusParser extends AbstractParser {
     }
 
     this.tokenizer.assertToken(Token.SEMICOLON)
+    
+    // Post-processing: Ensure all characters are set as continuous if DATATYPE=CONTINUOUS
+    const dataType = this.matrixObject.getParameter('DATATYPE')
+    if (dataType && dataType.toUpperCase() === 'CONTINUOUS') {
+      const characters = this.matrixObject.getCharacters()
+      for (let i = 0; i < characters.length; i++) {
+        this.matrixObject.setCharacterType(i, CharacterType.CONTINUOUS)
+      }
+    }
   }
 
   private doDataBlock(): void {
@@ -349,12 +367,14 @@ export class NexusParser extends AbstractParser {
   private doMatrixCommand(): void {
     const characterCount = this.matrixObject.getCharacterCount()
     const shouldAddTaxa = !this.matrixObject.getTaxonCount()
+
     while (this.untilToken([Token.SEMICOLON])) {
       if (this.tokenizer.consumeTokenIfMatch([Token.COMMENT])) {
         continue
       }
 
       const rowName = this.tokenizer.getTokenValue().getValue()
+      
       if (shouldAddTaxa) {
         this.matrixObject.addTaxon(rowName)
       }
@@ -365,20 +385,20 @@ export class NexusParser extends AbstractParser {
           Token.NEW_LINE,
           Token.LINE_BREAK,
         ])
-        const cellTokenizer = this.matrixObject.isMeristic()
+        const cellTokenizer = (this.matrixObject.isMeristic() || this.hasContinuousCharacters())
           ? new ContinuousCellTokenizer(reader)
           : new CellTokenizer(reader)
         while (row.length < characterCount) {
           const cellTokenValue = cellTokenizer.getTokenValue()
-          if (cellTokenizer.isFinished()) {
-            break
-          }
 
           const cell = new Cell(cellTokenValue.getValue())
           if (cellTokenValue.getToken() == Token.CELL_UNCERTAIN) {
             cell.uncertain = true
           }
           row.push(cell)
+          if (cellTokenizer.isFinished()) {
+            break
+          }
         }
       }
     }

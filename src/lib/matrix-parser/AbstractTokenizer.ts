@@ -121,30 +121,27 @@ export abstract class AbstractBaseTokenizer extends Tokenizer {
 
         const quoteChar = character
 
+        // Read everything until we find the matching closing quote
+        // IMPORTANT: Only the same quote type that opened the string can close it
         while (!this.reader.isAtEnd()) {
           character = this.reader.getCharacter()
-          if (character == Token.TICK || character == Token.SINGLE_QUOTE) {
+          
+          // Handle double consecutive quotes (escaped quotes)
+          if (character == quoteChar) {
             const nextCharacter = this.reader.peekCharacter()
             if (nextCharacter == character) {
-              this.reader.getCharacter()
-
-              // There is a buq in Mesquite in which double quotes are replaced
-              // by two consecutive single quotes in rare cases. We replace the
-              // two single quotes with a double quote iff it starts with a
-              // double quote to check if we should terminate the string.
-              switch (quoteChar) {
-                case Token.SINGLE_QUOTE:
-                  cstring.push(Token.SINGLE_QUOTE)
-                  continue
-                default:
-                  character = Token.DOUBLE_QUOTE
-              }
+              // Escaped quote: add one quote character and continue
+              this.reader.getCharacter() // consume the second quote
+              cstring.push(character)
+              continue
+            } else {
+              // This is the closing quote - we're done
+              break
             }
           }
-
-          if (character == quoteChar) {
-            break
-          } else if (character == Token.CARROT) {
+          
+          // Handle escape sequences
+          if (character == Token.CARROT) {
             character = this.reader.getCharacter()
             switch (character) {
               case 'n':
@@ -160,8 +157,19 @@ export abstract class AbstractBaseTokenizer extends Tokenizer {
             character = Token.SINGLE_QUOTE
           }
 
+          // Add this character to the quoted content
+          // NOTE: When inside single quotes, double quotes are treated as regular characters
+          // When inside double quotes, single quotes are treated as regular characters  
           cstring.push(character)
+          
+          // Safety check to prevent infinite loops
+          if (cstring.length > 200) {
+            throw new Error('Quoted string too long - missing closing quote')
+          }
         }
+        // After processing a complete quoted string, we should stop tokenizing
+        // and return this token immediately, regardless of what follows
+        break
       } else {
         cstring.push(character == Token.UNDERSCORE ? ' ' : character)
       }
