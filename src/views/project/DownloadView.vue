@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
+import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore'
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
 import {
   logView,
@@ -11,7 +11,7 @@ import {
 } from '@/lib/analytics.js'
 
 const route = useRoute()
-const projectStore = usePublicProjectDetailsStore()
+const projectStore = useProjectOverviewStore()
 const projectId = route.params.id
 const isDownloading = ref(false)
 
@@ -70,16 +70,14 @@ async function downloadProject() {
 }
 </script>
 <template>
-  <ProjectLoaderComp
-    :key="projectId"
-    :projectId="projectId"
-    :isLoading="projectStore.isLoading"
-    :errorMessage="
-      projectStore.overview ? null : 'No project overview data available.'
-    "
-    basePath="project"
-    itemName="overview"
-  >
+  <div v-if="projectStore.isLoading" class="text-center p-4">
+    <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+    <p class="mt-2">Loading project...</p>
+  </div>
+  <div v-else-if="!projectStore.overview" class="alert alert-danger">
+    No project overview data available.
+  </div>
+  <div v-else>
     <div class="download-section">
       <div class="download-button-container">
         <button
@@ -114,7 +112,7 @@ async function downloadProject() {
         </p>
       </div>
     </div>
-  </ProjectLoaderComp>
+  </div>
 </template>
 <style>
 .minor-text {

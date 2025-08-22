@@ -139,12 +139,22 @@ const router = createRouter({
         {
           path: '/curator',
           component: CuratorView,
+          beforeEnter: requireSignIn,
           children: [
             {
               path: '',
               name: 'CuratorHomeView',
               component: CuratorHomeView,
-              beforeEnter: requireSignIn,
+            },
+            {
+              path: 'duplication-requests',
+              name: 'CuratorDuplicationRequestsList',
+              component: () => import('@/views/curator/DuplicationRequestsListView.vue'),
+            },
+            {
+              path: 'duplication-requests/:requestId',
+              name: 'CuratorDuplicationRequestDetail',
+              component: () => import('@/views/curator/DuplicationRequestDetailView.vue'),
             },
           ],
         },
