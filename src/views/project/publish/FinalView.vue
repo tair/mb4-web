@@ -16,16 +16,8 @@ const successMessage = ref(null)
 const publishingComplete = ref(false)
 const publicationResult = ref(null)
 
-// Mock data for unpublished items (same as preferences)
-const unpublishedItems = reactive({
-  media: [
-    { id: 123, type: 'media' },
-    { id: 456, type: 'media' },
-  ],
-  documents: [{ id: 1, title: 'Research Notes Document', type: 'document' }],
-  matrices: [],
-  folios: [],
-})
+// Use store-backed unpublished items
+const unpublishedItems = computed(() => publishStore.unpublishedItems)
 
 // Mock data for media not in matrix (when matrix-only publishing is enabled)
 const mediaNotInMatrix = reactive([
@@ -52,11 +44,12 @@ onMounted(async () => {
 // })
 
 const hasUnpublishedItems = computed(() => {
+  const u = unpublishedItems.value || {}
   return (
-    unpublishedItems.documents.length > 0 ||
-    unpublishedItems.folios.length > 0 ||
-    unpublishedItems.matrices.length > 0 ||
-    unpublishedItems.media.length > 0
+    (u.documents?.length || 0) > 0 ||
+    (u.folios?.length || 0) > 0 ||
+    (u.matrices?.length || 0) > 0 ||
+    (u.media?.length || 0) > 0
   )
 })
 
@@ -71,13 +64,8 @@ function editItem(id, type) {
 }
 
 function confirmAndPublish() {
-  const confirmed = confirm(
-    'You are about to publish your project on MorphoBank - please be sure you have made all the changes you wish to make because publishing on MorphoBank means that changes to the project can no longer be made. If you wish to build on a project that is published, click the "Request project duplication" link on the project overview page to request to have the project duplicated.'
-  )
-
-  if (confirmed) {
-    publishProject()
-  }
+  // Directly publish without confirm dialog per requirements
+  publishProject()
 }
 
 async function publishProject() {
@@ -167,20 +155,17 @@ function formatDate(timestamp) {
 
       <!-- Publishing Interface -->
       <div v-else class="publishing-interface">
-        <h2>Final Step: Publish Your Project</h2>
-
         <div class="publish-intro">
-          <p>
-            You're ready to publish your project! Please review the information
-            below and confirm that you want to proceed with publication.
-          </p>
-
           <div class="warning-notice">
             <i class="fa-solid fa-exclamation-triangle warning-icon"></i>
             <p>
-              <strong>Important:</strong> Once published, your project cannot be
-              modified. If you need to make changes after publication, you'll
-              need to request project duplication to create a new version.
+              <strong>Important:</strong> You are about to publish your project
+              on MorphoBank - please be sure you have made all the changes you
+              wish to make because publishing on MorphoBank means that changes
+              to the project can no longer be made. If you wish to build on a
+              project that is published, click the "Request project duplication"
+              link on the project overview page to request to have the project
+              duplicated.
             </p>
           </div>
         </div>

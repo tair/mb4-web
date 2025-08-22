@@ -37,16 +37,8 @@ const preferences = reactive({
   publishInactiveMembers: true,
 })
 
-// Mock data for unpublished items
-const unpublishedItems = reactive({
-  media: [
-    { id: 123, type: 'media' },
-    { id: 456, type: 'media' },
-  ],
-  documents: [{ id: 1, title: 'Research Notes Document', type: 'document' }],
-  matrices: [],
-  folios: [],
-})
+// Store-backed unpublished items
+const unpublishedItems = computed(() => publishStore.unpublishedItems)
 
 onMounted(async () => {
   // Check if we can access this step
@@ -78,28 +70,36 @@ onMounted(async () => {
   isLoaded.value = true
 
   validateForm()
+
+  // Load unpublished items if not already populated
+  const u = publishStore.unpublishedItems
+  const missingUnpublished = [
+    u?.documents?.length,
+    u?.folios?.length,
+    u?.matrices?.length,
+    u?.media?.length,
+  ].every((n) => !n || n === 0)
+  if (missingUnpublished) {
+    await publishStore.loadUnpublishedItems(projectId)
+  }
 })
 
 const hasUnpublishedItems = computed(() => {
+  const u = unpublishedItems.value || {}
   return (
-    unpublishedItems.documents.length > 0 ||
-    unpublishedItems.folios.length > 0 ||
-    unpublishedItems.matrices.length > 0 ||
-    unpublishedItems.media.length > 0
+    (u.documents?.length || 0) > 0 ||
+    (u.folios?.length || 0) > 0 ||
+    (u.matrices?.length || 0) > 0 ||
+    (u.media?.length || 0) > 0
   )
 })
 
 function validateForm() {
-  formValid.value = preferences.nsfFunded !== null
+  formValid.value = true
 }
 
 async function savePreferences() {
-  // Validation matching the original PHP form
-  if (preferences.nsfFunded === null) {
-    alert('Please indicate if your project received NSF funding.')
-    return false
-  }
-
+  // Validation matching the original PHP form (updated)
   if (preferences.extinctTaxaIdentified === null) {
     alert('Please indicate if you have marked all extinct taxa.')
     return false
@@ -190,70 +190,14 @@ function updateCopyrightPreference(preference) {
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
     <div id="formArea" class="publish-preferences">
-      <p>
-        Before publishing your project, please confirm your publishing
-        preferences and click the "Save Publishing Preferences" button.
-      </p>
-      <p>
-        Please note your project's exemplar media will always be published to
-        your project.
-      </p>
-      <p>
-        If your project contains character ontologies within a matrix (see
-        manual) those will automatically be published.
-      </p>
-
-      <!-- Validation Status -->
-      <div class="validation-status-section">
-        <h3>Validation Status</h3>
-        <div class="validation-checks">
-          <div class="validation-check">
-            <span class="validation-icon success">✅</span>
-            <span class="validation-text">Citation Information - Complete</span>
-          </div>
-          <div class="validation-check">
-            <span class="validation-icon success">✅</span>
-            <span class="validation-text">Media Validation - Complete</span>
-          </div>
-        </div>
-        <p class="validation-note">
-          <small
-            >All validations have been completed successfully. You can now
-            configure your publishing preferences.</small
-          >
-        </p>
-      </div>
-
-      <hr style="height: 2px; background-color: #dedede; border: 0px" />
-      <br />
-      <div class="formError">* indicates mandatory field</div>
+      <!-- Intro/validation status removed per requirements -->
 
       <form @submit.prevent="savePreferences" id="publishingForm">
         <!-- Funding Acknowledgment -->
         <p style="font-size: 14px; line-height: 1.3em">
           <b>Funding acknowledgment:</b>
         </p>
-        <div class="formLabel">
-          <span class="formErrors">*</span> NSF Funded?<br />
-          <span style="font-weight: normal">
-            <input
-              type="radio"
-              name="nsf_funded"
-              value="1"
-              :checked="preferences.nsfFunded === true"
-              @change="preferences.nsfFunded = true"
-            />
-            Yes&nbsp;&nbsp;&nbsp;&nbsp;
-            <input
-              type="radio"
-              name="nsf_funded"
-              value="0"
-              :checked="preferences.nsfFunded === false"
-              @change="preferences.nsfFunded = false"
-            />
-            No
-          </span>
-        </div>
+        <!-- NSF funded radio group removed -->
 
         <br />
         <p style="font-size: 14px; line-height: 1.3em"><b>Extinct taxa:</b></p>
@@ -401,7 +345,7 @@ function updateCopyrightPreference(preference) {
             The following items will <b>NOT</b> be published to your project:
             <div style="padding: 0px 0px 0px 20px">
               <!-- Documents -->
-              <p v-if="unpublishedItems.documents.length > 0">
+              <p v-if="(unpublishedItems.documents?.length || 0) > 0">
                 <b
                   >{{ unpublishedItems.documents.length }}
                   {{
@@ -427,7 +371,7 @@ function updateCopyrightPreference(preference) {
               </p>
 
               <!-- Folios -->
-              <p v-if="unpublishedItems.folios.length > 0">
+              <p v-if="(unpublishedItems.folios?.length || 0) > 0">
                 <b
                   >{{ unpublishedItems.folios.length }}
                   {{
@@ -451,7 +395,7 @@ function updateCopyrightPreference(preference) {
               </p>
 
               <!-- Matrices -->
-              <p v-if="unpublishedItems.matrices.length > 0">
+              <p v-if="(unpublishedItems.matrices?.length || 0) > 0">
                 <b
                   >{{ unpublishedItems.matrices.length }}
                   {{
@@ -477,7 +421,7 @@ function updateCopyrightPreference(preference) {
               </p>
 
               <!-- Media -->
-              <p v-if="unpublishedItems.media.length > 0">
+              <p v-if="(unpublishedItems.media?.length || 0) > 0">
                 <b>{{ unpublishedItems.media.length }} media:</b>
                 <template
                   v-for="(media, index) in unpublishedItems.media"
