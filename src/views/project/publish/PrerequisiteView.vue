@@ -52,6 +52,56 @@ const validationStatus = computed(() => {
 })
 const canProceed = computed(() => publishStore.canProceedToPreferences)
 
+// Group media validation issues by reason code for detailed display
+const groupedMediaIssues = computed(() => {
+  const items = validationStatus.value?.media?.incompleteMedia || []
+  const counts = {}
+  for (const item of items) {
+    const reasons = Array.isArray(item?.reasons)
+      ? item.reasons
+      : [item?.reason || 'other']
+    for (const r of reasons) {
+      const reason = r || 'other'
+      counts[reason] = (counts[reason] || 0) + 1
+    }
+  }
+  return Object.keys(counts).map((reason) => ({
+    reason,
+    count: counts[reason],
+  }))
+})
+
+function humanizeReason(reason) {
+  switch (reason) {
+    case 'missing_specimen':
+      return 'Missing specimen information'
+    case 'missing_view':
+      return 'Missing view information'
+    case 'missing_copyright_status':
+      return 'Missing copyright status'
+    case 'missing_copyright':
+      return 'Missing copyright information'
+    case 'missing_creator':
+      return 'Missing creator/attribution information'
+    case 'missing_date':
+      return 'Missing creation date'
+    case 'missing_caption':
+      return 'Missing caption/description'
+    case 'invalid_format':
+      return 'Unsupported or invalid media format'
+    default:
+      return 'Other media validation issues'
+  }
+}
+
+// Build a concise one-line summary for display
+const mediaIssuesSummary = computed(() => {
+  if (!groupedMediaIssues.value.length) return ''
+  return groupedMediaIssues.value
+    .map((grp) => `${humanizeReason(grp.reason)} (${grp.count})`)
+    .join(', ')
+})
+
 onMounted(async () => {
   // Reset workflow when starting
   publishStore.resetWorkflow()
@@ -189,27 +239,33 @@ function proceedToPreferences() {
             "
             class="validation-details"
           >
-            <div
-              v-for="error in validationStatus?.media?.errors || []"
-              :key="error"
-              class="error-message"
-            >
-              {{ error }}
+            <div v-if="groupedMediaIssues.length > 0" class="info-message">
+              <div style="margin-bottom: 6px">
+                {{ validationStatus?.media?.incompleteMedia?.length }} media
+                files have incomplete information:
+              </div>
+              <ul style="margin: 0 0 8px 18px">
+                <li v-for="grp in groupedMediaIssues" :key="grp.reason">
+                  {{ humanizeReason(grp.reason) }} ({{ grp.count }})
+                </li>
+              </ul>
             </div>
-            <div
-              v-for="warning in validationStatus?.media?.warnings || []"
-              :key="warning"
-              class="warning-message"
-            >
-              {{ warning }}
-            </div>
-            <div
-              v-if="validationStatus?.media?.incompleteMedia?.length > 0"
-              class="info-message"
-            >
-              {{ validationStatus?.media?.incompleteMedia?.length }} media files
-              have incomplete information.
-            </div>
+            <template v-else>
+              <div
+                v-for="error in validationStatus?.media?.errors || []"
+                :key="error"
+                class="error-message"
+              >
+                {{ error }}
+              </div>
+              <div
+                v-for="warning in validationStatus?.media?.warnings || []"
+                :key="warning"
+                class="warning-message"
+              >
+                {{ warning }}
+              </div>
+            </template>
             <button
               @click="goToMediaManagement"
               class="btn btn-primary btn-small"
