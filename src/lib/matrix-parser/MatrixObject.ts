@@ -11,6 +11,7 @@ export class MatrixObject {
   private readonly characters: Map<string, Character>
   private readonly taxa: Map<string, Taxon>
   private readonly cells: Map<string, Cell[]>
+  private readonly characterTypes: Map<number, CharacterType>
 
   constructor(format: string) {
     this.dataType = DataType.REGULAR
@@ -22,6 +23,7 @@ export class MatrixObject {
     this.characters = new Map()
     this.taxa = new Map()
     this.cells = new Map()
+    this.characterTypes = new Map()
   }
 
   getFormat(): string {
@@ -99,7 +101,15 @@ export class MatrixObject {
     )
 
     const character = new Character(characterNumber, serializedCharacterName)
-    character.type = this.determineCharacterType(characterNumber)
+    
+    // Check if DATATYPE=CONTINUOUS was specified in FORMAT command
+    const dataType = this.getParameter('DATATYPE')
+    if (dataType && dataType.toUpperCase() === 'CONTINUOUS') {
+      character.type = CharacterType.CONTINUOUS
+    } else {
+      character.type = this.determineCharacterType(characterNumber)
+    }
+    
     if (isDuplicateCharacter) {
       character.duplicateCharacter = characterName
     }
@@ -238,7 +248,11 @@ export class MatrixObject {
   }
 
   private determineCharacterType(characterNumber: number): CharacterType {
-    return CharacterType.DISCRETE
+    return this.characterTypes.get(characterNumber) || CharacterType.DISCRETE
+  }
+
+  setCharacterType(characterNumber: number, characterType: CharacterType): void {
+    this.characterTypes.set(characterNumber, characterType)
   }
 }
 
