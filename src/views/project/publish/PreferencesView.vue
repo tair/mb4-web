@@ -37,8 +37,7 @@ const preferences = reactive({
   publishInactiveMembers: true,
 })
 
-// Store-backed unpublished items
-const unpublishedItems = computed(() => publishStore.unpublishedItems)
+// No unpublished items UI in this view; handled in FinalView
 
 onMounted(async () => {
   // Check if we can access this step
@@ -65,34 +64,24 @@ onMounted(async () => {
   // Load existing preferences from store
   Object.assign(preferences, publishStore.preferences)
 
+  // If user previously confirmed no personal info, skip to final step
+  // Unless they came from final view to update preferences
+  const fromFinal = route.query.from === 'final'
+  if (preferences.noPersonalInfo === true && !fromFinal) {
+    router.push(`/myprojects/${projectId}/publish/final`)
+    return
+  }
+
   // Simulate loading delay
   await new Promise((resolve) => setTimeout(resolve, 300))
   isLoaded.value = true
 
   validateForm()
 
-  // Load unpublished items if not already populated
-  const u = publishStore.unpublishedItems
-  const missingUnpublished = [
-    u?.documents?.length,
-    u?.folios?.length,
-    u?.matrices?.length,
-    u?.media?.length,
-  ].every((n) => !n || n === 0)
-  if (missingUnpublished) {
-    await publishStore.loadUnpublishedItems(projectId)
-  }
+  // Unpublished items are handled and loaded in FinalView
 })
 
-const hasUnpublishedItems = computed(() => {
-  const u = unpublishedItems.value || {}
-  return (
-    (u.documents?.length || 0) > 0 ||
-    (u.folios?.length || 0) > 0 ||
-    (u.matrices?.length || 0) > 0 ||
-    (u.media?.length || 0) > 0
-  )
-})
+// Removed unpublished items logic from this view
 
 function validateForm() {
   formValid.value = true
@@ -133,15 +122,7 @@ async function savePreferences() {
   return true
 }
 
-function editItem(id, type) {
-  const routes = {
-    media: `/myprojects/${projectId}/media/${id}`,
-    document: `/myprojects/${projectId}/documents/${id}`,
-    matrix: `/myprojects/${projectId}/matrices/${id}`,
-    folio: `/myprojects/${projectId}/folios/${id}`,
-  }
-  router.push(routes[type])
-}
+// Removed item editing helpers; not used in this view
 
 function updateCopyrightPreference(preference) {
   preferences.copyrightPreference = preference
@@ -334,120 +315,6 @@ function updateCopyrightPreference(preference) {
           </button>
         </div>
       </form>
-
-      <!-- Unpublished Items Section -->
-      <div class="unpublished-items-section">
-        <div class="info-box">
-          <b>Please Note:</b> <b>Individual</b> project documents, folios,
-          matrices and media can be set to 'Never publish to project'.
-
-          <template v-if="hasUnpublishedItems">
-            The following items will <b>NOT</b> be published to your project:
-            <div style="padding: 0px 0px 0px 20px">
-              <!-- Documents -->
-              <p v-if="(unpublishedItems.documents?.length || 0) > 0">
-                <b
-                  >{{ unpublishedItems.documents.length }}
-                  {{
-                    unpublishedItems.documents.length === 1
-                      ? 'document'
-                      : 'documents'
-                  }}:</b
-                >
-                <template
-                  v-for="(doc, index) in unpublishedItems.documents"
-                  :key="doc.id"
-                >
-                  <a
-                    href="#"
-                    @click="editItem(doc.id, 'document')"
-                    class="text-primary"
-                    >{{ doc.title }}</a
-                  >
-                  <span v-if="index < unpublishedItems.documents.length - 1"
-                    >,
-                  </span>
-                </template>
-              </p>
-
-              <!-- Folios -->
-              <p v-if="(unpublishedItems.folios?.length || 0) > 0">
-                <b
-                  >{{ unpublishedItems.folios.length }}
-                  {{
-                    unpublishedItems.folios.length === 1 ? 'folio' : 'folios'
-                  }}:</b
-                >
-                <template
-                  v-for="(folio, index) in unpublishedItems.folios"
-                  :key="folio.id"
-                >
-                  <a
-                    href="#"
-                    @click="editItem(folio.id, 'folio')"
-                    class="text-primary"
-                    >{{ folio.name }}</a
-                  >
-                  <span v-if="index < unpublishedItems.folios.length - 1"
-                    >,
-                  </span>
-                </template>
-              </p>
-
-              <!-- Matrices -->
-              <p v-if="(unpublishedItems.matrices?.length || 0) > 0">
-                <b
-                  >{{ unpublishedItems.matrices.length }}
-                  {{
-                    unpublishedItems.matrices.length === 1
-                      ? 'matrix'
-                      : 'matrices'
-                  }}:</b
-                >
-                <template
-                  v-for="(matrix, index) in unpublishedItems.matrices"
-                  :key="matrix.id"
-                >
-                  <a
-                    href="#"
-                    @click="editItem(matrix.id, 'matrix')"
-                    class="text-primary"
-                    >{{ matrix.title }} (matrix {{ matrix.id }})</a
-                  >
-                  <span v-if="index < unpublishedItems.matrices.length - 1"
-                    >,
-                  </span>
-                </template>
-              </p>
-
-              <!-- Media -->
-              <p v-if="(unpublishedItems.media?.length || 0) > 0">
-                <b>{{ unpublishedItems.media.length }} media:</b>
-                <template
-                  v-for="(media, index) in unpublishedItems.media"
-                  :key="media.id"
-                >
-                  <a
-                    href="#"
-                    @click="editItem(media.id, 'media')"
-                    class="text-primary"
-                    >M{{ media.id }}</a
-                  >
-                  <span v-if="index < unpublishedItems.media.length - 1"
-                    >,
-                  </span>
-                </template>
-              </p>
-            </div>
-          </template>
-
-          <template v-else>
-            <div style="padding: 0px 0px 0px 20px">
-              <p>All items are set to publish when project is published</p>
-            </div>
-          </template>
-        </div>
-      </div>
     </div>
   </LoadingIndicator>
 </template>

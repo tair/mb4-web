@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePublishWorkflowStore } from '@/stores/PublishWorkflowStore.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
@@ -10,8 +10,10 @@ const publishStore = usePublishWorkflowStore()
 const projectId = route.params.id
 
 const isLoaded = ref(false)
-const isValidating = ref(false)
+const isValidating = ref(true) // Start with validating state
 const validationComplete = ref(false)
+const showValidationUI = ref(false) // Only show UI if validation fails
+const currentValidationStep = ref('') // Track current validation step
 
 const validationStatus = computed(() => {
   try {
@@ -89,6 +91,8 @@ function humanizeReason(reason) {
       return 'Missing caption/description'
     case 'invalid_format':
       return 'Unsupported or invalid media format'
+    case 'copyright_permission_not_requested':
+      return 'Copyright permission not requested'
     default:
       return 'Other media validation issues'
   }
@@ -102,14 +106,37 @@ const mediaIssuesSummary = computed(() => {
     .join(', ')
 })
 
+// Prefer server-provided message; otherwise provide grammatically correct fallback
+const mediaHeaderMessage = computed(() => {
+  const firstError = validationStatus.value?.media?.errors?.[0]
+  const firstWarning = validationStatus.value?.media?.warnings?.[0]
+  if (firstError) return firstError
+  if (firstWarning) return firstWarning
+  const count = validationStatus.value?.media?.incompleteMedia?.length || 0
+  return count === 1
+    ? '1 media file has incomplete information:'
+    : `${count} media files have incomplete information:`
+})
+
 onMounted(async () => {
   // Reset workflow when starting
   publishStore.resetWorkflow()
   publishStore.setCurrentStep('validation')
 
+  // Initialize validation step
+  currentValidationStep.value = 'Starting validation...'
+
   // Auto-run validations on load
   await runValidations()
 
+  // If everything is valid, redirect immediately
+  if (publishStore.canProceedToPreferences) {
+    proceedToPreferences()
+    return
+  }
+
+  // Only show validation UI if there are issues
+  showValidationUI.value = true
   isLoaded.value = true
 })
 
@@ -118,16 +145,30 @@ async function runValidations() {
   validationComplete.value = false
 
   try {
-    // Run individual validations - these methods we know work
+    // Run individual validations with progress updates
+    currentValidationStep.value = 'Validating citation information...'
     await publishStore.validateCitations(projectId)
+
+    currentValidationStep.value = 'Validating media files...'
     await publishStore.validateMedia(projectId)
+
+    currentValidationStep.value = 'Finalizing validation...'
     validationComplete.value = true
+
+    // If validation passes after re-run, redirect immediately
+    if (publishStore.canProceedToPreferences) {
+      proceedToPreferences()
+      return
+    }
   } catch (error) {
     console.error('Validation failed:', error)
+    currentValidationStep.value = 'Validation error occurred'
   } finally {
     isValidating.value = false
   }
 }
+
+// Removed watch - immediate redirect is handled in runValidations
 
 function goToProjectInfo() {
   // Navigate to project edit page
@@ -146,7 +187,19 @@ function proceedToPreferences() {
 
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
-    <div id="formArea" class="publish-validation">
+    <!-- Validating Loading Screen -->
+    <div v-if="isValidating && !showValidationUI" class="validating-screen">
+      <div class="validating-content">
+        <div class="validating-spinner">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+        </div>
+        <h2>Validating Project</h2>
+        <p>{{ currentValidationStep || 'Preparing validation...' }}</p>
+      </div>
+    </div>
+
+    <!-- Validation Results UI (only shown if there are issues) -->
+    <div v-else-if="showValidationUI" id="formArea" class="publish-validation">
       <h2>Publishing Validation</h2>
 
       <p class="intro-text">
@@ -240,10 +293,7 @@ function proceedToPreferences() {
             class="validation-details"
           >
             <div v-if="groupedMediaIssues.length > 0" class="info-message">
-              <div style="margin-bottom: 6px">
-                {{ validationStatus?.media?.incompleteMedia?.length }} media
-                files have incomplete information:
-              </div>
+              <div style="margin-bottom: 6px">{{ mediaHeaderMessage }}</div>
               <ul style="margin: 0 0 8px 18px">
                 <li v-for="grp in groupedMediaIssues" :key="grp.reason">
                   {{ humanizeReason(grp.reason) }} ({{ grp.count }})
@@ -279,12 +329,17 @@ function proceedToPreferences() {
       <!-- Action Buttons -->
       <div class="action-buttons">
         <button
-          v-if="!isValidating && !validationComplete"
+          v-if="!isValidating"
           @click="runValidations"
           class="btn btn-secondary"
         >
           Re-run Validation
         </button>
+
+        <div v-if="isValidating" class="validating-inline">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          {{ currentValidationStep }}
+        </div>
 
         <button
           v-if="canProceed"
@@ -303,6 +358,55 @@ function proceedToPreferences() {
 </template>
 
 <style scoped>
+/* Validating Screen Styles */
+.validating-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  padding: 40px 20px;
+}
+
+.validating-content {
+  text-align: center;
+  max-width: 400px;
+}
+
+.validating-spinner {
+  margin-bottom: 20px;
+}
+
+.validating-spinner i {
+  font-size: 48px;
+  color: #007bff;
+}
+
+.validating-screen h2 {
+  color: #333;
+  margin: 0 0 15px 0;
+  font-size: 24px;
+}
+
+.validating-screen p {
+  color: #666;
+  font-size: 16px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.validating-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #007bff;
+  font-size: 14px;
+  margin: 10px 0;
+}
+
+.validating-inline i {
+  font-size: 16px;
+}
+
 #formArea {
   max-width: 900px;
   margin: 0 auto;
@@ -420,6 +524,15 @@ function proceedToPreferences() {
   padding: 8px 12px;
   background: #d1ecf1;
   border: 1px solid #bee5eb;
+  border-radius: 4px;
+}
+
+.success-message {
+  color: #155724;
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
   border-radius: 4px;
 }
 
