@@ -144,14 +144,8 @@ async function makeRequest(event) {
                 
                 <h6>Media Files with Onetime License:</h6>
                 <ul class="list-group mb-3">
-                  <li v-for="media in onetimeMedia" :key="media.media_id" class="list-group-item d-flex justify-content-between align-items-center">
+                  <li v-for="media in onetimeMedia" :key="media.media_id" class="list-group-item">
                     <span>Media File {{ media.media_id }}</span>
-                    <RouterLink
-                      :to="`/myprojects/${projectId}/media/${media.media_id}`"
-                      class="btn btn-outline-primary btn-sm"
-                    >
-                      View Media
-                    </RouterLink>
                   </li>
                 </ul>
                 

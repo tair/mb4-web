@@ -182,7 +182,8 @@ async function importMatrix(event) {
   const file = files[0]
   const reader = new FileReader()
   reader.onload = function () {
-    Object.assign(importedMatrix, parser.parseMatrix(reader.result))
+    const matrixObject = parser.parseMatrix(reader.result)
+    Object.assign(importedMatrix, matrixObject)
   }
 
   reader.onerror = function () {
@@ -635,8 +636,8 @@ onUnmounted(() => {
                     </p>
                   </td>
                   <td>
-                    <b v-if="character.type == 'C'">(continuous character)</b>
-                    <b v-else-if="character.type == 'M'"
+                    <b v-if="character.type == 1">(continuous character)</b>
+                    <b v-else-if="character.type == 2"
                       >(meristic character)</b
                     >
                     <ol v-else-if="character.states">
@@ -720,7 +721,7 @@ onUnmounted(() => {
                       v-model="editingCharacter.note"
                     ></textarea>
                   </div>
-                  <div class="form-group">
+                  <div class="form-group" v-if="editingCharacter.states?.length > 0">
                     <label>States</label><br />
                     <div class="character-states">
                       <div

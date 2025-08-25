@@ -89,7 +89,7 @@ const submitForm = async () => {
     }
     
     await userStore.updateUser()
-    message.updateUser = 'Update user profile succeed!'
+    message.updateUser = 'Update of user profile succeeded!'
     
     // Reset interaction tracking after successful update
     hasUserInteracted.value = false

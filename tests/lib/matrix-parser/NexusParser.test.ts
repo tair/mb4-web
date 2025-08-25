@@ -2,6 +2,7 @@ import {
   MatrixObject,
   CharacterOrdering,
   CharacterStateIncompleteType,
+  CharacterType,
 } from '@/lib/matrix-parser/MatrixObject'
 import { validate } from '@/lib/matrix-parser/MatrixValidator'
 import { NexusParser } from '@/lib/matrix-parser/NexusParser'
@@ -147,6 +148,40 @@ describe('NexusParserTest', () => {
     expect(characters[3].states[0].incompleteType).toBe(
       CharacterStateIncompleteType.INCORRECT_NUMBER_OF_SCORES
     )
+  })
+
+  // Test that continuous characters are properly handled
+  test('Test continuous characters', () => {
+    const matrix = parseMatrix('continuous_characters.nex')
+
+    expect(matrix.getFormat()).toBe('NEXUS')
+    expect(matrix.getTaxonCount()).toBe(3)
+    expect(matrix.getCharacterCount()).toBe(2)
+
+    const characters = matrix.getCharacters()
+    expect(characters.length).toBe(2)
+    
+    // Both characters should be marked as continuous
+    expect(characters[0].type).toBe(CharacterType.CONTINUOUS)
+    expect(characters[1].type).toBe(CharacterType.CONTINUOUS)
+    
+    // Character names
+    expect(characters[0].name).toBe('Height (mm)')
+    expect(characters[1].name).toBe('Weight (g)')
+
+    // Check taxa names
+    const taxaNames = matrix.getTaxaNames()
+    expect(taxaNames).toEqual(['Taxon A', 'Taxon B', 'Taxon C'])
+
+    // Check cell values (continuous data)
+    const taxonACells = matrix.getCells('Taxon A')
+    expect(taxonACells.length).toBe(2)
+    expect(taxonACells[0].score).toBe('12.5')
+    expect(taxonACells[1].score).toBe('45.2')
+
+    const taxonBCells = matrix.getCells('Taxon B')
+    expect(taxonBCells[0].score).toBe('15.8')
+    expect(taxonBCells[1].score).toBe('52.3')
   })
 })
 
