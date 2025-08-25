@@ -59,6 +59,16 @@
                 FAQ
               </a>
             </div>
+            <div class="col">
+              <a
+                class="nav-link p-1 me-3"
+                href="https://omniform1.com/forms/v1/landingPage/68a794a2cfa3b70cffc67d21/68a7aa40d1e73f776385b2ec"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Subscribe
+              </a>
+            </div>
           </section>
         </div>
       </div>
