@@ -106,7 +106,7 @@ const mediaId = computed(() => {
         </strong>
       </RouterLink>
       <p class="card-text">
-        {{ project.article_title }}
+        {{ project.article_title || project.name }}
       </p>
       <span class="p-0 small m-0 fw-lighter"
         >Journal Year: {{ project.journal_year }}</span
