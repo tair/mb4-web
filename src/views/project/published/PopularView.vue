@@ -5,6 +5,7 @@ import { usePublicProjectsStore } from '@/stores/PublicProjectsStore.js'
 import { getMorphoBankStatsText } from '@/utils/project'
 import GenericLoaderComp from '@/components/project/GenericLoaderComp.vue'
 import ProjectMenuComp from '@/components/project/ProjectMenuComp.vue'
+import ProjectDisplayComp from '@/components/project/ProjectDisplayComp.vue'
 
 const route = useRoute()
 const projectsStore = usePublicProjectsStore()
@@ -49,17 +50,10 @@ const morphoBankStatsText = computed(() => {
       >
         <div class="list-group-item p-0 m-0">
           <div class="py-2 m-0" style="border-bottom: 1px solid #e0e0e0">
-            <div class="row p-0 m-0">
-              <div class="col-2 small">Project {{ item.project_id }}:</div>
-              <div class="col">
-                <RouterLink
-                  :to="`/project/${item.project_id}/overview`"
-                  class="nav-link p-0"
-                >
-                  <div v-html="item.name"></div>
-                </RouterLink>
-              </div>
-            </div>
+            <ProjectDisplayComp 
+              :project="item" 
+              :showProjectLabel="true" 
+            />
             <div class="row p-0 m-0">
               <div class="col-2 small">Views:</div>
               <div class="col">{{ item.views }}</div>
@@ -84,17 +78,10 @@ const morphoBankStatsText = computed(() => {
                 {{ item.media_id }}
               </div>
             </div>
-            <div class="row p-0 m-0">
-              <div class="col-2 small">Project {{ item.project_id }}:</div>
-              <div class="col">
-                <RouterLink
-                  :to="`/project/${item.project_id}/overview`"
-                  class="nav-link p-0"
-                >
-                  <div v-html="item.name"></div>
-                </RouterLink>
-              </div>
-            </div>
+            <ProjectDisplayComp 
+              :project="item" 
+              :showProjectLabel="true" 
+            />
 
             <div class="row p-0 m-0">
               <div class="col-2 small">Views:</div>
@@ -125,17 +112,10 @@ const morphoBankStatsText = computed(() => {
                 </RouterLink>
               </div>
             </div>
-            <div class="row p-0 m-0">
-              <div class="col-2 small">Project {{ item.project_id }}:</div>
-              <div class="col">
-                <RouterLink
-                  :to="`/project/${item.project_id}/overview`"
-                  class="nav-link p-0"
-                >
-                  <div v-html="item.project"></div>
-                </RouterLink>
-              </div>
-            </div>
+            <ProjectDisplayComp 
+              :project="item" 
+              :showProjectLabel="true" 
+            />
 
             <div class="row p-0 m-0">
               <div class="col-2 small">Downloads:</div>
@@ -166,17 +146,10 @@ const morphoBankStatsText = computed(() => {
                 </RouterLink>
               </div>
             </div>
-            <div class="row p-0 m-0">
-              <div class="col-2 small">Project {{ item.project_id }}:</div>
-              <div class="col">
-                <RouterLink
-                  :to="`/project/${item.project_id}/overview`"
-                  class="nav-link p-0"
-                >
-                  <div v-html="item.project"></div>
-                </RouterLink>
-              </div>
-            </div>
+            <ProjectDisplayComp 
+              :project="item" 
+              :showProjectLabel="true" 
+            />
 
             <div class="row p-0 m-0">
               <div class="col-2 small">Downloads:</div>

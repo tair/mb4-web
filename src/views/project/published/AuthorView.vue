@@ -4,6 +4,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import { usePublicProjectsStore } from '@/stores/PublicProjectsStore.js'
 import GenericLoaderComp from '@/components/project/GenericLoaderComp.vue'
 import ProjectMenuComp from '@/components/project/ProjectMenuComp.vue'
+import ProjectDisplayComp from '@/components/project/ProjectDisplayComp.vue'
 import { getMorphoBankStatsText } from '@/utils/project'
 
 const route = useRoute()
@@ -47,7 +48,7 @@ const morphoBankStatsText = computed(() => {
 
     <div v-if="projectsStore.authors != ''">
       <div class="mb-3 text-black-50 fw-bold">
-        {{ Object.keys(projectsStore.authors['authors']).length }} authors have
+        {{ Object.keys(projectsStore.authors['authors']).length }} scientists have
         published data in MorphoBank
       </div>
 
@@ -97,35 +98,10 @@ const morphoBankStatsText = computed(() => {
                   :key="n"
                   class="mb-2"
                 >
-                  <a
-                    :href="`/project/${project.id}/overview`"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <span class="text-mb fw-bold"
-                      >P{{ project.id }}- {{ project.name }}</span
-                    >
-                  </a>
-                  <template
-                    v-if="
-                      project.article_authors ||
-                      project.journal_year ||
-                      project.journal_title
-                    "
-                  >
-                    <br />
-                    <span class="text-muted small">
-                      <template v-if="project.article_authors">{{
-                        project.article_authors
-                      }}</template>
-                      <template v-if="project.journal_year">
-                        ({{ project.journal_year }})</template
-                      >
-                      <template v-if="project.journal_title"
-                        >. {{ project.journal_title }}</template
-                      >
-                    </span>
-                  </template>
+                  <ProjectDisplayComp 
+                    :project="project" 
+                    :showProjectLabel="true" 
+                  />
                 </div>
               </div>
             </div>

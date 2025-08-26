@@ -4,6 +4,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import { usePublicProjectsStore } from '@/stores/PublicProjectsStore.js'
 import GenericLoaderComp from '@/components/project/GenericLoaderComp.vue'
 import ProjectMenuComp from '@/components/project/ProjectMenuComp.vue'
+import ProjectDisplayComp from '@/components/project/ProjectDisplayComp.vue'
 import { getMorphoBankStatsText } from '@/utils/project'
 
 const route = useRoute()
@@ -60,18 +61,10 @@ const morphoBankStatsText = computed(() => {
 
     <div class="list-group" :key="n" v-for="(title, n) in projectsStore.titles">
       <div class="list-group-item list-group-item-action mb-2">
-        <div class="row">
-          <div class="col-2">Project {{ title.project_id }}:</div>
-
-          <div class="col">
-            <RouterLink
-              :to="`/project/${title.project_id}/overview`"
-              class="nav-link p-0"
-            >
-              <div v-html="title.name"></div>
-            </RouterLink>
-          </div>
-        </div>
+        <ProjectDisplayComp 
+          :project="title" 
+          :showProjectLabel="true" 
+        />
       </div>
     </div>
   </GenericLoaderComp>
