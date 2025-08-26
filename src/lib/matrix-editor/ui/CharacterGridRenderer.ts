@@ -1,4 +1,4 @@
-import { Character } from '../data/Characters'
+import { Character, CharacterType } from '../data/Characters'
 import { MatrixModel } from '../MatrixModel'
 import { ImageRenderer } from './ImageRenderer'
 import * as mb from '../mb'
@@ -47,6 +47,11 @@ export abstract class CharacterGridRenderer {
    * @return The HTML content of the character states row
    */
   protected static characterStatesHtmlContent(character: Character): string {
+    // Check if character is continuous
+    if (character.getType() === CharacterType.CONTINUOUS) {
+      return '<i>(continuous character)</i>'
+    }
+    
     const stateNames: string[] = []
     const characterStates = character.getStates()
     for (let x = 0; x < characterStates.length; x++) {

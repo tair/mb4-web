@@ -355,3 +355,9 @@ onMounted(() => {
     </form>
   </div>
 </template>
+
+<style scoped>
+.form-label {
+  font-weight: bold;
+}
+</style>

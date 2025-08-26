@@ -37,11 +37,39 @@ function validateRequiredFields(formData) {
   Object.entries(schema3D).forEach(([fieldName, fieldDef]) => {
     if (fieldDef.required) {
       const value = formData.get(fieldName)
-      if (!value || (typeof value === 'string' && value.trim() === '')) {
+      
+      // Special handling for file uploads
+      if (fieldName === 'file') {
+        if (!value || (value instanceof File && value.size === 0)) {
+          errors.push(`${fieldDef.label} is required`)
+        }
+      } else if (!value || (typeof value === 'string' && value.trim() === '')) {
         errors.push(`${fieldDef.label} is required`)
       }
     }
   })
+  
+  // Conditional validation for copyright fields
+  const copyrightCheckbox = formData.get('is_copyrighted')
+  const isCopyrighted = copyrightCheckbox === '1' || copyrightCheckbox === 1
+  
+  if (isCopyrighted) {
+    // Check copyright_permission - must not be the default "not set" option (value 0)
+    const copyrightPermission = formData.get('copyright_permission')
+    const copyrightPermissionValue = parseInt(String(copyrightPermission), 10)
+    
+    if (isNaN(copyrightPermissionValue) || copyrightPermissionValue === 0) {
+      errors.push('Copyright permission must be selected when media is under copyright (cannot use "Copyright permission not set")')
+    }
+    
+    // Check copyright_license - must not be the default "not set" option (value 0)
+    const copyrightLicense = formData.get('copyright_license')
+    const copyrightLicenseValue = parseInt(String(copyrightLicense), 10)
+    
+    if (isNaN(copyrightLicenseValue) || copyrightLicenseValue === 0) {
+      errors.push('Media reuse license must be selected when media is under copyright (cannot use "Media reuse policy not set")')
+    }
+  }
   
   return errors
 }
@@ -65,14 +93,27 @@ async function create3DMedia(event) {
   try {
     const success = await mediaStore.create3D(projectId, formData)
     if (!success) {
-      alert('Failed to create 3D media')
+      validationErrors.value = ['Failed to create 3D media. Please check your input and try again.']
       return
     }
 
     router.push({ path: `/myprojects/${projectId}/media` })
   } catch (error) {
     console.error('3D upload error:', error)
-    alert('Failed to create 3D media')
+    
+    // Extract specific error messages from backend response
+    let errorMessage = 'Failed to create 3D media. Please try again.'
+    
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message
+    } else if (error.response?.data?.error) {
+      errorMessage = error.response.data.error
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+    
+    // Display the error in the validation errors section
+    validationErrors.value = [errorMessage]
   } finally {
     isUploading.value = false
   }
@@ -162,4 +203,8 @@ onMounted(() => {
     </form>
   </LoadingIndicator>
 </template>
-<style scoped></style>
+<style scoped>
+.form-label {
+  font-weight: bold;
+}
+</style>

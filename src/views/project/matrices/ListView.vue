@@ -1,19 +1,44 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMatricesStore } from '@/stores/MatricesStore'
+import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import ProjectMatrixComp from '@/components/project/ProjectMatrixComp.vue'
+import MatrixCopyrightDialog from '@/components/project/MatrixCopyrightDialog.vue'
 
 const route = useRoute()
 const matricesStore = useMatricesStore()
+const projectOverviewStore = useProjectOverviewStore()
 
 const projectId = route.params.id
 
-onMounted(() => {
+const publish_cc0 = ref(false)
+
+// Computed property to get current publish_cc0 value from project overview
+const currentPublishCC0 = computed(() => {
+  return projectOverviewStore.overview?.publish_cc0 ? true : false
+})
+
+function onCopyrightUpdated(newValue) {
+  publish_cc0.value = newValue
+  // Refresh project overview to get updated data
+  projectOverviewStore.invalidate()
+  projectOverviewStore.fetchProject(projectId)
+}
+
+onMounted(async () => {
   if (!matricesStore.isLoaded) {
     matricesStore.fetchMatricesByProjectId(projectId)
   }
+  
+  // Fetch project overview to get current publish_cc0 setting
+  if (!projectOverviewStore.isLoaded) {
+    await projectOverviewStore.fetchProject(projectId)
+  }
+  
+  // Set initial value
+  publish_cc0.value = currentPublishCC0.value
 })
 </script>
 <template>
@@ -29,6 +54,15 @@ onMounted(() => {
           <span> Create</span>
         </button>
       </RouterLink>
+      <button 
+        type="button" 
+        class="btn btn-m btn-outline-secondary"
+        data-bs-toggle="modal" 
+        data-bs-target="#matrixCopyrightModal"
+      >
+        <i class="fa-solid fa-cog"></i>
+        <span> Matrix copyright Preferences</span>
+      </button>
     </div>
     <div class="d-flex flex-column matrix-cards">
       <ProjectMatrixComp
@@ -42,6 +76,12 @@ onMounted(() => {
       </ProjectMatrixComp>
     </div>
   </LoadingIndicator>
+  
+  <MatrixCopyrightDialog 
+    :projectId="projectId"
+    :initialValue="currentPublishCC0"
+    @updated="onCopyrightUpdated"
+  />
 </template>
 <style scoped>
 @import '@/views/project/styles.css';

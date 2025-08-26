@@ -477,7 +477,7 @@
 
       <div class="form-group">
         <label class="form-label">
-          Journal cover image
+          Journal cover image (if missing above)
           <Tooltip :content="getJournalCoverTooltip()"></Tooltip>
         </label>
         <div class="journal-cover-upload">
@@ -486,7 +486,11 @@
             @change="handleJournalCoverUpload"
             accept="image/*"
             class="form-control"
+            :disabled="isJournalCoverUploadDisabled"
           />
+          <small v-if="isJournalCoverUploadDisabled" class="form-text text-muted">
+            Journal cover already available from selected journal
+          </small>
         </div>
       </div>
 
@@ -615,6 +619,13 @@ const filteredJournals = computed(() => {
   )
 })
 
+// Computed property to determine if journal cover upload should be disabled
+const isJournalCoverUploadDisabled = computed(() => {
+  // Only disable if we're in journal selection mode AND we have a valid journal cover 
+  // that's actually being displayed (matches the v-if condition in template)
+  return !showNewJournal.value && !!journalCoverPath.value
+})
+
 onMounted(async () => {
   await loadJournals()
   // Add click outside event listener
@@ -701,9 +712,18 @@ const loadJournalCover = async (journalTitle) => {
       }
     )
 
-    // Set the journal cover path directly without verification
-    if (response.data.coverPath) {
-      journalCoverPath.value = response.data.coverPath
+    // Check if we have a path and verify the image actually exists
+    if (response.data.coverPath && response.data.coverPath.trim() !== '') {
+      const coverPath = response.data.coverPath.trim()
+      
+      // Test if the image actually loads
+      const imageExists = await testImageExists(coverPath)
+      
+      if (imageExists) {
+        journalCoverPath.value = coverPath
+      } else {
+        journalCoverPath.value = null
+      }
     } else {
       journalCoverPath.value = null
     }
@@ -711,6 +731,19 @@ const loadJournalCover = async (journalTitle) => {
     console.error('Error loading journal cover:', err)
     journalCoverPath.value = null
   }
+}
+
+// Helper function to test if an image URL actually loads
+const testImageExists = (url) => {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => resolve(true)
+    img.onerror = () => resolve(false)
+    img.src = url
+    
+    // Set a timeout to avoid hanging
+    setTimeout(() => resolve(false), 5000)
+  })
 }
 
 // Update handleJournalChange to handle both modes
@@ -816,6 +849,14 @@ function handleJournalCoverUpload(event) {
   }
 }
 
+// Watch for changes in journal cover availability and clear uploaded file if disabled
+watch(isJournalCoverUploadDisabled, (newValue) => {
+  if (newValue && formData.journal_cover) {
+    // Clear the uploaded journal cover file when field becomes disabled (existing cover found)
+    formData.journal_cover = null
+  }
+})
+
 async function handleSubmit() {
   isLoading.value = true
   error.value = null
@@ -846,10 +887,13 @@ async function handleSubmit() {
       }
     }
 
-    // Create project with optional journal cover and exemplar media in a single API call
+    // Only send journal cover file if user uploaded one (existing covers already available)
+    const journalCoverToSend = isJournalCoverUploadDisabled.value ? null : formData.journal_cover
+    
+    // Create project - journal covers processed immediately (cataloguing_status: 0)
     const project = await projectsStore.createProject(
       projectData,
-      formData.journal_cover,
+      journalCoverToSend,
       formData.exemplar_media
     )
 
@@ -997,13 +1041,14 @@ function getLoadingText() {
     return 'Project created successfully!'
   }
 
-  const hasJournalCover = formData.journal_cover
+  // Journal covers processed immediately, exemplar media goes to curation
+  const hasJournalCover = !isJournalCoverUploadDisabled.value && formData.journal_cover
   const hasExemplarMedia = formData.exemplar_media
 
   if (hasJournalCover && hasExemplarMedia) {
-    return 'Uploading images and creating project...'
+    return 'Processing images and creating project...'
   } else if (hasJournalCover) {
-    return 'Uploading journal cover and creating project...'
+    return 'Processing journal cover and creating project...'
   } else if (hasExemplarMedia) {
     return 'Uploading exemplar media and creating project...'
   } else {

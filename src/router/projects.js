@@ -941,6 +941,23 @@ export const MY_PROJECT_VIEWS = [
       ),
   },
   {
+    path: 'download',
+    name: 'MyProjectDownloadView',
+    meta: {
+      itemName: 'download',
+      breadcrumbs: [
+        {
+          label: 'Download Project',
+          to: 'MyProjectDownloadView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/DownloadView.vue'
+      ),
+  },
+  {
     path: 'duplication/request',
     name: 'MyProjectDuplicationRequestView',
     meta: {
@@ -989,6 +1006,67 @@ export const MY_PROJECT_VIEWS = [
     component: () =>
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/publishPartition/SummaryView.vue'
+      ),
+  },
+  // Publication workflow routes
+  {
+    path: 'publish',
+    name: 'MyProjectPublishView',
+    meta: {
+      itemName: 'publish',
+      breadcrumbs: [
+        {
+          label: 'Publish Project',
+          to: 'MyProjectPublishView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/publish/PrerequisiteView.vue'
+      ),
+  },
+
+  {
+    path: 'publish/preferences',
+    name: 'MyProjectPublishPreferencesView',
+    meta: {
+      itemName: 'publish',
+      breadcrumbs: [
+        {
+          label: 'Publish Project',
+          to: 'MyProjectPublishView',
+        },
+        {
+          label: 'Publishing Preferences',
+          to: 'MyProjectPublishPreferencesView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/publish/PreferencesView.vue'
+      ),
+  },
+  {
+    path: 'publish/final',
+    name: 'MyProjectPublishFinalView',
+    meta: {
+      itemName: 'publish',
+      breadcrumbs: [
+        {
+          label: 'Publish Project',
+          to: 'MyProjectPublishView',
+        },
+        {
+          label: 'Final Publishing',
+          to: 'MyProjectPublishFinalView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/publish/FinalView.vue'
       ),
   },
 ]

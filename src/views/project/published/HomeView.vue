@@ -1,10 +1,11 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePublicProjectsStore } from '@/stores/PublicProjectsStore.js'
 import GenericLoaderComp from '@/components/project/GenericLoaderComp.vue'
 import ProjectMenuComp from '@/components/project/ProjectMenuComp.vue'
 import ProjectCardComp from '@/components/project/ProjectCardComp.vue'
+import { getMorphoBankStatsText } from '@/utils/project'
 
 const route = useRoute()
 const projectsStore = usePublicProjectsStore()
@@ -12,10 +13,12 @@ let sort_by = ref('desc')
 let is_asc = ref(false)
 let page_type = ref(route.path.split('/')[2])
 
-onMounted(() => {
+onMounted(async () => {
   page_type.value = route.path.split('/')[2]
   // set default sort desc - this will fetch projects if needed
   onSorted(sort_by)
+  // fetch MorphoBank statistics
+  await projectsStore.fetchMorphoBankStats()
 })
 
 let selectedPage = ref(projectsStore.currentPage)
@@ -64,6 +67,10 @@ watch(selectedPageSize, (currentValue) => {
   projectsStore.recalculatePageInfo()
   projectsStore.fetchByPage()
 })
+
+const morphoBankStatsText = computed(() => {
+  return getMorphoBankStatsText(projectsStore.morphoBankStats, false)
+})
 </script>
 
 <template>
@@ -72,14 +79,7 @@ watch(selectedPageSize, (currentValue) => {
     :errorMessage="!projectsStore.err ? null : 'No projects list available.'"
   >
     <div class="mb-3">
-      There are {{ projectsStore.projects?.length }} publicly accessible
-      projects as of April 23, 2022 in MorphoBank. Publicly available projects
-      contain 159,761 images and 660 matrices. MorphoBank also has an additional
-      1,501 projects that are in progress. These contain an additional 153,815
-      images and 1,310 matrices. These will become available as scientists
-      complete their research and release these data. 3,400 scientists and
-      students are content builders on MorphoBank. 1801 site visitors viewed or
-      downloaded data in the last thirty days.
+      {{ morphoBankStatsText }}
     </div>
 
     <div class="d-flex justify-content-between">

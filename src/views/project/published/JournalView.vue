@@ -1,16 +1,19 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { usePublicProjectsStore } from '@/stores/PublicProjectsStore.js'
 import GenericLoaderComp from '@/components/project/GenericLoaderComp.vue'
 import ProjectMenuComp from '@/components/project/ProjectMenuComp.vue'
+import ProjectDisplayComp from '@/components/project/ProjectDisplayComp.vue'
+import { getMorphoBankStatsText } from '@/utils/project'
 
 const route = useRoute()
 const projectsStore = usePublicProjectsStore()
 let idx = 0
 
-onMounted(() => {
-  projectsStore.fetchProjectJournal()
+onMounted(async () => {
+  await projectsStore.fetchProjectJournal()
+  await projectsStore.fetchMorphoBankStats()
 })
 
 // normalize the string (convert diacritics to ascii chars)
@@ -27,6 +30,10 @@ function getNormalizedCharAt1(str) {
 }
 
 let prev_char = ''
+
+const morphoBankStatsText = computed(() => {
+  return getMorphoBankStatsText(projectsStore.morphoBankStats, true)
+})
 </script>
 
 <template>
@@ -35,14 +42,7 @@ let prev_char = ''
     :errorMessage="!projectsStore.err ? null : 'No project journals available.'"
   >
     <div class="mb-3">
-      There are {{ projectsStore.projects?.length }} publicly accessible
-      projects as of April 23, 2022 in MorphoBank. Publicly available projects
-      contain 159,761 images and 660 matrices. MorphoBank also has an additional
-      1,501 projects that are in progress. These contain an additional 153,815
-      images and 1,310 matrices. These will become available as scientists
-      complete their research and release these data. 3,400 scientists and
-      students are content builders on MorphoBank. 1801 site visitors viewed or
-      downloaded data in the last thirty days.
+      {{ morphoBankStatsText }}
     </div>
 
     <div class="d-flex justify-content-between">
@@ -111,18 +111,10 @@ let prev_char = ''
                     class="list-group-item py-2"
                     style="background-color: #f8f8f8"
                   >
-                    <div class="row">
-                      <div class="col-2">Project {{ project.id }}:</div>
-
-                      <div class="col">
-                        <RouterLink
-                          :to="`/project/${project.id}/overview`"
-                          class="nav-link p-0"
-                        >
-                          <div v-html="project.name"></div>
-                        </RouterLink>
-                      </div>
-                    </div>
+                    <ProjectDisplayComp 
+                      :project="project" 
+                      :showProjectLabel="true" 
+                    />
                   </li>
                 </ul>
               </div>

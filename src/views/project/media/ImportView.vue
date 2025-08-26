@@ -227,12 +227,48 @@ function unselectAll() {
   return false
 }
 
-function selectAllForImport(shouldImport = true, shouldAddAsExemplar = true) {
+function selectAllForImport(shouldImport = true, shouldAddAsExemplar = false) {
   const resultsValues = Array.from(mediaResults.value.values())
   for (const results of resultsValues) {
-    for (const result of results.media) {
-      result.should_import = shouldImport
-      result.should_add_as_exemplar = shouldAddAsExemplar
+    if (shouldAddAsExemplar) {
+      // For "import/exemplar" mode, select ALL media for import but only first as exemplar
+      for (const result of results.media) {
+        result.should_import = true
+        result.should_add_as_exemplar = false
+      }
+      
+      if (results.media && results.media.length > 0) {
+        const firstMedia = results.media[0]
+        setUniqueExemplar(firstMedia.id, results.taxon_id)
+      }
+    } else {
+      // For regular "import" mode, select all media files
+      for (const result of results.media) {
+        result.should_import = shouldImport
+        if (!shouldImport) {
+          // If deselecting for import, also deselect as exemplar
+          result.should_add_as_exemplar = false
+        }
+      }
+    }
+  }
+}
+
+function setUniqueExemplar(mediaId: string, taxonId: number) {
+  // First, uncheck all exemplars within this taxon only
+  const targetResults = mediaResults.value.get(taxonId)
+  if (targetResults) {
+    // Clear all exemplars for this taxon
+    for (const result of targetResults.media) {
+      result.should_add_as_exemplar = false
+    }
+    
+    // Then, set the specified media as exemplar
+    const targetMedia = targetResults.media.find((media: ImportMedia) => media.id === mediaId)
+    if (targetMedia) {
+      targetMedia.should_add_as_exemplar = true
+      // Ensure the media is also selected for import
+      targetMedia.should_import = true
     }
   }
 }
@@ -436,18 +472,18 @@ async function importMediaForSelectedTaxa() {
     importResults.value.clear()
 
     alert(
-      'You have successfully imported the media into Morphobank but you curate them before they can be released into your import.'
+      'You have successfully imported the media into Morphobank but you must curate them before they can be released into your project.'
     )
     
     // Use a small timeout to ensure the alert is dismissed before redirect
     setTimeout(() => {
       // Try using route name instead of path for more reliable navigation
-      router.replace({ 
+      router.push({ 
         name: 'MyProjectMediaCurateView', 
         params: { id: projectId } 
       }).catch(() => {
         // Fallback to path-based navigation
-        router.replace({ path: `/myprojects/${projectId}/media/curate` }).catch(() => {
+        router.push({ path: `/myprojects/${projectId}/media/curate` }).catch(() => {
           // Final fallback to window.location
           window.location.href = `/myprojects/${projectId}/media/curate`
         })
@@ -892,6 +928,7 @@ function getTimestampInfo(taxon: any) {
                         :importText="importText"
                         :results="mediaResults.get(taxonId)"
                         :fetchMoreMedia="() => fetchMoreMedia(taxonId)"
+                        :setUniqueExemplar="(mediaId: string) => setUniqueExemplar(mediaId, taxonId)"
                       />
                     </div>
                   </div>

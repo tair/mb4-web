@@ -135,6 +135,14 @@ export const usePublicProjectDetailsStore = defineStore({
         return
       }
 
+      // If we already have an error for this project ID, don't retry immediately
+      if (this.err && this.project_id === String(id)) {
+        console.log(
+          'fetchProject: already have an error for this project ID, not retrying'
+        )
+        return
+      }
+
       this.loading = true
       this.loaded = false
       this.err = null
@@ -177,6 +185,7 @@ export const usePublicProjectDetailsStore = defineStore({
       } catch (e) {
         console.error(`store:projectDetails:fetchProject(): ${e}`)
         this.err = 'Error fetching project list.'
+        this.project_id = String(id) // Set project_id even on error to prevent retry loops
       } finally {
         this.loading = false
       }

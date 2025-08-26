@@ -246,7 +246,7 @@ onMounted(() => {
         </div>
         <div class="stat">
           <h3 class="stat-number">{{ stats.numMedia }}</h3>
-          <div class="stat-label">Images Uploaded</div>
+          <div class="stat-label">Media Files Uploaded</div>
         </div>
         <div class="stat">
           <h3 class="stat-number">

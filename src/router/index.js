@@ -139,12 +139,22 @@ const router = createRouter({
         {
           path: '/curator',
           component: CuratorView,
+          beforeEnter: requireSignIn,
           children: [
             {
               path: '',
               name: 'CuratorHomeView',
               component: CuratorHomeView,
-              beforeEnter: requireSignIn,
+            },
+            {
+              path: 'duplication-requests',
+              name: 'CuratorDuplicationRequestsList',
+              component: () => import('@/views/curator/DuplicationRequestsListView.vue'),
+            },
+            {
+              path: 'duplication-requests/:requestId',
+              name: 'CuratorDuplicationRequestDetail',
+              component: () => import('@/views/curator/DuplicationRequestDetailView.vue'),
             },
           ],
         },
@@ -156,7 +166,7 @@ const router = createRouter({
             import(
               /* webpackChunkName: "unpublished" */ '@/views/project/home/ListView.vue'
             ),
-          beforeEnter: requireSignIn,
+          beforeEnter: requireSignInAndProfileConfirmation,
         },
         {
           path: '/myprojects/create',
@@ -165,7 +175,7 @@ const router = createRouter({
             import(
               /* webpackChunkName: "unpublished" */ '@/views/project/home/CreateView.vue'
             ),
-          beforeEnter: requireSignIn,
+          beforeEnter: requireSignInAndProfileConfirmation,
         },
         {
           path: '/myprojects/:id(\\d+)/edit',
@@ -174,14 +184,14 @@ const router = createRouter({
             import(
               /* webpackChunkName: "unpublished" */ '@/views/project/home/EditProjectView.vue'
             ),
-          beforeEnter: requireSignIn,
+          beforeEnter: requireSignInAndProfileConfirmation,
         },
         {
           path: '/myprojects/:id(\\d+)',
           name: 'MyProjectsView',
           component: MyProjectsView,
           beforeEnter: [
-            requireSignIn,
+            requireSignInAndProfileConfirmation,
             invalidateOnProjectChange,
             async (to, from, next) => {
               const projectId = to.params.id
@@ -206,8 +216,8 @@ const router = createRouter({
         {
           path: '/projects',
           component: ProjectView,
-          // add default redirect to /projects/pub_date
-          redirect: '/projects/pub_date',
+          // add default redirect to /projects/journal_year
+          redirect: '/projects/journal_year',
           children: PUBLISHED_PROJECT_VIEWS,
         },
         {
@@ -303,6 +313,50 @@ function requireSignIn(to) {
   if (!authStore.hasValidAuthToken() && to.name !== 'UserLogin') {
     return { name: 'UserLogin' }
   }
+}
+
+async function requireProfileConfirmation(to) {
+  const authStore = useAuthStore()
+  
+  // Skip profile confirmation check for profile page itself and auth-related pages
+  if (to.name === 'myprofile' || to.name === 'UserLogin' || to.name === 'UserAuth') {
+    return
+  }
+  
+  // Only check for authenticated users
+  if (!authStore.hasValidAuthToken()) {
+    return
+  }
+
+  try {
+    const confirmationStatus = await authStore.checkProfileConfirmation()
+    
+    if (confirmationStatus.profile_confirmation_required) {
+      // Redirect to profile page with a query parameter indicating confirmation is needed
+      return { 
+        name: 'myprofile', 
+        query: { 
+          confirm_profile: '1',
+          message: 'Please confirm your profile details to continue'
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Profile confirmation check failed:', error)
+    // Continue without blocking if check fails
+  }
+}
+
+// Combined guard for authentication and profile confirmation
+async function requireSignInAndProfileConfirmation(to) {
+  // First check authentication
+  const authCheck = requireSignIn(to)
+  if (authCheck) {
+    return authCheck
+  }
+  
+  // Then check profile confirmation
+  return await requireProfileConfirmation(to)
 }
 
 // Add a function to check if a project is published
