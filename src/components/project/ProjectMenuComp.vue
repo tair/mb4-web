@@ -7,6 +7,21 @@ const props = defineProps({
 <template>
   <div class="d-grid gap-2 d-sm-flex mb-3">
     <RouterLink
+      :to="`/projects/journal_year`"
+      class="nav-link p-0"
+      v-if="menuItem != 'journal_year'"
+    >
+      <button type="button" class="btn btn-secondary btn-sm">
+        Article Publication Year
+      </button>
+    </RouterLink>
+    <div v-else>
+      <button type="button" class="btn btn-warning btn-sm">
+        Article Publication Year
+      </button>
+    </div>
+
+    <RouterLink
       :to="`/projects/pub_date`"
       class="nav-link p-0"
       v-if="menuItem != 'pub_date'"
@@ -101,21 +116,6 @@ const props = defineProps({
     </RouterLink>
     <div v-else>
       <button type="button" class="btn btn-warning btn-sm">Institution</button>
-    </div>
-
-    <RouterLink
-      :to="`/projects/journal_year`"
-      class="nav-link p-0"
-      v-if="menuItem != 'journal_year'"
-    >
-      <button type="button" class="btn btn-secondary btn-sm">
-        Article Publication Year
-      </button>
-    </RouterLink>
-    <div v-else>
-      <button type="button" class="btn btn-warning btn-sm">
-        Article Publication Year
-      </button>
     </div>
   </div>
 </template>
