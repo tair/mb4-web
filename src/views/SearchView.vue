@@ -134,24 +134,24 @@ const filteredAuthors = computed(() => {
   if (authorsFilter.value === 'all') {
     return members
   }
-  
-  return members.filter(author => {
+
+  return members.filter((author) => {
     if (!author.projects || !Array.isArray(author.projects)) {
       return false
     }
-    
+
     if (authorsFilter.value === 'published') {
       // Author has at least one published project
-      return author.projects.some(project => 
-        project.published == 1 || project.published === true
+      return author.projects.some(
+        (project) => project.published == 1 || project.published === true
       )
     } else if (authorsFilter.value === 'unpublished') {
       // Author has at least one unpublished project
-      return author.projects.some(project => 
-        project.published == 0 || project.published === false
+      return author.projects.some(
+        (project) => project.published == 0 || project.published === false
       )
     }
-    
+
     return true
   })
 })
