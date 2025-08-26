@@ -22,6 +22,11 @@ export const usePublicProjectsStore = defineStore({
     itemsPerPage: 25,
     totalPages: 0,
     /////////////////////
+
+    // morphobank statistics //
+    morphoBankStats: null,
+    morphoBankStatsLoading: false,
+    ////////////////////////////
   }),
   getters: {
     isLoading(state) {
@@ -275,6 +280,28 @@ export const usePublicProjectsStore = defineStore({
         this.err = 'Error fetching project institutions.'
       } finally {
         this.loading = false
+      }
+    },
+
+    async fetchMorphoBankStats() {
+      // if already loaded, return them.
+      if (this.morphoBankStats) return this.morphoBankStats
+
+      this.morphoBankStatsLoading = true
+
+      try {
+        var getter = axios.create()
+        delete getter.defaults.headers.common['Authorization']
+
+        const res = await getter.get(`${import.meta.env.VITE_API_URL}/stats/home`)
+        this.morphoBankStats = res.data
+
+        return this.morphoBankStats
+      } catch (e) {
+        console.error(`store:projects:fetchMorphoBankStats(): ${e}`)
+        this.err = 'Error fetching MorphoBank statistics.'
+      } finally {
+        this.morphoBankStatsLoading = false
       }
     },
   },

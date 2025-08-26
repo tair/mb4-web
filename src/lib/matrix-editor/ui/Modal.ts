@@ -259,7 +259,10 @@ export class Modal extends Component {
     let buttonHtml = ''
     for (const button of this.buttons) {
       const dismissable = button.dismissable ? 'data-bs-dismiss="modal"' : ''
-      buttonHtml += `<button type="button" class="btn btn-primary" data-key="${
+      const buttonClass = (button.key === ModalDefaultButtonKeys.CANCEL || button.key === ModalDefaultButtonKeys.NO) 
+        ? 'btn btn-outline-primary' 
+        : 'btn btn-primary'
+      buttonHtml += `<button type="button" class="${buttonClass}" data-key="${
         button.key || button.text
       }" ${dismissable}>${button.text}</button>`
     }

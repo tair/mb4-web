@@ -1,17 +1,24 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { usePublicProjectsStore } from '@/stores/PublicProjectsStore.js'
+import { getMorphoBankStatsText } from '@/utils/project'
 import GenericLoaderComp from '@/components/project/GenericLoaderComp.vue'
 import ProjectMenuComp from '@/components/project/ProjectMenuComp.vue'
+import ProjectDisplayComp from '@/components/project/ProjectDisplayComp.vue'
 
 const route = useRoute()
 const projectsStore = usePublicProjectsStore()
 let sort_by = ref('asc')
 let is_asc = ref(true)
 
-onMounted(() => {
-  projectsStore.fetchProjectStats()
+onMounted(async () => {
+  await projectsStore.fetchProjectStats()
+  await projectsStore.fetchMorphoBankStats()
+})
+
+const morphoBankStatsText = computed(() => {
+  return getMorphoBankStatsText(projectsStore.morphoBankStats, true)
 })
 </script>
 
@@ -23,14 +30,7 @@ onMounted(() => {
     "
   >
     <div class="mb-3">
-      There are {{ projectsStore.projects?.length }} publicly accessible
-      projects as of April 23, 2022 in MorphoBank. Publicly available projects
-      contain 159,761 images and 660 matrices. MorphoBank also has an additional
-      1,501 projects that are in progress. These contain an additional 153,815
-      images and 1,310 matrices. These will become available as scientists
-      complete their research and release these data. 3,400 scientists and
-      students are content builders on MorphoBank. 1801 site visitors viewed or
-      downloaded data in the last thirty days.
+      {{ morphoBankStatsText }}
     </div>
 
     <div class="d-flex justify-content-between">
@@ -50,17 +50,10 @@ onMounted(() => {
       >
         <div class="list-group-item p-0 m-0">
           <div class="py-2 m-0" style="border-bottom: 1px solid #e0e0e0">
-            <div class="row p-0 m-0">
-              <div class="col-2 small">Project {{ item.project_id }}:</div>
-              <div class="col">
-                <RouterLink
-                  :to="`/project/${item.project_id}/overview`"
-                  class="nav-link p-0"
-                >
-                  <div v-html="item.name"></div>
-                </RouterLink>
-              </div>
-            </div>
+            <ProjectDisplayComp 
+              :project="item" 
+              :showProjectLabel="true" 
+            />
             <div class="row p-0 m-0">
               <div class="col-2 small">Views:</div>
               <div class="col">{{ item.views }}</div>
@@ -85,17 +78,10 @@ onMounted(() => {
                 {{ item.media_id }}
               </div>
             </div>
-            <div class="row p-0 m-0">
-              <div class="col-2 small">Project {{ item.project_id }}:</div>
-              <div class="col">
-                <RouterLink
-                  :to="`/project/${item.project_id}/overview`"
-                  class="nav-link p-0"
-                >
-                  <div v-html="item.name"></div>
-                </RouterLink>
-              </div>
-            </div>
+            <ProjectDisplayComp 
+              :project="item" 
+              :showProjectLabel="true" 
+            />
 
             <div class="row p-0 m-0">
               <div class="col-2 small">Views:</div>
@@ -126,17 +112,10 @@ onMounted(() => {
                 </RouterLink>
               </div>
             </div>
-            <div class="row p-0 m-0">
-              <div class="col-2 small">Project {{ item.project_id }}:</div>
-              <div class="col">
-                <RouterLink
-                  :to="`/project/${item.project_id}/overview`"
-                  class="nav-link p-0"
-                >
-                  <div v-html="item.project"></div>
-                </RouterLink>
-              </div>
-            </div>
+            <ProjectDisplayComp 
+              :project="item" 
+              :showProjectLabel="true" 
+            />
 
             <div class="row p-0 m-0">
               <div class="col-2 small">Downloads:</div>
@@ -167,17 +146,10 @@ onMounted(() => {
                 </RouterLink>
               </div>
             </div>
-            <div class="row p-0 m-0">
-              <div class="col-2 small">Project {{ item.project_id }}:</div>
-              <div class="col">
-                <RouterLink
-                  :to="`/project/${item.project_id}/overview`"
-                  class="nav-link p-0"
-                >
-                  <div v-html="item.project"></div>
-                </RouterLink>
-              </div>
-            </div>
+            <ProjectDisplayComp 
+              :project="item" 
+              :showProjectLabel="true" 
+            />
 
             <div class="row p-0 m-0">
               <div class="col-2 small">Downloads:</div>
