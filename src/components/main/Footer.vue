@@ -36,11 +36,7 @@
                 News
               </RouterLink>
             </div>
-            <div class="col">
-              <RouterLink class="nav-link p-1 me-3" to="/askus">
-                Ask Us
-              </RouterLink>
-            </div>
+
             <div class="col">
               <a
                 class="nav-link p-1 me-3"
@@ -72,13 +68,13 @@
           </section>
         </div>
       </div>
-      <div class="row">
+      <div class="row mt-3">
         <p class="col text-muted text-center">
           MorphoBank was originally developed at Stony Brook University and was
           hosted there from 2001-2021.
         </p>
       </div>
-      <div class="text-copyright text-center">
+      <div class="text-copyright text-center mb-3">
         MorphoBank Version 4.0; &copy; The MorphoBank Project,
         {{ new Date().getFullYear() }}
       </div>

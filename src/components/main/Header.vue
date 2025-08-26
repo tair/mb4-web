@@ -78,6 +78,14 @@ function onSearch() {
                     Browse Projects
                   </RouterLink>
                 </li>
+                <li class="nav-item mx-1">
+                  <RouterLink
+                    class="nav-link p-0 m-1 text-nowrap"
+                    to="/askus"
+                  >
+                    Ask Us
+                  </RouterLink>
+                </li>
               </ul>
             </div>
           </div>
