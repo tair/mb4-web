@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { usePublishWorkflowStore } from '@/stores/PublishWorkflowStore.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import UnpublishedItemsNotice from '@/components/project/UnpublishedItemsNotice.vue'
+import PublishedSuccessView from '@/components/project/PublishedSuccessView.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -56,12 +57,6 @@ onMounted(async () => {
   isLoaded.value = true
 })
 
-// const canPublish = computed(() => {
-//   return publishStore.canPublish
-// })
-
-// Unpublished items logic moved to UnpublishedItemsNotice component
-
 function editItem(id, type) {
   const routes = {
     media: `/myprojects/${projectId}/media/${id}`,
@@ -106,10 +101,12 @@ async function publishProject() {
   }
 }
 
-function formatDate(timestamp) {
-  if (!timestamp) return ''
-  const date = new Date(timestamp * 1000) // Convert from Unix timestamp
-  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+function handleReturnToOverview() {
+  router.push(`/myprojects/${projectId}/overview`)
+}
+
+function handleViewPublishedProject(publishedProjectId) {
+  router.push(`/project/${publishedProjectId}/overview`)
 }
 </script>
 
@@ -117,50 +114,12 @@ function formatDate(timestamp) {
   <LoadingIndicator :isLoaded="isLoaded">
     <div id="formArea" class="publish-final">
       <!-- Publishing Completed Successfully -->
-      <div v-if="publishingComplete" class="publication-success">
-        <div class="success-header">
-          <i class="fa-solid fa-check-circle success-icon"></i>
-          <h2>Project Published Successfully!</h2>
-        </div>
-
-        <div class="success-details">
-          <p>
-            Your project has been successfully published and is now publicly
-            available.
-          </p>
-
-          <div v-if="publicationResult" class="publication-info">
-            <div class="info-item" v-if="publicationResult.projectId">
-              <strong>Project ID:</strong> {{ publicationResult.projectId }}
-            </div>
-            <div class="info-item" v-if="publicationResult.publishedOn">
-              <strong>Published On:</strong>
-              {{ formatDate(publicationResult.publishedOn) }}
-            </div>
-            <div class="info-item" v-if="publicationResult.message">
-              <strong>Status:</strong> {{ publicationResult.message }}
-            </div>
-          </div>
-        </div>
-
-        <div class="success-actions">
-          <button
-            @click="router.push(`/myprojects/${projectId}/overview`)"
-            class="btn btn-primary btn-large"
-          >
-            Return to Project Overview
-          </button>
-          <button
-            v-if="publicationResult?.projectId"
-            @click="
-              router.push(`/project/${publicationResult.projectId}/overview`)
-            "
-            class="btn btn-secondary btn-large"
-          >
-            View Published Project
-          </button>
-        </div>
-      </div>
+      <PublishedSuccessView
+        v-if="publishingComplete"
+        :publication-result="publicationResult"
+        @return-to-overview="handleReturnToOverview"
+        @view-published-project="handleViewPublishedProject"
+      />
 
       <!-- Publishing Interface -->
       <div v-else class="publishing-interface">
@@ -190,11 +149,18 @@ function formatDate(timestamp) {
           <button
             @click="confirmAndPublish"
             class="btn btn-success btn-large"
-            :disabled="isPublishing"
+            :disabled="isPublishing && !errorMessage"
           >
-            <i v-if="isPublishing" class="fa-solid fa-spinner fa-spin"></i>
+            <i
+              v-if="isPublishing && !errorMessage"
+              class="fa-solid fa-spinner fa-spin"
+            ></i>
             <i v-else class="fa-solid fa-rocket"></i>
-            {{ isPublishing ? 'Publishing Project...' : 'Publish Project' }}
+            {{
+              isPublishing && !errorMessage
+                ? 'Publishing Project...'
+                : 'Publish Project'
+            }}
           </button>
         </div>
 
@@ -218,33 +184,36 @@ function formatDate(timestamp) {
             Return to Project Overview
           </button>
         </div>
-      </div>
 
-      <!-- Matrix Media Only Warning (if applicable) -->
-      <div
-        v-if="publishStore.preferences.publishMatrixMediaOnly"
-        class="info-box"
-      >
-        <b>Please Note:</b> You have chosen to only publish media in use in a
-        matrix. Due to this, the following media will NOT be published:
-        <div style="padding: 10px 0px 30px 20px">
-          <template v-for="(media, index) in mediaNotInMatrix" :key="media.id">
-            <a
-              href="#"
-              @click="editItem(media.id, 'media')"
-              class="text-primary"
-              >M{{ media.id }}</a
+        <!-- Matrix Media Only Warning (if applicable) -->
+        <div
+          v-if="publishStore.preferences.publishMatrixMediaOnly"
+          class="info-box"
+        >
+          <b>Please Note:</b> You have chosen to only publish media in use in a
+          matrix. Due to this, the following media will NOT be published:
+          <div style="padding: 10px 0px 30px 20px">
+            <template
+              v-for="(media, index) in mediaNotInMatrix"
+              :key="media.id"
             >
-            <span v-if="index < mediaNotInMatrix.length - 1">, </span>
-          </template>
+              <a
+                href="#"
+                @click="editItem(media.id, 'media')"
+                class="text-primary"
+                >M{{ media.id }}</a
+              >
+              <span v-if="index < mediaNotInMatrix.length - 1">, </span>
+            </template>
+          </div>
         </div>
-      </div>
 
-      <!-- Unpublished Items Section -->
-      <UnpublishedItemsNotice
-        :unpublished-items="unpublishedItems"
-        :project-id="projectId"
-      />
+        <!-- Unpublished Items Section -->
+        <UnpublishedItemsNotice
+          :unpublished-items="unpublishedItems"
+          :project-id="projectId"
+        />
+      </div>
 
       <!-- Publishing Status -->
       <div v-if="isPublishing && !errorMessage" class="publishing-status mt-3">
@@ -268,75 +237,7 @@ function formatDate(timestamp) {
   padding: 20px;
 }
 
-/* Publishing Success Styles */
-.publication-success {
-  text-align: center;
-  padding: 40px 20px;
-}
-
-.success-header {
-  margin-bottom: 30px;
-}
-
-.success-icon {
-  font-size: 48px;
-  color: #28a745;
-  margin-bottom: 15px;
-  display: block;
-}
-
-.success-header h2 {
-  color: #333;
-  margin: 0;
-  font-size: 28px;
-}
-
-.success-details {
-  margin-bottom: 40px;
-}
-
-.success-details p {
-  font-size: 18px;
-  color: #666;
-  margin-bottom: 25px;
-}
-
-.publication-info {
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  padding: 20px;
-  text-align: left;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.info-item {
-  margin-bottom: 10px;
-  font-size: 14px;
-}
-
-.info-item strong {
-  color: #333;
-  margin-right: 8px;
-}
-
-.publication-link {
-  color: #007bff;
-  text-decoration: none;
-  word-break: break-all;
-}
-
-.publication-link:hover {
-  text-decoration: underline;
-}
-
-.success-actions {
-  display: flex;
-  gap: 15px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
+/* Publishing success styles moved to PublishedSuccessView component */
 
 /* Publishing Interface Styles */
 .publishing-interface {
@@ -500,7 +401,6 @@ function formatDate(timestamp) {
 }
 
 @media (max-width: 768px) {
-  .success-actions,
   .publish-actions,
   .secondary-actions {
     flex-direction: column;
