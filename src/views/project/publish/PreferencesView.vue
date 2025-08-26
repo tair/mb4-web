@@ -37,16 +37,7 @@ const preferences = reactive({
   publishInactiveMembers: true,
 })
 
-// Mock data for unpublished items
-const unpublishedItems = reactive({
-  media: [
-    { id: 123, type: 'media' },
-    { id: 456, type: 'media' },
-  ],
-  documents: [{ id: 1, title: 'Research Notes Document', type: 'document' }],
-  matrices: [],
-  folios: [],
-})
+// No unpublished items UI in this view; handled in FinalView
 
 onMounted(async () => {
   // Check if we can access this step
@@ -73,33 +64,31 @@ onMounted(async () => {
   // Load existing preferences from store
   Object.assign(preferences, publishStore.preferences)
 
+  // If user previously confirmed no personal info, skip to final step
+  // Unless they came from final view to update preferences
+  const fromFinal = route.query.from === 'final'
+  if (preferences.noPersonalInfo === true && !fromFinal) {
+    router.push(`/myprojects/${projectId}/publish/final`)
+    return
+  }
+
   // Simulate loading delay
   await new Promise((resolve) => setTimeout(resolve, 300))
   isLoaded.value = true
 
   validateForm()
+
+  // Unpublished items are handled and loaded in FinalView
 })
 
-const hasUnpublishedItems = computed(() => {
-  return (
-    unpublishedItems.documents.length > 0 ||
-    unpublishedItems.folios.length > 0 ||
-    unpublishedItems.matrices.length > 0 ||
-    unpublishedItems.media.length > 0
-  )
-})
+// Removed unpublished items logic from this view
 
 function validateForm() {
-  formValid.value = preferences.nsfFunded !== null
+  formValid.value = true
 }
 
 async function savePreferences() {
-  // Validation matching the original PHP form
-  if (preferences.nsfFunded === null) {
-    alert('Please indicate if your project received NSF funding.')
-    return false
-  }
-
+  // Validation matching the original PHP form (updated)
   if (preferences.extinctTaxaIdentified === null) {
     alert('Please indicate if you have marked all extinct taxa.')
     return false
@@ -133,15 +122,7 @@ async function savePreferences() {
   return true
 }
 
-function editItem(id, type) {
-  const routes = {
-    media: `/myprojects/${projectId}/media/${id}`,
-    document: `/myprojects/${projectId}/documents/${id}`,
-    matrix: `/myprojects/${projectId}/matrices/${id}`,
-    folio: `/myprojects/${projectId}/folios/${id}`,
-  }
-  router.push(routes[type])
-}
+// Removed item editing helpers; not used in this view
 
 function updateCopyrightPreference(preference) {
   preferences.copyrightPreference = preference
@@ -190,70 +171,14 @@ function updateCopyrightPreference(preference) {
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
     <div id="formArea" class="publish-preferences">
-      <p>
-        Before publishing your project, please confirm your publishing
-        preferences and click the "Save Publishing Preferences" button.
-      </p>
-      <p>
-        Please note your project's exemplar media will always be published to
-        your project.
-      </p>
-      <p>
-        If your project contains character ontologies within a matrix (see
-        manual) those will automatically be published.
-      </p>
-
-      <!-- Validation Status -->
-      <div class="validation-status-section">
-        <h3>Validation Status</h3>
-        <div class="validation-checks">
-          <div class="validation-check">
-            <span class="validation-icon success">✅</span>
-            <span class="validation-text">Citation Information - Complete</span>
-          </div>
-          <div class="validation-check">
-            <span class="validation-icon success">✅</span>
-            <span class="validation-text">Media Validation - Complete</span>
-          </div>
-        </div>
-        <p class="validation-note">
-          <small
-            >All validations have been completed successfully. You can now
-            configure your publishing preferences.</small
-          >
-        </p>
-      </div>
-
-      <hr style="height: 2px; background-color: #dedede; border: 0px" />
-      <br />
-      <div class="formError">* indicates mandatory field</div>
+      <!-- Intro/validation status removed per requirements -->
 
       <form @submit.prevent="savePreferences" id="publishingForm">
         <!-- Funding Acknowledgment -->
         <p style="font-size: 14px; line-height: 1.3em">
           <b>Funding acknowledgment:</b>
         </p>
-        <div class="formLabel">
-          <span class="formErrors">*</span> NSF Funded?<br />
-          <span style="font-weight: normal">
-            <input
-              type="radio"
-              name="nsf_funded"
-              value="1"
-              :checked="preferences.nsfFunded === true"
-              @change="preferences.nsfFunded = true"
-            />
-            Yes&nbsp;&nbsp;&nbsp;&nbsp;
-            <input
-              type="radio"
-              name="nsf_funded"
-              value="0"
-              :checked="preferences.nsfFunded === false"
-              @change="preferences.nsfFunded = false"
-            />
-            No
-          </span>
-        </div>
+        <!-- NSF funded radio group removed -->
 
         <br />
         <p style="font-size: 14px; line-height: 1.3em"><b>Extinct taxa:</b></p>
@@ -390,120 +315,6 @@ function updateCopyrightPreference(preference) {
           </button>
         </div>
       </form>
-
-      <!-- Unpublished Items Section -->
-      <div class="unpublished-items-section">
-        <div class="info-box">
-          <b>Please Note:</b> <b>Individual</b> project documents, folios,
-          matrices and media can be set to 'Never publish to project'.
-
-          <template v-if="hasUnpublishedItems">
-            The following items will <b>NOT</b> be published to your project:
-            <div style="padding: 0px 0px 0px 20px">
-              <!-- Documents -->
-              <p v-if="unpublishedItems.documents.length > 0">
-                <b
-                  >{{ unpublishedItems.documents.length }}
-                  {{
-                    unpublishedItems.documents.length === 1
-                      ? 'document'
-                      : 'documents'
-                  }}:</b
-                >
-                <template
-                  v-for="(doc, index) in unpublishedItems.documents"
-                  :key="doc.id"
-                >
-                  <a
-                    href="#"
-                    @click="editItem(doc.id, 'document')"
-                    class="text-primary"
-                    >{{ doc.title }}</a
-                  >
-                  <span v-if="index < unpublishedItems.documents.length - 1"
-                    >,
-                  </span>
-                </template>
-              </p>
-
-              <!-- Folios -->
-              <p v-if="unpublishedItems.folios.length > 0">
-                <b
-                  >{{ unpublishedItems.folios.length }}
-                  {{
-                    unpublishedItems.folios.length === 1 ? 'folio' : 'folios'
-                  }}:</b
-                >
-                <template
-                  v-for="(folio, index) in unpublishedItems.folios"
-                  :key="folio.id"
-                >
-                  <a
-                    href="#"
-                    @click="editItem(folio.id, 'folio')"
-                    class="text-primary"
-                    >{{ folio.name }}</a
-                  >
-                  <span v-if="index < unpublishedItems.folios.length - 1"
-                    >,
-                  </span>
-                </template>
-              </p>
-
-              <!-- Matrices -->
-              <p v-if="unpublishedItems.matrices.length > 0">
-                <b
-                  >{{ unpublishedItems.matrices.length }}
-                  {{
-                    unpublishedItems.matrices.length === 1
-                      ? 'matrix'
-                      : 'matrices'
-                  }}:</b
-                >
-                <template
-                  v-for="(matrix, index) in unpublishedItems.matrices"
-                  :key="matrix.id"
-                >
-                  <a
-                    href="#"
-                    @click="editItem(matrix.id, 'matrix')"
-                    class="text-primary"
-                    >{{ matrix.title }} (matrix {{ matrix.id }})</a
-                  >
-                  <span v-if="index < unpublishedItems.matrices.length - 1"
-                    >,
-                  </span>
-                </template>
-              </p>
-
-              <!-- Media -->
-              <p v-if="unpublishedItems.media.length > 0">
-                <b>{{ unpublishedItems.media.length }} media:</b>
-                <template
-                  v-for="(media, index) in unpublishedItems.media"
-                  :key="media.id"
-                >
-                  <a
-                    href="#"
-                    @click="editItem(media.id, 'media')"
-                    class="text-primary"
-                    >M{{ media.id }}</a
-                  >
-                  <span v-if="index < unpublishedItems.media.length - 1"
-                    >,
-                  </span>
-                </template>
-              </p>
-            </div>
-          </template>
-
-          <template v-else>
-            <div style="padding: 0px 0px 0px 20px">
-              <p>All items are set to publish when project is published</p>
-            </div>
-          </template>
-        </div>
-      </div>
     </div>
   </LoadingIndicator>
 </template>

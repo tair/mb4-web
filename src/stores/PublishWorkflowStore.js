@@ -44,6 +44,14 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
       publishInactiveMembers: true,
     },
 
+    // Items explicitly set to never publish
+    unpublishedItems: {
+      documents: [],
+      folios: [],
+      matrices: [],
+      media: [],
+    },
+
     // Final publishing data
     finalData: {
       publishingNotes: '',
@@ -78,7 +86,6 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
       return (
         state.validations.citations.isValid &&
         state.validations.media.isValid &&
-        state.preferences.nsfFunded !== null &&
         state.preferences.extinctTaxaIdentified !== null &&
         state.preferences.noPersonalInfo === true
       )
@@ -151,6 +158,12 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         publishCharacterNotes: true,
         publishMediaNotes: true,
         publishInactiveMembers: true,
+      }
+      this.unpublishedItems = {
+        documents: [],
+        folios: [],
+        matrices: [],
+        media: [],
       }
       this.finalData = {
         publishingNotes: '',
@@ -251,30 +264,52 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         const canPublish = data.canPublish !== false // Default to true if not specified
 
         if (data.warning === 'no_media') {
+          // Block publishing: explicit error copy per requirements
           this.validations.media = {
-            isValid: canPublish,
+            isValid: false,
             hasMedia: false,
             incompleteMedia: [],
-            errors: canPublish
-              ? []
-              : ['This project has no media files to publish.'],
-            warnings: canPublish
-              ? [
-                  'No media files found in project - projects without media may have limited visibility',
-                ]
-              : [],
+            errors: ['At least 1 media file is required to publish a project.'],
+            warnings: [],
+          }
+        } else if (data.warning === 'no_exemplar_media') {
+          // Exemplar media is required
+          this.validations.media = {
+            isValid: false,
+            hasMedia: Boolean(data.has_media ?? true),
+            incompleteMedia: [],
+            errors: [
+              'An exemplar media file must be selected for the project.',
+            ],
+            warnings: [],
+          }
+        } else if (data.warning === 'invalid_exemplar_media') {
+          // Selected exemplar is invalid or missing
+          this.validations.media = {
+            isValid: false,
+            hasMedia: Boolean(data.has_media ?? true),
+            incompleteMedia: [],
+            errors: [
+              'The selected exemplar media file is invalid or does not exist.',
+            ],
+            warnings: [],
           }
         } else if (data.warning === 'media_warnings') {
+          // Prefer new API fields: unfinishedMedia and message
+          const unfinished = Array.isArray(data.unfinishedMedia)
+            ? data.unfinishedMedia
+            : Array.isArray(data.incomplete_media)
+            ? data.incomplete_media
+            : []
+          const detailedMessage =
+            data.message || 'Some media files have incomplete information'
+
           this.validations.media = {
             isValid: canPublish,
             hasMedia: true,
-            incompleteMedia: data.incomplete_media || [],
-            errors: canPublish
-              ? []
-              : ['Some media files have incomplete information'],
-            warnings: canPublish
-              ? ['Some media files have incomplete information']
-              : [],
+            incompleteMedia: unfinished,
+            errors: canPublish ? [] : [detailedMessage],
+            warnings: [],
           }
         } else {
           this.validations.media = {
@@ -359,11 +394,58 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
           ),
         }
 
+        // Load unpublished items if provided
+        if (
+          Array.isArray(data.unpublishedDocuments) ||
+          Array.isArray(data.unpublishedFolios) ||
+          Array.isArray(data.unpublishedMatrices) ||
+          Array.isArray(data.unpublishedMedia)
+        ) {
+          this.unpublishedItems = {
+            documents: data.unpublishedDocuments || [],
+            folios: data.unpublishedFolios || [],
+            matrices: data.unpublishedMatrices || [],
+            media: data.unpublishedMedia || [],
+          }
+        }
+
         return { redirect: false }
       } catch (error) {
         console.error('Load preferences error:', error)
         return { redirect: false }
       }
+    },
+
+    // Load unpublished items from backend (fallback endpoint if not included in preferences)
+    async loadUnpublishedItems(projectId) {
+      try {
+        const response = await fetch(
+          `${
+            import.meta.env.VITE_API_URL
+          }/projects/${projectId}/publishing/unpublished-items`,
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${this.getAuthToken()}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        )
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+        const data = await response.json()
+        this.unpublishedItems = {
+          documents: data.documents || [],
+          folios: data.folios || [],
+          matrices: data.matrices || [],
+          media: data.media || [],
+        }
+      } catch (error) {
+        console.error('Load unpublished items error:', error)
+        // keep existing values
+      }
+      return this.unpublishedItems
     },
 
     // Save publishing preferences to backend
@@ -374,12 +456,6 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         // Map Vue preferences to backend format
         const backendData = {
           publish_cc0: preferences.allowCommercialUse ? 1 : 0,
-          nsf_funded:
-            preferences.nsfFunded !== null
-              ? preferences.nsfFunded
-                ? 1
-                : 0
-              : 0,
           extinct_taxa_identified:
             preferences.extinctTaxaIdentified !== null
               ? preferences.extinctTaxaIdentified

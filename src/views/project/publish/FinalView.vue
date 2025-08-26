@@ -3,6 +3,8 @@ import { onMounted, ref, computed, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePublishWorkflowStore } from '@/stores/PublishWorkflowStore.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
+import UnpublishedItemsNotice from '@/components/project/UnpublishedItemsNotice.vue'
+import PublishedSuccessView from '@/components/project/PublishedSuccessView.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -16,16 +18,8 @@ const successMessage = ref(null)
 const publishingComplete = ref(false)
 const publicationResult = ref(null)
 
-// Mock data for unpublished items (same as preferences)
-const unpublishedItems = reactive({
-  media: [
-    { id: 123, type: 'media' },
-    { id: 456, type: 'media' },
-  ],
-  documents: [{ id: 1, title: 'Research Notes Document', type: 'document' }],
-  matrices: [],
-  folios: [],
-})
+// Use store-backed unpublished items
+const unpublishedItems = computed(() => publishStore.unpublishedItems)
 
 // Mock data for media not in matrix (when matrix-only publishing is enabled)
 const mediaNotInMatrix = reactive([
@@ -42,22 +36,25 @@ onMounted(async () => {
 
   publishStore.setCurrentStep('final')
 
+  // Ensure unpublished items are loaded for display
+  try {
+    const u = publishStore.unpublishedItems
+    const missingUnpublished = [
+      u?.documents?.length,
+      u?.folios?.length,
+      u?.matrices?.length,
+      u?.media?.length,
+    ].every((n) => !n || n === 0)
+    if (missingUnpublished) {
+      await publishStore.loadUnpublishedItems(projectId)
+    }
+  } catch (e) {
+    // Best-effort only; ignore errors
+  }
+
   // Simulate loading delay
   await new Promise((resolve) => setTimeout(resolve, 300))
   isLoaded.value = true
-})
-
-// const canPublish = computed(() => {
-//   return publishStore.canPublish
-// })
-
-const hasUnpublishedItems = computed(() => {
-  return (
-    unpublishedItems.documents.length > 0 ||
-    unpublishedItems.folios.length > 0 ||
-    unpublishedItems.matrices.length > 0 ||
-    unpublishedItems.media.length > 0
-  )
 })
 
 function editItem(id, type) {
@@ -71,13 +68,8 @@ function editItem(id, type) {
 }
 
 function confirmAndPublish() {
-  const confirmed = confirm(
-    'You are about to publish your project on MorphoBank - please be sure you have made all the changes you wish to make because publishing on MorphoBank means that changes to the project can no longer be made. If you wish to build on a project that is published, click the "Request project duplication" link on the project overview page to request to have the project duplicated.'
-  )
-
-  if (confirmed) {
-    publishProject()
-  }
+  // Directly publish without confirm dialog per requirements
+  publishProject()
 }
 
 async function publishProject() {
@@ -109,10 +101,12 @@ async function publishProject() {
   }
 }
 
-function formatDate(timestamp) {
-  if (!timestamp) return ''
-  const date = new Date(timestamp * 1000) // Convert from Unix timestamp
-  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+function handleReturnToOverview() {
+  router.push(`/myprojects/${projectId}/overview`)
+}
+
+function handleViewPublishedProject(publishedProjectId) {
+  router.push(`/project/${publishedProjectId}/overview`)
 }
 </script>
 
@@ -120,67 +114,26 @@ function formatDate(timestamp) {
   <LoadingIndicator :isLoaded="isLoaded">
     <div id="formArea" class="publish-final">
       <!-- Publishing Completed Successfully -->
-      <div v-if="publishingComplete" class="publication-success">
-        <div class="success-header">
-          <i class="fa-solid fa-check-circle success-icon"></i>
-          <h2>Project Published Successfully!</h2>
-        </div>
-
-        <div class="success-details">
-          <p>
-            Your project has been successfully published and is now publicly
-            available.
-          </p>
-
-          <div v-if="publicationResult" class="publication-info">
-            <div class="info-item" v-if="publicationResult.projectId">
-              <strong>Project ID:</strong> {{ publicationResult.projectId }}
-            </div>
-            <div class="info-item" v-if="publicationResult.publishedOn">
-              <strong>Published On:</strong>
-              {{ formatDate(publicationResult.publishedOn) }}
-            </div>
-            <div class="info-item" v-if="publicationResult.message">
-              <strong>Status:</strong> {{ publicationResult.message }}
-            </div>
-          </div>
-        </div>
-
-        <div class="success-actions">
-          <button
-            @click="router.push(`/myprojects/${projectId}/overview`)"
-            class="btn btn-primary btn-large"
-          >
-            Return to Project Overview
-          </button>
-          <button
-            v-if="publicationResult?.projectId"
-            @click="
-              router.push(`/project/${publicationResult.projectId}/overview`)
-            "
-            class="btn btn-secondary btn-large"
-          >
-            View Published Project
-          </button>
-        </div>
-      </div>
+      <PublishedSuccessView
+        v-if="publishingComplete"
+        :publication-result="publicationResult"
+        @return-to-overview="handleReturnToOverview"
+        @view-published-project="handleViewPublishedProject"
+      />
 
       <!-- Publishing Interface -->
       <div v-else class="publishing-interface">
-        <h2>Final Step: Publish Your Project</h2>
-
         <div class="publish-intro">
-          <p>
-            You're ready to publish your project! Please review the information
-            below and confirm that you want to proceed with publication.
-          </p>
-
           <div class="warning-notice">
             <i class="fa-solid fa-exclamation-triangle warning-icon"></i>
             <p>
-              <strong>Important:</strong> Once published, your project cannot be
-              modified. If you need to make changes after publication, you'll
-              need to request project duplication to create a new version.
+              <strong>Important:</strong> You are about to publish your project
+              on MorphoBank - please be sure you have made all the changes you
+              wish to make because publishing on MorphoBank means that changes
+              to the project can no longer be made. If you wish to build on a
+              project that is published, click the "Request project duplication"
+              link on the project overview page to request to have the project
+              duplicated.
             </p>
           </div>
         </div>
@@ -191,157 +144,75 @@ function formatDate(timestamp) {
           {{ errorMessage }}
         </div>
 
-        <!-- Primary Action Buttons (centered) -->
+        <!-- Primary Action Button (centered) -->
         <div class="publish-actions">
           <button
             @click="confirmAndPublish"
             class="btn btn-success btn-large"
-            :disabled="isPublishing"
+            :disabled="isPublishing && !errorMessage"
           >
-            <i v-if="isPublishing" class="fa-solid fa-spinner fa-spin"></i>
+            <i
+              v-if="isPublishing && !errorMessage"
+              class="fa-solid fa-spinner fa-spin"
+            ></i>
             <i v-else class="fa-solid fa-rocket"></i>
-            {{ isPublishing ? 'Publishing Project...' : 'Publish Project' }}
+            {{
+              isPublishing && !errorMessage
+                ? 'Publishing Project...'
+                : 'Publish Project'
+            }}
+          </button>
+        </div>
+
+        <!-- Secondary Action Buttons (smaller, on separate row) -->
+        <div class="secondary-actions">
+          <button
+            @click="
+              router.push(
+                `/myprojects/${projectId}/publish/preferences?from=final`
+              )
+            "
+            class="btn btn-primary"
+          >
+            Update Publishing Preferences
           </button>
 
           <button
             @click="router.push(`/myprojects/${projectId}/overview`)"
-            class="btn btn-secondary btn-large"
+            class="btn btn-secondary"
           >
             Return to Project Overview
           </button>
         </div>
-      </div>
 
-      <!-- Matrix Media Only Warning (if applicable) -->
-      <div
-        v-if="publishStore.preferences.publishMatrixMediaOnly"
-        class="info-box"
-      >
-        <b>Please Note:</b> You have chosen to only publish media in use in a
-        matrix. Due to this, the following media will NOT be published:
-        <div style="padding: 10px 0px 30px 20px">
-          <template v-for="(media, index) in mediaNotInMatrix" :key="media.id">
-            <a
-              href="#"
-              @click="editItem(media.id, 'media')"
-              class="text-primary"
-              >M{{ media.id }}</a
+        <!-- Matrix Media Only Warning (if applicable) -->
+        <div
+          v-if="publishStore.preferences.publishMatrixMediaOnly"
+          class="info-box"
+        >
+          <b>Please Note:</b> You have chosen to only publish media in use in a
+          matrix. Due to this, the following media will NOT be published:
+          <div style="padding: 10px 0px 30px 20px">
+            <template
+              v-for="(media, index) in mediaNotInMatrix"
+              :key="media.id"
             >
-            <span v-if="index < mediaNotInMatrix.length - 1">, </span>
-          </template>
+              <a
+                href="#"
+                @click="editItem(media.id, 'media')"
+                class="text-primary"
+                >M{{ media.id }}</a
+              >
+              <span v-if="index < mediaNotInMatrix.length - 1">, </span>
+            </template>
+          </div>
         </div>
-      </div>
 
-      <!-- Unpublished Items Section -->
-      <div class="info-box">
-        <b>Please Note:</b> <b>Individual</b> project documents, folios,
-        matrices and media can be set to 'Never publish to project'.
-
-        <template v-if="hasUnpublishedItems">
-          The following items will <b>NOT</b> be published to your project:
-          <div style="padding: 0px 0px 0px 20px">
-            <!-- Documents -->
-            <p v-if="unpublishedItems.documents.length > 0">
-              <b
-                >{{ unpublishedItems.documents.length }}
-                {{
-                  unpublishedItems.documents.length === 1
-                    ? 'document'
-                    : 'documents'
-                }}:</b
-              >
-              <template
-                v-for="(doc, index) in unpublishedItems.documents"
-                :key="doc.id"
-              >
-                <a
-                  href="#"
-                  @click="editItem(doc.id, 'document')"
-                  class="text-primary"
-                  >{{ doc.title }}</a
-                >
-                <span v-if="index < unpublishedItems.documents.length - 1"
-                  >,
-                </span>
-              </template>
-            </p>
-
-            <!-- Folios -->
-            <p v-if="unpublishedItems.folios.length > 0">
-              <b
-                >{{ unpublishedItems.folios.length }}
-                {{
-                  unpublishedItems.folios.length === 1 ? 'folio' : 'folios'
-                }}:</b
-              >
-              <template
-                v-for="(folio, index) in unpublishedItems.folios"
-                :key="folio.id"
-              >
-                <a
-                  href="#"
-                  @click="editItem(folio.id, 'folio')"
-                  class="text-primary"
-                  >{{ folio.name }}</a
-                >
-                <span v-if="index < unpublishedItems.folios.length - 1"
-                  >,
-                </span>
-              </template>
-            </p>
-
-            <!-- Matrices -->
-            <p v-if="unpublishedItems.matrices.length > 0">
-              <b
-                >{{ unpublishedItems.matrices.length }}
-                {{
-                  unpublishedItems.matrices.length === 1
-                    ? 'matrix'
-                    : 'matrices'
-                }}:</b
-              >
-              <template
-                v-for="(matrix, index) in unpublishedItems.matrices"
-                :key="matrix.id"
-              >
-                <a
-                  href="#"
-                  @click="editItem(matrix.id, 'matrix')"
-                  class="text-primary"
-                  >{{ matrix.title }} (matrix {{ matrix.id }})</a
-                >
-                <span v-if="index < unpublishedItems.matrices.length - 1"
-                  >,
-                </span>
-              </template>
-            </p>
-
-            <!-- Media -->
-            <p v-if="unpublishedItems.media.length > 0">
-              <b>{{ unpublishedItems.media.length }} media:</b>
-              <template
-                v-for="(media, index) in unpublishedItems.media"
-                :key="media.id"
-              >
-                <a
-                  href="#"
-                  @click="editItem(media.id, 'media')"
-                  class="text-primary"
-                  >M{{ media.id }}</a
-                >
-                <span v-if="index < unpublishedItems.media.length - 1">, </span>
-              </template>
-            </p>
-          </div>
-        </template>
-
-        <template v-else>
-          <div style="padding: 0px 0px 0px 20px">
-            <p>
-              You have no individual items set to be blocked from publication.
-            </p>
-          </div>
-        </template>
+        <!-- Unpublished Items Section -->
+        <UnpublishedItemsNotice
+          :unpublished-items="unpublishedItems"
+          :project-id="projectId"
+        />
       </div>
 
       <!-- Publishing Status -->
@@ -366,75 +237,7 @@ function formatDate(timestamp) {
   padding: 20px;
 }
 
-/* Publishing Success Styles */
-.publication-success {
-  text-align: center;
-  padding: 40px 20px;
-}
-
-.success-header {
-  margin-bottom: 30px;
-}
-
-.success-icon {
-  font-size: 48px;
-  color: #28a745;
-  margin-bottom: 15px;
-  display: block;
-}
-
-.success-header h2 {
-  color: #333;
-  margin: 0;
-  font-size: 28px;
-}
-
-.success-details {
-  margin-bottom: 40px;
-}
-
-.success-details p {
-  font-size: 18px;
-  color: #666;
-  margin-bottom: 25px;
-}
-
-.publication-info {
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  padding: 20px;
-  text-align: left;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.info-item {
-  margin-bottom: 10px;
-  font-size: 14px;
-}
-
-.info-item strong {
-  color: #333;
-  margin-right: 8px;
-}
-
-.publication-link {
-  color: #007bff;
-  text-decoration: none;
-  word-break: break-all;
-}
-
-.publication-link:hover {
-  text-decoration: underline;
-}
-
-.success-actions {
-  display: flex;
-  gap: 15px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
+/* Publishing success styles moved to PublishedSuccessView component */
 
 /* Publishing Interface Styles */
 .publishing-interface {
@@ -487,6 +290,14 @@ function formatDate(timestamp) {
   gap: 15px;
   justify-content: center;
   margin-top: 30px;
+  flex-wrap: wrap;
+}
+
+.secondary-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 15px;
   flex-wrap: wrap;
 }
 
@@ -590,8 +401,8 @@ function formatDate(timestamp) {
 }
 
 @media (max-width: 768px) {
-  .success-actions,
-  .publish-actions {
+  .publish-actions,
+  .secondary-actions {
     flex-direction: column;
     align-items: center;
   }
