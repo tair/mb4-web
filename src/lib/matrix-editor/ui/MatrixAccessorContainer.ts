@@ -181,6 +181,11 @@ export abstract class MatrixAccessorContainer extends Component {
    */
   refreshCells() {
     this.matrixGrid.refreshCells()
+    // Also refresh character headers to update media availability indicators
+    // This is needed for initial loading when media is loaded via initCellMedia()
+    this.matrixGrid.redrawCharacters()
+    // Recalculate layout to fix alignment after character headers change height
+    this.matrixGrid.redraw()
   }
 
   /**
@@ -262,6 +267,12 @@ export abstract class MatrixAccessorContainer extends Component {
         taxaRender = new TaxaNameRenderer()
         break
     }
+    // Set the matrix model on the character renderer before using it
+    characterRender.setMatrixModel(this.matrixModel)
+    characterRender.setCharacterRules(this.matrixModel.getCharacterRules())
+    characterRender.setCharacterPreferences(this.matrixModel.getUserPreferences())
+    characterRender.setShouldDisplayWarnings(this.matrixModel.hasAccessToAtleastOneTaxon())
+    
     this.matrixGrid.setCharacterRender(characterRender)
     this.matrixGrid.setTaxaRender(taxaRender)
     this.matrixGrid.setCellRender(cellRender)
