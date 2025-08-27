@@ -198,7 +198,7 @@ export class PartitionsDialog extends Dialog {
         value: partition.getId(),
       })
       if (partitionId === partition.getId()) {
-        selectedIndex = x
+        selectedIndex = x + 1
       }
     }
 
