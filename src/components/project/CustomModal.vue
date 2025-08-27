@@ -54,13 +54,28 @@ export default {
 
 .modal-close {
   position: absolute;
-  top: 15px;
-  right: 20px;
-  background: none;
-  border: none;
-  font-size: 30px;
+  top: -10px;
+  right: -10px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
   cursor: pointer;
-  z-index: 602;
+  z-index: 1000;
   color: #666666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 1);
+  border-color: #999;
+  color: #333;
+  transform: scale(1.1);
 }
 </style>
