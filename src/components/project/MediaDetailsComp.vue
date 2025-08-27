@@ -251,7 +251,7 @@ const zoomDisplayUrl = computed(() => {
   const media = props.media_file?.media
   if (media) {
     // Try large first (usually JPEG), finally original
-    const sizePreference = ['large', 'original']
+    const sizePreference = ['original', 'large']
     for (const size of sizePreference) {
       if (media[size] && media[size].MIMETYPE !== 'image/tiff' && media[size].MIMETYPE !== 'image/tif') {
         return buildMediaUrl(props.project_id, props.media_file?.media_id, size)
