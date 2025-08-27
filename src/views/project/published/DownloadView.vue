@@ -3,7 +3,6 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
-import ProjectDownloadComponent from '@/components/project/ProjectDownloadComponent.vue'
 
 const route = useRoute()
 const projectStore = usePublicProjectDetailsStore()
