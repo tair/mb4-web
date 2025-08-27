@@ -73,7 +73,7 @@ export class MatrixLoader {
           }
           const data = await response.json()
           try {
-            console.log(data)
+            // console.log(data)
             if (data['ok']) {
               resolve(data)
             } else {
