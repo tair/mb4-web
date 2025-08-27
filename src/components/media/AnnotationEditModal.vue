@@ -3,11 +3,11 @@
     <div class="annotation-modal" @click.stop>
       <div class="modal-header">
         <h3 class="modal-title">
-          <i class="fa fa-edit"></i>
+          <span class="modal-icon">✏️</span>
           Edit Annotation
         </h3>
         <button class="modal-close" @click="cancel">
-          <i class="fa fa-times"></i>
+          <span class="close-icon">×</span>
         </button>
       </div>
 
@@ -16,7 +16,7 @@
           <!-- Annotation Label -->
           <div class="form-group">
             <label for="annotation-label">
-              <i class="fa fa-tag"></i>
+              <span class="field-icon">🏷️</span>
               Label *
             </label>
             <input
@@ -34,7 +34,7 @@
           <!-- Annotation Description -->
           <div class="form-group">
             <label for="annotation-description">
-              <i class="fa fa-file-text-o"></i>
+              <span class="field-icon">📝</span>
               Description
             </label>
             <textarea
@@ -53,12 +53,12 @@
           <!-- Annotation Type Display -->
           <div class="form-group">
             <label>
-              <i class="fa fa-shapes"></i>
+              <span class="field-icon">🔷</span>
               Type
             </label>
             <div class="annotation-type-display">
               <span class="type-badge" :class="`type-${localAnnotation.type}`">
-                <i :class="getTypeIcon(localAnnotation.type)"></i>
+                <span class="type-icon">{{ getTypeIcon(localAnnotation.type) }}</span>
                 {{ getTypeLabel(localAnnotation.type) }}
               </span>
             </div>
@@ -67,7 +67,7 @@
           <!-- Position and Size (for rectangles) -->
           <div v-if="localAnnotation.type === 'rect'" class="form-group">
             <label>
-              <i class="fa fa-arrows"></i>
+              <span class="field-icon">📐</span>
               Position & Size
             </label>
             <div class="position-controls">
@@ -123,7 +123,7 @@
           <!-- Position (for points) -->
           <div v-else-if="localAnnotation.type === 'point'" class="form-group">
             <label>
-              <i class="fa fa-crosshairs"></i>
+              <span class="field-icon">🎯</span>
               Position
             </label>
             <div class="position-controls">
@@ -157,7 +157,7 @@
           <!-- Polygon Points -->
           <div v-else-if="localAnnotation.type === 'poly'" class="form-group">
             <label>
-              <i class="fa fa-object-group"></i>
+              <span class="field-icon">▲</span>
               Polygon Points
             </label>
             <div class="polygon-points">
@@ -176,7 +176,7 @@
           <!-- Label Position -->
           <div class="form-group">
             <label>
-              <i class="fa fa-map-marker"></i>
+              <span class="field-icon">📍</span>
               Label Position
             </label>
             <div class="position-controls">
@@ -208,7 +208,7 @@
           <!-- Visibility Options -->
           <div class="form-group">
             <label>
-              <i class="fa fa-eye"></i>
+              <span class="field-icon">👁️</span>
               Visibility
             </label>
             <div class="checkbox-group">
@@ -227,7 +227,7 @@
           <!-- Context Information (if available) -->
           <div v-if="hasContextInfo" class="form-group">
             <label>
-              <i class="fa fa-info-circle"></i>
+              <span class="field-icon">ℹ️</span>
               Context
             </label>
             <div class="context-info">
@@ -240,7 +240,7 @@
           <!-- Metadata -->
           <div v-if="showMetadata" class="form-group">
             <label>
-              <i class="fa fa-info"></i>
+              <span class="field-icon">📊</span>
               Metadata
             </label>
             <div class="metadata-display">
@@ -267,18 +267,18 @@
             class="btn btn-danger"
             :disabled="deleting"
           >
-            <i class="fa fa-trash"></i>
+            <span class="btn-icon">🗑️</span>
             {{ deleting ? 'Deleting...' : 'Delete' }}
           </button>
         </div>
         
         <div class="footer-right">
           <button @click="cancel" type="button" class="btn btn-secondary">
-            <i class="fa fa-times"></i>
+            <span class="btn-icon">✖️</span>
             Cancel
           </button>
           <button @click="save" type="button" class="btn btn-primary" :disabled="!isValid || saving">
-            <i class="fa fa-save"></i>
+            <span class="btn-icon">💾</span>
             {{ saving ? 'Saving...' : 'Save' }}
           </button>
         </div>
@@ -380,10 +380,10 @@ export default {
 
     getTypeIcon(type) {
       switch (type) {
-        case 'rect': return 'fa fa-square-o'
-        case 'point': return 'fa fa-circle-o'
-        case 'poly': return 'fa fa-object-group'
-        default: return 'fa fa-question'
+        case 'rect': return '▢'
+        case 'point': return '●'
+        case 'poly': return '▲'
+        default: return '❓'
       }
     },
 
@@ -524,6 +524,35 @@ export default {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+/* Icon styles */
+.modal-icon,
+.close-icon,
+.field-icon,
+.btn-icon,
+.type-icon {
+  font-size: 16px;
+  display: inline-block;
+  width: 20px;
+  text-align: center;
+}
+
+.close-icon {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.field-icon {
+  font-size: 14px;
+}
+
+.btn-icon {
+  font-size: 14px;
+}
+
+.type-icon {
+  font-size: 16px;
 }
 
 .form-control {

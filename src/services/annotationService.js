@@ -42,7 +42,6 @@ class AnnotationService {
       }
 
       const url = `${this.baseUrl}/${projectId}/media/${mediaId}/labels?${params}`
-      console.log('Annotation API URL:', url) // TODO: Remove debug logs after testing
       
       const response = await apiService.get(url)
       
@@ -53,11 +52,9 @@ class AnnotationService {
       }
 
       const annotations = await response.json()
-      console.log('Raw API Response:', annotations) // Debug log
       
       // Transform server response to match our component expectations
       const transformed = this.transformAnnotationsFromServer(annotations)
-      console.log('Transformed annotations:', transformed) // Debug log
       
       return transformed
       
@@ -87,24 +84,19 @@ class AnnotationService {
    */
   async saveAnnotations(projectId, mediaId, type, linkId, annotations) {
     try {
-      console.log('💾 Starting save process:', { projectId, mediaId, type, linkId, annotationCount: annotations.length })
       
       const params = new URLSearchParams({ type: type })
       const url = `${this.baseUrl}/${projectId}/media/${mediaId}/labels/edit?${params}`
       
       // Transform annotations to server format
       const serverAnnotations = this.transformAnnotationsToServer(annotations)
-      console.log('💾 Transformed annotations:', serverAnnotations)
       
       const payload = {
         linkId: linkId,
         save: serverAnnotations
       }
-      console.log('💾 Save payload:', payload)
-      console.log('💾 Save URL:', url)
 
       const response = await apiService.post(url, payload)
-      console.log('💾 Save response status:', response.status)
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: response.statusText }))
@@ -113,7 +105,6 @@ class AnnotationService {
       }
 
       const result = await response.json()
-      console.log('💾 Save result:', result)
       return result
       
     } catch (error) {
@@ -147,28 +138,22 @@ class AnnotationService {
    */
   async deleteAnnotations(projectId, mediaId, annotationIds) {
     try {
-      console.log('🗑️ Starting delete process:', { projectId, mediaId, annotationIds })
       
       const url = `${this.baseUrl}/${projectId}/media/${mediaId}/labels/delete`
-      console.log('🗑️ Delete URL:', url)
       
       const payload = {
         annotationIds: Array.isArray(annotationIds) ? annotationIds : [annotationIds]
       }
-      console.log('🗑️ Delete payload:', payload)
 
       // Backend expects POST request to /labels/delete (not DELETE)
       const response = await apiService.post(url, payload)
-      console.log('🗑️ Delete response status:', response.status)
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: response.statusText }))
-        console.error('🗑️ Delete error response:', errorData)
         throw new Error(errorData.message || 'Failed to delete annotations')
       }
 
       const result = await response.json()
-      console.log('🗑️ Delete result:', result)
       return result
       
     } catch (error) {

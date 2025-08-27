@@ -10,7 +10,7 @@
           @click="setTool('pan')"
           title="Pan and select (Esc)"
         >
-          <i class="fa fa-hand-paper-o"></i>
+          <span class="tool-icon">✋</span>
           Pan
         </button>
         
@@ -23,7 +23,7 @@
             @click="setTool(tool.name)"
             :title="tool.title"
           >
-            <i :class="tool.icon"></i>
+            <span class="tool-icon">{{ tool.icon }}</span>
             {{ tool.label }}
           </button>
         </template>
@@ -35,14 +35,14 @@
         <!-- Zoom Controls (always available) -->
         <div class="zoom-controls">
           <button @click="zoomOut" class="btn btn-outline" title="Zoom Out">
-            <i class="fa fa-search-minus"></i>
+            <span class="zoom-icon">−</span>
           </button>
           <span class="zoom-level">{{ Math.round(viewerZoom * 100) }}%</span>
           <button @click="zoomIn" class="btn btn-outline" title="Zoom In">
-            <i class="fa fa-search-plus"></i>
+            <span class="zoom-icon">+</span>
           </button>
           <button @click="resetZoom" class="btn btn-outline" title="Reset Zoom">
-            <i class="fa fa-expand"></i>
+            <span class="zoom-icon">⌂</span>
           </button>
         </div>
         
@@ -53,24 +53,136 @@
           class="btn btn-primary"
           :disabled="saving"
         >
-          <i class="fa fa-save"></i>
+          <span class="save-icon">💾</span>
           {{ saving ? 'Saving...' : 'Save All' }}
         </button>
         
-        <!-- Export (only when annotations exist) -->
-        <div v-if="annotations.length > 0" class="dropdown" ref="exportDropdown">
+        <!-- Overview button -->
+        <!-- <button 
+          @click="toggleOverview"
+          class="btn btn-outline"
+          :class="{ active: showOverview }"
+          title="Show image overview"
+        >
+          <span class="overview-icon">🗺️</span>
+          Overview
+        </button> -->
+        
+        <!-- Help button -->
+        <div class="help-container">
           <button 
-            @click="toggleExportDropdown"
-            class="btn btn-secondary"
+            @click="toggleHelp"
+            class="btn btn-outline"
+            title="Show help"
           >
-            <i class="fa fa-download"></i>
-            Export
-            <i class="fa fa-caret-down"></i>
+            <span class="help-icon">?</span>
+            Help
           </button>
-          <div v-if="showExportDropdown" class="dropdown-menu">
-            <a @click="exportAnnotations('json')" class="dropdown-item">Export as JSON</a>
-            <a @click="exportAnnotations('csv')" class="dropdown-item">Export as CSV</a>
+          
+          <!-- Help dropdown -->
+          <div v-if="showHelp" class="help-dropdown" ref="helpDropdown">
+        <div class="help-content">
+          <h4 class="help-title">Annotation Tools Help</h4>
+          
+          <div class="help-section">
+            <h5>Navigation Tools</h5>
+            <div class="help-item">
+              <span class="help-icon-display">✋</span>
+              <div class="help-text">
+                <strong>Pan Tool</strong> - Click and drag to move around the image. Click on annotations to select them. (Shortcut: Esc)
+              </div>
+            </div>
           </div>
+
+          <div v-if="canEdit" class="help-section">
+            <h5>Drawing Tools</h5>
+            <div class="help-item">
+              <span class="help-icon-display">▢</span>
+              <div class="help-text">
+                <strong>Rectangle</strong> - Click and drag to draw rectangular annotations. (Shortcut: R)
+              </div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon-display">●</span>
+              <div class="help-text">
+                <strong>Point</strong> - Click to place point annotations at specific locations. (Shortcut: P)
+              </div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon-display">▲</span>
+              <div class="help-text">
+                <strong>Polygon</strong> - Click multiple points to create polygon shapes. Right-click or click near the start to finish. (Shortcut: G)
+              </div>
+            </div>
+          </div>
+
+          <div class="help-section">
+            <h5>Zoom Controls</h5>
+            <div class="help-item">
+              <span class="help-icon-display">−</span>
+              <div class="help-text">
+                <strong>Zoom Out</strong> - Decrease magnification
+              </div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon-display">+</span>
+              <div class="help-text">
+                <strong>Zoom In</strong> - Increase magnification
+              </div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon-display">⌂</span>
+              <div class="help-text">
+                <strong>Reset Zoom</strong> - Return to original size and position
+              </div>
+            </div>
+                          <div class="help-item">
+                <span class="help-icon-display">🖱️</span>
+                <div class="help-text">
+                  <strong>Mouse Wheel</strong> - Scroll to zoom in/out
+                </div>
+              </div>
+              <!-- <div class="help-item">
+                <span class="help-icon-display">🗺️</span>
+                <div class="help-text">
+                  <strong>Overview</strong> - Show image overview with current viewport. Click anywhere in overview to pan to that location.
+                </div>
+              </div> -->
+            </div>
+
+          <div v-if="canEdit" class="help-section">
+            <h5>Actions</h5>
+            <div class="help-item">
+              <span class="help-icon-display">💾</span>
+              <div class="help-text">
+                <strong>Save All</strong> - Save all unsaved annotations. (Shortcut: Ctrl+S)
+              </div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon-display">🗑️</span>
+              <div class="help-text">
+                <strong>Delete</strong> - Select an annotation and press Delete key to remove it
+              </div>
+            </div>
+          </div>
+
+          <div class="help-section">
+            <h5>Annotation Management</h5>
+            <div class="help-item">
+              <span class="help-icon-display">🏷️</span>
+              <div class="help-text">
+                <strong>Select</strong> - Click on annotations or their labels to select them
+              </div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon-display">✏️</span>
+              <div class="help-text">
+                <strong>Edit</strong> - Double-click on annotations or labels to edit their properties
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
         </div>
       </div>
     </div>
@@ -114,10 +226,33 @@
       </div>
       
       <!-- Debug info (minimal) -->
-      <div v-if="annotations.length > 0" class="debug-info" style="position: absolute; top: 10px; left: 10px; background: yellow; padding: 5px; z-index: 999; font-size: 12px;">
+      <!-- <div v-if="annotations.length > 0" class="debug-info" style="position: absolute; top: 10px; left: 10px; background: yellow; padding: 5px; z-index: 999; font-size: 12px;">
         <div>Annotations: {{ annotations.length }}</div>
         <div>Image loaded: {{ imageLoaded }}</div>
         <div>Refs ready: img={{ !!$refs.mediaImage }}, container={{ !!$refs.canvasContainer }}</div>
+      </div> -->
+    </div>
+
+    <!-- Image Overview Panel -->
+    <div v-if="showOverview" class="overview-panel" ref="overviewPanel">
+      <div class="overview-header">
+        <span class="overview-title">Image Overview</span>
+        <button @click="showOverview = false" class="overview-close">✕</button>
+      </div>
+      <div class="overview-container" ref="overviewContainer">
+        <img 
+          ref="overviewImage"
+          :src="mediaUrl"
+          @load="onOverviewImageLoad"
+          @click="onOverviewClick"
+          alt="Image overview"
+          class="overview-image"
+        />
+        <div 
+          ref="viewportIndicator"
+          class="viewport-indicator"
+          :style="getViewportIndicatorStyle()"
+        ></div>
       </div>
     </div>
 
@@ -221,7 +356,6 @@ export default {
       polygonPoints: [],
       
       // UI state
-      showExportDropdown: false,
       showKeyboardHints: true,
       hasUnsavedChanges: false,
       saving: false,
@@ -239,10 +373,14 @@ export default {
       lastPanPoint: null,
       
       drawingTools: [
-        { name: 'rect', label: 'Rectangle', icon: 'fa fa-square-o', title: 'Draw rectangle (R)' },
-        { name: 'point', label: 'Point', icon: 'fa fa-circle-o', title: 'Add point (P)' },
-        { name: 'poly', label: 'Polygon', icon: 'fa fa-object-group', title: 'Draw polygon (G)' }
-      ]
+        { name: 'rect', label: 'Rectangle', icon: '▢', title: 'Draw rectangle (R)' },
+        { name: 'point', label: 'Point', icon: '●', title: 'Add point (P)' },
+        { name: 'poly', label: 'Polygon', icon: '▲', title: 'Draw polygon (G)' }
+      ],
+      
+      // UI states
+      showHelp: false,
+      showOverview: false
     }
   },
 
@@ -261,7 +399,6 @@ export default {
   },
 
   mounted() {
-    console.log('🚀 AnnotationViewer mounted')
     this.setupEventListeners()
     this.setupCanvas()
     this.loadAnnotations()
@@ -270,7 +407,6 @@ export default {
     this.$nextTick(() => {
       const checkRefs = () => {
         if (this.$refs.mediaImage && this.$refs.canvasContainer && this.annotations.length > 0) {
-          console.log('Refs are ready, forcing label update...')
           this.$forceUpdate()
         } else {
           setTimeout(checkRefs, 100)
@@ -283,12 +419,7 @@ export default {
   watch: {
     annotations: {
       handler(newAnnotations, oldAnnotations) {
-        console.log('🔄 Annotations array changed:', {
-          oldCount: oldAnnotations?.length || 0,
-          newCount: newAnnotations?.length || 0,
-          oldAnnotations: oldAnnotations,
-          newAnnotations: newAnnotations
-        })
+
       },
       deep: true,
       immediate: true
@@ -313,16 +444,183 @@ export default {
       window.removeEventListener('resize', this.onWindowResize)
     },
 
+    toggleHelp() {
+      this.showHelp = !this.showHelp
+    },
+
+    toggleOverview() {
+      this.showOverview = !this.showOverview
+      if (this.showOverview) {
+        // Ensure viewport indicator is updated when overview is shown
+        this.$nextTick(() => {
+          this.updateViewportIndicator()
+        })
+      }
+    },
+
+    // Overview methods
+    onOverviewImageLoad() {
+      this.$nextTick(() => {
+        this.updateViewportIndicator()
+      })
+    },
+
+    onOverviewClick(event) {
+      const overviewImg = this.$refs.overviewImage
+      const overviewRect = overviewImg.getBoundingClientRect()
+      
+      // Calculate click position relative to overview image (0-1)
+      const relativeX = (event.clientX - overviewRect.left) / overviewRect.width
+      const relativeY = (event.clientY - overviewRect.top) / overviewRect.height
+      
+      // Get main image dimensions
+      const mainImg = this.$refs.mediaImage
+      if (!mainImg) return
+      
+      const mainRect = mainImg.getBoundingClientRect()
+      const naturalWidth = mainImg.naturalWidth
+      const naturalHeight = mainImg.naturalHeight
+      
+      // Calculate the same white space offset as in getViewportIndicatorStyle
+      const aspectRatio = naturalWidth / naturalHeight
+      const containerAspect = mainRect.width / mainRect.height
+      
+      let actualImageWidth, actualImageHeight, imageOffsetX, imageOffsetY, initialFitScale
+      
+      if (aspectRatio > containerAspect) {
+        // Image is wider - fits to container width, has vertical white space
+        actualImageWidth = mainRect.width
+        actualImageHeight = mainRect.width / aspectRatio
+        imageOffsetX = 0
+        imageOffsetY = (mainRect.height - actualImageHeight) / 2
+        initialFitScale = mainRect.width / naturalWidth
+      } else {
+        // Image is taller - fits to container height, has horizontal white space  
+        actualImageHeight = mainRect.height
+        actualImageWidth = mainRect.height * aspectRatio
+        imageOffsetY = 0
+        imageOffsetX = (mainRect.width - actualImageWidth) / 2
+        initialFitScale = mainRect.height / naturalHeight
+      }
+      
+      // Convert click position to natural image coordinates
+      const targetCenterX = relativeX * naturalWidth
+      const targetCenterY = relativeY * naturalHeight
+      
+      // Calculate the offset needed to center the clicked point
+      // The offset is how much we move from the natural center
+      const offsetFromCenterX = (naturalWidth / 2) - targetCenterX
+      const offsetFromCenterY = (naturalHeight / 2) - targetCenterY
+      
+      // Convert to display coordinates and add back the white space offset
+      this.viewerOffset.x = (offsetFromCenterX * initialFitScale * this.viewerZoom) + (imageOffsetX * this.viewerZoom)
+      this.viewerOffset.y = (offsetFromCenterY * initialFitScale * this.viewerZoom) + (imageOffsetY * this.viewerZoom)
+      
+      
+      this.updateImageTransform()
+    },
+
+    getViewportIndicatorStyle() {
+      
+      if (!this.imageLoaded || !this.$refs.overviewImage || !this.$refs.mediaImage) {
+        return { display: 'none' }
+      }
+      
+      const mainImg = this.$refs.mediaImage
+      const mainRect = mainImg.getBoundingClientRect()
+      const naturalWidth = mainImg.naturalWidth
+      const naturalHeight = mainImg.naturalHeight
+      
+      // CRITICAL FIX: Account for how the image is actually rendered within its container
+      // The image might have white space around it due to aspect ratio differences
+      const aspectRatio = naturalWidth / naturalHeight
+      const containerAspect = mainRect.width / mainRect.height
+      
+      let actualImageWidth, actualImageHeight, imageOffsetX, imageOffsetY, initialFitScale
+      
+      if (aspectRatio > containerAspect) {
+        // Image is wider - fits to container width, has vertical white space
+        actualImageWidth = mainRect.width
+        actualImageHeight = mainRect.width / aspectRatio
+        imageOffsetX = 0
+        imageOffsetY = (mainRect.height - actualImageHeight) / 2
+        initialFitScale = mainRect.width / naturalWidth
+      } else {
+        // Image is taller - fits to container height, has horizontal white space  
+        actualImageHeight = mainRect.height
+        actualImageWidth = mainRect.height * aspectRatio
+        imageOffsetY = 0
+        imageOffsetX = (mainRect.width - actualImageWidth) / 2
+        initialFitScale = mainRect.height / naturalHeight
+      }
+      
+      // Now calculate what portion of the NATURAL image we can see
+      // At zoom=1, we see the entire fitted image, which is a portion of the natural image
+      const visibleNaturalWidth = actualImageWidth / (initialFitScale * this.viewerZoom)
+      const visibleNaturalHeight = actualImageHeight / (initialFitScale * this.viewerZoom)
+      
+      // Convert to percentages of the natural image
+      const visibleWidthPercent = (visibleNaturalWidth / naturalWidth) * 100
+      const visibleHeightPercent = (visibleNaturalHeight / naturalHeight) * 100
+      
+      
+      // Calculate the center of our current view, accounting for image offset within container
+      // We need to adjust the offset calculation to account for white space
+      const adjustedOffsetX = this.viewerOffset.x - (imageOffsetX * this.viewerZoom)
+      const adjustedOffsetY = this.viewerOffset.y - (imageOffsetY * this.viewerZoom)
+      
+      const offsetXInNatural = adjustedOffsetX / (initialFitScale * this.viewerZoom)
+      const offsetYInNatural = adjustedOffsetY / (initialFitScale * this.viewerZoom)
+      
+      // Center position in natural image coordinates
+      const viewCenterXNatural = (naturalWidth / 2) - offsetXInNatural
+      const viewCenterYNatural = (naturalHeight / 2) - offsetYInNatural
+      
+      // Convert to percentages
+      const centerXPercent = (viewCenterXNatural / naturalWidth) * 100
+      const centerYPercent = (viewCenterYNatural / naturalHeight) * 100
+      
+
+      // Calculate rectangle position (center minus half size)
+      const leftPercent = centerXPercent - (visibleWidthPercent / 2)
+      const topPercent = centerYPercent - (visibleHeightPercent / 2)
+      
+      
+      // Clamp to bounds
+      const clampedLeft = Math.max(0, Math.min(100 - visibleWidthPercent, leftPercent))
+      const clampedTop = Math.max(0, Math.min(100 - visibleHeightPercent, topPercent))
+      const clampedWidth = Math.min(visibleWidthPercent, 100)
+      const clampedHeight = Math.min(visibleHeightPercent, 100)
+      
+      
+      return {
+        position: 'absolute',
+        left: `${clampedLeft}%`,
+        top: `${clampedTop}%`,
+        width: `${clampedWidth}%`,
+        height: `${clampedHeight}%`,
+        border: '2px solid #ff0000',
+        backgroundColor: 'rgba(255, 0, 0, 0.1)',
+        pointerEvents: 'none',
+        zIndex: 10
+      }
+    },
+
+    updateViewportIndicator() {
+      // Force re-render of viewport indicator
+    if (this.showOverview) {
+        this.$forceUpdate()
+      }
+    },
+
     // Image handling
     onImageLoad() {
-      console.log('Image loaded, setting up canvas and positioning labels...')
       this.imageLoaded = true
       this.setupCanvas()
       this.drawAnnotations()
       
       // Force label update now that image is loaded
       this.$nextTick(() => {
-        console.log('Image load complete, forcing label recalculation...')
         this.$forceUpdate()
       })
     },
@@ -337,11 +635,9 @@ export default {
       const container = this.$refs.canvasContainer
       
       if (!img || !container || !this.canvas) {
-        console.log('⚠️ setupCanvas called but refs not ready:', { img: !!img, container: !!container, canvas: !!this.canvas })
         return
       }
 
-      console.log('🖼️ Setting up canvas...')
       // Set canvas size to match image display size
       const rect = img.getBoundingClientRect()
       this.canvas.width = rect.width
@@ -355,7 +651,6 @@ export default {
       
       // Calculate scale factor
       this.imageScale = rect.width / img.naturalWidth
-      console.log('🖼️ Canvas setup complete, triggering drawAnnotations...')
       
       this.drawAnnotations()
     },
@@ -399,9 +694,11 @@ export default {
     },
 
     updateImageTransform() {
+      
       const img = this.$refs.mediaImage
       const canvas = this.canvas
       const transform = `scale(${this.viewerZoom}) translate(${this.viewerOffset.x}px, ${this.viewerOffset.y}px)`
+      
       
       // Apply the same transform to both image and canvas
       if (img) {
@@ -410,6 +707,9 @@ export default {
       if (canvas) {
         canvas.style.transform = transform
       }
+      
+      // Update viewport indicator in overview
+      this.updateViewportIndicator()
       
       // Only force label position update when needed
       if (this.annotations.length > 0) {
@@ -599,7 +899,6 @@ export default {
     },
 
     handlePolygonClick(point) {
-      console.log(`🔺 Adding polygon point ${this.polygonPoints.length + 1}:`, point)
       this.polygonPoints.push(point)
       
       // Check if we're close to the starting point to close the polygon
@@ -609,9 +908,7 @@ export default {
           Math.pow(point.x - startPoint.x, 2) + Math.pow(point.y - startPoint.y, 2)
         )
         
-        console.log(`🔺 Distance to start point: ${distance}`)
         if (distance < 10) {
-          console.log(`🔺 Close to start point, finishing polygon`)
           this.finishPolygon()
           return
         }
@@ -624,8 +921,6 @@ export default {
     finishPolygon() {
       if (this.polygonPoints.length < 3) return
 
-      console.log(`🔺 Finishing polygon with ${this.polygonPoints.length} points:`, this.polygonPoints)
-
       const points = this.polygonPoints.reduce((acc, point) => {
         acc.push(point.x, point.y)
         return acc
@@ -636,9 +931,6 @@ export default {
       const ys = this.polygonPoints.map(p => p.y)
       const minX = Math.min(...xs)
       const minY = Math.min(...ys)
-
-      console.log(`🔺 Polygon points array:`, points)
-      console.log(`🔺 Polygon bounding box:`, { minX, minY })
 
       this.createAnnotation({
         type: 'poly',
@@ -665,25 +957,12 @@ export default {
         annotation_id: null // Will be set by server
       }
 
-      console.log('🆕 Creating annotation:', annotation)
-      console.log('🆕 Current annotations before adding:', this.annotations.length)
-      console.log('🆕 New annotation coordinates:', { x: annotation.x, y: annotation.y, type: annotation.type })
-
       // Add to local state immediately for responsive UI
       this.annotations.push(annotation)
-      console.log('🆕 Annotations after adding:', this.annotations.length)
-      console.log('🆕 Full annotations array now:', this.annotations.map(a => ({ 
-        id: a.annotation_id, 
-        type: a.type, 
-        label: a.label,
-        x: a.x,
-        y: a.y 
-      })))
       this.hasUnsavedChanges = true
       
       // Only redraw canvas - don't trigger full updates
       this.$nextTick(() => {
-        console.log('🆕 Triggering drawAnnotations from createAnnotation')
         this.drawAnnotations()
       })
 
@@ -712,35 +991,19 @@ export default {
         y: Math.max(0, Math.min(100, relativeY * 100))
       }
       
-      console.log(`🖱️ Mouse click converted to coords:`, {
-        mousePos: { x: event.clientX, y: event.clientY },
-        imgRect: { left: imgRect.left, top: imgRect.top, width: imgRect.width, height: imgRect.height },
-        relative: { x: relativeX, y: relativeY },
-        finalCoords: coords
-      })
-      
       return coords
     },
 
     // Drawing methods
     drawAnnotations() {
       if (!this.ctx || !this.imageLoaded) {
-        console.log('⚠️ Skipping drawAnnotations - ctx or image not ready:', { ctx: !!this.ctx, imageLoaded: this.imageLoaded })
         return
       }
 
-      console.log(`🎨 Drawing ${this.annotations.length} annotations on canvas`)
-      console.log('🧹 Clearing canvas before redraw')
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
 
       this.annotations.forEach((annotation, index) => {
-        console.log(`🔸 Drawing annotation ${index + 1}:`, {
-          id: annotation.annotation_id,
-          type: annotation.type,
-          x: annotation.x,
-          y: annotation.y,
-          label: annotation.label
-        })
+
         this.drawAnnotation(annotation)
       })
 
@@ -748,7 +1011,6 @@ export default {
         this.drawPolygonInProgress()
       }
       
-      console.log(`✅ Finished drawing ${this.annotations.length} annotations`)
     },
 
     drawAnnotation(annotation) {
@@ -759,12 +1021,6 @@ export default {
       this.ctx.fillStyle = 'rgba(255, 107, 107, 0.1)'
 
       const scaledAnnotation = this.scaleAnnotation(annotation)
-      console.log(`🔷 Drawing ${annotation.type} annotation "${annotation.label}":`, { 
-        id: annotation.annotation_id,
-        originalCoords: { x: annotation.x, y: annotation.y },
-        scaledCoords: { x: scaledAnnotation.x, y: scaledAnnotation.y },
-        canvasSize: { w: this.canvas.width, h: this.canvas.height }
-      })
 
       switch (annotation.type) {
         case 'rect':
@@ -799,8 +1055,6 @@ export default {
 
     drawPolygon(annotation) {
       if (!annotation.points || annotation.points.length < 6) return
-
-      console.log(`🔺 Drawing polygon with ${annotation.points.length / 2} points:`, annotation.points)
 
       this.ctx.beginPath()
       // Points are already scaled by scaleAnnotation(), so use them directly
@@ -882,11 +1136,6 @@ export default {
             scaled.points[i + 1] = (annotation.points[i + 1] / 100) * canvasHeight
           }
         }
-        console.log(`🔺 Polygon points scaling:`, {
-          original: annotation.points,
-          scaled: scaled.points,
-          canvasSize: { w: canvasWidth, h: canvasHeight }
-        })
       }
       
       return scaled
@@ -1019,11 +1268,6 @@ export default {
         this.saving = true
         
         const unsavedAnnotations = this.annotations.filter(a => !a.annotation_id)
-        console.log('Saving annotations:', {
-          totalAnnotations: this.annotations.length,
-          unsavedCount: unsavedAnnotations.length,
-          unsavedAnnotations
-        })
         
         if (unsavedAnnotations.length > 0) {
           const result = await annotationService.saveAnnotations(
@@ -1034,17 +1278,13 @@ export default {
             unsavedAnnotations
           )
 
-          console.log('Save result:', result)
-
           // Update annotations with server-assigned IDs
           if (result.labels) {
             result.labels.forEach((serverAnnotation, index) => {
               if (unsavedAnnotations[index]) {
-                console.log(`Updating annotation ${index} with ID ${serverAnnotation.annotation_id}`)
                 unsavedAnnotations[index].annotation_id = serverAnnotation.annotation_id
               }
             })
-            console.log('Annotations after ID update:', this.annotations)
           }
         }
 
@@ -1099,56 +1339,25 @@ export default {
             this.saveAnnotations()
           }
           break
-        case 'KeyE':
-          if (event.ctrlKey || event.metaKey) {
-            event.preventDefault()
-            this.exportAnnotations('json')
-          }
-          break
       }
     },
 
     onDocumentClick(event) {
-      // Close export dropdown when clicking outside
-      if (!this.$refs.exportDropdown?.contains(event.target)) {
-        this.showExportDropdown = false
+      // Close help when clicking outside
+      const helpContainer = this.$refs.helpDropdown?.parentElement
+      if (helpContainer && !helpContainer.contains(event.target)) {
+        this.showHelp = false
       }
-    },
-
-    toggleExportDropdown() {
-      this.showExportDropdown = !this.showExportDropdown
-    },
-
-    // Export functionality
-    async exportAnnotations(format) {
-      this.showExportDropdown = false
       
-      try {
-        const data = await annotationService.exportAnnotations(
-          this.projectId,
-          this.mediaId,
-          format
-        )
-        
-        this.downloadFile(data, `annotations_${this.mediaId}_${new Date().toISOString().slice(0,10)}.${format}`)
-        
-      } catch (error) {
-        console.error('Export failed:', error)
-        this.showSaveStatus('Export failed', 'error')
+      // Close overview when clicking outside (but not on any annotation controls)
+      const overviewPanel = this.$refs.overviewPanel
+      const annotationControls = event.target.closest('.annotation-controls')
+      if (overviewPanel && !overviewPanel.contains(event.target) && !annotationControls) {
+        this.showOverview = false
       }
     },
 
-    downloadFile(content, filename) {
-      const blob = new Blob([content], { type: 'text/plain' })
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = filename
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      window.URL.revokeObjectURL(url)
-    },
+
 
     // Utility methods
     getDefaultLabel() {
@@ -1163,11 +1372,6 @@ export default {
 
     // Label visibility logic
     shouldShowLabel(annotation) {
-      console.log(`Checking label visibility for ${annotation.label}:`, {
-        showDefaultText: annotation.showDefaultText,
-        type: typeof annotation.showDefaultText,
-        shouldShow: annotation.showDefaultText == 1 || annotation.showDefaultText === true || annotation.showDefaultText === '1'
-      })
       
       // Show label if showDefaultText is 1, true, or '1' (string)
       return annotation.showDefaultText == 1 || annotation.showDefaultText === true || annotation.showDefaultText === '1'
@@ -1175,7 +1379,6 @@ export default {
 
     getAnnotationLabelStyle(annotation) {
       if (!this.$refs.mediaImage || !this.$refs.canvasContainer) {
-        console.log('Label style: missing image or container refs')
         return { display: 'none' }
       }
 
@@ -1197,12 +1400,7 @@ export default {
       const labelX = imgRect.left + (xPercent * imgRect.width) - containerRect.left
       const labelY = imgRect.top + (yPercent * imgRect.height) - containerRect.top
       
-      console.log(`🏷️ Label positioning for "${annotation.label}":`, {
-        rawCoords: { x: annotation.x, y: annotation.y },
-        percentages: { x: xPercent, y: yPercent },
-        calculatedPosition: { x: labelX, y: labelY },
-        annotationId: annotation.annotation_id
-      })
+      
       
       const style = {
         position: 'absolute',
@@ -1224,7 +1422,7 @@ export default {
         textAlign: 'center'
       }
       
-      console.log(`Final label style:`, style)
+      
       
       return style
     },
@@ -1232,7 +1430,7 @@ export default {
     // Load annotations from server
     async loadAnnotations() {
       try {
-        console.log('Loading annotations...')
+        
         const annotations = await annotationService.getAnnotations(
           this.projectId,
           this.mediaId,
@@ -1240,26 +1438,8 @@ export default {
           this.linkId
         )
         
-        console.log('=== RAW ANNOTATION DATA ===')
-        console.log('Full response:', annotations)
-        if (annotations && annotations.length > 0) {
-          annotations.forEach((ann, index) => {
-            console.log(`Annotation ${index + 1}:`, {
-              annotation_id: ann.annotation_id,
-              label: ann.label,
-              x: ann.x,
-              y: ann.y,
-              showDefaultText: ann.showDefaultText,
-              showDefaultTextType: typeof ann.showDefaultText,
-              allProperties: ann
-            })
-          })
-        }
-        console.log('=== END RAW DATA ===')
         
-        console.log('📥 Setting annotations array:', annotations || [])
         this.annotations = annotations || []
-        console.log('📊 Final annotations array:', this.annotations)
         
         // Emit event for parent component
         this.$emit('annotationsLoaded', this.annotations.length)
@@ -1270,15 +1450,9 @@ export default {
           
           // Wait for image to load before forcing label update
           setTimeout(() => {
-            console.log('Forcing label update after image load...')
             if (this.$refs.mediaImage && this.$refs.canvasContainer) {
-              console.log('Image and container refs are ready')
               this.$forceUpdate()
             } else {
-              console.log('Still waiting for refs...', {
-                mediaImage: !!this.$refs.mediaImage,
-                canvasContainer: !!this.$refs.canvasContainer
-              })
               // Try again in another 500ms
               setTimeout(() => this.$forceUpdate(), 500)
             }
@@ -1333,7 +1507,7 @@ export default {
   flex-wrap: wrap;
   gap: 10px;
   position: relative;
-  z-index: 50;
+  z-index: 10000;
 }
 
 .annotation-tools {
@@ -1391,6 +1565,11 @@ export default {
   align-items: center;
   flex-wrap: wrap;
   margin-left: auto;
+}
+
+.help-container {
+  position: relative;
+  display: inline-block;
 }
 
 .zoom-controls {
@@ -1589,6 +1768,190 @@ export default {
   color: #666;
 }
 
+/* Icon styles */
+.tool-icon,
+.zoom-icon,
+.save-icon,
+.help-icon {
+  font-size: 16px;
+  display: inline-block;
+  width: 20px;
+  text-align: center;
+}
+
+.help-icon {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.overview-icon {
+  font-size: 16px;
+}
+
+/* Help dropdown styles */
+.help-dropdown {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  z-index: 9999 !important;
+  min-width: 400px;
+  max-width: 500px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.help-content {
+  padding: 16px;
+}
+
+.help-title {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 8px;
+}
+
+.help-section {
+  margin-bottom: 20px;
+}
+
+.help-section:last-child {
+  margin-bottom: 0;
+}
+
+.help-section h5 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #007bff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.help-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.help-item:hover {
+  background: #f8f9fa;
+}
+
+.help-item:last-child {
+  margin-bottom: 0;
+}
+
+.help-icon-display {
+  font-size: 18px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e9ecef;
+  border-radius: 4px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.help-text {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #555;
+}
+
+.help-text strong {
+  color: #333;
+  font-weight: 600;
+}
+
+/* Overview panel styles */
+.overview-panel {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 250px;
+  background: white;
+  border: 2px solid #007bff;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  z-index: 9998;
+  overflow: hidden;
+}
+
+.overview-header {
+  background: #007bff;
+  color: white;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.overview-title {
+  flex: 1;
+}
+
+.overview-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.overview-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.overview-container {
+  position: relative;
+  padding: 8px;
+  background: #f8f9fa;
+}
+
+.overview-image {
+  width: 100%;
+  height: auto;
+  max-height: 200px;
+  object-fit: contain;
+  cursor: crosshair;
+  display: block;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.viewport-indicator {
+  position: absolute;
+  border: 2px solid #ff0000;
+  background: rgba(255, 0, 0, 0.1);
+  pointer-events: none;
+  z-index: 10;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .annotation-controls {
@@ -1608,6 +1971,35 @@ export default {
   .btn {
     padding: 10px 14px;
     font-size: 14px;
+  }
+  
+  .help-dropdown {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    right: auto;
+    min-width: 90vw;
+    max-width: 95vw;
+    max-height: 85vh;
+    z-index: 9999 !important;
+  }
+  
+  .help-container {
+    position: static;
+  }
+  
+  .overview-panel {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    left: 10px;
+    width: auto;
+    max-width: none;
+  }
+  
+  .overview-image {
+    max-height: 150px;
   }
 }
 </style>

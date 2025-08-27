@@ -90,7 +90,6 @@ const preloadAnnotations = async () => {
   if (!showAnnotations.value || annotationsLoaded.value) return
   
   try {
-    console.log(`Preloading annotations for media ${props.media_file?.media_id}`)
     const annotations = await annotationService.getAnnotations(
       Number(props.project_id),
       props.media_file?.media_id,
@@ -100,7 +99,6 @@ const preloadAnnotations = async () => {
     
     annotationsLoaded.value = true
     annotationCount.value = annotations.length
-    console.log(`Preloaded ${annotations.length} annotations`)
   } catch (error) {
     console.error('Failed to preload annotations:', error)
     annotationsLoaded.value = true
@@ -337,13 +335,11 @@ const onImageLoad = (event) => {
 // ============================================================================
 
 const onAnnotationsLoaded = (count) => {
-  console.log(`Loaded ${count} annotations for media ${props.media_file?.media_id}`)
   annotationsLoaded.value = true
   annotationCount.value = count
 }
 
 const onAnnotationsSaved = () => {
-  console.log(`Annotations saved for media ${props.media_file?.media_id}`)
 }
 
 async function confirmDownload(fileSize, fileName) {
