@@ -129,12 +129,32 @@ const filteredMatrices = computed(() =>
 const filteredTaxa = computed(() =>
   filterByPublished(searchResultsStore.results.taxa || [], taxaFilter.value)
 )
-const filteredAuthors = computed(() =>
-  filterByPublished(
-    searchResultsStore.results.members || [],
-    authorsFilter.value
-  )
-)
+const filteredAuthors = computed(() => {
+  const members = searchResultsStore.results.members || []
+  if (authorsFilter.value === 'all') {
+    return members
+  }
+  
+  return members.filter(author => {
+    if (!author.projects || !Array.isArray(author.projects)) {
+      return false
+    }
+    
+    if (authorsFilter.value === 'published') {
+      // Author has at least one published project
+      return author.projects.some(project => 
+        project.published == 1 || project.published === true
+      )
+    } else if (authorsFilter.value === 'unpublished') {
+      // Author has at least one unpublished project
+      return author.projects.some(project => 
+        project.published == 0 || project.published === false
+      )
+    }
+    
+    return true
+  })
+})
 
 const searchingProjects = computed(() => searchResultsStore.searching?.projects)
 const searchingMedia = computed(() => searchResultsStore.searching?.media)
@@ -493,7 +513,7 @@ function getProjectUrl(projectId, path = 'overview', isPublished = true) {
               :href="
                 getProjectUrl(
                   item.project_id,
-                  'overview',
+                  'views',
                   item.published == 1 || item.published === true
                 )
               "

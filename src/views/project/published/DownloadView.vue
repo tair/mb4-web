@@ -3,70 +3,39 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
-import {
-  logView,
-  HIT_TYPES,
-  logDownload,
-  DOWNLOAD_TYPES,
-} from '@/lib/analytics.js'
+import ProjectDownloadComponent from '@/components/project/ProjectDownloadComponent.vue'
 
 const route = useRoute()
 const projectStore = usePublicProjectDetailsStore()
 const projectId = route.params.id
+
 const isDownloading = ref(false)
+const downloadError = ref('')
 
 onMounted(() => {
   projectStore.fetchProject(projectId)
-  // Track download page view
-  // logView({ project_id: projectId, hit_type: HIT_TYPES.PROJECT })
 })
 
 async function downloadProject() {
-  try {
-    isDownloading.value = true
-    const apiUrl = `${
-      import.meta.env.VITE_API_URL
-    }/projects/${projectId}/download/sdd?format=zip`
-
-    // Make API call to get the ZIP file
-    const response = await fetch(apiUrl, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/zip',
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
-    // Get the blob data from the response
-    const blob = await response.blob()
-
-    // Create a blob URL and trigger download
-    const blobUrl = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = blobUrl
-    link.download = `project_${projectId}_sdd.zip`
-    link.style.display = 'none'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-
-    // Clean up the blob URL
-    URL.revokeObjectURL(blobUrl)
-
-    // Log the download for analytics
-    // logDownload({
-    //   project_id: projectId,
-    //   download_type: DOWNLOAD_TYPES.PROJECT || 'PROJECT',
-    // })
-  } catch (error) {
-    console.error('Error downloading project:', error)
-    alert('Error downloading project. Please try again.')
-  } finally {
-    isDownloading.value = false
+  isDownloading.value = true
+  const apiUrl = `${
+    import.meta.env.VITE_API_URL
+  }/projects/${projectId}/download/sdd?format=zip`
+  const response = await fetch(apiUrl, {
+    method: 'GET',
+    headers: { Accept: 'application/zip' },
+  })
+  if (!response.ok) {
+    console.log('Download failed with status', response.status)
+    downloadError.value = 'Download failed with status ' + response.status
   }
+  const blob = await response.blob()
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = `project_${projectId}_sdd.zip`
+  link.click()
+  URL.revokeObjectURL(link.href)
+  isDownloading.value = false
 }
 </script>
 <template>
@@ -80,43 +49,49 @@ async function downloadProject() {
     basePath="project"
     itemName="overview"
   >
-    <div class="download-section">
-      <div class="download-button-container">
-        <button
-          @click="downloadProject"
-          :disabled="isDownloading"
-          class="btn btn-primary btn-download"
-        >
-          <i v-if="isDownloading" class="fa-solid fa-spinner fa-spin"></i>
-          <i v-else class="fa-solid fa-download"></i>
-          {{ isDownloading ? 'Downloading...' : 'Download Project' }}
-        </button>
+    <div class="download-component">
+      <div class="download-section">
+        <div class="download-button-container">
+          <button
+            class="btn btn-primary btn-download"
+            @click="downloadProject"
+            :disabled="isDownloading"
+          >
+            <template v-if="isDownloading">
+              <i class="fa-solid fa-spinner fa-spin"></i>
+              Downloading...
+            </template>
+            <template v-else>
+              <i class="fa-solid fa-download"></i>
+              Download Project
+            </template>
+          </button>
+        </div>
       </div>
-
-      <div class="download-info">
-        <p>
-          This tool downloads the entire project, all media, matrices and
-          documents, as a zipped file. Please click on the menu to the left, if
-          you only want a Matrix, certain Media or Documents.
-        </p>
-        <p>
-          Media that have been released for 'one time use on MorphoBank only'
-          will not be part of the download packet.
-        </p>
-        <p class="minor-text">
-          The zipped archive has most project data formatted in an XML-format
-          file conforming to the Structure of Descriptive Data (SDD) standard
-          (<a
-            href="http://wiki.tdwg.org/twiki/bin/view/SDD/WebHome"
-            target="_blank"
-            >http://wiki.tdwg.org/twiki/bin/view/SDD/WebHome</a
-          >). See the MorphoBank manual for more information.
-        </p>
-      </div>
+    </div>
+    <div class="download-info">
+      <p v-if="downloadError" class="status-error">{{ downloadError }}</p>
+      <p>
+        This tool downloads the entire project, all media, matrices and
+        documents, as a zipped file. Please click on the menu to the left, if
+        you only want a Matrix, certain Media or Documents.
+      </p>
+      <p>
+        Media that have been released for 'one time use on MorphoBank only' will
+        not be part of the download packet.
+      </p>
+      <p class="minor-text">
+        The zipped archive has most project data formatted in an XML-format file
+        conforming to the Structure of Descriptive Data (SDD) standard (<a
+          href="http://wiki.tdwg.org/twiki/bin/view/SDD/WebHome"
+          target="_blank"
+          >http://wiki.tdwg.org/twiki/bin/view/SDD/WebHome</a
+        >). See the MorphoBank manual for more information.
+      </p>
     </div>
   </ProjectLoaderComp>
 </template>
-<style>
+<style scoped>
 .minor-text {
   color: #828282;
   font-size: 0.8rem;
@@ -128,7 +103,19 @@ async function downloadProject() {
 
 .download-button-container {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 12px;
+}
+
+.download-status {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.status-error {
+  color: #721c24;
+}
+.status-success {
+  color: #155724;
 }
 
 .btn-download {
@@ -182,7 +169,6 @@ async function downloadProject() {
 .fa-spinner {
   margin-right: 8px;
 }
-
 .fa-download {
   margin-right: 8px;
 }

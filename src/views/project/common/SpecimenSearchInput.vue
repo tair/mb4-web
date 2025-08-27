@@ -332,7 +332,7 @@ function cancelCreate() {
         </button>
         <button
           type="button"
-          class="btn btn-outline-secondary btn-sm"
+          class="btn btn-outline-primary btn-sm"
           @click="cancelCreate"
           :disabled="isCreating"
         >
