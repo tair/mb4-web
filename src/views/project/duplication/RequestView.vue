@@ -12,10 +12,12 @@ let onetimeMedia = ref([])
 let isPublished = ref(false)
 let userAccess = ref(false)
 let isLoaded = ref(false)
+let isSubmitted = ref(false)
 
 // Validation messages
 const validationMessages = ref({
   error: '',
+  success: '',
 })
 
 onMounted(async () => {
@@ -37,8 +39,9 @@ onMounted(async () => {
 })
 
 async function makeRequest(event) {
-  // Clear previous error messages
+  // Clear previous messages
   validationMessages.value.error = ''
+  validationMessages.value.success = ''
   
   const formData = new FormData(event.target)
   const formObject = Object.fromEntries(formData.entries())
@@ -64,8 +67,17 @@ async function makeRequest(event) {
       import.meta.env.VITE_API_URL
     }/projects/${projectId}/duplication/request`
 
-    await axios.post(url, { projectId, remarks, onetimeAction })
-    router.push({ path: `/myprojects/${projectId}/overview` })
+    const response = await axios.post(url, { projectId, remarks, onetimeAction })
+    
+    // Show success message
+    isSubmitted.value = true
+    validationMessages.value.success = 'Your duplication request has been successfully submitted! A MorphoBank administrator will contact you with further information.'
+    
+    // Redirect after a short delay to allow user to read the success message
+    window.setTimeout(() => {
+      window.location.href = `/myprojects/${projectId}/overview`
+    }, 3000) // 3 second delay
+    
   } catch (error) {
     console.error('Failed to submit duplication request:', error)
     validationMessages.value.error = 'Failed to submit request. Please try again.'
@@ -95,7 +107,7 @@ async function makeRequest(event) {
       further information.
     </p>
 
-    <form @submit.prevent="makeRequest">
+    <form @submit.prevent="makeRequest" :class="{ 'disabled': isSubmitted }">
       <div class="row setup-content">
         <!-- Onetime Media Section -->
         <div v-if="onetimeMedia.length > 0" class="form-group">
@@ -132,14 +144,8 @@ async function makeRequest(event) {
                 
                 <h6>Media Files with Onetime License:</h6>
                 <ul class="list-group mb-3">
-                  <li v-for="media in onetimeMedia" :key="media.media_id" class="list-group-item d-flex justify-content-between align-items-center">
+                  <li v-for="media in onetimeMedia" :key="media.media_id" class="list-group-item">
                     <span>Media File {{ media.media_id }}</span>
-                    <RouterLink
-                      :to="`/myprojects/${projectId}/media/${media.media_id}`"
-                      class="btn btn-outline-primary btn-sm"
-                    >
-                      View Media
-                    </RouterLink>
                   </li>
                 </ul>
                 
@@ -151,6 +157,7 @@ async function makeRequest(event) {
                     name="onetimeAction"
                     value="100"
                     id="moveMedia"
+                    :disabled="isSubmitted"
                   />
                   <label class="form-check-label" for="moveMedia">
                     Move onetime use media to new project
@@ -164,6 +171,7 @@ async function makeRequest(event) {
                     value="1"
                     id="keepMedia"
                     checked
+                    :disabled="isSubmitted"
                   />
                   <label class="form-check-label" for="keepMedia">
                     Keep onetime use media in existing project
@@ -186,6 +194,7 @@ async function makeRequest(event) {
             rows="4"
             placeholder="Please provide a detailed reason for your duplication request..."
             required
+            :disabled="isSubmitted"
           ></textarea>
           <div class="form-text">
             Please include the purpose of the duplication and any specific requirements.
@@ -198,6 +207,13 @@ async function makeRequest(event) {
           messageName="error"
           alertType="danger"
         />
+        
+        <!-- Success message -->
+        <Alert
+          :message="validationMessages"
+          messageName="success"
+          alertType="success"
+        />
 
         <!-- Submit buttons -->
         <div class="btn-form-group">
@@ -206,8 +222,8 @@ async function makeRequest(event) {
               Cancel
             </button>
           </RouterLink>
-          <button class="btn btn-primary" type="submit">
-            Submit Request
+          <button class="btn btn-primary" type="submit" :disabled="isSubmitted">
+            {{ isSubmitted ? 'Request Submitted' : 'Submit Request' }}
           </button>
         </div>
       </div>
@@ -217,4 +233,14 @@ async function makeRequest(event) {
 
 <style scoped>
 @import '@/views/project/styles.css';
+
+.disabled {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.disabled .form-control:disabled,
+.disabled .form-check-input:disabled {
+  opacity: 0.8;
+}
 </style>

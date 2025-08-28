@@ -9,9 +9,11 @@ const props = defineProps({
 
 // Extract media ID from filename
 const mediaId = computed(() => {
-  const match = props.project.image_props.media.FILENAME.match(
-    /media_files_media_(\d+)_preview/
-  )
+  const filename = props.project?.image_props?.media?.FILENAME
+  if (!filename) {
+    return null
+  }
+  const match = filename.match(/media_files_media_(\d+)_preview/)
   return match ? match[1] : null
 })
 </script>
@@ -48,6 +50,25 @@ const mediaId = computed(() => {
 .theme-color-text {
   color: #ef782f !important;
 }
+.stat-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+  flex: 1;
+  margin-bottom: 4px;
+}
+.stat-item i {
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+.stat-item small {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-left: 4px;
+}
 </style>
 
 <template>
@@ -69,6 +90,7 @@ const mediaId = computed(() => {
         </div>
         <div class="col d-flex align-items-stretch thumb">
           <img
+            v-if="mediaId"
             :src="buildMediaUrl(props.project.project_id, mediaId, 'large')"
             class="card-img-top"
           />
@@ -84,7 +106,7 @@ const mediaId = computed(() => {
         </strong>
       </RouterLink>
       <p class="card-text">
-        {{ project.article_title }}
+        {{ project.article_title || project.name }}
       </p>
       <span class="p-0 small m-0 fw-lighter"
         >Journal Year: {{ project.journal_year }}</span
@@ -95,73 +117,74 @@ const mediaId = computed(() => {
         <!-- tooltip dosplay order matters for layout -->
         <div
           v-if="project.project_stats.matrices"
-          class="col d-flex align-items-stretch"
+          class="col"
         >
           <RouterLink
             :to="`/project/${project.project_id}/matrices`"
-            class="nav-link p-0"
+            class="nav-link p-0 stat-item"
           >
             <i class="fa-solid fa-border-all"></i>
-            <small class="text-nowrap mx-1">
-              {{ project.project_stats.matrices }} matrices
+            <small>
+              {{ project.project_stats.matrices }}&nbsp;{{ project.project_stats.matrices > 1 ? 'matrices' : 'matrix' }}
             </small>
             <i
               v-if="project.has_continuous_char"
-              class="fa-solid fa-ruler-horizontal"
+              class="fa-solid fa-ruler-horizontal ms-1"
             ></i>
           </RouterLink>
         </div>
         <div
           v-if="project.project_stats.docs"
-          class="col d-flex align-items-stretch"
+          class="col"
         >
           <RouterLink
             :to="`/project/${project.project_id}/docs`"
-            class="nav-link p-0"
+            class="nav-link p-0 stat-item"
           >
             <i class="fa-solid fa-file"></i>
-            <small class="text-nowrap ms-1">
-              {{ project.project_stats.docs }}
-              {{ project.project_stats.docs > 99 ? 'document' : 'documents' }}
+            <small>
+              {{ project.project_stats.docs }}&nbsp;{{ project.project_stats.docs > 1 ? 'documents' : 'document' }}
             </small>
           </RouterLink>
         </div>
         <div
           v-if="project.project_stats.media_image"
-          class="col d-flex align-items-stretch"
+          class="col"
         >
           <RouterLink
             :to="`/project/${project.project_id}/media`"
-            class="nav-link p-0"
+            class="nav-link p-0 stat-item"
           >
             <i class="fa-solid fa-camera"></i>
-            <small class="text-nowrap ms-1"
-              >{{ project.project_stats.media_image }} images</small
-            >
+            <small>
+              {{ project.project_stats.media_image }}&nbsp;{{ project.project_stats.media_image > 1 ? 'images' : 'image' }}
+            </small>
           </RouterLink>
         </div>
         <div
           v-if="project.project_stats.media_3d"
-          class="col d-flex align-items-stretch"
+          class="col"
         >
           <RouterLink
             :to="`/project/${project.project_id}/media`"
-            class="nav-link p-0"
+            class="nav-link p-0 stat-item"
           >
             <i class="fa-solid fa-cube"></i>
-            <small class="text-nowrap ms-1"
-              >{{ project.project_stats.media_3d }} 3D media</small
-            >
+            <small>
+              {{ project.project_stats.media_3d }} 3D media
+            </small>
           </RouterLink>
         </div>
         <div
           v-if="project.has_continuous_char"
-          class="col d-flex align-items-stretch theme-color-text"
+          class="col theme-color-text"
         >
-          <i class="fa-solid fa-ruler-horizontal"></i>
-          <small class="text-nowrap ms-1">
-            Matrix has continuous characters
-          </small>
+          <div class="stat-item">
+            <i class="fa-solid fa-ruler-horizontal"></i>
+            <small>
+              Matrix has continuous characters
+            </small>
+          </div>
         </div>
       </div>
     </div>

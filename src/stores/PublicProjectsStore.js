@@ -22,6 +22,11 @@ export const usePublicProjectsStore = defineStore({
     itemsPerPage: 25,
     totalPages: 0,
     /////////////////////
+
+    // morphobank statistics //
+    morphoBankStats: null,
+    morphoBankStatsLoading: false,
+    ////////////////////////////
   }),
   getters: {
     isLoading(state) {
@@ -103,40 +108,8 @@ export const usePublicProjectsStore = defineStore({
         var getter = axios.create()
         delete getter.defaults.headers.common['Authorization']
 
-        let res = await getter.get(
-          `${
-            import.meta.env.VITE_API_URL
-          }/s3/stats_files/projectViewsForLast30Days.json`
-        )
-        const projectViewsForLast30Days = res.data
-
-        res = await getter.get(
-          `${
-            import.meta.env.VITE_API_URL
-          }/s3/stats_files/matrixDownloadsForLast30Days.json`
-        )
-        const matrixDownloadsForLast30Days = res.data
-
-        res = await getter.get(
-          `${
-            import.meta.env.VITE_API_URL
-          }/s3/stats_files/mediaViewsForLast30Days.json`
-        )
-        const mediaViewsForLast30Days = res.data
-
-        res = await getter.get(
-          `${
-            import.meta.env.VITE_API_URL
-          }/s3/stats_files/docDownloadsForLast30Days.json`
-        )
-        const docDownloadsForLast30Days = res.data
-
-        this.stats = {
-          projectViewsForLast30Days,
-          matrixDownloadsForLast30Days,
-          mediaViewsForLast30Days,
-          docDownloadsForLast30Days,
-        }
+        const res = await getter.get(`${import.meta.env.VITE_API_URL}/public/projects/stats`)
+        this.stats = res.data
       } catch (e) {
         console.error(`store:projects:fetchProjectStats(): ${e}`)
         this.err = 'Error fetching project stats.'
@@ -275,6 +248,28 @@ export const usePublicProjectsStore = defineStore({
         this.err = 'Error fetching project institutions.'
       } finally {
         this.loading = false
+      }
+    },
+
+    async fetchMorphoBankStats() {
+      // if already loaded, return them.
+      if (this.morphoBankStats) return this.morphoBankStats
+
+      this.morphoBankStatsLoading = true
+
+      try {
+        var getter = axios.create()
+        delete getter.defaults.headers.common['Authorization']
+
+        const res = await getter.get(`${import.meta.env.VITE_API_URL}/stats/home`)
+        this.morphoBankStats = res.data
+
+        return this.morphoBankStats
+      } catch (e) {
+        console.error(`store:projects:fetchMorphoBankStats(): ${e}`)
+        this.err = 'Error fetching MorphoBank statistics.'
+      } finally {
+        this.morphoBankStatsLoading = false
       }
     },
   },

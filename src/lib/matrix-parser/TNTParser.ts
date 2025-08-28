@@ -90,6 +90,9 @@ export class TNTParser extends AbstractParser {
     this.matrixObject.setDimensions('TAXA', taxaCount)
 
     let characterType = CharacterType.DISCRETE
+    let taxaProcessed = 0
+    
+    // Check for character type indicators that apply to all subsequent taxa
     while (this.untilToken([Token.SEMICOLON])) {
       if (this.tokenizer.consumeTokenIfMatch([Token.COMMENT])) {
         continue
@@ -97,12 +100,35 @@ export class TNTParser extends AbstractParser {
 
       if (this.tokenizer.consumeTokenIfMatch([Token.AMPERSAND_NUM])) {
         characterType = CharacterType.DISCRETE
+        // Set character type for all characters
+        for (let i = 0; i < characterCount; i++) {
+          this.matrixObject.setCharacterType(i, characterType)
+        }
+        continue
       } else if (this.tokenizer.consumeTokenIfMatch([Token.AMPERSAND_CONT])) {
         characterType = CharacterType.CONTINUOUS
+        // Set character type for all characters
+        for (let i = 0; i < characterCount; i++) {
+          this.matrixObject.setCharacterType(i, characterType)
+        }
+        continue
+      }
+
+      // Stop processing if we've already read the expected number of taxa
+      if (taxaProcessed >= taxaCount) {
+        break
       }
 
       const rowName = this.tokenizer.getTokenValue()
-      this.matrixObject.addTaxon(rowName.getValue())
+      const taxonName = rowName.getValue()
+      
+      // Skip values that look like continuous character data (numbers, ranges, etc.)
+      if (characterType === CharacterType.CONTINUOUS && this.looksLikeContinuousValue(taxonName)) {
+        continue
+      }
+      
+      this.matrixObject.addTaxon(taxonName)
+      taxaProcessed++
 
       // For TNT files, it is possible to have an AT symbol to indicate higher
       // taxonomy ranks. This is ignored by the parse so we just get value of
@@ -111,16 +137,21 @@ export class TNTParser extends AbstractParser {
         this.tokenizer.consumeToken()
       }
 
-      const row = this.matrixObject.getCells(rowName.getValue())
+      const row = this.matrixObject.getCells(taxonName)
 
       const cellTokenizer =
         characterType == CharacterType.CONTINUOUS
           ? new ContinuousCellTokenizer(this.reader)
           : new CellTokenizer(this.reader)
+
       this.tokenizer.setTokenizer(cellTokenizer)
       for (let x = 0; x < characterCount && !this.tokenizer.isFinished(); ++x) {
         const cellTokenValue = this.tokenizer.getTokenValue()
-        row.push(new Cell(cellTokenValue.getValue()))
+        if (cellTokenValue.getValue() !== '') { // skip empty token value
+          row.push(new Cell(cellTokenValue.getValue()))
+        } else {
+          x-- // does not count as a token
+        }
       }
       this.tokenizer.removeTokenizer()
     }
@@ -265,5 +296,42 @@ export class TNTParser extends AbstractParser {
     while (this.untilToken([Token.CLOSE_BRACKET])) {
       this.tokenizer.consumeToken()
     }
+  }
+
+  /**
+   * Check if a value looks like continuous character data rather than a taxon name
+   */
+  private looksLikeContinuousValue(value: string): boolean {
+    // Check for various continuous value patterns:
+    // - Simple numbers: "0.867", "-1.23", "42"
+    // - Ranges: "0.636-0.695", "1.5-2.8"
+    // - Missing data: "?", "-"
+    // - Invalid data markers
+    
+    if (!value || value.length === 0) {
+      return false
+    }
+    
+    // Missing data markers
+    if (value === '?' || value === '-') {
+      return true
+    }
+    
+    // Simple numeric values (integers and decimals)
+    if (/^-?\d+(\.\d+)?$/.test(value)) {
+      return true
+    }
+    
+    // Numeric ranges like "0.636-0.695" or "1.5-2.8"
+    if (/^-?\d+(\.\d+)?--?\d+(\.\d+)?$/.test(value)) {
+      return true
+    }
+    
+    // Ranges with single dash (more common)
+    if (/^-?\d+(\.\d+)?-\d+(\.\d+)?$/.test(value)) {
+      return true
+    }
+    
+    return false
   }
 }

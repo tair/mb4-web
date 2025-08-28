@@ -114,6 +114,7 @@ export class MatrixGrid extends Component {
     this.characterRenderer.setShouldDisplayWarnings(
       this.matrixModel.hasAccessToAtleastOneTaxon()
     )
+    this.characterRenderer.setMatrixModel(this.matrixModel)
 
     this.horizontalScrollBar = new Scrollbar()
     this.horizontalScrollBar.setOrientation(Orientation.HORIZONTAL)
@@ -793,6 +794,12 @@ export class MatrixGrid extends Component {
       }
     }
     this.redrawCells()
+    
+    // Redraw character headers to update media availability indicators
+    this.redrawCharacters()
+    
+    // Recalculate layout to fix alignment after character headers change height
+    this.resizeWindow()
 
     // make sure that the last active cell is still highlighted
     this.highlightLastClickedCell()

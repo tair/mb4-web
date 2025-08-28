@@ -5,7 +5,7 @@
  * @param {string} fileSize - The file size (original, large, medium, thumbnail, etc.)
  * @returns {string} - The S3 media URL or placeholder image URL
  */
-function buildMediaUrl(projectId, mediaId, fileSize = 'large') {
+function buildMediaUrl(projectId, mediaId, fileSize = 'original') {
   if (!projectId || !mediaId) {
     return '/public/images/image-not-found.png'
   }

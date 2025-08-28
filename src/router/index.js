@@ -139,12 +139,22 @@ const router = createRouter({
         {
           path: '/curator',
           component: CuratorView,
+          beforeEnter: requireSignIn,
           children: [
             {
               path: '',
               name: 'CuratorHomeView',
               component: CuratorHomeView,
-              beforeEnter: requireSignIn,
+            },
+            {
+              path: 'duplication-requests',
+              name: 'CuratorDuplicationRequestsList',
+              component: () => import('@/views/curator/DuplicationRequestsListView.vue'),
+            },
+            {
+              path: 'duplication-requests/:requestId',
+              name: 'CuratorDuplicationRequestDetail',
+              component: () => import('@/views/curator/DuplicationRequestDetailView.vue'),
             },
           ],
         },
@@ -206,8 +216,8 @@ const router = createRouter({
         {
           path: '/projects',
           component: ProjectView,
-          // add default redirect to /projects/pub_date
-          redirect: '/projects/pub_date',
+          // add default redirect to /projects/journal_year
+          redirect: '/projects/journal_year',
           children: PUBLISHED_PROJECT_VIEWS,
         },
         {

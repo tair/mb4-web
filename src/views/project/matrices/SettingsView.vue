@@ -189,6 +189,12 @@ async function confirmDelete() {
       }/projects/${projectId}/matrices/${matrixId}${deleteParams}`
     )
     matricesStore.invalidate()
+    
+    // If we deleted taxa and characters, invalidate the taxa store to reflect deletions
+    if (deleteWithTaxaAndCharacters.value) {
+      taxaStore.invalidate()
+    }
+    
     router.push(`/myprojects/${projectId}/matrices`)
   } catch (error) {
     console.error('Error deleting matrix:', error)
@@ -487,13 +493,11 @@ onMounted(() => {
                 class="form-check-input"
               />
               <label for="deleteWithTaxaAndCharacters" class="form-check-label">
-                Check this box if you want to completely remove the taxa and
-                characters in this matrix from your Project along with all the
-                scores in the matrix. We recommend this if you want a clean
-                slate - otherwise the taxa and characters will remain in memory
-                after the matrix scores are deleted. If you happen to have
-                multiple matrices that may contain the same taxa or characters
-                those will not be erased.
+                <strong>Permanently delete*</strong> the taxa and characters in this matrix from your Project along with all the scores in the matrix.
+                <br><br>
+                <em>*Any of the taxa and characters used in other matrices in your project will not be deleted.</em>
+                <br><br>
+                If unchecked, only the scores will be deleted —all taxa and characters will remain in your project.
               </label>
             </div>
           </div>

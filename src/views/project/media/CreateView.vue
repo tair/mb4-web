@@ -40,7 +40,13 @@ function validateRequiredFields(formData) {
   Object.entries(createSchema).forEach(([fieldName, fieldDef]) => {
     if (fieldDef.required) {
       const value = formData.get(fieldName)
-      if (!value || (typeof value === 'string' && value.trim() === '')) {
+      
+      // Special handling for file uploads
+      if (fieldName === 'file') {
+        if (!value || (value instanceof File && value.size === 0)) {
+          errors.push(`${fieldDef.label} is required`)
+        }
+      } else if (!value || (typeof value === 'string' && value.trim() === '')) {
         errors.push(`${fieldDef.label} is required`)
       }
     }
@@ -91,28 +97,46 @@ async function createMedia(event) {
   // Remove the is_exemplar field from formData as the backend doesn't expect it
   formData.delete('is_exemplar')
   
-  const result = await mediaStore.create(projectId, formData)
-  
-  if (!result) {
-    alert('Failed to create media')
-    return
-  }
+  try {
+    const result = await mediaStore.create(projectId, formData)
+    
+    if (!result) {
+      validationErrors.value = ['Failed to create media. Please check your input and try again.']
+      return
+    }
 
-  // If the media was created successfully and should be set as exemplar
-  if (isExemplar && result && result.media_id) {
-    try {
-      // Set this media as the project exemplar
-      const success = await projectsStore.setExemplarMedia(projectId, result.media_id)
-      if (!success) {
+    // If the media was created successfully and should be set as exemplar
+    if (isExemplar && result && result.media_id) {
+      try {
+        // Set this media as the project exemplar
+        const success = await projectsStore.setExemplarMedia(projectId, result.media_id)
+        if (!success) {
+          alert('Media created successfully, but failed to set as project exemplar')
+        }
+      } catch (error) {
+        console.error('Failed to set exemplar media:', error)
         alert('Media created successfully, but failed to set as project exemplar')
       }
-    } catch (error) {
-      console.error('Failed to set exemplar media:', error)
-      alert('Media created successfully, but failed to set as project exemplar')
     }
-  }
 
-  window.location.href = `/myprojects/${projectId}/media`
+    window.location.href = `/myprojects/${projectId}/media`
+  } catch (error) {
+    console.error('Media upload error:', error)
+    
+    // Extract specific error messages from backend response
+    let errorMessage = 'Failed to create media. Please try again.'
+    
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message
+    } else if (error.response?.data?.error) {
+      errorMessage = error.response.data.error
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+    
+    // Display the error in the validation errors section
+    validationErrors.value = [errorMessage]
+  }
 }
 
 onMounted(() => {

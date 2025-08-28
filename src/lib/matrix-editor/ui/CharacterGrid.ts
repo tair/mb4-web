@@ -792,6 +792,11 @@ export class CharacterGrid extends Component {
    * @return The HTML content of the character states row
    */
   static characterStatesHtmlContent(character: Character): string {
+    // Check if character is continuous
+    if (character.getType() === 1) { // CharacterType.CONTINUOUS = 1
+      return '<i>(continuous character)</i>'
+    }
+    
     const stateNames: string[] = []
     const characterStates = character.getStates()
     for (let x = 0; x < characterStates.length; x++) {
