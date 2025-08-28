@@ -13,8 +13,6 @@ const isLoaded = ref(false)
 const isSaving = ref(false)
 const formValid = ref(false)
 
-const validationStatus = computed(() => publishStore.getValidationStatus)
-
 const preferences = reactive({
   fundingAcknowledgment: '',
   nsfFunded: null, // null, true, false
@@ -174,13 +172,6 @@ function updateCopyrightPreference(preference) {
       <!-- Intro/validation status removed per requirements -->
 
       <form @submit.prevent="savePreferences" id="publishingForm">
-        <!-- Funding Acknowledgment -->
-        <p style="font-size: 14px; line-height: 1.3em">
-          <b>Funding acknowledgment:</b>
-        </p>
-        <!-- NSF funded radio group removed -->
-
-        <br />
         <p style="font-size: 14px; line-height: 1.3em"><b>Extinct taxa:</b></p>
         <div class="formLabel">
           <div id="extinctTaxa">
