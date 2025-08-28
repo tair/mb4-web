@@ -788,7 +788,13 @@ export class MatrixModel extends EventTarget {
         const cellMedia = cellInfo.getMediaById(mediaId)
         if (cellMedia) {
           const labelCount = result['label_count']
-          cellMedia.setLabelCount(labelCount)
+          // Ensure labelCount is always a number to prevent type issues
+          const numericLabelCount = typeof labelCount === 'number' 
+            ? labelCount 
+            : typeof labelCount === 'string' 
+            ? parseInt(labelCount, 10) || 0
+            : 0
+          cellMedia.setLabelCount(numericLabelCount)
         }
         this.dispatchEvent(
           CellsChangedEvents.create([taxonId], [characterId], true)
