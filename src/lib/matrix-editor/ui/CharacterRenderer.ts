@@ -1,6 +1,7 @@
 import { CharacterRules } from '../data/CharacterRules'
 import { Character } from '../data/Characters'
 import { UserPreferences } from '../data/ProjectProperties'
+import { MatrixModel } from '../MatrixModel'
 import * as mb from '../mb'
 import './CellsContent'
 import './CellsContent'
@@ -12,6 +13,7 @@ export abstract class CharacterRenderer {
   protected characterRules: CharacterRules
   protected userPreferences: UserPreferences
   protected shouldDisplayWarnings: boolean = true
+  protected matrixModel: MatrixModel
 
   /**
    * Sets the character rules
@@ -36,6 +38,37 @@ export abstract class CharacterRenderer {
    */
   setShouldDisplayWarnings(shouldDisplayWarnings: boolean) {
     this.shouldDisplayWarnings = shouldDisplayWarnings
+  }
+
+  /**
+   * Sets the matrix model for accessing cell data
+   * @param matrixModel The matrix model
+   */
+  setMatrixModel(matrixModel: MatrixModel) {
+    this.matrixModel = matrixModel
+  }
+
+  /**
+   * Checks if any taxon has media for the given character
+   * @param characterId The character ID to check
+   * @return true if any taxon has media for this character
+   */
+  protected hasAnyTaxonMediaForCharacter(characterId: number): boolean {
+    if (!this.matrixModel) {
+      return false
+    }
+
+    const taxa = this.matrixModel.getTaxa()
+    const cells = this.matrixModel.getCells()
+    
+    for (const taxon of taxa.getAll()) {
+      const cellInfo = cells.getCellInfo(taxon.getId(), characterId)
+      if (cellInfo.getMedia().length > 0) {
+        return true
+      }
+    }
+    
+    return false
   }
 
   /**
@@ -74,6 +107,10 @@ export abstract class CharacterRenderer {
     if (data.hasWarnings) {
       output = '<span class="characterModifier">(!)</span>' + output
     }
+    // Add media available indicator
+    if (data.hasMediaAvailable) {
+      output += '<br/><span class="media-available">media available</span>'
+    }
     return output
   }
 }
@@ -100,6 +137,7 @@ export class CharacterNameNumberRenderer extends CharacterRenderer {
         this.shouldDisplayWarnings &&
         character.getLastScoredOn() < character.getLastChangedOn(),
       displayMode: this.userPreferences.getCharacterNameDisplayMode(),
+      hasMediaAvailable: this.hasAnyTaxonMediaForCharacter(id),
     })
     return th
   }
@@ -129,6 +167,7 @@ export class CharacterNameNumberRenderer extends CharacterRenderer {
         break
     }
     output += '</span>'
+    
     output = CharacterRenderer.addLabels(output, data)
     return output
   }
@@ -155,6 +194,7 @@ export class CharacterNumberRenderer extends CharacterRenderer {
       hasWarnings:
         this.shouldDisplayWarnings &&
         character.getLastScoredOn() < character.getLastChangedOn(),
+      hasMediaAvailable: this.hasAnyTaxonMediaForCharacter(id),
     })
     return th
   }
@@ -180,4 +220,5 @@ type ContentData = {
   hasRules: boolean
   hasParentRules: boolean
   hasWarnings: boolean
+  hasMediaAvailable?: boolean
 }

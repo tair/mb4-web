@@ -11,7 +11,7 @@
           <div v-html="displayTitle"></div>
           <span v-if="hasAuthorInfo" class="text-muted small">
             <template v-if="project.article_authors">{{ project.article_authors }}</template>
-            <template v-if="project.journal_year">({{ project.journal_year }})</template>
+            <template v-if="project.journal_year"> ({{ project.journal_year }})</template>
             <template v-if="project.journal_title">. {{ project.journal_title }}</template>
           </span>
         </RouterLink>
@@ -27,7 +27,7 @@
       <div v-html="displayTitle"></div>
       <span v-if="hasAuthorInfo" class="text-muted small">
         <template v-if="project.article_authors">{{ project.article_authors }}</template>
-        <template v-if="project.journal_year">({{ project.journal_year }})</template>
+        <template v-if="project.journal_year"> ({{ project.journal_year }})</template>
         <template v-if="project.journal_title">. {{ project.journal_title }}</template>
       </span>
     </RouterLink>

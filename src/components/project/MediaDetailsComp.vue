@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, defineAsyncComponent, h } from 'vue'
 import { toDateString } from '@/utils/date'
 import {
   getViewStatsTooltipText,
@@ -10,26 +10,51 @@ import CustomModal from './CustomModal.vue'
 import MediaViewPanel from './MediaViewPanel.vue'
 import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 import { buildMediaUrl } from '@/utils/fileUtils.js'
-import { defineAsyncComponent } from 'vue'
+import annotationService from '@/services/annotationService.js'
+
+// Lazy load the annotation viewer for the zoom modal only
+const AnnotationViewer = defineAsyncComponent({
+  loader: () => import('../media/AnnotationViewer.vue'),
+  loadingComponent: {
+    render() {
+      return h('div', { class: 'lazy-loading-annotations' }, [
+        h('div', { class: 'loading-spinner' }),
+        h('p', 'Loading annotation viewer...')
+      ])
+    }
+  },
+  errorComponent: {
+    render() {
+      return h('div', { class: 'lazy-error-annotations' }, [
+        h('p', 'Failed to load annotation viewer')
+      ])
+    }
+  },
+  delay: 200,
+  timeout: 10000
+})
 
 // Lazy load the 3D viewer to improve initial page load performance
 const ThreeJSViewer = defineAsyncComponent({
   loader: () => import('./ThreeJSViewer.vue'),
   loadingComponent: {
-    template: `
-      <div class="lazy-loading-3d">
-        <div class="loading-spinner"></div>
-        <p>Loading 3D viewer...</p>
-      </div>
-    `
+    render() {
+      return h('div', { class: 'lazy-loading-3d' }, [
+        h('div', { class: 'loading-spinner' }),
+        h('p', 'Loading 3D viewer...')
+      ])
+    }
   },
   errorComponent: {
-    template: `
-      <div class="lazy-error-3d">
-        <p>Failed to load 3D viewer</p>
-        <button @click="$emit('retry')" class="btn btn-primary">Retry</button>
-      </div>
-    `
+    render() {
+      return h('div', { class: 'lazy-error-3d' }, [
+        h('p', 'Failed to load 3D viewer'),
+        h('button', { 
+          class: 'btn btn-primary',
+          onClick: () => window.location.reload()
+        }, 'Retry')
+      ])
+    }
   },
   delay: 200,
   timeout: 10000
@@ -43,6 +68,15 @@ const props = defineProps({
     type: [Number, String],
     required: false,
   },
+  // Add annotation support props
+  canEdit: {
+    type: Boolean,
+    default: false
+  },
+  isProjectPublished: {
+    type: Boolean,
+    default: false
+  }
 })
 
 const showZoomModal = ref(false)
@@ -50,6 +84,34 @@ const showDownloadModal = ref(false)
 const videoPlayer = ref(null)
 const viewStatsTooltipText = getViewStatsTooltipText()
 const downloadTooltipText = getDownloadTooltipText()
+
+// Preload annotations to avoid race condition
+const preloadAnnotations = async () => {
+  if (!showAnnotations.value || annotationsLoaded.value) return
+  
+  try {
+    const annotations = await annotationService.getAnnotations(
+      Number(props.project_id),
+      props.media_file?.media_id,
+      'M',
+      props.media_file?.media_id
+    )
+    
+    annotationsLoaded.value = true
+    annotationCount.value = annotations.length
+  } catch (error) {
+    console.error('Failed to preload annotations:', error)
+    annotationsLoaded.value = true
+    annotationCount.value = 0
+  }
+}
+
+// Reset annotation state when modal closes
+const onModalClose = () => {
+  showZoomModal.value = false
+  annotationsLoaded.value = false
+  annotationCount.value = 0
+}
 
 // Check if the media file is a 3D file
 const is3DFile = computed(() => {
@@ -137,6 +199,42 @@ const videoMimeType = computed(() => {
   return mimeTypes[ext] || 'video/mp4'
 })
 
+// Check if annotations should be enabled (only for 2D images and if user can edit)
+const annotationsEnabled = computed(() => {
+  return !is3DFile.value && !isVideoFile.value && props.canEdit && !props.isProjectPublished
+})
+
+// Check if annotations should be shown (read-only for published projects)
+const showAnnotations = computed(() => {
+  return !is3DFile.value && !isVideoFile.value
+})
+
+// Track if annotations are loaded and available
+const annotationsLoaded = ref(false)
+const annotationCount = ref(0)
+
+// Determine whether to use annotation viewer or regular media viewer
+// Use AnnotationViewer when user can edit OR when annotations exist
+const useAnnotationViewer = computed(() => {
+  if (!showAnnotations.value) return false
+  
+  // Always use if user can edit (they might want to add annotations)
+  if (annotationsEnabled.value) return true
+  
+  // Use if annotations exist (to view them)
+  if (annotationsLoaded.value && annotationCount.value > 0) return true
+  
+  // Default to false (use regular viewer) if can't edit and no annotations loaded yet
+  return false
+})
+
+// Watch for modal opening and preload annotations to avoid race condition
+watch(showZoomModal, (isOpen) => {
+  if (isOpen && showAnnotations.value && !annotationsLoaded.value) {
+    preloadAnnotations()
+  }
+})
+
 // Get the zoom display URL (3D model for 3D files, video for videos, large image for 2D files)
 const zoomDisplayUrl = computed(() => {
   if (is3DFile.value) {
@@ -151,7 +249,7 @@ const zoomDisplayUrl = computed(() => {
   const media = props.media_file?.media
   if (media) {
     // Try large first (usually JPEG), finally original
-    const sizePreference = ['large', 'original']
+    const sizePreference = ['original', 'large']
     for (const size of sizePreference) {
       if (media[size] && media[size].MIMETYPE !== 'image/tiff' && media[size].MIMETYPE !== 'image/tif') {
         return buildMediaUrl(props.project_id, props.media_file?.media_id, size)
@@ -230,6 +328,18 @@ const onImageError = (event) => {
 
 const onImageLoad = (event) => {
   // Handle successful image loading if needed
+}
+
+// ============================================================================
+// Annotation Event Handlers
+// ============================================================================
+
+const onAnnotationsLoaded = (count) => {
+  annotationsLoaded.value = true
+  annotationCount.value = count
+}
+
+const onAnnotationsSaved = () => {
 }
 
 async function confirmDownload(fileSize, fileName) {
@@ -352,7 +462,7 @@ function getHitsMessage(mediaObj) {
               </a>
               <CustomModal
                 :isVisible="showZoomModal"
-                @close="showZoomModal = false"
+                @close="onModalClose"
               >
                 <!-- Three.js 3D Viewer for all 3D files -->
                 <ThreeJSViewer
@@ -386,7 +496,20 @@ function getHitsMessage(mediaObj) {
                     <p>Your browser doesn't support video playback.</p>
                   </video>
                 </div>
-                <!-- Regular Image Viewer for 2D files -->
+                <!-- Annotation Viewer for 2D images (handles all cases gracefully) -->
+                <AnnotationViewer
+                  v-else-if="useAnnotationViewer"
+                  :media-id="media_file.media_id"
+                  :project-id="Number(project_id)"
+                  :media-url="zoomDisplayUrl"
+                  :can-edit="annotationsEnabled"
+                  :link-id="media_file.media_id"
+                  type="M"
+                  @annotationsLoaded="onAnnotationsLoaded"
+                  @annotationsSaved="onAnnotationsSaved"
+                />
+                
+                <!-- Fallback to regular image viewer (shouldn't normally be used for 2D) -->
                 <MediaViewPanel
                   v-else
                   :imgSrc="zoomDisplayUrl"
@@ -619,5 +742,37 @@ p {
   width: auto;
   height: auto;
   border-radius: 4px;
+}
+
+/* Annotation loading states */
+.lazy-loading-annotations,
+.lazy-error-annotations {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  color: #666;
+}
+
+.lazy-loading-annotations .loading-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #e3e3e3;
+  border-top: 3px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.lazy-error-annotations {
+  color: #dc3545;
 }
 </style>

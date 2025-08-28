@@ -105,7 +105,7 @@ const morphoBankStatsText = computed(() => {
               <div class="col-2 small">Document</div>
               <div class="col">
                 <RouterLink
-                  :to="`/project/${item.doc_id}/overview`"
+                  :to="`/project/${item.project_id}/documents`"
                   class="nav-link p-0"
                 >
                   <div v-html="item.doc"></div>
@@ -139,7 +139,7 @@ const morphoBankStatsText = computed(() => {
               <div class="col-2 small">Matrix {{ item.matrix_id }}</div>
               <div class="col">
                 <RouterLink
-                  :to="`/project/${item.doc_id}/overview`"
+                  :to="`/project/${item.project_id}/matrices`"
                   class="nav-link p-0"
                 >
                   <div v-html="item.matrix"></div>

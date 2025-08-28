@@ -189,6 +189,12 @@ async function confirmDelete() {
       }/projects/${projectId}/matrices/${matrixId}${deleteParams}`
     )
     matricesStore.invalidate()
+    
+    // If we deleted taxa and characters, invalidate the taxa store to reflect deletions
+    if (deleteWithTaxaAndCharacters.value) {
+      taxaStore.invalidate()
+    }
+    
     router.push(`/myprojects/${projectId}/matrices`)
   } catch (error) {
     console.error('Error deleting matrix:', error)
