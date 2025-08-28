@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { usePublishWorkflowStore } from '@/stores/PublishWorkflowStore.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import UnpublishedItemsNotice from '@/components/project/UnpublishedItemsNotice.vue'
-import PublishedSuccessView from '@/components/project/PublishedSuccessView.vue'
+import PublishedSuccessView from '@/views/project/publish/PublishedSuccessView.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -65,11 +65,6 @@ function editItem(id, type) {
     folio: `/myprojects/${projectId}/folios/${id}`,
   }
   router.push(routes[type])
-}
-
-function confirmAndPublish() {
-  // Directly publish without confirm dialog per requirements
-  publishProject()
 }
 
 async function publishProject() {
@@ -147,20 +142,18 @@ function handleViewPublishedProject(publishedProjectId) {
         <!-- Primary Action Button (centered) -->
         <div class="publish-actions">
           <button
-            @click="confirmAndPublish"
+            @click="publishProject"
             class="btn btn-success btn-large"
             :disabled="isPublishing && !errorMessage"
           >
-            <i
-              v-if="isPublishing && !errorMessage"
-              class="fa-solid fa-spinner fa-spin"
-            ></i>
-            <i v-else class="fa-solid fa-rocket"></i>
-            {{
-              isPublishing && !errorMessage
-                ? 'Publishing Project...'
-                : 'Publish Project'
-            }}
+            <template v-if="isPublishing && !errorMessage">
+              <i class="fa-solid fa-spinner fa-spin"></i>
+              Publishing Project...
+            </template>
+            <template v-else>
+              <i class="fa-solid fa-rocket"></i>
+              Publish Project
+            </template>
           </button>
         </div>
 

@@ -54,6 +54,7 @@ export const schema = {
         'Copyright expired or work otherwise in public domain': 4,
         'Copyright permission not yet requested': 5,
       },
+      value: 4,
     },
   },
   copyright_license: {
@@ -72,6 +73,7 @@ export const schema = {
         'Media released for onetime use, no reuse without permission': 8,
         'Unknown - Will set before project publication': 20,
       },
+      value: 1,
     },
   },
   copyright_info: {

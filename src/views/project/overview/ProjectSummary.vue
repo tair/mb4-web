@@ -49,6 +49,9 @@ const props = defineProps<{
   projectId: string | number
 }>()
 
+// Environment variables
+const DOI_URL = import.meta.env.VITE_DOI_URL
+
 // const overviewStore = useProjectOverviewStore() // No longer needed
 const exemplarMedia = ref(null)
 
@@ -146,25 +149,28 @@ function popDownloadAlert() {
       <div class="mt-5">
         <!-- Button shown first if applicable -->
         <!-- Case 1: DOI starts with '10.' - show Read the article button that goes to doi.org -->
-        <div v-if="overview.article_doi && overview.article_doi.startsWith('10.')" class="mb-2">
-          <a
-            :href="`https://doi.org/${overview.article_doi}`"
-            target="_blank"
-          >
+        <div
+          v-if="overview.article_doi && overview.article_doi.startsWith('10.')"
+          class="mb-2"
+        >
+          <a :href="`https://doi.org/${overview.article_doi}`" target="_blank">
             <button class="btn btn-primary">Read the article</button>
           </a>
         </div>
-        
+
         <!-- Case 2: DOI is 'none' and journal_url exists - show Read the Article button with journal_url -->
-        <div v-else-if="(!overview.article_doi || overview.article_doi === 'none') && overview.journal_url" class="mb-2">
-          <a
-            :href="overview.journal_url"
-            target="_blank"
-          >
+        <div
+          v-else-if="
+            (!overview.article_doi || overview.article_doi === 'none') &&
+            overview.journal_url
+          "
+          class="mb-2"
+        >
+          <a :href="overview.journal_url" target="_blank">
             <button class="btn btn-primary">Read the article</button>
           </a>
         </div>
-        
+
         <!-- DOI information shown below button -->
         <div>
           <span class="fw-bold">Article DOI:</span>
@@ -174,10 +180,7 @@ function popDownloadAlert() {
 
       <div v-if="overview.project_doi">
         <span class="fw-bold">Project DOI: </span>
-        <a 
-          :href="`http://dx.doi.org/${overview.project_doi}`"
-          target="_blank"
-        >
+        <a :href="`${DOI_URL}/${overview.project_doi}`" target="_blank">
           {{ overview.project_doi }}
         </a>
       </div>
