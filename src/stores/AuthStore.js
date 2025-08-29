@@ -37,6 +37,18 @@ export const useAuthStore = defineStore({
         state.user && state.user.access && state.user.access.includes('admin')
       )
     },
+    isAnonymousReviewer(state) {
+      return (
+        state.user && state.user.access && state.user.access.includes('anonymous_reviewer')
+      )
+    },
+    getAnonymousProjectId(state) {
+      if (this.isAnonymousReviewer && state.user.userId) {
+        // Extract project ID from user ID (format: "Project123")
+        return state.user.userId.replace('Project', '')
+      }
+      return null
+    },
   },
   actions: {
     invalidate() {
