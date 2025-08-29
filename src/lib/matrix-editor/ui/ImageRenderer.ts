@@ -13,6 +13,7 @@ export class ImageRenderer extends Component {
 
   private readonly type: string
   private projectId: number | null = null
+  private cellId: number | null = null
 
   private imageUrls: ImageRendererUrl[]
   private currentImageIndex: number
@@ -33,6 +34,14 @@ export class ImageRenderer extends Component {
    */
   setProjectId(projectId: number) {
     this.projectId = projectId
+  }
+
+  /**
+   * Sets the cell ID for annotation context
+   * @param cellId The cell/link ID
+   */
+  setCellId(cellId: number | null) {
+    this.cellId = cellId
   }
 
   /**
@@ -175,10 +184,9 @@ export class ImageRenderer extends Component {
     const imageUrl = this.imageUrls[this.currentImageIndex]
     
     if (this.projectId !== null) {
-      // Use new signature with project ID
-      // Enable annotations for editable media (when not readonly)
-      const enableAnnotations = !this.isReadOnly
-      ImageViewerDialog.show(this.type, imageUrl.id, this.projectId, {}, this.isReadOnly, enableAnnotations)
+      // console.log('onHandleClick', this.type, imageUrl.id, this.projectId, {}, this.isReadOnly, this.cellId)
+      // Use new signature with project ID and cell ID
+      ImageViewerDialog.show(this.type, imageUrl.id, this.projectId, {}, this.isReadOnly, this.cellId)
     } else {
       // Fallback to old signature - project ID will be derived from URL
       ImageViewerDialog.show(this.type, imageUrl.id, this.isReadOnly)

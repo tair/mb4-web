@@ -70,6 +70,11 @@ export class MatrixModel extends EventTarget {
     return this.matrixId
   }
 
+  /** @return the project id */
+  getProjectId(): number {
+    return this.loader.getProjectId()
+  }
+
   /** @return total number of taxa. */
   getNumberOfTaxa(): number {
     return this.taxa.size()

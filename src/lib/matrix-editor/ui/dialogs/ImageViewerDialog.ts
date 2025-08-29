@@ -5,12 +5,14 @@ import { VueMountingUtility, vueMountingRegistry } from '../VueMountingUtility'
 
 /**
  * Advanced Media Viewer with support for images, videos, and 3D files
+ * Automatically enables annotation viewer for all 2D images (readonly mode shows labels but disables editing)
  *
  * @param type The type of the media to display
- * @param id The id of the media to display
+ * @param mediaId The id of the media to display
  * @param projectId The project ID for building media URLs
  * @param mediaData Optional media metadata for smart URL selection
- * @param readonly Whether the image viewer should be immutable
+ * @param readonly Whether the image viewer should be immutable (affects editing, not viewing)
+ * @param linkId Optional matrix cell link ID for annotation context
  */
 export class ImageViewerDialog extends Modal {
   /**
@@ -44,41 +46,40 @@ export class ImageViewerDialog extends Modal {
   private static ANNOTATION_UI_PADDING: number = 40
 
   private readonly type: string
-  private readonly id: number
+  private readonly mediaId: number
   private readonly projectId: number
   private mediaData: any
   private readonly readonly: boolean
+  private readonly linkId: number | null
   private readonly metaViewport: Element
   private currentMediaElement: HTMLElement | null = null
   
   // Annotation functionality
   private annotationMountingUtility: VueMountingUtility | null = null
-  private enableAnnotations: boolean = false
   private annotationContainer: HTMLElement | null = null
 
   constructor(
     type: string, 
-    id: number, 
+    mediaId: number, 
     projectId: number,
     mediaData?: any,
     readonly?: boolean | null,
-    enableAnnotations?: boolean
+    linkId?: number | null
   ) {
     super()
 
     this.type = type
-    this.id = id
+    this.mediaId = mediaId
     this.projectId = projectId
     this.mediaData = mediaData || {}
     this.readonly = !!readonly
-    this.enableAnnotations = !!enableAnnotations && !this.readonly
+    this.linkId = linkId || null
     this.metaViewport = document.querySelector(
       'meta[name="viewport"]'
     ) as Element
     
-    // Set appropriate title based on functionality
-    const title = this.enableAnnotations ? 'Media Annotation Viewer' : 'Media Viewer'
-    this.setTitle(title)
+    // Always use annotation viewer title since annotations are always enabled
+    this.setTitle('Media Annotation Viewer')
     this.setDisposeOnHide(true)
   }
 
@@ -162,7 +163,7 @@ export class ImageViewerDialog extends Modal {
    * Build media URL for different file sizes using the static utility method
    */
   private buildMediaUrl(fileType: string = 'original'): string {
-    const url = ImageViewerDialog.buildMediaUrl(this.projectId, this.id, fileType)
+    const url = ImageViewerDialog.buildMediaUrl(this.projectId, this.mediaId, fileType)
     return url
   }
 
@@ -251,38 +252,11 @@ export class ImageViewerDialog extends Modal {
     
     const viewer = this.getElementByClass<HTMLElement>('media-viewer-container')
     
-    if (this.enableAnnotations) {
-      // For annotations, the modal CSS handles the sizing using viewport units
-      // We just need to ensure the container takes full available space
-      if (viewer) {
-        mb.setElementStyle(viewer, 'height', '100%')
-        mb.setElementStyle(viewer, 'width', '100%')
-      }
-    } else {
-      // For simple media viewing, use the original sizing logic
-      const minHeight = ImageViewerDialog.MIN_DIALOG_HEIGHT
-      const totalPadding = ImageViewerDialog.HEADER_PADDING
-      
-      const possiblePaneHeight = Math.max(
-        minHeight,
-        windowDimensionHeight - totalPadding
-      )
-      
-      const maxHeight = ImageViewerDialog.MAX_DIALOG_HEIGHT
-      const height = Math.min(maxHeight, possiblePaneHeight)
-      
-      if (viewer) {
-        mb.setElementStyle(viewer, 'height', height + 'px')
-
-        // Calculate width constraints for simple media viewer
-        setTimeout(() => {
-          const element = this.getElement()
-          if (element && windowDimensionWidth < element.offsetWidth) {
-            const width = windowDimensionWidth - (ImageViewerDialog.HEADER_PADDING + 40)
-            mb.setElementStyle(viewer, 'width', width + 'px')
-          }
-        })
-      }
+    // For annotations, the modal CSS handles the sizing using viewport units
+    // We just need to ensure the container takes full available space
+    if (viewer) {
+      mb.setElementStyle(viewer, 'height', '100%')
+      mb.setElementStyle(viewer, 'width', '100%')
     }
   }
 
@@ -290,10 +264,6 @@ export class ImageViewerDialog extends Modal {
    * Creates the media content HTML
    */
   private createMediaContent(): string {
-    const annotationContainer = this.enableAnnotations 
-      ? '<div class="annotation-viewer-container" style="display: none;"></div>'
-      : ''
-    
     return `
       <div class="media-viewer-container">
         <div class="loading-overlay" style="display: flex;">
@@ -307,7 +277,7 @@ export class ImageViewerDialog extends Modal {
           </div>
         </div>
         <div class="media-content" style="display: none;"></div>
-        ${annotationContainer}
+        <div class="annotation-viewer-container" style="display: none;"></div>
       </div>
     `
   }
@@ -372,8 +342,8 @@ export class ImageViewerDialog extends Modal {
     errorOverlay.style.display = 'none'
     container.style.display = 'flex'
 
-    // Setup annotations if enabled and image viewer was created
-    if (this.enableAnnotations && !this.is3DFile() && !this.isVideoFile()) {
+    // Setup annotations for image viewers (not for 3D files or videos)
+    if (!this.is3DFile() && !this.isVideoFile()) {
       this.setupAnnotations()
     }
   }
@@ -516,11 +486,11 @@ export class ImageViewerDialog extends Modal {
       await this.annotationMountingUtility.mount(this.annotationContainer, {
         component: AnnotationViewer,
         props: {
-          mediaId: this.id,
+          mediaId: this.mediaId,
           projectId: this.projectId,
           mediaUrl: mediaUrl,
           type: this.type,
-          linkId: null, // Could be enhanced to support specific link contexts
+          linkId: this.linkId, // Pass the cell link_id for matrix cells
           canEdit: !this.readonly,
           contextType: null,
           contextId: null
@@ -550,7 +520,7 @@ export class ImageViewerDialog extends Modal {
     const downloadUrl = this.buildMediaUrl('original')
     const link = document.createElement('a')
     link.href = downloadUrl
-    link.download = `media_${this.id}`
+    link.download = `media_${this.mediaId}`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -838,19 +808,15 @@ export class ImageViewerDialog extends Modal {
     const contentElement = this.getContentElement()
     contentElement.classList.add('mediaViewer')
     
-    // Add annotation-specific class if annotations are enabled
-    if (this.enableAnnotations) {
-      contentElement.classList.add('with-annotations')
-    }
+    // Always add annotation-specific class since annotations are always enabled
+    contentElement.classList.add('with-annotations')
     
     // Get the modal dialog element and add annotation-specific classes
     const element = this.getElement()
     const modalDialog = element.querySelector('.modal-dialog')
     
-    if (modalDialog && this.enableAnnotations) {
+    if (modalDialog) {
       modalDialog.classList.add('modal-xl', 'modal-annotation-viewer')
-    } else if (modalDialog) {
-      modalDialog.classList.add('modal-lg')
     }
     
     contentElement.innerHTML = this.createMediaContent()
@@ -887,7 +853,7 @@ export class ImageViewerDialog extends Modal {
    * @param projectIdOrReadonly Project ID (new signature) or readonly flag (old signature)
    * @param mediaData Optional media metadata for smart URL selection
    * @param readonly Whether the image viewer should be immutable
-   * @param enableAnnotations Whether to enable annotation functionality
+   * @param linkId Optional link ID for matrix cell context
    */
   static show(
     type: string, 
@@ -895,27 +861,25 @@ export class ImageViewerDialog extends Modal {
     projectIdOrReadonly?: number | boolean | null,
     mediaData?: any,
     readonly?: boolean | null,
-    enableAnnotations?: boolean
+    linkId?: number | null
   ) {
+    console.log('ImageViewerDialog show', type, id, projectIdOrReadonly, mediaData, readonly, linkId)
     
     // Handle backwards compatibility with old signature: show(type, id, readonly)
     let projectId: number
     let actualReadonly: boolean
     let actualMediaData: any
-    let actualEnableAnnotations: boolean
     
     if (typeof projectIdOrReadonly === 'number') {
-      // New signature: show(type, id, projectId, mediaData?, readonly?, enableAnnotations?)
+      // New signature: show(type, id, projectId, mediaData?, readonly?)
       projectId = projectIdOrReadonly
       actualMediaData = mediaData
       actualReadonly = !!readonly
-      actualEnableAnnotations = !!enableAnnotations
     } else {
       // Old signature: show(type, id, readonly?) - need to derive projectId
       projectId = 1 // Default fallback
       actualMediaData = {}
       actualReadonly = !!projectIdOrReadonly
-      actualEnableAnnotations = false // Default to false for backwards compatibility
       
       // Try multiple URL patterns to extract project ID
       const currentUrl = window.location.pathname + window.location.search + window.location.hash
@@ -953,7 +917,7 @@ export class ImageViewerDialog extends Modal {
       }
     }
     
-    const viewer = new ImageViewerDialog(type, id, projectId, actualMediaData, actualReadonly, actualEnableAnnotations)
+    const viewer = new ImageViewerDialog(type, id, projectId, actualMediaData, actualReadonly, linkId)
     viewer.setVisible(true)
   }
 }

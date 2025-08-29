@@ -360,6 +360,12 @@ export class CellStateNameImageRenderer extends CellRenderer {
       images.setProjectId(this.projectId)
     }
     
+    // Set cell ID from the first media item's link_id (all media in a cell share the same link_id)
+    if (data.media.length > 0) {
+      const cellId = data.media[0].getId() // getId() returns link_id for cell media
+      images.setCellId(cellId)
+    }
+    
     for (let x = 0; x < data.media.length; x++) {
       const media = data.media[x]
       const labelCount = media.getLabelCount()
@@ -396,6 +402,12 @@ export class CellStateNumberImageRenderer extends CellRenderer {
     // Set project ID if available
     if (this.projectId !== null) {
       images.setProjectId(this.projectId)
+    }
+    
+    // Set cell ID from the first media item's link_id (all media in a cell share the same link_id)
+    if (data.media.length > 0) {
+      const cellId = data.media[0].getId() // getId() returns link_id for cell media
+      images.setCellId(cellId)
     }
     
     for (let x = 0; x < data.media.length; x++) {
