@@ -19,54 +19,8 @@ async function downloadProject() {
   isDownloading.value = true
   downloadError.value = ''
 
-  // First try to get the file from S3
-  const s3BucketUrl =
-    import.meta.env.VITE_S3_BUCKET_URL || 'https://mb4-data.s3.amazonaws.com'
-  const s3Url = `${s3BucketUrl}/sdd_exports/${projectId}_morphobank.zip`
-
   try {
-    console.log('Attempting S3 download from:', s3Url)
-    const s3Response = await fetch(s3Url, {
-      method: 'GET',
-      headers: { Accept: 'application/zip' },
-    })
-
-    if (s3Response.ok) {
-      console.log('S3 download successful')
-      try {
-        const blob = await s3Response.blob()
-        const link = document.createElement('a')
-        link.href = URL.createObjectURL(blob)
-        link.download = `project_${projectId}_sdd.zip`
-        link.click()
-        URL.revokeObjectURL(link.href)
-        isDownloading.value = false
-        return
-      } catch (blobError) {
-        console.log(
-          'S3 blob processing error:',
-          blobError.message,
-          'Falling back to API download'
-        )
-      }
-    } else {
-      console.log(
-        'S3 download failed with status:',
-        s3Response.status,
-        'Falling back to API download'
-      )
-    }
-  } catch (error) {
-    console.log(
-      'S3 download error:',
-      error.message,
-      'Falling back to API download'
-    )
-  }
-
-  // Fallback to API download
-  try {
-    console.log('Calling API download for project:', projectId)
+    console.log('Downloading project:', projectId)
     const apiUrl = `${
       import.meta.env.VITE_API_URL
     }/projects/${projectId}/download/sdd?format=zip`
@@ -76,7 +30,7 @@ async function downloadProject() {
     })
 
     if (!response.ok) {
-      console.log('API download failed with status', response.status)
+      console.log('Download failed with status', response.status)
       let errorMessage = 'Download failed. '
       if (response.status === 404) {
         errorMessage += 'Project not found or not available for download.'
@@ -93,7 +47,7 @@ async function downloadProject() {
       return
     }
 
-    console.log('API download successful')
+    console.log('Download successful')
     try {
       const blob = await response.blob()
       const link = document.createElement('a')
@@ -102,14 +56,14 @@ async function downloadProject() {
       link.click()
       URL.revokeObjectURL(link.href)
     } catch (blobError) {
-      console.log('API blob processing error:', blobError.message)
+      console.log('Blob processing error:', blobError.message)
       downloadError.value =
         'Download completed but failed to save file. Please try again.'
       isDownloading.value = false
       return
     }
   } catch (error) {
-    console.log('API download error:', error.message)
+    console.log('Download error:', error.message)
     let errorMessage = 'Download failed. '
     if (error.name === 'NetworkError' || error.message.includes('fetch')) {
       errorMessage +=
