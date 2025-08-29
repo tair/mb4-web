@@ -10,6 +10,15 @@ import { isEmptyOrWhitespace } from '../mb'
  * The abstract class that defines how cells are rendered.
  */
 export abstract class CellRenderer {
+  protected projectId: number | null = null
+
+  /**
+   * Sets the project ID for proper media URL building
+   * @param projectId The project ID
+   */
+  setProjectId(projectId: number) {
+    this.projectId = projectId
+  }
   /**
    * The highlight mode index.
    */
@@ -345,6 +354,12 @@ export class CellStateNameImageRenderer extends CellRenderer {
     td.textContent = CellContent(data, CellStateNameContent)
     const images = new ImageRenderer('X')
     images.setReadOnly(data.readonly)
+    
+    // Set project ID if available
+    if (this.projectId !== null) {
+      images.setProjectId(this.projectId)
+    }
+    
     for (let x = 0; x < data.media.length; x++) {
       const media = data.media[x]
       const labelCount = media.getLabelCount()
@@ -353,7 +368,8 @@ export class CellStateNameImageRenderer extends CellRenderer {
         : undefined
       const tinyMedium = media.getTiny()
       if (tinyMedium) {
-        images.addImage(media.getId(), tinyMedium['url'], caption)
+        // Use getMediaId() to get actual media file ID, not getId() which returns link ID
+        images.addImage(media.getMediaId(), tinyMedium['url'], caption)
       }
     }
     images.render(td)
@@ -376,6 +392,12 @@ export class CellStateNumberImageRenderer extends CellRenderer {
     td.textContent = CellContent(data, CellStateNumberContent)
     const images = new ImageRenderer('X')
     images.setReadOnly(data.readonly)
+    
+    // Set project ID if available
+    if (this.projectId !== null) {
+      images.setProjectId(this.projectId)
+    }
+    
     for (let x = 0; x < data.media.length; x++) {
       const media = data.media[x]
       const labelCount = media.getLabelCount()
@@ -384,7 +406,8 @@ export class CellStateNumberImageRenderer extends CellRenderer {
         : undefined
       const tiny = media.getTiny()
       if (tiny) {
-        images.addImage(media.getId(), tiny['url'], caption)
+        // Use getMediaId() to get actual media file ID, not getId() which returns link ID
+        images.addImage(media.getMediaId(), tiny['url'], caption)
       }
     }
     images.render(td)

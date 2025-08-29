@@ -91,7 +91,8 @@ export class MatrixGrid extends Component {
 
   constructor(
     protected matrixModel: MatrixModel,
-    protected gridHandler: MatrixGridHandler
+    protected gridHandler: MatrixGridHandler,
+    protected projectId: number
   ) {
     super()
     this.cellRenderer = new CellStateNameImageRenderer()
@@ -103,6 +104,10 @@ export class MatrixGrid extends Component {
     )
 
     this.taxaRenderer.setReadonly(this.matrixModel.isReadonly())
+    
+    // Set project ID for both renderers to enable proper media URL building
+    this.taxaRenderer.setProjectId(projectId)
+    this.cellRenderer.setProjectId(projectId)
 
     this.characterRenderer = new CharacterNameNumberRenderer()
     this.characterRenderer.setCharacterRules(

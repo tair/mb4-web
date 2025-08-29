@@ -12,6 +12,7 @@ export class ImageRenderer extends Component {
   private static readonly ARROW_DOWN_TEXT: string = '\u25bc'
 
   private readonly type: string
+  private projectId: number | null = null
 
   private imageUrls: ImageRendererUrl[]
   private currentImageIndex: number
@@ -24,6 +25,14 @@ export class ImageRenderer extends Component {
     this.imageUrls = []
     this.currentImageIndex = 0
     this.isReadOnly = false
+  }
+
+  /**
+   * Sets the project ID for proper media URL building
+   * @param projectId The project ID
+   */
+  setProjectId(projectId: number) {
+    this.projectId = projectId
   }
 
   /**
@@ -164,7 +173,17 @@ export class ImageRenderer extends Component {
    */
   protected onHandleClick(e: Event) {
     const imageUrl = this.imageUrls[this.currentImageIndex]
-    ImageViewerDialog.show(this.type, imageUrl.id, this.isReadOnly)
+    
+    if (this.projectId !== null) {
+      // Use new signature with project ID
+      // Enable annotations for editable media (when not readonly)
+      const enableAnnotations = !this.isReadOnly
+      ImageViewerDialog.show(this.type, imageUrl.id, this.projectId, {}, this.isReadOnly, enableAnnotations)
+    } else {
+      // Fallback to old signature - project ID will be derived from URL
+      ImageViewerDialog.show(this.type, imageUrl.id, this.isReadOnly)
+    }
+    
     e.stopPropagation()
     e.preventDefault()
     return true

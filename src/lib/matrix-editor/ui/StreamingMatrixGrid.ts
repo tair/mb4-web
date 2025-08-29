@@ -18,8 +18,8 @@ export class StreamingMatrixGrid extends MatrixGrid {
   private characterIdsToLoad: Set<number>
   private reDrawTimer: number = 0
 
-  constructor(matrixModel: MatrixModel, gridHandler: MatrixGridHandler) {
-    super(matrixModel, gridHandler)
+  constructor(matrixModel: MatrixModel, gridHandler: MatrixGridHandler, projectId: number) {
+    super(matrixModel, gridHandler, projectId)
     this.streamingCellsModal = new StreamingCellsModal()
     this.registerDisposable(this.streamingCellsModal)
     this.taxaIdsToLoad = new Set()

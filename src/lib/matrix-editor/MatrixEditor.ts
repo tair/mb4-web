@@ -59,7 +59,7 @@ export class MatrixEditor extends AbstractMatrixAccessor {
         this.matrixModel.setProjectProperties(data['user'])
 
         const appElement = document.getElementById('app')
-        this.matrixContainer = new MatrixEditorContainer(this.matrixModel)
+        this.matrixContainer = new MatrixEditorContainer(this.matrixModel, this.projectId)
         this.matrixContainer.render(appElement)
         this.matrixContainer.redraw()
 

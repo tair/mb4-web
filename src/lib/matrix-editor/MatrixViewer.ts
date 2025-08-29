@@ -76,7 +76,7 @@ export class MatrixViewer extends AbstractMatrixAccessor {
           .setUserPreferences(userPreferences)
 
         const appElement = document.getElementById('app')
-        this.matrixContainer = new MatrixViewerContainer(this.matrixModel)
+        this.matrixContainer = new MatrixViewerContainer(this.matrixModel, this.projectId)
         this.matrixContainer.render(appElement)
         this.matrixContainer.redraw()
 

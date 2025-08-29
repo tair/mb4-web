@@ -42,8 +42,8 @@ export class MatrixEditorContainer extends MatrixAccessorContainer {
     'Partitions are subsets of your matrix that you define. Click here ' +
     'to make those and to view only a partition if you wish.'
 
-  constructor(matrixModel: MatrixModel) {
-    super(matrixModel, new MatrixEditorGridHandler())
+  constructor(matrixModel: MatrixModel, projectId: number) {
+    super(matrixModel, new MatrixEditorGridHandler(), projectId)
   }
 
   protected override decorateInternal(element: HTMLElement) {

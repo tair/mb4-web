@@ -13,6 +13,7 @@ export abstract class AbstractMatrixAccessor {
   protected matrixLoader: MatrixLoader
   protected matrixModel: MatrixModel
   protected matrixId: number
+  protected projectId: number
   protected matrixContainer: MatrixAccessorContainer
   protected loadingModal: LoadingModal
   protected matrixModelSyncer: MatrixModelServerEventSyncer
@@ -28,12 +29,13 @@ export abstract class AbstractMatrixAccessor {
     location: string,
     published: boolean = false
   ) {
+    this.projectId = projectId
+    this.matrixId = matrixId
     this.matrixLoader = new MatrixLoader(projectId, location)
     this.matrixLoader.setMatrixId(matrixId, published)
 
     this.matrixModel = new MatrixModel(matrixId, this.matrixLoader)
     this.matrixModel.setStreaming(streaming)
-    this.matrixId = matrixId
 
     this.loadingModal = new LoadingModal()
     this.loadingModal.render()
