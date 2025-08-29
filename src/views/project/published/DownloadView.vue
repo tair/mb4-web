@@ -17,23 +17,109 @@ onMounted(() => {
 
 async function downloadProject() {
   isDownloading.value = true
-  const apiUrl = `${
-    import.meta.env.VITE_API_URL
-  }/projects/${projectId}/download/sdd?format=zip`
-  const response = await fetch(apiUrl, {
-    method: 'GET',
-    headers: { Accept: 'application/zip' },
-  })
-  if (!response.ok) {
-    console.log('Download failed with status', response.status)
-    downloadError.value = 'Download failed with status ' + response.status
+  downloadError.value = ''
+
+  // First try to get the file from S3
+  const s3BucketUrl =
+    import.meta.env.VITE_S3_BUCKET_URL || 'https://mb4-data.s3.amazonaws.com'
+  const s3Url = `${s3BucketUrl}/sdd_exports/${projectId}_morphobank.zip`
+
+  try {
+    console.log('Attempting S3 download from:', s3Url)
+    const s3Response = await fetch(s3Url, {
+      method: 'GET',
+      headers: { Accept: 'application/zip' },
+    })
+
+    if (s3Response.ok) {
+      console.log('S3 download successful')
+      try {
+        const blob = await s3Response.blob()
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = `project_${projectId}_sdd.zip`
+        link.click()
+        URL.revokeObjectURL(link.href)
+        isDownloading.value = false
+        return
+      } catch (blobError) {
+        console.log(
+          'S3 blob processing error:',
+          blobError.message,
+          'Falling back to API download'
+        )
+      }
+    } else {
+      console.log(
+        'S3 download failed with status:',
+        s3Response.status,
+        'Falling back to API download'
+      )
+    }
+  } catch (error) {
+    console.log(
+      'S3 download error:',
+      error.message,
+      'Falling back to API download'
+    )
   }
-  const blob = await response.blob()
-  const link = document.createElement('a')
-  link.href = URL.createObjectURL(blob)
-  link.download = `project_${projectId}_sdd.zip`
-  link.click()
-  URL.revokeObjectURL(link.href)
+
+  // Fallback to API download
+  try {
+    console.log('Calling API download for project:', projectId)
+    const apiUrl = `${
+      import.meta.env.VITE_API_URL
+    }/projects/${projectId}/download/sdd?format=zip`
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: { Accept: 'application/zip' },
+    })
+
+    if (!response.ok) {
+      console.log('API download failed with status', response.status)
+      let errorMessage = 'Download failed. '
+      if (response.status === 404) {
+        errorMessage += 'Project not found or not available for download.'
+      } else if (response.status === 403) {
+        errorMessage +=
+          'Access denied. You may not have permission to download this project.'
+      } else if (response.status >= 500) {
+        errorMessage += 'Server error. Please try again later.'
+      } else {
+        errorMessage += `Server returned status ${response.status}.`
+      }
+      downloadError.value = errorMessage
+      isDownloading.value = false
+      return
+    }
+
+    console.log('API download successful')
+    try {
+      const blob = await response.blob()
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = `project_${projectId}_sdd.zip`
+      link.click()
+      URL.revokeObjectURL(link.href)
+    } catch (blobError) {
+      console.log('API blob processing error:', blobError.message)
+      downloadError.value =
+        'Download completed but failed to save file. Please try again.'
+      isDownloading.value = false
+      return
+    }
+  } catch (error) {
+    console.log('API download error:', error.message)
+    let errorMessage = 'Download failed. '
+    if (error.name === 'NetworkError' || error.message.includes('fetch')) {
+      errorMessage +=
+        'Network connection error. Please check your internet connection and try again.'
+    } else {
+      errorMessage += error.message
+    }
+    downloadError.value = errorMessage
+  }
+
   isDownloading.value = false
 }
 </script>
@@ -50,6 +136,10 @@ async function downloadProject() {
   >
     <div class="download-component">
       <div class="download-section">
+        <div v-if="downloadError" class="error-alert">
+          <i class="fa-solid fa-exclamation-triangle"></i>
+          <span>{{ downloadError }}</span>
+        </div>
         <div class="download-button-container">
           <button
             class="btn btn-primary btn-download"
@@ -69,7 +159,6 @@ async function downloadProject() {
       </div>
     </div>
     <div class="download-info">
-      <p v-if="downloadError" class="status-error">{{ downloadError }}</p>
       <p>
         This tool downloads the entire project, all media, matrices and
         documents, as a zipped file. Please click on the menu to the left, if
@@ -115,6 +204,23 @@ async function downloadProject() {
 }
 .status-success {
   color: #155724;
+}
+
+.error-alert {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-alert i {
+  font-size: 16px;
+  flex-shrink: 0;
 }
 
 .btn-download {
