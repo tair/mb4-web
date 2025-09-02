@@ -76,15 +76,11 @@ export function getCopyrightTitle(copyrightPermission: number, copyrightLicense:
  * Generate complete HTML for copyright icon with image and title
  * @param copyrightPermission - The copyright permission value
  * @param copyrightLicense - The copyright license value
- * @param width - Image width (default 88)
- * @param height - Image height (default 31)
  * @returns HTML string with img tag
  */
 export function getCopyrightImageHtml(
   copyrightPermission: number, 
-  copyrightLicense: number,
-  width: number = 88,
-  height: number = 31
+  copyrightLicense: number
 ): string {
   const imagePath = getCopyrightImagePath(copyrightPermission, copyrightLicense)
   const title = getCopyrightTitle(copyrightPermission, copyrightLicense)
@@ -97,5 +93,5 @@ export function getCopyrightImageHtml(
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
   
-  return `<img src="/images/${imagePath}.png" width="${width}" height="${height}" title="${escapedTitle}" style="vertical-align: middle;" alt="${escapedTitle}" />`
+  return `<img src="/images/${imagePath}.png" title="${escapedTitle}" style="max-width: 88px; height: auto; object-fit: contain; vertical-align: middle;" alt="${escapedTitle}" />`
 }

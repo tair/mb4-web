@@ -511,6 +511,8 @@ export class CharacterMedia {
    * @return The large tag of the media
    */
   getMedium(): Media {
-    return this.characterMediaObj['medium']
+    return this.characterMediaObj['large']
   }
+
+
 }

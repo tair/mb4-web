@@ -720,7 +720,7 @@ export class ImageViewerDialog extends Modal {
     const imagePath = getCopyrightImagePath(copyrightPermission, copyrightLicense)
     const title = getCopyrightTitle(copyrightPermission, copyrightLicense)
     
-    return `<img src="/images/${imagePath}.png" width="66" height="23" title="${this.escapeHtml(title)}" style="vertical-align: middle;" alt="${this.escapeHtml(title)}" />`
+    return `<img src="/images/${imagePath}.png" title="${this.escapeHtml(title)}" style="max-width: 88px; height: auto; object-fit: contain; vertical-align: middle;" alt="${this.escapeHtml(title)}" />`
   }
 
   /**

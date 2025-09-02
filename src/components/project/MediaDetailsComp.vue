@@ -645,8 +645,10 @@ function getHitsMessage(mediaObj) {
 
 <style scoped>
 .cc-icon {
-  width: 88;
-  height: 31;
+  max-width: 88px;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 1rem;
 }
 
 .card {
@@ -687,11 +689,6 @@ function getHitsMessage(mediaObj) {
 
 .nav-link:hover {
   text-decoration: underline;
-}
-
-.cc-icon {
-  max-width: 100px;
-  margin-bottom: 1rem;
 }
 
 .card-title,

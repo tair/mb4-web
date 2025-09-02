@@ -17,8 +17,15 @@ function title() {
 <template>
   <img
     :src="`/images/${imagePath()}.png`"
-    width="88"
-    height="31"
     :title="title()"
+    class="copyright-icon"
   />
 </template>
+
+<style scoped>
+.copyright-icon {
+  max-width: 88px;
+  height: auto;
+  object-fit: contain;
+}
+</style>
