@@ -16,10 +16,19 @@ export abstract class CharacterGridRenderer {
 
   protected matrixModel: MatrixModel
   protected readonly: boolean
+  protected projectId: number | null = null
 
   constructor(matrixModel: MatrixModel, readonly: boolean) {
     this.matrixModel = matrixModel
     this.readonly = readonly
+  }
+
+  /**
+   * Sets the project ID for proper media URL building
+   * @param projectId The project ID
+   */
+  setProjectId(projectId: number) {
+    this.projectId = projectId
   }
 
   /**
@@ -101,7 +110,20 @@ export class CharacterDetailedGridRenderer extends CharacterGridRenderer {
     row.appendChild(characterStatesElement)
     const images = new ImageRenderer('C')
     images.setReadOnly(this.readonly)
+    
+    // Set project ID if available
+    if (this.projectId !== null) {
+      images.setProjectId(this.projectId)
+    }
+    
     const characterMedia = character.getMedia()
+    
+    // Set cell ID for the first media item (like CellRenderer does)
+    if (characterMedia.length > 0) {
+      const cellId = characterMedia[0].getId() // getId() returns link_id for character media
+      images.setCellId(cellId)
+    }
+    
     for (let x = 0, l = characterMedia.length; x < l; x++) {
       const characterMedium = characterMedia[x]
       const tiny = characterMedium.getTiny()

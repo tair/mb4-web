@@ -65,6 +65,7 @@ export class CharacterGrid extends Component {
       matrixModel,
       this.readonly
     )
+    this.renderer.setProjectId(matrixModel.getProjectId())
   }
 
   protected override createDom() {
@@ -275,6 +276,7 @@ export class CharacterGrid extends Component {
    */
   setRenderer(renderer: CharacterGridRenderer) {
     this.renderer = renderer
+    this.renderer.setProjectId(this.matrixModel.getProjectId())
   }
 
   /**

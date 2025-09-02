@@ -2,6 +2,7 @@ import * as mb from '../../mb'
 import { Modal } from '../Modal'
 import { EventType } from '../Component'
 import { VueMountingUtility, vueMountingRegistry } from '../VueMountingUtility'
+import { getCopyrightImagePath, getCopyrightTitle } from '../../../../utils/copyright'
 
 /**
  * Advanced Media Viewer with support for images, videos, and 3D files
@@ -15,35 +16,7 @@ import { VueMountingUtility, vueMountingRegistry } from '../VueMountingUtility'
  * @param linkId Optional matrix cell link ID for annotation context
  */
 export class ImageViewerDialog extends Modal {
-  /**
-   * The min dialog height for simple media viewing
-   */
-  private static MIN_DIALOG_HEIGHT: number = 400
 
-  /**
-   * The min dialog height when annotations are enabled
-   */
-  private static MIN_DIALOG_HEIGHT_WITH_ANNOTATIONS: number = 700
-
-  /**
-   * The max dialog height for simple media viewing
-   */
-  private static MAX_DIALOG_HEIGHT: number = 800
-
-  /**
-   * The max dialog height when annotations are enabled (90% of viewport)
-   */
-  private static MAX_DIALOG_HEIGHT_WITH_ANNOTATIONS_RATIO: number = 0.9
-
-  /**
-   * The size of the dialog's header + borders + 2px slack
-   */
-  private static HEADER_PADDING: number = 60
-
-  /**
-   * Additional padding for annotation interface elements
-   */
-  private static ANNOTATION_UI_PADDING: number = 40
 
   private readonly type: string
   private readonly mediaId: number
@@ -82,19 +55,6 @@ export class ImageViewerDialog extends Modal {
     this.setTitle('Media Annotation Viewer')
     this.setDisposeOnHide(true)
   }
-
-
-
-  /**
-   * Media type constants (matches backend media-constants.js)
-   */
-  private static readonly MEDIA_TYPES = {
-    IMAGE: 'image',
-    VIDEO: 'video',
-    AUDIO: 'audio',
-    MODEL_3D: '3d',
-    STACKS: 'stacks'
-  } as const
 
   /**
    * Check if the media file is a 3D file
@@ -137,8 +97,6 @@ export class ImageViewerDialog extends Modal {
     // Default to false if no clear indicators
     return false
   }
-
-
 
   /**
    * Check if the original file is a TIFF file (for smart URL selection)
@@ -240,6 +198,15 @@ export class ImageViewerDialog extends Modal {
       this.annotationMountingUtility.unmount()
       this.annotationMountingUtility = null
     }
+    
+    // Clean up metadata container that's inside the annotation container
+    if (this.annotationContainer) {
+      const metadataContainer = this.annotationContainer.querySelector('.media-metadata-container') as HTMLElement
+      if (metadataContainer) {
+        this.annotationContainer.removeChild(metadataContainer)
+      }
+    }
+    
     this.annotationContainer = null
   }
 
@@ -277,7 +244,11 @@ export class ImageViewerDialog extends Modal {
           </div>
         </div>
         <div class="media-content" style="display: none;"></div>
-        <div class="annotation-viewer-container" style="display: none;"></div>
+        <div class="annotation-viewer-container" style="display: none;">
+          <!-- AnnotationViewer component will be mounted here first -->
+          <!-- Metadata container will be dynamically appended at the bottom -->
+          <!-- Structure: [AnnotationViewer Component] [Metadata Container] -->
+        </div>
       </div>
     `
   }
@@ -499,7 +470,7 @@ export class ImageViewerDialog extends Modal {
       })
 
       // Show the annotation container
-      this.annotationContainer.style.display = 'block'
+      this.annotationContainer.style.display = 'flex'
 
       // Hide the regular media content since annotations will handle the image display
       const mediaContent = this.getElementByClass<HTMLElement>('media-content')
@@ -507,10 +478,286 @@ export class ImageViewerDialog extends Modal {
         mediaContent.style.display = 'none'
       }
 
+      // Setup media metadata section at the bottom of the annotation viewer
+      // Add a small delay to ensure AnnotationViewer has fully mounted
+      setTimeout(async () => {
+        await this.setupMediaMetadata()
+      }, 100)
+
     } catch (error) {
       console.error('Failed to setup annotations:', error)
       // If annotation setup fails, just continue without annotations
     }
+  }
+
+  /**
+   * Setup media metadata section at the bottom of the annotation viewer
+   * Creates a metadata container as a child of the annotation-viewer-container
+   * so it appears below the AnnotationViewer component using flexbox layout
+   */
+  private async setupMediaMetadata() {
+    try {
+      // Create metadata container as a child of the annotation viewer container
+      const annotationContainer = this.getElementByClass<HTMLElement>('annotation-viewer-container')
+      
+      if (!annotationContainer) {
+        console.error('Annotation container not found for metadata')
+        return
+      }
+
+      // Create the metadata container element
+      const metadataContainer = document.createElement('div')
+      metadataContainer.className = 'media-metadata-container'
+      
+      metadataContainer.innerHTML = `
+        <div class="media-metadata-content">
+          <div class="metadata-loading">Loading metadata...</div>
+          <div class="metadata-info" style="display: none;"></div>
+        </div>
+      `
+      
+      // Append to the annotation container so it appears at the bottom
+      annotationContainer.appendChild(metadataContainer)
+
+      // Get the newly created elements
+      const metadataLoading = metadataContainer.querySelector('.metadata-loading') as HTMLElement
+      const metadataInfo = metadataContainer.querySelector('.metadata-info') as HTMLElement
+
+      if (!metadataLoading || !metadataInfo) {
+        console.error('Failed to create metadata elements')
+        return
+      }
+
+      // Fetch metadata
+      const metadata = await this.fetchMediaMetadata()
+      
+      // Generate metadata HTML
+      const metadataHtml = this.generateMetadataHtml(metadata)
+      
+      // Update content
+      metadataInfo.innerHTML = metadataHtml
+      metadataLoading.style.display = 'none'
+      metadataInfo.style.display = 'flex'
+      
+    } catch (error) {
+      console.error('Failed to setup media metadata:', error)
+      // On error, try to remove any partially created metadata container
+      const annotationContainer = this.getElementByClass<HTMLElement>('annotation-viewer-container')
+      if (annotationContainer) {
+        const metadataContainer = annotationContainer.querySelector('.media-metadata-container') as HTMLElement
+        if (metadataContainer) {
+          annotationContainer.removeChild(metadataContainer)
+        }
+      }
+    }
+  }
+
+  /**
+   * Fetch detailed media metadata using the new comprehensive details API
+   */
+  private async fetchMediaMetadata(): Promise<any> {
+    try {
+      // Use the new detailed media API endpoint that includes view, specimen, and copyright info
+      let mediaUrl = `${(import.meta as any).env.VITE_API_URL}/projects/${this.projectId}/media/${this.mediaId}/details`
+      
+      // Add linkId as query parameter if available for character information
+      if (this.linkId) {
+        mediaUrl += `?link_id=${this.linkId}`
+      }
+      
+      const response = await fetch(mediaUrl, {
+        headers: {
+          'Accept': 'application/json',
+        },
+        credentials: 'same-origin'
+      })
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch media details: ${response.status} ${response.statusText}`)
+      }
+      
+      const data = await response.json()
+      
+      // The new API returns comprehensive data including:
+      // - view_name: actual view name instead of just view_id
+      // - specimen_display: proper specimen information built from database fields
+      // - copyright_holder: resolved copyright holder name
+      // - character_info: character and state details when linkId is provided
+      const metadata = {
+        ...this.mediaData,
+        ...data.media,
+        mediaId: this.mediaId,
+        projectId: this.projectId,
+        linkId: this.linkId
+      }
+      
+      return metadata
+    } catch (error) {
+      console.error('Error fetching detailed media metadata:', error)
+      
+      // Fallback to basic API if detailed API fails
+      try {
+        const basicUrl = `${(import.meta as any).env.VITE_API_URL}/projects/${this.projectId}/media/${this.mediaId}`
+        const basicResponse = await fetch(basicUrl, {
+          headers: { 'Accept': 'application/json' },
+          credentials: 'same-origin'
+        })
+        
+        if (basicResponse.ok) {
+          const basicData = await basicResponse.json()
+          return {
+            ...this.mediaData,
+            ...basicData.media,
+            mediaId: this.mediaId,
+            projectId: this.projectId,
+            linkId: this.linkId
+          }
+        }
+      } catch (fallbackError) {
+        console.warn('Fallback API also failed:', fallbackError)
+      }
+      
+      // Return basic metadata even on error
+      return {
+        mediaId: this.mediaId,
+        projectId: this.projectId,
+        linkId: this.linkId,
+        ...this.mediaData
+      }
+    }
+  }
+
+  /**
+   * Generate HTML for metadata display with explicit 2-column layout
+   */
+  private generateMetadataHtml(metadata: any): string {
+    const leftColumnItems: string[] = []
+    const rightColumnItems: string[] = []
+    
+    // LEFT COLUMN: Basic media information
+    
+    // Media ID
+    leftColumnItems.push(`<div class="metadata-item">
+      <strong>Media #:</strong> M${metadata.mediaId}
+    </div>`)
+    
+    // Copyright information - using the new comprehensive copyright data with icons
+    const isCopyrighted = metadata.is_copyrighted === 1 || metadata.is_copyrighted === true
+    
+    if (isCopyrighted && (metadata.copyright_permission || metadata.copyright_license)) {
+      const copyrightImageHtml = this.generateCopyrightImageHtml(metadata.copyright_permission, metadata.copyright_license)
+      leftColumnItems.push(`<div class="metadata-item">
+        <strong>Copyright:</strong> ${copyrightImageHtml}
+      </div>`)
+      
+      if (metadata.copyright_holder) {
+        leftColumnItems.push(`<div class="metadata-item">
+          <strong>Copyright holder:</strong> ${this.escapeHtml(metadata.copyright_holder)}
+        </div>`)
+      }
+    } else {
+      leftColumnItems.push(`<div class="metadata-item">
+        <strong>Copyright image:</strong> ${isCopyrighted ? 'Yes' : 'No'}
+      </div>`)
+      
+      if (isCopyrighted && metadata.copyright_holder) {
+        leftColumnItems.push(`<div class="metadata-item">
+          <strong>Copyright holder:</strong> ${this.escapeHtml(metadata.copyright_holder)}
+        </div>`)
+      }
+    }
+    
+    // RIGHT COLUMN: Specimen and character information
+
+    // View - using the new comprehensive view_name from API
+    if (metadata.view_name) {
+      rightColumnItems.push(`<div class="metadata-item">
+        <strong>View:</strong> ${this.escapeHtml(metadata.view_name)}
+      </div>`)
+    } else if (metadata.view_id) {
+      rightColumnItems.push(`<div class="metadata-item">
+        <strong>View:</strong> View ID ${metadata.view_id}
+      </div>`)
+    }
+    
+    // Specimen information - using the complete specimen name from enhanced API
+    if (metadata.specimen_display) {
+      // Use the complete specimen name (taxon name + institutional identifier)
+      // Don't escape HTML for specimen display since it contains intentional scientific name formatting
+      rightColumnItems.push(`<div class="metadata-item">
+        <strong>Specimen:</strong> ${this.sanitizeScientificHtml(metadata.specimen_display)}
+      </div>`)
+    } else if (metadata.specimen_id) {
+      // Final fallback to specimen ID
+      rightColumnItems.push(`<div class="metadata-item">
+        <strong>Specimen:</strong> S${metadata.specimen_id}
+      </div>`)
+    }
+    
+    // Character information - using the pre-formatted display from backend
+    if (metadata.character_display) {
+      const characterText = metadata.character_display
+      rightColumnItems.push(`<div class="metadata-item">
+        <strong>Character:</strong> ${this.escapeHtml(characterText)}
+      </div>`)
+    }
+    
+    // Create the 2-column layout HTML structure
+    return `
+      <div class="metadata-column metadata-column-left">
+        ${leftColumnItems.join('')}
+      </div>
+      <div class="metadata-column metadata-column-right">
+        ${rightColumnItems.join('')}
+      </div>
+    `
+  }
+
+  /**
+   * Generate copyright image HTML using shared copyright utilities
+   */
+  private generateCopyrightImageHtml(copyrightPermission: number, copyrightLicense: number): string {
+    const imagePath = getCopyrightImagePath(copyrightPermission, copyrightLicense)
+    const title = getCopyrightTitle(copyrightPermission, copyrightLicense)
+    
+    return `<img src="/images/${imagePath}.png" width="66" height="23" title="${this.escapeHtml(title)}" style="vertical-align: middle;" alt="${this.escapeHtml(title)}" />`
+  }
+
+  /**
+   * Escape HTML characters
+   */
+  private escapeHtml(text: string): string {
+    if (!text) return ''
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+  }
+
+  /**
+   * Sanitize HTML while preserving safe scientific formatting tags
+   * Allows <i>, <em>, <b>, <strong> for scientific names but escapes everything else
+   */
+  private sanitizeScientificHtml(text: string): string {
+    if (!text) return ''
+    
+    // First escape all HTML
+    let sanitized = this.escapeHtml(text)
+    
+    // Then selectively unescape safe scientific formatting tags
+    sanitized = sanitized
+      .replace(/&lt;i&gt;/g, '<i>')
+      .replace(/&lt;\/i&gt;/g, '</i>')
+      .replace(/&lt;em&gt;/g, '<em>')
+      .replace(/&lt;\/em&gt;/g, '</em>')
+      .replace(/&lt;b&gt;/g, '<b>')
+      .replace(/&lt;\/b&gt;/g, '</b>')
+      .replace(/&lt;strong&gt;/g, '<strong>')
+      .replace(/&lt;\/strong&gt;/g, '</strong>')
+    
+    return sanitized
   }
 
   /**
@@ -665,6 +912,120 @@ export class ImageViewerDialog extends Modal {
         flex: 1;
         min-height: 100%;
         height: 100%;
+      }
+
+      /* Ensure the AnnotationViewer component takes available space */
+      .mediaViewer .annotation-viewer-container > :first-child:not(.media-metadata-container) {
+        flex: 1;
+        min-height: 0; /* Allow shrinking */
+      }
+
+      /* Media metadata section styles - positioned at bottom of annotation viewer */
+      .mediaViewer .media-metadata-container {
+        width: 100%;
+        border-top: 2px solid #dee2e6;
+        background-color: #f1f3f4;
+        padding: 0.6rem 0.75rem;
+        flex-shrink: 0; /* Don't shrink */
+        order: 999; /* Always appear at the bottom */
+        position: relative;
+        z-index: 10;
+        box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.05);
+      }
+
+      .mediaViewer .media-metadata-content {
+        max-width: 100%;
+      }
+
+      .mediaViewer .metadata-loading {
+        text-align: center;
+        color: #6c757d;
+        font-style: italic;
+        font-size: 0.75rem;
+      }
+
+      .mediaViewer .metadata-info {
+        display: flex;
+        gap: 1rem;
+      }
+
+      .mediaViewer .metadata-column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .mediaViewer .metadata-column-left {
+        /* Left column for basic media info */
+      }
+
+      .mediaViewer .metadata-column-right {
+        /* Right column for specimen and character info */
+      }
+
+      .mediaViewer .metadata-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        line-height: 1.3;
+      }
+
+      .mediaViewer .metadata-item strong {
+        min-width: 75px;
+        flex-shrink: 0;
+        color: #495057;
+        font-weight: 600;
+        font-size: 0.72rem;
+      }
+
+      .mediaViewer .metadata-item > :not(strong) {
+        color: #212529;
+        word-break: break-word;
+        font-size: 0.73rem;
+      }
+
+      /* Copyright icon styling */
+      .mediaViewer .metadata-item img {
+        vertical-align: middle;
+        margin-left: 0.25rem;
+        border: 1px solid #dee2e6;
+        border-radius: 3px;
+        background-color: white;
+      }
+
+      /* Scientific name (taxonomic) styling */
+      .mediaViewer .metadata-item em {
+        font-style: italic;
+        color: #495057;
+        font-weight: normal;
+      }
+
+      /* Responsive metadata layout - stack columns on small screens */
+      @media (max-width: 480px) {
+        .mediaViewer .metadata-info {
+          flex-direction: column;
+          gap: 0.4rem;
+        }
+
+        .mediaViewer .metadata-column {
+          gap: 0.4rem;
+        }
+
+        .mediaViewer .metadata-item {
+          flex-direction: column;
+          gap: 0.1rem;
+          font-size: 0.7rem;
+        }
+
+        .mediaViewer .metadata-item strong {
+          min-width: auto;
+        }
+
+        .mediaViewer .media-metadata-container {
+          padding: 0.5rem;
+        }
       }
 
       /* Image viewer styles */
@@ -844,6 +1205,51 @@ export class ImageViewerDialog extends Modal {
     }/public/media/${projectId}/serve/${mediaId}/${fileType}`
   }
 
+  /**
+   * Static utility method to extract project ID from URL or global context
+   * @returns The derived project ID or default fallback (1)
+   */
+  static deriveProjectId(): number {
+    let projectId = 1 // Default fallback
+    
+    // Try multiple URL patterns to extract project ID
+    const currentUrl = window.location.pathname + window.location.search + window.location.hash
+    
+    // Pattern 1: /projects/{id} (standard)
+    let urlMatch = currentUrl.match(/\/projects\/(\d+)/)
+    if (urlMatch) {
+      projectId = parseInt(urlMatch[1], 10)
+    } else {
+      // Pattern 2: matrix editor URLs might have projectId in query params
+      urlMatch = currentUrl.match(/[?&]project[_-]?id=(\d+)/i)
+      if (urlMatch) {
+        projectId = parseInt(urlMatch[1], 10)
+      } else {
+        // Pattern 3: check for any numeric ID in the URL that could be project ID
+        const allNumbers = currentUrl.match(/\d+/g)
+        if (allNumbers && allNumbers.length > 0) {
+          // Try to find a reasonable project ID (usually 3-4 digits)
+          const potentialProjectIds = allNumbers.filter(num => num.length >= 2 && num.length <= 5)
+          if (potentialProjectIds.length > 0) {
+            projectId = parseInt(potentialProjectIds[0], 10)
+          }
+        }
+      }
+    }
+    
+    // Additional check: try to get from matrix model or global context
+    if (projectId === 1 && typeof window !== 'undefined') {
+      // Check if there's a global project ID available
+      if ((window as any).PROJECT_ID) {
+        projectId = (window as any).PROJECT_ID
+      } else if ((window as any).mb && (window as any).mb.projectId) {
+        projectId = (window as any).mb.projectId
+      }
+    }
+    
+    return projectId
+  }
+
 
 
   /**
@@ -863,61 +1269,35 @@ export class ImageViewerDialog extends Modal {
     readonly?: boolean | null,
     linkId?: number | null
   ) {
-    console.log('ImageViewerDialog show', type, id, projectIdOrReadonly, mediaData, readonly, linkId)
     
     // Handle backwards compatibility with old signature: show(type, id, readonly)
     let projectId: number
     let actualReadonly: boolean
     let actualMediaData: any
     
-    if (typeof projectIdOrReadonly === 'number') {
-      // New signature: show(type, id, projectId, mediaData?, readonly?)
-      projectId = projectIdOrReadonly
+    let actualLinkId: number | null
+    
+    if (typeof projectIdOrReadonly === 'number' || projectIdOrReadonly === null) {
+      // New signature: show(type, id, projectId, mediaData?, readonly?, linkId?)
+      // projectId can be a number or null (null means derive from URL)
+      if (projectIdOrReadonly === null) {
+        // Derive project ID from URL when null is passed
+        projectId = ImageViewerDialog.deriveProjectId()
+      } else {
+        projectId = projectIdOrReadonly as number
+      }
       actualMediaData = mediaData
       actualReadonly = !!readonly
+      actualLinkId = linkId || null
     } else {
       // Old signature: show(type, id, readonly?) - need to derive projectId
-      projectId = 1 // Default fallback
+      projectId = ImageViewerDialog.deriveProjectId()
       actualMediaData = {}
       actualReadonly = !!projectIdOrReadonly
-      
-      // Try multiple URL patterns to extract project ID
-      const currentUrl = window.location.pathname + window.location.search + window.location.hash
-      
-      // Pattern 1: /projects/{id} (standard)
-      let urlMatch = currentUrl.match(/\/projects\/(\d+)/)
-      if (urlMatch) {
-        projectId = parseInt(urlMatch[1], 10)
-      } else {
-        // Pattern 2: matrix editor URLs might have projectId in query params
-        urlMatch = currentUrl.match(/[?&]project[_-]?id=(\d+)/i)
-        if (urlMatch) {
-          projectId = parseInt(urlMatch[1], 10)
-        } else {
-          // Pattern 3: check for any numeric ID in the URL that could be project ID
-          const allNumbers = currentUrl.match(/\d+/g)
-          if (allNumbers && allNumbers.length > 0) {
-            // Try to find a reasonable project ID (usually 3-4 digits)
-            const potentialProjectIds = allNumbers.filter(num => num.length >= 2 && num.length <= 5)
-            if (potentialProjectIds.length > 0) {
-              projectId = parseInt(potentialProjectIds[0], 10)
-            }
-          }
-        }
-      }
-      
-      // Additional check: try to get from matrix model or global context
-      if (projectId === 1 && typeof window !== 'undefined') {
-        // Check if there's a global project ID available
-        if ((window as any).PROJECT_ID) {
-          projectId = (window as any).PROJECT_ID
-        } else if ((window as any).mb && (window as any).mb.projectId) {
-          projectId = (window as any).mb.projectId
-        }
-      }
+      actualLinkId = null // Old signature doesn't support linkId
     }
     
-    const viewer = new ImageViewerDialog(type, id, projectId, actualMediaData, actualReadonly, linkId)
+    const viewer = new ImageViewerDialog(type, id, projectId, actualMediaData, actualReadonly, actualLinkId)
     viewer.setVisible(true)
   }
 }

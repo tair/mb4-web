@@ -183,14 +183,9 @@ export class ImageRenderer extends Component {
   protected onHandleClick(e: Event) {
     const imageUrl = this.imageUrls[this.currentImageIndex]
     
-    if (this.projectId !== null) {
-      // console.log('onHandleClick', this.type, imageUrl.id, this.projectId, {}, this.isReadOnly, this.cellId)
-      // Use new signature with project ID and cell ID
-      ImageViewerDialog.show(this.type, imageUrl.id, this.projectId, {}, this.isReadOnly, this.cellId)
-    } else {
-      // Fallback to old signature - project ID will be derived from URL
-      ImageViewerDialog.show(this.type, imageUrl.id, this.isReadOnly)
-    }
+    // Always use new signature - pass null for projectId if not available
+    // This ensures linkId is always passed when available
+    ImageViewerDialog.show(this.type, imageUrl.id, this.projectId, {}, this.isReadOnly, this.cellId)
     
     e.stopPropagation()
     e.preventDefault()

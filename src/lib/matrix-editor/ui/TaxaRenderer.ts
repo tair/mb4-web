@@ -140,6 +140,12 @@ export class TaxaNameImageRenderer extends TaxaRenderer {
       images.setProjectId(this.projectId)
     }
     
+    // Set cell ID for the first media item (like CellRenderer does)
+    if (media.length > 0) {
+      const cellId = media[0].getId() // getId() returns link_id for taxa media
+      images.setCellId(cellId)
+    }
+    
     for (let x = 0; x < media.length; x++) {
       const medium = media[x]
       const tiny = medium.getTiny()
