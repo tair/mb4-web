@@ -79,6 +79,26 @@ onMounted(async () => {
 const downloadTooltipText =
   'This tool downloads the entire project, all media, matrices and documents, as a zipped file. Please click on the menu to the left, if you only want a Matrix, certain Media or Documents.'
 
+// Check if the media file is a 3D file using USE_ICON
+const is3DFile = computed(() => {
+  return props.overview?.image_props?.media?.USE_ICON === '3d'
+})
+
+// Computed property to get the appropriate media URL (3D icon for 3D media, image URL for others)
+const exemplarMediaUrl = computed(() => {
+  if (!exemplarMedia.value?.media_id) {
+    return null
+  }
+
+  // Check if this is a 3D file that should use the 3D icon
+  if (is3DFile.value) {
+    return '/images/3DImage.png'
+  }
+
+  // For regular images, use the large variant
+  return buildMediaUrl(props.projectId, exemplarMedia.value.media_id, 'large')
+})
+
 function getWidth(mediaObj: { [key: string]: any }): string {
   if (mediaObj?.media?.large?.PIXEL_X) {
     return mediaObj.media.large.PIXEL_X + 'px'
@@ -109,7 +129,7 @@ function popDownloadAlert() {
         <div v-if="exemplarMedia" class="d-flex flex-column">
           <div class="d-flex justify-content-center">
             <img
-              :src="buildMediaUrl(projectId, exemplarMedia.media_id, 'large')"
+              :src="exemplarMediaUrl"
               :style="{
                 width: getWidth(exemplarMedia),
                 height: getHeight(exemplarMedia),

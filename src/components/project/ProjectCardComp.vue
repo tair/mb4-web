@@ -16,6 +16,26 @@ const mediaId = computed(() => {
   const match = filename.match(/media_files_media_(\d+)_preview/)
   return match ? match[1] : null
 })
+
+// Check if this is a 3D media file using USE_ICON
+const is3DFile = computed(() => {
+  return props.project?.image_props?.media?.USE_ICON === '3d'
+})
+
+// Get the appropriate media URL (3D icon for 3D media, image URL for others)
+const mediaUrl = computed(() => {
+  // Check if this is a 3D file that should use the 3D icon
+  if (is3DFile.value) {
+    return '/images/3DImage.png'
+  }
+
+  // For regular images, use the large variant if we have mediaId
+  if (mediaId.value) {
+    return buildMediaUrl(props.project.project_id, mediaId.value, 'large')
+  }
+
+  return null
+})
 </script>
 <style scoped>
 .thumb {
@@ -90,8 +110,8 @@ const mediaId = computed(() => {
         </div>
         <div class="col d-flex align-items-stretch thumb">
           <img
-            v-if="mediaId"
-            :src="buildMediaUrl(props.project.project_id, mediaId, 'large')"
+            v-if="mediaUrl"
+            :src="mediaUrl"
             class="card-img-top"
           />
         </div>
