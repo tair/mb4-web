@@ -31,7 +31,7 @@ export function getCopyrightImagePath(copyrightPermission: number, copyrightLice
     case 7:
       return 'CC-BY-NC-ND'
     default:
-      return 'CC-0-gray'
+      return 'CC-0_gray'
   }
 }
 
