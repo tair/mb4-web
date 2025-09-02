@@ -14,6 +14,7 @@ export class ImageRenderer extends Component {
   private readonly type: string
   private projectId: number | null = null
   private cellId: number | null = null
+  private isPublished: boolean = false
 
   private imageUrls: ImageRendererUrl[]
   private currentImageIndex: number
@@ -50,6 +51,14 @@ export class ImageRenderer extends Component {
    */
   setReadOnly(isReadOnly: boolean) {
     this.isReadOnly = isReadOnly
+  }
+
+  /**
+   * Sets whether this is a published project
+   * @param published Whether the project is published
+   */
+  setPublished(published: boolean) {
+    this.isPublished = published
   }
 
   /**
@@ -185,7 +194,7 @@ export class ImageRenderer extends Component {
     
     // Always use new signature - pass null for projectId if not available
     // This ensures linkId is always passed when available
-    ImageViewerDialog.show(this.type, imageUrl.id, this.projectId, {}, this.isReadOnly, this.cellId)
+    ImageViewerDialog.show(this.type, imageUrl.id, this.projectId, {}, this.isReadOnly, this.cellId, this.isPublished)
     
     e.stopPropagation()
     e.preventDefault()

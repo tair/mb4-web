@@ -80,10 +80,11 @@ export function getCopyrightTitle(copyrightPermission: number, copyrightLicense:
  */
 export function getCopyrightImageHtml(
   copyrightPermission: number, 
-  copyrightLicense: number
+  copyrightLicense: number,
+  isCopyrighted: true
 ): string {
-  const imagePath = getCopyrightImagePath(copyrightPermission, copyrightLicense)
-  const title = getCopyrightTitle(copyrightPermission, copyrightLicense)
+  const imagePath = isCopyrighted ? getCopyrightImagePath(copyrightPermission, copyrightLicense) : getPublicCopyrightImagePath()
+  const title = isCopyrighted ? getCopyrightTitle(copyrightPermission, copyrightLicense) : getPublicCopyrightTitle()
   
   // Escape HTML in title for safety
   const escapedTitle = title
@@ -94,4 +95,12 @@ export function getCopyrightImageHtml(
     .replace(/'/g, '&#39;')
   
   return `<img src="/images/${imagePath}.png" title="${escapedTitle}" style="max-width: 88px; height: auto; object-fit: contain; vertical-align: middle;" alt="${escapedTitle}" />`
+}
+
+function getPublicCopyrightImagePath(): string {
+  return 'CC-0'
+}
+
+function getPublicCopyrightTitle(): string {
+  return 'Copyright license for future use: Media released for onetime use, no reuse without permission'
 }

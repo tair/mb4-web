@@ -283,6 +283,37 @@ const router = createRouter({
       path: '/project/:projectId/matrices/:matrixId/view',
       name: 'ProjectMatrixViewerView',
       component: () => import('@/views/project/published/MatrixViewerView.vue'),
+      beforeEnter: async (to, from, next) => {
+        const projectId = to.params.projectId
+        
+        try {
+          const { exists, published, message } = await checkProjectExistsAndPublished(projectId)
+          
+          // Security: Explicitly check that published is exactly true
+          if (!exists || published !== true) {
+            next({
+              name: 'NotFoundView',
+              query: {
+                message: message || 'This project is not accessible.',
+              },
+            })
+            return
+          }
+
+          // Only allow access if published is explicitly true
+          to.meta.published = published
+          next()
+        } catch (error) {
+          // Security: Any error in checking published status denies access
+          console.error('Route Guard Error:', error)
+          next({
+            name: 'NotFoundView',
+            query: {
+              message: 'Unable to verify project access permissions.',
+            },
+          })
+        }
+      },
     },
   ],
   scrollBehavior(to, from, savedPosition) {

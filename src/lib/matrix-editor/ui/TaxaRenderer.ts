@@ -11,6 +11,7 @@ export abstract class TaxaRenderer {
   protected projectProperties: ProjectProperties
   protected readOnly: boolean
   protected projectId: number | null = null
+  protected published: boolean = false
 
   protected TaxaRenderer() {
     this.readOnly = false
@@ -39,6 +40,14 @@ export abstract class TaxaRenderer {
    */
   setProjectId(projectId: number) {
     this.projectId = projectId
+  }
+
+  /**
+   * Sets whether this is a published project
+   * @param published Whether the project is published
+   */
+  setPublished(published: boolean) {
+    this.published = published
   }
 
   /**
@@ -139,6 +148,9 @@ export class TaxaNameImageRenderer extends TaxaRenderer {
     if (this.projectId !== null) {
       images.setProjectId(this.projectId)
     }
+    
+    // Set published status
+    images.setPublished(this.published)
     
     // Set cell ID for the first media item (like CellRenderer does)
     if (media.length > 0) {

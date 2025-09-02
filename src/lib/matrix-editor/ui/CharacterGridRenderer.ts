@@ -17,6 +17,7 @@ export abstract class CharacterGridRenderer {
   protected matrixModel: MatrixModel
   protected readonly: boolean
   protected projectId: number | null = null
+  protected published: boolean = false
 
   constructor(matrixModel: MatrixModel, readonly: boolean) {
     this.matrixModel = matrixModel
@@ -29,6 +30,14 @@ export abstract class CharacterGridRenderer {
    */
   setProjectId(projectId: number) {
     this.projectId = projectId
+  }
+
+  /**
+   * Sets whether this is a published project
+   * @param published Whether the project is published
+   */
+  setPublished(published: boolean) {
+    this.published = published
   }
 
   /**
@@ -115,6 +124,9 @@ export class CharacterDetailedGridRenderer extends CharacterGridRenderer {
     if (this.projectId !== null) {
       images.setProjectId(this.projectId)
     }
+    
+    // Set published status from matrix model
+    images.setPublished(this.matrixModel.isPublished())
     
     const characterMedia = character.getMedia()
     

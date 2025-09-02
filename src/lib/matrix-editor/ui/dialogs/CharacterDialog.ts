@@ -1047,7 +1047,8 @@ class MediaPane extends BasePane {
       
       // Use new signature with project ID, respect matrix readonly state
       const readonly = this.matrixModel.isReadonly()
-      ImageViewerDialog.show('C', mediaId, projectId, {}, readonly, null)
+      const published = this.matrixModel.isPublished()
+      ImageViewerDialog.show('C', mediaId, projectId, {}, readonly, null, published)
     }
     return true
   }

@@ -102,6 +102,10 @@ export class MatrixGrid extends Component {
     this.taxaRenderer.setTaxaPreferences(
       this.matrixModel.getProjectProperties()
     )
+    
+    // Set published status on default renderers
+    this.cellRenderer.setPublished(this.matrixModel.isPublished())
+    this.taxaRenderer.setPublished(this.matrixModel.isPublished())
 
     this.taxaRenderer.setReadonly(this.matrixModel.isReadonly())
     
@@ -120,6 +124,7 @@ export class MatrixGrid extends Component {
       this.matrixModel.hasAccessToAtleastOneTaxon()
     )
     this.characterRenderer.setMatrixModel(this.matrixModel)
+    this.characterRenderer.setPublished(this.matrixModel.isPublished())
 
     this.horizontalScrollBar = new Scrollbar()
     this.horizontalScrollBar.setOrientation(Orientation.HORIZONTAL)

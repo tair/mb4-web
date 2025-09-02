@@ -2,7 +2,7 @@ import * as mb from '../../mb'
 import { Modal } from '../Modal'
 import { EventType } from '../Component'
 import { VueMountingUtility, vueMountingRegistry } from '../VueMountingUtility'
-import { getCopyrightImagePath, getCopyrightTitle } from '../../../../utils/copyright'
+import { getCopyrightImageHtml, getCopyrightImagePath, getCopyrightTitle } from '../../../../utils/copyright'
 
 /**
  * Advanced Media Viewer with support for images, videos, and 3D files
@@ -24,6 +24,7 @@ export class ImageViewerDialog extends Modal {
   private mediaData: any
   private readonly readonly: boolean
   private readonly linkId: number | null
+  private readonly published: boolean
   private readonly metaViewport: Element
   private currentMediaElement: HTMLElement | null = null
   
@@ -37,7 +38,8 @@ export class ImageViewerDialog extends Modal {
     projectId: number,
     mediaData?: any,
     readonly?: boolean | null,
-    linkId?: number | null
+    linkId?: number | null,
+    published?: boolean
   ) {
     super()
 
@@ -47,6 +49,7 @@ export class ImageViewerDialog extends Modal {
     this.mediaData = mediaData || {}
     this.readonly = !!readonly
     this.linkId = linkId || null
+    this.published = !!published
     this.metaViewport = document.querySelector(
       'meta[name="viewport"]'
     ) as Element
@@ -464,7 +467,8 @@ export class ImageViewerDialog extends Modal {
           linkId: this.linkId, // Pass the cell link_id for matrix cells
           canEdit: !this.readonly,
           contextType: null,
-          contextId: null
+          contextId: null,
+          published: this.published // Pass published state to AnnotationViewer
         },
         withPinia: true
       })
@@ -557,14 +561,17 @@ export class ImageViewerDialog extends Modal {
    */
   private async fetchMediaMetadata(): Promise<any> {
     try {
-      // Use the new detailed media API endpoint that includes view, specimen, and copyright info
-      let mediaUrl = `${(import.meta as any).env.VITE_API_URL}/projects/${this.projectId}/media/${this.mediaId}/details`
+      // Use the correct API endpoint based on whether the project is published
+      const baseUrl = this.published 
+        ? `${(import.meta as any).env.VITE_API_URL}/public/projects/${this.projectId}/media/${this.mediaId}/details`
+        : `${(import.meta as any).env.VITE_API_URL}/projects/${this.projectId}/media/${this.mediaId}/details`
       
       // Add linkId as query parameter if available for character information
+      let mediaUrl = baseUrl
       if (this.linkId) {
         mediaUrl += `?link_id=${this.linkId}`
       }
-      
+
       const response = await fetch(mediaUrl, {
         headers: {
           'Accept': 'application/json',
@@ -640,45 +647,36 @@ export class ImageViewerDialog extends Modal {
     leftColumnItems.push(`<div class="metadata-item">
       <strong>Media #:</strong> M${metadata.mediaId}
     </div>`)
-    
-    // Copyright information - using the new comprehensive copyright data with icons
-    const isCopyrighted = metadata.is_copyrighted === 1 || metadata.is_copyrighted === true
-    
-    if (isCopyrighted && (metadata.copyright_permission || metadata.copyright_license)) {
-      const copyrightImageHtml = this.generateCopyrightImageHtml(metadata.copyright_permission, metadata.copyright_license)
-      leftColumnItems.push(`<div class="metadata-item">
-        <strong>Copyright:</strong> ${copyrightImageHtml}
-      </div>`)
-      
-      if (metadata.copyright_holder) {
-        leftColumnItems.push(`<div class="metadata-item">
-          <strong>Copyright holder:</strong> ${this.escapeHtml(metadata.copyright_holder)}
-        </div>`)
-      }
-    } else {
-      leftColumnItems.push(`<div class="metadata-item">
-        <strong>Copyright image:</strong> ${isCopyrighted ? 'Yes' : 'No'}
-      </div>`)
-      
-      if (isCopyrighted && metadata.copyright_holder) {
-        leftColumnItems.push(`<div class="metadata-item">
-          <strong>Copyright holder:</strong> ${this.escapeHtml(metadata.copyright_holder)}
-        </div>`)
-      }
-    }
-    
-    // RIGHT COLUMN: Specimen and character information
 
-    // View - using the new comprehensive view_name from API
+    // Media View
     if (metadata.view_name) {
-      rightColumnItems.push(`<div class="metadata-item">
+      leftColumnItems.push(`<div class="metadata-item">
         <strong>View:</strong> ${this.escapeHtml(metadata.view_name)}
       </div>`)
     } else if (metadata.view_id) {
-      rightColumnItems.push(`<div class="metadata-item">
+      leftColumnItems.push(`<div class="metadata-item">
         <strong>View:</strong> View ID ${metadata.view_id}
       </div>`)
     }
+
+    let isCopyrighted = metadata.is_copyrighted === 1 || metadata.is_copyrighted === true
+    
+    const copyrightImageHtml = isCopyrighted ? 
+      getCopyrightImageHtml(metadata.copyright_permission, metadata.copyright_license, true) :
+      this.generatePublicCopyrightImageHtml()
+    leftColumnItems.push(`<div class="metadata-item">
+      <strong>Copyright:</strong> ${copyrightImageHtml}
+    </div>`)
+    
+    if (isCopyrighted) {
+      if (metadata.copyright_holder) {
+        leftColumnItems.push(`<div class="metadata-item">
+            <strong>Copyright holder:</strong> ${this.escapeHtml(metadata.copyright_holder)}
+          </div>`)
+      }
+    }
+    
+    // RIGHT COLUMN: Specimen and context information
     
     // Specimen information - using the complete specimen name from enhanced API
     if (metadata.specimen_display) {
@@ -694,11 +692,32 @@ export class ImageViewerDialog extends Modal {
       </div>`)
     }
     
+    // Specimen notes - additional description if available
+    // if (metadata.specimen_notes) {
+    //   rightColumnItems.push(`<div class="metadata-item">
+    //     <strong>Specimen Notes:</strong> ${this.escapeHtml(metadata.specimen_notes)}
+    //   </div>`)
+    // }
+    
     // Character information - using the pre-formatted display from backend
     if (metadata.character_display) {
       const characterText = metadata.character_display
       rightColumnItems.push(`<div class="metadata-item">
         <strong>Character:</strong> ${this.escapeHtml(characterText)}
+      </div>`)
+    }
+    
+    // Direct taxon context - when media is associated with a taxon outside character context
+    if (metadata.taxon_display) {
+      rightColumnItems.push(`<div class="metadata-item">
+        <strong>Taxon:</strong> ${this.sanitizeScientificHtml(metadata.taxon_display)}
+      </div>`)
+    }
+    
+    // Media notes - additional notes about the specific media file
+    if (metadata.media_notes) {
+      rightColumnItems.push(`<div class="metadata-item">
+        <strong>Media Notes:</strong> ${this.escapeHtml(metadata.media_notes)}
       </div>`)
     }
     
@@ -721,6 +740,13 @@ export class ImageViewerDialog extends Modal {
     const title = getCopyrightTitle(copyrightPermission, copyrightLicense)
     
     return `<img src="/images/${imagePath}.png" title="${this.escapeHtml(title)}" style="max-width: 88px; height: auto; object-fit: contain; vertical-align: middle;" alt="${this.escapeHtml(title)}" />`
+  }
+
+  /**
+   * Generate public copyright image HTML for non-copyrighted content
+   */
+  private generatePublicCopyrightImageHtml(): string {
+    return `<img src="/images/CC-0.png" title="Public Domain" style="max-width: 88px; height: auto; object-fit: contain; vertical-align: middle;" alt="Public Domain" />`
   }
 
   /**
@@ -1260,6 +1286,7 @@ export class ImageViewerDialog extends Modal {
    * @param mediaData Optional media metadata for smart URL selection
    * @param readonly Whether the image viewer should be immutable
    * @param linkId Optional link ID for matrix cell context
+   * @param published Whether the project is published (for correct API endpoint)
    */
   static show(
     type: string, 
@@ -1267,18 +1294,19 @@ export class ImageViewerDialog extends Modal {
     projectIdOrReadonly?: number | boolean | null,
     mediaData?: any,
     readonly?: boolean | null,
-    linkId?: number | null
+    linkId?: number | null,
+    published?: boolean
   ) {
-    
     // Handle backwards compatibility with old signature: show(type, id, readonly)
     let projectId: number
     let actualReadonly: boolean
     let actualMediaData: any
     
     let actualLinkId: number | null
+    let actualPublished: boolean
     
     if (typeof projectIdOrReadonly === 'number' || projectIdOrReadonly === null) {
-      // New signature: show(type, id, projectId, mediaData?, readonly?, linkId?)
+      // New signature: show(type, id, projectId, mediaData?, readonly?, linkId?, published?)
       // projectId can be a number or null (null means derive from URL)
       if (projectIdOrReadonly === null) {
         // Derive project ID from URL when null is passed
@@ -1289,15 +1317,17 @@ export class ImageViewerDialog extends Modal {
       actualMediaData = mediaData
       actualReadonly = !!readonly
       actualLinkId = linkId || null
+      actualPublished = !!published
     } else {
       // Old signature: show(type, id, readonly?) - need to derive projectId
       projectId = ImageViewerDialog.deriveProjectId()
       actualMediaData = {}
       actualReadonly = !!projectIdOrReadonly
       actualLinkId = null // Old signature doesn't support linkId
+      actualPublished = false // Old signature defaults to false
     }
     
-    const viewer = new ImageViewerDialog(type, id, projectId, actualMediaData, actualReadonly, actualLinkId)
+    const viewer = new ImageViewerDialog(type, id, projectId, actualMediaData, actualReadonly, actualLinkId, actualPublished)
     viewer.setVisible(true)
   }
 }

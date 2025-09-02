@@ -274,6 +274,11 @@ export abstract class MatrixAccessorContainer extends Component {
     characterRender.setCharacterPreferences(this.matrixModel.getUserPreferences())
     characterRender.setShouldDisplayWarnings(this.matrixModel.hasAccessToAtleastOneTaxon())
     
+    // Set published status on all renderers
+    cellRender.setPublished(this.matrixModel.isPublished())
+    characterRender.setPublished(this.matrixModel.isPublished())
+    taxaRender.setPublished(this.matrixModel.isPublished())
+    
     this.matrixGrid.setCharacterRender(characterRender)
     this.matrixGrid.setTaxaRender(taxaRender)
     this.matrixGrid.setCellRender(cellRender)

@@ -335,7 +335,8 @@ class MediaPane extends Component {
       
       // Use new signature with project ID, respect taxon access permissions
       const readonly = !this.taxon.hasAccess(this.matrixModel.getProjectProperties())
-      ImageViewerDialog.show('T', mediaId, projectId, {}, readonly, null)
+      const published = this.matrixModel.isPublished()
+      ImageViewerDialog.show('T', mediaId, projectId, {}, readonly, null, published)
     }
   }
 

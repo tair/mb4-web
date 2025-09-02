@@ -339,6 +339,10 @@ export default {
     contextId: {
       type: Number,
       default: null
+    },
+    published: {
+      type: Boolean,
+      default: false
     }
   },
 
@@ -399,6 +403,9 @@ export default {
   },
 
   mounted() {
+    // Configure annotation service for correct endpoint usage
+    annotationService.setPublished(this.published)
+    
     this.setupEventListeners()
     this.setupCanvas()
     this.loadAnnotations()

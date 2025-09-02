@@ -11,6 +11,7 @@ import { isEmptyOrWhitespace } from '../mb'
  */
 export abstract class CellRenderer {
   protected projectId: number | null = null
+  protected isPublished: boolean = false
 
   /**
    * Sets the project ID for proper media URL building
@@ -18,6 +19,14 @@ export abstract class CellRenderer {
    */
   setProjectId(projectId: number) {
     this.projectId = projectId
+  }
+
+  /**
+   * Sets whether this is a published project
+   * @param published Whether the project is published
+   */
+  setPublished(published: boolean) {
+    this.isPublished = published
   }
   /**
    * The highlight mode index.
@@ -360,6 +369,9 @@ export class CellStateNameImageRenderer extends CellRenderer {
       images.setProjectId(this.projectId)
     }
     
+    // Set published status
+    images.setPublished(this.isPublished)
+    
     // Set cell ID from the first media item's link_id (all media in a cell share the same link_id)
     if (data.media.length > 0) {
       const cellId = data.media[0].getId() // getId() returns link_id for cell media
@@ -403,6 +415,9 @@ export class CellStateNumberImageRenderer extends CellRenderer {
     if (this.projectId !== null) {
       images.setProjectId(this.projectId)
     }
+    
+    // Set published status
+    images.setPublished(this.isPublished)
     
     // Set cell ID from the first media item's link_id (all media in a cell share the same link_id)
     if (data.media.length > 0) {

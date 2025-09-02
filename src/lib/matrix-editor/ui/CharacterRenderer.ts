@@ -14,6 +14,7 @@ export abstract class CharacterRenderer {
   protected userPreferences: UserPreferences
   protected shouldDisplayWarnings: boolean = true
   protected matrixModel: MatrixModel
+  protected published: boolean = false
 
   /**
    * Sets the character rules
@@ -46,6 +47,22 @@ export abstract class CharacterRenderer {
    */
   setMatrixModel(matrixModel: MatrixModel) {
     this.matrixModel = matrixModel
+  }
+
+  /**
+   * Sets whether this is a published project
+   * @param published Whether the project is published
+   */
+  setPublished(published: boolean) {
+    this.published = published
+  }
+
+  /**
+   * Returns whether this is a published project
+   * @return Whether the project is published
+   */
+  isPublished(): boolean {
+    return this.published
   }
 
   /**

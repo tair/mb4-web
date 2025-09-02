@@ -35,6 +35,7 @@ export class MatrixModel extends EventTarget {
   private currentPartitionId: number | null = null
   private readonly: boolean = false
   private streaming: boolean = false
+  private published: boolean = false
   private characters: Characters
   private partitionCharacters: Character[] | null = null
   private taxa: Taxa
@@ -73,6 +74,22 @@ export class MatrixModel extends EventTarget {
   /** @return the project id */
   getProjectId(): number {
     return this.loader.getProjectId()
+  }
+
+  /**
+   * Sets whether this is a published project
+   * @param published whether the project is published
+   */
+  setPublished(published: boolean): void {
+    this.published = published
+  }
+
+  /**
+   * Gets whether this is a published project
+   * @return whether the project is published
+   */
+  isPublished(): boolean {
+    return this.published
   }
 
   /** @return total number of taxa. */

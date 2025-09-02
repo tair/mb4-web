@@ -1356,7 +1356,8 @@ class MediaPane extends BasePane {
       
       // Use new signature with all parameters, respect access permissions
       const readonly = !this.hasAccess
-      ImageViewerDialog.show('X', mediaId, projectId, {}, readonly, linkId)
+      const published = this.matrixModel.isPublished()
+      ImageViewerDialog.show('X', mediaId, projectId, {}, readonly, linkId, published)
     }
   }
 

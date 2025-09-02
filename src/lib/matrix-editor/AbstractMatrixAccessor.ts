@@ -36,6 +36,7 @@ export abstract class AbstractMatrixAccessor {
 
     this.matrixModel = new MatrixModel(matrixId, this.matrixLoader)
     this.matrixModel.setStreaming(streaming)
+    this.matrixModel.setPublished(published)
 
     this.loadingModal = new LoadingModal()
     this.loadingModal.render()
