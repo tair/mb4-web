@@ -81,26 +81,65 @@ export function getCopyrightTitle(copyrightPermission: number, copyrightLicense:
 export function getCopyrightImageHtml(
   copyrightPermission: number, 
   copyrightLicense: number,
-  isCopyrighted: true
+  isCopyrighted: boolean
 ): string {
-  const imagePath = isCopyrighted ? getCopyrightImagePath(copyrightPermission, copyrightLicense) : getPublicCopyrightImagePath()
-  const title = isCopyrighted ? getCopyrightTitle(copyrightPermission, copyrightLicense) : getPublicCopyrightTitle()
-  
+  const title = getCopyrightTitle(copyrightPermission, copyrightLicense)
   // Escape HTML in title for safety
-  const escapedTitle = title
+  const escapedTitle = escapeHtml(title)
+  let iconPath = '';
+
+  if (isCopyrighted !== null && isCopyrighted !== undefined) {
+    if (isCopyrighted) {
+      // Media IS copyrighted
+      if (copyrightPermission === 4) {
+        // Copyright expired - show Public Domain Mark
+        iconPath = 'PDM'
+      } else {
+        // Show appropriate Creative Commons license icon
+        switch(copyrightLicense) {
+          case 1: // CC0 - relinquish copyright
+            iconPath = 'CC-0';
+            break;
+          case 2: // Attribution CC BY
+            iconPath = 'CC-BY';
+            break;
+          case 3: // Attribution-NonCommercial CC BY-NC
+            iconPath = 'CC-BY-NC';
+            break;
+          case 4: // Attribution-ShareAlike CC BY-SA
+            iconPath = 'CC-BY-SA';
+            break;
+          case 5: // Attribution-NonCommercial-ShareAlike CC BY-NC-SA
+            iconPath = 'CC-BY-NC-SA';
+            break;
+          case 6: // Attribution-NoDerivs CC BY-ND
+            iconPath = 'CC-BY-ND';
+            break;
+          case 7: // Attribution-NonCommercial-NoDerivs CC BY-NC-ND
+            iconPath = 'CC-BY-NC-ND';
+            break;
+          case 8: // One-time use only
+            return "Copyright license for future use: Media released for onetime use, no reuse without permission";
+        }
+      }
+    } else {
+      // Media is NOT copyrighted - always show CC-0
+      iconPath = 'CC-0';
+    }
+  }
+  
+  if (iconPath) {
+    return `<img src="/images/${imagePath}.png" title="${escapedTitle}" style="max-width: 88px; height: auto; object-fit: contain; vertical-align: middle;" alt="${escapedTitle}" />`
+  }
+  
+  return '';
+}
+
+function escapeHtml(text: string): string {
+  return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
-  
-  return `<img src="/images/${imagePath}.png" title="${escapedTitle}" style="max-width: 88px; height: auto; object-fit: contain; vertical-align: middle;" alt="${escapedTitle}" />`
-}
-
-function getPublicCopyrightImagePath(): string {
-  return 'CC-0'
-}
-
-function getPublicCopyrightTitle(): string {
-  return 'Copyright license for future use: Media released for onetime use, no reuse without permission'
 }

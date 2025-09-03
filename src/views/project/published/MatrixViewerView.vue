@@ -8,7 +8,7 @@ import { logView, HIT_TYPES } from '@/lib/analytics.js'
 const route = useRoute()
 const projectId = parseInt(route.params.projectId, 10)
 const matrixId = parseInt(route.params.matrixId, 10)
-const isStreaming = false
+const isStreaming = true
 const published = route.meta.published // Use published status from route guard, NO fallback for security
 
 // Security check: If published status is not set by route guard, something is wrong

@@ -4,6 +4,7 @@ import './CellsContent'
 import { CellStateNameNumberContent } from './CellsContent'
 import { CellStateNumberContent } from './CellsContent'
 import { ImageRenderer } from './ImageRenderer'
+import { LazyImageRenderer } from './LazyImageRenderer'
 import { isEmptyOrWhitespace } from '../mb'
 
 /**
@@ -361,7 +362,7 @@ export class CellStateNameImageRenderer extends CellRenderer {
 
   override renderCell(td: HTMLElement, data: { [key: string]: any }): void {
     td.textContent = CellContent(data, CellStateNameContent)
-    const images = new ImageRenderer('X')
+    const images = new LazyImageRenderer('X')
     images.setReadOnly(data.readonly)
     
     // Set project ID if available
@@ -408,7 +409,7 @@ export class CellStateNumberImageRenderer extends CellRenderer {
 
   override renderCell(td: HTMLElement, data: { [key: string]: any }): void {
     td.textContent = CellContent(data, CellStateNumberContent)
-    const images = new ImageRenderer('X')
+    const images = new LazyImageRenderer('X')
     images.setReadOnly(data.readonly)
     
     // Set project ID if available

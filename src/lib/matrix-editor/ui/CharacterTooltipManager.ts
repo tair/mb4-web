@@ -147,12 +147,12 @@ export class CharacterTooltipManager {
       const stateName = state
         ? '(' + state.getNumber() + ') ' + mb.htmlEscape(state.getName())
         : 'character'
-      const content = MediaExports.toTag(medium.getMedium())
+      const content = MediaExports.toTag(medium.getMedium(), 'large')
       html +=
         '<div class="media" data-bs-toggle="popover" data-bs-placement="bottom" data-bs-custom-class="characterMediaTooltip" data-bs-trigger="hover" data-bs-html="true" data-bs-content="' +
         content +
         '">' +
-        MediaExports.toTag(medium.getTiny()) +
+        MediaExports.toTag(medium.getTiny(), 'thumbnail') +
         '<div class="title">' +
         stateName +
         '</div></div>'

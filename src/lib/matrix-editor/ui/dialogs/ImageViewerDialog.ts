@@ -3,6 +3,7 @@ import { Modal } from '../Modal'
 import { EventType } from '../Component'
 import { VueMountingUtility, vueMountingRegistry } from '../VueMountingUtility'
 import { getCopyrightImageHtml, getCopyrightImagePath, getCopyrightTitle } from '../../../../utils/copyright'
+import { SimpleImageViewer } from './SimpleImageViewer'
 
 /**
  * Advanced Media Viewer with support for images, videos, and 3D files
@@ -31,6 +32,7 @@ export class ImageViewerDialog extends Modal {
   // Annotation functionality
   private annotationMountingUtility: VueMountingUtility | null = null
   private annotationContainer: HTMLElement | null = null
+  private simpleImageViewer: SimpleImageViewer | null = null
 
   constructor(
     type: string, 
@@ -200,6 +202,12 @@ export class ImageViewerDialog extends Modal {
       vueMountingRegistry.unregister(this.annotationMountingUtility)
       this.annotationMountingUtility.unmount()
       this.annotationMountingUtility = null
+    }
+    
+    // Clean up simple image viewer
+    if (this.simpleImageViewer) {
+      this.simpleImageViewer.dispose()
+      this.simpleImageViewer = null
     }
     
     // Clean up metadata container that's inside the annotation container
@@ -447,7 +455,26 @@ export class ImageViewerDialog extends Modal {
       }
 
       // Dynamic import of the AnnotationViewer component
-      const { default: AnnotationViewer } = await import('../../../../components/media/AnnotationViewer.vue')
+      let AnnotationViewer
+      try {
+        // First try the relative path
+        const module = await import('../../../../components/media/AnnotationViewer.vue')
+        AnnotationViewer = module.default
+      } catch (importError) {
+        console.error('Failed to import AnnotationViewer component via relative path:', importError)
+        // Try alternative import paths in case of build/path issues
+        try {
+          const altModule = await import('@/components/media/AnnotationViewer.vue')
+          AnnotationViewer = altModule.default
+        } catch (altImportError) {
+          console.error('Alternative @ alias import also failed:', altImportError)
+          throw new Error('Could not load AnnotationViewer component - both import methods failed')
+        }
+      }
+
+      if (!AnnotationViewer) {
+        throw new Error('AnnotationViewer component is null or undefined after import')
+      }
       
       // Create mounting utility
       this.annotationMountingUtility = new VueMountingUtility()
@@ -485,12 +512,59 @@ export class ImageViewerDialog extends Modal {
       // Setup media metadata section at the bottom of the annotation viewer
       // Add a small delay to ensure AnnotationViewer has fully mounted
       setTimeout(async () => {
-        await this.setupMediaMetadata()
+        // Only setup metadata if we have the full AnnotationViewer (not SimpleImageViewer)
+        if (this.annotationMountingUtility && !this.simpleImageViewer) {
+          await this.setupMediaMetadata()
+        }
       }, 100)
 
     } catch (error) {
       console.error('Failed to setup annotations:', error)
-      // If annotation setup fails, just continue without annotations
+      
+      // If annotation setup fails, use SimpleImageViewer as fallback
+      const mediaContent = this.getElementByClass<HTMLElement>('media-content')
+      if (this.annotationContainer) {
+        
+        try {
+          // Use the SimpleImageViewer as a fallback
+          const mediaUrl = this.getZoomDisplayUrl()
+          this.simpleImageViewer = new SimpleImageViewer(
+            this.annotationContainer, 
+            mediaUrl, 
+            this.mediaId, 
+            this.projectId
+          )
+          this.simpleImageViewer.render()
+          
+          // Show the annotation container (which now contains the simple viewer)
+          this.annotationContainer.style.display = 'flex'
+          
+          // Hide the regular media content
+          if (mediaContent) {
+            mediaContent.style.display = 'none'
+          }
+          
+        } catch (fallbackError) {
+          console.error('SimpleImageViewer fallback also failed:', fallbackError)
+          
+          // Last resort: show regular image viewer
+          if (mediaContent && this.annotationContainer) {
+            mediaContent.style.display = 'flex'
+            this.annotationContainer.style.display = 'none'
+          }
+        }
+      }
+      
+      // Clean up any partially created annotation resources
+      if (this.annotationMountingUtility) {
+        try {
+          vueMountingRegistry.unregister(this.annotationMountingUtility)
+          this.annotationMountingUtility.unmount()
+        } catch (cleanupError) {
+          console.warn('Error cleaning up annotation mounting utility:', cleanupError)
+        }
+        this.annotationMountingUtility = null
+      }
     }
   }
 
@@ -661,9 +735,11 @@ export class ImageViewerDialog extends Modal {
 
     let isCopyrighted = metadata.is_copyrighted === 1 || metadata.is_copyrighted === true
     
-    const copyrightImageHtml = isCopyrighted ? 
-      getCopyrightImageHtml(metadata.copyright_permission, metadata.copyright_license, true) :
-      this.generatePublicCopyrightImageHtml()
+    const copyrightImageHtml = getCopyrightImageHtml(
+      metadata.copyright_permission,
+      metadata.copyright_license,
+      isCopyrighted
+    )
     leftColumnItems.push(`<div class="metadata-item">
       <strong>Copyright:</strong> ${copyrightImageHtml}
     </div>`)
@@ -730,16 +806,6 @@ export class ImageViewerDialog extends Modal {
         ${rightColumnItems.join('')}
       </div>
     `
-  }
-
-  /**
-   * Generate copyright image HTML using shared copyright utilities
-   */
-  private generateCopyrightImageHtml(copyrightPermission: number, copyrightLicense: number): string {
-    const imagePath = getCopyrightImagePath(copyrightPermission, copyrightLicense)
-    const title = getCopyrightTitle(copyrightPermission, copyrightLicense)
-    
-    return `<img src="/images/${imagePath}.png" title="${this.escapeHtml(title)}" style="max-width: 88px; height: auto; object-fit: contain; vertical-align: middle;" alt="${this.escapeHtml(title)}" />`
   }
 
   /**

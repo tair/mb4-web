@@ -500,9 +500,17 @@ div.matrixgridCells table {
 }
 
 .cellStateImages .matrixgrid tr td img {
+  object-fit: contain;
+}
+
+.cellStateImages .matrixgrid tr td img.thumbnail-media-image {
   max-width: 160px;
   max-height: 160px;
-  object-fit: contain;
+}
+
+.cellStateImages .matrixgrid tr td img.large-media-image {
+  max-width: 160px;
+  max-height: 160px;
 }
 
 .loadingModal {
@@ -563,9 +571,17 @@ div.matrixgridCells table {
 
 .imageThumbnail img {
   margin: auto;
+  object-fit: contain;
+}
+
+.imageThumbnail img.thumbnail-media-image {
   max-width: 140px;
   max-height: 110px;
-  object-fit: contain;
+}
+
+.imageThumbnail img.large-media-image {
+  max-width: 140px;
+  max-height: 110px;
 }
 
 .imageThumbnail .imageArrowDown,
@@ -1349,9 +1365,17 @@ ol.selectList li:hover span.remove {
 }
 
 .mediaGrid .mediaItem img {
+  object-fit: contain;
+}
+
+.mediaGrid .mediaItem img.thumbnail-media-image {
   max-width: 110px;
   max-height: 80px;
-  object-fit: contain;
+}
+
+.mediaGrid .mediaItem img.large-media-image {
+  max-width: 110px;
+  max-height: 80px;
 }
 
 .mediaGrid .mediaItem:hover {
@@ -2202,9 +2226,17 @@ div.loadingMessage > div,
 .characterTooltip div.media img {
   display: block;
   margin: auto;
+  object-fit: contain;
+}
+
+.characterTooltip div.media img.thumbnail-media-image {
   max-width: 75px;
   max-height: 60px;
-  object-fit: contain;
+}
+
+.characterTooltip div.media img.large-media-image {
+  max-width: 300px;
+  max-height: 200px;
 }
 
 .characterTooltip div.state {
@@ -2245,6 +2277,12 @@ div.loadingMessage > div,
   background: white;
   max-width: fit-content;
   z-index: 30000;
+}
+
+.characterMediaTooltip img.large-media-image {
+  max-width: 400px;
+  max-height: 300px;
+  object-fit: contain;
 }
 
 .checkerDialog header {
