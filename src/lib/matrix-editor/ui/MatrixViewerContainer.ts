@@ -15,8 +15,8 @@ import { OntologyDialog } from './dialogs/OntologyDialog'
  * @param matrixModel the data associated with the matrix. This includes characters, taxon, and cells.
  */
 export class MatrixViewerContainer extends MatrixAccessorContainer {
-  constructor(matrixModel: MatrixModel) {
-    super(matrixModel, new MatrixViewerGridHandler())
+  constructor(matrixModel: MatrixModel, projectId: number) {
+    super(matrixModel, new MatrixViewerGridHandler(), projectId)
   }
 
   protected override handleCharactersClick() {

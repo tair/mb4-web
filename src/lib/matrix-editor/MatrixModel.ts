@@ -35,6 +35,7 @@ export class MatrixModel extends EventTarget {
   private currentPartitionId: number | null = null
   private readonly: boolean = false
   private streaming: boolean = false
+  private published: boolean = false
   private characters: Characters
   private partitionCharacters: Character[] | null = null
   private taxa: Taxa
@@ -68,6 +69,27 @@ export class MatrixModel extends EventTarget {
   /** @return the id of the matrix */
   getId(): number {
     return this.matrixId
+  }
+
+  /** @return the project id */
+  getProjectId(): number {
+    return this.loader.getProjectId()
+  }
+
+  /**
+   * Sets whether this is a published project
+   * @param published whether the project is published
+   */
+  setPublished(published: boolean): void {
+    this.published = published
+  }
+
+  /**
+   * Gets whether this is a published project
+   * @return whether the project is published
+   */
+  isPublished(): boolean {
+    return this.published
   }
 
   /** @return total number of taxa. */
@@ -788,7 +810,13 @@ export class MatrixModel extends EventTarget {
         const cellMedia = cellInfo.getMediaById(mediaId)
         if (cellMedia) {
           const labelCount = result['label_count']
-          cellMedia.setLabelCount(labelCount)
+          // Ensure labelCount is always a number to prevent type issues
+          const numericLabelCount = typeof labelCount === 'number' 
+            ? labelCount 
+            : typeof labelCount === 'string' 
+            ? parseInt(labelCount, 10) || 0
+            : 0
+          cellMedia.setLabelCount(numericLabelCount)
         }
         this.dispatchEvent(
           CellsChangedEvents.create([taxonId], [characterId], true)

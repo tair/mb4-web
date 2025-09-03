@@ -1348,7 +1348,16 @@ class MediaPane extends BasePane {
       .getCellInfo(this.taxonId, this.characterId)
     const medium = cellInfo.getMediaById(item.id)
     if (medium) {
-      ImageViewerDialog.show('X', medium.getId())
+      // Get project ID from matrix model
+      const projectId = this.matrixModel.getProjectId()
+      // medium.getId() returns link_id, medium.getMediaId() returns media_id
+      const linkId = medium.getId() // This is the cell link ID for annotation context
+      const mediaId = medium.getMediaId() // This is the actual media ID
+      
+      // Use new signature with all parameters, respect access permissions
+      const readonly = !this.hasAccess
+      const published = this.matrixModel.isPublished()
+      ImageViewerDialog.show('X', mediaId, projectId, {}, readonly, linkId, published)
     }
   }
 

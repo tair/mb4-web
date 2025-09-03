@@ -708,13 +708,13 @@ export class CellMedia {
    * @return The icon tag of the media
    */
   getIcon(): Media {
-    return this.cellMediaObj['icon']
+    return this.cellMediaObj['thumbnail']
   }
 
   /**
    * @return The tiny media
    */
   getTiny(): Media {
-    return this.cellMediaObj['tiny']
+    return this.cellMediaObj['thumbnail']
   }
 }

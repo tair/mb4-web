@@ -13,6 +13,14 @@ class AnnotationService {
   }
 
   /**
+   * Set the base URL based on whether the project is published
+   * @param {boolean} published - Whether the project is published
+   */
+  setPublished(published) {
+    this.baseUrl = published ? '/services/public/projects' : '/services/projects'
+  }
+
+  /**
    * Get annotations for a media item
    * 
    * @param {number} projectId - Project ID

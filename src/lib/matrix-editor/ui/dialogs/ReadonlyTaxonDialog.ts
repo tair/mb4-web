@@ -67,7 +67,7 @@ export class ReadonlyTaxonDialog extends Dialog {
 
     this.tabNavigator.addTab('Notes', new NotesPane(taxon))
     if (taxon.hasMedia()) {
-      this.tabNavigator.addTab('Media', new MediaPane(taxon))
+      this.tabNavigator.addTab('Media', new MediaPane(taxon, this.matrixModel))
     }
 
     this.tabNavigator.setSelectedTabIndex(selectedTabIndex)
@@ -140,12 +140,14 @@ class NotesPane extends Component {
  */
 class MediaPane extends Component {
   private readonly taxon: Taxon
+  private readonly matrixModel: MatrixModel
   private readonly mediaGrid: MediaGrid
 
-  constructor(taxon: Taxon) {
+  constructor(taxon: Taxon, matrixModel: MatrixModel) {
     super()
 
     this.taxon = taxon
+    this.matrixModel = matrixModel
 
     this.mediaGrid = new MediaGrid()
     this.mediaGrid.setRemoveable(false)
@@ -197,7 +199,10 @@ class MediaPane extends Component {
   protected onHandleDoubleClickCellMedia(e: CustomEvent<MediaGridItemEvent>) {
     const item = e.detail.item
     if (item) {
-      ImageViewerDialog.show('T', item.id, true)
+      // Use new signature with project ID and published state from matrix model
+      const projectId = this.matrixModel.getProjectId()
+      const published = this.matrixModel.isPublished()
+      ImageViewerDialog.show('T', item.id, projectId, {}, true, null, published)
     }
   }
 }

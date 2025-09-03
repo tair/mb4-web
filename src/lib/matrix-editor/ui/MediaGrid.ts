@@ -119,7 +119,7 @@ export class MediaGrid extends Component {
     const mediaDiv = document.createElement('div')
     mb.setElementStyle(mediaDiv, 'align', 'center')
     mediaDiv.classList.add('mediaItem')
-    mediaDiv.innerHTML = MediaExports.toTag(item.image)
+    mediaDiv.innerHTML = MediaExports.toTag(item.image, 'thumbnail')
     const handler = this.getHandler()
     if (this.removeable) {
       const removeSpan = document.createElement('span')

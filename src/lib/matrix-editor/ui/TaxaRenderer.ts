@@ -10,6 +10,8 @@ import * as mb from '../mb'
 export abstract class TaxaRenderer {
   protected projectProperties: ProjectProperties
   protected readOnly: boolean
+  protected projectId: number | null = null
+  protected published: boolean = false
 
   protected TaxaRenderer() {
     this.readOnly = false
@@ -30,6 +32,22 @@ export abstract class TaxaRenderer {
    */
   setReadonly(readOnly: boolean) {
     this.readOnly = readOnly
+  }
+
+  /**
+   * Sets the project ID for proper media URL building
+   * @param projectId The project ID
+   */
+  setProjectId(projectId: number) {
+    this.projectId = projectId
+  }
+
+  /**
+   * Sets whether this is a published project
+   * @param published Whether the project is published
+   */
+  setPublished(published: boolean) {
+    this.published = published
   }
 
   /**
@@ -125,11 +143,27 @@ export class TaxaNameImageRenderer extends TaxaRenderer {
     const media = taxon.getMedia()
     const images = new ImageRenderer('T')
     images.setReadOnly(!hasAccess || this.readOnly)
+    
+    // Set project ID if available
+    if (this.projectId !== null) {
+      images.setProjectId(this.projectId)
+    }
+    
+    // Set published status
+    images.setPublished(this.published)
+    
+    // Set cell ID for the first media item (like CellRenderer does)
+    if (media.length > 0) {
+      const cellId = media[0].getId() // getId() returns link_id for taxa media
+      images.setCellId(cellId)
+    }
+    
     for (let x = 0; x < media.length; x++) {
       const medium = media[x]
       const tiny = medium.getTiny()
       if (tiny) {
-        images.addImage(medium.getId(), tiny['url'])
+        // Use getMediaId() to get actual media file ID, not getId() which returns link ID
+        images.addImage(medium.getMediaId(), tiny['url'])
       }
     }
     images.render(td)

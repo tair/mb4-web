@@ -18,6 +18,14 @@ export class MatrixLoader {
   }
 
   /**
+   * Gets the project ID
+   * @return The project ID
+   */
+  getProjectId(): number {
+    return this.projectId
+  }
+
+  /**
    * Sets the project and matrix id.
    *
    */

@@ -328,7 +328,15 @@ class MediaPane extends Component {
     const item = e.detail.item
     const medium = this.taxon.getMediaById(item.id)
     if (medium) {
-      ImageViewerDialog.show('T', medium.getId())
+      // Get project ID from matrix model
+      const projectId = this.matrixModel.getProjectId()
+      // medium.getId() returns link_id, medium.getMediaId() returns media_id
+      const mediaId = medium.getMediaId() // Use actual media ID
+      
+      // Use new signature with project ID, respect taxon access permissions
+      const readonly = !this.taxon.hasAccess(this.matrixModel.getProjectProperties())
+      const published = this.matrixModel.isPublished()
+      ImageViewerDialog.show('T', mediaId, projectId, {}, readonly, null, published)
     }
   }
 

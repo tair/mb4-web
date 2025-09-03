@@ -12,6 +12,9 @@ export class ImageRenderer extends Component {
   private static readonly ARROW_DOWN_TEXT: string = '\u25bc'
 
   private readonly type: string
+  private projectId: number | null = null
+  private cellId: number | null = null
+  private isPublished: boolean = false
 
   private imageUrls: ImageRendererUrl[]
   private currentImageIndex: number
@@ -27,11 +30,35 @@ export class ImageRenderer extends Component {
   }
 
   /**
+   * Sets the project ID for proper media URL building
+   * @param projectId The project ID
+   */
+  setProjectId(projectId: number) {
+    this.projectId = projectId
+  }
+
+  /**
+   * Sets the cell ID for annotation context
+   * @param cellId The cell/link ID
+   */
+  setCellId(cellId: number | null) {
+    this.cellId = cellId
+  }
+
+  /**
    * Sets the image as readonly
    * @param readonly The boolean which indicates whether this image render is readonly
    */
   setReadOnly(isReadOnly: boolean) {
     this.isReadOnly = isReadOnly
+  }
+
+  /**
+   * Sets whether this is a published project
+   * @param published Whether the project is published
+   */
+  setPublished(published: boolean) {
+    this.isPublished = published
   }
 
   /**
@@ -164,7 +191,11 @@ export class ImageRenderer extends Component {
    */
   protected onHandleClick(e: Event) {
     const imageUrl = this.imageUrls[this.currentImageIndex]
-    ImageViewerDialog.show(this.type, imageUrl.id, this.isReadOnly)
+    
+    // Always use new signature - pass null for projectId if not available
+    // This ensures linkId is always passed when available
+    ImageViewerDialog.show(this.type, imageUrl.id, this.projectId, {}, this.isReadOnly, this.cellId, this.isPublished)
+    
     e.stopPropagation()
     e.preventDefault()
     return true

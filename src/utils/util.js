@@ -43,11 +43,11 @@ function getDownloadTooltipText() {
 }
 
 function getCopyRightTooltipText() {
-  return `MorphoBank hosts phylogenetic data (matrices, characters, character states and documents) that are scientific facts in the public domain and not typically subject to copyright. Some authors have additionally marked their non-image data as CC0 <img src="/images/CC-0_gray.png" /> to emphasize its availability for reuse.<br/><br/>Image data on MorphoBank may, however, be subject to copyright and licenses should be checked before reuse.`
+  return `MorphoBank hosts phylogenetic data (matrices, characters, character states and documents) that are scientific facts in the public domain and not typically subject to copyright. Some authors have additionally marked their non-image data as CC0 <img src="/images/CC-0_gray.png" style="max-width: 88px; height: auto; object-fit: contain; vertical-align: middle;" /> to emphasize its availability for reuse.<br/><br/>Image data on MorphoBank may, however, be subject to copyright and licenses should be checked before reuse.`
 }
 
 function getCC0ImgTag() {
-  return '<img src="/images/CC-0_gray.png" />'
+  return '<img src="/images/CC-0_gray.png" style="max-width: 88px; height: auto; object-fit: contain; vertical-align: middle;" />'
 }
 
 // Tooltip content functions

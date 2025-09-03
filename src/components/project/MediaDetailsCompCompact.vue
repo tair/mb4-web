@@ -484,6 +484,7 @@ function getHitsMessage(mediaObj) {
                   :can-edit="annotationsEnabled"
                   :link-id="useAnnotationLinkId ? media_file.media_id : null"
                   :save-link-id="media_file.media_id"
+                  :published="isProjectPublished"
                   type="M"
                   @annotationsLoaded="onAnnotationsLoaded"
                   @annotationsSaved="onAnnotationsSaved"
