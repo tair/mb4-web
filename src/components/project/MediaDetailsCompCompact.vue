@@ -145,7 +145,7 @@ const isOriginalTiffFile = computed(() => {
   return originalMedia && (originalMedia.MIMETYPE === 'image/tiff' || originalMedia.MIMETYPE === 'image/tif')
 })
 
-// Get the main display URL (3D icon for 3D files, video thumbnail for videos, actual image for 2D files)
+// Get the main display URL - ALWAYS use thumbnail for compact view
 const mainDisplayUrl = computed(() => {
   if (is3DFile.value) {
     return '/images/3DImage.png'
@@ -155,21 +155,8 @@ const mainDisplayUrl = computed(() => {
     return buildMediaUrl(props.project_id, props.media_file?.media_id, 'thumbnail')
   }
   
-  // For regular images, prefer JPEG variants for browser compatibility
-  // CANT FIGURE OUT WHY THIS WORKS.... BUT IT DOES SO KEEPING IT
-  const media = props.media_file?.media
-  if (media) {
-    // Try large first (usually JPEG), finally original
-    const sizePreference = ['large', 'original']
-    for (const size of sizePreference) {
-      if (media[size] && media[size].MIMETYPE !== 'image/tiff' && media[size].MIMETYPE !== 'image/tif') {
-        return buildMediaUrl(props.project_id, props.media_file?.media_id, size)
-      }
-    }
-  }
-  
-  // Fallback to original if no JPEG variants found
-  return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
+  // For regular images, always use thumbnail in compact view
+  return buildMediaUrl(props.project_id, props.media_file?.media_id, 'thumbnail')
 })
 
 // Get the 3D model URL for model-viewer
@@ -240,7 +227,7 @@ watch(showZoomModal, (isOpen) => {
   }
 })
 
-// Get the zoom display URL (3D model for 3D files, video for videos, large image for 2D files)
+// Get the zoom display URL - use original for zoom modal to maintain quality
 const zoomDisplayUrl = computed(() => {
   if (is3DFile.value) {
     return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
@@ -249,20 +236,7 @@ const zoomDisplayUrl = computed(() => {
     return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
   }
   
-  // For zoom modal, use same smart logic as main display - prefer JPEG variants
-  // CANT FIGURE OUT WHY THIS WORKS.... BUT IT DOES SO KEEPING IT FOR NOW
-  const media = props.media_file?.media
-  if (media) {
-    // Try large first (usually JPEG), finally original
-    const sizePreference = ['original', 'large']
-    for (const size of sizePreference) {
-      if (media[size] && media[size].MIMETYPE !== 'image/tiff' && media[size].MIMETYPE !== 'image/tif') {
-        return buildMediaUrl(props.project_id, props.media_file?.media_id, size)
-      }
-    }
-  }
-  
-  // Fallback to original if no JPEG variants found
+  // For zoom modal, use original for best quality
   return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
 })
 
@@ -444,8 +418,8 @@ function getHitsMessage(mediaObj) {
   <div v-if="!media_file">Please select a media from the list.</div>
 
   <div v-else class="row p-2">
-    <div class="col">
-      <div class="card shadow">
+    <div class="col-md-4">
+      <div class="card shadow compact-card">
         <img
           :src="mainDisplayUrl"
           :style="{
@@ -454,15 +428,15 @@ function getHitsMessage(mediaObj) {
             backgroundImage: 'url(' + '/images/loader.png' + ')',
             backgroundPosition: '10px 10px',
           }"
-          class="card-img"
+          class="card-img compact-img"
           @error="onImageError"
           @load="onImageLoad"
         />
 
-        <div class="card-body">
+        <div class="card-body compact-body">
           <div class="card-text">
-            <div class="nav">
-              <a class="nav-link" href="#" @click="showZoomModal = true">
+            <div class="nav compact-nav">
+              <a class="nav-link compact-link" href="#" @click="showZoomModal = true">
                 Zoom
               </a>
               <CustomModal
@@ -521,7 +495,7 @@ function getHitsMessage(mediaObj) {
                   :imgSrc="zoomDisplayUrl"
                 />
               </CustomModal>
-              <a class="nav-link" href="#" @click="showDownloadModal = true">
+              <a class="nav-link compact-link" href="#" @click="showDownloadModal = true">
                 Download
                 <Tooltip :content="downloadTooltipText"></Tooltip>
               </a>
@@ -554,107 +528,182 @@ function getHitsMessage(mediaObj) {
             </div>
           </div>
           <div v-if="media_file.license && media_file.license.image">
-            <img :src="`/images/${media_file.license.image}`" class="cc-icon" />
+            <img :src="`/images/${media_file.license.image}`" class="cc-icon compact-cc" />
           </div>
           <div v-if="media_file.license && media_file.license.isOneTimeUse">
-            <p>
+            <p class="compact-text">
               Copyright license for future use: Media released for onetime use,
               no reuse without permission
             </p>
           </div>
           <div>
-            <p class="card-title" v-if="media_file.media['ORIGINAL_FILENAME']">
+            <p class="card-title compact-title" v-if="media_file.media['ORIGINAL_FILENAME']">
               Original filename: {{ media_file.media['ORIGINAL_FILENAME'] }}
             </p>
           </div>
         </div>
       </div>
     </div>
-    <div class="col">
-      <div>
-        <strong>Morphobank media number</strong>
-        <p>{{ 'M' + media_file.media_id }}</p>
-      </div>
-      <div>
-        <strong>Taxonomic name</strong>
-        <p v-html="media_file.taxon_name"></p>
-      </div>
-      <div v-if="media_file.specimen_name">
-        <strong>Specimen</strong>
-        <p v-html="media_file.specimen_name"></p>
-      </div>
-      <div v-if="media_file.specimen_notes">
-        <strong>Specimen notes</strong>
-        <p v-html="media_file.specimen_notes"></p>
-      </div>
-      <div v-if="media_file.view_name">
-        <strong>View</strong>
-        <p>{{ media_file.view_name }}</p>
-      </div>
-      <div v-if="media_file.side_represented">
-        <strong>Side represented</strong>
-        <p>{{ media_file.side_represented }}</p>
-      </div>
-      <div v-if="media_file.user_name">
-        <strong>Media loaded by</strong>
-        <p>{{ media_file.user_name }}</p>
-      </div>
-      <div v-if="media_file.copyright_holder">
-        <strong>Copyright holder</strong>
-        <p>{{ media_file.copyright_holder }}</p>
-      </div>
-      <div v-if="media_file.copyright_permission">
-        <strong>Copyright information</strong>
-        <p>{{ media_file.copyright_permission }}</p>
-      </div>
-      <div v-if="media_file.references">
-        <strong>{{
-          media_file.references.length > 1
-            ? 'Bibliographic References'
-            : 'Bibliographic Reference'
-        }}</strong>
-        <p v-html="media_file.references.join('<br/>')"></p>
-      </div>
-      <div v-if="media_file.notes">
-        <strong>Media Notes</strong>
-        <p v-html="media_file.notes"></p>
-      </div>
-      <div v-if="media_file.url">
-        <strong>Web source of media</strong>
-        <p>
-          <a :href="media_file.url" target="_blank"
-            >View media online &raquo;</a
-          >
-        </p>
-      </div>
-      <div v-if="media_file.url_description">
-        <strong>Web source description</strong>
-        <p v-html="media_file.url_description"></p>
-      </div>
-      <div v-if="media_file.created_on">
-        <strong>Media loaded on</strong>
-        <p>{{ toDateString(media_file.created_on) }}</p>
-      </div>
-      <div v-if="media_file.ancestor">
-        <strong>{{ getAncestorMessage(media_file) }}</strong>
-        <p v-if="media_file.ancestor.child_siblings">
-          <i v-html="getSibilingMessage(media_file)"></i>
-        </p>
-      </div>
-      <div class="mb-4" v-if="getHitsMessage(media_file)">
-        {{ getHitsMessage(media_file) }}
-        <Tooltip :content="viewStatsTooltipText"></Tooltip>
+    <div class="col-md-8">
+      <div class="compact-info">
+        <div class="info-item">
+          <strong>Morphobank media number</strong>
+          <p>{{ 'M' + media_file.media_id }}</p>
+        </div>
+        <div class="info-item">
+          <strong>Taxonomic name</strong>
+          <p v-html="media_file.taxon_name"></p>
+        </div>
+        <div class="info-item" v-if="media_file.specimen_name">
+          <strong>Specimen</strong>
+          <p v-html="media_file.specimen_name"></p>
+        </div>
+        <div class="info-item" v-if="media_file.specimen_notes">
+          <strong>Specimen notes</strong>
+          <p v-html="media_file.specimen_notes"></p>
+        </div>
+        <div class="info-item" v-if="media_file.view_name">
+          <strong>View</strong>
+          <p>{{ media_file.view_name }}</p>
+        </div>
+        <div class="info-item" v-if="media_file.side_represented">
+          <strong>Side represented</strong>
+          <p>{{ media_file.side_represented }}</p>
+        </div>
+        <div class="info-item" v-if="media_file.user_name">
+          <strong>Media loaded by</strong>
+          <p>{{ media_file.user_name }}</p>
+        </div>
+        <div class="info-item" v-if="media_file.copyright_holder">
+          <strong>Copyright holder</strong>
+          <p>{{ media_file.copyright_holder }}</p>
+        </div>
+        <div class="info-item" v-if="media_file.copyright_permission">
+          <strong>Copyright information</strong>
+          <p>{{ media_file.copyright_permission }}</p>
+        </div>
+        <div class="info-item" v-if="media_file.references">
+          <strong>{{
+            media_file.references.length > 1
+              ? 'Bibliographic References'
+              : 'Bibliographic Reference'
+          }}</strong>
+          <p v-html="media_file.references.join('<br/>')"></p>
+        </div>
+        <div class="info-item" v-if="media_file.notes">
+          <strong>Media Notes</strong>
+          <p v-html="media_file.notes"></p>
+        </div>
+        <div class="info-item" v-if="media_file.url">
+          <strong>Web source of media</strong>
+          <p>
+            <a :href="media_file.url" target="_blank"
+              >View media online &raquo;</a
+            >
+          </p>
+        </div>
+        <div class="info-item" v-if="media_file.url_description">
+          <strong>Web source description</strong>
+          <p v-html="media_file.url_description"></p>
+        </div>
+        <div class="info-item" v-if="media_file.created_on">
+          <strong>Media loaded on</strong>
+          <p>{{ toDateString(media_file.created_on) }}</p>
+        </div>
+        <div class="info-item" v-if="media_file.ancestor">
+          <strong>{{ getAncestorMessage(media_file) }}</strong>
+          <p v-if="media_file.ancestor.child_siblings">
+            <i v-html="getSibilingMessage(media_file)"></i>
+          </p>
+        </div>
+        <div class="info-item mb-4" v-if="getHitsMessage(media_file)">
+          {{ getHitsMessage(media_file) }}
+          <Tooltip :content="viewStatsTooltipText"></Tooltip>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.cc-icon {
-  max-width: 88px;
+.compact-card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 0rem;
+  max-width: 200px;
+}
+
+.compact-img {
+  margin: 0.25rem;
+  max-width: 100%;
+  max-height: 180px;
+  width: auto;
   height: auto;
   object-fit: contain;
-  margin-bottom: 1rem;
+}
+
+.compact-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0.25rem;
+}
+
+.compact-nav {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.compact-link {
+  margin: 0 0.25rem;
+  text-decoration: none;
+  color: #007bff;
+  font-size: 0.9rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.compact-link:hover {
+  text-decoration: underline;
+}
+
+.compact-cc {
+  max-width: 80px;
+  margin-bottom: 0.5rem;
+}
+
+.compact-title,
+.compact-text {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.compact-info {
+  padding-left: 1rem;
+}
+
+.info-item {
+  margin-bottom: 0.75rem;
+}
+
+.info-item strong {
+  font-size: 0.9rem;
+  color: #495057;
+}
+
+.info-item p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.cc-icon {
+  width: 88;
+  height: 31;
 }
 
 .card {
@@ -695,6 +744,11 @@ function getHitsMessage(mediaObj) {
 
 .nav-link:hover {
   text-decoration: underline;
+}
+
+.cc-icon {
+  max-width: 100px;
+  margin-bottom: 1rem;
 }
 
 .card-title,
@@ -777,5 +831,21 @@ p {
 
 .lazy-error-annotations {
   color: #dc3545;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .compact-card {
+    max-width: 100%;
+  }
+  
+  .compact-img {
+    max-height: 150px;
+  }
+  
+  .compact-info {
+    padding-left: 0;
+    margin-top: 1rem;
+  }
 }
 </style>

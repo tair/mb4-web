@@ -209,7 +209,6 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         }
 
         const data = await response.json()
-        console.log(data)
 
         this.validations.citations = {
           isValid: data.citation_complete || false,
@@ -258,7 +257,6 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         }
 
         const data = await response.json()
-        console.log(data)
 
         // Process media validation results
         const canPublish = data.canPublish !== false // Default to true if not specified
@@ -475,8 +473,6 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
           no_personal_identifiable_info: preferences.noPersonalInfo ? 1 : 0,
         }
 
-        console.log('Sending preferences payload:', backendData)
-
         const response = await fetch(
           `${
             import.meta.env.VITE_API_URL
@@ -549,7 +545,6 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         }
 
         const data = await response.json()
-        console.log(data)
 
         this.publicationResult = {
           success: true,

@@ -46,16 +46,7 @@
           </button>
         </div>
         
-        <!-- Save button (only when editing) -->
-        <button 
-          v-if="canEdit && hasUnsavedChanges" 
-          @click="saveAnnotations"
-          class="btn btn-primary"
-          :disabled="saving"
-        >
-          <span class="save-icon">💾</span>
-          {{ saving ? 'Saving...' : 'Save All' }}
-        </button>
+        <!-- Save All button removed - individual saves happen instantly -->
         
         <!-- Overview button -->
         <!-- <button 
@@ -152,12 +143,7 @@
 
           <div v-if="canEdit" class="help-section">
             <h5>Actions</h5>
-            <div class="help-item">
-              <span class="help-icon-display">💾</span>
-              <div class="help-text">
-                <strong>Save All</strong> - Save all unsaved annotations. (Shortcut: Ctrl+S)
-              </div>
-            </div>
+            <!-- Save All removed - annotations save instantly when edited -->
             <div class="help-item">
               <span class="help-icon-display">🗑️</span>
               <div class="help-text">
@@ -272,7 +258,7 @@
     <!-- Keyboard Shortcuts Help -->
     <div v-if="canEdit && showKeyboardHints" class="keyboard-hints">
       <small>
-        Shortcuts: R=Rectangle, P=Point, G=Polygon, Esc=Pan, Ctrl+S=Save, Delete=Remove selected
+        Shortcuts: R=Rectangle, P=Point, G=Polygon, Esc=Pan, Delete=Remove selected
       </small>
     </div>
     
@@ -286,6 +272,7 @@
     <!-- Edit Annotation Modal -->
     <AnnotationEditModal
       v-if="editingAnnotation"
+      ref="editModal"
       :annotation="editingAnnotation"
       @save="updateAnnotation"
       @cancel="cancelEdit"
@@ -325,6 +312,11 @@ export default {
       validator: value => ['X', 'M', 'T', 'C'].includes(value)
     },
     linkId: {
+      type: Number,
+      default: null
+    },
+    // Separate linkId for save operations (defaults to mediaId if not provided)
+    saveLinkId: {
       type: Number,
       default: null
     },
@@ -399,6 +391,11 @@ export default {
     
     canvasRect() {
       return this.canvas?.getBoundingClientRect()
+    },
+    
+    // Use saveLinkId if provided, otherwise fall back to mediaId for save operations
+    effectiveSaveLinkId() {
+      return this.saveLinkId !== null ? this.saveLinkId : this.mediaId
     }
   },
 
@@ -966,15 +963,38 @@ export default {
 
       // Add to local state immediately for responsive UI
       this.annotations.push(annotation)
-      this.hasUnsavedChanges = true
       
       // Only redraw canvas - don't trigger full updates
       this.$nextTick(() => {
         this.drawAnnotations()
       })
 
-      // Note: Auto-save disabled - users will manually save using "Save All" button
-      // This prevents conflicts with manual save operations
+      // Save to database immediately
+      try {
+        const result = await annotationService.saveAnnotations(
+          this.projectId,
+          this.mediaId,
+          this.type,
+          this.effectiveSaveLinkId,
+          [annotation]
+        )
+        
+        // Update with server-assigned ID
+        if (result.labels && result.labels[0]) {
+          annotation.annotation_id = result.labels[0].annotation_id
+        }
+        
+        this.showSaveStatus('Annotation created and saved', 'success')
+      } catch (error) {
+        console.error('Failed to save new annotation:', error)
+        this.showSaveStatus('Failed to save annotation', 'error')
+        // Remove from local state if save failed
+        const index = this.annotations.findIndex(a => a === annotation)
+        if (index !== -1) {
+          this.annotations.splice(index, 1)
+          this.drawAnnotations()
+        }
+      }
     },
 
     // Canvas utility methods
@@ -1219,12 +1239,35 @@ export default {
       this.editingAnnotation = { ...annotation }
     },
 
-    updateAnnotation(updatedAnnotation) {
+    async updateAnnotation(updatedAnnotation) {
       const index = this.annotations.findIndex(a => a.annotation_id === updatedAnnotation.annotation_id)
+      
       if (index !== -1) {
+        // Update local state immediately for responsive UI
         this.annotations[index] = { ...this.annotations[index], ...updatedAnnotation }
-        this.hasUnsavedChanges = true
         this.drawAnnotations()
+        
+        // Save to database immediately
+        try {
+          await annotationService.updateAnnotation(
+            this.projectId,
+            this.mediaId,
+            this.type,
+            this.effectiveSaveLinkId,
+            updatedAnnotation
+          )
+          this.showSaveStatus('Annotation saved successfully', 'success')
+        } catch (error) {
+          console.error('Failed to save annotation:', error)
+          this.showSaveStatus('Failed to save annotation', 'error')
+          // Revert local changes if save failed
+          this.loadAnnotations()
+        } finally {
+          // Reset the modal's saving state
+          if (this.$refs.editModal) {
+            this.$refs.editModal.saving = false
+          }
+        }
       }
       this.editingAnnotation = null
     },
@@ -1263,7 +1306,7 @@ export default {
 
     canDeleteAnnotation(annotation) {
       // Users can delete their own annotations, project owners can delete any
-      return this.canEdit && annotation
+      return Boolean(this.canEdit && annotation)
     },
 
     // Data management - REMOVED DUPLICATE (keeping the correct one below)
@@ -1281,7 +1324,7 @@ export default {
             this.projectId,
             this.mediaId,
             this.type,
-            this.linkId,
+            this.effectiveSaveLinkId,
             unsavedAnnotations
           )
 
@@ -1340,12 +1383,7 @@ export default {
             this.deleteAnnotation(this.selectedAnnotation)
           }
           break
-        case 'KeyS':
-          if (event.ctrlKey || event.metaKey) {
-            event.preventDefault()
-            this.saveAnnotations()
-          }
-          break
+        // Ctrl+S removed - annotations save instantly when edited
       }
     },
 

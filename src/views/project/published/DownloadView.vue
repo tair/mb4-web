@@ -17,23 +17,63 @@ onMounted(() => {
 
 async function downloadProject() {
   isDownloading.value = true
-  const apiUrl = `${
-    import.meta.env.VITE_API_URL
-  }/projects/${projectId}/download/sdd?format=zip`
-  const response = await fetch(apiUrl, {
-    method: 'GET',
-    headers: { Accept: 'application/zip' },
-  })
-  if (!response.ok) {
-    console.log('Download failed with status', response.status)
-    downloadError.value = 'Download failed with status ' + response.status
+  downloadError.value = ''
+
+  try {
+    console.log('Downloading project:', projectId)
+    const apiUrl = `${
+      import.meta.env.VITE_API_URL
+    }/projects/${projectId}/download/sdd?format=zip`
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: { Accept: 'application/zip' },
+    })
+
+    if (!response.ok) {
+      console.log('Download failed with status', response.status)
+      let errorMessage = 'Download failed. '
+      if (response.status === 404) {
+        errorMessage += 'Project not found or not available for download.'
+      } else if (response.status === 403) {
+        errorMessage +=
+          'Access denied. You may not have permission to download this project.'
+      } else if (response.status >= 500) {
+        errorMessage += 'Server error. Please try again later.'
+      } else {
+        errorMessage += `Server returned status ${response.status}.`
+      }
+      downloadError.value = errorMessage
+      isDownloading.value = false
+      return
+    }
+
+    console.log('Download successful')
+    try {
+      const blob = await response.blob()
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = `project_${projectId}_sdd.zip`
+      link.click()
+      URL.revokeObjectURL(link.href)
+    } catch (blobError) {
+      console.log('Blob processing error:', blobError.message)
+      downloadError.value =
+        'Download completed but failed to save file. Please try again.'
+      isDownloading.value = false
+      return
+    }
+  } catch (error) {
+    console.log('Download error:', error.message)
+    let errorMessage = 'Download failed. '
+    if (error.name === 'NetworkError' || error.message.includes('fetch')) {
+      errorMessage +=
+        'Network connection error. Please check your internet connection and try again.'
+    } else {
+      errorMessage += error.message
+    }
+    downloadError.value = errorMessage
   }
-  const blob = await response.blob()
-  const link = document.createElement('a')
-  link.href = URL.createObjectURL(blob)
-  link.download = `project_${projectId}_sdd.zip`
-  link.click()
-  URL.revokeObjectURL(link.href)
+
   isDownloading.value = false
 }
 </script>
@@ -50,6 +90,10 @@ async function downloadProject() {
   >
     <div class="download-component">
       <div class="download-section">
+        <div v-if="downloadError" class="error-alert">
+          <i class="fa-solid fa-exclamation-triangle"></i>
+          <span>{{ downloadError }}</span>
+        </div>
         <div class="download-button-container">
           <button
             class="btn btn-primary btn-download"
@@ -69,7 +113,6 @@ async function downloadProject() {
       </div>
     </div>
     <div class="download-info">
-      <p v-if="downloadError" class="status-error">{{ downloadError }}</p>
       <p>
         This tool downloads the entire project, all media, matrices and
         documents, as a zipped file. Please click on the menu to the left, if
@@ -115,6 +158,23 @@ async function downloadProject() {
 }
 .status-success {
   color: #155724;
+}
+
+.error-alert {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-alert i {
+  font-size: 16px;
+  flex-shrink: 0;
 }
 
 .btn-download {
