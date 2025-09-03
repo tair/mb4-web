@@ -129,7 +129,7 @@ export function getCopyrightImageHtml(
   }
   
   if (iconPath) {
-    return `<img src="/images/${imagePath}.png" title="${escapedTitle}" style="max-width: 88px; height: auto; object-fit: contain; vertical-align: middle;" alt="${escapedTitle}" />`
+    return `<img src="/images/${iconPath}.png" title="${escapedTitle}" style="max-width: 88px; height: auto; object-fit: contain; vertical-align: middle;" alt="${escapedTitle}" />`
   }
   
   return '';
