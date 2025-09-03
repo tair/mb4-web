@@ -311,6 +311,7 @@ onMounted(() => {
         :project_id="projectId"
         :can-edit="canEditMedia"
         :is-project-published="false"
+        :use-annotation-link-id="false"
       />
     </div>
 

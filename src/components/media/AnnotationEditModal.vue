@@ -277,7 +277,7 @@
             <span class="btn-icon">✖️</span>
             Cancel
           </button>
-          <button @click="save" type="button" class="btn btn-primary" :disabled="!isValid || saving">
+          <button @click="handleSaveClick" type="button" class="btn btn-primary" :disabled="!isValid || saving">
             <span class="btn-icon">💾</span>
             {{ saving ? 'Saving...' : 'Save' }}
           </button>
@@ -342,6 +342,10 @@ export default {
   },
 
   methods: {
+    handleSaveClick() {
+      this.save()
+    },
+    
     save() {
       if (!this.isValid) return
 

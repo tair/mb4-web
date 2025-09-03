@@ -76,6 +76,11 @@ const props = defineProps({
   isProjectPublished: {
     type: Boolean,
     default: false
+  },
+  // Control whether to use linkId for annotation filtering (disable for edit/list contexts)
+  useAnnotationLinkId: {
+    type: Boolean,
+    default: true
   }
 })
 
@@ -94,7 +99,7 @@ const preloadAnnotations = async () => {
       Number(props.project_id),
       props.media_file?.media_id,
       'M',
-      props.media_file?.media_id
+      props.useAnnotationLinkId ? props.media_file?.media_id : null
     )
     
     annotationsLoaded.value = true
@@ -477,7 +482,8 @@ function getHitsMessage(mediaObj) {
                   :project-id="Number(project_id)"
                   :media-url="zoomDisplayUrl"
                   :can-edit="annotationsEnabled"
-                  :link-id="media_file.media_id"
+                  :link-id="useAnnotationLinkId ? media_file.media_id : null"
+                  :save-link-id="media_file.media_id"
                   type="M"
                   @annotationsLoaded="onAnnotationsLoaded"
                   @annotationsSaved="onAnnotationsSaved"

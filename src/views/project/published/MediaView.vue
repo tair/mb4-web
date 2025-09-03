@@ -234,6 +234,7 @@ watch(selectedPageSize, (currentValue, oldValue) => {
         <MediaDetailsComp
           :media_file="mediaDetailsFor"
           :project_id="projectId"
+          :use-annotation-link-id="false"
         ></MediaDetailsComp>
       </div>
     </div>
