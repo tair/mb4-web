@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useMatricesStore } from '@/stores/MatricesStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useAuthStore } from '@/stores/AuthStore'
+import { useNotifications } from '@/composables/useNotifications'
 import Tooltip from '@/components/main/Tooltip.vue'
 import { getTaxonomicUnitOptions } from '@/utils/taxa'
 import axios from 'axios'
@@ -13,6 +14,7 @@ const router = useRouter()
 const matricesStore = useMatricesStore()
 const taxaStore = useTaxaStore()
 const authStore = useAuthStore()
+const { showError, showSuccess } = useNotifications()
 
 const projectId = route.params.id
 const matrixId = route.params.matrixId
@@ -124,6 +126,7 @@ async function loadData() {
     }
   } catch (error) {
     console.error('Error loading data:', error)
+    showError('Failed to load data')
     errors.value.general = 'Failed to load data'
   } finally {
     isLoading.value = false
@@ -157,12 +160,14 @@ async function handleSubmit() {
       }/projects/${projectId}/matrices/${matrixId}`,
       matrixData
     )
+    showSuccess('Matrix settings updated successfully!')
     console.log('Matrix updated successfully')
 
     matricesStore.invalidate()
     router.push(`/myprojects/${projectId}/matrices`)
   } catch (error) {
     console.error('Error updating matrix settings:', error)
+    showError('Failed to update matrix settings. Please try again.')
     errors.value.general = 'Failed to update matrix settings. Please try again.'
   } finally {
     isLoading.value = false
@@ -198,6 +203,7 @@ async function confirmDelete() {
     router.push(`/myprojects/${projectId}/matrices`)
   } catch (error) {
     console.error('Error deleting matrix:', error)
+    showError('Failed to delete matrix')
     errors.value.general = 'Failed to delete matrix'
   } finally {
     isLoading.value = false

@@ -6,6 +6,7 @@ import { useCharactersStore } from '@/stores/CharactersStore'
 import { useMatricesStore } from '@/stores/MatricesStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useFileTransferStore } from '@/stores/FileTransferStore'
+import { useNotifications } from '@/composables/useNotifications'
 import { CharacterStateIncompleteType } from '@/lib/matrix-parser/MatrixObject.ts'
 import { getIncompleteStateText } from '@/lib/matrix-parser/text.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
@@ -18,6 +19,7 @@ const taxaStore = useTaxaStore()
 const matricesStore = useMatricesStore()
 const charactersStore = useCharactersStore()
 const fileTransferStore = useFileTransferStore()
+const { showError, showSuccess } = useNotifications()
 const projectId = route.params.id
 
 // Taxonomic unit options for dropdown
@@ -96,21 +98,21 @@ function saveEditedCharacter() {
     for (const state of editingCharacter.value.states) {
       const stateName = state.name
       if (stateName == null || stateName.length == 0) {
-        alert('All states must have non-empty names.')
+        showError('All states must have non-empty names.')
         return
       }
       if (state.name.match(/State\ \d+$/)) {
-        alert(
+        showError(
           `You must rename the generic state: '${state.name}' or recode the character in the matrix.`
         )
         return
       }
       if (stateNames.has(stateName)) {
-        alert('All states must have unique names.')
+        showError('All states must have unique names.')
         return
       }
       if (stateName.length > 500) {
-        alert('All states must names that are under 500 characters.')
+        showError('All states must names that are under 500 characters.')
         return
       }
       stateNames.add(stateName)
@@ -187,7 +189,7 @@ async function importMatrix(event) {
   }
 
   reader.onerror = function () {
-    alert('Failed to read file')
+    showError('Failed to read file')
   }
 
   reader.readAsBinaryString(file)
@@ -200,7 +202,7 @@ function moveUpload() {
 
 async function moveToCharacters() {
   if (!importedMatrix.taxa || !importedMatrix.characters) {
-    alert('Please upload a valid matrix file first')
+    showError('Please upload a valid matrix file first')
     return false
   }
 

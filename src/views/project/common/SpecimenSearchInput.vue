@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 import { getSpecimenName } from '@/utils/specimens'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useNotifications } from '@/composables/useNotifications'
 import SearchSelectInput from '@/components/project/SearchSelectInput.vue'
 import SpecimenName from '@/components/project/SpecimenName.vue'
 import TaxaSearchInput from '@/views/project/common/TaxaSearchInput.vue'
@@ -28,6 +29,7 @@ const projectId = route.params.id
 
 const specimenStore = useSpecimensStore()
 const taxaStore = useTaxaStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 // Inline creation state
 const showCreateForm = ref(false)
@@ -133,7 +135,7 @@ function resetCreateForm() {
 
 async function createSpecimen() {
   if (!createFormData.value.taxon_id) {
-    alert('Please select a taxon')
+    showWarning('Please select a taxon', 'Taxon Selection Required')
     return
   }
 
@@ -176,11 +178,11 @@ async function createSpecimen() {
       showCreateForm.value = false
       resetCreateForm()
     } else {
-      alert('Failed to create specimen')
+      showError('Failed to create specimen', 'Creation Failed')
     }
   } catch (error) {
     console.error('Error creating specimen:', error)
-    alert('Failed to create specimen')
+    showError('Failed to create specimen', 'Creation Error')
   } finally {
     isCreating.value = false
   }

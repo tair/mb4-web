@@ -3,6 +3,7 @@ import axios from 'axios'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useNotifications } from '@/composables/useNotifications'
 import { TaxaColumns, sortTaxaAlphabetically } from '@/utils/taxa'
 import { toDMYDate } from '@/utils/date'
 import { capitalizeFirstLetter } from '@/utils/string'
@@ -35,6 +36,7 @@ const route = useRoute()
 const projectId = route.params.id
 
 const taxaStore = useTaxaStore()
+const { showError, showSuccess } = useNotifications()
 const filteredTaxa = computed(() => {
   let baseTaxa = taxaStore.taxa
   
@@ -244,12 +246,12 @@ async function validateSelectedTaxa() {
   selectedTaxaSize.value = selectedTaxa.length
   
   if (selectedTaxa.length === 0) {
-    alert('Please select at least one taxon to validate.')
+    showError('Please select at least one taxon to validate.')
     return
   }
 
   if (selectedTaxa.length > maxSelectedTaxa) {
-    alert(`You can only validate up to ${maxSelectedTaxa} taxa at a time.`)
+    showError(`You can only validate up to ${maxSelectedTaxa} taxa at a time.`)
     return
   }
 
@@ -350,7 +352,7 @@ function getPbdbDataForTaxon(taxonId: number) {
 
 async function importSelectedData() {
   if (selectedImports.value?.size === 0) {
-    alert('Please select at least one taxon to import data for.')
+    showError('Please select at least one taxon to import data for.')
     return
   }
 
@@ -390,13 +392,13 @@ async function importSelectedData() {
     // Refresh validation results to show updated status
     await loadPbdbValidationStatus()
 
-    alert(`Successfully imported PBDB taxonomic data for ${importedCount} taxa!`)
+    showSuccess(`Successfully imported PBDB taxonomic data for ${importedCount} taxa!`)
     
     // Refresh taxa store to show updated data
     taxaStore.fetch(projectId)
   } catch (error) {
     console.error('Error importing PBDB data:', error)
-    alert('Failed to import PBDB data. Please try again.')
+    showError('Failed to import PBDB data. Please try again.')
   } finally {
     isImporting.value = false
   }

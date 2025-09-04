@@ -10,6 +10,7 @@ import { useTaxaStore } from '@/stores/TaxaStore'
 import { useAuthStore } from '@/stores/AuthStore'
 import { useProjectsStore } from '@/stores/ProjectsStore'
 import { AccessControlService, EntityType } from '@/lib/access-control.js'
+import { useNotifications } from '@/composables/useNotifications'
 import { editSchema } from '@/views/project/media/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaDetailsCompCompact from '@/components/project/MediaDetailsCompCompact.vue'
@@ -25,7 +26,7 @@ const taxaStore = useTaxaStore()
 const mediaViewsStore = useMediaViewsStore()
 const authStore = useAuthStore()
 const projectsStore = useProjectsStore()
-const validationErrors = ref([])
+const { showError, showSuccess } = useNotifications()
 const isSubmitting = ref(false)
 
 
@@ -194,7 +195,7 @@ function validateFormData(formData) {
 async function editMedia(event) {
   // Prevent submission if user doesn't have access
   if (!canEditMedia.value) {
-    alert('You do not have permission to edit this media.')
+    showError('You do not have permission to edit this media.')
     return
   }
 
@@ -203,7 +204,7 @@ async function editMedia(event) {
   // Validate form data
   const errors = validateFormData(formData)
   if (errors.length > 0) {
-    validationErrors.value = errors
+    showError(errors.join('; '), 'Validation Error')
     return
   }
   
@@ -214,8 +215,6 @@ async function editMedia(event) {
   // Remove the is_exemplar field from formData as the backend doesn't expect it
   formData.delete('is_exemplar')
   
-  // Clear any previous validation errors and errors
-  validationErrors.value = []
   isSubmitting.value = true
 
   try {
@@ -226,7 +225,7 @@ async function editMedia(event) {
 
     const success = await mediaStore.edit(projectId, mediaId, formData)
     if (!success) {
-      alert('Failed to modify media')
+      showError('Failed to modify media')
       return
     }
 
@@ -236,18 +235,19 @@ async function editMedia(event) {
         // Set this media as the project exemplar
         const exemplarSuccess = await projectsStore.setExemplarMedia(projectId, mediaId)
         if (!exemplarSuccess) {
-          alert('Media updated successfully, but failed to set as project exemplar')
+          showError('Media updated successfully, but failed to set as project exemplar', 'Warning')
         }
       } catch (error) {
         console.error('Failed to set exemplar media:', error)
-        alert('Media updated successfully, but failed to set as project exemplar')
+        showError('Media updated successfully, but failed to set as project exemplar', 'Warning')
       }
     }
 
+    showSuccess('Media updated successfully!')
     window.location.href = `/myprojects/${projectId}/media`
   } catch (error) {
     console.error('Error editing media:', error)
-    alert('Failed to modify media')
+    showError('Failed to modify media', 'Update Failed')
   } finally {
     isSubmitting.value = false
   }
@@ -337,12 +337,6 @@ onMounted(() => {
           </component>
         </div>
         
-        <!-- Display validation errors -->
-        <div v-if="validationErrors.length > 0" class="alert alert-danger" role="alert">
-          <ul class="mb-0">
-            <li v-for="error in validationErrors" :key="error">{{ error }}</li>
-          </ul>
-        </div>
         
         <div class="btn-form-group">
           <RouterLink :to="{ name: 'MyProjectMediaView' }">

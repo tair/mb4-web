@@ -4,6 +4,7 @@ import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useAuthStore } from '@/stores/AuthStore'
+import { useNotifications } from '@/composables/useNotifications'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { userSchema } from '@/views/project/members/schema.js'
 
@@ -13,6 +14,7 @@ const userId = parseInt(route.params.userId)
 
 const projectUsersStore = useProjectUsersStore()
 const authStore = useAuthStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 const user = computed(() => projectUsersStore.getUserById(userId))
 
 // Check if current user is project admin
@@ -27,7 +29,7 @@ const isCurrentUserProjectAdmin = computed(() => {
 async function edit(event) {
   // Check if current user is project admin before allowing edit
   if (!isCurrentUserProjectAdmin.value) {
-    alert('Only project administrators can edit member permissions')
+    showWarning('Only project administrators can edit member permissions', 'Access Denied')
     return
   }
   
@@ -44,7 +46,7 @@ async function edit(event) {
   if (success) {
     router.go(-1)
   } else {
-    alert('Failed to update member')
+    showError('Failed to update member', 'Update Failed')
   }
 }
 

@@ -3,6 +3,7 @@ import { onMounted, computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
+import { useNotifications } from '@/composables/useNotifications'
 import BibliographyItem from '@/components/project/BibliographyItem.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import router from '@/router'
@@ -18,6 +19,7 @@ const referenceId = parseInt(route.params.referenceId)
 
 const bibliographiesStore = useBibliographiesStore()
 const projectUsersStore = useProjectUsersStore()
+const { showError, showSuccess } = useNotifications()
 const reference = computed(() =>
   bibliographiesStore.getReferenceById(referenceId)
 )
@@ -27,6 +29,7 @@ const isLoaded = computed(
 )
 
 const errors = ref({})
+const isSaving = ref(false)
 
 onMounted(() => {
   if (!bibliographiesStore.isLoaded) {
@@ -38,6 +41,8 @@ onMounted(() => {
 })
 
 async function editReference(event) {
+  if (isSaving.value) return // Prevent double submission
+  
   const formData = new FormData(event.currentTarget)
 
   // Validate the form using the utility function
@@ -49,17 +54,27 @@ async function editReference(event) {
 
   // Clear any previous errors
   errors.value = {}
+  isSaving.value = true
 
-  const authorFields = ['authors', 'secondary_authors', 'editors']
-  const authors = Object.fromEntries(
-    authorFields.map((field) => [field, convertAuthors(formData, field)])
-  )
-  const json = { ...Object.fromEntries(formData), ...authors }
-  const success = await bibliographiesStore.edit(projectId, referenceId, json)
-  if (success) {
-    router.go(-1)
-  } else {
-    alert('Failed to update bibliography')
+  try {
+    const authorFields = ['authors', 'secondary_authors', 'editors']
+    const authors = Object.fromEntries(
+      authorFields.map((field) => [field, convertAuthors(formData, field)])
+    )
+    const json = { ...Object.fromEntries(formData), ...authors }
+    const success = await bibliographiesStore.edit(projectId, referenceId, json)
+    
+    if (success) {
+      showSuccess('Bibliography updated successfully!')
+      router.go(-1)
+    } else {
+      showError('Failed to update bibliography')
+    }
+  } catch (error) {
+    console.error('Error updating bibliography:', error)
+    showError('Failed to update bibliography. Please try again.')
+  } finally {
+    isSaving.value = false
   }
 }
 </script>
@@ -93,10 +108,21 @@ async function editReference(event) {
           class="btn btn-outline-primary"
           type="button"
           @click="$router.go(-1)"
+          :disabled="isSaving"
         >
           Cancel
         </button>
-        <button class="btn btn-primary" type="submit">Save</button>
+        <button 
+          class="btn btn-primary" 
+          type="submit"
+          :disabled="isSaving"
+        >
+          <span v-if="isSaving">
+            <i class="fa fa-spinner fa-spin me-2"></i>
+            Saving...
+          </span>
+          <span v-else>Save</span>
+        </button>
       </div>
     </form>
   </LoadingIndicator>

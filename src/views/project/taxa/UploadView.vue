@@ -2,6 +2,7 @@
 import router from '@/router'
 import { useRoute } from 'vue-router'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useNotifications } from '@/composables/useNotifications'
 import { nameColumnMap } from '@/utils/taxa'
 import { csvToArray } from '@/utils/csv'
 import { ref } from 'vue'
@@ -9,6 +10,7 @@ import { ref } from 'vue'
 const route = useRoute()
 const projectId = parseInt(route.params.id as string)
 const taxaStore = useTaxaStore()
+const { showError, showSuccess } = useNotifications()
 
 // The list of taxa that will be set when the file is uploaded.
 const taxa = new Set()
@@ -64,7 +66,7 @@ function parseContent(content: string) {
 
 async function createBatch() {
   if (taxa.size == 0) {
-    alert('There are no taxa specified in the upload file')
+    showError('There are no taxa specified in the upload file')
     return
   }
 
@@ -72,11 +74,14 @@ async function createBatch() {
   try {
     const created = await taxaStore.createBatch(projectId, Array.from(taxa))
     if (created) {
+      showSuccess('Taxa uploaded successfully!')
       router.replace({ path: `/myprojects/${projectId}/taxa` })
+    } else {
+      showError('Failed to upload taxa')
     }
   } catch (error) {
     console.error('Error creating batch:', error)
-    alert('Failed to upload taxa. Please try again.')
+    showError('Failed to upload taxa. Please try again.')
   } finally {
     isProcessing.value = false
   }

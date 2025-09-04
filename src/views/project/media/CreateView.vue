@@ -8,6 +8,7 @@ import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useProjectsStore } from '@/stores/ProjectsStore'
+import { useNotifications } from '@/composables/useNotifications'
 import { createSchema } from '@/views/project/media/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import '@/assets/css/form.css'
@@ -21,7 +22,8 @@ const specimensStore = useSpecimensStore()
 const taxaStore = useTaxaStore()
 const mediaViewsStore = useMediaViewsStore()
 const projectsStore = useProjectsStore()
-const validationErrors = ref([])
+const { showError, showSuccess } = useNotifications()
+const isSubmitting = ref(false)
 const formData = ref(new FormData())
 const isCopyrighted = ref(false)
 const copyrightPermissionValue = ref(4) // Default value from schema
@@ -128,17 +130,18 @@ function handleCopyrightChange(event) {
 }
 
 async function createMedia(event) {
+  if (isSubmitting.value) return // Prevent double submission
+  
   const formData = new FormData(event.currentTarget)
 
   // Validate required fields
   const errors = validateRequiredFields(formData)
   if (errors.length > 0) {
-    validationErrors.value = errors
+    showError(errors.join('; '), 'Validation Error')
     return
   }
 
-  // Clear any previous validation errors
-  validationErrors.value = []
+  isSubmitting.value = true
 
   // Check if this should be set as project exemplar
   const exemplarValue = formData.get('is_exemplar')
@@ -168,9 +171,7 @@ async function createMedia(event) {
     const result = await mediaStore.create(projectId, formData)
 
     if (!result) {
-      validationErrors.value = [
-        'Failed to create media. Please check your input and try again.',
-      ]
+      showError('Failed to create media. Please check your input and try again.')
       return
     }
 
@@ -183,18 +184,15 @@ async function createMedia(event) {
           result.media_id
         )
         if (!success) {
-          alert(
-            'Media created successfully, but failed to set as project exemplar'
-          )
+          showError('Media created successfully, but failed to set as project exemplar', 'Warning')
         }
       } catch (error) {
         console.error('Failed to set exemplar media:', error)
-        alert(
-          'Media created successfully, but failed to set as project exemplar'
-        )
+        showError('Media created successfully, but failed to set as project exemplar', 'Warning')
       }
     }
 
+    showSuccess('Media uploaded successfully!')
     window.location.href = `/myprojects/${projectId}/media`
   } catch (error) {
     console.error('Media upload error:', error)
@@ -210,8 +208,10 @@ async function createMedia(event) {
       errorMessage = error.message
     }
 
-    // Display the error in the validation errors section
-    validationErrors.value = [errorMessage]
+    // Display the error as notification
+    showError(errorMessage, 'Media Upload Failed')
+  } finally {
+    isSubmitting.value = false
   }
 }
 
@@ -270,26 +270,23 @@ onMounted(() => {
           </div>
         </template>
 
-        <!-- Display validation errors -->
-        <div
-          v-if="validationErrors.length > 0"
-          class="alert alert-danger"
-          role="alert"
-        >
-          <ul class="mb-0">
-            <li v-for="error in validationErrors" :key="error">{{ error }}</li>
-          </ul>
-        </div>
 
         <div class="btn-form-group">
           <button
             class="btn btn-outline-primary"
             type="button"
             @click="$router.go(-1)"
+            :disabled="isSubmitting"
           >
             Cancel
           </button>
-          <button class="btn btn-primary" type="submit">Create</button>
+          <button class="btn btn-primary" type="submit" :disabled="isSubmitting">
+            <span v-if="isSubmitting">
+              <i class="fa fa-spinner fa-spin me-2"></i>
+              Creating Media...
+            </span>
+            <span v-else>Create</span>
+          </button>
         </div>
       </div>
     </form>

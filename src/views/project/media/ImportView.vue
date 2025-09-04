@@ -4,6 +4,7 @@ import axios from 'axios'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useNotifications } from '@/composables/useNotifications'
 import { TaxaColumns, sortTaxaAlphabetically } from '@/utils/taxa'
 import { Filter } from '@/types/most'
 import { toISODate, toDMYDate } from '@/utils/date'
@@ -42,6 +43,7 @@ const importText = importType == 'eol' ? 'Eol.org' : 'iDigBio.org'
 
 const filters = reactive<Filter>({})
 const taxaStore = useTaxaStore()
+const { showError, showSuccess, showWarning } = useNotifications()
 const filteredTaxa = computed(() => {
   const filtered = Object.values(filters).reduce(
     (taxa, filter) => taxa.filter(filter),
@@ -283,13 +285,7 @@ async function fecthMediaForSelectedTaxa() {
     .filter((taxon: any) => taxon.selected)
     .map((taxon: any) => taxon.taxon_id)
   if (selectedTaxaIds.length > 100) {
-    alert(
-      `You selected ${
-        selectedTaxaIds.length
-      } taxa. Only a maximum of 100 taxa can be queried at a time. Please unselect ${
-        selectedTaxaIds.length - 100
-      } taxa to continue.`
-    )
+    showError(`You selected ${selectedTaxaIds.length} taxa. Only a maximum of 100 taxa can be queried at a time. Please unselect ${selectedTaxaIds.length - 100} taxa to continue.`, 'Too Many Taxa Selected')
     return
   }
 
@@ -346,15 +342,15 @@ async function fecthMediaForSelectedTaxa() {
     
     // Provide user-friendly error messages
     if (error.response?.status === 500) {
-      fetchError.value = `There was a problem contacting ${importText}. Some or all of your requested taxa were not searched for. Please try your request again for the following taxa: ${taxaNames}`
+      showError(`There was a problem contacting ${importText}. Some or all of your requested taxa were not searched for. Please try your request again for the following taxa: ${taxaNames}`, 'Search Failed')
     } else if (error.response?.status === 503) {
-      fetchError.value = `${importText} service is temporarily unavailable. Please try again later for the following taxa: ${taxaNames}`
+      showError(`${importText} service is temporarily unavailable. Please try again later for the following taxa: ${taxaNames}`, 'Service Unavailable')
     } else if (error.response?.status >= 400 && error.response?.status < 500) {
-      fetchError.value = `There was an issue with the request to ${importText}. Please check your taxa selection and try again for the following taxa: ${taxaNames}`
+      showError(`There was an issue with the request to ${importText}. Please check your taxa selection and try again for the following taxa: ${taxaNames}`, 'Request Error')
     } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-      fetchError.value = `There was a problem contacting ${importText}. Some or all of your requested taxa were not searched for. Please try your request again for the following taxa: ${taxaNames}`
+      showError(`There was a problem contacting ${importText}. Some or all of your requested taxa were not searched for. Please try your request again for the following taxa: ${taxaNames}`, 'Connection Timeout')
     } else {
-      fetchError.value = `There was a problem contacting ${importText}. Some or all of your requested taxa were not searched for. Please try your request again for the following taxa: ${taxaNames}`
+      showError(`There was a problem contacting ${importText}. Some or all of your requested taxa were not searched for. Please try your request again for the following taxa: ${taxaNames}`, 'Search Failed')
     }
   } finally {
     isLoadingMedia.value = false
@@ -440,7 +436,7 @@ async function importMediaForSelectedTaxa() {
   }
 
   if (selected.length == 0) {
-    alert('Please select media to import')
+    showError('Please select media to import')
     return
   }
 
@@ -455,14 +451,12 @@ async function importMediaForSelectedTaxa() {
     )
 
     if (response.status != 200) {
-      alert('Failed to import the media')
+      showError('Failed to import the media')
       return
     }
 
     if (!response.data.success) {
-      alert(
-        'Failed to import media: ' + (response.data.message ?? 'Unknown issue')
-      )
+      showError('Failed to import media: ' + (response.data.message ?? 'Unknown issue'))
       return
     }
 
@@ -471,9 +465,7 @@ async function importMediaForSelectedTaxa() {
     mediaResults.value.clear()
     importResults.value.clear()
 
-    alert(
-      'You have successfully imported the media into Morphobank but you must curate them before they can be released into your project.'
-    )
+    showSuccess('You have successfully imported the media into Morphobank but you must curate them before they can be released into your project.', 'Import Successful')
     
     // Use a small timeout to ensure the alert is dismissed before redirect
     setTimeout(() => {
@@ -491,7 +483,7 @@ async function importMediaForSelectedTaxa() {
     }, 100)
   } catch (error) {
     console.error('Error importing media:', error)
-    alert('Failed to import media. Please try again.')
+    showError('Failed to import media. Please try again.')
   } finally {
     isImportingMedia.value = false
   }

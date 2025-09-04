@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import BibliographyItem from '@/components/project/BibliographyItem.vue'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
+import { useNotifications } from '@/composables/useNotifications'
 
 const props = defineProps<{
   projectId: number | string
@@ -9,9 +10,11 @@ const props = defineProps<{
 }>()
 
 const bibliographiesStore = useBibliographiesStore()
+const { showError, showSuccess, showWarning: showWarningNotification } = useNotifications()
 const citationInfo = ref([])
 const loading = ref(false)
 const showWarning = ref(false)
+const isDeleting = ref(false)
 
 // Check for citations when bibliographies change
 watch(
@@ -60,9 +63,32 @@ function getBibliographyTitle(referenceId: number): string {
 }
 
 async function deleteBibliographies(referenceIds: number[]) {
-  const deleted = bibliographiesStore.deleteIds(props.projectId, referenceIds)
-  if (!deleted) {
-    alert('Failed to delete bibliographies')
+  if (isDeleting.value) return // Prevent double submission
+  
+  isDeleting.value = true
+  
+  try {
+    const deleted = await bibliographiesStore.deleteIds(props.projectId, referenceIds)
+    
+    if (deleted) {
+      const count = referenceIds.length
+      showSuccess(`Successfully deleted ${count} ${count === 1 ? 'bibliography' : 'bibliographies'}!`)
+      
+      // Show warning about citations if any existed
+      if (showWarning.value) {
+        const citationsCount = citationInfo.value.reduce((total, citation) => total + citation.total_count, 0)
+        if (citationsCount > 0) {
+          showWarningNotification(`${citationsCount} associated citation${citationsCount === 1 ? '' : 's'} were also deleted.`, 'Citations Removed')
+        }
+      }
+    } else {
+      showError('Failed to delete bibliographies')
+    }
+  } catch (error) {
+    console.error('Error deleting bibliographies:', error)
+    showError('Failed to delete bibliographies. Please try again.')
+  } finally {
+    isDeleting.value = false
   }
 }
 </script>
@@ -151,21 +177,26 @@ async function deleteBibliographies(referenceIds: number[]) {
             type="button"
             class="btn btn-outline-primary"
             data-bs-dismiss="modal"
+            :disabled="loading || isDeleting"
           >
             Cancel
           </button>
           <button
             type="button"
             :class="showWarning ? 'btn btn-danger' : 'btn btn-primary'"
-            data-bs-dismiss="modal"
+            :data-bs-dismiss="isDeleting ? '' : 'modal'"
             @click="
               deleteBibliographies(bibliographies.map((b) => b.reference_id))
             "
-            :disabled="loading"
+            :disabled="loading || isDeleting"
           >
             <span v-if="loading">
               <i class="fa-solid fa-spinner fa-spin"></i>
               Checking...
+            </span>
+            <span v-else-if="isDeleting">
+              <i class="fa-solid fa-spinner fa-spin"></i>
+              Deleting...
             </span>
             <span v-else-if="showWarning">
               <i class="fa-solid fa-triangle-exclamation"></i>

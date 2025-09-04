@@ -1,6 +1,7 @@
 <script setup>
 import axios from 'axios'
 import { ref } from 'vue'
+import { useNotifications } from '@/composables/useNotifications'
 
 const props = defineProps({
   projectId: {
@@ -12,6 +13,8 @@ const props = defineProps({
     required: true,
   },
 })
+
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 // TNT specific variables
 const tntFile = ref(null)
@@ -409,7 +412,7 @@ function downloadNexusFile(content, filename) {
     console.log(`Downloaded: ${filename}`)
   } catch (error) {
     console.error('Error downloading nexus file:', error)
-    alert('Failed to download the analysis results file.')
+    showError('Failed to download the analysis results file.', 'Download Failed')
   }
 }
 

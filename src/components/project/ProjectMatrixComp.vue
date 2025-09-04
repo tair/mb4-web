@@ -6,6 +6,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useMatricesStore } from '@/stores/MatricesStore'
 import { useFileTransferStore } from '@/stores/FileTransferStore'
 import { useDocumentsStore } from '@/stores/DocumentsStore'
+import { useNotifications } from '@/composables/useNotifications'
 import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import { getTaxonomicUnitOptions } from '@/utils/taxa'
@@ -54,6 +55,7 @@ const matricesStore = useMatricesStore()
 const fileTransferStore = useFileTransferStore()
 const taxaStore = useTaxaStore()
 const charactersStore = useCharactersStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 const notes = ref(true)
 const format = ref(formats.keys()?.next()?.value)
 const partitionId = ref('')
@@ -433,8 +435,8 @@ function validateJobName() {
 async function onRun() {
   if (!validateJobParameters()) {
     //if (validateMsg != null && validateMsg.startsWith("MrBayes block"))
-    if (validateMsg) alert(validateMsg)
-    else alert('Please fill out all the required fields')
+    if (validateMsg) showWarning(validateMsg, 'Validation Error')
+    else showWarning('Please fill out all the required fields', 'Missing Fields')
     return
   }
   const url = new URL(`${baseUrl}/run`)
@@ -501,7 +503,7 @@ async function sendCipresRequest(url) {
     const response = await axios.post(url)
     document.body.style.cursor = 'default'
     const msg = response.data?.message || 'Failed to submit job to CIPRES'
-    alert(msg)
+    showError(msg, 'Job Submission Failed')
     if (!msg.includes('fail') && !msg.includes('Fail')) {
       let urlNew = window.location.href
       if (urlNew.indexOf('?') > -1) {
@@ -580,9 +582,10 @@ async function onDownloadJobResults(url, filename, ck, cr) {
     URL.revokeObjectURL(blobUrl) // Clean up
   } catch (error) {
     console.error('Error downloading the file:', error)
-    alert(
+    showError(
       'Failed to download results for ' +
-        (filename || documentUrl.split('/').pop())
+        (filename || documentUrl.split('/').pop()),
+      'Download Failed'
     )
   }
 }

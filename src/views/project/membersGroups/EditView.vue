@@ -3,6 +3,7 @@ import router from '@/router'
 import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectMemberGroupsStore } from '@/stores/ProjectMemberGroupsStore'
+import { useNotifications } from '@/composables/useNotifications'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { groupSchema } from '@/views/project/membersGroups/schema.js'
 
@@ -11,6 +12,7 @@ const projectId = route.params.id
 const groupId = route.params.groupId
 
 const projectMemberGroupsStore = useProjectMemberGroupsStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 const group = computed(() => projectMemberGroupsStore.getGroupById(groupId))
 
 async function edit(event) {
@@ -24,7 +26,7 @@ async function edit(event) {
   if (success) {
     router.go(-1)
   } else {
-    alert('Failed to update group')
+    showError('Failed to update group', 'Update Failed')
   }
 }
 

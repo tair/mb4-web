@@ -5,6 +5,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { useProjectsStore } from '@/stores/ProjectsStore'
+import { useNotifications } from '@/composables/useNotifications'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -12,6 +13,7 @@ const partitionId = route.params.partitionId
 const isLoaded = ref(false)
 
 const projectsStore = useProjectsStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 const project = ref(null)
 
 let partition = null
@@ -58,8 +60,9 @@ async function publishPartition(event) {
   const onetimeAction = formObject.onetimeAction || 1
 
   if (!taxa.value || !characters.value) {
-    alert(
-      'You cannot publish this partition because it is empty. Please add characters and taxa and try again.'
+    showWarning(
+      'You cannot publish this partition because it is empty. Please add characters and taxa and try again.',
+      'Empty Partition'
     )
     return
   }
@@ -70,10 +73,10 @@ async function publishPartition(event) {
   const response = await axios.post(url, { onetimeAction })
 
   if (response.status == 200) {
-    alert('Publishing Partition')
+    showInfo('Publishing Partition', 'Publishing')
     router.push({ path: `/myprojects/${projectId}/overview` })
   } else {
-    alert('Could not publish Partition')
+    showError('Could not publish Partition', 'Publish Failed')
   }
 }
 </script>
