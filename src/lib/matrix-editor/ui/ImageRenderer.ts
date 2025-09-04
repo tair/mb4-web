@@ -67,12 +67,14 @@ export class ImageRenderer extends Component {
    * @param id the id of the image
    * @param url the url of the image
    * @param caption the caption of the image
+   * @param mediaData the full media object data for TIFF detection
    */
-  addImage(id: number, url: string, caption?: string | null) {
+  addImage(id: number, url: string, caption?: string | null, mediaData?: any) {
     const imageUrl: ImageRendererUrl = {
       id: id,
       url: url,
       caption: caption || null,
+      mediaData: mediaData || null,
     }
 
     this.imageUrls.push(imageUrl)
@@ -192,9 +194,9 @@ export class ImageRenderer extends Component {
   protected onHandleClick(e: Event) {
     const imageUrl = this.imageUrls[this.currentImageIndex]
     
-    // Always use new signature - pass null for projectId if not available
-    // This ensures linkId is always passed when available
-    ImageViewerDialog.show(this.type, imageUrl.id, this.projectId, {}, this.isReadOnly, this.cellId, this.isPublished)
+    // Use actual media data from the stored mediaData for TIFF detection
+    const mediaData = imageUrl.mediaData || {}
+    ImageViewerDialog.show(this.type, imageUrl.id, this.projectId, mediaData, this.isReadOnly, this.cellId, this.isPublished)
     
     e.stopPropagation()
     e.preventDefault()
@@ -221,4 +223,5 @@ interface ImageRendererUrl {
   url: string
   id: number
   caption: string | null
+  mediaData?: any // Store the full media object data for TIFF detection
 }

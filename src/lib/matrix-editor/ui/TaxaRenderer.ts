@@ -163,7 +163,9 @@ export class TaxaNameImageRenderer extends TaxaRenderer {
       const tiny = medium.getTiny()
       if (tiny) {
         // Use getMediaId() to get actual media file ID, not getId() which returns link ID
-        images.addImage(medium.getMediaId(), tiny['url'])
+        // Pass the full media object data for TIFF detection
+        const mediaData = (medium as any).taxonMediaObj || {}
+        images.addImage(medium.getMediaId(), tiny['url'], null, mediaData)
       }
     }
     images.render(td)

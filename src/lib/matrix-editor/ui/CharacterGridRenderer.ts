@@ -140,7 +140,9 @@ export class CharacterDetailedGridRenderer extends CharacterGridRenderer {
       const characterMedium = characterMedia[x]
       const tiny = characterMedium.getTiny()
       if (tiny) {
-        images.addImage(characterMedium.getId(), tiny['url'])
+        // Pass the full media object data for TIFF detection
+        const mediaData = (characterMedium as any).characterMediaObj || {}
+        images.addImage(characterMedium.getId(), tiny['url'], null, mediaData)
       }
     }
     const characterMediaElement = document.createElement('td')

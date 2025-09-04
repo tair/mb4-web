@@ -202,7 +202,11 @@ class MediaPane extends Component {
       // Use new signature with project ID and published state from matrix model
       const projectId = this.matrixModel.getProjectId()
       const published = this.matrixModel.isPublished()
-      ImageViewerDialog.show('T', item.id, projectId, {}, true, null, published)
+      // Find the corresponding taxon media object for the item
+      const taxonMedium = this.taxon.getMediaById(item.id)
+      const mediaData = taxonMedium ? (taxonMedium as any).taxonMediaObj || {} : {}
+      
+      ImageViewerDialog.show('T', item.id, projectId, mediaData, true, null, published)
     }
   }
 }

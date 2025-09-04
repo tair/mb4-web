@@ -388,7 +388,9 @@ export class CellStateNameImageRenderer extends CellRenderer {
       const tinyMedium = media.getTiny()
       if (tinyMedium) {
         // Use getMediaId() to get actual media file ID, not getId() which returns link ID
-        images.addImage(media.getMediaId(), tinyMedium['url'], caption)
+        // Pass the full media object data for TIFF detection
+        const mediaData = (media as any).cellMediaObj || {}
+        images.addImage(media.getMediaId(), tinyMedium['url'], caption, mediaData)
       }
     }
     images.render(td)
@@ -435,7 +437,9 @@ export class CellStateNumberImageRenderer extends CellRenderer {
       const tiny = media.getTiny()
       if (tiny) {
         // Use getMediaId() to get actual media file ID, not getId() which returns link ID
-        images.addImage(media.getMediaId(), tiny['url'], caption)
+        // Pass the full media object data for TIFF detection
+        const mediaData = (media as any).cellMediaObj || {}
+        images.addImage(media.getMediaId(), tiny['url'], caption, mediaData)
       }
     }
     images.render(td)

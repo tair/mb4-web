@@ -336,7 +336,9 @@ class MediaPane extends Component {
       // Use new signature with project ID, respect taxon access permissions
       const readonly = !this.taxon.hasAccess(this.matrixModel.getProjectProperties())
       const published = this.matrixModel.isPublished()
-      ImageViewerDialog.show('T', mediaId, projectId, {}, readonly, null, published)
+      // Pass the actual media data from the medium object instead of empty object
+      const mediaData = (medium as any).taxonMediaObj || {}
+      ImageViewerDialog.show('T', mediaId, projectId, mediaData, readonly, null, published)
     }
   }
 
