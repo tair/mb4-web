@@ -17,15 +17,14 @@
           <div class="form-group">
             <label for="annotation-label">
               <span class="field-icon">🏷️</span>
-              Label *
+              Label
             </label>
             <input
               id="annotation-label"
               v-model="localAnnotation.label"
               type="text"
               class="form-control"
-              placeholder="Enter annotation label"
-              required
+              placeholder="Enter annotation label (optional)"
               maxlength="255"
               ref="labelInput"
             />
@@ -219,7 +218,7 @@
                   :true-value="1"
                   :false-value="0"
                 />
-                <span class="checkbox-text">Show label text</span>
+                <span class="checkbox-text">Show state name by default</span>
               </label>
             </div>
           </div>
@@ -315,7 +314,7 @@ export default {
 
   computed: {
     isValid() {
-      return this.localAnnotation.label && this.localAnnotation.label.trim().length > 0
+      return true // Labels are optional, so always allow saving
     },
 
     hasContextInfo() {
@@ -354,7 +353,7 @@ export default {
       // Clean up the annotation data
       const annotationToSave = {
         ...this.localAnnotation,
-        label: this.localAnnotation.label.trim(),
+        label: this.localAnnotation.label ? this.localAnnotation.label.trim() : '',
         description: this.localAnnotation.description ? this.localAnnotation.description.trim() : '',
         showDefaultText: this.localAnnotation.showDefaultText ? 1 : 0
       }
@@ -454,7 +453,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 10001;
   padding: 20px;
 }
 
