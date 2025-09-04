@@ -140,8 +140,6 @@ export class LazyImageRenderer extends Component {
         }
       })
 
-      console.log('LazyMatrixImage Vue component mounted successfully')
-
     } catch (error) {
       console.error('Failed to mount LazyMatrixImage component:', error)
       // Fallback to basic display

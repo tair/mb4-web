@@ -238,9 +238,12 @@ export class AddCharacterMediaDialog extends Dialog {
       .then((mediaItems) => {
         AddCharacterMediaDialog.mediaItems = mediaItems
         this.redrawMatrixGrid()
+        contentElement.removeChild(this.loadingElement)
       })
-      .catch((e) => alert(e))
-      .finally(() => contentElement.removeChild(this.loadingElement))
+      .catch((e) => {
+        alert(e)
+        contentElement.removeChild(this.loadingElement)
+      })
   }
 
   /**
@@ -270,8 +273,8 @@ export class AddCharacterMediaDialog extends Dialog {
       }
       const characterMediaItem = {
         id: mediaItemId,
-        caption: mediaItem['specimen_name'],
-        image: mediaItem['icon'],
+        caption: mediaItem['caption'] || mediaItem['specimen_name'] || `M${mediaItemId}`,
+        image: mediaItem['image'],
       } as MediaGridItem
       this.mediaGrid.addItem(characterMediaItem)
     }

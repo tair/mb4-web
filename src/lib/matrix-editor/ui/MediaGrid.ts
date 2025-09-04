@@ -135,9 +135,15 @@ export class MediaGrid extends Component {
       )
     }
     if (item.caption) {
-      const contentSpan = document.createElement('b')
+      const contentSpan = document.createElement('span')
       contentSpan.innerHTML = item.caption
       contentSpan.title = contentSpan.innerText
+      contentSpan.style.fontSize = '11px'
+      contentSpan.style.fontWeight = 'normal'
+      contentSpan.style.lineHeight = '1.2'
+      contentSpan.style.display = 'block'
+      contentSpan.style.marginTop = '2px'
+      contentSpan.style.textAlign = 'center'
       mediaDiv.appendChild(document.createElement('br'))
       mediaDiv.appendChild(contentSpan)
     }

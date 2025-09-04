@@ -85,7 +85,7 @@ export class MatrixLoader {
             if (data['ok']) {
               resolve(data)
             } else {
-              const errorMessage = data['errors'].join(',')
+              const errorMessage = data['errors']?.join(',') || 'Unknown error'
               reject(errorMessage)
             }
           } catch (e) {
