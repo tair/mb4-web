@@ -422,7 +422,11 @@ class MediaPane extends Component {
       // Use new signature with project ID and published state from matrix model  
       const projectId = this.matrixModel.getProjectId()
       const published = this.matrixModel.isPublished()
-      ImageViewerDialog.show('X', item.id, projectId, {}, true, null, published)
+      // Find the corresponding cell media object for the item
+      const cellMedium = this.cellMedia.find(m => m.getId() === item.id)
+      const mediaData = cellMedium ? (cellMedium as any).cellMediaObj || {} : {}
+      
+      ImageViewerDialog.show('X', item.id, projectId, mediaData, true, null, published)
     }
   }
 }

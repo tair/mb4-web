@@ -56,6 +56,7 @@ export class ImageViewerDialog extends Modal {
       'meta[name="viewport"]'
     ) as Element
     
+    
     // Always use annotation viewer title since annotations are always enabled
     this.setTitle('Media Annotation Viewer')
     this.setDisposeOnHide(true)
@@ -113,12 +114,22 @@ export class ImageViewerDialog extends Modal {
       return true
     }
     
-    // Check matrix editor media structure
+    // Check matrix editor media structure (new field from backend)
+    if (this.mediaData?.original_mimetype === 'image/tiff' || this.mediaData?.original_mimetype === 'image/tif') {
+      return true
+    }
+    
+    // Legacy check for old matrix editor structure
     if (this.mediaData?.mimetype === 'image/tiff' || this.mediaData?.mimetype === 'image/tif') {
       return true
     }
     
-    // No filename fallback needed
+    // Check filename extension as fallback
+    const filename = this.mediaData?.media?.ORIGINAL_FILENAME || this.mediaData?.filename || ''
+    if (filename && (filename.toLowerCase().endsWith('.tiff') || filename.toLowerCase().endsWith('.tif'))) {
+      return true
+    }
+    
     return false
   }
 
@@ -143,11 +154,11 @@ export class ImageViewerDialog extends Modal {
       return this.buildMediaUrl('original')
     }
     
-          // For zoom modal, prefer original quality unless it's TIFF
-      if (this.isOriginalTiffFile()) {
-        // For TIFF files, use 'large' which should be converted to JPEG
-        return this.buildMediaUrl('large')
-      }
+    // For zoom modal, prefer original quality unless it's TIFF
+    if (this.isOriginalTiffFile()) {
+      // For TIFF files, use 'large' which should be converted to JPEG
+      return this.buildMediaUrl('large')
+    }
     
     // For non-TIFF images, use original quality
     return this.buildMediaUrl('original')

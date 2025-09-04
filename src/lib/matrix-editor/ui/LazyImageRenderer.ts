@@ -58,12 +58,14 @@ export class LazyImageRenderer extends Component {
    * @param id the id of the image
    * @param url the url of the image
    * @param caption the caption of the image
+   * @param mediaData the full media object data for TIFF detection
    */
-  addImage(id: number, url: string, caption?: string | null) {
+  addImage(id: number, url: string, caption?: string | null, mediaData?: any) {
     const imageUrl: ImageRendererUrl = {
       id: id,
       url: url,
       caption: caption || null,
+      mediaData: mediaData || null,
     }
 
     this.imageUrls.push(imageUrl)
@@ -138,8 +140,6 @@ export class LazyImageRenderer extends Component {
         }
       })
 
-      console.log('LazyMatrixImage Vue component mounted successfully')
-
     } catch (error) {
       console.error('Failed to mount LazyMatrixImage component:', error)
       // Fallback to basic display
@@ -151,7 +151,11 @@ export class LazyImageRenderer extends Component {
    * Handle image click events from Vue component
    */
   private handleVueImageClick(imageId: number, type: string, projectId: number | null, readonly: boolean, cellId: number | null, published: boolean) {
-    ImageViewerDialog.show(type, imageId, projectId, {}, readonly, cellId, published)
+    // Find the media data for the clicked image
+    const imageUrl = this.imageUrls.find(img => img.id === imageId)
+    const mediaData = imageUrl?.mediaData || {}
+    
+    ImageViewerDialog.show(type, imageId, projectId, mediaData, readonly, cellId, published)
   }
 
   /**
@@ -162,11 +166,13 @@ export class LazyImageRenderer extends Component {
     if (this.imageUrls.length === 0) return
     
     const imageUrl = this.imageUrls[0]
+    const mediaData = imageUrl.mediaData || {}
+    
     ImageViewerDialog.show(
       this.type, 
       imageUrl.id, 
       this.projectId, 
-      {}, 
+      mediaData, 
       this.isReadOnly, 
       this.cellId, 
       this.isPublished
@@ -255,6 +261,7 @@ interface ImageRendererUrl {
   url: string
   id: number
   caption: string | null
+  mediaData?: any // Store the full media object data for TIFF detection
 }
 
 export { ImageRendererUrl }

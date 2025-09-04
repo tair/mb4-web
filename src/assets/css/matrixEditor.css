@@ -1290,7 +1290,7 @@ ol.selectList li:hover span.remove {
 .addMediaDialog .addMedia {
   border: 1px solid #ddd;
   border-radius: var(--bs-border-radius);
-  height: 305px;
+  height: 400px;
   overflow: hidden;
   position: relative;
 }
@@ -1354,13 +1354,13 @@ ol.selectList li:hover span.remove {
 
 .mediaGrid .mediaItem {
   display: inline-block;
-  height: 100px;
+  height: 140px;
   margin: 5px;
-  overflow: hidden;
+  overflow: visible;
   padding: 5px;
   position: relative;
   text-overflow: ellipsis;
-  vertical-align: middle;
+  vertical-align: top;
   width: 120px;
 }
 
