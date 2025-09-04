@@ -302,6 +302,9 @@ class AnnotationService {
       created_on: annotation.created_on,
       updated_on: annotation.updated_on,
       
+      // Link information (preserve original link_id for updates)
+      link_id: annotation.link_id,
+      
       // Context
       contextType: annotation.context_type,
       contextId: annotation.context_id

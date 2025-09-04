@@ -205,10 +205,10 @@
         }]"
         @click="selectAnnotation(annotation)"
         @dblclick="editAnnotation(annotation)"
-        :title="`Annotation ${annotation.annotation_id}: ${annotation.label}`"
+        :title="`Annotation ${annotation.annotation_id}: ${getDisplayLabelText(annotation)}`"
         v-show="shouldShowLabel(annotation)"
       >
-        {{ annotation.label }}
+        {{ getDisplayLabelText(annotation) }}
       </div>
       
       <!-- Debug info (minimal) -->
@@ -376,7 +376,13 @@ export default {
       
       // UI states
       showHelp: false,
-      showOverview: false
+      showOverview: false,
+      
+      // Character information cache for enhanced label display
+      characterDisplayCache: new Map(),
+      
+      // Enhanced label text cache to handle async loading
+      enhancedLabelCache: new Map()
     }
   },
 
@@ -1243,17 +1249,31 @@ export default {
       const index = this.annotations.findIndex(a => a.annotation_id === updatedAnnotation.annotation_id)
       
       if (index !== -1) {
+        // Ensure the updated annotation preserves the original link_id
+        const originalAnnotation = this.annotations[index]
+        updatedAnnotation.link_id = updatedAnnotation.link_id || originalAnnotation.link_id
+        
         // Update local state immediately for responsive UI
         this.annotations[index] = { ...this.annotations[index], ...updatedAnnotation }
+        
+        // Clear enhanced label cache for updated annotation
+        const cacheKey = updatedAnnotation.annotation_id
+        if (cacheKey) {
+          this.enhancedLabelCache.delete(cacheKey)
+        }
+        
         this.drawAnnotations()
         
         // Save to database immediately
         try {
+          // Use the annotation's original link_id if available, otherwise use current context linkId
+          const linkIdForUpdate = updatedAnnotation.link_id || this.effectiveSaveLinkId
+          
           await annotationService.updateAnnotation(
             this.projectId,
             this.mediaId,
             this.type,
-            this.effectiveSaveLinkId,
+            linkIdForUpdate,
             updatedAnnotation
           )
           this.showSaveStatus('Annotation saved successfully', 'success')
@@ -1486,6 +1506,9 @@ export default {
         
         this.annotations = annotations || []
         
+        // Clear enhanced label cache when annotations change
+        this.enhancedLabelCache.clear()
+        
         // Emit event for parent component
         this.$emit('annotationsLoaded', this.annotations.length)
         
@@ -1529,6 +1552,114 @@ export default {
       setTimeout(() => {
         this.saveStatus = null
       }, 3000)
+    },
+
+    // Character information methods for enhanced label display
+    async fetchCharacterDisplayInfo(linkId) {
+      // Check cache first
+      if (this.characterDisplayCache.has(linkId)) {
+        return this.characterDisplayCache.get(linkId)
+      }
+
+      try {
+        const baseUrl = this.published ? '/services/public/projects' : '/services/projects'
+        const url = `${baseUrl}/${this.projectId}/media/${this.mediaId}/details?link_id=${linkId}`
+        
+        const response = await fetch(url)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch character info: ${response.statusText}`)
+        }
+
+        const responseData = await response.json()
+        const characterDisplay = responseData.media?.character_display || null
+
+        // Cache the result
+        this.characterDisplayCache.set(linkId, characterDisplay)
+        return characterDisplay
+
+      } catch (error) {
+        console.error('Error fetching character display info:', error)
+        return null
+      }
+    },
+
+    // Get enhanced label text for display
+    async getEnhancedLabelText(annotation) {
+      // If annotation has a label, use it
+      if (annotation.label && annotation.label.trim()) {
+        return annotation.label
+      }
+
+      // If showDefaultText is not enabled, return empty
+      if (!this.shouldShowLabel(annotation)) {
+        return ''
+      }
+
+      // For character annotations (type 'C') and matrix annotations (type 'X'), try to get enhanced display
+      if ((this.type === 'C' || this.type === 'X') && this.linkId) {
+        const characterDisplay = await this.fetchCharacterDisplayInfo(this.linkId)
+        if (characterDisplay) {
+          return characterDisplay
+        }
+      }
+
+      // Fallback to default label
+      return this.getDefaultLabel()
+    },
+
+    // Synchronous method for template - handles caching and triggers async loading
+    getDisplayLabelText(annotation) {
+      const cacheKey = annotation.annotation_id || `temp-${Date.now()}`
+      
+      // If we have cached enhanced text, use it
+      if (this.enhancedLabelCache.has(cacheKey)) {
+        return this.enhancedLabelCache.get(cacheKey)
+      }
+      
+      // If annotation has a label, use it immediately
+      if (annotation.label && annotation.label.trim()) {
+        const labelText = annotation.label
+        this.enhancedLabelCache.set(cacheKey, labelText)
+        return labelText
+      }
+
+      // If showDefaultText is not enabled, return empty
+      if (!this.shouldShowLabel(annotation)) {
+        return ''
+      }
+
+      // For character annotations and matrix annotations, check if we need to load enhanced display
+      if ((this.type === 'C' || this.type === 'X') && this.linkId) {
+        // Check if we already have character display info
+        if (this.characterDisplayCache.has(this.linkId)) {
+          const characterDisplay = this.characterDisplayCache.get(this.linkId)
+          if (characterDisplay) {
+            this.enhancedLabelCache.set(cacheKey, characterDisplay)
+            return characterDisplay
+          }
+        } else {
+          // Trigger async loading (don't wait for it)
+          this.loadEnhancedLabelAsync(annotation, cacheKey)
+        }
+      }
+
+      // Return default label for now
+      const defaultLabel = this.getDefaultLabel()
+      this.enhancedLabelCache.set(cacheKey, defaultLabel)
+      return defaultLabel
+    },
+
+    // Async method to load enhanced label and update cache
+    async loadEnhancedLabelAsync(annotation, cacheKey) {
+      try {
+        const enhancedText = await this.getEnhancedLabelText(annotation)
+        this.enhancedLabelCache.set(cacheKey, enhancedText)
+        
+        // Force Vue to re-render the component
+        this.$forceUpdate()
+      } catch (error) {
+        console.error('Error loading enhanced label:', error)
+      }
     }
   }
 }
