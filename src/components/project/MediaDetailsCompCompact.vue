@@ -116,12 +116,77 @@ const onModalClose = () => {
   showZoomModal.value = false
   annotationsLoaded.value = false
   annotationCount.value = 0
+  // Reset 3D format attempt index for next time
+  currentExtensionIndex.value = 0
 }
 
-// Check if the media file is a 3D file
+// Check if the media file is a 3D file - ROBUST DETECTION
 const is3DFile = computed(() => {
-  return props.media_file?.media?.thumbnail?.USE_ICON === '3d' || 
-         props.media_file?.media?.original?.USE_ICON === '3d'
+  if (!props.media_file) {
+    return false
+  }
+
+  const mediaData = props.media_file.media || props.media_file
+  
+  // Method 1: Check media_type field (primary method for this data structure)
+  if (mediaData?.media_type === '3d' || mediaData?.media_type === '3D') {
+    return true
+  }
+  
+  // Method 2: Check USE_ICON fields  
+  const useIconChecks = [
+    mediaData?.thumbnail?.USE_ICON,
+    mediaData?.original?.USE_ICON,
+    mediaData?.USE_ICON,
+    mediaData?.icon,
+    mediaData?.type
+  ]
+  
+  for (let i = 0; i < useIconChecks.length; i++) {
+    const iconValue = useIconChecks[i]
+    if (iconValue === '3d' || iconValue === '3D') {
+      return true
+    }
+  }
+  
+  // Method 3: Check filename extensions
+  const filenameChecks = [
+    mediaData?.ORIGINAL_FILENAME,
+    mediaData?.filename,
+    mediaData?.original_filename,
+    mediaData?.name,
+    props.media_file?.filename,
+    props.media_file?.original_filename
+  ]
+  
+  const threeDExtensions = ['ply', 'stl', 'obj', 'gltf', 'glb', 'fbx', '3ds', 'dae', 'x3d', 'wrl']
+  
+  for (let i = 0; i < filenameChecks.length; i++) {
+    const filename = filenameChecks[i]
+    if (filename) {
+      const ext = filename.split('.').pop()?.toLowerCase()
+      if (threeDExtensions.includes(ext)) {
+        return true
+      }
+    }
+  }
+  
+  // Method 4: Check MIME type
+  const mimeChecks = [
+    mediaData?.original?.MIMETYPE,
+    mediaData?.MIMETYPE,
+    mediaData?.mime_type,
+    mediaData?.mimetype
+  ]
+  
+  for (let i = 0; i < mimeChecks.length; i++) {
+    const mime = mimeChecks[i]
+    if (mime && (mime.includes('model/') || mime.includes('application/sla'))) {
+      return true
+    }
+  }
+  
+  return false
 })
 
 // Check if the media file is a video file
@@ -132,12 +197,37 @@ const isVideoFile = computed(() => {
   return videoExtensions.includes(ext)
 })
 
-// Get the file extension from the original filename
+// Track which extension we're trying for 3D files
+const currentExtensionIndex = ref(0)
+const threeDExtensionFallbacks = ['stl', 'ply', 'obj'] // Try STL first, then PLY, then OBJ
+
+// Get the file extension - NEVER empty for 3D files
 const fileExtension = computed(() => {
   const filename = props.media_file?.media?.ORIGINAL_FILENAME || ''
   const ext = filename.split('.').pop()?.toLowerCase()
+  
+  // If we have a valid 3D extension from filename, use it
+  if (ext && ['ply', 'stl', 'obj', 'gltf', 'glb', 'fbx', '3ds', 'dae', 'x3d', 'wrl'].includes(ext)) {
+    return ext
+  }
+  
+  // FOR 3D FILES: ALWAYS provide an extension, never return empty
+  if (is3DFile.value) {
+    const fallbackExt = threeDExtensionFallbacks[currentExtensionIndex.value] || 'stl'
+    return fallbackExt
+  }
+  
   return ext || ''
 })
+
+// Function to try next 3D format when current one fails
+const tryNextFormat = () => {
+  if (is3DFile.value && currentExtensionIndex.value < threeDExtensionFallbacks.length - 1) {
+    currentExtensionIndex.value++
+    return true
+  }
+  return false
+}
 
 // Check if the original file is a TIFF file (for download logic)
 const isOriginalTiffFile = computed(() => {
@@ -242,11 +332,16 @@ const zoomDisplayUrl = computed(() => {
 
 // Handle model loading events from ThreeJSViewer
 const onModelError = (error) => {
-  console.error('3D model loading error:', error)
+  // Try next format if available
+  if (!tryNextFormat()) {
+    // All format attempts failed
+    console.error('Failed to load 3D model:', error)
+  }
 }
 
 const onModelLoad = (model) => {
-  // 3D model loaded successfully
+  // Reset the extension index for next time
+  currentExtensionIndex.value = 0
 }
 
 // Handle video loading events
@@ -446,8 +541,9 @@ function getHitsMessage(mediaObj) {
                 <!-- Three.js 3D Viewer for all 3D files -->
                 <ThreeJSViewer
                   v-if="is3DFile"
+                  :key="`3d-viewer-${fileExtension || 'stl'}-${currentExtensionIndex}`"
                   :modelUrl="modelUrl"
-                  :fileExtension="fileExtension"
+                  :fileExtension="fileExtension || 'stl'"
                   @load="onModelLoad"
                   @error="onModelError"
                 />
@@ -475,9 +571,9 @@ function getHitsMessage(mediaObj) {
                     <p>Your browser doesn't support video playback.</p>
                   </video>
                 </div>
-                <!-- Annotation Viewer for 2D images (always used for 2D media) -->
+                <!-- Annotation Viewer for 2D images (used for 2D media) -->
                 <AnnotationViewer
-                  v-if="!is3DFile && !isVideoFile"
+                  v-else
                   :media-id="media_file.media_id"
                   :project-id="Number(project_id)"
                   :media-url="zoomDisplayUrl"
@@ -488,12 +584,6 @@ function getHitsMessage(mediaObj) {
                   type="M"
                   @annotationsLoaded="onAnnotationsLoaded"
                   @annotationsSaved="onAnnotationsSaved"
-                />
-
-                <!-- Fallback to regular image viewer (shouldn't normally be used for 2D) -->
-                <MediaViewPanel
-                  v-else
-                  :imgSrc="zoomDisplayUrl"
                 />
               </CustomModal>
               <a class="nav-link compact-link" href="#" @click="showDownloadModal = true">

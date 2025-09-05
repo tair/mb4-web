@@ -136,7 +136,9 @@ export const useMediaStore = defineStore({
       const url = `${
         import.meta.env.VITE_API_URL
       }/projects/${projectId}/media/${mediaId}/edit`
-      const response = await axios.post(url, mediaFormData)
+      const response = await axios.post(url, mediaFormData, {
+        timeout: 300000, // 5 minutes timeout for large media file uploads
+      })
       if (response.status == 200) {
         const media = response.data.media
         this.addMedia([media])

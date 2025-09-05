@@ -212,8 +212,8 @@ function initThreeJS() {
   // Lighting
   setupLighting()
 
-  // Add grid helper for visual reference (subtle gray on black)
-  const gridHelper = new THREE.GridHelper(20, 20, 0x333333, 0x222222)
+  // Add grid helper for visual reference (subtle colors for dark blue-gray background)
+  const gridHelper = new THREE.GridHelper(20, 20, 0x555555, 0x444444)
   scene.add(gridHelper)
   
   // Add axis helper
@@ -225,8 +225,8 @@ function initThreeJS() {
 }
 
 function setupLighting() {
-  // Ambient light for overall illumination
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6)
+  // Strong ambient light for overall illumination - ensures models are always visible
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.8)
   scene.add(ambientLight)
 
   // Main directional light
@@ -237,17 +237,21 @@ function setupLighting() {
   directionalLight.shadow.mapSize.height = 2048
   scene.add(directionalLight)
 
-  // Additional fill lights for better illumination
-  const fillLight1 = new THREE.DirectionalLight(0xffffff, 0.4)
-  fillLight1.position.set(-10, 0, -5)
+  // Additional fill lights for better illumination from all sides
+  const fillLight1 = new THREE.DirectionalLight(0xffffff, 0.6)
+  fillLight1.position.set(-10, 5, -5)
   scene.add(fillLight1)
 
-  const fillLight2 = new THREE.DirectionalLight(0xffffff, 0.4)
-  fillLight2.position.set(0, -10, 0)
+  const fillLight2 = new THREE.DirectionalLight(0xffffff, 0.6)
+  fillLight2.position.set(5, -10, 5)
   scene.add(fillLight2)
 
+  const fillLight3 = new THREE.DirectionalLight(0xffffff, 0.6)
+  fillLight3.position.set(-5, 5, 10)
+  scene.add(fillLight3)
+
   // Add a hemisphere light for more natural lighting
-  const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.5)
+  const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x666666, 0.7)
   hemisphereLight.position.set(0, 20, 0)
   scene.add(hemisphereLight)
 }
@@ -303,6 +307,13 @@ async function loadModel() {
       scene.add(model)
       model.visible = true
       
+      // Ensure all meshes are visible and have proper materials
+      model.traverse(child => {
+        if (child.isMesh) {
+          child.visible = true
+        }
+      })
+      
       // Center and scale the model
       centerAndScaleModel(model)
       
@@ -331,30 +342,39 @@ async function loadPLY() {
         
         let material
         if (hasVertexColors) {
-          // Check if the vertex colors are meaningful (not all black or very dark)
+          // Check if the vertex colors provide good contrast against dark background
           const colors = geometry.attributes.color.array
-          let hasValidColors = false
+          let hasGoodContrast = false
+          let averageBrightness = 0
+          let sampleCount = 0
           
-          // Sample a few vertices to check if colors are meaningful
-          for (let i = 0; i < Math.min(colors.length, 30); i += 3) {
+          // Sample vertices to check average brightness and contrast
+          for (let i = 0; i < Math.min(colors.length, 90); i += 3) {
             const r = colors[i]
             const g = colors[i + 1] 
             const b = colors[i + 2]
-            // If any color component is above 0.1, consider it a valid color
-            if (r > 0.1 || g > 0.1 || b > 0.1) {
-              hasValidColors = true
-              break
+            
+            // Calculate brightness (perceptual luminance)
+            const brightness = (r * 0.299) + (g * 0.587) + (b * 0.114)
+            averageBrightness += brightness
+            sampleCount++
+            
+            // Check if this color provides good contrast against dark background
+            if (brightness > 0.3) { // Higher threshold for better contrast
+              hasGoodContrast = true
             }
           }
           
-          if (hasValidColors) {
-            // Use vertex colors from PLY file
+          averageBrightness /= sampleCount
+          
+          // Use vertex colors only if they provide good contrast, otherwise use bright cream
+          if (hasGoodContrast && averageBrightness > 0.2) {
             material = new THREE.MeshLambertMaterial({ 
               vertexColors: true,
               side: THREE.DoubleSide
             })
           } else {
-            // Colors are too dark/black, use default cream color
+            // Colors are too dark or low contrast, use bright cream color
             material = new THREE.MeshPhongMaterial({ 
               color: 0xFFF8DC, // Cream color
               side: THREE.DoubleSide,
@@ -363,7 +383,7 @@ async function loadPLY() {
             })
           }
         } else {
-          // Use default cream color
+          // No vertex colors, use bright cream color
           material = new THREE.MeshPhongMaterial({ 
             color: 0xFFF8DC, // Cream color
             side: THREE.DoubleSide,
@@ -399,11 +419,41 @@ async function loadSTL() {
       
       let material
       if (hasVertexColors) {
-        // Use vertex colors from STL file (Magics format)
-        material = new THREE.MeshLambertMaterial({ 
-          vertexColors: true,
-          side: THREE.DoubleSide
-        })
+        // Check brightness and contrast for STL colors
+        const colors = geometry.attributes.color.array
+        let hasGoodContrast = false
+        let averageBrightness = 0
+        let sampleCount = 0
+        
+        for (let i = 0; i < Math.min(colors.length, 90); i += 3) {
+          const r = colors[i]
+          const g = colors[i + 1] 
+          const b = colors[i + 2]
+          
+          const brightness = (r * 0.299) + (g * 0.587) + (b * 0.114)
+          averageBrightness += brightness
+          sampleCount++
+          
+          if (brightness > 0.3) {
+            hasGoodContrast = true
+          }
+        }
+        
+        averageBrightness /= sampleCount
+        
+        if (hasGoodContrast && averageBrightness > 0.2) {
+          material = new THREE.MeshLambertMaterial({ 
+            vertexColors: true,
+            side: THREE.DoubleSide
+          })
+        } else {
+          material = new THREE.MeshPhongMaterial({ 
+            color: 0xFFF8DC, // Cream color
+            side: THREE.DoubleSide,
+            shininess: 30,
+            specular: 0x111111
+          })
+        }
       } else {
         // Use cream color for STL model
         material = new THREE.MeshPhongMaterial({ 
@@ -465,22 +515,64 @@ async function loadOBJ() {
             // Check if OBJ file has vertex colors or existing materials
             const hasVertexColors = child.geometry.attributes.color !== undefined
             const hasExistingMaterial = child.material && 
-              child.material.map !== null || 
-              child.material.color !== undefined
+              (child.material.map !== null || child.material.color !== undefined)
             
             if (hasVertexColors) {
-              // Use vertex colors from OBJ file
-              child.material = new THREE.MeshLambertMaterial({ 
-                vertexColors: true,
-                side: THREE.DoubleSide
-              })
+              // Check brightness and contrast for OBJ vertex colors
+              const colors = child.geometry.attributes.color.array
+              let hasGoodContrast = false
+              let averageBrightness = 0
+              let sampleCount = 0
+              
+              for (let i = 0; i < Math.min(colors.length, 90); i += 3) {
+                const r = colors[i]
+                const g = colors[i + 1] 
+                const b = colors[i + 2]
+                
+                const brightness = (r * 0.299) + (g * 0.587) + (b * 0.114)
+                averageBrightness += brightness
+                sampleCount++
+                
+                if (brightness > 0.3) {
+                  hasGoodContrast = true
+                }
+              }
+              
+              averageBrightness /= sampleCount
+              
+              if (hasGoodContrast && averageBrightness > 0.2) {
+                child.material = new THREE.MeshLambertMaterial({ 
+                  vertexColors: true,
+                  side: THREE.DoubleSide
+                })
+              } else {
+                child.material = new THREE.MeshPhongMaterial({ 
+                  color: 0xFFF8DC, // Cream color
+                  side: THREE.DoubleSide,
+                  shininess: 30,
+                  specular: 0x111111
+                })
+              }
             } else if (hasExistingMaterial && child.material.color) {
-              // Keep existing material colors but upgrade to Lambert for better lighting
+              // Check if existing color provides good contrast
               const existingColor = child.material.color
-              child.material = new THREE.MeshLambertMaterial({ 
-                color: existingColor,
-                side: THREE.DoubleSide
-              })
+              const brightness = (existingColor.r * 0.299) + (existingColor.g * 0.587) + (existingColor.b * 0.114)
+              
+              if (brightness > 0.2) {
+                // Keep existing material colors but upgrade to Lambert for better lighting
+                child.material = new THREE.MeshLambertMaterial({ 
+                  color: existingColor,
+                  side: THREE.DoubleSide
+                })
+              } else {
+                // Existing color too dark, use cream
+                child.material = new THREE.MeshPhongMaterial({ 
+                  color: 0xFFF8DC, // Cream color
+                  side: THREE.DoubleSide,
+                  shininess: 30,
+                  specular: 0x111111
+                })
+              }
             } else {
               // Use default cream color
               child.material = new THREE.MeshPhongMaterial({ 
@@ -519,14 +611,29 @@ async function loadGLTF() {
         model.traverse((child) => {
           if (child.isMesh) {
             // GLTF files typically preserve their original materials and colors
-            // Check if the material has meaningful color information
-            if (child.material && 
-                (child.material.map || 
-                 child.material.color || 
-                 child.material.vertexColors)) {
-              hasOriginalColors = true
-            } else {
-              // Apply default cream color if no material colors exist
+            let hasGoodMaterial = false
+            
+            if (child.material) {
+              // Check if material has textures (always good)
+              if (child.material.map) {
+                hasGoodMaterial = true
+              }
+              // Check if material color provides good contrast
+              else if (child.material.color) {
+                const color = child.material.color
+                const brightness = (color.r * 0.299) + (color.g * 0.587) + (color.b * 0.114)
+                if (brightness > 0.2) {
+                  hasGoodMaterial = true
+                }
+              }
+              // Check for vertex colors
+              else if (child.material.vertexColors) {
+                hasGoodMaterial = true // Assume vertex colors are handled correctly
+              }
+            }
+            
+            if (!hasGoodMaterial) {
+              // Apply bright cream color for better visibility
               child.material = new THREE.MeshPhongMaterial({ 
                 color: 0xFFF8DC, // Cream color
                 side: THREE.DoubleSide,
@@ -563,15 +670,32 @@ async function loadFBX() {
         object.traverse((child) => {
           if (child.isMesh) {
             // FBX files often preserve their original materials and colors
-            // Check if the material has meaningful color information
-            if (child.material && 
-                (child.material.map || 
-                 child.material.color || 
-                 child.material.vertexColors ||
-                 Array.isArray(child.material))) {
-              hasOriginalColors = true
-            } else {
-              // Apply default cream color if no material colors exist
+            let hasGoodMaterial = false
+            
+            // Handle multiple materials (array)
+            if (Array.isArray(child.material)) {
+              hasGoodMaterial = true // Assume multi-material objects are properly colored
+            } else if (child.material) {
+              // Check if material has textures (always good)
+              if (child.material.map) {
+                hasGoodMaterial = true
+              }
+              // Check if material color provides good contrast
+              else if (child.material.color) {
+                const color = child.material.color
+                const brightness = (color.r * 0.299) + (color.g * 0.587) + (color.b * 0.114)
+                if (brightness > 0.2) {
+                  hasGoodMaterial = true
+                }
+              }
+              // Check for vertex colors
+              else if (child.material.vertexColors) {
+                hasGoodMaterial = true
+              }
+            }
+            
+            if (!hasGoodMaterial) {
+              // Apply bright cream color for better visibility
               child.material = new THREE.MeshPhongMaterial({ 
                 color: 0xFFF8DC, // Cream color
                 side: THREE.DoubleSide,
@@ -600,23 +724,28 @@ async function loadFBX() {
 function centerAndScaleModel(model) {
   // Reset the model position to origin
   model.position.set(0, 0, 0)
+  model.rotation.set(0, 0, 0)
+  model.scale.set(1, 1, 1)
   
-  // Compute the bounding box of the model's geometry
-  const geometry = model.geometry
-  geometry.computeBoundingBox()
-  const box = geometry.boundingBox
+  // Compute the bounding box of the entire model
+  const box = new THREE.Box3().setFromObject(model)
   const center = box.getCenter(new THREE.Vector3())
   const size = box.getSize(new THREE.Vector3())
   
-  // Translate geometry to center it
-  geometry.translate(-center.x, -center.y, -center.z)
+  // CENTER THE GEOMETRY DIRECTLY (not the mesh position)
+  model.traverse(child => {
+    if (child.isMesh && child.geometry) {
+      child.geometry.translate(-center.x, -center.y, -center.z)
+    }
+  })
 
-  // Calculate appropriate scale
+  // Calculate appropriate scale AFTER centering
   const maxDim = Math.max(size.x, size.y, size.z)
   
   // Scale model to fit nicely in view (target size of 4 units)
   const targetSize = 4
   const scale = targetSize / maxDim
+  
   model.scale.setScalar(scale)
   
   // Update the model's matrix
