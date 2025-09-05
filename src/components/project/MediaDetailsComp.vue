@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch, defineAsyncComponent, h } from 'vue'
+import { ref, computed, defineAsyncComponent, h } from 'vue'
 import { toDateString } from '@/utils/date'
 import {
   getViewStatsTooltipText,
@@ -7,10 +7,8 @@ import {
 } from '@/utils/util.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import CustomModal from './CustomModal.vue'
-import MediaViewPanel from './MediaViewPanel.vue'
 import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 import { buildMediaUrl } from '@/utils/fileUtils.js'
-import annotationService from '@/services/annotationService.js'
 
 // Lazy load the annotation viewer for the zoom modal only
 const AnnotationViewer = defineAsyncComponent({
@@ -90,32 +88,9 @@ const videoPlayer = ref(null)
 const viewStatsTooltipText = getViewStatsTooltipText()
 const downloadTooltipText = getDownloadTooltipText()
 
-// Preload annotations to avoid race condition
-const preloadAnnotations = async () => {
-  if (!showAnnotations.value || annotationsLoaded.value) return
-  
-  try {
-    const annotations = await annotationService.getAnnotations(
-      Number(props.project_id),
-      props.media_file?.media_id,
-      'M',
-      props.useAnnotationLinkId ? props.media_file?.media_id : null
-    )
-    
-    annotationsLoaded.value = true
-    annotationCount.value = annotations.length
-  } catch (error) {
-    console.error('Failed to preload annotations:', error)
-    annotationsLoaded.value = true
-    annotationCount.value = 0
-  }
-}
-
-// Reset annotation state when modal closes
+// Reset modal state when closed
 const onModalClose = () => {
   showZoomModal.value = false
-  annotationsLoaded.value = false
-  annotationCount.value = 0
 }
 
 // Check if the media file is a 3D file
@@ -209,36 +184,6 @@ const annotationsEnabled = computed(() => {
   return !is3DFile.value && !isVideoFile.value && props.canEdit && !props.isProjectPublished
 })
 
-// Check if annotations should be shown (read-only for published projects)
-const showAnnotations = computed(() => {
-  return !is3DFile.value && !isVideoFile.value
-})
-
-// Track if annotations are loaded and available
-const annotationsLoaded = ref(false)
-const annotationCount = ref(0)
-
-// Determine whether to use annotation viewer or regular media viewer
-// Use AnnotationViewer when user can edit OR when annotations exist
-const useAnnotationViewer = computed(() => {
-  if (!showAnnotations.value) return false
-  
-  // Always use if user can edit (they might want to add annotations)
-  if (annotationsEnabled.value) return true
-  
-  // Use if annotations exist (to view them)
-  if (annotationsLoaded.value && annotationCount.value > 0) return true
-  
-  // Default to false (use regular viewer) if can't edit and no annotations loaded yet
-  return false
-})
-
-// Watch for modal opening and preload annotations to avoid race condition
-watch(showZoomModal, (isOpen) => {
-  if (isOpen && showAnnotations.value && !annotationsLoaded.value) {
-    preloadAnnotations()
-  }
-})
 
 // Get the zoom display URL (3D model for 3D files, video for videos, large image for 2D files)
 const zoomDisplayUrl = computed(() => {
@@ -340,11 +285,11 @@ const onImageLoad = (event) => {
 // ============================================================================
 
 const onAnnotationsLoaded = (count) => {
-  annotationsLoaded.value = true
-  annotationCount.value = count
+  // Annotation count received from AnnotationViewer
 }
 
 const onAnnotationsSaved = () => {
+  // Annotations saved successfully
 }
 
 async function confirmDownload(fileSize, fileName) {
@@ -501,9 +446,9 @@ function getHitsMessage(mediaObj) {
                     <p>Your browser doesn't support video playback.</p>
                   </video>
                 </div>
-                <!-- Annotation Viewer for 2D images (always used for 2D media) -->
+                <!-- Annotation Viewer for all 2D images -->
                 <AnnotationViewer
-                  v-if="!is3DFile && !isVideoFile"
+                  v-else-if="!is3DFile && !isVideoFile"
                   :media-id="media_file.media_id"
                   :project-id="Number(project_id)"
                   :media-url="zoomDisplayUrl"
@@ -514,12 +459,6 @@ function getHitsMessage(mediaObj) {
                   type="M"
                   @annotationsLoaded="onAnnotationsLoaded"
                   @annotationsSaved="onAnnotationsSaved"
-                />
-
-                <!-- Fallback to regular image viewer (shouldn't normally be used for 2D) -->
-                <MediaViewPanel
-                  v-else
-                  :imgSrc="zoomDisplayUrl"
                 />
               </CustomModal>
               <a class="nav-link" href="#" @click="showDownloadModal = true">
