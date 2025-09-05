@@ -2,6 +2,7 @@
 import router from '@/router'
 import { useRoute } from 'vue-router'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
+import { useNotifications } from '@/composables/useNotifications'
 import { nameColumnMap } from '@/utils/taxa'
 import { csvToArray } from '@/utils/csv'
 import { sha256 } from '@/utils/digest'
@@ -11,6 +12,7 @@ import { ref } from 'vue'
 const route = useRoute()
 const projectId = parseInt(route.params.id as string)
 const specimensStore = useSpecimensStore()
+const { showError, showSuccess } = useNotifications()
 const isProcessing = ref(false)
 
 const specimens = new Set()
@@ -92,19 +94,27 @@ async function parseContent(content: string) {
 }
 
 async function createBatch() {
+  if (specimens.size === 0) {
+    showError('There are no specimens specified in the upload file')
+    return
+  }
+
   isProcessing.value = true
-  let created = false
   try {
-    created = await specimensStore.createBatch(
+    const created = await specimensStore.createBatch(
       projectId,
       Array.from(specimens),
       Object.fromEntries(taxa)
     )
     if (created) {
+      showSuccess('Specimens uploaded successfully!')
       await router.push(`/myprojects/${projectId}/specimens`)
+    } else {
+      showError('Failed to upload specimens')
     }
   } catch (error) {
     console.error('Error creating batch:', error)
+    showError('Failed to upload specimens. Please try again.')
   } finally {
     isProcessing.value = false
   }

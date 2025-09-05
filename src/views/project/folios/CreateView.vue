@@ -3,12 +3,14 @@ import { ref } from 'vue'
 import { useRoute } from 'vue-router'
 import router from '@/router'
 import { useFoliosStore } from '@/stores/FoliosStore'
+import { useNotifications } from '@/composables/useNotifications'
 import { schema } from '@/views/project/folios/schema.js'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id)
 
 const foliosStore = useFoliosStore()
+const { showError, showSuccess } = useNotifications()
 
 // Form validation state
 const nameError = ref('')
@@ -29,24 +31,32 @@ function handleNameInput(event) {
 }
 
 async function create(event) {
+  if (isSubmitting.value) return // Prevent double submission
+  
   isSubmitting.value = true
   
-  const formData = new FormData(event.currentTarget)
-  const json = Object.fromEntries(formData)
-  
-  // Validate name before submission
-  if (!validateName(json.name)) {
-    isSubmitting.value = false
-    return
-  }
+  try {
+    const formData = new FormData(event.currentTarget)
+    const json = Object.fromEntries(formData)
+    
+    // Validate name before submission
+    if (!validateName(json.name)) {
+      return
+    }
 
-  const success = await foliosStore.create(projectId, json)
-  isSubmitting.value = false
-  
-  if (success) {
-    router.go(-1)
-  } else {
-    alert('Failed to create folio')
+    const success = await foliosStore.create(projectId, json)
+    
+    if (success) {
+      showSuccess('Folio created successfully!')
+      router.go(-1)
+    } else {
+      showError('Failed to create folio')
+    }
+  } catch (error) {
+    console.error('Error creating folio:', error)
+    showError('Failed to create folio')
+  } finally {
+    isSubmitting.value = false
   }
 }
 </script>
@@ -77,6 +87,7 @@ async function create(event) {
         class="btn btn-outline-primary"
         type="button"
         @click="$router.go(-1)"
+        :disabled="isSubmitting"
       >
         Cancel
       </button>
@@ -85,7 +96,10 @@ async function create(event) {
         type="submit"
         :disabled="isSubmitting"
       >
-        <span v-if="isSubmitting">Creating...</span>
+        <span v-if="isSubmitting">
+          <i class="fa fa-spinner fa-spin me-2"></i>
+          Creating...
+        </span>
         <span v-else>Create</span>
       </button>
     </div>

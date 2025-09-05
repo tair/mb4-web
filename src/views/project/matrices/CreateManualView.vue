@@ -4,6 +4,7 @@ import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMatricesStore } from '@/stores/MatricesStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useNotifications } from '@/composables/useNotifications'
 import {
   getTaxonomicUnitOptions,
   getTaxonName,
@@ -15,6 +16,7 @@ const route = useRoute()
 const router_instance = useRouter()
 const matricesStore = useMatricesStore()
 const taxaStore = useTaxaStore()
+const { showError, showSuccess } = useNotifications()
 
 const projectId = route.params.id
 
@@ -77,6 +79,7 @@ async function createMatrix() {
     })
 
     if (response.status === 200) {
+      showSuccess('Matrix created successfully!')
       // Clear matrices store to refresh data
       await matricesStore.invalidate()
 
@@ -85,9 +88,10 @@ async function createMatrix() {
     }
   } catch (error) {
     console.error('Error creating manual matrix:', error)
-    createError.value =
-      error.response?.data?.message ||
+    const errorMessage = error.response?.data?.message ||
       'Failed to create matrix. Please try again.'
+    showError(errorMessage)
+    createError.value = errorMessage
   } finally {
     isCreating.value = false
   }

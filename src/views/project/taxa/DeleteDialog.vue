@@ -3,6 +3,7 @@ import { Modal } from 'bootstrap'
 import TaxonomicName from '@/components/project/TaxonomicName.vue'
 import TaxaSearchInput from '@/views/project/common/TaxaSearchInput.vue'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useNotifications } from '@/composables/useNotifications'
 import { computed, onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{
@@ -33,6 +34,7 @@ onMounted(() => {
 // Watch the input taxa so that we can fetch their usages when the user changes
 // the taxa selected to be deleted.
 const taxaStore = useTaxaStore()
+const { showError, showSuccess } = useNotifications()
 const taxonIds = computed(() => props.taxa.map((taxon) => taxon.taxon_id))
 watch(taxonIds, async (ids) => {
   usages.value = await taxaStore.fetchTaxaUsage(props.projectId, ids)
@@ -71,17 +73,23 @@ function setRemappedTaxonId(originalTaxonId: number, remappedTaxonId: number) {
 }
 
 async function handleDelete() {
-  const deleted = await taxaStore.deleteIds(
-    props.projectId,
-    props.taxa.map((taxon) => taxon.taxon_id),
-    Object.fromEntries(remappedTaxonIds.entries())
-  )
-  if (deleted) {
-    const element = document.getElementById('taxaDeleteModal')
-    const modal = Modal.getInstance(element)
-    modal.hide()
-  } else {
-    alert('Failed to delete views')
+  try {
+    const deleted = await taxaStore.deleteIds(
+      props.projectId,
+      props.taxa.map((taxon) => taxon.taxon_id),
+      Object.fromEntries(remappedTaxonIds.entries())
+    )
+    if (deleted) {
+      showSuccess('Taxa deleted successfully!')
+      const element = document.getElementById('taxaDeleteModal')
+      const modal = Modal.getInstance(element)
+      modal.hide()
+    } else {
+      showError('Failed to delete taxa')
+    }
+  } catch (error) {
+    console.error('Error deleting taxa:', error)
+    showError('Failed to delete taxa. Please try again.')
   }
 }
 </script>
@@ -139,7 +147,7 @@ async function handleDelete() {
                       </p>
                       <TaxaSearchInput
                         @select="
-                          (selected) =>
+                          (selected: any) =>
                             setRemappedTaxonId(
                               taxon.taxon_id,
                               selected?.taxon_id

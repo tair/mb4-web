@@ -9,6 +9,7 @@ import { getTaxonForMediaId } from '@/views/project/utils'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaCard from '@/components/project/MediaCard.vue'
 import { buildMediaUrl } from '@/utils/fileUtils.js'
+import { useNotifications } from '@/composables/useNotifications'
 import CurationBatchDialog from './CurationBatchDialog.vue'
 
 const route = useRoute()
@@ -18,6 +19,7 @@ const projectId = route.params.id
 const mediaStore = useMediaStore()
 const specimensStore = useSpecimensStore()
 const taxaStore = useTaxaStore()
+const { showError, showSuccess } = useNotifications()
 const mediaViewsStore = useMediaViewsStore()
 const isLoaded = computed(
   () =>
@@ -92,9 +94,7 @@ function getMediaThumbnailUrl(media) {
 async function releaseSelectedMedia() {
   // Check if all selected media have specimen and view assigned
   if (!canReleaseSelected.value) {
-    alert(
-      'All selected media must have both specimen and view assigned before release.'
-    )
+    showError('All selected media must have both specimen and view assigned before release.')
     return
   }
 
@@ -114,13 +114,13 @@ async function releaseSelectedMedia() {
   })
 
   if (!success) {
-    alert('Failed to release the media')
+    showError('Failed to release the media')
   } else {
     // Clear the store first to ensure fresh data
     mediaStore.invalidate()
     // Refresh the media list to show updated status
     await mediaStore.fetchMedia(projectId)
-    alert(`Successfully released ${mediaIds.length} media items!`)
+    showSuccess(`Successfully released ${mediaIds.length} media items!`)
   }
 }
 
@@ -160,8 +160,9 @@ async function deleteSelectedMedia() {
   const mediaIds = selectedMedia.value.map((m) => m.media_id)
   const success = await mediaStore.deleteIds(projectId, mediaIds)
   if (!success) {
-    alert('Failed to delete the media')
+    showError('Failed to delete the media')
   } else {
+    showSuccess(`Successfully deleted ${mediaIds.length} media items!`)
     // Refresh the media list to show updated status
     await mediaStore.fetchMedia(projectId)
   }

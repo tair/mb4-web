@@ -4,6 +4,7 @@ import { formatBytes, formatNumber } from '@/utils/format'
 import { buildMediaUrl } from '@/utils/fileUtils.js'
 // import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore' // No longer needed
 import { ref, onMounted, computed } from 'vue'
+import { useNotifications } from '@/composables/useNotifications'
 // import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 
 type OverviewStat = {
@@ -53,6 +54,7 @@ const props = defineProps<{
 const DOI_URL = import.meta.env.VITE_DOI_URL
 
 // const overviewStore = useProjectOverviewStore() // No longer needed
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 const exemplarMedia = ref(null)
 
 // Computed property to get overview data - now always uses props
@@ -114,8 +116,9 @@ function getHeight(mediaObj: { [key: string]: any }): string {
 }
 
 function popDownloadAlert() {
-  alert(
-    "You are downloading data from MorphoBank. If you plan to reuse these items you must check the copyright reuse policies for the individual media, matrix, document or character list. Note - policies are often different for different media. By downloading from MorphoBank, you agree to the site's Terms of Use & Privacy Policy."
+  showInfo(
+    "You are downloading data from MorphoBank. If you plan to reuse these items you must check the copyright reuse policies for the individual media, matrix, document or character list. Note - policies are often different for different media. By downloading from MorphoBank, you agree to the site's Terms of Use & Privacy Policy.",
+    "Download Notice"
   )
   // logDownload({ project_id: props.projectId, download_type: DOWNLOAD_TYPES.PROJECT })
 }

@@ -3,6 +3,7 @@ import axios from 'axios'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useNotifications } from '@/composables/useNotifications'
 import { TaxaColumns, sortTaxaAlphabetically } from '@/utils/taxa'
 import { toDMYDate } from '@/utils/date'
 import { capitalizeFirstLetter } from '@/utils/string'
@@ -35,6 +36,7 @@ const route = useRoute()
 const projectId = route.params.id
 
 const taxaStore = useTaxaStore()
+const { showError, showSuccess } = useNotifications()
 const filteredTaxa = computed(() => {
   let baseTaxa = taxaStore.taxa
   
@@ -49,7 +51,7 @@ const filteredTaxa = computed(() => {
 
 const isLoaded = computed(() => taxaStore.isLoaded)
 const hasNoResult = computed(() =>
-  Array.from(validationResults.value.values()).some((v) => v.pbdb_pulled_on && (v.pbdb_taxon_id === 0 || v.pbdb_taxon_id === '0'))
+  Array.from(validationResults.value.values()).some((v) => v.pbdb_pulled_on && (String(v.pbdb_taxon_id) === '0'))
 )
 const hasUnselectedUnsearchedRecords = computed(() => {
   return filteredTaxa.value.some(taxon => {
@@ -114,7 +116,7 @@ const taxaWithoutPbdbData = computed(() => {
 const currentSessionPreviouslyImported = computed(() => {
   return taxaWithPbdbData.value.filter((taxon) => {
     const validationResult = validationResults.value.get(taxon.taxon_id)
-    return validationResult && validationResult.pbdb_taxon_id && validationResult.pbdb_taxon_id > 0
+    return validationResult && validationResult.pbdb_taxon_id && Number(validationResult.pbdb_taxon_id) > 0
   })
 })
 
@@ -147,7 +149,7 @@ function selectNoResult() {
     const result = validationResults.value.get(taxon.taxon_id)
     // Only select taxa with absolutely no PBDB results (pbdb_taxon_id = 0)
     // NOT taxa that have results but are not imported (pbdb_taxon_id = null)
-    if (result && result.pbdb_pulled_on && (result.pbdb_taxon_id === 0 || result.pbdb_taxon_id === '0')) {
+    if (result && result.pbdb_pulled_on && String(result.pbdb_taxon_id) === '0') {
       if (!taxon.selected) {
         taxon.selected = true
         selectedCount++
@@ -244,12 +246,12 @@ async function validateSelectedTaxa() {
   selectedTaxaSize.value = selectedTaxa.length
   
   if (selectedTaxa.length === 0) {
-    alert('Please select at least one taxon to validate.')
+    showError('Please select at least one taxon to validate.')
     return
   }
 
   if (selectedTaxa.length > maxSelectedTaxa) {
-    alert(`You can only validate up to ${maxSelectedTaxa} taxa at a time.`)
+    showError(`You can only validate up to ${maxSelectedTaxa} taxa at a time.`)
     return
   }
 
@@ -350,7 +352,7 @@ function getPbdbDataForTaxon(taxonId: number) {
 
 async function importSelectedData() {
   if (selectedImports.value?.size === 0) {
-    alert('Please select at least one taxon to import data for.')
+    showError('Please select at least one taxon to import data for.')
     return
   }
 
@@ -390,13 +392,13 @@ async function importSelectedData() {
     // Refresh validation results to show updated status
     await loadPbdbValidationStatus()
 
-    alert(`Successfully imported PBDB taxonomic data for ${importedCount} taxa!`)
+    showSuccess(`Successfully imported PBDB taxonomic data for ${importedCount} taxa!`)
     
     // Refresh taxa store to show updated data
     taxaStore.fetch(projectId)
   } catch (error) {
     console.error('Error importing PBDB data:', error)
-    alert('Failed to import PBDB data. Please try again.')
+    showError('Failed to import PBDB data. Please try again.')
   } finally {
     isImporting.value = false
   }
@@ -442,7 +444,7 @@ function getTimestampInfo(taxon: any) {
   }
   
   // Priority 4: Check for "no results" state (pbdb_pulled_on set, pbdb_taxon_id = 0)
-  if (pulledTimestamp && (pbdbTaxonId === 0 || pbdbTaxonId === '0')) {
+  if (pulledTimestamp && String(pbdbTaxonId) === '0') {
     return {
       type: 'no_results',
       timestamp: pulledTimestamp,
@@ -923,7 +925,7 @@ onMounted(async () => {
                   type="button"
                   class="btn btn-success btn-step-next"
                   @click="importSelectedData"
-                  :disabled="selectedImports.value?.size === 0 || isImporting"
+                  :disabled="selectedImports.size === 0 || isImporting"
                 >
                   <span v-if="isImporting">
                     <i class="fa fa-spinner fa-spin me-1"></i>
@@ -931,7 +933,7 @@ onMounted(async () => {
                   </span>
                   <span v-else>
                     <i class="fa fa-download me-1"></i>
-                    Import {{ selectedImports.value?.size }} Taxa
+                    Import {{ selectedImports.size }} Taxa
                   </span>
                 </button>
               </div>

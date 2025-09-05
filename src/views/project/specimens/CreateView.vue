@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import router from '@/router'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useNotifications } from '@/composables/useNotifications'
 import { schema } from '@/views/project/specimens/schema.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import {
@@ -16,6 +17,7 @@ const route = useRoute()
 const projectId = route.params.id
 const specimensStore = useSpecimensStore()
 const taxaStore = useTaxaStore()
+const { showError, showSuccess } = useNotifications()
 
 // Track the selected reference source type
 const referenceSource = ref(0) // Default to "Vouchered" (0)
@@ -84,11 +86,17 @@ async function create(event) {
     })
   }
 
-  const success = await specimensStore.create(projectId, json)
-  if (success) {
-    router.go(-1)
-  } else {
-    alert('Failed to create specimen')
+  try {
+    const success = await specimensStore.create(projectId, json)
+    if (success) {
+      showSuccess('Specimen created successfully!')
+      router.go(-1)
+    } else {
+      showError('Failed to create specimen')
+    }
+  } catch (error) {
+    console.error('Error creating specimen:', error)
+    showError('Failed to create specimen. Please try again.')
   }
 }
 </script>

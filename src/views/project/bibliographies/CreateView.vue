@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
+import { useNotifications } from '@/composables/useNotifications'
 import router from '@/router'
 import { schema } from '@/views/project/bibliographies/schema.js'
 import {
@@ -13,7 +14,9 @@ const route = useRoute()
 const projectId = route.params.id
 
 const bibliographiesStore = useBibliographiesStore()
+const { showError, showSuccess } = useNotifications()
 const errors = ref({})
+const isCreating = ref(false)
 
 // Filter out read-only system fields (owner, timestamps) that shouldn't appear on create forms
 const createSchema = computed(() => {
@@ -27,6 +30,8 @@ const createSchema = computed(() => {
 })
 
 async function createReference(event) {
+  if (isCreating.value) return // Prevent double submission
+  
   const formData = new FormData(event.currentTarget)
 
   // Validate the form using the utility function
@@ -38,17 +43,27 @@ async function createReference(event) {
 
   // Clear any previous errors
   errors.value = {}
+  isCreating.value = true
 
-  const authorFields = ['authors', 'secondary_authors', 'editors']
-  const authors = Object.fromEntries(
-    authorFields.map((field) => [field, convertAuthors(formData, field)])
-  )
-  const json = { ...Object.fromEntries(formData), ...authors }
-  const success = await bibliographiesStore.create(projectId, json)
-  if (success) {
-    router.go(-1)
-  } else {
-    alert('Failed to create bibliography')
+  try {
+    const authorFields = ['authors', 'secondary_authors', 'editors']
+    const authors = Object.fromEntries(
+      authorFields.map((field) => [field, convertAuthors(formData, field)])
+    )
+    const json = { ...Object.fromEntries(formData), ...authors }
+    const success = await bibliographiesStore.create(projectId, json)
+    
+    if (success) {
+      showSuccess('Bibliography created successfully!')
+      router.go(-1)
+    } else {
+      showError('Failed to create bibliography')
+    }
+  } catch (error) {
+    console.error('Error creating bibliography:', error)
+    showError('Failed to create bibliography. Please try again.')
+  } finally {
+    isCreating.value = false
   }
 }
 </script>
@@ -79,10 +94,21 @@ async function createReference(event) {
         class="btn btn-outline-primary"
         type="button"
         @click="$router.go(-1)"
+        :disabled="isCreating"
       >
         Cancel
       </button>
-      <button class="btn btn-primary" type="submit">Create</button>
+      <button 
+        class="btn btn-primary" 
+        type="submit"
+        :disabled="isCreating"
+      >
+        <span v-if="isCreating">
+          <i class="fa fa-spinner fa-spin me-2"></i>
+          Creating...
+        </span>
+        <span v-else>Create</span>
+      </button>
     </div>
   </form>
 </template>

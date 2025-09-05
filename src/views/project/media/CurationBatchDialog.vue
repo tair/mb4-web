@@ -6,6 +6,7 @@ import { schema } from '@/views/project/media/schema.js'
 import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useNotifications } from '@/composables/useNotifications'
 
 const props = defineProps<{
   batchEdit: (formData: any) => Promise<boolean>
@@ -18,6 +19,8 @@ const projectId = route.params.id
 const mediaViewsStore = useMediaViewsStore()
 const specimensStore = useSpecimensStore()
 const taxaStore = useTaxaStore()
+const { showError, showSuccess } = useNotifications()
+const isSubmitting = ref(false)
 
 const menuCollapsed = ref({
   mediaEditView: false, // Start expanded for curation
@@ -92,6 +95,8 @@ const viewOptions = computed(() => {
 })
 
 async function handleSubmitClicked(event: Event) {
+  if (isSubmitting.value) return // Prevent double submission
+  
   const target = event.currentTarget as any
   const formData = new FormData(target)
   const json = Object.fromEntries(formData)
@@ -100,16 +105,28 @@ async function handleSubmitClicked(event: Event) {
   validateForm(json)
 
   if (validationErrors.value.length > 0) {
+    showError(validationErrors.value.join('; '), 'Validation Error')
     return // Don't submit if validation fails
   }
 
-  // Add cataloguing_status to release the media
-  json.cataloguing_status = '0'
+  isSubmitting.value = true
 
-  const success = await props.batchEdit(json)
-  if (!success) {
-    alert('Failed to assign and release media files')
-    return
+  try {
+    // Add cataloguing_status to release the media
+    json.cataloguing_status = '0'
+
+    const success = await props.batchEdit(json)
+    if (!success) {
+      showError('Failed to assign and release media files')
+      return
+    }
+
+    showSuccess('Media items assigned and released successfully!')
+  } catch (error) {
+    console.error('Curation error:', error)
+    showError('Failed to assign and release media files')
+  } finally {
+    isSubmitting.value = false
   }
 
   const element = document.getElementById('curationBatchModal')
@@ -177,15 +194,6 @@ onMounted(() => {
             </h5>
           </div>
           <div class="modal-body">
-            <!-- Validation Errors -->
-            <div v-if="validationErrors.length > 0" class="alert alert-warning">
-              <strong>Please fix the following issues:</strong>
-              <ul class="mb-0 mt-2">
-                <li v-for="error in validationErrors" :key="error">
-                  {{ error }}
-                </li>
-              </ul>
-            </div>
 
             <!-- Assignment Status -->
             <div class="alert alert-info">
@@ -284,10 +292,16 @@ onMounted(() => {
             <button
               type="submit"
               class="btn btn-success"
-              :disabled="!canRelease"
+              :disabled="!canRelease || isSubmitting"
             >
-              <i class="fa fa-check me-2"></i>
-              Assign {{ selectedCount }} Media Items
+              <span v-if="isSubmitting">
+                <i class="fa fa-spinner fa-spin me-2"></i>
+                Assigning...
+              </span>
+              <span v-else>
+                <i class="fa fa-check me-2"></i>
+                Assign {{ selectedCount }} Media Items
+              </span>
             </button>
           </div>
         </div>

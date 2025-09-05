@@ -4,6 +4,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import BibliographyItem from '@/components/project/BibliographyItem.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
+import { useNotifications } from '@/composables/useNotifications'
 import DeleteDialog from '@/views/project/bibliographies/DeleteDialog.vue'
 import axios from 'axios'
 
@@ -13,6 +14,7 @@ const projectId = route.params.id
 const bibliographiesToDelete = ref([])
 
 const bibliographiesStore = useBibliographiesStore()
+const { showError, showSuccess } = useNotifications()
 
 const selectedLetter = ref(null)
 const letters = computed(() => {
@@ -138,9 +140,10 @@ async function exportEndNote() {
     link.click()
     link.remove()
     window.URL.revokeObjectURL(url)
+    showSuccess('EndNote file exported successfully!')
   } catch (error) {
     console.error('Error exporting EndNote file:', error)
-    alert('Failed to export EndNote file')
+    showError('Failed to export EndNote file')
   }
 }
 </script>

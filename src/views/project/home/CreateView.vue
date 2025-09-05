@@ -554,6 +554,7 @@ import { ref, reactive, onMounted, computed, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProjectsStore } from '@/stores/ProjectsStore'
 import { useUserStore } from '@/stores/UserStore'
+import { useNotifications } from '@/composables/useNotifications'
 import axios from 'axios'
 import {
   getNSFFundedTooltip,
@@ -573,6 +574,7 @@ import '@/assets/css/form.css'
 const router = useRouter()
 const projectsStore = useProjectsStore()
 const userStore = useUserStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 const formData = reactive({
   name: '',
@@ -834,11 +836,11 @@ async function retrieveDOI() {
         }
       }
     } else {
-      alert(response.data.errors.join('\n'))
+      showError(response.data.errors.join('\n'), 'DOI Retrieval Error')
     }
   } catch (error) {
     console.error('Error retrieving DOI:', error)
-    alert('Failed to retrieve DOI information. Please try again.')
+    showError('Failed to retrieve DOI information. Please try again.', 'DOI Retrieval Failed')
   }
 }
 
@@ -920,7 +922,7 @@ async function handleSubmit() {
 function validateForm() {
   // Basic validation
   if (!formData.name || formData.nsf_funded === '') {
-    alert('Please fill in all required fields')
+    showWarning('Please fill in all required fields', 'Validation Error')
     return false
   }
 
@@ -930,8 +932,9 @@ function validateForm() {
     (!formData.reviewer_login_password ||
       formData.reviewer_login_password.trim() === '')
   ) {
-    alert(
-      'Please enter a reviewer login password when reviewer access is enabled'
+    showWarning(
+      'Please enter a reviewer login password when reviewer access is enabled',
+      'Reviewer Password Required'
     )
     return false
   }
@@ -942,7 +945,7 @@ function validateForm() {
     formData.publication_status === '1'
   ) {
     if (formData.journal_title === '' && formData.journal_title_other === '') {
-      alert('Please enter journal title information')
+      showWarning('Please enter journal title information', 'Journal Title Required')
       return false
     }
 
@@ -963,7 +966,7 @@ function validateForm() {
           formData[field].trim() === '') ||
         (typeof formData[field] === 'number' && isNaN(formData[field]))
       ) {
-        alert(`Please fill in ${field.replace(/_/g, ' ')}`)
+        showWarning(`Please fill in ${field.replace(/_/g, ' ')}`, 'Required Field Missing')
         return false
       }
     }
@@ -986,7 +989,7 @@ function validateForm() {
             formData[field].trim() === '') ||
           (typeof formData[field] === 'number' && isNaN(formData[field]))
         ) {
-          alert(`Please fill in ${field.replace(/_/g, ' ')}`)
+          showWarning(`Please fill in ${field.replace(/_/g, ' ')}`, 'Required Field Missing')
           return false
         }
       }
@@ -995,14 +998,15 @@ function validateForm() {
 
   // Author format validation
   if (formData.article_authors && formData.article_authors.includes(' and ')) {
-    alert('Article authors must be separated by commas, not "and"')
+    showWarning('Article authors must be separated by commas, not "and"', 'Author Format Error')
     return false
   }
 
   // DOI format validation
   if (formData.article_doi && !formData.article_doi.match(/^10\..*\/\S+$/)) {
-    alert(
-      'Invalid DOI format. Please enter the DOI as provided by the publisher.'
+    showWarning(
+      'Invalid DOI format. Please enter the DOI as provided by the publisher.',
+      'DOI Format Error'
     )
     return false
   }

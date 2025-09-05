@@ -6,13 +6,14 @@ import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { schema } from '@/views/project/views/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
-
+import { useNotifications } from '@/composables/useNotifications'
 const route = useRoute()
 const projectId = route.params.id
 const viewId = parseInt(route.params.viewId)
 
 const projectUsersStore = useProjectUsersStore()
 const mediaViewsStore = useMediaViewsStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 const mediaView = computed(() => mediaViewsStore.getMediaViewById(viewId))
 const isLoaded = computed(
   () => mediaViewsStore.isLoaded && projectUsersStore.isLoaded
@@ -34,7 +35,7 @@ async function edit(event) {
   if (success) {
     router.go(-1)
   } else {
-    alert('Failed to update media view')
+    showError('Failed to update media view', 'Update Failed')
   }
 }
 </script>

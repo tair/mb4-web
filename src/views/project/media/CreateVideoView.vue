@@ -7,6 +7,7 @@ import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useNotifications } from '@/composables/useNotifications'
 import { videoSchema } from '@/views/project/media/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 
@@ -18,8 +19,8 @@ const mediaStore = useMediaStore()
 const specimensStore = useSpecimensStore()
 const taxaStore = useTaxaStore()
 const mediaViewsStore = useMediaViewsStore()
+const { showError, showSuccess } = useNotifications()
 const isUploading = ref(false)
-const validationErrors = ref([])
 
 const isLoaded = computed(
   () =>
@@ -82,21 +83,19 @@ async function createVideoMedia(event) {
   // Validate required fields
   const errors = validateRequiredFields(formData)
   if (errors.length > 0) {
-    validationErrors.value = errors
+    showError(errors.join('; '), 'Validation Error')
     return
   }
-  
-  // Clear any previous validation errors
-  validationErrors.value = []
   
   isUploading.value = true
   try {
     const success = await mediaStore.createVideo(projectId, formData)
     if (!success) {
-      validationErrors.value = ['Failed to create video media. Please check your input and try again.']
+      showError('Failed to create video media. Please check your input and try again.')
       return
     }
 
+    showSuccess('Video media uploaded successfully!')
     router.push({ path: `/myprojects/${projectId}/media` })
   } catch (error) {
     console.error('Video upload error:', error)
@@ -112,8 +111,8 @@ async function createVideoMedia(event) {
       errorMessage = error.message
     }
     
-    // Display the error in the validation errors section
-    validationErrors.value = [errorMessage]
+    // Display the error as notification
+    showError(errorMessage, 'Video Upload Failed')
   } finally {
     isUploading.value = false
   }
@@ -161,12 +160,6 @@ onMounted(() => {
     </header>
     <form @submit.prevent="createVideoMedia">
       <div class="row setup-content">
-        <!-- Display validation errors -->
-        <div v-if="validationErrors.length > 0" class="alert alert-danger" role="alert">
-          <ul class="mb-0">
-            <li v-for="error in validationErrors" :key="error">{{ error }}</li>
-          </ul>
-        </div>
         <template v-for="(definition, index) in videoSchema" :key="index">
           <div v-if="!definition.existed" class="form-group">
             <label :for="index" class="form-label">
