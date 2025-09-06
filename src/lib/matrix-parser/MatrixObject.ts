@@ -254,6 +254,10 @@ export class MatrixObject {
   setCharacterType(characterNumber: number, characterType: CharacterType): void {
     this.characterTypes.set(characterNumber, characterType)
   }
+
+  getCharacterType(characterNumber: number): CharacterType {
+    return this.determineCharacterType(characterNumber)
+  }
 }
 
 export class Character {

@@ -30,7 +30,7 @@ export class TNTTokenizer extends AbstractBaseTokenizer {
 
   protected static readonly stringTerminatingTokens: Set<Token> = new Set([
     Token.COLON,
-    Token.EQUAL,
+    // Token.EQUAL,
     Token.OPEN_SBRACKET,
     Token.SEMICOLON,
   ])

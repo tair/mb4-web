@@ -89,72 +89,279 @@ export class TNTParser extends AbstractParser {
     )
     this.matrixObject.setDimensions('TAXA', taxaCount)
 
-    let characterType = CharacterType.DISCRETE
-    let taxaProcessed = 0
+    // Initialize character types as discrete by default
+    const characterTypes: CharacterType[] = new Array(characterCount).fill(CharacterType.DISCRETE)
+    for (let i = 0; i < characterCount; i++) {
+      this.matrixObject.setCharacterType(i, CharacterType.DISCRETE)
+    }
+
+    // Parse the matrix data, handling mixed character types
+    this.parseMatrixData(characterCount, taxaCount, characterTypes)
+  }
+
+  private parseMatrixData(characterCount: number, taxaCount: number, characterTypes: CharacterType[]): void {
+    const taxaData: Map<string, Cell[]> = new Map()
+    let currentCharacterIndex = 0
+    let hasSectionMarkers = false
     
-    // Check for character type indicators that apply to all subsequent taxa
     while (this.untilToken([Token.SEMICOLON])) {
       if (this.tokenizer.consumeTokenIfMatch([Token.COMMENT])) {
         continue
       }
 
-      if (this.tokenizer.consumeTokenIfMatch([Token.AMPERSAND_NUM])) {
-        characterType = CharacterType.DISCRETE
-        // Set character type for all characters
-        for (let i = 0; i < characterCount; i++) {
-          this.matrixObject.setCharacterType(i, characterType)
-        }
+      if (this.tokenizer.consumeTokenIfMatch([Token.AMPERSAND_CONT])) {
+        hasSectionMarkers = true
+        // Parse continuous character section
+        currentCharacterIndex = this.parseCharacterSection(
+          CharacterType.CONTINUOUS, 
+          currentCharacterIndex, 
+          characterCount, 
+          taxaCount, 
+          characterTypes, 
+          taxaData
+        )
         continue
-      } else if (this.tokenizer.consumeTokenIfMatch([Token.AMPERSAND_CONT])) {
-        characterType = CharacterType.CONTINUOUS
-        // Set character type for all characters
-        for (let i = 0; i < characterCount; i++) {
-          this.matrixObject.setCharacterType(i, characterType)
-        }
+      } else if (this.tokenizer.consumeTokenIfMatch([Token.AMPERSAND_NUM])) {
+        hasSectionMarkers = true
+        // Parse discrete character section
+        currentCharacterIndex = this.parseCharacterSection(
+          CharacterType.DISCRETE, 
+          currentCharacterIndex, 
+          characterCount, 
+          taxaCount, 
+          characterTypes, 
+          taxaData
+        )
         continue
       }
 
-      // Stop processing if we've already read the expected number of taxa
-      if (taxaProcessed >= taxaCount) {
+      // If we encounter a taxon name without section markers, 
+      // fall back to original simple parsing logic
+      if (!hasSectionMarkers) {
+        this.parseSimpleMatrix(characterCount, taxaCount)
+        return
+      }
+      
+      // Skip values that look like character data rather than a taxon name
+      const tokenValue = this.tokenizer.getTokenValue()
+      const value = tokenValue.getValue()
+      if (this.looksLikeContinuousValue(value)) {
+        continue
+      }
+      
+      // This might be the start of an unmarked section, break to handle it
+      break
+    }
+    
+    // Add all parsed taxa and their data to the matrix (only for mixed format)
+    if (hasSectionMarkers) {
+      for (const [taxonName, cells] of taxaData) {
+        this.matrixObject.addTaxon(taxonName)
+        const row = this.matrixObject.getCells(taxonName)
+        row.push(...cells)
+      }
+    }
+  }
+
+  private parseSimpleMatrix(characterCount: number, taxaCount: number): void {
+    let taxaProcessed = 0
+    
+    // Parse matrix data without using untilToken - let parent handle semicolon
+    while (taxaProcessed < taxaCount && !this.tokenizer.isFinished()) {
+      // Check for end of section
+      if (this.tokenizer.isToken([Token.SEMICOLON])) {
         break
+      }
+      
+      if (this.tokenizer.consumeTokenIfMatch([Token.COMMENT])) {
+        continue
       }
 
       const rowName = this.tokenizer.getTokenValue()
       const taxonName = rowName.getValue()
       
-      // Skip values that look like continuous character data (numbers, ranges, etc.)
-      if (characterType === CharacterType.CONTINUOUS && this.looksLikeContinuousValue(taxonName)) {
+      // Skip if this looks like character data rather than a taxon name
+      if (this.looksLikeContinuousValue(taxonName)) {
         continue
       }
       
       this.matrixObject.addTaxon(taxonName)
       taxaProcessed++
 
-      // For TNT files, it is possible to have an AT symbol to indicate higher
-      // taxonomy ranks. This is ignored by the parse so we just get value of
-      // discard it.
+      // Handle AT symbol for higher taxonomy ranks
       if (this.tokenizer.consumeTokenIfMatch([Token.AT])) {
         this.tokenizer.consumeToken()
       }
 
       const row = this.matrixObject.getCells(taxonName)
 
-      const cellTokenizer =
-        characterType == CharacterType.CONTINUOUS
-          ? new ContinuousCellTokenizer(this.reader)
-          : new CellTokenizer(this.reader)
-
+      // Use discrete cell tokenizer for simple matrices
+      const cellTokenizer = new CellTokenizer(this.reader)
       this.tokenizer.setTokenizer(cellTokenizer)
+      
       for (let x = 0; x < characterCount && !this.tokenizer.isFinished(); ++x) {
         const cellTokenValue = this.tokenizer.getTokenValue()
-        if (cellTokenValue.getValue() !== '') { // skip empty token value
+        if (cellTokenValue.getValue() !== '') {
           row.push(new Cell(cellTokenValue.getValue()))
         } else {
-          x-- // does not count as a token
+          x-- // Don't count empty tokens
         }
       }
+      
       this.tokenizer.removeTokenizer()
     }
+  }
+
+  private parseCharacterSection(
+    sectionType: CharacterType,
+    startCharacterIndex: number,
+    totalCharacterCount: number,
+    taxaCount: number,
+    characterTypes: CharacterType[],
+    taxaData: Map<string, Cell[]>
+  ): number {
+    let taxaProcessed = 0
+    
+    // Determine how many characters this section contains by looking ahead
+    const sectionCharacterCount = this.determineSectionCharacterCount(sectionType, startCharacterIndex, totalCharacterCount)
+    
+    // Update character types for this section
+    for (let i = 0; i < sectionCharacterCount; i++) {
+      const charIndex = startCharacterIndex + i
+      if (charIndex < totalCharacterCount) {
+        characterTypes[charIndex] = sectionType
+        this.matrixObject.setCharacterType(charIndex, sectionType)
+      }
+    }
+    
+    // Parse taxa data for this section - DON'T use untilToken here!
+    while (taxaProcessed < taxaCount && !this.tokenizer.isFinished()) {
+      // Check for section end markers first
+      if (this.tokenizer.isToken([Token.SEMICOLON])) {
+        break
+      }
+      
+      if (this.tokenizer.isToken([Token.AMPERSAND_CONT, Token.AMPERSAND_NUM])) {
+        break
+      }
+      
+      if (this.tokenizer.consumeTokenIfMatch([Token.COMMENT])) {
+        continue
+      }
+
+      const rowName = this.tokenizer.getTokenValue()
+      const taxonName = rowName.getValue()
+      
+      // Skip values that look like character data rather than taxon names
+      if (sectionType === CharacterType.CONTINUOUS && this.looksLikeContinuousValue(taxonName)) {
+        continue
+      }
+      
+      // Initialize taxon data if not exists
+      if (!taxaData.has(taxonName)) {
+        taxaData.set(taxonName, new Array(totalCharacterCount).fill(null))
+      }
+      
+      const taxonCells = taxaData.get(taxonName)!
+      
+      // Handle AT symbol for higher taxonomy ranks
+      if (this.tokenizer.consumeTokenIfMatch([Token.AT])) {
+        this.tokenizer.consumeToken()
+      }
+
+      // Parse character data for this taxon in this section
+      const cellTokenizer = sectionType === CharacterType.CONTINUOUS
+        ? new ContinuousCellTokenizer(this.reader)
+        : new CellTokenizer(this.reader)
+
+      this.tokenizer.setTokenizer(cellTokenizer)
+      
+      for (let i = 0; i < sectionCharacterCount && !this.tokenizer.isFinished(); i++) {
+        const cellTokenValue = this.tokenizer.getTokenValue()
+        const charIndex = startCharacterIndex + i
+        
+        if (cellTokenValue.getValue() !== '' && charIndex < totalCharacterCount) {
+          taxonCells[charIndex] = new Cell(cellTokenValue.getValue())
+        } else if (cellTokenValue.getValue() === '') {
+          i-- // Don't count empty tokens
+        }
+      }
+      
+      this.tokenizer.removeTokenizer()
+      taxaProcessed++
+    }
+    
+    return startCharacterIndex + sectionCharacterCount
+  }
+
+  private determineSectionCharacterCount(sectionType: CharacterType, startIndex: number, totalCount: number): number {
+    // For the provided file structure:
+    // - Continuous section has 8 characters (columns 0-7)
+    // - Discrete section has 84 characters (columns 8-91)
+    
+    if (sectionType === CharacterType.CONTINUOUS) {
+      // Look ahead to count continuous characters by examining the first taxon's data
+      return this.countContinuousCharacters(startIndex, totalCount)
+    } else {
+      // Remaining characters are discrete
+      return totalCount - startIndex
+    }
+  }
+
+  private countContinuousCharacters(startIndex: number, totalCount: number): number {
+    // Save current position
+    const currentPosition = this.reader.getPosition()
+    
+    try {
+      // Skip to first taxon data line
+      while (!this.tokenizer.isFinished()) {
+        const tokenValue = this.tokenizer.getTokenValue()
+        const value = tokenValue.getValue()
+        
+        // Skip comments and section markers
+        if (this.tokenizer.consumeTokenIfMatch([Token.COMMENT])) {
+          continue
+        }
+        
+        // Found a taxon name (not a continuous value)
+        if (!this.looksLikeContinuousValue(value)) {
+          // Count continuous values in this line
+          let count = 0
+          const tempTokenizer = new ContinuousCellTokenizer(this.reader)
+          this.tokenizer.setTokenizer(tempTokenizer)
+          
+          while (!this.tokenizer.isFinished()) {
+            const cellValue = this.tokenizer.getTokenValue()
+            const cellStr = cellValue.getValue()
+            
+            if (cellStr === '') {
+              continue
+            }
+            
+            // If we hit a non-continuous value or end of line, stop counting
+            if (!this.looksLikeContinuousValue(cellStr) && cellStr !== '?') {
+              break
+            }
+            
+            count++
+            
+            // Check if next character suggests end of continuous section
+            if (this.reader.peekCharacter() === '\n' || this.reader.peekCharacter() === '\r') {
+              break
+            }
+          }
+          
+          this.tokenizer.removeTokenizer()
+          return count
+        }
+      }
+    } finally {
+      // Restore position
+      this.reader.setPosition(currentPosition)
+    }
+    
+    // Default fallback - assume 8 continuous characters based on the file structure
+    return 8
   }
 
   private doCnamesCommand(): void {
