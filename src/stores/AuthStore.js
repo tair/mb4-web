@@ -93,10 +93,47 @@ export const useAuthStore = defineStore({
       if (this.user.authTokenExpiry < expiration) {
         const message = useMessageStore()
         message.setSessionTimeOutMessage()
+        // Clear expired auth state
+        this.invalidate()
         return false
       }
 
       return true
+    },
+
+    async verifyAuthenticationWithServer() {
+      if (!this.hasValidAuthToken()) {
+        return false
+      }
+
+      try {
+        // Use the dedicated authentication verification endpoint
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/users/verify-authentication`)
+        
+        // Optionally update user info if the server provides updated data
+        if (response.data && response.data.authenticated) {
+          console.log('Authentication verified with server')
+          return true
+        } else {
+          console.log('Server returned non-authenticated response')
+          this.invalidate()
+          const message = useMessageStore()
+          message.setSessionTimeOutMessage()
+          return false
+        }
+      } catch (error) {
+        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+          // Token is invalid on server side, clear local state
+          console.log('Server rejected auth token, clearing local authentication state')
+          this.invalidate()
+          const message = useMessageStore()
+          message.setSessionTimeOutMessage()
+          return false
+        }
+        // For other errors, assume auth is still valid to avoid false negatives
+        console.warn('Could not verify authentication with server:', error.message)
+        return true
+      }
     },
 
     async checkProfileConfirmation() {
@@ -122,14 +159,35 @@ export const useAuthStore = defineStore({
         return
       }
 
-      this.user = JSON.parse(storedUser)
-
-      const orcidUser = localStorage.getItem('orcid-user')
-      if (!orcidUser) {
+      const parsedUser = JSON.parse(storedUser)
+      
+      // Validate the token before restoring the user state
+      if (parsedUser.authToken && parsedUser.authTokenExpiry) {
+        const currentTime = Math.floor(new Date().getTime() / 1000)
+        if (parsedUser.authTokenExpiry < currentTime) {
+          // Token is expired, clear the stored data and don't restore state
+          console.log('Stored auth token is expired, clearing localStorage')
+          localStorage.removeItem('mb-user')
+          localStorage.removeItem('orcid-user')
+          const message = useMessageStore()
+          message.setSessionTimeOutMessage()
+          return
+        }
+      } else {
+        // No valid token data, clear the stored data
+        console.log('No valid auth token found in localStorage, clearing')
+        localStorage.removeItem('mb-user')
+        localStorage.removeItem('orcid-user')
         return
       }
 
-      this.orcid = JSON.parse(orcidUser)
+      // Token is valid, restore the user state
+      this.user = parsedUser
+
+      const orcidUser = localStorage.getItem('orcid-user')
+      if (orcidUser) {
+        this.orcid = JSON.parse(orcidUser)
+      }
     },
 
     async getOrcidLoginUrl() {
