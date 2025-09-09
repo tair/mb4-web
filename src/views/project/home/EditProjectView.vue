@@ -49,7 +49,7 @@
           <input
             type="file"
             @change="handleExemplarMediaUpload"
-            accept="image/*"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/webp,image/tiff"
             class="form-control"
           />
           <button
@@ -447,7 +447,7 @@
           <input
             type="file"
             @change="handleJournalCoverUpload"
-            accept="image/*"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/webp,image/tiff"
             class="form-control"
             :disabled="isJournalCoverUploadDisabled"
           />
@@ -786,9 +786,44 @@ async function loadJournals() {
   }
 }
 
+// Helper function to validate file types and show errors for unsupported formats
+function validateImageFile(file, fileType = 'image') {
+  if (!file) return true
+  
+  const fileName = file.name.toLowerCase()
+  const fileExtension = fileName.split('.').pop()
+  
+  // Check for HEIC files specifically
+  if (fileExtension === 'heic' || fileExtension === 'heif') {
+    showError(
+      `HEIC/HEIF files are not supported. Please convert your ${fileType} to JPEG, PNG, or another supported format.`,
+      'Unsupported File Format'
+    )
+    return false
+  }
+  
+  // Check for other unsupported formats
+  const supportedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'tif']
+  if (!supportedExtensions.includes(fileExtension)) {
+    showError(
+      `${fileExtension.toUpperCase()} files are not supported. Please use JPEG, PNG, GIF, BMP, WebP, or TIFF format.`,
+      'Unsupported File Format'
+    )
+    return false
+  }
+  
+  return true
+}
+
 function handleExemplarMediaUpload(event) {
   const file = event.target.files[0]
   if (file) {
+    // Validate file format
+    if (!validateImageFile(file, 'exemplar media')) {
+      // Clear the file input
+      event.target.value = ''
+      return
+    }
     formData.exemplar_media = file
     existingExemplarMedia.value = false
   }
@@ -928,9 +963,9 @@ async function retrieveDOI() {
 
       // Handle each field from the response
       for (const [field, value] of Object.entries(fields)) {
-        if (!value) continue
-
         if (field === 'journal_title') {
+          if (!value) continue
+          
           // Check if journal exists in the dropdown
           const journalExists = journals.value.some(
             (journal) => journal.toLowerCase() === value.toLowerCase()
@@ -944,7 +979,11 @@ async function retrieveDOI() {
             showNewJournal.value = true
             formData.journal_title_other = value
           }
+        } else if (field === 'abstract') {
+          // Map abstract field to description (always set, even if empty)
+          formData.description = value || ''
         } else {
+          if (!value) continue
           // Set other fields directly
           formData[field] = value
         }
@@ -961,6 +1000,12 @@ async function retrieveDOI() {
 function handleJournalCoverUpload(event) {
   const file = event.target.files[0]
   if (file) {
+    // Validate file format
+    if (!validateImageFile(file, 'journal cover')) {
+      // Clear the file input
+      event.target.value = ''
+      return
+    }
     formData.journal_cover = file
   }
 }

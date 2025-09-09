@@ -35,7 +35,7 @@ defineProps<{
       </span>
 
       <table class="table table-bordered mt-2 table-striped">
-        <thead>
+        <thead class="sticky-header">
           <tr>
             <th scope="col">Taxon</th>
             <th scope="col">Unscored cells</th>
@@ -83,3 +83,29 @@ defineProps<{
     <span class="h4"> Project has no matrices defined. </span>
   </div>
 </template>
+
+<style scoped>
+.sticky-header {
+  position: sticky !important;
+  top: 80px !important;
+  z-index: 50 !important;
+  background-color: #f8f9fa !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+.sticky-header th {
+  background-color: #f8f9fa !important;
+  border-top: 1px solid #dee2e6 !important;
+  border-bottom: 2px solid #dee2e6 !important;
+  position: sticky !important;
+  top: 80px !important;
+  padding: 12px 8px !important;
+  font-weight: 600 !important;
+}
+
+/* Ensure the table header is always visible */
+table.table thead.sticky-header th {
+  background-color: #f8f9fa !important;
+  color: #212529 !important;
+}
+</style>
