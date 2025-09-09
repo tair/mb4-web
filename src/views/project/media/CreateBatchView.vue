@@ -8,6 +8,7 @@ import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useNotifications } from '@/composables/useNotifications'
+import { NavigationPatterns } from '@/utils/navigationUtils.js'
 import { batchSchema } from '@/views/project/media/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 
@@ -96,7 +97,7 @@ async function createBatch(event) {
     }
 
     showSuccess('Batch media uploaded successfully!')
-    router.push({ path: `/myprojects/${projectId}/media` })
+    await NavigationPatterns.afterBatchOperation(projectId, 'media')
   } catch (error) {
     console.error('Batch upload error:', error)
     

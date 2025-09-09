@@ -566,6 +566,7 @@ import {
   getJournalCoverTooltip,
   TOOLTIP_ARTICLE_DOI,
 } from '@/utils/util.js'
+import { NavigationPatterns } from '@/utils/navigationUtils.js'
 
 import Tooltip from '@/components/main/Tooltip.vue'
 import FormLayout from '@/components/main/FormLayout.vue'
@@ -905,10 +906,9 @@ async function handleSubmit() {
 
     // Show success state briefly before redirecting
     projectCreated.value = true
-    await new Promise((resolve) => setTimeout(resolve, 800))
-
-    // Force full page refresh to bypass any cached 404 responses
-    window.location.href = `/myprojects/${project.project_id}/overview`
+    
+    // Use robust navigation with proper error handling
+    await NavigationPatterns.afterProjectCreate(project.project_id)
   } catch (err) {
     console.error('Error in handleSubmit:', err)
     error.value =

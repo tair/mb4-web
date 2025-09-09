@@ -6,6 +6,7 @@ import { useRoute } from 'vue-router'
 import { useDocumentsStore } from '@/stores/DocumentsStore'
 import { documentSchema } from '@/views/project/documents/schema.js'
 import { useNotifications } from '@/composables/useNotifications'
+import { NavigationPatterns } from '@/utils/navigationUtils.js'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -32,13 +33,7 @@ async function createDocument(event) {
 
     // Success - show notification and navigate away
     showSuccess('Document created successfully!')
-    try {
-      await router.push({ path: `/myprojects/${projectId}/documents` })
-    } catch (navError) {
-      console.error('Navigation failed:', navError)
-      // Reset loading state if navigation fails
-      isCreating.value = false
-    }
+    await NavigationPatterns.afterCreate(projectId, 'documents')
   } catch (error) {
     console.error('Error creating document:', error)
     showError('Failed to create document. Please try again.')

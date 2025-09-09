@@ -5,6 +5,7 @@ import router from '@/router'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useNotifications } from '@/composables/useNotifications'
+import { NavigationPatterns, navigateBack } from '@/utils/navigationUtils.js'
 import { schema } from '@/views/project/specimens/schema.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import {
@@ -90,7 +91,7 @@ async function create(event) {
     const success = await specimensStore.create(projectId, json)
     if (success) {
       showSuccess('Specimen created successfully!')
-      router.go(-1)
+      await navigateBack(`/myprojects/${projectId}/specimens`)
     } else {
       showError('Failed to create specimen')
     }

@@ -11,6 +11,7 @@ import { useAuthStore } from '@/stores/AuthStore'
 import { useProjectsStore } from '@/stores/ProjectsStore'
 import { AccessControlService, EntityType } from '@/lib/access-control.js'
 import { useNotifications } from '@/composables/useNotifications'
+import { NavigationPatterns } from '@/utils/navigationUtils.js'
 import { editSchema } from '@/views/project/media/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaDetailsCompCompact from '@/components/project/MediaDetailsCompCompact.vue'
@@ -244,7 +245,7 @@ async function editMedia(event) {
     }
 
     showSuccess('Media updated successfully!')
-    window.location.href = `/myprojects/${projectId}/media`
+    await NavigationPatterns.afterEdit(projectId, 'media')
   } catch (error) {
     console.error('Error editing media:', error)
     showError('Failed to modify media', 'Update Failed')

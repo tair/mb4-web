@@ -9,6 +9,7 @@ import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useProjectsStore } from '@/stores/ProjectsStore'
 import { useNotifications } from '@/composables/useNotifications'
+import { NavigationPatterns } from '@/utils/navigationUtils.js'
 import { createSchema } from '@/views/project/media/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import '@/assets/css/form.css'
@@ -193,7 +194,7 @@ async function createMedia(event) {
     }
 
     showSuccess('Media uploaded successfully!')
-    window.location.href = `/myprojects/${projectId}/media`
+    await NavigationPatterns.afterComplexResourceCreate(projectId, 'media')
   } catch (error) {
     console.error('Media upload error:', error)
 

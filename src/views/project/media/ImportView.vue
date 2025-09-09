@@ -5,6 +5,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useNotifications } from '@/composables/useNotifications'
+import { NavigationPatterns } from '@/utils/navigationUtils.js'
 import { TaxaColumns, sortTaxaAlphabetically } from '@/utils/taxa'
 import { Filter } from '@/types/most'
 import { toISODate, toDMYDate } from '@/utils/date'
@@ -467,20 +468,8 @@ async function importMediaForSelectedTaxa() {
 
     showSuccess('You have successfully imported the media into Morphobank but you must curate them before they can be released into your project.', 'Import Successful')
     
-    // Use a small timeout to ensure the alert is dismissed before redirect
-    setTimeout(() => {
-      // Try using route name instead of path for more reliable navigation
-      router.push({ 
-        name: 'MyProjectMediaCurateView', 
-        params: { id: projectId } 
-      }).catch(() => {
-        // Fallback to path-based navigation
-        router.push({ path: `/myprojects/${projectId}/media/curate` }).catch(() => {
-          // Final fallback to window.location
-          window.location.href = `/myprojects/${projectId}/media/curate`
-        })
-      })
-    }, 100)
+    // Navigate to curation with proper delay for message visibility
+    await NavigationPatterns.afterBatchOperation(projectId, 'media/curate', { delay: 100 })
   } catch (error) {
     console.error('Error importing media:', error)
     showError('Failed to import media. Please try again.')

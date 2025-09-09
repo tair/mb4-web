@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useMatricesStore } from '@/stores/MatricesStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useNotifications } from '@/composables/useNotifications'
+import { NavigationPatterns } from '@/utils/navigationUtils.js'
 import {
   getTaxonomicUnitOptions,
   getTaxonName,
@@ -83,8 +84,8 @@ async function createMatrix() {
       // Clear matrices store to refresh data
       await matricesStore.invalidate()
 
-      // Navigate to matrices list
-      window.location.href = `/myprojects/${projectId}/matrices`
+      // Use robust navigation with proper error handling
+      await NavigationPatterns.afterComplexResourceCreate(projectId, 'matrices')
     }
   } catch (error) {
     console.error('Error creating manual matrix:', error)
