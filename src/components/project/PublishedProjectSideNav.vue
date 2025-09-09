@@ -66,7 +66,7 @@ onMounted(() => {
     <li
       v-if="mediaStore.hasMedia"
       :class="[
-        item === 'media' ? 'list-group-item-warning' : 'list-group-item-action',
+        item === 'media' || item === 'mediaDetail' ? 'list-group-item-warning' : 'list-group-item-action',
         'list-group-item',
       ]"
     >

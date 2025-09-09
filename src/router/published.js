@@ -96,6 +96,15 @@ const PUBLISHED_PROJECT_DETAIL_VIEWS = [
       ),
   },
   {
+    path: 'media/:mediaId(\\d+)',
+    name: 'ProjectMediaDetailView',
+    meta: { itemName: 'mediaDetail' },
+    component: () =>
+      import(
+        /* webpackChunkName: "published" */ '@/views/project/published/MediaDetailView.vue'
+      ),
+  },
+  {
     path: 'folios',
     name: 'ProjectFoliosView',
     meta: { itemName: 'folios' },
