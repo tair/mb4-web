@@ -82,7 +82,7 @@ axios.interceptors.request.use(
   }
 )
 
-// Optional: Set up response interceptor for session-related error handling
+// Set up response interceptor for session and authentication error handling
 axios.interceptors.response.use(
   (response) => {
     return response
@@ -97,6 +97,22 @@ axios.interceptors.response.use(
       sessionManager.renewSession()
       // Optionally retry the request with new session
     }
+    
+    // Handle authentication errors by clearing local auth state
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      // Import authStore dynamically to avoid circular dependency
+      import('./stores/AuthStore.js').then(({ useAuthStore }) => {
+        const authStore = useAuthStore()
+        // Only clear if we have auth data (to avoid clearing on public endpoints)
+        if (authStore.user?.authToken) {
+          console.log('Authentication error detected, clearing local auth state')
+          authStore.invalidate()
+        }
+      }).catch(err => {
+        console.warn('Could not clear auth state on error:', err)
+      })
+    }
+    
     return Promise.reject(error)
   }
 )

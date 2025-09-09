@@ -5,8 +5,6 @@ import { usePublicMediaStore } from '@/stores/PublicMediaStore.js'
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
 import MediaCardComp from '@/components/project/MediaCardComp.vue'
-import MediaDetailsComp from '@/components/project/MediaDetailsComp.vue'
-import { logView, HIT_TYPES } from '@/lib/analytics.js'
 
 const route = useRoute()
 
@@ -15,33 +13,18 @@ const projectStore = usePublicProjectDetailsStore()
 const projectId = route.params.id
 const mediaId = route.params.mediaId
 const thumbnailView = ref(true)
-const mediaDetailsFor = ref(null)
 const orderByOptions = mediaStore.getOrderByOptions
 let orderBySelection = ref(mediaStore.getDefaultOrderBy)
 let searchStr = ref(null)
 
-onMounted(() => {
-  mediaStore.fetchMediaFiles(projectId)
+onMounted(async () => {
+  await mediaStore.fetchMediaFiles(projectId)
   // need to get project title
-  projectStore.fetchProject(projectId)
+  await projectStore.fetchProject(projectId)
 })
 
-let isDetailsActive = ref(false)
 let selectedPage = ref(mediaStore.currentPage)
 let selectedPageSize = ref(mediaStore.itemsPerPage)
-
-function onShowDetails(media_file) {
-  isDetailsActive.value = true
-  mediaDetailsFor.value = media_file
-  // Track media view when a specific media item is clicked
-  if (projectId && media_file.media_id) {
-    logView({
-      project_id: projectId,
-      hit_type: HIT_TYPES.MEDIA,
-      row_id: media_file.media_id,
-    })
-  }
-}
 
 function searchByStr() {
   mediaStore.filterMediaFiles(searchStr.value)
@@ -157,44 +140,7 @@ watch(selectedPageSize, (currentValue, oldValue) => {
       </div>
     </div>
 
-    <nav>
-      <div class="nav nav-tabs" id="nav-tab" role="tablist">
-        <a
-          @click="isDetailsActive = false"
-          :class="[{ active: isDetailsActive == false }, 'nav-link']"
-          id="nav-media-list-tab"
-          data-bs-toggle="tab"
-          href="#nav-media-list"
-          role="tab"
-          aria-controls="nav-media-list"
-          aria-selected="true"
-          >Media list</a
-        >
-        <a
-          @click="isDetailsActive = true"
-          :class="[{ active: isDetailsActive == true }, 'nav-link']"
-          id="nav-media-details-tab"
-          data-bs-toggle="tab"
-          href="#nav-media-details"
-          role="tab"
-          aria-controls="nav-media-details"
-          aria-selected="false"
-          >Media details</a
-        >
-      </div>
-    </nav>
-    <div class="tab-content" id="nav-tabContent">
-      <div
-        :class="[
-          { active: !isDetailsActive },
-          { show: !isDetailsActive },
-          'tab-pane',
-          'fade',
-        ]"
-        id="nav-media-list"
-        role="tabpanel"
-        aria-labelledby="nav-media-list-tab"
-      >
+    <!-- Media List Content -->
         <div
           :class="[
             thumbnailView
@@ -208,35 +154,18 @@ watch(selectedPageSize, (currentValue, oldValue) => {
             v-for="(media_file, n) in mediaStore.mediaList"
             :key="n"
           >
-            <a href="#" @click="onShowDetails(media_file)" class="nav-link">
+            <router-link 
+              :to="{ name: 'ProjectMediaDetailView', params: { id: projectId, mediaId: media_file.media_id } }" 
+              class="nav-link"
+            >
               <MediaCardComp
                 :key="media_file.media_id"
                 :media_file="media_file"
                 :full_view="thumbnailView"
                 :project_id="projectId"
               ></MediaCardComp>
-            </a>
+            </router-link>
           </div>
         </div>
-      </div>
-      <div
-        :class="[
-          { active: isDetailsActive },
-          { show: isDetailsActive },
-          'tab-pane',
-          'fade',
-        ]"
-        id="nav-media-details"
-        role="tabpanel"
-        aria-labelledby="nav-media-details-tab"
-      >
-        <!-- For: {{ mediaDetailsFor }} -->
-        <MediaDetailsComp
-          :media_file="mediaDetailsFor"
-          :project_id="projectId"
-          :use-annotation-link-id="false"
-        ></MediaDetailsComp>
-      </div>
-    </div>
   </ProjectLoaderComp>
 </template>

@@ -54,6 +54,11 @@ export const usePublicMediaStore = defineStore({
       if (!idList || idList.length == 0) return null
       return this.full_media_files.filter((m) => idList.includes(m.media_id))
     },
+    
+    getMediaFileById(mediaId) {
+      if (!this.full_media_files || !mediaId) return null
+      return this.full_media_files.find((m) => m.media_id == mediaId)
+    },
     filterMediaFiles(searchStr) {
       if (!searchStr) {
         this.media_files = this.full_media_files

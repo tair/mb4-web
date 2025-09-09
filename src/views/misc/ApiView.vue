@@ -16,9 +16,9 @@
     <h2>Using the API</h2>
     <div>
       All API functions are accessed using URLs in the form
-      <blockquote>
+      <blockquote class="ms-5">
         <b>
-          http://www.morphobank.org/service.php/[command]/[resource
+          {{ apiBaseUrl }}/service/[command]/[resource
           type]?[url-encoded parameter list]
         </b>
       </blockquote>
@@ -38,8 +38,68 @@
     <div>
       The API List command will return a JSON object similar to this one:
     </div>
-    <pre><code>
-{		
+    <pre><code>{{ apiResponseExample }}</code></pre>
+    <div>
+      If the request was successful the <b>status</b> property will be set to
+      ok, otherwise it will be set to err. When an error occurs the
+      <b>error</b> property will include a description of the error. The
+      <b>totalResults</b> property will indicate the total number of resources
+      found. The <b>parameters</b> object includes a summary of any parameters
+      passed to the command.
+    </div>
+    <div>
+      The results property, contains a list of JSON objects representing each
+      returned resource.
+    </div>
+    <br />
+    <h1>Examples</h1>
+    <h2>Return a list of all published MorphoBank projects</h2>
+    <blockquote>
+      <b>{{ apiBaseUrl }}/service/List/PublishedProjects</b>
+    </blockquote>
+    <pre><code>{{ publishedProjectsExample }}</code></pre>
+    <br />
+    <h2>Return a list of project taxonomy</h2>
+    <blockquote>
+      <b
+        >{{ apiBaseUrl }}/service/List/ProjectTaxonomy?project_id=44</b
+      >
+    </blockquote>
+    <div>
+      ProjectTaxonomy requires the following parameter:<br />
+      <b>project_id</b> is the unique, numberic identifier of the project to
+      find media for
+    </div>
+    <pre><code>{{ projectTaxonomyExample }}</code></pre>
+    <br />
+    <h2>Return a list of project media</h2>
+    <blockquote>
+      <b>{{ apiBaseUrl }}/service/List/ProjectMedia?project_id=44</b>
+    </blockquote>
+    <div>
+      ProjectMedia requires the following parameter:<br />
+      <b>project_id</b> is the unique, numberic identifier of the project to
+      find media for
+    </div>
+    <pre><code>{{ projectMediaExample }}</code></pre>
+  </div>
+</template>
+
+<script setup>
+import { computed } from 'vue'
+
+// Get the API base URL from environment variable
+const apiBaseUrl = computed(() => {
+  return import.meta.env.VITE_API_URL || 'https://morphobank.org/services'
+})
+
+const frontendBaseUrl = computed(() => {
+  return import.meta.env.VITE_HOST || 'https://morphobank.org'
+})
+
+// Computed properties for JSON examples with dynamic URLs
+const apiResponseExample = computed(() => {
+  return `{		
     "ok": true,
     "totalResults": 305,
     "parameters": {
@@ -57,36 +117,19 @@
             "copyright_permission": "Permission to use media on MorphoBank granted by copyright holder",
             "copyright_license": "Attribution- CC BY-NC-SA - reuse here and applied to future uses but noncommercial",
             "copyright_holder": "Gonzalo Giribet",
-            "notes": "Image by Gonzalo Giribet\r\nImage edited by Jessica Tupper",
+            "notes": "Image by Gonzalo Giribet\\r\\nImage edited by Jessica Tupper",
             "web_source": "",
             "web_source_description": "",
             "citation": "",
-            "url": "https://morphobank.org/index.php/Projects/Media/id/31/project_id/44"
+            "url": "${frontendBaseUrl.value}/project/44/media/31"
         },
         ...and 305 more...
     ]
-}
-    </code></pre>
-    <div>
-      If the request was successful the <b>status</b> property will be set to
-      ok, otherwise it will be set to err. When an error occurs the
-      <b>error</b> property will include a description of the error. The
-      <b>totalResults</b> property will indicate the total number of resources
-      found. The <b>parameters</b> object includes a summary of any parameters
-      passed to the command.
-    </div>
-    <div>
-      The results property, contains a list of JSON objects representing each
-      returned resource.
-    </div>
-    <br />
-    <h1>Examples</h1>
-    <h2>Return a list of all published MorphoBank projects</h2>
-    <blockquote>
-      <b>https://morphobank.org/service.php/List/PublishedProjects</b>
-    </blockquote>
-    <pre><code>
-{
+}`
+})
+
+const publishedProjectsExample = computed(() => {
+  return `{
   
     "ok": true,
     "status": "ok",
@@ -98,7 +141,7 @@
             "media_count": 309,
             "taxonomy_count": 30,
             "matrices_count": 1,
-            "url": "https://morphobank.org/index.php/Projects/ProjectOverview/project_id/44"
+            "url": "${frontendBaseUrl.value}/project/44/overview"
         },
         {
             "project_id": "45",
@@ -106,26 +149,15 @@
             "media_count": 187,
             "taxonomy_count": 55,
             "matrices_count": 1,
-            "url": "https://morphobank.org/index.php/Projects/ProjectOverview/project_id/45"
+            "url": "${frontendBaseUrl.value}/project/45/overview"
         },
         ...and 513 more...
     ]
-}
-    </code></pre>
-    <br />
-    <h2>Return a list of project taxonomy</h2>
-    <blockquote>
-      <b
-        >https://morphobank.org/service.php/List/ProjectTaxonomy?project_id=44</b
-      >
-    </blockquote>
-    <div>
-      ProjectTaxonomy requires the following parameter:<br />
-      <b>project_id</b> is the unique, numberic identifier of the project to
-      find media for
-    </div>
-    <pre><code>
-{
+}`
+})
+
+const projectTaxonomyExample = computed(() => {
+  return `{
 
     "ok": true,
     "status": "ok",
@@ -174,20 +206,11 @@
         },
         ...and 29 more...
     ]
-}
-    </code></pre>
-    <br />
-    <h2>Return a list of project media</h2>
-    <blockquote>
-      <b>https://morphobank.org/service.php/List/ProjectMedia?project_id=44</b>
-    </blockquote>
-    <div>
-      ProjectMedia requires the following 2 parameters:<br />
-      <b>project_id</b> is the unique, numberic identifier of the project to
-      find media for
-    </div>
-    <pre><code>
-{
+}`
+})
+
+const projectMediaExample = computed(() => {
+  return `{
 
     "ok": true,
     "status": "ok",
@@ -207,18 +230,18 @@
             "copyright_permission": "Permission to use media on MorphoBank granted by copyright holder",
             "copyright_license": "Attribution- CC BY-NC-SA - reuse here and applied to future uses but noncommercial",
             "copyright_holder": "Gonzalo Giribet",
-            "notes": "Image by Gonzalo Giribet\r\nImage edited by Jessica Tupper",
+            "notes": "Image by Gonzalo Giribet\\r\\nImage edited by Jessica Tupper",
             "web_source": "",
             "web_source_description": "",
             "citation": "",
-            "url": "https:\/\/morphobank.org\/index.php\/Projects\/Media\/id\/31\/project_id\/44"
+            "url": "${frontendBaseUrl.value}/project/44/media/31"
         }
       ...and 304 more...
     ]
-}
-    </code></pre>
-  </div>
-</template>
+}`
+})
+</script>
+
 <style scoped>
 .api pre {
   background-color: #ededed;
