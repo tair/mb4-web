@@ -38,7 +38,7 @@ const props = defineProps<{
 <template>
   <div>
     <h3>Members</h3>
-    <table class="table table-bordered table-striped">
+    <table class="table table-bordered table-striped table-sm small">
       <thead>
         <tr>
           <th scope="col">Member Name</th>
@@ -94,7 +94,9 @@ const props = defineProps<{
       <tbody>
         <tr :key="idx" v-for="(member, idx) in members">
           <td scope="row">
-            <div class="fw-bold">{{ member.fname + ' ' + member.lname }}</div>
+            <div class="fw-bold">
+              {{ member.fname + ' ' + member.lname }} <Tooltip :content="member.email"></Tooltip>
+            </div>
 
             <small v-if="member.administrator == '1'" class="text-danger"
               >Project Administrator

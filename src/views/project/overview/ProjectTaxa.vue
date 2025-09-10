@@ -37,7 +37,7 @@ const props = defineProps<{
         Taxa)
       </span>
 
-      <table class="table table-bordered mt-2 table-striped">
+      <table class="table table-bordered mt-2 table-striped table-sm small">
         <thead>
           <tr>
             <th scope="col">Taxon</th>

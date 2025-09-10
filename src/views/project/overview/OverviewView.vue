@@ -38,32 +38,6 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-
-    <!-- Additional sections for unpublished projects -->
-    <div class="mt-4" v-if="projectOverviewStore.overview">
-      <!-- Recent Changes -->
-      <div class="mb-5" v-if="projectOverviewStore.overview.recent_changes">
-        <ProjectRecentChanges
-          :recentChanges="projectOverviewStore.overview.recent_changes"
-        ></ProjectRecentChanges>
-      </div>
-
-      <!-- Members -->
-      <div class="mb-5" v-if="projectOverviewStore.overview.members">
-        <ProjectMembers
-          :members="projectOverviewStore.overview.members"
-          :published="projectOverviewStore.overview.published"
-        ></ProjectMembers>
-      </div>
-
-      <!-- Taxa -->
-      <div class="mb-5" v-if="projectOverviewStore.overview.taxa">
-        <ProjectTaxa
-          :taxa="projectOverviewStore.overview.taxa"
-          :published="projectOverviewStore.overview.published"
-        ></ProjectTaxa>
-      </div>
-    </div>
   </LoadingIndicator>
 </template>
 <style scoped></style>

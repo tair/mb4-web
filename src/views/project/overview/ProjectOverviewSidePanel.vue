@@ -148,10 +148,10 @@ const refreshStatistics = async () => {
             </button>
           </li>
           <li class="list-group-item">
-            <span class="fw-bold">Statistics generated: </span>
+            <span class="fw-bold">Statistics generated: </span><br />
             {{ toDMYDateFromTimestamp(overview.stats.timestamp) }} <br />
             <button 
-              class="btn btn-sm btn-link p-0"
+              class="btn btn-sm btn-link p-0 mt-1 text-start"
               @click="refreshStatistics"
               :disabled="isRefreshing"
             >

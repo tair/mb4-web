@@ -2,11 +2,8 @@
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore'
-import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import ProjectMembers from '@/views/project/overview/ProjectMembers.vue'
-import ProjectOverviewSidePanel from '@/views/project/overview/ProjectOverviewSidePanel.vue'
 import ProjectRecentChanges from '@/views/project/overview/ProjectRecentChanges.vue'
-import ProjectSummary from '@/views/project/overview/ProjectSummary.vue'
 import ProjectTaxa from '@/views/project/overview/ProjectTaxa.vue'
 
 const route = useRoute()
@@ -36,6 +33,7 @@ onMounted(async () => {
     >
       <ProjectMembers
         :members="projectOverviewStore.overview.members"
+        :published="projectOverviewStore.overview.published"
       ></ProjectMembers>
     </div>
     <div class="py-5 border-bottom">
@@ -43,3 +41,5 @@ onMounted(async () => {
     </div>
   </div>
 </template>
+
+

@@ -20,7 +20,7 @@ const foldThreshold = 20
   <div id="project-view">
     <h3>Project Views</h3>
     <!-- {{ projectStore.stats.project_views[0]["hit_type"] }} -->
-    <table class="table table-bordered table-striped">
+    <table class="table table-bordered table-striped table-sm small">
       <thead>
         <tr>
           <th scope="col">Type</th>
