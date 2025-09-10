@@ -51,11 +51,13 @@ const props = defineProps<{
 }>()
 
 // Environment variables
-const DOI_URL = import.meta.env.VITE_DOI_URL
+const DOI_URL = import.meta.env?.VITE_DOI_URL || 'https://doi.org'
+const VITE_HOST = import.meta.env?.VITE_HOST || 'http://morphobank.org'
 
 // const overviewStore = useProjectOverviewStore() // No longer needed
 const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 const exemplarMedia = ref(null)
+const showFullDescription = ref(false)
 
 // Computed property to get overview data - now always uses props
 const overview = computed(() => props.overview)
@@ -125,6 +127,22 @@ function popDownloadAlert() {
 </script>
 
 <template>
+  <!-- Project Status Messages -->
+  <div v-if="overview.published === 1" class="alert alert-info mb-3">
+    <h2 style="color:#3D8DA3;">This project is published</h2>
+    <p style="color:#3D8DA3;">
+      If you wish to edit it send a request to MorphoBank support. 
+      If you would like to reuse it, use the "Request project duplication" link at right.
+    </p>
+  </div>
+  
+  <div v-else class="alert alert-warning mb-3">
+    <h2 style="color:#3D8DA3;">This project is unpublished</h2>
+    <p style="color:#3D8DA3;">
+      You are working on your project in the My Projects section of the site.
+    </p>
+  </div>
+
   <div class="row">
     <div class="col">
       <div class="thumbnil-block p-2">
@@ -166,7 +184,26 @@ function popDownloadAlert() {
       </div>
 
       <h4>Abstract</h4>
-      <p v-html="overview.description"></p>
+      <div v-if="overview.description">
+        <div v-if="overview.description.length <= 500" v-html="overview.description"></div>
+        <div v-else>
+          <div v-if="!showFullDescription">
+            <div v-html="overview.description.substring(0, 500) + '...'"></div>
+            <button class="btn btn-link p-0 mt-2" @click="showFullDescription = true">
+              Show more
+            </button>
+          </div>
+          <div v-else>
+            <div v-html="overview.description"></div>
+            <button class="btn btn-link p-0 mt-2" @click="showFullDescription = false">
+              Show less
+            </button>
+          </div>
+        </div>
+      </div>
+      <div v-else class="text-muted">
+        No description provided.
+      </div>
 
       <!-- Always show Article DOI section -->
       <div class="mt-5">
@@ -207,6 +244,12 @@ function popDownloadAlert() {
           {{ overview.project_doi }}
         </a>
       </div>
+
+      <!-- Project Permalink (only for unpublished projects) -->
+      <div v-if="overview.published !== 1" class="mt-3">
+        <span class="fw-bold">Project Permalink:</span><br/>
+        When you release your data on MorphoBank <strong>{{ VITE_HOST }}/permalink/?P{{ overview.project_id }}</strong> will be the permalink you should insert into your publication so readers can find your data. This will not be active until your Project is published by you on MorphoBank, however, please insert it into your publication.
+      </div>
     </div>
   </div>
 
@@ -217,11 +260,12 @@ function popDownloadAlert() {
         <div class="card-body">
           <ul>
             <li>{{ formatNumber(overview.stats.media) }} Media</li>
-            <li>{{ formatNumber(overview.stats.matrices) }} Matrix</li>
-            <li>{{ formatNumber(overview.stats.docs) }} Documents</li>
-            <li>{{ formatNumber(overview.stats.taxa) }} Taxa</li>
-            <li>{{ formatNumber(overview.stats.specimens) }} Specimens</li>
-            <li>{{ formatNumber(overview.stats.characters) }} Characters</li>
+            <li>{{ formatNumber(overview.stats.matrices) }} {{ overview.stats.matrices === 1 ? 'Matrix' : 'Matrices' }}</li>
+            <li>{{ formatNumber(overview.stats.docs) }} {{ overview.stats.docs === 1 ? 'Document' : 'Documents' }}</li>
+            <li v-if="overview.stats.folios > 0">{{ formatNumber(overview.stats.folios) }} {{ overview.stats.folios === 1 ? 'Folio' : 'Folios' }}</li>
+            <li>{{ formatNumber(overview.stats.taxa) }} {{ overview.stats.taxa === 1 ? 'Taxon' : 'Taxa' }}</li>
+            <li>{{ formatNumber(overview.stats.specimens) }} {{ overview.stats.specimens === 1 ? 'Specimen' : 'Specimens' }}</li>
+            <li>{{ formatNumber(overview.stats.characters) }} {{ overview.stats.characters === 1 ? 'Character' : 'Characters' }}</li>
           </ul>
           <div>
             Total size of project's media files:
