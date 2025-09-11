@@ -46,20 +46,42 @@
           </button>
         </div>
         
-        <!-- Save All button removed - individual saves happen instantly -->
-        
-        <!-- Overview button -->
-        <!-- <button 
-          @click="toggleOverview"
+      <!-- Save All button removed - individual saves happen instantly -->
+      
+      <!-- Label Display Mode Toggle -->
+      <div class="label-mode-controls">
+        <button 
+          @click="toggleLabelsPanel"
           class="btn btn-outline"
-          :class="{ active: showOverview }"
-          title="Show image overview"
+          :class="{ active: showLabelsPanel }"
+          title="Toggle labels panel"
         >
-          <span class="overview-icon">🗺️</span>
-          Overview
-        </button> -->
+          <span class="labels-icon">🏷️</span>
+          Labels
+        </button>
         
-        <!-- Help button -->
+        <button 
+          @click="toggleLabelMode"
+          class="btn btn-outline"
+          :title="labelMode === 'numbers' ? 'Switch to full text labels' : 'Switch to numbered labels'"
+        >
+          <span class="mode-icon">{{ labelMode === 'numbers' ? '123' : 'ABC' }}</span>
+          {{ labelMode === 'numbers' ? 'Numbers' : 'Text' }}
+        </button>
+      </div>
+      
+      <!-- Overview button -->
+      <!-- <button 
+        @click="toggleOverview"
+        class="btn btn-outline"
+        :class="{ active: showOverview }"
+        title="Show image overview"
+      >
+        <span class="overview-icon">🗺️</span>
+        Overview
+      </button> -->
+      
+      <!-- Help button -->
         <div class="help-container">
           <button 
             @click="toggleHelp"
@@ -153,6 +175,28 @@
           </div>
 
           <div class="help-section">
+            <h5>Label Display</h5>
+            <div class="help-item">
+              <span class="help-icon-display">🏷️</span>
+              <div class="help-text">
+                <strong>Labels Panel</strong> - Toggle the side panel to view all annotations in a clean list format
+              </div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon-display">123</span>
+              <div class="help-text">
+                <strong>Number Mode</strong> - Shows small numbered circles instead of text labels to avoid clutter
+              </div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon-display">ABC</span>
+              <div class="help-text">
+                <strong>Text Mode</strong> - Shows full text labels on the image (can get cluttered with many annotations)
+              </div>
+            </div>
+          </div>
+
+          <div class="help-section">
             <h5>Annotation Management</h5>
             <div class="help-item">
               <span class="help-icon-display">🏷️</span>
@@ -166,6 +210,12 @@
                 <strong>Edit</strong> - Double-click on annotations or labels to edit their properties
               </div>
             </div>
+            <div class="help-item">
+              <span class="help-icon-display">🖱️</span>
+              <div class="help-text">
+                <strong>Hover</strong> - In number mode, hover over numbered labels to see full text in a tooltip
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -177,7 +227,7 @@
     <div class="annotation-canvas-container" ref="canvasContainer">
       <img 
         ref="mediaImage"
-        :src="mediaUrl"
+        :src="currentImageUrl || mediaUrl"
         @load="onImageLoad"
         @error="onImageError"
         alt="Media for annotation"
@@ -197,18 +247,35 @@
       
       <!-- Annotation Labels -->
       <div
-        v-for="annotation in annotations"
+        v-for="(annotation, index) in annotations"
         :key="annotation.annotation_id"
         :style="getAnnotationLabelStyle(annotation)"
         :class="['annotation-label', { 
-          'selected': selectedAnnotation?.annotation_id === annotation.annotation_id
+          'selected': selectedAnnotation?.annotation_id === annotation.annotation_id,
+          'numbered-label': labelMode === 'numbers',
+          'text-label': labelMode === 'text'
         }]"
         @click="selectAnnotation(annotation)"
         @dblclick="editAnnotation(annotation)"
-        :title="`Annotation ${annotation.annotation_id}: ${getDisplayLabelText(annotation)}`"
+        :title="labelMode === 'numbers' ? `Annotation ${index + 1}: ${getDisplayLabelText(annotation)}` : `Annotation ${annotation.annotation_id}: ${getDisplayLabelText(annotation)}`"
         v-show="shouldShowLabel(annotation)"
+        @mouseenter="hoveredAnnotation = annotation"
+        @mouseleave="hoveredAnnotation = null"
       >
-        {{ getDisplayLabelText(annotation) }}
+        <span v-if="labelMode === 'numbers'" class="annotation-number">{{ index + 1 }}</span>
+        <span v-else>{{ getDisplayLabelText(annotation) }}</span>
+      </div>
+      
+      <!-- Hover Tooltip for numbered mode -->
+      <div
+        v-if="labelMode === 'numbers' && hoveredAnnotation"
+        class="annotation-tooltip"
+        :style="getTooltipStyle(hoveredAnnotation)"
+      >
+        <div class="tooltip-content">
+          <strong>Annotation {{ getAnnotationIndex(hoveredAnnotation) + 1 }}</strong>
+          <div>{{ getTooltipLabelText(hoveredAnnotation) }}</div>
+        </div>
       </div>
       
       <!-- Debug info (minimal) -->
@@ -217,6 +284,66 @@
         <div>Image loaded: {{ imageLoaded }}</div>
         <div>Refs ready: img={{ !!$refs.mediaImage }}, container={{ !!$refs.canvasContainer }}</div>
       </div> -->
+    </div>
+
+    <!-- Labels Panel -->
+    <div 
+      v-if="showLabelsPanel" 
+      class="labels-panel" 
+      ref="labelsPanel"
+      :style="getPanelStyle()"
+      :class="{ 'dragging': isDraggingPanel }"
+    >
+      <div 
+        class="labels-header"
+        @mousedown="startDragging"
+        :class="{ 'draggable': true }"
+      >
+        <span class="drag-handle">⋮⋮</span>
+        <span class="labels-title">Annotations ({{ annotations.length }})</span>
+        <button @click="showLabelsPanel = false" class="labels-close">✕</button>
+      </div>
+      <div class="labels-content">
+        <div v-if="annotations.length === 0" class="no-annotations">
+          No annotations yet
+        </div>
+        <div
+          v-for="(annotation, index) in annotations"
+          :key="annotation.annotation_id"
+          :class="['label-item', { 
+            'selected': selectedAnnotation?.annotation_id === annotation.annotation_id 
+          }]"
+          @click="selectAndFocusAnnotation(annotation)"
+          @dblclick="editAnnotation(annotation)"
+        >
+          <div class="label-number">{{ index + 1 }}</div>
+          <div class="label-details">
+            <div class="label-text">{{ getDisplayLabelText(annotation) || 'Unlabeled annotation' }}</div>
+            <div class="label-meta">
+              <span class="label-type">{{ getAnnotationTypeDisplay(annotation.type) }}</span>
+              <span v-if="annotation.annotation_id" class="label-id">ID: {{ annotation.annotation_id }}</span>
+            </div>
+          </div>
+          <div class="label-actions">
+            <button 
+              v-if="canEdit" 
+              @click.stop="editAnnotation(annotation)"
+              class="label-action-btn edit-btn"
+              title="Edit annotation"
+            >
+              ✏️
+            </button>
+            <button 
+              v-if="canDeleteAnnotation(annotation)" 
+              @click.stop="deleteAnnotation(annotation)"
+              class="label-action-btn delete-btn"
+              title="Delete annotation"
+            >
+              🗑️
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Image Overview Panel -->
@@ -228,7 +355,7 @@
       <div class="overview-container" ref="overviewContainer">
         <img 
           ref="overviewImage"
-          :src="mediaUrl"
+          :src="currentImageUrl || mediaUrl"
           @load="onOverviewImageLoad"
           @click="onOverviewClick"
           alt="Image overview"
@@ -285,6 +412,7 @@
 <script>
 import AnnotationEditModal from './AnnotationEditModal.vue'
 import { annotationService } from '../../services/annotationService.js'
+import { buildMediaUrl } from '../../utils/fileUtils.js'
 
 export default {
   name: 'AnnotationViewer',
@@ -377,12 +505,25 @@ export default {
       // UI states
       showHelp: false,
       showOverview: false,
+      showLabelsPanel: false,
+      labelMode: 'numbers', // 'numbers' or 'text'
+      hoveredAnnotation: null,
+      
+      // Panel dragging state
+      isDraggingPanel: false,
+      panelPosition: { x: 20, y: 20 }, // Default position from right/top
+      dragStartPos: { x: 0, y: 0 },
+      dragStartPanelPos: { x: 0, y: 0 },
       
       // Character information cache for enhanced label display
       characterDisplayCache: new Map(),
       
       // Enhanced label text cache to handle async loading
-      enhancedLabelCache: new Map()
+      enhancedLabelCache: new Map(),
+      
+      // Image fallback state
+      currentImageUrl: null,
+      hasTriedFallback: false
     }
   },
 
@@ -433,6 +574,15 @@ export default {
       },
       deep: true,
       immediate: true
+    },
+    
+    mediaUrl: {
+      handler(newUrl) {
+        // Reset fallback state when mediaUrl changes
+        this.currentImageUrl = newUrl
+        this.hasTriedFallback = false
+      },
+      immediate: true
     }
   },
 
@@ -445,12 +595,16 @@ export default {
     setupEventListeners() {
       document.addEventListener('keydown', this.onKeyDown)
       document.addEventListener('click', this.onDocumentClick)
+      document.addEventListener('mousemove', this.onDocumentMouseMove)
+      document.addEventListener('mouseup', this.onDocumentMouseUp)
       window.addEventListener('resize', this.onWindowResize)
     },
 
     removeEventListeners() {
       document.removeEventListener('keydown', this.onKeyDown)
       document.removeEventListener('click', this.onDocumentClick)
+      document.removeEventListener('mousemove', this.onDocumentMouseMove)
+      document.removeEventListener('mouseup', this.onDocumentMouseUp)
       window.removeEventListener('resize', this.onWindowResize)
     },
 
@@ -466,6 +620,25 @@ export default {
           this.updateViewportIndicator()
         })
       }
+    },
+
+    toggleLabelsPanel() {
+      this.showLabelsPanel = !this.showLabelsPanel
+      
+      // Reset position to default when opening panel for the first time
+      if (this.showLabelsPanel && this.panelPosition.x === 20 && this.panelPosition.y === 20) {
+        // Calculate default position from the right side
+        const defaultRight = 20
+        const panelWidth = 350
+        this.panelPosition = { 
+          x: window.innerWidth - panelWidth - defaultRight, 
+          y: 20 
+        }
+      }
+    },
+
+    toggleLabelMode() {
+      this.labelMode = this.labelMode === 'numbers' ? 'text' : 'numbers'
     },
 
     // Overview methods
@@ -629,6 +802,11 @@ export default {
       this.setupCanvas()
       this.drawAnnotations()
       
+      // Log successful load (helpful for debugging fallback behavior)
+      if (this.hasTriedFallback) {
+        console.warn('Successfully loaded fallback image (large version)')
+      }
+      
       // Force label update now that image is loaded
       this.$nextTick(() => {
         this.$forceUpdate()
@@ -636,8 +814,18 @@ export default {
     },
 
     onImageError() {
-      console.error('Failed to load media image')
-      this.showSaveStatus('Failed to load image', 'error')
+      console.error('Failed to load media image:', this.currentImageUrl || this.mediaUrl)
+      
+      // Try fallback to 'large' version if we haven't tried it yet
+      if (!this.hasTriedFallback) {
+        console.warn('Trying fallback to large version...')
+        this.hasTriedFallback = true
+        this.currentImageUrl = buildMediaUrl(this.projectId, this.mediaId, 'large')
+        return
+      }
+      
+      // If fallback also failed, show error
+      this.showSaveStatus('Failed to load image (tried original and large versions)', 'error')
     },
 
     setupCanvas() {
@@ -1408,6 +1596,9 @@ export default {
     },
 
     onDocumentClick(event) {
+      // Don't close panels if we just finished dragging
+      if (this.isDraggingPanel) return
+      
       // Close help when clicking outside
       const helpContainer = this.$refs.helpDropdown?.parentElement
       if (helpContainer && !helpContainer.contains(event.target)) {
@@ -1420,6 +1611,12 @@ export default {
       if (overviewPanel && !overviewPanel.contains(event.target) && !annotationControls) {
         this.showOverview = false
       }
+      
+      // Close labels panel when clicking outside (but not on any annotation controls)
+      const labelsPanel = this.$refs.labelsPanel
+      if (labelsPanel && !labelsPanel.contains(event.target) && !annotationControls) {
+        this.showLabelsPanel = false
+      }
     },
 
 
@@ -1431,7 +1628,7 @@ export default {
         case 'T': return 'Taxon annotation'
         case 'X': return 'Matrix annotation'
         case 'M': 
-        default: return 'Media annotation'
+        default: return ''
       }
     },
 
@@ -1660,6 +1857,134 @@ export default {
       } catch (error) {
         console.error('Error loading enhanced label:', error)
       }
+    },
+
+    // New methods for enhanced label UI
+    getAnnotationIndex(annotation) {
+      return this.annotations.findIndex(a => a.annotation_id === annotation.annotation_id)
+    },
+
+    getAnnotationTypeDisplay(type) {
+      const typeMap = {
+        'rect': 'Rectangle',
+        'point': 'Point', 
+        'poly': 'Polygon'
+      }
+      return typeMap[type] || type
+    },
+
+    selectAndFocusAnnotation(annotation) {
+      this.selectAnnotation(annotation)
+      // Optionally zoom to fit the annotation
+      // this.zoomToAnnotation(annotation)
+    },
+
+    getTooltipStyle(annotation) {
+      if (!this.$refs.mediaImage || !this.$refs.canvasContainer) {
+        return { display: 'none' }
+      }
+
+      const img = this.$refs.mediaImage
+      const container = this.$refs.canvasContainer
+      
+      // Get container dimensions 
+      const containerRect = container.getBoundingClientRect()
+      
+      // Get actual image display size (after CSS scaling)
+      const imgRect = img.getBoundingClientRect()
+      
+      // Calculate position on the image itself
+      const xPercent = parseFloat(annotation.x) / 100
+      const yPercent = parseFloat(annotation.y) / 100
+      
+      // Position relative to the displayed image
+      const tooltipX = imgRect.left + (xPercent * imgRect.width) - containerRect.left
+      const tooltipY = imgRect.top + (yPercent * imgRect.height) - containerRect.top
+      
+      return {
+        position: 'absolute',
+        left: `${tooltipX}px`,
+        top: `${tooltipY - 80}px`, // Position tooltip above the annotation
+        transform: 'translateX(-50%)', // Center the tooltip horizontally
+        zIndex: 9999,
+        pointerEvents: 'none' // Don't interfere with mouse events
+      }
+    },
+
+    getTooltipLabelText(annotation) {
+      // Check if annotation has an actual custom label
+      if (annotation.label && annotation.label.trim()) {
+        return annotation.label
+      }
+      
+      // If no custom label but showDefaultText is enabled, use the enhanced label text
+      if (this.shouldShowLabel(annotation)) {
+        const enhancedText = this.getDisplayLabelText(annotation)
+        if (enhancedText && enhancedText.trim()) {
+          return enhancedText
+        }
+      }
+      
+      // If no custom label and no default text, show "No label"
+      return 'No label'
+    },
+
+    // Panel dragging methods
+    startDragging(event) {
+      // Don't start dragging if clicking on the close button
+      if (event.target.classList.contains('labels-close')) {
+        return
+      }
+      
+      this.isDraggingPanel = true
+      this.dragStartPos = { x: event.clientX, y: event.clientY }
+      this.dragStartPanelPos = { ...this.panelPosition }
+      
+      // Prevent text selection while dragging
+      event.preventDefault()
+      document.body.style.userSelect = 'none'
+    },
+
+    onDocumentMouseMove(event) {
+      if (!this.isDraggingPanel) return
+      
+      const deltaX = event.clientX - this.dragStartPos.x
+      const deltaY = event.clientY - this.dragStartPos.y
+      
+      // Calculate new position
+      let newX = this.dragStartPanelPos.x + deltaX
+      let newY = this.dragStartPanelPos.y + deltaY
+      
+      // Get viewport dimensions and panel dimensions
+      const viewport = {
+        width: window.innerWidth,
+        height: window.innerHeight
+      }
+      
+      const panelWidth = 350 // From CSS
+      const panelHeight = Math.min(viewport.height * 0.8, 600) // Max height from CSS
+      
+      // Constrain to viewport bounds
+      newX = Math.max(10, Math.min(viewport.width - panelWidth - 10, newX))
+      newY = Math.max(10, Math.min(viewport.height - panelHeight - 10, newY))
+      
+      this.panelPosition = { x: newX, y: newY }
+    },
+
+    onDocumentMouseUp() {
+      if (this.isDraggingPanel) {
+        this.isDraggingPanel = false
+        document.body.style.userSelect = ''
+      }
+    },
+
+    getPanelStyle() {
+      return {
+        position: 'fixed',
+        left: `${this.panelPosition.x}px`,
+        top: `${this.panelPosition.y}px`,
+        right: 'auto', // Override the CSS right positioning
+      }
     }
   }
 }
@@ -1741,6 +2066,16 @@ export default {
   align-items: center;
   flex-wrap: wrap;
   margin-left: auto;
+}
+
+.label-mode-controls {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  padding: 4px 8px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #ddd;
 }
 
 .help-container {
@@ -1894,6 +2229,36 @@ export default {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
+}
+
+/* Numbered label style */
+.annotation-label.numbered-label {
+  min-width: 40px !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 16px !important;
+  font-weight: bold !important;
+  background: #007bff !important;
+  color: white !important;
+  border: 3px solid white !important;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.4) !important;
+}
+
+.annotation-label.numbered-label.selected {
+  background: #dc3545 !important;
+  border-color: #dc3545 !important;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4) !important;
+}
+
+.annotation-number {
+  font-size: 16px;
+  font-weight: bold;
+  color: inherit;
 }
 
 .annotation-label.selected {
@@ -2177,5 +2542,228 @@ export default {
   .overview-image {
     max-height: 150px;
   }
+}
+
+/* Tooltip styles */
+.annotation-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  border-radius: 6px;
+  padding: 0;
+  z-index: 100000;
+  pointer-events: none;
+  font-size: 13px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  min-width: 200px;
+}
+
+.tooltip-content {
+  padding: 10px 12px;
+}
+
+.tooltip-content strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #fff;
+  font-size: 14px;
+}
+
+/* Labels Panel styles */
+.labels-panel {
+  position: fixed;
+  /* top and right will be overridden by inline styles */
+  width: 350px;
+  max-width: 90vw;
+  max-height: 80vh;
+  background: white;
+  border: 2px solid #007bff;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  z-index: 99999;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s ease;
+}
+
+.labels-panel.dragging {
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  transform: rotate(1deg);
+}
+
+.labels-header {
+  background: #007bff;
+  color: white;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.labels-header.draggable {
+  cursor: grab;
+  user-select: none;
+}
+
+.labels-header.draggable:active {
+  cursor: grabbing;
+}
+
+.drag-handle {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-right: 8px;
+  line-height: 1;
+  font-weight: bold;
+  letter-spacing: -2px;
+}
+
+.labels-title {
+  flex: 1;
+}
+
+.labels-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.labels-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.labels-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.no-annotations {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 20px;
+}
+
+.label-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+}
+
+.label-item:hover {
+  border-color: #007bff;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+}
+
+.label-item.selected {
+  border-color: #007bff;
+  background: #f8f9ff;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+}
+
+.label-number {
+  width: 32px;
+  height: 32px;
+  background: #007bff;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.label-item.selected .label-number {
+  background: #dc3545;
+}
+
+.label-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.label-text {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  margin-bottom: 4px;
+  word-wrap: break-word;
+  line-height: 1.3;
+}
+
+.label-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #666;
+}
+
+.label-type {
+  background: #e9ecef;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.label-id {
+  font-family: monospace;
+}
+
+.label-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.label-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: background-color 0.2s;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.label-action-btn:hover {
+  background: #f8f9fa;
+}
+
+.edit-btn:hover {
+  background: #e3f2fd;
+}
+
+.delete-btn:hover {
+  background: #ffebee;
 }
 </style>

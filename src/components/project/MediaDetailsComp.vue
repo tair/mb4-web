@@ -88,9 +88,76 @@ const videoPlayer = ref(null)
 const viewStatsTooltipText = getViewStatsTooltipText()
 const downloadTooltipText = getDownloadTooltipText()
 
+// Math CAPTCHA state
+const mathQuestion = ref('')
+const mathAnswer = ref(null)
+const userMathAnswer = ref('')
+const isCaptchaVerified = ref(false)
+
 // Reset modal state when closed
 const onModalClose = () => {
   showZoomModal.value = false
+}
+
+// Reset download modal state when closed
+const onDownloadModalClose = () => {
+  showDownloadModal.value = false
+  // Reset captcha when modal closes
+  resetCaptcha()
+}
+
+// Math CAPTCHA functions
+const generateMathQuestion = () => {
+  const num1 = Math.floor(Math.random() * 10) + 1
+  const num2 = Math.floor(Math.random() * 10) + 1
+  const operators = ['+', '-', '×']
+  const operator = operators[Math.floor(Math.random() * operators.length)]
+  
+  let answer
+  switch (operator) {
+    case '+':
+      answer = num1 + num2
+      break
+    case '-':
+      // Ensure positive result
+      if (num1 < num2) {
+        [num1, num2] = [num2, num1]
+      }
+      answer = num1 - num2
+      break
+    case '×':
+      // Use smaller numbers for multiplication
+      const smallNum1 = Math.floor(Math.random() * 5) + 1
+      const smallNum2 = Math.floor(Math.random() * 5) + 1
+      mathQuestion.value = `${smallNum1} × ${smallNum2} = ?`
+      mathAnswer.value = smallNum1 * smallNum2
+      userMathAnswer.value = ''
+      isCaptchaVerified.value = false
+      return
+  }
+  
+  mathQuestion.value = `${num1} ${operator} ${num2} = ?`
+  mathAnswer.value = answer
+  userMathAnswer.value = ''
+  isCaptchaVerified.value = false
+}
+
+const verifyMathAnswer = () => {
+  const userAnswer = parseInt(userMathAnswer.value)
+  isCaptchaVerified.value = userAnswer === mathAnswer.value
+  
+  if (!isCaptchaVerified.value && userMathAnswer.value !== '') {
+    // Give user feedback but don't immediately regenerate
+    setTimeout(() => {
+      if (!isCaptchaVerified.value && userMathAnswer.value !== '') {
+        generateMathQuestion()
+      }
+    }, 1500)
+  }
+}
+
+const resetCaptcha = () => {
+  generateMathQuestion()
 }
 
 // Check if the media file is a 3D file
@@ -293,10 +360,10 @@ const onAnnotationsSaved = () => {
 }
 
 async function confirmDownload(fileSize, fileName) {
-  // if (!isCaptchaVerified) {
-  //   alert("Please complete the CAPTCHA");
-  //   return;
-  // }
+  if (!isCaptchaVerified.value) {
+    alert("Please complete the security verification before downloading.");
+    return;
+  }
   // CAPTCHA is completed, proceed with the download
   // For 3D files, videos, and TIFF files, always download the original file regardless of requested size
   const downloadSize = (is3DFile.value || isVideoFile.value || isOriginalTiffFile.value) ? 'original' : fileSize
@@ -461,13 +528,13 @@ function getHitsMessage(mediaObj) {
                   @annotationsSaved="onAnnotationsSaved"
                 />
               </CustomModal>
-              <a class="nav-link" href="#" @click="showDownloadModal = true">
+              <a class="nav-link" href="#" @click="showDownloadModal = true; generateMathQuestion()">
                 Download
                 <Tooltip :content="downloadTooltipText"></Tooltip>
               </a>
               <CustomModal
                 :isVisible="showDownloadModal"
-                @close="showDownloadModal = false"
+                @close="onDownloadModalClose"
               >
                 <div>
                   <h2>Copyright Warning</h2>
@@ -478,8 +545,50 @@ function getHitsMessage(mediaObj) {
                     Please acknowledge that you have read and understood the
                     copyright warning before proceeding with the download.
                   </p>
+                  
+                  <!-- Math CAPTCHA Component -->
+                  <div class="math-captcha-container mb-3">
+                    <div class="math-captcha-header">
+                      <h5>Security Verification</h5>
+                      <small class="text-muted">Please solve this simple math problem to continue:</small>
+                    </div>
+                    
+                    <div class="math-captcha-question">
+                      <label class="math-question-label">{{ mathQuestion }}</label>
+                      <div class="math-input-group">
+                        <input 
+                          v-model="userMathAnswer" 
+                          type="number" 
+                          class="form-control math-input"
+                          placeholder="Enter answer"
+                          @input="verifyMathAnswer"
+                          :class="{ 'is-valid': isCaptchaVerified && userMathAnswer, 'is-invalid': !isCaptchaVerified && userMathAnswer }"
+                        />
+                        <button 
+                          type="button" 
+                          class="btn btn-outline-secondary btn-sm refresh-btn"
+                          @click="generateMathQuestion"
+                          title="Get a new question"
+                        >
+                          ↻
+                        </button>
+                      </div>
+                      
+                      <div class="math-feedback">
+                        <small v-if="isCaptchaVerified" class="text-success">
+                          ✓ Correct! You may now proceed with the download.
+                        </small>
+                        <small v-else-if="userMathAnswer && !isCaptchaVerified" class="text-danger">
+                          ✗ Incorrect answer. Please try again.
+                        </small>
+                      </div>
+                    </div>
+                  </div>
+                  
                   <button
                     class="btn btn-primary"
+                    :disabled="!isCaptchaVerified"
+                    :class="{ 'btn-success': isCaptchaVerified }"
                     @click="
                       confirmDownload(
                         'original',
@@ -487,7 +596,7 @@ function getHitsMessage(mediaObj) {
                       )
                     "
                   >
-                    I Acknowledge and Proceed
+                    {{ isCaptchaVerified ? 'I Acknowledge and Proceed' : 'Complete Security Check First' }}
                   </button>
                 </div>
               </CustomModal>
@@ -503,7 +612,7 @@ function getHitsMessage(mediaObj) {
             </p>
           </div>
           <div>
-            <p class="card-title" v-if="media_file.media['ORIGINAL_FILENAME']">
+            <p class="card-title filename-display" v-if="media_file.media['ORIGINAL_FILENAME']">
               Original filename: {{ media_file.media['ORIGINAL_FILENAME'] }}
             </p>
           </div>
@@ -607,8 +716,8 @@ function getHitsMessage(mediaObj) {
 
 .card-img {
   margin: 1rem;
-  max-width: 100%;
-  max-height: 500px;
+  max-width: 400px;
+  max-height: 400px;
   width: auto;
   height: auto;
   object-fit: contain;
@@ -717,5 +826,122 @@ p {
 
 .lazy-error-annotations {
   color: #dc3545;
+}
+
+/* Filename display styling */
+.filename-display {
+  max-width: 450px;
+  word-wrap: break-word;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
+
+/* Math CAPTCHA Styling */
+.math-captcha-container {
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  margin: 20px 0;
+}
+
+.math-captcha-header {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.math-captcha-header h5 {
+  color: #495057;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.math-captcha-question {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.math-question-label {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #343a40;
+  margin-bottom: 10px;
+  padding: 8px 16px;
+  background-color: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  min-width: 120px;
+  text-align: center;
+}
+
+.math-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.math-input {
+  width: 100px;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.math-input:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.math-input.is-valid {
+  border-color: #28a745;
+}
+
+.math-input.is-invalid {
+  border-color: #dc3545;
+}
+
+.refresh-btn {
+  width: 32px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+
+.refresh-btn:hover {
+  transform: rotate(90deg);
+  background-color: #e9ecef;
+}
+
+.math-feedback {
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.math-feedback small {
+  font-weight: 500;
+}
+
+/* Button state styling */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-success {
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: #218838;
+  border-color: #1e7e34;
 }
 </style>
