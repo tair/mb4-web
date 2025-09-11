@@ -7,7 +7,7 @@ import { useAuthStore } from '@/stores/AuthStore'
 import { useNotifications } from '@/composables/useNotifications'
 import Tooltip from '@/components/main/Tooltip.vue'
 import { getTaxonomicUnitOptions } from '@/utils/taxa'
-import axios from 'axios'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -70,12 +70,9 @@ async function loadData() {
   try {
     // Load matrix data if editing existing matrix
     if (matrixId) {
-      const response = await axios.get(
-        `${
-          import.meta.env.VITE_API_URL
-        }/projects/${projectId}/matrices/${matrixId}`
-      )
-      matrix.value = response.data
+      const response = await apiService.get(`/projects/${projectId}/matrices/${matrixId}`)
+      const responseData = await response.json()
+      matrix.value = responseData
 
       // Parse other_options if it's a JSON string
       let otherOptions = {}
@@ -105,12 +102,11 @@ async function loadData() {
 
       // Check if user has permission to delete this matrix
       try {
-        const permissionResponse = await axios.get(
-          `${
-            import.meta.env.VITE_API_URL
-          }/projects/${projectId}/matrices/${matrixId}/can-delete`
+        const permissionResponse = await apiService.get(
+          apiService.buildUrl(`/projects/${projectId}/matrices/${matrixId}/can-delete`)
         )
-        canDelete.value = permissionResponse.data.canDelete
+        const permissionData = await permissionResponse.json()
+        canDelete.value = permissionData.canDelete
       } catch (error) {
         console.error('Error checking delete permission:', error)
         canDelete.value = false
@@ -154,10 +150,8 @@ async function handleSubmit() {
       other_options: JSON.stringify(matrixOptions),
     }
 
-    await axios.put(
-      `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/matrices/${matrixId}`,
+    await apiService.put(
+      apiService.buildUrl(`/projects/${projectId}/matrices/${matrixId}`),
       matrixData
     )
     showSuccess('Matrix settings updated successfully!')
@@ -188,10 +182,8 @@ async function confirmDelete() {
       ? '?deleteTaxaAndCharacters=true'
       : ''
 
-    await axios.delete(
-      `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/matrices/${matrixId}${deleteParams}`
+    await apiService.delete(
+      apiService.buildUrl(`/projects/${projectId}/matrices/${matrixId}${deleteParams}`)
     )
     matricesStore.invalidate()
     

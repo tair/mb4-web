@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import router from '@/router'
-import axios from 'axios'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTaxaStore } from '@/stores/TaxaStore'
@@ -14,6 +13,7 @@ import ImportMediaComponent from '@/components/project/ImportMediaComponent.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import TaxonomicName from '@/components/project/TaxonomicName.vue'
 import Tooltip from '@/components/main/Tooltip.vue'
+import { apiService } from '@/services/apiService.js'
 
 interface ImportInfo {
   no_results_on: number | null
@@ -300,19 +300,15 @@ async function fecthMediaForSelectedTaxa() {
   }
 
   try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/projects/${projectId}/${importType}/media`,
-      { taxon_ids: selectedTaxaIds }
-    )
-
-    if (response.status != 200) {
-      throw new Error(`Server returned status ${response.status}`)
-    }
+    const response = await apiService.post(`/projects/${projectId}/${importType}/media`, {
+      taxon_ids: selectedTaxaIds
+    })
+    const data = await response.json()
 
     mediaResults.value.clear()
     const processedTaxaIds: number[] = []
     
-    for (const result of response.data.results) {
+    for (const result of data.results) {
       const taxonId = parseInt(result.taxon_id)
       mediaResults.value.set(taxonId, result)
       processedTaxaIds.push(taxonId)
@@ -342,17 +338,7 @@ async function fecthMediaForSelectedTaxa() {
     }).join(', ')
     
     // Provide user-friendly error messages
-    if (error.response?.status === 500) {
-      showError(`There was a problem contacting ${importText}. Some or all of your requested taxa were not searched for. Please try your request again for the following taxa: ${taxaNames}`, 'Search Failed')
-    } else if (error.response?.status === 503) {
-      showError(`${importText} service is temporarily unavailable. Please try again later for the following taxa: ${taxaNames}`, 'Service Unavailable')
-    } else if (error.response?.status >= 400 && error.response?.status < 500) {
-      showError(`There was an issue with the request to ${importText}. Please check your taxa selection and try again for the following taxa: ${taxaNames}`, 'Request Error')
-    } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-      showError(`There was a problem contacting ${importText}. Some or all of your requested taxa were not searched for. Please try your request again for the following taxa: ${taxaNames}`, 'Connection Timeout')
-    } else {
-      showError(`There was a problem contacting ${importText}. Some or all of your requested taxa were not searched for. Please try your request again for the following taxa: ${taxaNames}`, 'Search Failed')
-    }
+    showError(`There was a problem contacting ${importText}. Some or all of your requested taxa were not searched for. Please try your request again for the following taxa: ${taxaNames}`, 'Search Failed')
   } finally {
     isLoadingMedia.value = false
   }
@@ -364,19 +350,12 @@ async function fetchMoreMedia(taxonId: number) {
   const currentCount = results.media.length
   
   try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/projects/${projectId}/${importType}/media`,
-      { 
-        taxon_ids: [taxonId], 
-        size: currentCount + 12  // Request 12 additional images
-      }
-    )
-
-    if (response.status != 200) {
-      throw new Error(`Server returned status ${response.status}`)
-    }
-
-    const newResults = response.data.results[0]
+    const response = await apiService.post(`/projects/${projectId}/${importType}/media`, {
+      taxon_ids: [taxonId], 
+      size: currentCount + 12  // Request 12 additional images
+    })
+    const responseData = await response.json()
+    const newResults = responseData.results[0]
     const previousMediaCount = currentCount
     const newMediaCount = newResults.media ? newResults.media.length : 0
     
@@ -405,8 +384,6 @@ async function fetchMoreMedia(taxonId: number) {
       throw new Error('AUTO_DISABLE_AFTER_SUCCESS')
     } else if (error.message === 'NO_NEW_MEDIA') {
       throw new Error('No additional media were found')
-    } else if (error.response?.status >= 500) {
-      throw new Error(`There was a problem contacting ${importText}, please try your request again later`)
     } else {
       throw new Error(`Failed to fetch additional media from ${importText}`)
     }
@@ -444,20 +421,13 @@ async function importMediaForSelectedTaxa() {
   isImportingMedia.value = true
   
   try {
-    const response = await axios.post(
-      `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/${importType}/import`,
-      { imports: selected }
-    )
+    const response = await apiService.post(`/projects/${projectId}/${importType}/import`, {
+      imports: selected
+    })
+    const data = await response.json()
 
-    if (response.status != 200) {
-      showError('Failed to import the media')
-      return
-    }
-
-    if (!response.data.success) {
-      showError('Failed to import media: ' + (response.data.message ?? 'Unknown issue'))
+    if (!data.success) {
+      showError('Failed to import media: ' + (data.message ?? 'Unknown issue'))
       return
     }
 
@@ -483,10 +453,9 @@ onMounted(async () => {
     taxaStore.fetch(projectId)
   }
 
-  const response = await axios.get(
-    `${import.meta.env.VITE_API_URL}/projects/${projectId}/${importType}`
-  )
-  for (const result of response.data.results) {
+  const response = await apiService.get(`/projects/${projectId}/${importType}`)
+  const data = await response.json()
+  for (const result of data.results) {
     const taxonId = parseInt(result.taxon_id)
     importResults.value.set(taxonId, result)
   }

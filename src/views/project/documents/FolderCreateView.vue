@@ -1,11 +1,11 @@
 <script setup>
-import axios from 'axios'
 import router from '@/router'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDocumentsStore } from '@/stores/DocumentsStore'
 import { useNotifications } from '@/composables/useNotifications'
 import { folderSchema } from '@/views/project/documents/schema.js'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -23,13 +23,12 @@ async function createFolder(event) {
     const formData = new FormData(event.currentTarget)
     const jsonData = Object.fromEntries(formData)
 
-    const url = `${
-      import.meta.env.VITE_API_URL
-    }/projects/${projectId}/documents/folder/create`
-    const response = await axios.post(url, jsonData)
+    const url = apiService.buildUrl(`/projects/${projectId}/documents/folder/create`)
+    const response = await apiService.post(url, jsonData)
     
-    if (response.status != 200) {
-      showError(response.data?.message || 'Failed to create folder')
+    if (!response.ok) {
+      const errorData = await response.json()
+      showError(errorData?.message || 'Failed to create folder')
       return
     }
 

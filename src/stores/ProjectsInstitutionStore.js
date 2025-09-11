@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
+import { apiService } from '@/services/apiService.js'
 
 export const useProjectInstitutionStore = defineStore({
   id: 'project-institutions',
@@ -11,12 +11,9 @@ export const useProjectInstitutionStore = defineStore({
   actions: {
     async fetchInstitutions(projectId) {
       try {
-        const url = `${
-          import.meta.env.VITE_API_URL
-        }/projects/${projectId}/institutions`
-
-        const response = await axios.get(url)
-        this.institutions = response.data.institutions
+        const response = await apiService.get(`/projects/${projectId}/institutions`)
+        const responseData = await response.json()
+        this.institutions = responseData.institutions
         this.isLoaded = true
       } catch (e) {
         console.error('Error fetching the Institutions', e)
@@ -25,13 +22,10 @@ export const useProjectInstitutionStore = defineStore({
     },
 
     async removeInstitution(projectId, institutionIds) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/institutions/remove`
-
-      const response = await axios.post(url, { institutionIds })
-      if (response.status == 200) {
-        this.removeByInstitutionIds(response.data.institutionIds)
+      const response = await apiService.post(`/projects/${projectId}/institutions/remove`, { institutionIds })
+      if (response.ok) {
+        const responseData = await response.json()
+        this.removeByInstitutionIds(responseData.institutionIds)
         return true
       }
       return false
@@ -44,16 +38,13 @@ export const useProjectInstitutionStore = defineStore({
     },
 
     async addInstitution(projectId, institutionId, name) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/institutions/add`
+      const response = await apiService.post(`/projects/${projectId}/institutions/add`, { institutionId, name })
 
-      const response = await axios.post(url, { institutionId, name })
-
-      if (response.status == 200) {
+      if (response.ok) {
         this.removeByInstitutionIds([institutionId])
 
-        const institution = response.data.institution
+        const responseData = await response.json()
+        const institution = responseData.institution
 
         this.institutions.push(institution)
 
@@ -69,19 +60,20 @@ export const useProjectInstitutionStore = defineStore({
     //   selectedInstitutionId
     // ) {
     //   const url = `${
-    //     import.meta.env.VITE_API_URL
+    //     apiService.buildUrl('')
     //   }/projects/${projectId}/institutions/edit`
 
-    //   const response = await axios.post(url, {
+    //   const response = await apiService.post(`/projects/${projectId}/institutions/edit`, {
     //     institutionId,
     //     name,
     //     selectedInstitutionId,
     //   })
 
-    //   if (response.status == 200) {
+    //   if (response.ok) {
     //     this.removeByInstitutionIds([institutionId])
 
-    //     const institution = response.data.institution
+    //     const responseData = await response.json()
+    //     const institution = responseData.institution
     //     this.institutions.push(institution)
 
     //     return true

@@ -43,7 +43,7 @@ async function create(event) {
           </div>
           <div class="btn-form-group">
             <button
-              class="btn btn-primary me-2"
+              class="btn btn-outline-primary me-2"
               type="button"
               @click="$router.go(-1)"
             >

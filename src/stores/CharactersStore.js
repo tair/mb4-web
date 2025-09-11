@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
+import { apiService } from '@/services/apiService.js'
 
 export const useCharactersStore = defineStore({
   id: 'characters',
@@ -14,11 +14,9 @@ export const useCharactersStore = defineStore({
   },
   actions: {
     async fetchCharactersByProjectId(projectId) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/characters`
-      const response = await axios.get(url)
-      const characters = response.data.characters
+      const response = await apiService.get(`/projects/${projectId}/characters`)
+      const responseData = await response.json()
+        const characters = responseData.characters
       this.map = new Map(characters.map((c) => [c.character_id, c]))
       this.isLoaded = true
     },

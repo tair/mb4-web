@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
+import { apiService } from '@/services/apiService.js'
 
 export const useMediaStore = defineStore({
   id: 'media',
@@ -32,42 +32,40 @@ export const useMediaStore = defineStore({
   },
   actions: {
     async fetchMedia(projectId) {
-      const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/media`
-      const response = await axios.get(url)
-      const media = response.data.media
+      const url = `/projects/${projectId}/media`
+      const response = await apiService.get(url)
+      const responseData = await response.json()
+      const media = responseData.media
       this.addMedia(media)
 
       this.isLoaded = true
     },
     async fetchMediaUsage(projectId, mediaIds) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/media/usages`
-      const response = await axios.post(url, {
+      const url = `/projects/${projectId}/media/usages`
+      const response = await apiService.post(url, {
         media_ids: mediaIds,
       })
-      return response.data.usages
+      const responseData = await response.json()
+      return responseData.usages
     },
     async create(projectId, mediaFormData) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/media/create`
-      const response = await axios.post(url, mediaFormData)
-      if (response.status == 200) {
-        const media = response.data.media
+      const url = `/projects/${projectId}/media/create`
+      const response = await apiService.post(url, mediaFormData)
+      if (response.ok) {
+        const responseData = await response.json()
+        const media = responseData.media
         this.addMedia([media])
         return media // Return the created media object instead of just true
       }
       return false
     },
     async createBatch(projectId, mediaFormData) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/media/create/batch`
+      const url = `/projects/${projectId}/media/create/batch`
       try {
-        const response = await axios.post(url, mediaFormData)
-        if (response.status == 200) {
-          const media = response.data.media
+        const response = await apiService.post(url, mediaFormData)
+        if (response.ok) {
+          const responseData = await response.json()
+          const media = responseData.media
           this.addMedia(media)
           return true
         }
@@ -79,13 +77,11 @@ export const useMediaStore = defineStore({
       }
     },
     async create3D(projectId, mediaFormData) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/media/create/3d`
       try {
-        const response = await axios.post(url, mediaFormData)
-        if (response.status == 200) {
-          const media = response.data.media
+        const response = await apiService.post(`/projects/${projectId}/media/create/3d`, mediaFormData)
+        if (response.ok) {
+          const responseData = await response.json()
+          const media = responseData.media
           this.addMedia([media])
           return true
         }
@@ -97,13 +93,11 @@ export const useMediaStore = defineStore({
       }
     },
     async createVideo(projectId, mediaFormData) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/media/create/video`
       try {
-        const response = await axios.post(url, mediaFormData)
-        if (response.status == 200) {
-          const media = response.data.media
+        const response = await apiService.post(`/projects/${projectId}/media/create/video`, mediaFormData)
+        if (response.ok) {
+          const responseData = await response.json()
+          const media = responseData.media
           this.addMedia([media])
           return true
         }
@@ -115,13 +109,11 @@ export const useMediaStore = defineStore({
       }
     },
     async createStacks(projectId, mediaFormData) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/media/create/stacks`
       try {
-        const response = await axios.post(url, mediaFormData)
-        if (response.status == 200) {
-          const media = response.data.media
+        const response = await apiService.post(`/projects/${projectId}/media/create/stacks`, mediaFormData)
+        if (response.ok) {
+          const responseData = await response.json()
+          const media = responseData.media
           this.addMedia([media]) // Stack creates a single media file containing the ZIP
           return true
         }
@@ -133,32 +125,27 @@ export const useMediaStore = defineStore({
       }
     },
     async edit(projectId, mediaId, mediaFormData) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/media/${mediaId}/edit`
-      const response = await axios.post(url, mediaFormData, {
+      const response = await apiService.post(`/projects/${projectId}/media/${mediaId}/edit`, mediaFormData, {
         timeout: 300000, // 5 minutes timeout for large media file uploads
       })
-      if (response.status == 200) {
-        const media = response.data.media
+      if (response.ok) {
+        const responseData = await response.json()
+        const media = responseData.media
         this.addMedia([media])
         return true
       }
       return false
     },
     async editIds(projectId, mediaIds, json) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/media/edit`
-
       try {
-        const response = await axios.post(url, {
+        const response = await apiService.post(`/projects/${projectId}/media/edit`, {
           media_ids: mediaIds,
           media: json,
         })
 
-        if (response.status == 200) {
-          const media = response.data.media
+        if (response.ok) {
+          const responseData = await response.json()
+          const media = responseData.media
           this.addMedia(media)
           return true
         }
@@ -170,14 +157,11 @@ export const useMediaStore = defineStore({
       }
     },
     async deleteIds(projectId, mediaIds, remappedMediaIds = []) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/media/delete`
-      const response = await axios.post(url, {
+      const response = await apiService.post(`/projects/${projectId}/media/delete`, {
         media_ids: mediaIds,
         remapped_media_ids: remappedMediaIds,
       })
-      if (response.status == 200) {
+      if (response.ok) {
         this.removeByMediaIds(mediaIds)
         return true
       }

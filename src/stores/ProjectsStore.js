@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
+import { apiService } from '@/services/apiService.js'
 
 export const useProjectsStore = defineStore({
   id: 'projects',
@@ -21,37 +21,36 @@ export const useProjectsStore = defineStore({
         return // Use cached data
       }
 
-      const url = `${import.meta.env.VITE_API_URL}/projects/`
-      const response = await axios.get(url)
-      this.projects = response.data.projects
+      const response = await apiService.get('/projects/')
+      const responseData = await response.json()
+      this.projects = responseData.projects
       this.lastFetched = Date.now()
       this.isLoaded = true
     },
     async create(project) {
-      const url = `${import.meta.env.VITE_API_URL}/projects/create`
-      const response = await axios.post(url, { project })
-      if (response.status == 200) {
-        const project = response.data.project
-        this.projects.push(project)
-        return project
+      const response = await apiService.post('/projects/create', { project })
+      if (response.ok) {
+        const responseData = await response.json()
+        const newProject = responseData.project
+        this.projects.push(newProject)
+        return newProject
       }
       return false
     },
     async edit(projectId, project) {
-      const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/edit`
-      const response = await axios.post(url, { project })
-      if (response.status == 200) {
-        const project = response.data.project
-        this.removeProjectById(project.project_id)
-        this.projects.push(project)
+      const response = await apiService.post(`/projects/${projectId}/edit`, { project })
+      if (response.ok) {
+        const responseData = await response.json()
+        const updatedProject = responseData.project
+        this.removeProjectById(updatedProject.project_id)
+        this.projects.push(updatedProject)
         return true
       }
       return false
     },
     async delete(projectId) {
-      const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/delete`
-      const response = await axios.post(url)
-      if (response.status == 200) {
+      const response = await apiService.post(`/projects/${projectId}/delete`)
+      if (response.ok) {
         this.removeProjectById(projectId)
         return true
       }
@@ -110,11 +109,7 @@ export const useProjectsStore = defineStore({
           }
         }
 
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/projects/create`,
-          requestData,
-          { headers }
-        )
+        const response = await apiService.post('/projects/create', requestData, { headers })
 
         // Add the new project to the store's cache so it appears in the dashboard
         if (response.data && response.status === 201) {
@@ -123,7 +118,7 @@ export const useProjectsStore = defineStore({
           await this.fetchProjects()
         }
 
-        return response.data
+        const responseData = await response.json(); return responseData
       } catch (error) {
         console.error('Error creating project:', error.response || error)
         throw error
@@ -131,12 +126,11 @@ export const useProjectsStore = defineStore({
     },
     async setExemplarMedia(projectId, mediaId) {
       try {
-        const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/edit`
-        const response = await axios.post(url, { 
+        const response = await apiService.post(`/projects/${projectId}/edit`, { 
           exemplar_media_id: mediaId 
         })
         
-        if (response.status === 200) {
+        if (response.ok) {
           // Update the project in our store if we have it
           const project = this.getProjectById(projectId)
           if (project) {

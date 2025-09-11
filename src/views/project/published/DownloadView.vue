@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const projectStore = usePublicProjectDetailsStore()
@@ -21,13 +22,12 @@ async function downloadProject() {
 
   try {
     console.log('Downloading project:', projectId)
-    const apiUrl = `${
-      import.meta.env.VITE_API_URL
-    }/projects/${projectId}/download/sdd?format=zip`
-    const response = await fetch(apiUrl, {
-      method: 'GET',
-      headers: { Accept: 'application/zip' },
-    })
+    const response = await apiService.get(
+      `/projects/${projectId}/download/sdd?format=zip`,
+      {
+        headers: { Accept: 'application/zip' },
+      }
+    )
 
     if (!response.ok) {
       console.log('Download failed with status', response.status)

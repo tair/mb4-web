@@ -6,9 +6,9 @@ import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useNotifications } from '@/composables/useNotifications'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { getTaxonName } from '@/utils/taxa'
-import axios from 'axios'
 import { useAuthStore } from '@/stores/AuthStore'
 import { AccessControlService, EntityType } from '@/lib/access-control.js'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id)
@@ -79,7 +79,7 @@ onMounted(async () => {
 
   const promises = []
   if (!taxaStore.isLoaded) {
-    promises.push(taxaStore.fetchTaxa(projectId))
+    promises.push(taxaStore.fetch(projectId))
   }
   if (!projectUsersStore.isLoaded) {
     promises.push(projectUsersStore.fetchUsers(projectId))
@@ -215,20 +215,16 @@ async function onDrop(event, toExtinct) {
 
 async function updateExtinctStatus(taxonIds, extinct) {
   try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/projects/${projectId}/taxa/extinct/batch`,
+    const response = await apiService.post(`/projects/${projectId}/taxa/extinct/batch`,
       {
         ids: taxonIds,
         extinct: extinct ? 1 : 0
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${authStore.accessToken}`,
-        },
       }
     )
     
-    if (response.data.status === 'ok') {
+    const responseData = await response.json()
+    
+    if (responseData.status === 'ok') {
       // Update local store
       for (const taxonId of taxonIds) {
         const taxon = taxaStore.taxa.find(t => t.taxon_id === taxonId)
@@ -241,7 +237,7 @@ async function updateExtinctStatus(taxonIds, extinct) {
       const action = extinct ? 'marked as extinct' : 'marked as living'
       displayNotification(`Successfully ${action} ${count} taxa`)
     } else {
-      throw new Error(response.data.errors?.[0] || 'Update failed')
+      throw new Error(responseData.errors?.[0] || 'Update failed')
     }
   } catch (error) {
     console.error('Error updating extinct status:', error)

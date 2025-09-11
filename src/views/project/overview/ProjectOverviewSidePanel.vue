@@ -6,6 +6,7 @@ import { toDMYDate, toDMYDateFromTimestamp } from '@/utils/date'
 import { formatBytes } from '@/utils/format'
 import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore'
 import { useNotifications } from '@/composables/useNotifications'
+import { apiService } from '@/services/apiService.js'
 
 type ProjectStats = {
   timestamp: string
@@ -77,13 +78,7 @@ const refreshStatistics = async () => {
     showInfo('Refreshing project statistics...', 'Refresh Started')
     
     // Call the new refresh endpoint to regenerate cached stats
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/projects/${props.projectId}/refresh-stats`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    })
+    const response = await apiService.post(`/projects/${props.projectId}/refresh-stats`)
     
     if (!response.ok) {
       throw new Error(`Failed to refresh stats: ${response.statusText}`)

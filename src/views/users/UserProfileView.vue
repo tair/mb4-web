@@ -1,5 +1,4 @@
 <script setup>
-import axios from 'axios'
 import { reactive, ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/UserStore.js'
@@ -12,6 +11,7 @@ import FormLayout from '@/components/main/FormLayout.vue'
 import AddInstitutionDialog from '@/components/dialogs/AddInstitutionDialog.vue'
 import { Modal } from 'bootstrap'
 import '@/assets/css/form.css'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const userStore = useUserStore()
@@ -113,15 +113,11 @@ const searchInstitutions = async () => {
 
   try {
     searchLoading.value = true
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/users/search-institutions`,
-      {
-        params: {
-          searchTerm: searchTerm.value,
-        },
-      }
-    )
-    institutionList.value = response.data
+    const response = await apiService.get('/users/search-institutions', {
+      params: { searchTerm: searchTerm.value }
+    })
+    const data = await response.json()
+    institutionList.value = data
     searchLoading.value = false
   } catch (error) {
     error.loadInstitutions = 'Error loading institutions'

@@ -7,7 +7,7 @@ import { useMessageStore } from '@/stores/MessageStore.js'
 import router from '../../router'
 import Alert from '@/components/main/Alert.vue'
 import Tooltip from '@/components/main/Tooltip.vue'
-import axios from 'axios'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -84,14 +84,9 @@ const submitForm = async () => {
 
 onMounted(async () => {
   try {
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/auth/validate-reset-key`,
-      {
-        params: {
-          resetKey: resetKey,
-        },
-      }
-    )
+    const response = await apiService.get('/auth/validate-reset-key', {
+      params: { resetKey }
+    })
   } catch (error) {
     console.log('Checking reset key failed')
     console.log(error)

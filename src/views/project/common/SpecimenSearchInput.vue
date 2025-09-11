@@ -1,5 +1,4 @@
 <script setup>
-import axios from 'axios'
 import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getSpecimenName } from '@/utils/specimens'
@@ -9,6 +8,7 @@ import { useNotifications } from '@/composables/useNotifications'
 import SearchSelectInput from '@/components/project/SearchSelectInput.vue'
 import SpecimenName from '@/components/project/SpecimenName.vue'
 import TaxaSearchInput from '@/views/project/common/TaxaSearchInput.vue'
+import { apiService } from '@/services/apiService.js'
 
 const props = defineProps({
   name: {
@@ -92,13 +92,12 @@ function getText(specimen) {
 }
 
 async function searchSpecimen(text) {
-  const url = `${
-    import.meta.env.VITE_API_URL
-  }/projects/${projectId}/specimens/search`
-  const response = await axios.post(url, {
+  const url = apiService.buildUrl(`/projects/${projectId}/specimens/search`)
+  const response = await apiService.post(url, {
     text: text,
   })
-  const specimenIds = response.data.results
+  const responseData = await response.json()
+  const specimenIds = responseData.results
   return specimenStore.specimens.filter((specimen) =>
     specimenIds.includes(specimen.specimen_id)
   )

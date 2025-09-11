@@ -4,6 +4,7 @@ import { EventType } from '../Component'
 import { VueMountingUtility, vueMountingRegistry } from '../VueMountingUtility'
 import { getCopyrightImageHtml, getCopyrightImagePath, getCopyrightTitle } from '../../../../utils/copyright'
 import { SimpleImageViewer } from './SimpleImageViewer'
+import { apiService } from '@/services/apiService.js'
 
 /**
  * Advanced Media Viewer with support for images, videos, and 3D files
@@ -657,7 +658,7 @@ export class ImageViewerDialog extends Modal {
         mediaUrl += `?link_id=${this.linkId}`
       }
 
-      const response = await fetch(mediaUrl, {
+      const response = await apiService.get(mediaUrl, {
         headers: {
           'Accept': 'application/json',
         },
@@ -690,7 +691,7 @@ export class ImageViewerDialog extends Modal {
       // Fallback to basic API if detailed API fails
       try {
         const basicUrl = `${(import.meta as any).env.VITE_API_URL}/projects/${this.projectId}/media/${this.mediaId}`
-        const basicResponse = await fetch(basicUrl, {
+        const basicResponse = await apiService.get(basicUrl, {
           headers: { 'Accept': 'application/json' },
           credentials: 'same-origin'
         })

@@ -1,8 +1,8 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
 import { processItemsWithMediaLegacy } from '@/utils/fileUtils.js'
+import { apiService } from '@/services/apiService.js'
 
 const router = useRouter()
 
@@ -39,9 +39,8 @@ const currentPressIndex = ref(0)
 onMounted(async () => {
   try {
     // Fetch all required data from the new endpoint
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/home-page`
-    )
+    const response = await apiService.get('/home-page')
+    const data = await response.json()
     const {
       featuredProjects: featuredProjectsData,
       matrixImages: matrixImagesData,
@@ -49,13 +48,12 @@ onMounted(async () => {
       tools: toolsData,
       press: pressData,
       maintenanceStatus,
-    } = response.data
+    } = data
 
     // Fetch stats data
-    const statsResponse = await axios.get(
-      `${import.meta.env.VITE_API_URL}/stats/home`
-    )
-    stats.value = statsResponse.data
+    const statsResponse = await apiService.get('/stats/home')
+    const statsData = await statsResponse.json()
+    stats.value = statsData
 
     // Process media URLs for featured projects using enhanced function
     featuredProjects.value = processItemsWithMediaLegacy(

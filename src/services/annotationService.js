@@ -9,7 +9,7 @@ import { apiService } from './apiService.js'
 
 class AnnotationService {
   constructor() {
-    this.baseUrl = '/services/projects'
+    this.baseUrl = '/projects'
   }
 
   /**
@@ -17,7 +17,7 @@ class AnnotationService {
    * @param {boolean} published - Whether the project is published
    */
   setPublished(published) {
-    this.baseUrl = published ? '/services/public/projects' : '/services/projects'
+    this.baseUrl = published ? '/public/projects' : '/projects'
   }
 
   /**

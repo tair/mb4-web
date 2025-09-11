@@ -1,10 +1,10 @@
 <script setup>
-import axios from 'axios'
 import router from '@/router'
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import Alert from '@/components/main/Alert.vue'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -22,14 +22,11 @@ const validationMessages = ref({
 
 onMounted(async () => {
   try {
-    const url = `${
-      import.meta.env.VITE_API_URL
-    }/projects/${projectId}/duplication/request`
-    const response = await axios.get(url)
-
-    onetimeMedia.value = response.data.oneTimeMedia
-    isPublished.value = response.data.projectPublished
-    userAccess.value = response.data.hasAccess
+    const response = await apiService.get(`/projects/${projectId}/duplication/request`)
+    const responseData = await response.json()
+    onetimeMedia.value = responseData.oneTimeMedia
+    isPublished.value = responseData.projectPublished
+    userAccess.value = responseData.hasAccess
   } catch (error) {
     console.error('Failed to load duplication request data:', error)
     validationMessages.value.error = 'Failed to load project data. Please try again.'
@@ -63,11 +60,7 @@ async function makeRequest(event) {
   }
 
   try {
-    const url = `${
-      import.meta.env.VITE_API_URL
-    }/projects/${projectId}/duplication/request`
-
-    const response = await axios.post(url, { projectId, remarks, onetimeAction })
+    const response = await apiService.post(`/projects/${projectId}/duplication/request`, { projectId, remarks, onetimeAction })
     
     // Show success message
     isSubmitted.value = true

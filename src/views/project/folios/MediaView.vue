@@ -70,6 +70,11 @@ function updateFolioMedia() {
   // Get the actual media data and merge with folio info
   const media = folioMediaWithPositions.map((folioMediaItem: any) => {
     const mediaData = mediaStore.getMediaById(folioMediaItem.media_id)
+    // If mediaData is undefined (media not in store yet), skip this item
+    // It will be properly loaded when the store is refreshed
+    if (!mediaData) {
+      return null
+    }
     return {
       ...mediaData,
       link_id: folioMediaItem.link_id,
@@ -77,7 +82,7 @@ function updateFolioMedia() {
       folio_id: folioMediaItem.folio_id,
       selected: selectedStates.get(folioMediaItem.media_id) || false,
     }
-  })
+  }).filter(item => item !== null) // Remove null items
   // Sort by position to maintain order
   folioMedia.value = media.sort(
     (a: any, b: any) => (a.position || 0) - (b.position || 0)

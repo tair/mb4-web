@@ -1,6 +1,6 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { apiService } from '@/services/apiService.js'
 
 export const useSpecimensStore = defineStore({
   id: 'specimens',
@@ -34,88 +34,71 @@ export const useSpecimensStore = defineStore({
   },
   actions: {
     async fetchSpecimens(projectId) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/specimens`
-      const response = await axios.get(url)
-      const specimens = response.data.specimens || []
+      const response = await apiService.get(`/projects/${projectId}/specimens`)
+      const responseData = await response.json()
+        const specimens = responseData.specimens || []
       this.addSpecimens(specimens)
       this.isLoaded = true
     },
     async fetchSpecimensUsage(projectId, specimenIds) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/specimens/usages`
-      const response = await axios.post(url, {
+      const response = await apiService.post(`/projects/${projectId}/specimens/usages`, {
         specimen_ids: specimenIds,
       })
-      return response.data.usages
+      const responseData = await response.json(); return responseData.usages
     },
     async create(projectId, specimen) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/specimens/create`
-      const response = await axios.post(url, { specimen })
-      if (response.status == 200) {
-        const specimen = response.data.specimen
+      const response = await apiService.post(`/projects/${projectId}/specimens/create`, { specimen })
+      if (response.ok) {
+        const responseData = await response.json()
+        const specimen = responseData.specimen
         this.addSpecimens([specimen])
         return true
       }
       return false
     },
     async createBatch(projectId, specimens, taxa) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/specimens/create/batch`
-      const response = await axios.post(url, { specimens, taxa })
-      if (response.status == 200) {
+      const response = await apiService.post(`/projects/${projectId}/specimens/create/batch`, { specimens, taxa })
+      if (response.ok) {
         const taxaStore = useTaxaStore()
         // Add newly create taxa to the taxa store.
-        const taxa = response.data.taxa
+        const responseData = await response.json()
+        const taxa = responseData.taxa
+        const specimens = responseData.specimens
         taxaStore.addTaxa(taxa)
-
-        const specimens = response.data.specimens
         this.addSpecimens(specimens)
         return true
       }
       return false
     },
     async edit(projectId, specimenId, specimen) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/specimens/${specimenId}/edit`
-      const response = await axios.post(url, { specimen })
-      if (response.status == 200) {
-        const specimen = response.data.specimen
+      const response = await apiService.post(`/projects/${projectId}/specimens/${specimenId}/edit`, { specimen })
+      if (response.ok) {
+        const responseData = await response.json()
+        const specimen = responseData.specimen
         this.addSpecimens([specimen])
         return true
       }
       return false
     },
     async editIds(projectId, specimenIds, json) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/specimens/edit`
-      const response = await axios.post(url, {
+      const response = await apiService.post(`/projects/${projectId}/specimens/edit`, {
         specimen_ids: specimenIds,
         specimen: json,
       })
-      if (response.status == 200) {
-        const specimens = response.data.specimens
+      if (response.ok) {
+        const responseData = await response.json()
+        const specimens = responseData.specimens
         this.addSpecimens(specimens)
         return true
       }
       return false
     },
     async deleteIds(projectId, specimenIds, remappedSpecimenIds) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/specimens/delete`
-      const response = await axios.post(url, {
+      const response = await apiService.post(`/projects/${projectId}/specimens/delete`, {
         specimen_ids: specimenIds,
         remapped_specimen_ids: remappedSpecimenIds,
       })
-      if (response.status == 200) {
+      if (response.ok) {
         this.removeBySpecimenIds(specimenIds)
         return true
       }

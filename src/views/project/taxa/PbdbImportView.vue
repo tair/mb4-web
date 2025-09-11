@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import axios from 'axios'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTaxaStore } from '@/stores/TaxaStore'
@@ -11,6 +10,7 @@ import { capitalizeFirstLetter } from '@/utils/string'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import TaxonomicName from '@/components/project/TaxonomicName.vue'
 import Tooltip from '@/components/main/Tooltip.vue'
+import { apiService } from '@/services/apiService.js'
 
 interface PbdbValidationInfo {
   pbdb_pulled_on: number | null
@@ -262,16 +262,10 @@ async function validateSelectedTaxa() {
   try {
     const selectedTaxaIds = selectedTaxa.map(t => t.taxon_id)
 
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/projects/${projectId}/pbdb/validate`,
-      { taxon_ids: selectedTaxaIds }
-    )
-
-    if (response.status !== 200) {
-      throw new Error('Failed to validate taxa against PBDB')
-    }
-
-    const data = response.data
+    const response = await apiService.post(`/projects/${projectId}/pbdb/validate`, {
+      taxon_ids: selectedTaxaIds
+    })
+    const data = await response.json()
     if (!data.success) {
       console.error('[PBDB FRONTEND DEBUG] Validation failed:', data)
       throw new Error(data.message || 'Validation failed')
@@ -359,17 +353,13 @@ async function importSelectedData() {
   isImporting.value = true
   
   try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/projects/${projectId}/pbdb/import`,
-      { taxa_info: Array.from(selectedImports.value.values()) }
-    )
+    const response = await apiService.post(`/projects/${projectId}/pbdb/import`, {
+      taxa_info: Array.from(selectedImports.value.values())
+    })
+    const data = await response.json()
 
-    if (response.status !== 200) {
-      throw new Error('Failed to import PBDB data')
-    }
-
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Import failed')
+    if (!data.success) {
+      throw new Error(data.message || 'Import failed')
     }
 
     const importedCount = selectedImports.value.size
@@ -479,12 +469,11 @@ function formatRanksForDisplay(ranks: Record<string, string>): string {
 
 async function loadPbdbValidationStatus() {
   try {
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/projects/${projectId}/pbdb`
-    )
+    const response = await apiService.get(`/projects/${projectId}/pbdb`)
+    const data = await response.json()
 
     validationResults.value.clear()
-    for (const result of response.data.results) {
+    for (const result of data.results) {
       const taxonId = parseInt(result.taxon_id)
       validationResults.value.set(taxonId, result)
     }

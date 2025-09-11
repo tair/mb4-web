@@ -413,6 +413,7 @@
 import AnnotationEditModal from './AnnotationEditModal.vue'
 import { annotationService } from '../../services/annotationService.js'
 import { buildMediaUrl } from '../../utils/fileUtils.js'
+import { apiService } from '@/services/apiService.js'
 
 export default {
   name: 'AnnotationViewer',
@@ -1759,10 +1760,10 @@ export default {
       }
 
       try {
-        const baseUrl = this.published ? '/services/public/projects' : '/services/projects'
+        const baseUrl = this.published ? '/public/projects' : '/projects'
         const url = `${baseUrl}/${this.projectId}/media/${this.mediaId}/details?link_id=${linkId}`
         
-        const response = await fetch(url)
+        const response = await apiService.get(url)
         if (!response.ok) {
           throw new Error(`Failed to fetch character info: ${response.statusText}`)
         }

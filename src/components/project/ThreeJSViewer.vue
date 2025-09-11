@@ -67,6 +67,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { apiService } from '@/services/apiService.js'
 
 // Dynamic loader imports for better performance
 const loaderCache = new Map()
@@ -477,7 +478,7 @@ async function loadSTL() {
     const onError = async (error) => {
       // Try fallback loading method
       try {
-        const response = await fetch(props.modelUrl)
+        const response = await apiService.get(props.modelUrl)
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`)
         }

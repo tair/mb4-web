@@ -5,6 +5,7 @@ import { buildMediaUrl } from '@/utils/fileUtils.js'
 // import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore' // No longer needed
 import { ref, onMounted, computed } from 'vue'
 import { useNotifications } from '@/composables/useNotifications'
+import { useAuthStore } from '@/stores/AuthStore.js'
 // import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 
 type OverviewStat = {
@@ -56,11 +57,24 @@ const VITE_HOST = import.meta.env?.VITE_HOST || 'http://morphobank.org'
 
 // const overviewStore = useProjectOverviewStore() // No longer needed
 const { showError, showSuccess, showWarning, showInfo } = useNotifications()
+const authStore = useAuthStore()
 const exemplarMedia = ref(null)
 const showFullDescription = ref(false)
 
 // Computed property to get overview data - now always uses props
 const overview = computed(() => props.overview)
+
+// Check if current user is a member of this project
+const isCurrentUserMember = computed(() => {
+  if (!authStore.user?.userId || !overview.value?.members) {
+    return false
+  }
+  
+  // Check if the current user's ID matches any member's user_id
+  return overview.value.members.some((member: any) => 
+    member.user_id && String(member.user_id) === String(authStore.user.userId)
+  )
+})
 
 onMounted(async () => {
   // Use the image_props from the overview data (should come from props)
@@ -128,7 +142,7 @@ function popDownloadAlert() {
 
 <template>
   <!-- Project Status Messages -->
-  <div v-if="overview.published === 1" class="alert alert-info mb-3">
+  <div v-if="overview.published === 1 && isCurrentUserMember" class="alert alert-info mb-3">
     <h2 style="color:#3D8DA3;">This project is published</h2>
     <p style="color:#3D8DA3;">
       If you wish to edit it send a request to MorphoBank support. 
@@ -136,7 +150,7 @@ function popDownloadAlert() {
     </p>
   </div>
   
-  <div v-else class="alert alert-warning mb-3">
+  <div v-else-if="overview.published !== 1" class="alert alert-warning mb-3">
     <h2 style="color:#3D8DA3;">This project is unpublished</h2>
     <p style="color:#3D8DA3;">
       You are working on your project in the My Projects section of the site.

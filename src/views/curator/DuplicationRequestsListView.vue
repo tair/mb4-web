@@ -1,8 +1,8 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import axios from 'axios'
 import { RouterLink } from 'vue-router'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
+import { apiService } from '@/services/apiService.js'
 
 const isLoaded = ref(false)
 const requests = ref([])
@@ -43,7 +43,7 @@ async function loadRequests() {
     params.append('page', filters.value.page)
     params.append('limit', pagination.value.limit)
     
-    const response = await axios.get(`${import.meta.env.VITE_API_URL}/duplication-requests?${params}`)
+    const response = await apiService.get(`/duplication-requests?${params}`)
     
     if (response.data.success) {
       requests.value = response.data.data.requests

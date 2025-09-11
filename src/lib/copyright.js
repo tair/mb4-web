@@ -1,9 +1,9 @@
-import axios from 'axios'
+import { apiService } from '@/services/apiService.js'
 
 export async function setCopyRight(projectId, copyright) {
-  const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/copyright`
-  const response = await axios.post(url, copyright)
-  if (response.status != 200) {
-    throw new Error(response.data?.message || 'Failed to set copyright')
+  const response = await apiService.post(`/projects/${projectId}/copyright`, copyright)
+  if (!response.ok) {
+    const responseData = await response.json()
+    throw new Error(responseData?.message || 'Failed to set copyright')
   }
 }

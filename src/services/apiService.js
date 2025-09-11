@@ -3,6 +3,12 @@
  * 
  * Centralized HTTP client for making API requests
  * Handles authentication, error handling, and request/response transformation
+ * 
+ * Features:
+ * - Automatic 401 handling with redirectUri support (similar to axios interceptors)
+ * - Blob response handling for authentication errors
+ * - Token management and cleanup
+ * - Comprehensive error handling for all HTTP methods
  */
 
 class ApiService {
@@ -53,20 +59,86 @@ class ApiService {
   }
 
   /**
-   * Build full URL
-   * @param {string} endpoint - API endpoint
+   * Build full URL - intelligently handles both relative and absolute URLs
+   * @param {string} endpoint - API endpoint (relative path or full URL)
+   * @param {Object} params - Optional query parameters
    * @returns {string} Full URL
    */
-  buildUrl(endpoint) {
-    // Remove leading slash if present to avoid double slashes
-    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
-    
-    if (this.baseUrl) {
-      return `${this.baseUrl}/${cleanEndpoint}`
+  buildUrl(endpoint, params = null) {
+    // Check if it's already a full URL (has protocol)
+    if (this.isFullUrl(endpoint)) {
+      return this.appendQueryParams(endpoint, params)
     }
     
-    // If no base URL, assume endpoint is already a full URL or relative to current origin
-    return endpoint.startsWith('/') ? endpoint : `/${endpoint}`
+    // For relative URLs, build with API base URL
+    const apiBaseUrl = import.meta.env.VITE_API_URL || ''
+    
+    // Ensure endpoint starts with / for relative paths
+    const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
+    
+    let fullUrl
+    // If we have a configured baseUrl, use it (for testing/override scenarios)
+    if (this.baseUrl) {
+      const cleanEndpoint = normalizedEndpoint.startsWith('/') ? normalizedEndpoint.slice(1) : normalizedEndpoint
+      fullUrl = `${this.baseUrl}/${cleanEndpoint}`
+    }
+    // Use VITE_API_URL for relative paths
+    else if (apiBaseUrl) {
+      fullUrl = `${apiBaseUrl}${normalizedEndpoint}`
+    }
+    // Fallback: return as relative to current origin
+    else {
+      fullUrl = normalizedEndpoint
+    }
+    
+    return this.appendQueryParams(fullUrl, params)
+  }
+
+  /**
+   * Append query parameters to a URL
+   * @param {string} url - Base URL
+   * @param {Object} params - Query parameters object
+   * @returns {string} URL with query parameters
+   */
+  appendQueryParams(url, params) {
+    if (!params || Object.keys(params).length === 0) {
+      return url
+    }
+    
+    const urlObj = new URL(url, window.location.origin)
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        urlObj.searchParams.set(key, value)
+      }
+    })
+    
+    return urlObj.toString()
+  }
+
+  /**
+   * Check if a URL is a full URL (has protocol)
+   * @param {string} url - URL to check
+   * @returns {boolean} True if it's a full URL
+   */
+  isFullUrl(url) {
+    try {
+      new URL(url)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  /**
+   * Force a URL to be treated as external/full URL (bypass API base URL)
+   * Useful for S3, CIPRES, or other external service URLs
+   * @param {string} url - The full URL
+   * @returns {string} The URL unchanged (for chaining)
+   */
+  external(url) {
+    // This is just a semantic helper - if the URL is already full, buildUrl will handle it correctly
+    // But this makes the intent clear in the calling code
+    return url
   }
 
   /**
@@ -81,22 +153,37 @@ class ApiService {
 
     // Try to get error message from response
     let errorMessage = response.statusText
+    let errorData = null
+    
     try {
-      const errorData = await response.clone().json()
+      errorData = await response.clone().json()
       if (errorData.message) {
         errorMessage = errorData.message
       } else if (errorData.error) {
         errorMessage = errorData.error
       }
     } catch (e) {
-      // If response is not JSON, use statusText
+      // If response is not JSON, try to handle as blob for 401 errors
+      if (response.status === 401) {
+        try {
+          const blob = await response.clone().blob()
+          const blobText = await blob.text()
+          try {
+            errorData = JSON.parse(blobText)
+          } catch (parseError) {
+            console.error('Error parsing blob response:', parseError)
+          }
+        } catch (blobError) {
+          console.error('Error reading blob:', blobError)
+        }
+      }
     }
 
     // Handle specific status codes
     switch (response.status) {
       case 401:
-        // Unauthorized - redirect to login or refresh token
-        this.handleUnauthorized()
+        // Unauthorized - check for redirectUri in response data
+        await this.handleUnauthorized(errorData)
         throw new Error('Authentication required')
         
       case 403:
@@ -121,14 +208,27 @@ class ApiService {
 
   /**
    * Handle unauthorized responses
+   * @param {Object} errorData - Error response data that may contain redirectUri
    */
-  handleUnauthorized() {
+  async handleUnauthorized(errorData = null) {
+    console.log('Interceptor caught error: 401')
+    
+    // Check if we have a redirectUri in the error response
+    if (errorData && errorData.redirectUri) {
+      // Redirect to the provided URI with current location as redirect parameter
+      const redirectUrl = `${errorData.redirectUri}&redirect=${encodeURIComponent(window.location.href)}`
+      console.log('Redirecting due to authentication required:', redirectUrl)
+      window.location.href = redirectUrl
+      return
+    }
+    
     // Clear stored tokens
     localStorage.removeItem('auth_token')
     sessionStorage.removeItem('auth_token')
     
     // Import authStore to handle session timeout properly
-    import('@/stores/AuthStore.js').then(({ useAuthStore }) => {
+    try {
+      const { useAuthStore } = await import('@/stores/AuthStore.js')
       const authStore = useAuthStore()
       // Only handle if we have auth data
       if (authStore.user?.authToken) {
@@ -136,23 +236,24 @@ class ApiService {
         authStore.invalidate()
         // The authStore.invalidate() will trigger the redirect via axios interceptor
       }
-    }).catch(err => {
+    } catch (err) {
       console.warn('ApiService: Could not handle auth error:', err)
-    })
+    }
   }
 
   /**
    * Make GET request
    * @param {string} endpoint - API endpoint
-   * @param {Object} options - Request options
+   * @param {Object} options - Request options (can include 'params' for query parameters)
    * @returns {Promise<Response>} Fetch response
    */
   async get(endpoint, options = {}) {
-    const url = this.buildUrl(endpoint)
+    const { params, ...fetchOptions } = options
+    const url = this.buildUrl(endpoint, params)
     const config = {
       method: 'GET',
       headers: this.getAuthHeaders(),
-      ...options
+      ...fetchOptions
     }
 
     try {
