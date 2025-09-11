@@ -227,7 +227,7 @@
     <div class="annotation-canvas-container" ref="canvasContainer">
       <img 
         ref="mediaImage"
-        :src="mediaUrl"
+        :src="currentImageUrl || mediaUrl"
         @load="onImageLoad"
         @error="onImageError"
         alt="Media for annotation"
@@ -355,7 +355,7 @@
       <div class="overview-container" ref="overviewContainer">
         <img 
           ref="overviewImage"
-          :src="mediaUrl"
+          :src="currentImageUrl || mediaUrl"
           @load="onOverviewImageLoad"
           @click="onOverviewClick"
           alt="Image overview"
@@ -412,6 +412,7 @@
 <script>
 import AnnotationEditModal from './AnnotationEditModal.vue'
 import { annotationService } from '../../services/annotationService.js'
+import { buildMediaUrl } from '../../utils/fileUtils.js'
 
 export default {
   name: 'AnnotationViewer',
@@ -518,7 +519,11 @@ export default {
       characterDisplayCache: new Map(),
       
       // Enhanced label text cache to handle async loading
-      enhancedLabelCache: new Map()
+      enhancedLabelCache: new Map(),
+      
+      // Image fallback state
+      currentImageUrl: null,
+      hasTriedFallback: false
     }
   },
 
@@ -568,6 +573,15 @@ export default {
 
       },
       deep: true,
+      immediate: true
+    },
+    
+    mediaUrl: {
+      handler(newUrl) {
+        // Reset fallback state when mediaUrl changes
+        this.currentImageUrl = newUrl
+        this.hasTriedFallback = false
+      },
       immediate: true
     }
   },
@@ -788,6 +802,11 @@ export default {
       this.setupCanvas()
       this.drawAnnotations()
       
+      // Log successful load (helpful for debugging fallback behavior)
+      if (this.hasTriedFallback) {
+        console.warn('Successfully loaded fallback image (large version)')
+      }
+      
       // Force label update now that image is loaded
       this.$nextTick(() => {
         this.$forceUpdate()
@@ -795,8 +814,18 @@ export default {
     },
 
     onImageError() {
-      console.error('Failed to load media image')
-      this.showSaveStatus('Failed to load image', 'error')
+      console.error('Failed to load media image:', this.currentImageUrl || this.mediaUrl)
+      
+      // Try fallback to 'large' version if we haven't tried it yet
+      if (!this.hasTriedFallback) {
+        console.warn('Trying fallback to large version...')
+        this.hasTriedFallback = true
+        this.currentImageUrl = buildMediaUrl(this.projectId, this.mediaId, 'large')
+        return
+      }
+      
+      // If fallback also failed, show error
+      this.showSaveStatus('Failed to load image (tried original and large versions)', 'error')
     },
 
     setupCanvas() {
