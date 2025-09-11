@@ -582,6 +582,7 @@ import { useProjectsStore } from '@/stores/ProjectsStore'
 import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore'
 import { useUserStore } from '@/stores/UserStore'
 import { useNotifications } from '@/composables/useNotifications'
+import { NavigationPatterns } from '@/utils/navigationUtils.js'
 import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
 import axios from 'axios'
 import {
@@ -1071,10 +1072,9 @@ async function handleSubmit() {
 
     // Show success state briefly before redirecting
     projectUpdated.value = true
-    await new Promise((resolve) => setTimeout(resolve, 800))
-
-    // Force full page refresh to bypass any cached 404 responses
-    window.location.href = `/myprojects/${projectId}/overview`
+    
+    // Use robust navigation with proper error handling
+    await NavigationPatterns.afterEdit(projectId, 'overview', { delay: 800 })
   } catch (err) {
     console.error('Error in handleSubmit:', err)
     error.value =
@@ -1285,7 +1285,7 @@ async function deleteProject() {
       // Show success message briefly before redirecting
       showDeleteDialog.value = false
       
-      // Force full page refresh to bypass any cached responses
+      // Navigate to projects list after deletion
       window.location.href = '/myprojects'
     } else {
       throw new Error('Failed to delete project')

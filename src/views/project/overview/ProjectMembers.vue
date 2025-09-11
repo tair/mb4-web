@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import Tooltip from '@/components/main/Tooltip.vue'
+import { toISODate } from '@/utils/date'
 
 type MemberStats = {
+  user_id: number
   fname: string
-  lname: String
+  lname: string
+  email: string
   administrator: string
   membership_status: string
   member_role: string
+  last_login: number
   taxa: number
   specimens: number
   media: number
@@ -23,16 +27,18 @@ type MemberStats = {
   cell_media: number
   cell_media_labels: number
   rules: number
+  warnings: number
 }
 
-defineProps<{
+const props = defineProps<{
   members: MemberStats[]
+  published?: number
 }>()
 </script>
 <template>
   <div>
     <h3>Members</h3>
-    <table class="table table-bordered table-striped">
+    <table class="table table-bordered table-striped table-sm small">
       <thead>
         <tr>
           <th scope="col">Member Name</th>
@@ -77,12 +83,20 @@ defineProps<{
               content="Rules of character relationship that this project member specified. Please see manual for further details."
             ></Tooltip>
           </th>
+          <th v-if="published !== 1" scope="col">
+            Cell Warnings
+            <Tooltip
+              content="Characters that have been changed since scoring began. The user may wish to recheck these scores to see that the change to the character has not impacted the score."
+            ></Tooltip>
+          </th>
         </tr>
       </thead>
       <tbody>
         <tr :key="idx" v-for="(member, idx) in members">
           <td scope="row">
-            <div class="fw-bold">{{ member.fname + ' ' + member.lname }}</div>
+            <div class="fw-bold">
+              {{ member.fname + ' ' + member.lname }} <Tooltip :content="member.email"></Tooltip>
+            </div>
 
             <small v-if="member.administrator == '1'" class="text-danger"
               >Project Administrator
@@ -113,6 +127,13 @@ defineProps<{
                 <Tooltip content="no current access to this project"></Tooltip
               ></small>
             </div>
+
+            <!-- Last Login (only for unpublished projects) -->
+            <div v-if="published !== 1 && member.last_login" class="mt-1">
+              <small class="text-muted">
+                Last logged in {{ toISODate(member.last_login) }}
+              </small>
+            </div>
           </td>
           <td>{{ member.taxa }}</td>
           <td>{{ member.specimens }}</td>
@@ -131,6 +152,7 @@ defineProps<{
           <td>{{ member.cell_media }}</td>
           <td>{{ member.cell_media_labels }}</td>
           <td>{{ member.rules }}</td>
+          <td v-if="published !== 1">{{ member.warnings || 0 }}</td>
         </tr>
       </tbody>
     </table>

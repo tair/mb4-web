@@ -4,6 +4,7 @@ import { reactive, ref } from 'vue'
 import router from '@/router'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useNotifications } from '@/composables/useNotifications'
+import { NavigationPatterns } from '@/utils/navigationUtils.js'
 import { TaxaColumns, nameColumnMap, TAXA_COLUMN_NAMES } from '@/utils/taxa'
 import { capitalizeFirstLetter } from '@/utils/string'
 import Alert from '@/components/main/Alert.vue'
@@ -65,7 +66,7 @@ async function createTaxonBatch() {
 
     if (created) {
       showSuccess('Taxa created successfully!')
-      router.replace({ path: `/myprojects/${projectId}/taxa` })
+      await NavigationPatterns.afterBatchOperation(projectId, 'taxa')
     } else {
       showError('Failed to create taxa. Please try again.')
       validationMessages.value.validation = 'Failed to create taxa. Please try again.'

@@ -95,6 +95,9 @@ export const useAuthStore = defineStore({
         message.setSessionTimeOutMessage()
         // Clear expired auth state
         this.invalidate()
+        
+        // Redirect to login page if we're not already there
+        this.redirectToLoginIfNeeded()
         return false
       }
 
@@ -119,6 +122,7 @@ export const useAuthStore = defineStore({
           this.invalidate()
           const message = useMessageStore()
           message.setSessionTimeOutMessage()
+          this.redirectToLoginIfNeeded()
           return false
         }
       } catch (error) {
@@ -128,12 +132,33 @@ export const useAuthStore = defineStore({
           this.invalidate()
           const message = useMessageStore()
           message.setSessionTimeOutMessage()
+          this.redirectToLoginIfNeeded()
           return false
         }
         // For other errors, assume auth is still valid to avoid false negatives
         console.warn('Could not verify authentication with server:', error.message)
         return true
       }
+    },
+
+    redirectToLoginIfNeeded() {
+      // Import router dynamically to avoid circular dependency
+      import('@/router/index.js').then(({ default: router }) => {
+        const currentRoute = router.currentRoute.value
+        if (currentRoute.name !== 'UserLogin') {
+          console.log('Session expired, redirecting to login page')
+          router.push({ 
+            name: 'UserLogin', 
+            query: { 
+              redirect: currentRoute.name,
+              // Preserve query params if they exist
+              ...(Object.keys(currentRoute.query).length > 0 ? { originalQuery: JSON.stringify(currentRoute.query) } : {})
+            } 
+          })
+        }
+      }).catch(err => {
+        console.warn('Could not redirect to login:', err)
+      })
     },
 
     async checkProfileConfirmation() {
@@ -171,6 +196,7 @@ export const useAuthStore = defineStore({
           localStorage.removeItem('orcid-user')
           const message = useMessageStore()
           message.setSessionTimeOutMessage()
+          this.redirectToLoginIfNeeded()
           return
         }
       } else {

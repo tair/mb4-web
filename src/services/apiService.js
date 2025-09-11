@@ -127,9 +127,18 @@ class ApiService {
     localStorage.removeItem('auth_token')
     sessionStorage.removeItem('auth_token')
     
-    // Could emit an event or redirect to login page
-    // For now, just log the event
-    console.warn('Authentication required - please log in')
+    // Import authStore to handle session timeout properly
+    import('@/stores/AuthStore.js').then(({ useAuthStore }) => {
+      const authStore = useAuthStore()
+      // Only handle if we have auth data
+      if (authStore.user?.authToken) {
+        console.log('ApiService: Authentication error detected, clearing auth state')
+        authStore.invalidate()
+        // The authStore.invalidate() will trigger the redirect via axios interceptor
+      }
+    }).catch(err => {
+      console.warn('ApiService: Could not handle auth error:', err)
+    })
   }
 
   /**

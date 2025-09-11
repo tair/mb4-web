@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import router from '@/router'
 import { useFoliosStore } from '@/stores/FoliosStore'
 import { useNotifications } from '@/composables/useNotifications'
+import { NavigationPatterns, navigateBack } from '@/utils/navigationUtils.js'
 import { schema } from '@/views/project/folios/schema.js'
 
 const route = useRoute()
@@ -48,7 +49,7 @@ async function create(event) {
     
     if (success) {
       showSuccess('Folio created successfully!')
-      router.go(-1)
+      await navigateBack(`/myprojects/${projectId}/folios`)
     } else {
       showError('Failed to create folio')
     }

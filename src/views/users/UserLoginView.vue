@@ -30,7 +30,16 @@ const submitForm = async () => {
         router.push({ path: '/' }) // Fallback to home
       }
     } else if (route.query.redirect) {
-      router.push({ name: `${route.query.redirect}` })
+      // Handle redirect with original query parameters if they exist
+      const redirectRoute = { name: `${route.query.redirect}` }
+      if (route.query.originalQuery) {
+        try {
+          redirectRoute.query = JSON.parse(route.query.originalQuery)
+        } catch (e) {
+          console.warn('Could not parse original query parameters:', e)
+        }
+      }
+      router.push(redirectRoute)
     } else {
       router.push({ path: '/myprojects' })
     }

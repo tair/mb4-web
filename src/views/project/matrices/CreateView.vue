@@ -7,6 +7,7 @@ import { useMatricesStore } from '@/stores/MatricesStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useFileTransferStore } from '@/stores/FileTransferStore'
 import { useNotifications } from '@/composables/useNotifications'
+import { NavigationPatterns } from '@/utils/navigationUtils.js'
 import { CharacterStateIncompleteType } from '@/lib/matrix-parser/MatrixObject.ts'
 import { getIncompleteStateText } from '@/lib/matrix-parser/text.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
@@ -326,8 +327,8 @@ async function uploadMatrix() {
       // Wait for store invalidation to complete
       await matricesStore.invalidate()
 
-      // Force a full page reload to ensure fresh data is loaded
-      window.location.href = `/myprojects/${projectId}/matrices`
+      // Use robust navigation with proper error handling
+      await NavigationPatterns.afterComplexResourceCreate(projectId, 'matrices')
     }
   } catch (error) {
     console.error('Error uploading matrix:', error)
