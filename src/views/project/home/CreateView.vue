@@ -555,7 +555,6 @@ import { useRouter } from 'vue-router'
 import { useProjectsStore } from '@/stores/ProjectsStore'
 import { useUserStore } from '@/stores/UserStore'
 import { useNotifications } from '@/composables/useNotifications'
-import axios from 'axios'
 import {
   getNSFFundedTooltip,
   getExemplarMediaTooltip,
@@ -571,6 +570,7 @@ import { NavigationPatterns } from '@/utils/navigationUtils.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import FormLayout from '@/components/main/FormLayout.vue'
 import '@/assets/css/form.css'
+import { apiService } from '@/services/apiService.js'
 
 const router = useRouter()
 const projectsStore = useProjectsStore()
@@ -662,10 +662,9 @@ function selectJournalFromKeyboard() {
 async function loadJournals() {
   try {
     isLoadingJournals.value = true
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/projects/journals`
-    )
-    journals.value = response.data
+    const response = await apiService.get('/projects/journals')
+    const data = await response.json()
+    journals.value = data
   } catch (error) {
     console.error('Error loading journals:', error)
   } finally {
@@ -743,16 +742,14 @@ const loadJournalCover = async (journalTitle) => {
   }
 
   try {
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/projects/journal-cover`,
-      {
-        params: { journalTitle },
-      }
-    )
+    const response = await apiService.get('/projects/journal-cover', {
+      params: { journalTitle }
+    })
+    const responseData = await response.json()
 
     // Check if we have a path and verify the image actually exists
-    if (response.data.coverPath && response.data.coverPath.trim() !== '') {
-      const coverPath = response.data.coverPath.trim()
+    if (responseData.coverPath && responseData.coverPath.trim() !== '') {
+      const coverPath = responseData.coverPath.trim()
       
       // Test if the image actually loads
       const imageExists = await testImageExists(coverPath)
@@ -834,16 +831,14 @@ async function retrieveDOI() {
   if (!formData.article_doi) return
 
   try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/projects/doi`,
-      {
-        article_doi: formData.article_doi,
-        newProject: true, // Since this is CreateView, we're always creating a new project
-      }
-    )
+    const response = await apiService.post('/projects/doi', {
+      article_doi: formData.article_doi,
+      newProject: true, // Since this is CreateView, we're always creating a new project
+    })
+    const responseData = await response.json()
 
-    if (response.data.status === 'ok') {
-      const fields = response.data.fields
+    if (responseData.status === 'ok') {
+      const fields = responseData.fields
 
       // Set project name to article title for new projects
       formData.name = fields.article_title
@@ -876,7 +871,7 @@ async function retrieveDOI() {
         }
       }
     } else {
-      showError(response.data.errors.join('\n'), 'DOI Retrieval Error')
+      showError(responseData.errors.join('\n'), 'DOI Retrieval Error')
     }
   } catch (error) {
     console.error('Error retrieving DOI:', error)

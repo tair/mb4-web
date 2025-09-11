@@ -1,3 +1,5 @@
+import { apiService } from '@/services/apiService.js'
+
 /**
  * Class that loads the matrix.
  * @param host The location of the server.
@@ -61,20 +63,17 @@ export class MatrixLoader {
     if (this.readOnly) {
       query['ro'] = 1
     }
-    const options = {
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-      credential: 'include',
-      body: JSON.stringify(query),
-    }
     const url = this.url + request.getMethod()
     return new Promise((resolve, reject) => {
       const fetchWithRequest = async () => {
         try {
-          const response = await fetch(url, options)
+          const response = await apiService.post(url, query, {
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            credential: 'include',
+          })
           if (response.status == 401) {
             sendRetries = request.getRetries()
             return { errors: ['User is not signed in'] }

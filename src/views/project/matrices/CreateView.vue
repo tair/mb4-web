@@ -1,5 +1,4 @@
 <script setup>
-import axios from 'axios'
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCharactersStore } from '@/stores/CharactersStore'
@@ -14,6 +13,7 @@ import { mergeMatrix } from '@/lib/MatrixMerger.js'
 import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
 import { getTaxonomicUnitOptions } from '@/utils/taxa'
 import router from '@/router'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const taxaStore = useTaxaStore()
@@ -310,14 +310,10 @@ async function uploadMatrix() {
     const serializedMatrix = serializeMatrix(importedMatrix)
     formData.set('matrix', serializedMatrix)
 
-    const url = new URL(
-      `${import.meta.env.VITE_API_URL}/projects/${projectId}/matrices/upload`
-    )
-
-    const response = await axios.post(url, formData, {
+    const response = await apiService.post(`/projects/${projectId}/matrices/upload`, formData, {
       timeout: 300000, // 5 minutes timeout
     })
-    if (response.status === 200) {
+    if (response.ok) {
       // Clear the file from FileTransferStore after successful upload
       if (isMerge) {
         fileTransferStore.clearMergeFile()

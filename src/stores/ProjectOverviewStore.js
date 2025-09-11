@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
+import { apiService } from '@/services/apiService.js'
 
 /**
  * ProjectOverviewStore
@@ -79,13 +79,14 @@ export const useProjectOverviewStore = defineStore({
         return
       }
 
-      const url = `${import.meta.env.VITE_API_URL}/projects/${id}/overview`
+      const url = `/projects/${id}/overview`
       this.isLoading = true
       this.currentProjectId = id
 
       try {
-        const response = await axios.get(url)
-        this.overview = response.data.overview
+        const response = await apiService.get(url)
+        const responseData = await response.json()
+        this.overview = responseData.overview
         this.isLoaded = true
       } catch (e) {
         console.error('Error fetching project overview:', e)
@@ -109,16 +110,17 @@ export const useProjectOverviewStore = defineStore({
       }
 
       try {
-        const url = `${import.meta.env.VITE_API_URL}/projects/${id}/overview`
-        const response = await axios.get(url)
+        const url = `/projects/${id}/overview`
+        const response = await apiService.get(url)
+        const responseData = await response.json()
         
         // Update only the disk usage fields
-        if (response.data.overview) {
-          this.overview.disk_usage = response.data.overview.disk_usage
-          this.overview.disk_usage_limit = response.data.overview.disk_usage_limit
+        if (responseData.overview) {
+          this.overview.disk_usage = responseData.overview.disk_usage
+          this.overview.disk_usage_limit = responseData.overview.disk_usage_limit
           // Also update stats if they exist
-          if (response.data.overview.stats) {
-            this.overview.stats = response.data.overview.stats
+          if (responseData.overview.stats) {
+            this.overview.stats = responseData.overview.stats
           }
         }
       } catch (e) {

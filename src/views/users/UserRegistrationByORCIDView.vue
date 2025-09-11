@@ -186,7 +186,7 @@ import { useAuthStore } from '@/stores/AuthStore.js'
 import { useMessageStore } from '@/stores/MessageStore.js'
 import { getPasswordPattern, getPasswordRule } from '@/utils/util.js'
 import router from '../../router'
-import axios from 'axios'
+import { apiService } from '@/services/apiService.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import Alert from '@/components/main/Alert.vue'
 
@@ -250,7 +250,7 @@ onMounted(async () => {
   }
 })
 
-const submitForm = () => {
+const submitForm = async () => {
   if (!validatePassword() || !confirmPassword()) return
 
   const formObject = {
@@ -263,36 +263,34 @@ const submitForm = () => {
     refreshToken: state.refreshToken,
   }
 
-  axios
-    .post(authStore.getRegisterUrl(), formObject)
-    .then(function (response) {
-      if (response.status === 201) {
-        messageStore.setSuccessMessage('User was created successfully!')
-        router.push({ path: '/users/login' })
-      } else {
-        error.signup = 'An error occurred while creating user.'
-        error.showResetLink = false
-      }
-    })
-    .catch(function (e) {
-      console.log(e.response)
-      if (e.response && e.response.data && e.response.data.message) {
-        // Check if the error message indicates email already exists
-        const errorMessage = e.response.data.message.toLowerCase()
-        if (errorMessage.includes('email') && errorMessage.includes('reset')) {
-          error.signup =
-            'This email is already in our system. Please reset your password below instead of creating a new account.'
-          error.showResetLink = true
-        } else {
-          error.signup = e.response.data.message
-          error.showResetLink = false
-        }
-      } else {
+  try {
+    const response = await apiService.post(authStore.getRegisterUrl(), formObject)
+    if (response.ok) {
+      messageStore.setSuccessMessage('User was created successfully!')
+      router.push({ path: '/users/login' })
+    } else {
+      error.signup = 'An error occurred while creating user.'
+      error.showResetLink = false
+    }
+  } catch (e) {
+    console.log(e)
+    if (e.message) {
+      // Check if the error message indicates email already exists
+      const errorMessage = e.message.toLowerCase()
+      if (errorMessage.includes('email') && errorMessage.includes('reset')) {
         error.signup =
-          'An error occurred while creating user. Please try again later.'
+          'This email is already in our system. Please reset your password below instead of creating a new account.'
+        error.showResetLink = true
+      } else {
+        error.signup = e.message
         error.showResetLink = false
       }
-    })
+    } else {
+      error.signup =
+        'An error occurred while creating user. Please try again later.'
+      error.showResetLink = false
+    }
+  }
 }
 </script>
 

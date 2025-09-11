@@ -18,8 +18,7 @@
       All API functions are accessed using URLs in the form
       <blockquote class="ms-5">
         <b>
-          {{ apiBaseUrl }}/service/[command]/[resource
-          type]?[url-encoded parameter list]
+          {{ apiService.buildUrl("/service/[command]/[resourcetype]?[url-encoded parameter list]") }}
         </b>
       </blockquote>
     </div>
@@ -55,14 +54,14 @@
     <h1>Examples</h1>
     <h2>Return a list of all published MorphoBank projects</h2>
     <blockquote>
-      <b>{{ apiBaseUrl }}/service/List/PublishedProjects</b>
+      <b>{{ apiService.buildUrl('/service/List/PublishedProjects') }}</b>
     </blockquote>
     <pre><code>{{ publishedProjectsExample }}</code></pre>
     <br />
     <h2>Return a list of project taxonomy</h2>
     <blockquote>
       <b
-        >{{ apiBaseUrl }}/service/List/ProjectTaxonomy?project_id=44</b
+        >{{ apiService.buildUrl('/service/List/ProjectTaxonomy?project_id=44') }}</b
       >
     </blockquote>
     <div>
@@ -74,7 +73,7 @@
     <br />
     <h2>Return a list of project media</h2>
     <blockquote>
-      <b>{{ apiBaseUrl }}/service/List/ProjectMedia?project_id=44</b>
+      <b>{{ apiService.buildUrl('/service/List/ProjectMedia?project_id=44') }}</b>
     </blockquote>
     <div>
       ProjectMedia requires the following parameter:<br />
@@ -87,10 +86,11 @@
 
 <script setup>
 import { computed } from 'vue'
+import { apiService } from '@/services/apiService.js'
 
 // Get the API base URL from environment variable
 const apiBaseUrl = computed(() => {
-  return import.meta.env.VITE_API_URL || 'https://morphobank.org/services'
+  return apiService.buildUrl('') || 'https://morphobank.org/services'
 })
 
 const frontendBaseUrl = computed(() => {

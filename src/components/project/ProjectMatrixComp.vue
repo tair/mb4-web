@@ -1,12 +1,11 @@
 <script setup>
-import axios from 'axios'
-
 import { ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMatricesStore } from '@/stores/MatricesStore'
 import { useFileTransferStore } from '@/stores/FileTransferStore'
 import { useDocumentsStore } from '@/stores/DocumentsStore'
 import { useNotifications } from '@/composables/useNotifications'
+import { apiService } from '@/services/apiService.js'
 import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import { getTaxonomicUnitOptions } from '@/utils/taxa'
@@ -74,9 +73,7 @@ const parsedMatrix = ref(null)
 const projectId = route.params.id
 const matrixId = props.matrix.matrix_id
 const taxonNames = props.matrix.taxonNames
-const baseUrl = `${
-  import.meta.env.VITE_API_URL
-}/projects/${projectId}/matrices/${matrixId}`
+const baseUrl = apiService.buildUrl(`/projects/${projectId}/matrices/${matrixId}`)
 
 const tools = new Map()
 tools.set('PAUPRAT', 'PAUP Ratchet')
@@ -500,9 +497,10 @@ async function onRun() {
 async function sendCipresRequest(url) {
   try {
     document.body.style.cursor = 'wait'
-    const response = await axios.post(url)
+    const response = await apiService.post(url)
+    const data = await response.json()
     document.body.style.cursor = 'default'
-    const msg = response.data?.message || 'Failed to submit job to CIPRES'
+    const msg = data?.message || 'Failed to submit job to CIPRES'
     showError(msg, 'Job Submission Failed')
     if (!msg.includes('fail') && !msg.includes('Fail')) {
       let urlNew = window.location.href
@@ -560,7 +558,7 @@ async function onDownloadJob(
 
 async function onDownloadJobResults(url, filename, ck, cr) {
   try {
-    const response = await fetch(url, {
+    const response = await apiService.get(url, {
       headers: {
         'cipres-appkey': `${ck}`,
         Authorization: `Basic ${cr}`,

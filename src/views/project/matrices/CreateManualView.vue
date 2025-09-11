@@ -1,5 +1,4 @@
 <script setup>
-import axios from 'axios'
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMatricesStore } from '@/stores/MatricesStore'
@@ -12,6 +11,7 @@ import {
   sortTaxaAlphabetically,
 } from '@/utils/taxa'
 import router from '@/router'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const router_instance = useRouter()
@@ -68,11 +68,8 @@ async function createMatrix() {
   errors.value = {}
 
   try {
-    const url = `${
-      import.meta.env.VITE_API_URL
-    }/projects/${projectId}/matrices/create`
 
-    const response = await axios.post(url, {
+    const response = await apiService.post(`/projects/${projectId}/matrices/create`, {
       title: formData.title,
       notes: formData.notes,
       otu: formData.otu,

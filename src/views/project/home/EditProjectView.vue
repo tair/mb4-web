@@ -584,7 +584,6 @@ import { useUserStore } from '@/stores/UserStore'
 import { useNotifications } from '@/composables/useNotifications'
 import { NavigationPatterns } from '@/utils/navigationUtils.js'
 import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
-import axios from 'axios'
 import {
   getNSFFundedTooltip,
   getExemplarMediaTooltip,
@@ -599,6 +598,7 @@ import {
 import Tooltip from '@/components/main/Tooltip.vue'
 import FormLayout from '@/components/main/FormLayout.vue'
 import '@/assets/css/form.css'
+import { apiService } from '@/services/apiService.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -741,6 +741,8 @@ async function loadProjectData() {
         formData.journal_title_other = formData.journal_title
         formData.journal_title = ''
       } else {
+        // Set journalSearch to show the current journal title in the input
+        journalSearch.value = formData.journal_title
         loadJournalCover(formData.journal_title)
       }
     }
@@ -776,10 +778,9 @@ function selectJournalFromKeyboard() {
 async function loadJournals() {
   try {
     isLoadingJournals.value = true
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/projects/journals`
-    )
-    journals.value = response.data
+    const response = await apiService.get('/projects/journals')
+    const responseData = await response.json()
+    journals.value = responseData
   } catch (error) {
     console.error('Error loading journals:', error)
   } finally {
@@ -860,16 +861,14 @@ const loadJournalCover = async (journalTitle) => {
   }
 
   try {
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/projects/journal-cover`,
-      {
-        params: { journalTitle },
-      }
-    )
+    const response = await apiService.get('/projects/journal-cover', {
+      params: { journalTitle }
+    })
 
     // Check if we have a path and verify the image actually exists
     if (response.data.coverPath && response.data.coverPath.trim() !== '') {
-      const coverPath = response.data.coverPath.trim()
+      const responseData = await response.json()
+      const coverPath = responseData.coverPath.trim()
       
       // Test if the image actually loads
       const imageExists = await testImageExists(coverPath)
@@ -951,8 +950,8 @@ async function retrieveDOI() {
   if (!formData.article_doi) return
 
   try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/projects/doi`,
+    const response = await apiService.post(
+      apiService.buildUrl('/projects/doi'),
       {
         article_doi: formData.article_doi,
         newProject: false, // Since this is EditView, we're editing an existing project
@@ -960,7 +959,8 @@ async function retrieveDOI() {
     )
 
     if (response.data.status === 'ok') {
-      const fields = response.data.fields
+      const responseData = await response.json()
+      const fields = responseData.fields
 
       // Handle each field from the response
       for (const [field, value] of Object.entries(fields)) {
@@ -1121,8 +1121,8 @@ async function updateProject(
       }
     }
 
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/projects/${projectId}/edit`,
+    const response = await apiService.post(
+      apiService.buildUrl(`/projects/${projectId}/edit`),
       requestData,
       { headers }
     )
@@ -1277,8 +1277,8 @@ async function deleteProject() {
   error.value = null
 
   try {
-    const response = await axios.delete(
-      `${import.meta.env.VITE_API_URL}/projects/${projectId}`
+    const response = await apiService.delete(
+      apiService.buildUrl(`/projects/${projectId}`)
     )
 
     if (response.status === 200) {

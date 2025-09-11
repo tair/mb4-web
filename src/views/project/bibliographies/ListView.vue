@@ -6,7 +6,7 @@ import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
 import { useNotifications } from '@/composables/useNotifications'
 import DeleteDialog from '@/views/project/bibliographies/DeleteDialog.vue'
-import axios from 'axios'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -116,19 +116,15 @@ function filterByLetter(letter) {
 
 async function exportEndNote() {
   try {
-    const response = await axios.get(
-      `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/bibliography/export`,
+    const response = await apiService.get(
+      `/projects/${projectId}/bibliography/export`,
       {
         responseType: 'blob',
       }
     )
 
-    // Create a blob URL and trigger download
-    const blob = new Blob([response.data], {
-      type: 'text/tab-separated-values',
-    })
+    // Get blob data from the response
+    const blob = await response.blob()
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url

@@ -1,6 +1,6 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
 import { useAuthStore } from '@/stores/AuthStore.js'
+import { apiService } from '@/services/apiService.js'
 
 export const useUserStore = defineStore({
   id: 'user',
@@ -39,15 +39,14 @@ export const useUserStore = defineStore({
       if (userObj) {
         try {
           // get user profile
-          const response = await axios.get(
-            `${import.meta.env.VITE_API_URL}/users/get-profile`
-          )
-          this.setUserValue(response.data)
+          const response = await apiService.get('/users/get-profile')
+          const data = await response.json()
+          this.setUserValue(data)
           this.initUserFormValue()
         } catch (e) {
           // TODO: display user fetch error
           console.log(e)
-          this.err.fetchErr = e.response.data.message
+          this.err.fetchErr = e.message
           throw e
         }
       }
@@ -56,16 +55,14 @@ export const useUserStore = defineStore({
     async updateUser() {
       try {
         // get user profile
-        const response = await axios.put(
-          `${import.meta.env.VITE_API_URL}/users/update-profile`,
-          this.userForm
-        )
-        this.setUserValue(response.data.user)
+        const response = await apiService.put('/users/update-profile', this.userForm)
+        const responseData = await response.json()
+        this.setUserValue(responseData.user)
         this.reset()
       } catch (e) {
         // TODO: display user fetch error
         console.log(e)
-        this.err.updateErr = e.response.data.message
+        this.err.updateErr = e.message
         throw e
       }
     },

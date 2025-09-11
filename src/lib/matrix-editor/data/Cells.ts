@@ -263,7 +263,7 @@ export class Cells {
       this.cells[taxonId] = {}
     }
     if (!(characterId in this.cells[taxonId])) {
-      delete this.cells[taxonId][characterId]
+      this.cells[taxonId][characterId] = []
     }
   }
 

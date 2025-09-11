@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/AuthStore'
 import { useRouter } from 'vue-router'
 import ProjectCard from '@/views/project/home/ProjectCard.vue'
 import FormLayout from '@/components/main/FormLayout.vue'
-import axios from 'axios'
+import { apiService } from '@/services/apiService.js'
 
 const projectsStore = useProjectsStore()
 const authStore = useAuthStore()
@@ -48,10 +48,9 @@ onMounted(async () => {
     // Fetch curator projects if user has curator permissions
     if (userCanCurate.value) {
       isLoadingCuratorProjects.value = true
-      const curatorResponse = await axios.get(
-        `${import.meta.env.VITE_API_URL}/projects/curator-projects`
-      )
-      curatorProjects.value = curatorResponse.data.projects || []
+      const curatorResponse = await apiService.get('/projects/curator-projects')
+      const curatorData = await curatorResponse.json()
+      curatorProjects.value = curatorData.projects || []
     }
   } catch (error) {
     console.error('Error fetching curator projects:', error)

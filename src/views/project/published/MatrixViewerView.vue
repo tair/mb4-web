@@ -4,6 +4,7 @@ import startMatrixViewer from '@/lib/matrix-editor/startMatrixViewer'
 import '@/assets/css/matrixEditor.css'
 import { onMounted } from 'vue'
 import { logView, HIT_TYPES } from '@/lib/analytics.js'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const projectId = parseInt(route.params.projectId, 10)
@@ -32,7 +33,7 @@ startMatrixViewer(
   projectId,
   matrixId,
   isStreaming,
-  import.meta.env.VITE_API_URL,
+  apiService.buildUrl(''),
   published
 )
 </script>

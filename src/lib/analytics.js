@@ -1,6 +1,4 @@
-import axios from 'axios'
-
-const API_URL = import.meta.env.VITE_API_URL
+import { apiService } from '@/services/apiService.js'
 
 // Hit types mapping
 const HIT_TYPES = {
@@ -26,7 +24,7 @@ const DOWNLOAD_TYPES = {
 
 export async function logView({ project_id, hit_type, row_id = null }) {
   try {
-    await axios.post(`${API_URL}/analytics/view`, {
+    await apiService.post('/analytics/view', {
       project_id,
       hit_type,
       row_id,
@@ -43,7 +41,7 @@ export async function logDownload({
   row_id = null,
 }) {
   try {
-    await axios.post(`${API_URL}/analytics/download`, {
+    await apiService.post('/analytics/download', {
       project_id,
       download_type,
       row_id,

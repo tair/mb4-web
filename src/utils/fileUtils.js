@@ -1,3 +1,5 @@
+import { apiService } from '@/services/apiService.js'
+
 /**
  * Build S3 media URL for a given project, media ID, and file size
  * @param {number|string} projectId - The project ID
@@ -9,9 +11,7 @@ function buildMediaUrl(projectId, mediaId, fileSize = 'original') {
   if (!projectId || !mediaId) {
     return '/public/images/image-not-found.png'
   }
-  return `${
-    import.meta.env.VITE_API_URL
-  }/public/media/${projectId}/serve/${mediaId}/${fileSize}`
+  return apiService.buildUrl(`/public/media/${projectId}/serve/${mediaId}/${fileSize}`)
 }
 
 /**
@@ -24,9 +24,7 @@ function buildDocumentUrl(projectId, documentId) {
   if (!projectId || !documentId) {
     return null
   }
-  return `${
-    import.meta.env.VITE_API_URL
-  }/public/documents/${projectId}/serve/${documentId}`
+  return apiService.buildUrl(`/public/documents/${projectId}/serve/${documentId}`)
 }
 
 /**

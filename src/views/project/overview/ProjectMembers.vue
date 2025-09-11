@@ -95,7 +95,8 @@ const props = defineProps<{
         <tr :key="idx" v-for="(member, idx) in members">
           <td scope="row">
             <div class="fw-bold">
-              {{ member.fname + ' ' + member.lname }} <Tooltip :content="member.email"></Tooltip>
+              {{ member.fname + ' ' + member.lname }} 
+              <Tooltip v-if="member.email" :content="member.email"></Tooltip>
             </div>
 
             <small v-if="member.administrator == '1'" class="text-danger"

@@ -1,5 +1,4 @@
 <script setup>
-import axios from 'axios'
 import router from '@/router'
 import { onMounted, computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -7,15 +6,14 @@ import { useDocumentsStore } from '@/stores/DocumentsStore'
 import { useNotifications } from '@/composables/useNotifications'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { folderSchema } from '@/views/project/documents/schema.js'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const projectId = route.params.id
 const folderId = parseInt(route.params.folderId)
 const folder = computed(() => documentsStore.getFolderById(folderId))
 
-const baseUrl = `${
-  import.meta.env.VITE_API_URL
-}/projects/${projectId}/documents/folder`
+const baseUrl = apiService.buildUrl(`/projects/${projectId}/documents/folder`)
 const documentsStore = useDocumentsStore()
 const { showError, showSuccess } = useNotifications()
 const isSaving = ref(false)
@@ -30,10 +28,11 @@ async function editFolder(event) {
     const jsonData = Object.fromEntries(formData)
 
     const url = `${baseUrl}/${folderId}/edit`
-    const response = await axios.post(url, jsonData)
+    const response = await apiService.post(url, jsonData)
     
-    if (response.status != 200) {
-      showError(response.data?.message || 'Failed to modify folder')
+    if (!response.ok) {
+      const errorData = await response.json()
+      showError(errorData?.message || 'Failed to modify folder')
       return
     }
 

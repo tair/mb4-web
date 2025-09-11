@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
+import { apiService } from '@/services/apiService.js'
 
 export const useFolioMediaStore = defineStore({
   id: 'folio-media',
@@ -32,64 +32,51 @@ export const useFolioMediaStore = defineStore({
   },
   actions: {
     async fetch(projectId, folioId) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/folios/${folioId}/media`
-      const response = await axios.get(url)
-      const media = response.data.media
+      const response = await apiService.get(`/projects/${projectId}/folios/${folioId}/media`)
+      const responseData = await response.json()
+        const media = responseData.media
       this.addMedia(media)
 
       this.isLoaded = true
     },
     async create(projectId, folioId, mediaIds) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/folios/${folioId}/media/create`
-      const response = await axios.post(url, { media_ids: mediaIds })
-      if (response.status == 200) {
-        const media = response.data.media
-        this.addMedia([media])
+      const response = await apiService.post(`/projects/${projectId}/folios/${folioId}/media/create`, { media_ids: mediaIds })
+      if (response.ok) {
+        const responseData = await response.json()
+        const media = responseData.media
+        this.addMedia(media)
         return true
       }
       return false
     },
     async edit(projectId, folioId, mediaId, media) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/folios/${folioId}/media/${mediaId}/edit`
-      const response = await axios.post(url, { media })
-      if (response.status == 200) {
-        const media = response.data.media
+      const response = await apiService.post(`/projects/${projectId}/folios/${folioId}/media/${mediaId}/edit`, { media })
+      if (response.ok) {
+        const responseData = await response.json()
+        const media = responseData.media
         this.addMedia([media])
         return true
       }
       return false
     },
     async deleteIds(projectId, folioId, linkIds) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/folios/${folioId}/media/delete`
-      const response = await axios.post(url, {
+      const response = await apiService.post(`/projects/${projectId}/folios/${folioId}/media/delete`, {
         link_ids: linkIds,
       })
-      if (response.status == 200) {
+      if (response.ok) {
         this.removeByIds(linkIds)
         return true
       }
       return false
     },
     async reorderMedia(projectId, folioId, linkIds, index) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/folios/${folioId}/media/reorder`
-
       try {
-        const response = await axios.post(url, {
+        const response = await apiService.post(`/projects/${projectId}/folios/${folioId}/media/reorder`, {
           link_ids: linkIds,
           index: index,
         })
 
-        if (response.status == 200) {
+        if (response.ok) {
           await this.fetch(projectId, folioId)
           return true
         }
@@ -100,12 +87,9 @@ export const useFolioMediaStore = defineStore({
       }
     },
     async find(projectId, folioId, text) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/folios/${folioId}/media/search`
-      const response = await axios.post(url, { text })
-      if (response.status == 200) {
-        return response.data.media_ids
+      const response = await apiService.post(`/projects/${projectId}/folios/${folioId}/media/search`, { text })
+      if (response.ok) {
+        const responseData = await response.json(); return responseData.media_ids
       }
       return []
     },

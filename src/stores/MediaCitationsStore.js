@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
+import { apiService } from '@/services/apiService.js'
 
 export const useMediaCitationsStore = defineStore({
   id: 'media-citations',
@@ -32,22 +32,18 @@ export const useMediaCitationsStore = defineStore({
   },
   actions: {
     async fetchCitations(projectId, mediaId) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/media/${mediaId}/citations`
-      const response = await axios.get(url)
-      const citations = response.data.citations
+      const response = await apiService.get(`/projects/${projectId}/media/${mediaId}/citations`)
+      const responseData = await response.json()
+        const citations = responseData.citations
       this.addCitations(citations)
 
       this.isLoaded = true
     },
     async create(projectId, mediaId, citationData) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/media/${mediaId}/citations/create`
       try {
-        const response = await axios.post(url, { citation: citationData })
-        const newCitation = response.data.citation
+        const response = await apiService.post(`/projects/${projectId}/media/${mediaId}/citations/create`, { citation: citationData })
+        const responseData = await response.json()
+        const newCitation = responseData.citation
         this.addCitations([newCitation])
         return true
       } catch (error) {
@@ -55,14 +51,11 @@ export const useMediaCitationsStore = defineStore({
       }
     },
     async edit(projectId, mediaId, citationId, citation) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/media/${mediaId}/citations/${citationId}/edit`
-
       try {
-        const response = await axios.post(url, { citation })
-        if (response.status == 200) {
-          const updatedCitation = response.data.citation
+        const response = await apiService.post(`/projects/${projectId}/media/${mediaId}/citations/${citationId}/edit`, { citation })
+        if (response.ok) {
+          const responseData = await response.json()
+        const updatedCitation = responseData.citation
           this.removeCitationsByIds([updatedCitation.link_id])
           this.addCitations([updatedCitation])
           return true
@@ -73,13 +66,10 @@ export const useMediaCitationsStore = defineStore({
       }
     },
     async deleteIds(projectId, mediaId, citationIds) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/media/${mediaId}/citations/delete`
-      const response = await axios.post(url, {
+      const response = await apiService.post(`/projects/${projectId}/media/${mediaId}/citations/delete`, {
         citation_ids: citationIds,
       })
-      if (response.status == 200) {
+      if (response.ok) {
         this.removeCitationsByIds(citationIds)
         return true
       }

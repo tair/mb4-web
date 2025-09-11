@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
+import { apiService } from '@/services/apiService.js'
 
 export const useSearchResultsStore = defineStore({
   id: 'searchResults',
@@ -30,7 +30,6 @@ export const useSearchResultsStore = defineStore({
   getters: {},
   actions: {
     async fetchResults(query) {
-      const baseUrl = import.meta.env.VITE_API_URL
       this.searching.projects = true
       this.searching.media = true
       this.searching.media_views = true
@@ -51,123 +50,128 @@ export const useSearchResultsStore = defineStore({
       this.results.taxa = []
       this.results.members = []
 
-      // Fetch projects
-      axios
-        .get(`${baseUrl}/search/projects`, { params: query })
-        .then((res) => {
-          this.results.projects = res.data.projects
-        })
-        .catch(() => {
-          this.results.projects = []
-        })
-        .finally(() => {
-          this.searching.projects = false
-        })
+      // Fetch all results in parallel
+      const searchPromises = [
+        // Fetch projects
+        apiService.get('/search/projects', { params: query })
+          .then(async (res) => {
+            const data = await res.json()
+            this.results.projects = data.projects
+          })
+          .catch(() => {
+            this.results.projects = []
+          })
+          .finally(() => {
+            this.searching.projects = false
+          }),
 
-      // Fetch media
-      axios
-        .get(`${baseUrl}/search/media`, { params: query })
-        .then((res) => {
-          this.results.media = res.data.media
-        })
-        .catch(() => {
-          this.results.media = []
-        })
-        .finally(() => {
-          this.searching.media = false
-        })
+        // Fetch media
+        apiService.get('/search/media', { params: query })
+          .then(async (res) => {
+            const data = await res.json()
+            this.results.media = data.media
+          })
+          .catch(() => {
+            this.results.media = []
+          })
+          .finally(() => {
+            this.searching.media = false
+          }),
 
-      // Fetch media-views
-      axios
-        .get(`${baseUrl}/search/media-views`, { params: query })
-        .then((res) => {
-          this.results.media_views = res.data.mediaViews
-        })
-        .catch(() => {
-          this.results.media_views = []
-        })
-        .finally(() => {
-          this.searching.media_views = false
-        })
+        // Fetch media-views
+        apiService.get('/search/media-views', { params: query })
+          .then(async (res) => {
+            const data = await res.json()
+            this.results.media_views = data.mediaViews
+          })
+          .catch(() => {
+            this.results.media_views = []
+          })
+          .finally(() => {
+            this.searching.media_views = false
+          }),
 
-      // Fetch specimens
-      axios
-        .get(`${baseUrl}/search/specimens`, { params: query })
-        .then((res) => {
-          this.results.specimens = res.data.specimens
-        })
-        .catch(() => {
-          this.results.specimens = []
-        })
-        .finally(() => {
-          this.searching.specimens = false
-        })
+        // Fetch specimens
+        apiService.get('/search/specimens', { params: query })
+          .then(async (res) => {
+            const data = await res.json()
+            this.results.specimens = data.specimens
+          })
+          .catch(() => {
+            this.results.specimens = []
+          })
+          .finally(() => {
+            this.searching.specimens = false
+          }),
 
-      // Fetch characters
-      axios
-        .get(`${baseUrl}/search/characters`, { params: query })
-        .then((res) => {
-          this.results.characters = res.data.characters
-        })
-        .catch(() => {
-          this.results.characters = []
-        })
-        .finally(() => {
-          this.searching.characters = false
-        })
+        // Fetch characters
+        apiService.get('/search/characters', { params: query })
+          .then(async (res) => {
+            const data = await res.json()
+            this.results.characters = data.characters
+          })
+          .catch(() => {
+            this.results.characters = []
+          })
+          .finally(() => {
+            this.searching.characters = false
+          }),
 
-      // Fetch references
-      axios
-        .get(`${baseUrl}/search/references`, { params: query })
-        .then((res) => {
-          // console.log(res.data)
-          this.results.references = res.data.references
-        })
-        .catch(() => {
-          this.results.references = []
-        })
-        .finally(() => {
-          this.searching.references = false
-        })
+        // Fetch references
+        apiService.get('/search/references', { params: query })
+          .then(async (res) => {
+            const data = await res.json()
+            this.results.references = data.references
+          })
+          .catch(() => {
+            this.results.references = []
+          })
+          .finally(() => {
+            this.searching.references = false
+          }),
 
-      // Fetch matrices
-      axios
-        .get(`${baseUrl}/search/matrices`, { params: query })
-        .then((res) => {
-          this.results.matrices = res.data.matrices
-        })
-        .catch(() => {
-          this.results.matrices = []
-        })
-        .finally(() => {
-          this.searching.matrices = false
-        })
+        // Fetch matrices
+        apiService.get('/search/matrices', { params: query })
+          .then(async (res) => {
+            const data = await res.json()
+            this.results.matrices = data.matrices
+          })
+          .catch(() => {
+            this.results.matrices = []
+          })
+          .finally(() => {
+            this.searching.matrices = false
+          }),
 
-      // Fetch taxa
-      axios
-        .get(`${baseUrl}/search/taxa`, { params: query })
-        .then((res) => {
-          this.results.taxa = res.data.taxa
-        })
-        .catch(() => {
-          this.results.taxa = []
-        })
-        .finally(() => {
-          this.searching.taxa = false
-        })
+        // Fetch taxa
+        apiService.get('/search/taxa', { params: query })
+          .then(async (res) => {
+            const data = await res.json()
+            this.results.taxa = data.taxa
+          })
+          .catch(() => {
+            this.results.taxa = []
+          })
+          .finally(() => {
+            this.searching.taxa = false
+          }),
 
-      // Fetch members
-      axios
-        .get(`${baseUrl}/search/members`, { params: query })
-        .then((res) => {
-          this.results.members = res.data.members
-        })
-        .catch(() => {
-          this.results.members = []
-        })
-        .finally(() => {
-          this.searching.members = false
-        })
+        // Fetch members
+        apiService.get('/search/members', { params: query })
+          .then(async (res) => {
+            const data = await res.json()
+            this.results.members = data.members
+          })
+          .catch(() => {
+            this.results.members = []
+          })
+          .finally(() => {
+            this.searching.members = false
+          })
+      ]
+
+      // Wait for all searches to complete
+      await Promise.allSettled(searchPromises)
     },
   },
 })

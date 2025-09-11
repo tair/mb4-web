@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import axios from 'axios'
 import { useRoute } from 'vue-router'
 import { ref, watch, computed } from 'vue'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -40,15 +40,11 @@ async function searchInstitutions() {
 
   try {
     isSearching.value = true
-    const url = `${
-      import.meta.env.VITE_API_URL
-    }/projects/${projectId}/institutions/search`
-
-    const response = await axios.get(url, {
-      params: { searchTerm: searchTerm.value },
+    const response = await apiService.get(`/projects/${projectId}/institutions/search`, {
+      params: { searchTerm: searchTerm.value }
     })
-
-    institutions.value = response.data
+    const responseData = await response.json()
+    institutions.value = responseData
     showDropdown.value = true
   } catch (e) {
     console.error('Error getting Institutions\n', e)
