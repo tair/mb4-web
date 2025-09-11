@@ -68,6 +68,25 @@ const dynamicCreateSchema = computed(() => {
   return schema
 })
 
+// Helper function to validate file types and show errors for unsupported formats
+function validateImageFile(file, fileType = 'media') {
+  if (!file) return true
+  
+  const fileName = file.name.toLowerCase()
+  const fileExtension = fileName.split('.').pop()
+  
+  // Check for HEIC files specifically
+  if (fileExtension === 'heic' || fileExtension === 'heif') {
+    showError(
+      `HEIC/HEIF files are not supported. Please convert your ${fileType} to JPEG, PNG, or another supported format.`,
+      'Unsupported File Format'
+    )
+    return false
+  }
+  
+  return true
+}
+
 function validateRequiredFields(formData) {
   const errors = []
 
@@ -80,6 +99,11 @@ function validateRequiredFields(formData) {
       if (fieldName === 'file') {
         if (!value || (value instanceof File && value.size === 0)) {
           errors.push(`${fieldDef.label} is required`)
+        } else if (value instanceof File) {
+          // Validate file format
+          if (!validateImageFile(value, 'media file')) {
+            errors.push('Please select a supported file format')
+          }
         }
       } else if (!value || (typeof value === 'string' && value.trim() === '')) {
         errors.push(`${fieldDef.label} is required`)
