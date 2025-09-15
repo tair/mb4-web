@@ -198,7 +198,19 @@ watch(
   [isLoaded, filteredMedia],
   ([loaded, media]) => {
     if (loaded && media.length === 0) {
-      router.push(`/myprojects/${projectId}/media`)
+      // Small delay to ensure any modal cleanup completes before navigation
+      setTimeout(() => {
+        // Force cleanup any remaining modal artifacts before navigation
+        const backdrop = document.querySelector('.modal-backdrop')
+        if (backdrop) {
+          backdrop.remove()
+        }
+        document.body.classList.remove('modal-open')
+        document.body.style.removeProperty('overflow')
+        document.body.style.removeProperty('padding-right')
+        
+        router.push(`/myprojects/${projectId}/media`)
+      }, 200)
     }
   },
   { immediate: true }

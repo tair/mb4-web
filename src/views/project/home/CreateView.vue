@@ -210,6 +210,33 @@
 
       <div class="form-group">
         <label class="form-label">
+          Article DOI
+          <Tooltip :content="TOOLTIP_ARTICLE_DOI"></Tooltip>
+        </label>
+        <p class="field-description">
+          This information will be used to automatically create a bibliographic
+          reference and populate fields below. Changes made here will update the reference.
+        </p>
+        <div class="doi-input">
+          <input
+            v-model="formData.article_doi"
+            type="text"
+            class="form-control"
+            placeholder="10.xxxx/xxxxx"
+          />
+          <button
+            type="button"
+            @click="retrieveDOI"
+            class="btn-link"
+            title="Retrieve article information using DOI"
+          >
+            Retrieve
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">
           Journal Title
           <span
             class="required"
@@ -494,32 +521,6 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">
-          Article DOI
-          <Tooltip :content="TOOLTIP_ARTICLE_DOI"></Tooltip>
-        </label>
-        <p class="field-description">
-          This information will be used to automatically create a bibliographic
-          reference. Changes made here will update the reference.
-        </p>
-        <div class="doi-input">
-          <input
-            v-model="formData.article_doi"
-            type="text"
-            class="form-control"
-            placeholder="10.xxxx/xxxxx"
-          />
-          <button
-            type="button"
-            @click="retrieveDOI"
-            class="btn-link"
-            title="Retrieve article information using DOI"
-          >
-            Retrieve
-          </button>
-        </div>
-      </div>
 
       <div class="form-buttons">
         <button
