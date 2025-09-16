@@ -6,6 +6,7 @@ import { schema } from '@/views/project/media/schema.js'
 import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useMediaStore } from '@/stores/MediaStore'
 import { useNotifications } from '@/composables/useNotifications'
 
 const props = defineProps<{
@@ -19,6 +20,7 @@ const projectId = route.params.id
 const mediaViewsStore = useMediaViewsStore()
 const specimensStore = useSpecimensStore()
 const taxaStore = useTaxaStore()
+const mediaStore = useMediaStore()
 const { showError, showSuccess } = useNotifications()
 const isSubmitting = ref(false)
 
@@ -47,12 +49,35 @@ function validateForm(formData: any) {
   }
 }
 
+// Computed properties for tracking assignment status
+const selectedCount = computed(() => props.selectedMedia.length)
+
+// Count how many selected items have specimen assigned
+const specimenAssignedCount = computed(() => {
+  return props.selectedMedia.filter(media => 
+    media.specimen_id && media.specimen_id !== 0
+  ).length
+})
+
+// Count how many selected items have view assigned  
+const viewAssignedCount = computed(() => {
+  return props.selectedMedia.filter(media => 
+    media.view_id && media.view_id !== 0
+  ).length
+})
+
+// Count how many selected items are ready for release (have both specimen and view)
+const readyForReleaseCount = computed(() => {
+  return props.selectedMedia.filter(media => 
+    media.specimen_id && media.specimen_id !== 0 &&
+    media.view_id && media.view_id !== 0
+  ).length
+})
+
 // Computed properties for validation
 const canRelease = computed(() => {
   return validationErrors.value.length === 0
 })
-
-const selectedCount = computed(() => props.selectedMedia.length)
 
 // Get the current specimen_id if all selected media have the same specimen
 const currentSpecimenId = computed(() => {
@@ -109,34 +134,94 @@ async function handleSubmitClicked(event: Event) {
     return // Don't submit if validation fails
   }
 
-  isSubmitting.value = true
-
-  try {
-    // Add cataloguing_status to release the media
-    json.cataloguing_status = '0'
-
-    const success = await props.batchEdit(json)
-    if (!success) {
-      showError('Failed to assign and release media files')
-      return
-    }
-
-    showSuccess('Media items assigned and released successfully!')
-  } catch (error) {
-    console.error('Curation error:', error)
-    showError('Failed to assign and release media files')
-  } finally {
-    isSubmitting.value = false
-  }
-
-  const element = document.getElementById('curationBatchModal')
-  if (!element) {
+  // Capture media IDs BEFORE any API calls to avoid losing selection after refresh
+  const mediaIds = props.selectedMedia.map((m) => {
+    // Try different possible ID property names
+    return m.media_id || m.id || m.mediaId || m.media_file_id
+  }).filter(id => id != null && id !== 0 && id !== '0') // Filter out null, undefined, 0, or '0' values
+  
+  // Validate that we have media IDs
+  if (!mediaIds || mediaIds.length === 0) {
+    showError('No media items selected for assignment and release')
     return
   }
 
-  const modal = Modal.getInstance(element)
-  if (modal) {
-    modal.hide()
+  isSubmitting.value = true
+
+  try {
+    // First, assign specimen and view (without cataloguing_status)
+    const assignmentSuccess = await props.batchEdit(json)
+    if (!assignmentSuccess) {
+      throw new Error('Failed to assign specimen and view to media files')
+    }
+
+    // Second, release the media by setting cataloguing_status to 0
+    const releaseSuccess = await mediaStore.editIds(projectId, mediaIds, {
+      cataloguing_status: 0,
+    })
+
+    if (!releaseSuccess) {
+      throw new Error('Assignment successful, but failed to release media files')
+    }
+
+    // Close modal BEFORE data refresh to prevent navigation race condition
+    const element = document.getElementById('curationBatchModal')
+    if (element) {
+      const modal = Modal.getInstance(element)
+      if (modal) {
+        modal.hide()
+      } else {
+        // Fallback: create new modal instance and hide it
+        const newModal = new Modal(element)
+        newModal.hide()
+      }
+    }
+    
+    // Force immediate cleanup
+    const backdrop = document.querySelector('.modal-backdrop')
+    if (backdrop) {
+      backdrop.remove()
+    }
+    document.body.classList.remove('modal-open')
+    document.body.style.removeProperty('overflow')
+    document.body.style.removeProperty('padding-right')
+
+    // Small delay to ensure modal cleanup completes before data refresh
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    // Clear the store to ensure fresh data
+    mediaStore.invalidate()
+    // Refresh the media list to show updated status
+    await mediaStore.fetchMedia(projectId)
+    
+    showSuccess(`Successfully assigned and released ${mediaIds.length} media items!`)
+  } catch (error) {
+    console.error('Curation error:', error)
+    // Show specific error message if available, otherwise fall back to generic message
+    const errorMessage = error.message || 'Failed to assign and release media files'
+    showError(errorMessage)
+  } finally {
+    isSubmitting.value = false
+    
+    // Ensure modal is closed even if error occurred
+    const element = document.getElementById('curationBatchModal')
+    if (element) {
+      const modal = Modal.getInstance(element)
+      if (modal) {
+        modal.hide()
+      }
+      
+      // Final cleanup
+      setTimeout(() => {
+        const backdrop = document.querySelector('.modal-backdrop')
+        if (backdrop) {
+          backdrop.remove()
+        }
+        document.body.classList.remove('modal-open')
+        document.body.style.removeProperty('overflow')
+        document.body.style.removeProperty('padding-right')
+      }, 50)
+    }
   }
 }
 
@@ -190,7 +275,7 @@ onMounted(() => {
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">
-              Assign Specimen and View to {{ selectedCount }} Media Items
+              Assign and Release {{ selectedCount }} Media Items
             </h5>
           </div>
           <div class="modal-body">
@@ -199,10 +284,10 @@ onMounted(() => {
             <div class="alert alert-info">
               <strong>Assignment Status:</strong>
               <ul class="mb-0 mt-2">
-                <li>Specimen assigned: {{ selectedCount }} items</li>
-                <li>View assigned: {{ selectedCount }} items</li>
+                <li>Specimen assigned: {{ specimenAssignedCount }} / {{ selectedCount }} items</li>
+                <li>View assigned: {{ viewAssignedCount }} / {{ selectedCount }} items</li>
                 <li>
-                  Ready to release: {{ canRelease ? selectedCount : 0 }} items
+                  Ready to release: {{ readyForReleaseCount }} / {{ selectedCount }} items
                 </li>
               </ul>
             </div>
@@ -296,11 +381,11 @@ onMounted(() => {
             >
               <span v-if="isSubmitting">
                 <i class="fa fa-spinner fa-spin me-2"></i>
-                Assigning...
+                Assigning and Releasing...
               </span>
               <span v-else>
-                <i class="fa fa-check me-2"></i>
-                Assign {{ selectedCount }} Media Items
+                <i class="fa fa-arrow-up-from-bracket me-2"></i>
+                Assign and Release {{ selectedCount }} Media Items
               </span>
             </button>
           </div>

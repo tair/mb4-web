@@ -173,6 +173,33 @@
 
       <div class="form-group">
         <label class="form-label">
+          Article DOI
+          <Tooltip :content="TOOLTIP_ARTICLE_DOI"></Tooltip>
+        </label>
+        <p class="field-description">
+          This information will be used to automatically create a bibliographic
+          reference and populate fields below. Changes made here will update the reference.
+        </p>
+        <div class="doi-input">
+          <input
+            v-model="formData.article_doi"
+            type="text"
+            class="form-control"
+            placeholder="10.xxxx/xxxxx"
+          />
+          <button
+            type="button"
+            @click="retrieveDOI"
+            class="btn-link"
+            title="Retrieve article information using DOI"
+          >
+            Retrieve
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">
           Journal Title
           <span
             class="required"
@@ -457,32 +484,6 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">
-          Article DOI
-          <Tooltip :content="TOOLTIP_ARTICLE_DOI"></Tooltip>
-        </label>
-        <p class="field-description">
-          This information will be used to automatically create a bibliographic
-          reference. Changes made here will update the reference.
-        </p>
-        <div class="doi-input">
-          <input
-            v-model="formData.article_doi"
-            type="text"
-            class="form-control"
-            placeholder="10.xxxx/xxxxx"
-          />
-          <button
-            type="button"
-            @click="retrieveDOI"
-            class="btn-link"
-            title="Retrieve article information using DOI"
-          >
-            Retrieve
-          </button>
-        </div>
-      </div>
 
       <div class="form-buttons">
         <button
@@ -864,10 +865,10 @@ const loadJournalCover = async (journalTitle) => {
     const response = await apiService.get('/projects/journal-cover', {
       params: { journalTitle }
     })
+    const responseData = await response.json()
 
     // Check if we have a path and verify the image actually exists
-    if (response.data.coverPath && response.data.coverPath.trim() !== '') {
-      const responseData = await response.json()
+    if (responseData.coverPath && responseData.coverPath.trim() !== '') {
       const coverPath = responseData.coverPath.trim()
       
       // Test if the image actually loads
@@ -950,16 +951,13 @@ async function retrieveDOI() {
   if (!formData.article_doi) return
 
   try {
-    const response = await apiService.post(
-      apiService.buildUrl('/projects/doi'),
-      {
-        article_doi: formData.article_doi,
-        newProject: false, // Since this is EditView, we're editing an existing project
-      }
-    )
+    const response = await apiService.post('/projects/doi', {
+      article_doi: formData.article_doi,
+      newProject: false, // Since this is EditView, we're editing an existing project
+    })
+    const responseData = await response.json()
 
-    if (response.data.status === 'ok') {
-      const responseData = await response.json()
+    if (responseData.status === 'ok') {
       const fields = responseData.fields
 
       // Handle each field from the response
@@ -990,7 +988,7 @@ async function retrieveDOI() {
         }
       }
     } else {
-      showError(response.data.errors.join('\n'), 'DOI Retrieval Error')
+      showError(responseData.errors.join('\n'), 'DOI Retrieval Error')
     }
   } catch (error) {
     console.error('Error retrieving DOI:', error)
