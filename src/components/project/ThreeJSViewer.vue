@@ -338,60 +338,13 @@ async function loadPLY() {
     loader.load(
       props.modelUrl,
       (geometry) => {
-        // Check if PLY file has vertex colors
-        const hasVertexColors = geometry.attributes.color !== undefined
-        
-        let material
-        if (hasVertexColors) {
-          // Check if the vertex colors provide good contrast against dark background
-          const colors = geometry.attributes.color.array
-          let hasGoodContrast = false
-          let averageBrightness = 0
-          let sampleCount = 0
-          
-          // Sample vertices to check average brightness and contrast
-          for (let i = 0; i < Math.min(colors.length, 90); i += 3) {
-            const r = colors[i]
-            const g = colors[i + 1] 
-            const b = colors[i + 2]
-            
-            // Calculate brightness (perceptual luminance)
-            const brightness = (r * 0.299) + (g * 0.587) + (b * 0.114)
-            averageBrightness += brightness
-            sampleCount++
-            
-            // Check if this color provides good contrast against dark background
-            if (brightness > 0.3) { // Higher threshold for better contrast
-              hasGoodContrast = true
-            }
-          }
-          
-          averageBrightness /= sampleCount
-          
-          // Use vertex colors only if they provide good contrast, otherwise use bright cream
-          if (hasGoodContrast && averageBrightness > 0.2) {
-            material = new THREE.MeshLambertMaterial({ 
-              vertexColors: true,
-              side: THREE.DoubleSide
-            })
-          } else {
-            // Colors are too dark or low contrast, use bright cream color
-            material = new THREE.MeshPhongMaterial({ 
-              color: 0xFFF8DC, // Cream color
-              side: THREE.DoubleSide,
-              shininess: 30,
-              specular: 0x111111
-            })
-          }
-        } else {
-          // No vertex colors, use bright cream color
-          material = new THREE.MeshPhongMaterial({ 
-            color: 0xFFF8DC, // Cream color
-            side: THREE.DoubleSide,
-            shininess: 30,
-            specular: 0x111111
-          })
-        }
+        // Always use cream color for all PLY models
+        const material = new THREE.MeshPhongMaterial({ 
+          color: 0xFFF8DC, // Cream color
+          side: THREE.DoubleSide,
+          shininess: 30,
+          specular: 0x111111
+        })
         
         const mesh = new THREE.Mesh(geometry, material)
         mesh.castShadow = true
@@ -415,55 +368,13 @@ async function loadSTL() {
   return new Promise(async (resolve, reject) => {
     
     const onLoad = (geometry) => {
-      // Check if STL file has vertex colors (Magics format or similar)
-      const hasVertexColors = geometry.attributes.color !== undefined
-      
-      let material
-      if (hasVertexColors) {
-        // Check brightness and contrast for STL colors
-        const colors = geometry.attributes.color.array
-        let hasGoodContrast = false
-        let averageBrightness = 0
-        let sampleCount = 0
-        
-        for (let i = 0; i < Math.min(colors.length, 90); i += 3) {
-          const r = colors[i]
-          const g = colors[i + 1] 
-          const b = colors[i + 2]
-          
-          const brightness = (r * 0.299) + (g * 0.587) + (b * 0.114)
-          averageBrightness += brightness
-          sampleCount++
-          
-          if (brightness > 0.3) {
-            hasGoodContrast = true
-          }
-        }
-        
-        averageBrightness /= sampleCount
-        
-        if (hasGoodContrast && averageBrightness > 0.2) {
-          material = new THREE.MeshLambertMaterial({ 
-            vertexColors: true,
-            side: THREE.DoubleSide
-          })
-        } else {
-          material = new THREE.MeshPhongMaterial({ 
-            color: 0xFFF8DC, // Cream color
-            side: THREE.DoubleSide,
-            shininess: 30,
-            specular: 0x111111
-          })
-        }
-      } else {
-        // Use cream color for STL model
-        material = new THREE.MeshPhongMaterial({ 
-          color: 0xFFF8DC, // Cream color
-          side: THREE.DoubleSide,
-          shininess: 30,
-          specular: 0x111111
-        })
-      }
+      // Always use cream color for all STL models
+      const material = new THREE.MeshPhongMaterial({ 
+        color: 0xFFF8DC, // Cream color
+        side: THREE.DoubleSide,
+        shininess: 30,
+        specular: 0x111111
+      })
       
       const mesh = new THREE.Mesh(geometry, material)
       mesh.castShadow = true
@@ -510,79 +421,16 @@ async function loadOBJ() {
     loader.load(
       props.modelUrl,
       (object) => {
-        // Apply material to all meshes in the object
+        // Apply cream material to all meshes in the object
         object.traverse((child) => {
           if (child.isMesh) {
-            // Check if OBJ file has vertex colors or existing materials
-            const hasVertexColors = child.geometry.attributes.color !== undefined
-            const hasExistingMaterial = child.material && 
-              (child.material.map !== null || child.material.color !== undefined)
-            
-            if (hasVertexColors) {
-              // Check brightness and contrast for OBJ vertex colors
-              const colors = child.geometry.attributes.color.array
-              let hasGoodContrast = false
-              let averageBrightness = 0
-              let sampleCount = 0
-              
-              for (let i = 0; i < Math.min(colors.length, 90); i += 3) {
-                const r = colors[i]
-                const g = colors[i + 1] 
-                const b = colors[i + 2]
-                
-                const brightness = (r * 0.299) + (g * 0.587) + (b * 0.114)
-                averageBrightness += brightness
-                sampleCount++
-                
-                if (brightness > 0.3) {
-                  hasGoodContrast = true
-                }
-              }
-              
-              averageBrightness /= sampleCount
-              
-              if (hasGoodContrast && averageBrightness > 0.2) {
-                child.material = new THREE.MeshLambertMaterial({ 
-                  vertexColors: true,
-                  side: THREE.DoubleSide
-                })
-              } else {
-                child.material = new THREE.MeshPhongMaterial({ 
-                  color: 0xFFF8DC, // Cream color
-                  side: THREE.DoubleSide,
-                  shininess: 30,
-                  specular: 0x111111
-                })
-              }
-            } else if (hasExistingMaterial && child.material.color) {
-              // Check if existing color provides good contrast
-              const existingColor = child.material.color
-              const brightness = (existingColor.r * 0.299) + (existingColor.g * 0.587) + (existingColor.b * 0.114)
-              
-              if (brightness > 0.2) {
-                // Keep existing material colors but upgrade to Lambert for better lighting
-                child.material = new THREE.MeshLambertMaterial({ 
-                  color: existingColor,
-                  side: THREE.DoubleSide
-                })
-              } else {
-                // Existing color too dark, use cream
-                child.material = new THREE.MeshPhongMaterial({ 
-                  color: 0xFFF8DC, // Cream color
-                  side: THREE.DoubleSide,
-                  shininess: 30,
-                  specular: 0x111111
-                })
-              }
-            } else {
-              // Use default cream color
-              child.material = new THREE.MeshPhongMaterial({ 
-                color: 0xFFF8DC, // Cream color
-                side: THREE.DoubleSide,
-                shininess: 30,
-                specular: 0x111111
-              })
-            }
+            // Always use cream color for all OBJ models
+            child.material = new THREE.MeshPhongMaterial({ 
+              color: 0xFFF8DC, // Cream color
+              side: THREE.DoubleSide,
+              shininess: 30,
+              specular: 0x111111
+            })
             
             child.castShadow = true
             child.receiveShadow = true
@@ -607,41 +455,16 @@ async function loadGLTF() {
       props.modelUrl,
       (gltf) => {
         const model = gltf.scene
-        let hasOriginalColors = false
         
         model.traverse((child) => {
           if (child.isMesh) {
-            // GLTF files typically preserve their original materials and colors
-            let hasGoodMaterial = false
-            
-            if (child.material) {
-              // Check if material has textures (always good)
-              if (child.material.map) {
-                hasGoodMaterial = true
-              }
-              // Check if material color provides good contrast
-              else if (child.material.color) {
-                const color = child.material.color
-                const brightness = (color.r * 0.299) + (color.g * 0.587) + (color.b * 0.114)
-                if (brightness > 0.2) {
-                  hasGoodMaterial = true
-                }
-              }
-              // Check for vertex colors
-              else if (child.material.vertexColors) {
-                hasGoodMaterial = true // Assume vertex colors are handled correctly
-              }
-            }
-            
-            if (!hasGoodMaterial) {
-              // Apply bright cream color for better visibility
-              child.material = new THREE.MeshPhongMaterial({ 
-                color: 0xFFF8DC, // Cream color
-                side: THREE.DoubleSide,
-                shininess: 30,
-                specular: 0x111111
-              })
-            }
+            // Always use cream color for all GLTF models
+            child.material = new THREE.MeshPhongMaterial({ 
+              color: 0xFFF8DC, // Cream color
+              side: THREE.DoubleSide,
+              shininess: 30,
+              specular: 0x111111
+            })
             
             child.castShadow = true
             child.receiveShadow = true
@@ -666,44 +489,15 @@ async function loadFBX() {
     loader.load(
       props.modelUrl,
       (object) => {
-        let hasOriginalColors = false
-        
         object.traverse((child) => {
           if (child.isMesh) {
-            // FBX files often preserve their original materials and colors
-            let hasGoodMaterial = false
-            
-            // Handle multiple materials (array)
-            if (Array.isArray(child.material)) {
-              hasGoodMaterial = true // Assume multi-material objects are properly colored
-            } else if (child.material) {
-              // Check if material has textures (always good)
-              if (child.material.map) {
-                hasGoodMaterial = true
-              }
-              // Check if material color provides good contrast
-              else if (child.material.color) {
-                const color = child.material.color
-                const brightness = (color.r * 0.299) + (color.g * 0.587) + (color.b * 0.114)
-                if (brightness > 0.2) {
-                  hasGoodMaterial = true
-                }
-              }
-              // Check for vertex colors
-              else if (child.material.vertexColors) {
-                hasGoodMaterial = true
-              }
-            }
-            
-            if (!hasGoodMaterial) {
-              // Apply bright cream color for better visibility
-              child.material = new THREE.MeshPhongMaterial({ 
-                color: 0xFFF8DC, // Cream color
-                side: THREE.DoubleSide,
-                shininess: 30,
-                specular: 0x111111
-              })
-            }
+            // Always use cream color for all FBX models
+            child.material = new THREE.MeshPhongMaterial({ 
+              color: 0xFFF8DC, // Cream color
+              side: THREE.DoubleSide,
+              shininess: 30,
+              specular: 0x111111
+            })
             
             child.castShadow = true
             child.receiveShadow = true
