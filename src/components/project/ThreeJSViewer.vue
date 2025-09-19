@@ -338,12 +338,15 @@ async function loadPLY() {
     loader.load(
       props.modelUrl,
       (geometry) => {
-        // Always use cream color for all PLY models
-        const material = new THREE.MeshPhongMaterial({ 
+        // Ensure geometry has proper normals - many PLY files lack them
+        if (!geometry.attributes.normal) {
+          geometry.computeVertexNormals()
+        }
+        
+        // Always use cream color for all PLY models - using MeshLambertMaterial for better reliability
+        const material = new THREE.MeshLambertMaterial({ 
           color: 0xFFF8DC, // Cream color
-          side: THREE.DoubleSide,
-          shininess: 30,
-          specular: 0x111111
+          side: THREE.DoubleSide
         })
         
         const mesh = new THREE.Mesh(geometry, material)
@@ -368,12 +371,15 @@ async function loadSTL() {
   return new Promise(async (resolve, reject) => {
     
     const onLoad = (geometry) => {
+      // Ensure geometry has proper normals - STL files can also lack them
+      if (!geometry.attributes.normal) {
+        geometry.computeVertexNormals()
+      }
+      
       // Always use cream color for all STL models
-      const material = new THREE.MeshPhongMaterial({ 
+      const material = new THREE.MeshLambertMaterial({ 
         color: 0xFFF8DC, // Cream color
-        side: THREE.DoubleSide,
-        shininess: 30,
-        specular: 0x111111
+        side: THREE.DoubleSide
       })
       
       const mesh = new THREE.Mesh(geometry, material)
@@ -424,12 +430,15 @@ async function loadOBJ() {
         // Apply cream material to all meshes in the object
         object.traverse((child) => {
           if (child.isMesh) {
+            // Ensure geometry has proper normals - OBJ files can also lack them
+            if (!child.geometry.attributes.normal) {
+              child.geometry.computeVertexNormals()
+            }
+            
             // Always use cream color for all OBJ models
-            child.material = new THREE.MeshPhongMaterial({ 
+            child.material = new THREE.MeshLambertMaterial({ 
               color: 0xFFF8DC, // Cream color
-              side: THREE.DoubleSide,
-              shininess: 30,
-              specular: 0x111111
+              side: THREE.DoubleSide
             })
             
             child.castShadow = true
@@ -458,12 +467,15 @@ async function loadGLTF() {
         
         model.traverse((child) => {
           if (child.isMesh) {
+            // Ensure geometry has proper normals
+            if (!child.geometry.attributes.normal) {
+              child.geometry.computeVertexNormals()
+            }
+            
             // Always use cream color for all GLTF models
-            child.material = new THREE.MeshPhongMaterial({ 
+            child.material = new THREE.MeshLambertMaterial({ 
               color: 0xFFF8DC, // Cream color
-              side: THREE.DoubleSide,
-              shininess: 30,
-              specular: 0x111111
+              side: THREE.DoubleSide
             })
             
             child.castShadow = true
@@ -491,12 +503,15 @@ async function loadFBX() {
       (object) => {
         object.traverse((child) => {
           if (child.isMesh) {
+            // Ensure geometry has proper normals
+            if (!child.geometry.attributes.normal) {
+              child.geometry.computeVertexNormals()
+            }
+            
             // Always use cream color for all FBX models
-            child.material = new THREE.MeshPhongMaterial({ 
+            child.material = new THREE.MeshLambertMaterial({ 
               color: 0xFFF8DC, // Cream color
-              side: THREE.DoubleSide,
-              shininess: 30,
-              specular: 0x111111
+              side: THREE.DoubleSide
             })
             
             child.castShadow = true
