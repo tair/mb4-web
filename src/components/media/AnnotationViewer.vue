@@ -11,7 +11,7 @@
           title="Pan and select (Esc)"
         >
           <span class="tool-icon">✋</span>
-          Pan
+          Pan/Select
         </button>
         
         <!-- Drawing tools (only when user can edit) -->
@@ -54,19 +54,29 @@
           @click="toggleLabelsPanel"
           class="btn btn-outline"
           :class="{ active: showLabelsPanel }"
-          title="Toggle labels panel"
+          title="Open labels panel (annotations list)"
         >
           <span class="labels-icon">🏷️</span>
-          Labels
+          Labels Panel
         </button>
         
         <button 
-          @click="toggleLabelMode"
+          @click="setLabelMode('text')"
           class="btn btn-outline"
-          :title="labelMode === 'numbers' ? 'Switch to full text labels' : 'Switch to numbered labels'"
+          :class="{ active: labelMode === 'text' }"
+          title="Show text labels"
         >
-          <span class="mode-icon">{{ labelMode === 'numbers' ? '123' : 'ABC' }}</span>
-          {{ labelMode === 'numbers' ? 'Numbers' : 'Text' }}
+          <span class="mode-icon">ABC</span>
+          Labels: Text
+        </button>
+        <button 
+          @click="setLabelMode('numbers')"
+          class="btn btn-outline"
+          :class="{ active: labelMode === 'numbers' }"
+          title="Show numbered labels"
+        >
+          <span class="mode-icon">123</span>
+          Labels: Numbers
         </button>
       </div>
       
@@ -86,10 +96,10 @@
           <button 
             @click="toggleHelp"
             class="btn btn-outline"
-            title="Show help"
+            title="Help and keyboard shortcuts"
           >
             <span class="help-icon">?</span>
-            Help
+            Help & Shortcuts
           </button>
           
           <!-- Help dropdown -->
@@ -257,6 +267,7 @@
         }]"
         @click="selectAnnotation(annotation)"
         @dblclick="editAnnotation(annotation)"
+        @mousedown="startLabelDrag($event, annotation)"
         :title="labelMode === 'numbers' ? `Annotation ${index + 1}: ${getDisplayLabelText(annotation)}` : `Annotation ${annotation.annotation_id}: ${getDisplayLabelText(annotation)}`"
         v-show="shouldShowLabel(annotation)"
         @mouseenter="hoveredAnnotation = annotation"
@@ -492,7 +503,7 @@ export default {
       imageOffset: { x: 0, y: 0 },
       
       // Viewer zoom and pan
-      viewerZoom: 1,
+      viewerZoom: 0.5,
       viewerOffset: { x: 0, y: 0 },
       isPanning: false,
       lastPanPoint: null,
@@ -507,7 +518,7 @@ export default {
       showHelp: false,
       showOverview: false,
       showLabelsPanel: false,
-      labelMode: 'numbers', // 'numbers' or 'text'
+      labelMode: 'text', // 'numbers' or 'text'
       hoveredAnnotation: null,
       
       // Panel dragging state
@@ -524,7 +535,19 @@ export default {
       
       // Image fallback state
       currentImageUrl: null,
-      hasTriedFallback: false
+      hasTriedFallback: false,
+      
+      // Label positioning and dragging
+      labelPositions: new Map(), // Store custom label positions
+      isDraggingLabel: false,
+      draggedLabelAnnotation: null,
+      dragStartLabelPos: { x: 0, y: 0 },
+      
+      // Canvas display dimensions for consistent coordinate conversion
+      canvasDisplayWidth: 0,
+      canvasDisplayHeight: 0,
+      canvasOffsetX: 0,
+      canvasOffsetY: 0
     }
   },
 
@@ -555,6 +578,20 @@ export default {
     this.setupCanvas()
     this.loadAnnotations()
     
+    // Apply initial zoom immediately to prevent 100% flash
+    this.$nextTick(() => {
+      if (this.$refs.mediaImage) {
+        this.updateImageTransform()
+      }
+    })
+    
+    // Additional safety: apply transform after a short delay to handle any timing issues
+    setTimeout(() => {
+      if (this.$refs.mediaImage) {
+        this.updateImageTransform()
+      }
+    }, 50)
+    
     // Watch for refs to become available
     this.$nextTick(() => {
       const checkRefs = () => {
@@ -582,6 +619,13 @@ export default {
         // Reset fallback state when mediaUrl changes
         this.currentImageUrl = newUrl
         this.hasTriedFallback = false
+        
+        // Apply initial zoom when new image is set
+        this.$nextTick(() => {
+          if (this.$refs.mediaImage) {
+            this.updateImageTransform()
+          }
+        })
       },
       immediate: true
     }
@@ -640,6 +684,12 @@ export default {
 
     toggleLabelMode() {
       this.labelMode = this.labelMode === 'numbers' ? 'text' : 'numbers'
+    },
+
+    setLabelMode(mode) {
+      if (mode === 'text' || mode === 'numbers') {
+        this.labelMode = mode
+      }
     },
 
     // Overview methods
@@ -800,18 +850,22 @@ export default {
     // Image handling
     onImageLoad() {
       this.imageLoaded = true
+      
+      // Setup canvas first to calculate display dimensions
       this.setupCanvas()
-      this.drawAnnotations()
+      
+      // Apply initial zoom transform immediately
+      this.$nextTick(() => {
+        this.updateImageTransform()
+        this.drawAnnotations()
+        // Force label update after everything is set up
+        this.$forceUpdate()
+      })
       
       // Log successful load (helpful for debugging fallback behavior)
       if (this.hasTriedFallback) {
         console.warn('Successfully loaded fallback image (large version)')
       }
-      
-      // Force label update now that image is loaded
-      this.$nextTick(() => {
-        this.$forceUpdate()
-      })
     },
 
     onImageError() {
@@ -837,19 +891,48 @@ export default {
         return
       }
 
-      // Set canvas size to match image display size
-      const rect = img.getBoundingClientRect()
-      this.canvas.width = rect.width
-      this.canvas.height = rect.height
+      // Get natural image size and calculate display properties
+      const naturalWidth = img.naturalWidth
+      const naturalHeight = img.naturalHeight
+      const containerWidth = container.clientWidth
+      const containerHeight = container.clientHeight
+      
+      if (naturalWidth === 0 || naturalHeight === 0) {
+        // Image not fully loaded yet
+        return
+      }
+      
+      const aspectRatio = naturalWidth / naturalHeight
+      const containerAspect = containerWidth / containerHeight
+      
+      let displayWidth, displayHeight
+      
+      if (aspectRatio > containerAspect) {
+        displayWidth = containerWidth
+        displayHeight = containerWidth / aspectRatio
+      } else {
+        displayHeight = containerHeight
+        displayWidth = containerHeight * aspectRatio
+      }
+
+      // Make canvas fill the entire container like the image does
+      this.canvas.width = containerWidth
+      this.canvas.height = containerHeight
       
       // Position canvas to perfectly overlay the image
-      this.canvas.style.width = rect.width + 'px'
-      this.canvas.style.height = rect.height + 'px'
+      this.canvas.style.width = containerWidth + 'px'
+      this.canvas.style.height = containerHeight + 'px'  
       this.canvas.style.top = '0px'
       this.canvas.style.left = '0px'
       
-      // Calculate scale factor
-      this.imageScale = rect.width / img.naturalWidth
+      // Store display dimensions for coordinate conversion
+      this.canvasDisplayWidth = displayWidth
+      this.canvasDisplayHeight = displayHeight
+      this.canvasOffsetX = (containerWidth - displayWidth) / 2
+      this.canvasOffsetY = (containerHeight - displayHeight) / 2
+      
+      // Calculate scale factor (for backward compatibility)
+      this.imageScale = displayWidth / naturalWidth
       
       this.drawAnnotations()
     },
@@ -858,6 +941,8 @@ export default {
       if (this.imageLoaded) {
         setTimeout(() => {
           this.setupCanvas()
+          // Force re-render of labels after canvas update
+          this.$forceUpdate()
         }, 100)
       }
     },
@@ -887,22 +972,22 @@ export default {
     },
 
     resetZoom() {
-      this.viewerZoom = 1
+      this.viewerZoom = 0.5 // Reset to default 50% zoom
       this.viewerOffset = { x: 0, y: 0 }
       this.updateImageTransform()
     },
 
     updateImageTransform() {
-      
       const img = this.$refs.mediaImage
       const canvas = this.canvas
+      
+      // Don't apply transform if elements don't exist yet
+      if (!img) return
+      
       const transform = `scale(${this.viewerZoom}) translate(${this.viewerOffset.x}px, ${this.viewerOffset.y}px)`
       
-      
       // Apply the same transform to both image and canvas
-      if (img) {
-        img.style.transform = transform
-      }
+      img.style.transform = transform
       if (canvas) {
         canvas.style.transform = transform
       }
@@ -1225,8 +1310,11 @@ export default {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
 
       this.annotations.forEach((annotation, index) => {
-
         this.drawAnnotation(annotation)
+        // Draw connection line between annotation and label
+        if (this.shouldShowLabel(annotation)) {
+          this.drawConnectionLine(annotation)
+        }
       })
 
       if (this.polygonPoints.length > 0) {
@@ -1311,40 +1399,157 @@ export default {
       this.ctx.lineWidth = 2
       this.ctx.setLineDash([5, 5])
 
-      const canvasWidth = this.canvas.width
-      const canvasHeight = this.canvas.height
+      // Use stored display dimensions if available, otherwise fallback to canvas dimensions
+      const displayWidth = this.canvasDisplayWidth || this.canvas.width
+      const displayHeight = this.canvasDisplayHeight || this.canvas.height
+      const offsetX = this.canvasOffsetX || 0
+      const offsetY = this.canvasOffsetY || 0
 
       this.ctx.beginPath()
       const firstPoint = this.polygonPoints[0]
-      this.ctx.moveTo((firstPoint.x / 100) * canvasWidth, (firstPoint.y / 100) * canvasHeight)
+      this.ctx.moveTo(offsetX + (firstPoint.x / 100) * displayWidth, offsetY + (firstPoint.y / 100) * displayHeight)
 
       for (let i = 1; i < this.polygonPoints.length; i++) {
         const point = this.polygonPoints[i]
-        this.ctx.lineTo((point.x / 100) * canvasWidth, (point.y / 100) * canvasHeight)
+        this.ctx.lineTo(offsetX + (point.x / 100) * displayWidth, offsetY + (point.y / 100) * displayHeight)
       }
 
       this.ctx.stroke()
       this.ctx.setLineDash([])
     },
 
+    drawConnectionLine(annotation) {
+      if (!this.ctx || !this.$refs.mediaImage || !this.$refs.canvasContainer) {
+        return
+      }
+
+      // Use the STORED display dimensions from setupCanvas to ensure consistency
+      const displayWidth = this.canvasDisplayWidth
+      const displayHeight = this.canvasDisplayHeight
+      const offsetX = this.canvasOffsetX
+      const offsetY = this.canvasOffsetY
+      
+      if (!displayWidth || !displayHeight) return
+      
+      // Calculate annotation center in percentage coordinates
+      let annotationCenterXPercent, annotationCenterYPercent
+
+      switch (annotation.type) {
+        case 'rect':
+          annotationCenterXPercent = parseFloat(annotation.x) + (parseFloat(annotation.w) / 2)
+          annotationCenterYPercent = parseFloat(annotation.y) + (parseFloat(annotation.h) / 2)
+          break
+        case 'point':
+          annotationCenterXPercent = parseFloat(annotation.x)
+          annotationCenterYPercent = parseFloat(annotation.y)
+          break
+        case 'poly':
+          if (annotation.points && annotation.points.length >= 6) {
+            let sumX = 0, sumY = 0
+            const pointCount = annotation.points.length / 2
+            for (let i = 0; i < annotation.points.length; i += 2) {
+              sumX += annotation.points[i]
+              sumY += annotation.points[i + 1]
+            }
+            annotationCenterXPercent = sumX / pointCount
+            annotationCenterYPercent = sumY / pointCount
+          } else {
+            return
+          }
+          break
+        default:
+          return
+      }
+
+      // Get label position
+      const labelPosition = this.getLabelPosition(annotation)
+      
+      // Position within the fitted image area (same calculation as labels)
+      const annotationX = offsetX + (annotationCenterXPercent / 100) * displayWidth
+      const annotationY = offsetY + (annotationCenterYPercent / 100) * displayHeight
+      const labelX = offsetX + (labelPosition.x / 100) * displayWidth
+      const labelY = offsetY + (labelPosition.y / 100) * displayHeight
+      
+      // Since canvas fills the container and has the same transform applied,
+      // we draw at the untransformed positions and let CSS handle the rest
+      const canvasAnnotationX = annotationX
+      const canvasAnnotationY = annotationY
+      const canvasLabelX = labelX
+      const canvasLabelY = labelY
+
+      // Draw connection line with high visibility (white outline + colored dashed)
+      this.ctx.save()
+      this.ctx.lineCap = 'round'
+      this.ctx.lineJoin = 'round'
+
+      // Outline pass (solid white behind for contrast)
+      this.ctx.strokeStyle = 'rgba(255,255,255,0.95)'
+      this.ctx.lineWidth = 6
+      this.ctx.setLineDash([])
+      this.ctx.globalAlpha = 1
+      this.ctx.beginPath()
+      this.ctx.moveTo(canvasAnnotationX, canvasAnnotationY)
+      this.ctx.lineTo(canvasLabelX, canvasLabelY)
+      this.ctx.stroke()
+
+      // Foreground pass (colored dashed with subtle shadow)
+      this.ctx.strokeStyle = '#0d6efd'
+      this.ctx.lineWidth = 3
+      this.ctx.setLineDash([8, 6])
+      this.ctx.globalAlpha = 1
+      this.ctx.shadowColor = 'rgba(0,0,0,0.25)'
+      this.ctx.shadowBlur = 2
+      this.ctx.beginPath()
+      this.ctx.moveTo(canvasAnnotationX, canvasAnnotationY)
+      this.ctx.lineTo(canvasLabelX, canvasLabelY)
+      this.ctx.stroke()
+
+      this.ctx.restore()
+    },
+
+    getLabelPosition(annotation) {
+      // Check if we have a custom position for this annotation
+      const customPos = this.labelPositions.get(annotation.annotation_id)
+      if (customPos) {
+        return customPos
+      }
+
+      // Calculate dynamic offset to place label about 100px above the annotation
+      const displayHeight = this.canvasDisplayHeight || 500 // fallback height
+      const desiredPixelOffset = 150
+      
+      // Convert 100px to percentage of display height
+      const offsetYPercent = (desiredPixelOffset / displayHeight) * 100
+      
+      // Default position: slightly to the right and well above the annotation
+      const offsetX = 2 // 2% to the right (reduced to keep labels closer to center)
+      const offsetY = -Math.max(8, offsetYPercent) // Use larger of 8% or calculated pixel equivalent
+      
+      return {
+        x: Math.min(95, Math.max(5, parseFloat(annotation.x) + offsetX)),
+        y: Math.max(5, parseFloat(annotation.y) + offsetY)
+      }
+    },
+
     scaleAnnotation(annotation) {
       const img = this.$refs.mediaImage
       if (!img || !this.canvas) return annotation
       
-      // Get current image display size
-      const imgRect = img.getBoundingClientRect()
-      const canvasWidth = this.canvas.width
-      const canvasHeight = this.canvas.height
+      // Use stored display dimensions if available, otherwise fallback to canvas dimensions
+      const displayWidth = this.canvasDisplayWidth || this.canvas.width
+      const displayHeight = this.canvasDisplayHeight || this.canvas.height
+      const offsetX = this.canvasOffsetX || 0
+      const offsetY = this.canvasOffsetY || 0
       
       // Convert from percentage coordinates (0-100) to canvas pixels
       const scaled = {
         ...annotation,
-        x: (annotation.x / 100) * canvasWidth,
-        y: (annotation.y / 100) * canvasHeight,
-        w: (annotation.w / 100) * canvasWidth,
-        h: (annotation.h / 100) * canvasHeight,
-        tx: (annotation.tx / 100) * canvasWidth,
-        ty: (annotation.ty / 100) * canvasHeight
+        x: offsetX + (annotation.x / 100) * displayWidth,
+        y: offsetY + (annotation.y / 100) * displayHeight,
+        w: (annotation.w / 100) * displayWidth,
+        h: (annotation.h / 100) * displayHeight,
+        tx: offsetX + (annotation.tx / 100) * displayWidth,
+        ty: offsetY + (annotation.ty / 100) * displayHeight
       }
       
       // Handle polygon points conversion
@@ -1352,10 +1557,10 @@ export default {
         scaled.points = []
         for (let i = 0; i < annotation.points.length; i += 2) {
           // Convert x coordinate (even indices)
-          scaled.points[i] = (annotation.points[i] / 100) * canvasWidth
+          scaled.points[i] = offsetX + (annotation.points[i] / 100) * displayWidth
           // Convert y coordinate (odd indices)
           if (i + 1 < annotation.points.length) {
-            scaled.points[i + 1] = (annotation.points[i + 1] / 100) * canvasHeight
+            scaled.points[i + 1] = offsetY + (annotation.points[i + 1] / 100) * displayHeight
           }
         }
       }
@@ -1651,24 +1856,46 @@ export default {
       // Get container dimensions 
       const containerRect = container.getBoundingClientRect()
       
-      // Get actual image display size (after CSS scaling)
-      const imgRect = img.getBoundingClientRect()
+      // Use the STORED display dimensions from setupCanvas to ensure consistency
+      const displayWidth = this.canvasDisplayWidth
+      const displayHeight = this.canvasDisplayHeight  
+      const offsetX = this.canvasOffsetX
+      const offsetY = this.canvasOffsetY
       
-      // Calculate position on the image itself (not container)
-      // Note: annotation.x and annotation.y are already percentages (0-100), so we divide by 100 to get decimal (0-1)
-      const xPercent = parseFloat(annotation.x) / 100
-      const yPercent = parseFloat(annotation.y) / 100
+      // Fallback to calculation if stored values aren't available yet
+      if (!displayWidth || !displayHeight) {
+        return { display: 'none' }
+      }
       
-      // Position relative to the displayed image
-      const labelX = imgRect.left + (xPercent * imgRect.width) - containerRect.left
-      const labelY = imgRect.top + (yPercent * imgRect.height) - containerRect.top
+      // Get label position (either custom or default)
+      const labelPosition = this.getLabelPosition(annotation)
+      const xPercent = labelPosition.x / 100
+      const yPercent = labelPosition.y / 100
+      
+      // The key insight: The image element fills the container, and transform applies to the container
+      // So we need to calculate position relative to the container, not the fitted image
+      const containerWidth = container.clientWidth
+      const containerHeight = container.clientHeight
+      
+      // Position within the fitted image area
+      const imageX = offsetX + (xPercent * displayWidth)
+      const imageY = offsetY + (yPercent * displayHeight)
+      
+      // Transform applies to the entire container from origin (0,0)
+      // scale(zoom) translate(offset) means:
+      // 1. Scale the entire container (including empty space)
+      // 2. Then translate
+      // Since translate comes AFTER scale in the CSS transform, the offset values are multiplied by zoom
+      const labelX = (imageX * this.viewerZoom) + (this.viewerOffset.x * this.viewerZoom)
+      const labelY = (imageY * this.viewerZoom) + (this.viewerOffset.y * this.viewerZoom)
+      
       
       
       
       const style = {
         position: 'absolute',
         left: `${labelX}px`,
-        top: `${labelY - 50}px`, // Position label above the annotation
+        top: `${labelY}px`,
         transform: 'translateX(-50%)', // Center the label horizontally
         zIndex: 999,
         background: 'rgba(255, 255, 255, 0.95)',
@@ -1888,19 +2115,28 @@ export default {
       const img = this.$refs.mediaImage
       const container = this.$refs.canvasContainer
       
-      // Get container dimensions 
-      const containerRect = container.getBoundingClientRect()
+      // Use the STORED display dimensions from setupCanvas to ensure consistency
+      const displayWidth = this.canvasDisplayWidth
+      const displayHeight = this.canvasDisplayHeight
+      const offsetX = this.canvasOffsetX
+      const offsetY = this.canvasOffsetY
       
-      // Get actual image display size (after CSS scaling)
-      const imgRect = img.getBoundingClientRect()
+      if (!displayWidth || !displayHeight) {
+        return { display: 'none' }
+      }
       
       // Calculate position on the image itself
       const xPercent = parseFloat(annotation.x) / 100
       const yPercent = parseFloat(annotation.y) / 100
       
-      // Position relative to the displayed image
-      const tooltipX = imgRect.left + (xPercent * imgRect.width) - containerRect.left
-      const tooltipY = imgRect.top + (yPercent * imgRect.height) - containerRect.top
+      // Calculate base position (where tooltip would be without any zoom/pan)
+      const baseX = offsetX + (xPercent * displayWidth)
+      const baseY = offsetY + (yPercent * displayHeight)
+      
+      // Apply the same transforms as the image and canvas
+      // Since translate comes AFTER scale in the CSS transform, the offset values are multiplied by zoom
+      const tooltipX = (baseX * this.viewerZoom) + (this.viewerOffset.x * this.viewerZoom)
+      const tooltipY = (baseY * this.viewerZoom) + (this.viewerOffset.y * this.viewerZoom)
       
       return {
         position: 'absolute',
@@ -1930,6 +2166,79 @@ export default {
       return 'No label'
     },
 
+    // Label dragging methods
+    startLabelDrag(event, annotation) {
+      // Prevent other interactions when dragging labels
+      event.stopPropagation()
+      event.preventDefault()
+      
+      this.isDraggingLabel = true
+      this.draggedLabelAnnotation = annotation
+      this.dragStartLabelPos = { x: event.clientX, y: event.clientY }
+      
+      // Prevent text selection while dragging
+      document.body.style.userSelect = 'none'
+      
+      // Set cursor style
+      document.body.style.cursor = 'grabbing'
+    },
+
+    updateLabelDrag(event) {
+      if (!this.isDraggingLabel || !this.draggedLabelAnnotation) return
+      
+      const img = this.$refs.mediaImage
+      const container = this.$refs.canvasContainer
+      
+      if (!img || !container) return
+      
+      const containerRect = container.getBoundingClientRect()
+      
+      // Use the STORED display dimensions from setupCanvas to ensure consistency
+      const displayWidth = this.canvasDisplayWidth
+      const displayHeight = this.canvasDisplayHeight
+      const offsetX = this.canvasOffsetX
+      const offsetY = this.canvasOffsetY
+      
+      if (!displayWidth || !displayHeight) return
+      
+      // Calculate mouse position relative to the container
+      const mouseX = event.clientX - containerRect.left
+      const mouseY = event.clientY - containerRect.top
+      
+      // Reverse the transform to get back to base coordinates
+      // CSS transform is: scale(zoom) translate(offset), which means: (basePos * zoom) + (offset * zoom)
+      // So: basePos = (screenPos - (offset * zoom)) / zoom
+      const baseMouseX = (mouseX - (this.viewerOffset.x * this.viewerZoom)) / this.viewerZoom
+      const baseMouseY = (mouseY - (this.viewerOffset.y * this.viewerZoom)) / this.viewerZoom
+      
+      // Calculate position relative to the base image
+      const relativeX = (baseMouseX - offsetX) / displayWidth
+      const relativeY = (baseMouseY - offsetY) / displayHeight
+      
+      // Convert to percentage coordinates with bounds checking
+      const newX = Math.max(0, Math.min(100, relativeX * 100))
+      const newY = Math.max(0, Math.min(100, relativeY * 100))
+      
+      // Store the new position
+      this.labelPositions.set(this.draggedLabelAnnotation.annotation_id, {
+        x: newX,
+        y: newY
+      })
+      
+      // Force re-render to update label position and line
+      this.$nextTick(() => {
+        this.$forceUpdate()
+        this.drawAnnotations()
+      })
+    },
+
+    endLabelDrag() {
+      this.isDraggingLabel = false
+      this.draggedLabelAnnotation = null
+      document.body.style.userSelect = ''
+      document.body.style.cursor = ''
+    },
+
     // Panel dragging methods
     startDragging(event) {
       // Don't start dragging if clicking on the close button
@@ -1947,35 +2256,49 @@ export default {
     },
 
     onDocumentMouseMove(event) {
-      if (!this.isDraggingPanel) return
-      
-      const deltaX = event.clientX - this.dragStartPos.x
-      const deltaY = event.clientY - this.dragStartPos.y
-      
-      // Calculate new position
-      let newX = this.dragStartPanelPos.x + deltaX
-      let newY = this.dragStartPanelPos.y + deltaY
-      
-      // Get viewport dimensions and panel dimensions
-      const viewport = {
-        width: window.innerWidth,
-        height: window.innerHeight
+      // Handle panel dragging
+      if (this.isDraggingPanel) {
+        const deltaX = event.clientX - this.dragStartPos.x
+        const deltaY = event.clientY - this.dragStartPos.y
+        
+        // Calculate new position
+        let newX = this.dragStartPanelPos.x + deltaX
+        let newY = this.dragStartPanelPos.y + deltaY
+        
+        // Get viewport dimensions and panel dimensions
+        const viewport = {
+          width: window.innerWidth,
+          height: window.innerHeight
+        }
+        
+        const panelWidth = 350 // From CSS
+        const panelHeight = Math.min(viewport.height * 0.8, 600) // Max height from CSS
+        
+        // Constrain to viewport bounds
+        newX = Math.max(10, Math.min(viewport.width - panelWidth - 10, newX))
+        newY = Math.max(10, Math.min(viewport.height - panelHeight - 10, newY))
+        
+        this.panelPosition = { x: newX, y: newY }
+        return
       }
       
-      const panelWidth = 350 // From CSS
-      const panelHeight = Math.min(viewport.height * 0.8, 600) // Max height from CSS
-      
-      // Constrain to viewport bounds
-      newX = Math.max(10, Math.min(viewport.width - panelWidth - 10, newX))
-      newY = Math.max(10, Math.min(viewport.height - panelHeight - 10, newY))
-      
-      this.panelPosition = { x: newX, y: newY }
+      // Handle label dragging
+      if (this.isDraggingLabel && this.draggedLabelAnnotation) {
+        this.updateLabelDrag(event)
+        return
+      }
     },
 
     onDocumentMouseUp() {
       if (this.isDraggingPanel) {
         this.isDraggingPanel = false
         document.body.style.userSelect = ''
+        return
+      }
+      
+      if (this.isDraggingLabel) {
+        this.endLabelDrag()
+        return
       }
     },
 
@@ -2001,21 +2324,23 @@ export default {
 
 .annotation-controls {
   background: #fff;
-  padding: 12px;
+  padding: 10px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #ddd;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   position: relative;
   z-index: 10000;
+  min-height: 56px;
 }
 
 .annotation-tools {
   display: flex;
-  gap: 5px;
+  gap: 6px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .annotation-info,
@@ -2048,6 +2373,9 @@ export default {
   align-items: center;
   gap: 6px;
   transition: all 0.2s;
+  white-space: nowrap;
+  height: 36px;
+  box-sizing: border-box;
 }
 
 .annotation-tool:hover {
@@ -2071,39 +2399,44 @@ export default {
 
 .label-mode-controls {
   display: flex;
-  gap: 5px;
+  gap: 6px;
   align-items: center;
-  padding: 4px 8px;
-  background: #f8f9fa;
-  border-radius: 4px;
-  border: 1px solid #ddd;
+  height: 36px;
 }
 
 .help-container {
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
 }
 
 .zoom-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 8px;
+  gap: 4px;
+  padding: 4px;
   background: #f8f9fa;
-  border-radius: 4px;
+  border-radius: 6px;
   border: 1px solid #ddd;
+  height: 36px;
+  box-sizing: border-box;
 }
 
 .zoom-level {
   font-size: 12px;
   font-weight: 500;
   color: #666;
-  min-width: 40px;
+  min-width: 50px;
   text-align: center;
+  padding: 6px 8px;
+  background: white;
+  border-radius: 3px;
+  line-height: 1;
 }
 
 .btn {
-  padding: 8px 16px;
+  padding: 8px 12px;
   border: 1px solid #ccc;
   background: white;
   border-radius: 4px;
@@ -2113,6 +2446,9 @@ export default {
   align-items: center;
   gap: 6px;
   transition: all 0.2s;
+  white-space: nowrap;
+  height: 36px;
+  box-sizing: border-box;
 }
 
 .btn:disabled {
@@ -2150,6 +2486,32 @@ export default {
   background: #f8f9fa;
   border-color: #007bff;
   color: #007bff;
+}
+
+/* Make the active selection visually stronger (glow) */
+.btn-outline.active {
+  background: #e7f1ff;
+  border-color: #007bff;
+  color: #0b5ed7;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Zoom control buttons */
+.zoom-controls .btn {
+  padding: 6px 8px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 3px;
+}
+
+.zoom-controls .btn:hover {
+  background: #e9ecef;
+}
+
+/* Clean alignment without forcing */
+.annotation-controls > * {
+  display: flex;
+  align-items: center;
 }
 
 .dropdown {
@@ -2196,8 +2558,9 @@ export default {
 
 .media-image {
   display: block;
-  max-width: 100%;
-  height: auto;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
   transform-origin: top left;
 }
 
@@ -2219,17 +2582,30 @@ export default {
   font-size: 14px !important;
   font-weight: bold !important;
   color: #007bff !important;
-  cursor: pointer !important;
+  cursor: grab !important;
   z-index: 999 !important;
-  white-space: nowrap !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
   transition: all 0.2s !important;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
   pointer-events: auto !important;
-  min-width: 100px !important;
+  min-width: 120px !important;
+  max-width: 300px !important;
   text-align: center !important;
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
+  line-height: 1.4 !important;
+}
+
+.annotation-label:active {
+  cursor: grabbing !important;
+}
+
+.annotation-label:hover {
+  box-shadow: 0 6px 12px rgba(0, 123, 255, 0.4) !important;
+  border-color: #0056b3 !important;
 }
 
 /* Numbered label style */
@@ -2272,10 +2648,6 @@ export default {
   display: none;
 }
 
-.annotation-label:hover {
-  transform: scale(1.05);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
 
 .annotation-status {
   background: #f8f9fa;
@@ -2499,6 +2871,9 @@ export default {
   .annotation-controls {
     flex-direction: column;
     align-items: stretch;
+    padding: 8px 10px;
+    gap: 8px;
+    min-height: auto;
   }
   
   .annotation-tools {
@@ -2511,8 +2886,19 @@ export default {
   
   .annotation-tool,
   .btn {
-    padding: 10px 14px;
-    font-size: 14px;
+    padding: 8px 12px;
+    font-size: 13px;
+    height: 38px;
+  }
+  
+  .zoom-controls {
+    width: 100%;
+    max-width: 200px;
+    margin: 0 auto;
+  }
+  
+  .label-mode-controls {
+    justify-content: center;
   }
   
   .help-dropdown {
@@ -2681,8 +3067,9 @@ export default {
 
 .label-item.selected {
   border-color: #007bff;
-  background: #f8f9ff;
-  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+  background: linear-gradient(135deg, #f8f9ff 0%, #e3f2fd 100%);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  transform: translateY(-1px);
 }
 
 .label-number {
@@ -2710,11 +3097,17 @@ export default {
 
 .label-text {
   font-weight: 600;
-  color: #333;
-  font-size: 14px;
-  margin-bottom: 4px;
+  color: #2c3e50;
+  font-size: 15px;
+  margin-bottom: 6px;
   word-wrap: break-word;
-  line-height: 1.3;
+  line-height: 1.4;
+  letter-spacing: 0.2px;
+}
+
+.label-item.selected .label-text {
+  color: #1e3a8a;
+  font-weight: 700;
 }
 
 .label-meta {

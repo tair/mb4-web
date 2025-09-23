@@ -1199,7 +1199,10 @@ export class ImageViewerDialog extends Modal {
         font-size: 0.9rem;
       }
 
-      .mediaViewer .btn {
+      /* IMPORTANT: Scope generic button styles so they don't override
+         the AnnotationViewer toolbar buttons inside the modal */
+      .mediaViewer .threejs-viewer-placeholder .btn,
+      .mediaViewer .error-content .btn {
         padding: 0.5rem 1rem;
         border: none;
         border-radius: 4px;
@@ -1208,17 +1211,20 @@ export class ImageViewerDialog extends Modal {
         margin-top: 1rem;
       }
 
-      .mediaViewer .btn-primary {
+      .mediaViewer .threejs-viewer-placeholder .btn-primary,
+      .mediaViewer .error-content .btn-primary {
         background-color: #007bff;
         color: white;
       }
 
-      .mediaViewer .btn-secondary {
+      .mediaViewer .threejs-viewer-placeholder .btn-secondary,
+      .mediaViewer .error-content .btn-secondary {
         background-color: #6c757d;
         color: white;
       }
 
-      .mediaViewer .btn:hover {
+      .mediaViewer .threejs-viewer-placeholder .btn:hover,
+      .mediaViewer .error-content .btn:hover {
         opacity: 0.9;
         transform: translateY(-1px);
       }
