@@ -184,7 +184,11 @@ class ApiService {
       case 401:
         // Unauthorized - check for redirectUri in response data
         await this.handleUnauthorized(errorData)
-        throw new Error('Authentication required')
+        // Prefer server-provided message when available
+        {
+          const message = (errorData && (errorData.message || errorData.error)) || 'Authentication required'
+          throw new Error(message)
+        }
         
       case 403:
         throw new Error('Access forbidden')
