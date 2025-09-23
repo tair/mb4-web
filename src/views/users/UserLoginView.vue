@@ -5,22 +5,24 @@ import { useAuthStore } from '@/stores/AuthStore.js'
 import { useMessageStore } from '@/stores/MessageStore.js'
 import router from '../../router'
 import Alert from '@/components/main/Alert.vue'
+import { useNotifications } from '@/composables/useNotifications'
 
 const authStore = useAuthStore()
 const route = useRoute()
 const state = reactive({})
 const messageStore = useMessageStore()
+const { showError, showSuccess } = useNotifications()
 const message = reactive({
   message: messageStore.getMessage(),
 })
-const error = reactive({})
 
 const submitForm = async () => {
   const loggedIn = await authStore.login(state.email, state.password)
   if (authStore.err) {
-    error.login = authStore.err
+    showError(authStore.err, 'Sign in failed')
   }
   if (loggedIn) {
+    showSuccess('Welcome back to MorphoBank!', 'Signed in')
     // Check if this is an anonymous reviewer
     if (authStore.isAnonymousReviewer) {
       const projectId = authStore.getAnonymousProjectId
@@ -134,7 +136,7 @@ onBeforeUnmount(() => {
           >Forget your password?</RouterLink
         >
       </div>
-      <Alert :message="error" messageName="login" alertType="danger"></Alert>
+      
       <button class="w-100 btn btn-lg btn-outline-primary mt-3" type="submit">
         Sign in
       </button>

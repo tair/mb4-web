@@ -260,8 +260,15 @@ export const useAuthStore = defineStore({
         localStorage.setItem('mb-user', JSON.stringify(uObj))
         return true
       } catch (e) {
-        console.error(`store:auth:login(): ${e}\n${e.response.data.message}`)
-        this.err = e.response.data.message
+        // apiService throws standard Error instances with a message
+        let errMsg = 'Login failed. Please check your credentials and try again.'
+        if (e && typeof e.message === 'string' && e.message.trim().length > 0) {
+          errMsg = e.message
+        } else if (typeof e === 'string' && e.trim().length > 0) {
+          errMsg = e
+        }
+        console.error(`store:auth:login(): ${errMsg}`)
+        this.err = errMsg
         return false
       } finally {
         this.loading = false

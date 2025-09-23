@@ -199,7 +199,7 @@ function onImageError(event: Event) {
         <!-- User Institution Info Column (1/3) -->
         <div class="col-md-4">
           <div class="institution-info">
-            <div v-if="user.isMember && user.name" class="user-institution">
+            <div v-if="user.isMember" class="user-institution">
               <div class="user-logo-container" v-if="user.imageUrl">
                 <img 
                   :src="user.imageUrl" 
@@ -210,7 +210,7 @@ function onImageError(event: Event) {
               </div>
               <div class="user-details">
                 <span class="institution-text">
-                  Thank you for being a member of MorphoBank through <strong>{{ user.name }}</strong>!
+                  Membership from your institution sustains MorphoBank.
                   <!-- <span v-if="user.expDate" class="exp-date">
                     (expires {{ new Date(user.expDate).toLocaleDateString() }})
                   </span> -->
@@ -220,28 +220,19 @@ function onImageError(event: Event) {
             <div v-else class="non-subscriber">
               <div class="institution-text">
                 <p class="membership-info">
-                  MorphoBank is partially supported by 
-                  <a 
-                    href="https://phoenixbioinfo.org/morphobank/" 
-                    class="subscribe-link"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    memberships
-                  </a> 
-                  from university libraries and museums.
+                  MorphoBank is possible because of supporting memberships from university libraries and museums.
                 </p>
-                <p class="mission-text">
+                <div class="cta-row">
+                  <span class="cta-text">Let your librarian know that you want to help support MorphoBank.</span>
                   <a 
                     href="https://ui.arabidopsis.org/#/contentaccess/subscription/institution?partnerId=morphobank&redirect=https:%2F%2Fmorphobank.org"
-                    class="subscribe-link"
+                    class="cta-button"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Click here
-                  </a> 
-                  to have MorphoBank contact your librarian about membership.
-                </p>
+                    Submit request
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -250,7 +241,7 @@ function onImageError(event: Event) {
         <!-- Partner Carousel Column (2/3) -->
         <div class="col-md-8">
           <div v-if="realOrgsCount > 0" class="partners-section">
-            <h6 class="partners-title">Supporting Partner Institutions</h6>
+            <h6 class="partners-title">Supporting Member Institutions</h6>
             <div class="carousel-container">
               <button 
                 v-if="realOrgsCount > itemsPerView"
@@ -320,8 +311,8 @@ function onImageError(event: Event) {
 .institutional-banner {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   border-bottom: 1px solid #dee2e6;
-  padding: 16px 0;
-  min-height: 100px;
+  padding: 12px 0;
+  min-height: 80px;
   display: flex;
   align-items: center;
 }
@@ -359,9 +350,9 @@ function onImageError(event: Event) {
 }
 
 .institution-text {
-  font-size: 14px;
+  font-size: 13px;
   color: #495057;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .institution-text strong {
@@ -388,18 +379,43 @@ function onImageError(event: Event) {
   text-decoration: none;
 }
 
+.cta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cta-text {
+  line-height: 1.3;
+}
+
+.cta-button {
+  display: inline-block;
+  background: #ef782f;
+  color: #fff;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.cta-button:hover {
+  background: #e56f29;
+  border-color: #e56f29;
+  color: #fff;
+  text-decoration: none;
+}
+
 .non-subscriber .institution-text {
   text-align: left;
 }
 
-.membership-info,
-.mission-text {
-  margin: 0 0 8px 0;
-  line-height: 1.5;
-}
-
-.mission-text {
-  margin-bottom: 12px;
+.membership-info {
+  margin: 0 0 4px 0;
+  line-height: 1.3;
 }
 
 
@@ -536,8 +552,8 @@ function onImageError(event: Event) {
 
 @media (max-width: 992px) {
   .institutional-banner {
-    padding: 12px 0;
-    min-height: auto;
+    padding: 10px 0;
+    min-height: 70px;
   }
   
   .row {
