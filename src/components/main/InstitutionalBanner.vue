@@ -45,8 +45,8 @@ async function getUserIP() {
     }
     
     const data = await response.json()
-    // return data.ip || ''
-    return '0.0.0.0'
+    return data.ip || ''
+    // return '0.0.0.0'
   } catch (err) {
     console.warn('Could not fetch real IP, using empty fallback:', err)
     return '' // Fallback empty IP for development/fallback
