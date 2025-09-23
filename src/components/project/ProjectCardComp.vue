@@ -1,6 +1,7 @@
 <script setup>
 import { RouterLink } from 'vue-router'
 import { buildMediaUrl } from '@/utils/fileUtils.js'
+import { apiService } from '@/services/apiService.js'
 import { computed } from 'vue'
 
 const props = defineProps({
@@ -20,6 +21,14 @@ const mediaId = computed(() => {
 // Check if this is a 3D media file using USE_ICON
 const is3DFile = computed(() => {
   return props.project?.image_props?.media?.USE_ICON === '3d'
+})
+
+// Build journal cover URL from path
+const journalCoverUrl = computed(() => {
+  if (!props.project?.journal_cover_path) {
+    return null
+  }
+  return apiService.buildUrl(props.project.journal_cover_path)
 })
 
 // Get the appropriate media URL (3D icon for 3D media, image URL for others)
@@ -97,12 +106,12 @@ const mediaUrl = computed(() => {
       <div class="border-bottom row thumb-row">
         <div class="col align-items-stretch thumb">
           <img
-            v-if="project.journal_cover_url"
-            :src="project.journal_cover_url"
+            v-if="journalCoverUrl"
+            :src="journalCoverUrl"
             class="card-img-top"
           />
           <div
-            v-if="!project.journal_cover_url && project.journal_in_press"
+            v-if="!journalCoverUrl && project.journal_in_press"
             class="in-press"
           >
             In<br />Press

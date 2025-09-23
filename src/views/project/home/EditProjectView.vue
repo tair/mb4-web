@@ -317,6 +317,52 @@
 
       <div class="form-group">
         <label class="form-label">
+          Journal cover image (if missing above)
+          <Tooltip :content="getJournalCoverTooltip()"></Tooltip>
+        </label>
+
+        <!-- Display current uploaded journal cover -->
+        <div v-if="currentJournalCoverUrl" class="current-journal-cover-container">
+          <div class="current-journal-cover-wrapper">
+            <img
+              :src="currentJournalCoverUrl"
+              alt="Current Journal Cover"
+              class="current-journal-cover"
+            />
+            <div class="current-journal-cover-info">
+              <div class="current-journal-cover-filename">
+                Current: {{ currentJournalCover?.ORIGINAL_FILENAME || currentJournalCover?.filename }}
+              </div>
+              <button
+                type="button"
+                @click="clearCurrentJournalCover"
+                class="btn-link remove-cover-btn"
+              >
+                Remove current cover
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="journal-cover-upload">
+          <input
+            type="file"
+            @change="handleJournalCoverUpload"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/webp,image/tiff"
+            class="form-control"
+            :disabled="isJournalCoverUploadDisabled"
+          />
+          <small v-if="isJournalCoverUploadDisabled && !currentJournalCoverUrl" class="form-text text-muted">
+            Journal cover already available from selected journal
+          </small>
+          <small v-if="currentJournalCoverUrl" class="form-text text-muted">
+            Upload a new image to replace the current journal cover
+          </small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">
           Abstract
           <span
             class="required"
@@ -464,26 +510,6 @@
           :required="formData.publication_status === '0'"
         />
       </div>
-
-      <div class="form-group">
-        <label class="form-label">
-          Journal cover image (if missing above)
-          <Tooltip :content="getJournalCoverTooltip()"></Tooltip>
-        </label>
-        <div class="journal-cover-upload">
-          <input
-            type="file"
-            @change="handleJournalCoverUpload"
-            accept="image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/webp,image/tiff"
-            class="form-control"
-            :disabled="isJournalCoverUploadDisabled"
-          />
-          <small v-if="isJournalCoverUploadDisabled" class="form-text text-muted">
-            Journal cover already available from selected journal
-          </small>
-        </div>
-      </div>
-
 
       <div class="form-buttons">
         <button
@@ -636,6 +662,8 @@ const journalSearch = ref('')
 const showNewJournal = ref(false)
 const journals = ref([])
 const journalCoverPath = ref(null)
+const currentJournalCover = ref(null) // Current uploaded journal cover data
+const currentJournalCoverUrl = ref(null) // URL for current uploaded journal cover
 const isLoading = ref(false)
 const isLoadingProject = ref(true)
 const error = ref(null)
@@ -662,9 +690,9 @@ const filteredJournals = computed(() => {
 
 // Computed property to determine if journal cover upload should be disabled
 const isJournalCoverUploadDisabled = computed(() => {
-  // Only disable if we're in journal selection mode AND we have a valid journal cover 
-  // that's actually being displayed (matches the v-if condition in template)
-  return !showNewJournal.value && !!journalCoverPath.value
+  // Disable if we're in journal selection mode AND we have a valid journal cover from journal title
+  // OR if we have a current uploaded journal cover
+  return (!showNewJournal.value && !!journalCoverPath.value) || !!currentJournalCoverUrl.value
 })
 
 onMounted(async () => {
@@ -709,6 +737,9 @@ async function loadProjectData() {
 
     // Set flags for existing media
     existingExemplarMedia.value = !!overview.exemplar_media_id
+
+    // Load current journal cover if exists
+    await loadCurrentJournalCover(overview.journal_cover)
 
     // Set reviewer login settings
     const reviewerLoginEnabled = overview.allow_reviewer_login === 1 || overview.allow_reviewer_login === true
@@ -852,6 +883,34 @@ function toggleJournalMode() {
   }
   // Reset journal cover
   journalCoverPath.value = null
+}
+
+// Load current uploaded journal cover
+const loadCurrentJournalCover = async (journalCoverData) => {
+  currentJournalCover.value = null
+  currentJournalCoverUrl.value = null
+
+  if (!journalCoverData) {
+    return
+  }
+
+  try {
+    // Check if it's the new migrated format
+    if (journalCoverData.filename && journalCoverData.migrated) {
+      currentJournalCover.value = journalCoverData
+      const s3Key = `media_files/journal_covers/uploads/${journalCoverData.filename}`
+      currentJournalCoverUrl.value = apiService.buildUrl(`/s3/${s3Key}`)
+    }
+    // Handle old format if needed (though it should be migrated by now)
+    else if (journalCoverData.media_id) {
+      currentJournalCover.value = journalCoverData
+      // For old format, we might need to construct a different URL
+      // This is a fallback for any unmigrated covers
+      console.warn('Found old format journal cover, should be migrated:', journalCoverData)
+    }
+  } catch (err) {
+    console.error('Error loading current journal cover:', err)
+  }
 }
 
 // Load journal cover when journal is selected
@@ -1009,6 +1068,13 @@ function handleJournalCoverUpload(event) {
   }
 }
 
+function clearCurrentJournalCover() {
+  currentJournalCover.value = null
+  currentJournalCoverUrl.value = null
+  // Also clear any uploaded file
+  formData.journal_cover = null
+}
+
 // Watch for changes in journal cover availability and clear uploaded file if disabled
 watch(isJournalCoverUploadDisabled, (newValue) => {
   if (newValue && formData.journal_cover) {
@@ -1054,14 +1120,27 @@ async function handleSubmit() {
       }
     }
 
-    // Only send journal cover file if user uploaded one (existing covers already available)
-    const journalCoverToSend = isJournalCoverUploadDisabled.value ? null : formData.journal_cover
+    // Determine journal cover action:
+    // - If user uploaded a new file, send it
+    // - If user removed current cover (currentJournalCover was cleared), send removal signal
+    // - Otherwise, don't send anything (keep existing)
+    let journalCoverToSend = null
+    let removeJournalCover = false
+    
+    if (formData.journal_cover) {
+      // User uploaded a new journal cover
+      journalCoverToSend = formData.journal_cover
+    } else if (currentJournalCover.value === null && projectOverviewStore.overview?.journal_cover) {
+      // User had a journal cover but removed it
+      removeJournalCover = true
+    }
     
     // Update project - journal covers processed immediately (cataloguing_status: 0)
     const success = await updateProject(
       projectData,
       journalCoverToSend,
-      formData.exemplar_media
+      formData.exemplar_media,
+      removeJournalCover
     )
 
     if (!success) {
@@ -1086,7 +1165,8 @@ async function handleSubmit() {
 async function updateProject(
   projectData,
   journalCoverFile = null,
-  exemplarMediaFile = null
+  exemplarMediaFile = null,
+  removeJournalCover = false
 ) {
   try {
     let requestData
@@ -1097,7 +1177,8 @@ async function updateProject(
       const formData = new FormData()
 
       // Add all project data as JSON string
-      formData.append('projectData', JSON.stringify(projectData))
+      const dataToSend = { ...projectData, removeJournalCover }
+      formData.append('projectData', JSON.stringify(dataToSend))
 
       // Add journal cover file if provided
       if (journalCoverFile) {
@@ -1113,7 +1194,7 @@ async function updateProject(
       // Don't set Content-Type header - let browser set it with boundary
     } else {
       // Use JSON for project data only
-      requestData = projectData
+      requestData = { ...projectData, removeJournalCover }
       headers = {
         'Content-Type': 'application/json',
       }
@@ -1125,9 +1206,15 @@ async function updateProject(
       { headers }
     )
 
-    // Refresh the projects cache
+    // Refresh the projects cache and invalidate project overview cache
     if (response.status === 200) {
       await projectsStore.fetchProjects(true) // Force refresh
+      projectOverviewStore.invalidate() // Invalidate cached overview data
+      
+      // Also trigger a fresh fetch if the overview was for this project
+      if (projectOverviewStore.currentProjectId === projectId) {
+        await projectOverviewStore.fetchProject(projectId)
+      }
     }
 
     return response.status === 200
@@ -1557,6 +1644,49 @@ function getLoadingText() {
   margin-bottom: 5px;
   font-size: 0.9em;
   color: #666;
+}
+
+.current-journal-cover-container {
+  margin: 15px 0;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.current-journal-cover-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.current-journal-cover {
+  max-width: 150px;
+  max-height: 100px;
+  object-fit: contain;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.current-journal-cover-info {
+  flex: 1;
+}
+
+.current-journal-cover-filename {
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.remove-cover-btn {
+  color: #dc3545;
+  font-size: 0.9em;
+}
+
+.remove-cover-btn:hover {
+  color: #c82333;
+  text-decoration: underline;
 }
 
 .spinner-border-sm {

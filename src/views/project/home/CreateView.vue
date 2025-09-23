@@ -354,6 +354,25 @@
 
       <div class="form-group">
         <label class="form-label">
+          Journal cover image (if missing above)
+          <Tooltip :content="getJournalCoverTooltip()"></Tooltip>
+        </label>
+        <div class="journal-cover-upload">
+          <input
+            type="file"
+            @change="handleJournalCoverUpload"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/webp,image/tiff"
+            class="form-control"
+            :disabled="isJournalCoverUploadDisabled"
+          />
+          <small v-if="isJournalCoverUploadDisabled" class="form-text text-muted">
+            Journal cover already available from selected journal
+          </small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">
           Abstract
           <span
             class="required"
@@ -501,26 +520,6 @@
           :required="formData.publication_status === '0'"
         />
       </div>
-
-      <div class="form-group">
-        <label class="form-label">
-          Journal cover image (if missing above)
-          <Tooltip :content="getJournalCoverTooltip()"></Tooltip>
-        </label>
-        <div class="journal-cover-upload">
-          <input
-            type="file"
-            @change="handleJournalCoverUpload"
-            accept="image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/webp,image/tiff"
-            class="form-control"
-            :disabled="isJournalCoverUploadDisabled"
-          />
-          <small v-if="isJournalCoverUploadDisabled" class="form-text text-muted">
-            Journal cover already available from selected journal
-          </small>
-        </div>
-      </div>
-
 
       <div class="form-buttons">
         <button
