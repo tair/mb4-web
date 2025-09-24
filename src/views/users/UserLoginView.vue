@@ -31,9 +31,27 @@ const submitForm = async () => {
       } else {
         router.push({ path: '/' }) // Fallback to home
       }
+    } else if (route.query.redirectPath) {
+      // Prefer full path redirect when available (avoids missing required params)
+      router.push({ path: `${route.query.redirectPath}` }).catch(() => {
+        // If router refuses due to malformed saved query, fall back to session storage
+        const fallbackPath = sessionStorage.getItem('mb-redirectPath')
+        if (fallbackPath) {
+          router.push({ path: fallbackPath })
+        } else {
+          router.push({ path: '/myprojects' })
+        }
+      })
     } else if (route.query.redirect) {
-      // Handle redirect with original query parameters if they exist
+      // Handle named-route redirect with optional params/query
       const redirectRoute = { name: `${route.query.redirect}` }
+      if (route.query.originalParams) {
+        try {
+          redirectRoute.params = JSON.parse(route.query.originalParams)
+        } catch (e) {
+          console.warn('Could not parse original route params:', e)
+        }
+      }
       if (route.query.originalQuery) {
         try {
           redirectRoute.query = JSON.parse(route.query.originalQuery)
@@ -41,7 +59,15 @@ const submitForm = async () => {
           console.warn('Could not parse original query parameters:', e)
         }
       }
-      router.push(redirectRoute)
+      router.push(redirectRoute).catch(() => {
+        // If required params are missing, fallback to fullPath if persisted
+        const fallbackPath = sessionStorage.getItem('mb-redirectPath')
+        if (fallbackPath) {
+          router.push({ path: fallbackPath })
+        } else {
+          router.push({ path: '/myprojects' })
+        }
+      })
     } else {
       router.push({ path: '/myprojects' })
     }

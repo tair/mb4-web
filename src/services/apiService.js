@@ -230,18 +230,22 @@ class ApiService {
     localStorage.removeItem('auth_token')
     sessionStorage.removeItem('auth_token')
     
-    // Import authStore to handle session timeout properly
+    // Import authStore and always trigger redirect to login for 401
     try {
       const { useAuthStore } = await import('@/stores/AuthStore.js')
       const authStore = useAuthStore()
-      // Only handle if we have auth data
-      if (authStore.user?.authToken) {
-        console.log('ApiService: Authentication error detected, clearing auth state')
-        authStore.invalidate()
-        // The authStore.invalidate() will trigger the redirect via axios interceptor
-      }
+      console.log('ApiService: Authentication error detected, redirecting to login')
+      // Clear any local auth state if present
+      try { authStore.invalidate() } catch {}
+      // Ensure redirect to login regardless of prior auth state
+      try { authStore.redirectToLoginIfNeeded() } catch {}
     } catch (err) {
       console.warn('ApiService: Could not handle auth error:', err)
+      // As a final fallback, navigate directly
+      try {
+        const { default: router } = await import('@/router/index.js')
+        router.push({ name: 'UserLogin' })
+      } catch {}
     }
   }
 
