@@ -748,18 +748,11 @@ async function loadProjectData() {
     // Never populate the password field for security reasons - always leave empty
     formData.reviewer_login_password = ''
 
-    // Determine publication status based on available data
-    if (
-      overview.journal_url &&
-      overview.journal_volume &&
-      overview.article_pp
-    ) {
-      formData.publication_status = '0' // Published
-    } else if (overview.journal_title && overview.journal_year) {
-      formData.publication_status = '1' // In press
-    } else {
-      formData.publication_status = '2' // In prep or review
-    }
+    // Map journal_in_press from database to publication_status in form
+    // journal_in_press: 0 = Published, 1 = In press, 2 = Article in prep or in review
+    formData.publication_status = overview.journal_in_press !== null && overview.journal_in_press !== undefined 
+      ? String(overview.journal_in_press) 
+      : '2' // Default to "Article in prep or in review"
 
     // Handle journal title - check if it exists in the journals list
     if (formData.journal_title) {
