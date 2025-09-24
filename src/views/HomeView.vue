@@ -1,8 +1,9 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { processItemsWithMediaLegacy } from '@/utils/fileUtils.js'
+// no need for fileUtils helpers here; featured will use S3 direct paths
 import { apiService } from '@/services/apiService.js'
+import { buildS3OriginalImageUrl } from '@/utils/fileUtils.js'
 
 const router = useRouter()
 
@@ -55,22 +56,40 @@ onMounted(async () => {
     const statsData = await statsResponse.json()
     stats.value = statsData
 
-    // Process media URLs for featured projects using enhanced function
-    featuredProjects.value = processItemsWithMediaLegacy(
-      featuredProjectsData,
-      'large'
-    )
+    // Featured projects: use S3 original path, with 3D icon handling
+    featuredProjects.value = featuredProjectsData.map((proj) => {
+      const mediaId = proj.media_id || proj.exemplar_media_id
+      const mediaUrl = mediaId
+        ? buildS3OriginalImageUrl(proj.project_id, mediaId, proj.media)
+        : null
+      return { ...proj, media: mediaUrl }
+    })
 
-    // Process media URLs for matrix images using enhanced function
-    matrixImages.value = processItemsWithMediaLegacy(matrixImagesData, 'large')
+    // Matrix images: load from S3 per migration structure
+    matrixImages.value = matrixImagesData.map((img) => ({
+      ...img,
+      media: apiService.buildUrl(
+        `/s3/media_files/matrix_images/${img.image_id}/${img.image_id}_large.jpg`
+      ),
+    }))
 
     announcements.value = announcementsData
 
-    // Process media URLs for tools using enhanced function
-    tools.value = processItemsWithMediaLegacy(toolsData, 'large')
+    // Tools: load from S3 per migration structure
+    tools.value = toolsData.map((tool) => ({
+      ...tool,
+      media: apiService.buildUrl(
+        `/s3/media_files/hp_tools/${tool.tool_id}/${tool.tool_id}_large.jpg`
+      ),
+    }))
 
-    // Process media URLs for press using enhanced function
-    press.value = processItemsWithMediaLegacy(pressData, 'large')
+    // Press: load from S3 per migration structure
+    press.value = pressData.map((item) => ({
+      ...item,
+      media: apiService.buildUrl(
+        `/s3/media_files/press/${item.press_id}/${item.press_id}_large.jpg`
+      ),
+    }))
 
     maintenanceMode.value = maintenanceStatus.enabled
     maintenanceMessage.value = maintenanceStatus.message
@@ -169,6 +188,15 @@ const goToPress = (index) => {
   currentPressIndex.value = index
 }
 
+// Image fallback handler for missing S3 objects
+const handleImageError = (event) => {
+  const img = event?.target
+  if (img && !img.dataset.fallbackApplied) {
+    img.dataset.fallbackApplied = '1'
+    img.src = '/images/image_not_found.png'
+  }
+}
+
 // Initialize active items
 onMounted(() => {
   nextTick(() => {
@@ -201,6 +229,7 @@ onMounted(() => {
             :src="matrixImages[0].media"
             :alt="'Project ' + matrixImages[0].project_id"
             class="matrix-image"
+            @error="handleImageError"
           />
         </router-link>
       </div>
@@ -429,6 +458,7 @@ onMounted(() => {
                     :src="project.media"
                     :alt="project.name"
                     class="card-image"
+                    @error="handleImageError"
                   />
                 </div>
                 <div class="card-desc">
@@ -485,6 +515,7 @@ onMounted(() => {
                       :src="tool.media"
                       :alt="tool.title"
                       class="card-image"
+                      @error="handleImageError"
                     />
                   </div>
                   <div class="card-desc">
@@ -500,6 +531,7 @@ onMounted(() => {
                     :src="tool.media"
                     :alt="tool.title"
                     class="card-image"
+                    @error="handleImageError"
                   />
                 </div>
                 <div class="card-desc">
@@ -550,6 +582,7 @@ onMounted(() => {
                       :src="item.media"
                       :alt="item.title"
                       class="card-image"
+                      @error="handleImageError"
                     />
                   </div>
                   <div class="card-desc">
@@ -570,6 +603,7 @@ onMounted(() => {
                     :src="item.media"
                     :alt="item.title"
                     class="card-image"
+                    @error="handleImageError"
                   />
                 </div>
                 <div class="card-desc">
