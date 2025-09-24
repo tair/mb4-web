@@ -200,13 +200,13 @@ function popDownloadAlert() {
               <span class="text-muted">. </span>
             </template>
             <template v-if="overview.journal_in_press === 0">
-              <span class="badge bg-success ms-2">Published</span>
+              <span class="badge bg-success ms-2">Status of peer-reviewed publication: Published</span>
             </template>
             <template v-else-if="overview.journal_in_press === 1">
-              <span class="badge bg-warning text-dark ms-2">In Press</span>
+              <span class="badge bg-warning text-dark ms-2">Status of peer-reviewed publication: In Press</span>
             </template>
             <template v-else-if="overview.journal_in_press === 2">
-              <span class="badge bg-secondary ms-2">Article in prep or in review</span>
+              <span class="badge bg-secondary ms-2">Status of peer-reviewed publication: Article in prep or in review</span>
             </template>
           </div>
         </div>
