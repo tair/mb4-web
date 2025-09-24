@@ -147,9 +147,13 @@ export class MediaGrid extends Component {
       mediaDiv.appendChild(document.createElement('br'))
       mediaDiv.appendChild(contentSpan)
     }
-    handler.listen(mediaDiv, MobileFriendlyClickEventType, () =>
+    handler.listen(mediaDiv, MobileFriendlyClickEventType, (e) => {
+      // Prevent the table's double/click handler from also firing (which opens the media selector)
+      // when clicking directly on a media item. We only want to open the AnnotationViewer in that case.
+      e.stopPropagation()
+      e.preventDefault()
       this.doubleClickMediaItem(item)
-    )
+    })
     return mediaDiv
   }
 
