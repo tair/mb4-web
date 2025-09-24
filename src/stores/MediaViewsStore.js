@@ -25,6 +25,7 @@ export const useMediaViewsStore = defineStore({
       try {
         const response = await apiService.post(`/projects/${projectId}/views/create`, data)
         if (response.ok) {
+          const responseData = await response.json()
           // Handle both single view and bulk creation responses
           if (responseData.view) {
             this.addMediaViews([responseData.view])
