@@ -9,21 +9,29 @@ import { getMorphoBankStatsText } from '@/utils/project'
 
 const route = useRoute()
 const projectsStore = usePublicProjectsStore()
-let sort_by = ref('asc')
-let is_asc = ref(true)
+let idx = 0
+
+// normalize the string (convert diacritics to ascii chars)
+// then return the first char
+function getNormalizedCharAt1(str) {
+  try {
+    const noTags = str.replace(/<[^>]*>/g, '')
+    const nfd = noTags.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    const alnumOnly = nfd.replace(/[^a-zA-Z0-9]/g, '')
+    return alnumOnly
+      .charAt(0)
+      .toUpperCase()
+  } catch (e) {
+    return str
+  }
+}
+
+let prev_char = ''
 
 onMounted(async () => {
-  await projectsStore.fetchProjectTitles(sort_by)
+  await projectsStore.fetchProjectTitlesGrouped()
   await projectsStore.fetchMorphoBankStats()
 })
-
-function onSorted(sort) {
-  if (sort === sort_by.value) return
-
-  sort_by.value = sort
-  is_asc.value = sort === 'asc' ? true : false
-  projectsStore.fetchProjectTitles(sort)
-}
 
 const morphoBankStatsText = computed(() => {
   return getMorphoBankStatsText(projectsStore.morphoBankStats, true)
@@ -41,31 +49,54 @@ const morphoBankStatsText = computed(() => {
 
     <div class="d-flex justify-content-between">
       <ProjectMenuComp menuItem="prj_title"></ProjectMenuComp>
-
-      <div class="d-grid gap-1 d-md-flex">
-        <a
-          href="#"
-          @click="onSorted('asc')"
-          :style="{ color: is_asc ? '#ef782f' : 'gray' }"
-          ><i class="fa-solid fa-arrow-up fa-xl"></i
-        ></a>
-
-        <a
-          href="#"
-          @click="onSorted('desc')"
-          :style="{ color: !is_asc ? '#ef782f' : 'gray' }"
-          ><i class="fa-solid fa-arrow-down fa-xl"></i
-        ></a>
-      </div>
     </div>
 
-    <div class="list-group" :key="n" v-for="(title, n) in projectsStore.titles">
-      <div class="list-group-item list-group-item-action mb-2">
-        <ProjectDisplayComp 
-          :project="title" 
-          :showProjectLabel="true" 
-        />
+    <div v-if="projectsStore.titlesGrouped != null">
+      <div class="d-grid gap-2 d-sm-flex _offset2 mb-4" id="top">
+        <div :key="n" v-for="(char, n) in projectsStore.titlesGrouped.chars">
+          <a :href="`#${char}`" class="fw-bold">{{ char }}</a>
+        </div>
+      </div>
+
+      <div :key="n" v-for="(projects, title) in projectsStore.titlesGrouped['titles']">
+        <div
+          class="fw-bold mt-3"
+          v-if="/[A-Z0-9]/.test(getNormalizedCharAt1(title)) && prev_char != getNormalizedCharAt1(title)"
+        >
+          <a :id="`${getNormalizedCharAt1(title)}`" href="#top">
+            <p class="_offset">
+              {{ (prev_char = getNormalizedCharAt1(title)) }}
+            </p>
+          </a>
+        </div>
+
+        <div class="mb-2">
+          <ul class="list-group list-group-flush">
+            <li
+              v-for="(project, n) in projects"
+              :key="n"
+              class="list-group-item py-2"
+              style="background-color: #f8f8f8"
+            >
+              <ProjectDisplayComp 
+                :project="project" 
+                :showProjectLabel="true" 
+              />
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </GenericLoaderComp>
 </template>
+
+<style>
+._offset {
+  padding-top: 100px;
+  margin-top: -100px;
+}
+._offset2 {
+  padding-top: 300px;
+  margin-top: -300px;
+}
+</style>
