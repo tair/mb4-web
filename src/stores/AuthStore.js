@@ -148,14 +148,19 @@ export const useAuthStore = defineStore({
         const currentRoute = router.currentRoute.value
         if (currentRoute.name !== 'UserLogin') {
           console.log('Session expired, redirecting to login page')
-          router.push({ 
-            name: 'UserLogin', 
-            query: { 
-              redirect: currentRoute.name,
-              // Preserve query params if they exist
-              ...(Object.keys(currentRoute.query).length > 0 ? { originalQuery: JSON.stringify(currentRoute.query) } : {})
-            } 
-          })
+          // Persist full path as a robust fallback in case query is lost
+          try { sessionStorage.setItem('mb-redirectPath', currentRoute.fullPath) } catch {}
+          const query = {
+            redirect: currentRoute.name,
+            redirectPath: currentRoute.fullPath,
+            ...(Object.keys(currentRoute.query).length > 0
+              ? { originalQuery: JSON.stringify(currentRoute.query) }
+              : {}),
+            ...(Object.keys(currentRoute.params).length > 0
+              ? { originalParams: JSON.stringify(currentRoute.params) }
+              : {}),
+          }
+          router.push({ name: 'UserLogin', query })
         }
       }).catch(err => {
         console.warn('Could not redirect to login:', err)

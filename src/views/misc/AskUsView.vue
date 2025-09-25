@@ -297,8 +297,8 @@ export default {
     }
 
     const validateDescription = (description) => {
-      if (!description || description.length < 200) {
-        return 'The description must contain more than 200 characters. Please clearly state the problem and what was expected.'
+      if (!description || description.length < 75) {
+        return 'The description must contain at least 75 characters. Please clearly state the problem and what was expected.'
       }
 
       // Check for HTML links

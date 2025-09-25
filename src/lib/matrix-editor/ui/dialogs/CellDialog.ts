@@ -1223,14 +1223,20 @@ class MediaPane extends BasePane {
       MediaPane.AUTO_OPEN_MEDIA_WINDOW
     )
     this.openMediaCheckbox.setChecked(isAutoOpenMediaWindowSelected)
-    if (isAutoOpenMediaWindowSelected) {
+    // Determine whether the user can add media to cells (row access + action permission)
+    const projectProperties = this.matrixModel.getProjectProperties()
+    const canEditCells = projectProperties.isActionAllowed('editCellData')
+    const canAddMedia = this.hasAccess && canEditCells
+    if (isAutoOpenMediaWindowSelected && canAddMedia) {
       setTimeout(() => this.handleAddCellMedia, 350)
     }
 
-    if (!this.hasAccess) {
+    if (!canAddMedia) {
       const addTaxonMediaElement =
         this.getElementByClass<HTMLElement>('addCellMedia')
-      addTaxonMediaElement.title = CellDialog.LOCKED_MESSAGE
+      addTaxonMediaElement.title = this.hasAccess
+        ? 'You do not have permission to modify cells.'
+        : CellDialog.LOCKED_MESSAGE
       addTaxonMediaElement.classList.add('disabled')
       this.openMediaCheckbox.setEnabled(false)
     }
@@ -1244,7 +1250,10 @@ class MediaPane extends BasePane {
       MobileFriendlyClickEventType,
       (e: CustomEvent<MediaGridItemEvent>) => this.handleDoubleClickCellMedia(e)
     )
-    if (this.hasAccess) {
+    const projectProperties = this.matrixModel.getProjectProperties()
+    const canEditCells = projectProperties.isActionAllowed('editCellData')
+    const canAddMedia = this.hasAccess && canEditCells
+    if (canAddMedia) {
       this.getHandler()
         .listen(addTaxonMediaElement, EventType.CLICK, () =>
           this.handleAddCellMedia()

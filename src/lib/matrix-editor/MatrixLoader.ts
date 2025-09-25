@@ -72,13 +72,20 @@ export class MatrixLoader {
               Accept: 'application/json',
               'Content-Type': 'application/json',
             },
-            credential: 'include',
+            credentials: 'include',
           })
-          if (response.status == 401) {
-            sendRetries = request.getRetries()
-            return { errors: ['User is not signed in'] }
+          // Try to parse JSON; if it fails for error responses, fall back to text
+          let data: any
+          try {
+            data = await response.json()
+          } catch (_e) {
+            if (!response.ok) {
+              const text = await response.text()
+              const message = text || response.statusText || 'Unknown error'
+              return Promise.reject(message)
+            }
+            throw _e
           }
-          const data = await response.json()
           try {
             // console.log(data)
             if (data['ok']) {

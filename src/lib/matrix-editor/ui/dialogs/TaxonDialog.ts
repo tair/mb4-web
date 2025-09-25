@@ -289,7 +289,10 @@ class MediaPane extends Component {
       MediaPane.AUTO_OPEN_MEDIA_WINDOW
     )
     this.openMediaCheckbox.setChecked(isAutoOpenMediaWindowSelected)
-    if (isAutoOpenMediaWindowSelected) {
+    const projectProperties = this.matrixModel.getProjectProperties()
+    const canEditCells = projectProperties.isActionAllowed('editCellData')
+    const canAddMedia = this.taxon.hasAccess(this.matrixModel.getProjectProperties()) && canEditCells
+    if (isAutoOpenMediaWindowSelected && canAddMedia) {
       setTimeout(() => this.handleAddTaxonMedia, 350)
     }
   }
@@ -303,8 +306,13 @@ class MediaPane extends Component {
         this.handleDoubleClickTaxonMedia(e)
     )
     const addTaxonMediaElement = this.getElementByClass('addTaxonMedia')
-    if (!this.taxon.hasAccess(this.matrixModel.getProjectProperties())) {
+    const projectProperties = this.matrixModel.getProjectProperties()
+    const canEditCells = projectProperties.isActionAllowed('editCellData')
+    const hasRowAccess = this.taxon.hasAccess(projectProperties)
+    const canAddMedia = hasRowAccess && canEditCells
+    if (!canAddMedia) {
       addTaxonMediaElement.classList.add('disabled')
+      addTaxonMediaElement.setAttribute('title', hasRowAccess ? 'You do not have permission to modify cells.' : 'Row is locked for you')
       this.openMediaCheckbox.setEnabled(false)
       return
     }

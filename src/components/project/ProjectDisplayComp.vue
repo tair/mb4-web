@@ -18,13 +18,15 @@
       </div>
     </div>
 
-    <!-- Simple Display (no Project ID label) -->
+    <!-- Simple Display (optional inline Project ID) -->
     <RouterLink
       v-else
       :to="`/project/${projectId}/overview`"
       :class="linkClass"
     >
-      <div v-html="displayTitle"></div>
+      <div>
+        <span v-html="displayTitle"></span>
+      </div>
       <span v-if="hasAuthorInfo" class="text-muted small">
         <template v-if="project.article_authors">{{ project.article_authors }}</template>
         <template v-if="project.journal_year"> ({{ project.journal_year }})</template>
