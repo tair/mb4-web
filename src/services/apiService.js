@@ -22,41 +22,15 @@ class ApiService {
   }
 
   /**
-   * Get authentication headers
-   * @returns {Object} Headers object with authentication
+   * Get default headers
+   * @returns {Object} Headers object
    */
-  getAuthHeaders() {
-    const headers = { ...this.defaultHeaders }
-    
-    // Add authentication token if available
-    const token = this.getAuthToken()
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`
-    }
-    
-    return headers
+  getDefaultHeaders() {
+    // Backend uses httpOnly cookies for auth, not Authorization headers
+    // The browser automatically sends cookies with credentials: 'include'
+    return { ...this.defaultHeaders }
   }
 
-  /**
-   * Get authentication token from storage
-   * @returns {string|null} Authentication token
-   */
-  getAuthToken() {
-    // Try to get token from various sources
-    return localStorage.getItem('auth_token') || 
-           sessionStorage.getItem('auth_token') || 
-           this.getCookieValue('auth_token')
-  }
-
-  /**
-   * Get cookie value by name
-   * @param {string} name - Cookie name
-   * @returns {string|null} Cookie value
-   */
-  getCookieValue(name) {
-    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
-    return match ? match[2] : null
-  }
 
   /**
    * Build full URL - intelligently handles both relative and absolute URLs
@@ -226,9 +200,9 @@ class ApiService {
       return
     }
     
-    // Clear stored tokens
-    localStorage.removeItem('auth_token')
-    sessionStorage.removeItem('auth_token')
+    // Clear stored user data (matches what AuthStore does)
+    localStorage.removeItem('mb-user')
+    localStorage.removeItem('orcid-user')
     
     // Import authStore and always trigger redirect to login for 401
     try {
@@ -239,6 +213,60 @@ class ApiService {
       try { authStore.invalidate() } catch {}
       // Ensure redirect to login regardless of prior auth state
       try { authStore.redirectToLoginIfNeeded() } catch {}
+
+      // For matrix editor and other non-SPA contexts, force immediate redirect
+      // The matrix editor takes over the DOM, preventing Vue Router navigation
+      const isMatrixEditor = window.location.pathname.includes('/matrices/') && 
+                            (window.location.pathname.includes('/edit') || window.location.pathname.includes('/view'))
+      
+      if (isMatrixEditor) {
+        // Stop any ongoing matrix operations
+        try {
+          // Clear the app div to remove matrix editor DOM
+          const appDiv = document.getElementById('app')
+          if (appDiv) {
+            appDiv.innerHTML = '<div>Redirecting to login...</div>'
+          }
+        } catch {}
+        
+        // Force immediate full page reload for matrix editor
+        const loginUrl = new URL('/users/login', window.location.origin)
+        // Pass only the pathname + search + hash, not the full URL
+        const redirectPath = window.location.pathname + window.location.search + window.location.hash
+        loginUrl.searchParams.set('redirectPath', redirectPath)
+        
+        // Use both replace and href as fallback
+        try {
+          window.location.replace(loginUrl.toString())
+        } catch {
+          window.location.href = loginUrl.toString()
+        }
+        
+        // Final fallback - reload page after short delay
+        setTimeout(() => {
+          window.location.reload()
+        }, 500)
+        return
+      }
+      
+      // For other pages, try SPA navigation first with fallback
+      try {
+        const alreadyOnLogin = window.location.pathname.includes('/users/login')
+        if (!alreadyOnLogin) {
+          // Store only the path, not the full URL
+          const currentPath = window.location.pathname + window.location.search + window.location.hash
+          // Give the SPA router a brief chance to handle navigation first
+          setTimeout(() => {
+            // If still not on login route, force navigation
+            if (!window.location.pathname.includes('/users/login')) {
+              // Build login URL with proper redirect parameter
+              const loginUrl = new URL('/users/login', window.location.origin)
+              loginUrl.searchParams.set('redirectPath', currentPath)
+              window.location.replace(loginUrl.toString()) // Changed to replace() for more forceful navigation
+            }
+          }, 100)
+        }
+      } catch {}
     } catch (err) {
       console.warn('ApiService: Could not handle auth error:', err)
       // As a final fallback, navigate directly
@@ -256,11 +284,13 @@ class ApiService {
    * @returns {Promise<Response>} Fetch response
    */
   async get(endpoint, options = {}) {
-    const { params, ...fetchOptions } = options
+    const { params, headers: optionHeaders, ...fetchOptions } = options
     const url = this.buildUrl(endpoint, params)
+    const headers = { ...this.getDefaultHeaders(), ...(optionHeaders || {}) }
     const config = {
       method: 'GET',
-      headers: this.getAuthHeaders(),
+      headers,
+      credentials: 'include',
       ...fetchOptions
     }
 
@@ -282,10 +312,13 @@ class ApiService {
    */
   async post(endpoint, data = null, options = {}) {
     const url = this.buildUrl(endpoint)
+    const { headers: optionHeaders, ...otherOptions } = options
+    const headers = { ...this.getDefaultHeaders(), ...(optionHeaders || {}) }
     const config = {
       method: 'POST',
-      headers: this.getAuthHeaders(),
-      ...options
+      headers,
+      credentials: 'include',
+      ...otherOptions
     }
 
     if (data !== null) {
@@ -318,10 +351,13 @@ class ApiService {
    */
   async put(endpoint, data = null, options = {}) {
     const url = this.buildUrl(endpoint)
+    const { headers: optionHeaders, ...otherOptions } = options
+    const headers = { ...this.getDefaultHeaders(), ...(optionHeaders || {}) }
     const config = {
       method: 'PUT',
-      headers: this.getAuthHeaders(),
-      ...options
+      headers,
+      credentials: 'include',
+      ...otherOptions
     }
 
     if (data !== null) {
@@ -353,10 +389,13 @@ class ApiService {
    */
   async patch(endpoint, data = null, options = {}) {
     const url = this.buildUrl(endpoint)
+    const { headers: optionHeaders, ...otherOptions } = options
+    const headers = { ...this.getDefaultHeaders(), ...(optionHeaders || {}) }
     const config = {
       method: 'PATCH',
-      headers: this.getAuthHeaders(),
-      ...options
+      headers,
+      credentials: 'include',
+      ...otherOptions
     }
 
     if (data !== null) {
@@ -388,10 +427,13 @@ class ApiService {
    */
   async delete(endpoint, data = null, options = {}) {
     const url = this.buildUrl(endpoint)
+    const { headers: optionHeaders, ...otherOptions } = options
+    const headers = { ...this.getDefaultHeaders(), ...(optionHeaders || {}) }
     const config = {
       method: 'DELETE',
-      headers: this.getAuthHeaders(),
-      ...options
+      headers,
+      credentials: 'include',
+      ...otherOptions
     }
 
     if (data !== null) {
@@ -433,14 +475,17 @@ class ApiService {
       })
     }
 
+    const { headers: optionHeaders, ...otherOptions } = options
+    const mergedHeaders = { ...this.getDefaultHeaders(), ...(optionHeaders || {}) }
     const config = {
       method: 'POST',
       headers: {
         // Don't set Content-Type for FormData
-        ...this.getAuthHeaders()
+        ...mergedHeaders
       },
       body: formData,
-      ...options
+      credentials: 'include',
+      ...otherOptions
     }
 
     // Remove Content-Type header for FormData
