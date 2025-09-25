@@ -763,17 +763,21 @@ export class ImageViewerDialog extends Modal {
         : 0
       const sideText = this.getSideText(value)
       const actionText = value === 0 ? 'Add a new side' : 'Modify the side'
+      const canEditSide = this.shouldAllowSideEdit()
+      const actionSection = canEditSide
+        ? `<span class="metadata-side-wrapper">
+            <button type="button" class="link-like-btn metadata-side-action" title="Change side">${this.escapeHtml(actionText)}</button>
+            <div class="viewer-side-menu" style="display:none;">
+              <button type="button" class="dropdown-item" data-side="1">Left side</button>
+              <button type="button" class="dropdown-item" data-side="2">Right side</button>
+              <button type="button" class="dropdown-item" data-side="0">Not applicable</button>
+            </div>
+          </span>`
+        : ''
       leftColumnItems.push(`<div class="metadata-item">
         <strong>Side:</strong>
         <span class="metadata-side-display">${this.escapeHtml(sideText)}</span>
-        <span class="metadata-side-wrapper">
-          <button type="button" class="link-like-btn metadata-side-action" title="Change side">${this.escapeHtml(actionText)}</button>
-          <div class="viewer-side-menu" style="display:none;">
-            <button type="button" class="dropdown-item" data-side="1">Left side</button>
-            <button type="button" class="dropdown-item" data-side="2">Right side</button>
-            <button type="button" class="dropdown-item" data-side="0">Not applicable</button>
-          </div>
-        </span>
+        ${actionSection}
       </div>`)
     }
 
