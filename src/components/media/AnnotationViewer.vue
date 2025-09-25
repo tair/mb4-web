@@ -255,6 +255,12 @@
         @wheel.prevent="onCanvasWheel"
       ></canvas>
       
+      <!-- Loading overlay while image is loading or switching sources -->
+      <div v-if="isLoadingImage" class="image-loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading image…</div>
+      </div>
+      
       <!-- Annotation Labels -->
       <div
         v-for="(annotation, index) in annotations"
@@ -499,6 +505,7 @@ export default {
       
       // Image state
       imageLoaded: false,
+      isLoadingImage: true,
       imageScale: 1,
       imageOffset: { x: 0, y: 0 },
       
@@ -536,6 +543,8 @@ export default {
       // Image fallback state
       currentImageUrl: null,
       hasTriedFallback: false,
+      imageLoadTimer: null,
+      fallbackDelayMs: 3000,
       
       // Label positioning and dragging
       labelPositions: new Map(), // Store custom label positions
@@ -619,6 +628,10 @@ export default {
         // Reset fallback state when mediaUrl changes
         this.currentImageUrl = newUrl
         this.hasTriedFallback = false
+        this.imageLoaded = false
+        this.isLoadingImage = true
+        this.clearImageLoadTimer()
+        this.startImageLoadWatch()
         
         // Apply initial zoom when new image is set
         this.$nextTick(() => {
@@ -633,6 +646,7 @@ export default {
 
   beforeUnmount() {
     this.removeEventListeners()
+    this.clearImageLoadTimer()
   },
 
   methods: {
@@ -850,6 +864,8 @@ export default {
     // Image handling
     onImageLoad() {
       this.imageLoaded = true
+      this.isLoadingImage = false
+      this.clearImageLoadTimer()
       
       // Setup canvas first to calculate display dimensions
       this.setupCanvas()
@@ -875,7 +891,11 @@ export default {
       if (!this.hasTriedFallback) {
         console.warn('Trying fallback to large version...')
         this.hasTriedFallback = true
+        this.clearImageLoadTimer()
         this.currentImageUrl = buildMediaUrl(this.projectId, this.mediaId, 'large')
+        this.imageLoaded = false
+        this.isLoadingImage = true
+        this.startImageLoadWatch()
         return
       }
       
@@ -2309,6 +2329,27 @@ export default {
         top: `${this.panelPosition.y}px`,
         right: 'auto', // Override the CSS right positioning
       }
+    },
+
+    // Image load monitoring and timeout fallback
+    startImageLoadWatch() {
+      this.clearImageLoadTimer()
+      this.imageLoadTimer = setTimeout(() => {
+        if (!this.imageLoaded && !this.hasTriedFallback) {
+          this.hasTriedFallback = true
+          this.currentImageUrl = buildMediaUrl(this.projectId, this.mediaId, 'large')
+          this.isLoadingImage = true
+          this.imageLoaded = false
+          this.clearImageLoadTimer()
+        }
+      }, this.fallbackDelayMs)
+    },
+
+    clearImageLoadTimer() {
+      if (this.imageLoadTimer) {
+        clearTimeout(this.imageLoadTimer)
+        this.imageLoadTimer = null
+      }
     }
   }
 }
@@ -3159,5 +3200,75 @@ export default {
 
 .delete-btn:hover {
   background: #ffebee;
+}
+
+.image-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #007bff;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Image loading overlay */
+.image-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(248, 249, 250, 0.85);
+  z-index: 20;
+}
+
+.image-loading-overlay .loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 4px solid #e3e3e3;
+  border-top: 4px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+.image-loading-overlay .loading-text {
+  color: #495057;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>
