@@ -79,7 +79,8 @@ async function apiValidateTntFile(file) {
     },
   })
 
-  const responseData = await response.json(); return responseData
+  const responseData = await response.json()
+  return responseData
 }
 
 /**
@@ -140,7 +141,7 @@ async function apiAnalyzeTntFile(file, params) {
  * @returns {Promise<Object>} - Validation response data with species and cache key
  */
 async function apiValidateMatrix(matrixId) {
-  const response = await apiService.post(`/tnt/validate`)
+  const response = await apiService.post(`/tnt/matrices/${matrixId}/validate`)
   const responseData = await response.json()
   return responseData
 }
@@ -402,7 +403,10 @@ function downloadNexusFile(content, filename) {
     console.log(`Downloaded: ${filename}`)
   } catch (error) {
     console.error('Error downloading nexus file:', error)
-    showError('Failed to download the analysis results file.', 'Download Failed')
+    showError(
+      'Failed to download the analysis results file.',
+      'Download Failed'
+    )
   }
 }
 
