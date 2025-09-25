@@ -177,3 +177,112 @@ export {
   processItemsWithMediaLegacy,
   getBestMediaUrl,
 }
+
+// ----------------------
+// Additional helpers for S3 original URLs and media-type detection
+// ----------------------
+
+/**
+ * Extract a lowercase file extension from a URL or path
+ * @param {string} str
+ * @returns {string|null}
+ */
+function extFromUrlOrPath(str) {
+  if (!str || typeof str !== 'string') return null
+  const m = str.match(/\.([a-z0-9]+)(?:\?|$)/i)
+  return m ? m[1].toLowerCase() : null
+}
+
+/**
+ * Determine whether media represents a 3D asset
+ * @param {Object} media
+ * @returns {boolean}
+ */
+function is3DMedia(media) {
+  if (!media) return false
+  const useIcon = media?.thumbnail?.USE_ICON
+  const type = (media?.media_type || '').toString().toLowerCase()
+  return useIcon === '3d' || type === '3d' || type.includes('model')
+}
+
+/**
+ * Attempt to determine the original file extension from the media object
+ * @param {Object|string|null} media
+ * @returns {string|null}
+ */
+function detectOriginalExtension(media) {
+  if (!media) return null
+  // raw URL or maybe stringified JSON
+  if (typeof media === 'string') {
+    const trimmed = media.trim()
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      try {
+        media = JSON.parse(trimmed)
+      } catch {
+        return extFromUrlOrPath(media)
+      }
+    } else {
+      return extFromUrlOrPath(media)
+    }
+  }
+
+  const orig = media.original || media.Original || null
+  if (orig) {
+    const s3Key = orig.s3_key || orig.S3_KEY || orig.key || orig.KEY
+    if (s3Key) {
+      const fromKey = extFromUrlOrPath(s3Key)
+      if (fromKey) return fromKey
+    }
+    if (orig.FILENAME) {
+      const fromFilename = extFromUrlOrPath(orig.FILENAME)
+      if (fromFilename) return fromFilename
+    }
+    if (orig.url) {
+      const fromUrl = extFromUrlOrPath(orig.url)
+      if (fromUrl) return fromUrl
+    }
+  }
+
+  // Fallback: sometimes only a generic url/fullUrl is present on root
+  if (media.url || media.fullUrl) {
+    return extFromUrlOrPath(media.url || media.fullUrl)
+  }
+  return null
+}
+
+function isBrowserFriendlyImageExtension(ext) {
+  if (!ext) return false
+  const safe = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']
+  return safe.includes(ext.toLowerCase())
+}
+
+/**
+ * Build S3 URL for the original media file following the convention:
+ * /s3/media_files/images/{projectId}/{mediaId}/{projectId}_{mediaId}_original.{ext}
+ * Falls back to 3D icon if media is 3D, or to JPG if extension is unknown.
+ * @param {number|string} projectId
+ * @param {number|string} mediaId
+ * @param {Object|string|null} mediaObj - optional media JSON to infer type/extension
+ * @returns {string}
+ */
+function buildS3OriginalImageUrl(projectId, mediaId, mediaObj = null) {
+  if (!projectId || !mediaId) {
+    return '/images/image-not-found.png'
+  }
+  if (is3DMedia(mediaObj)) {
+    return '/images/3DImage.png'
+  }
+  const ext = detectOriginalExtension(mediaObj)
+  // If original extension isn't browser-friendly (e.g., tiff), fall back to derived large JPEG
+  if (!isBrowserFriendlyImageExtension(ext)) {
+    return apiService.buildUrl(
+      `/s3/media_files/images/${projectId}/${mediaId}/${projectId}_${mediaId}_large.jpg`
+    )
+  }
+  const useExt = ext || 'jpg'
+  return apiService.buildUrl(
+    `/s3/media_files/images/${projectId}/${mediaId}/${projectId}_${mediaId}_original.${useExt}`
+  )
+}
+
+export { buildS3OriginalImageUrl, is3DMedia, detectOriginalExtension }

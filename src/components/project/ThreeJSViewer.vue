@@ -139,6 +139,8 @@ const viewerContainer = ref(null)
 // Component state
 const loading = ref(false)
 const error = ref(null)
+const lastLoadedSignature = ref(null)
+const currentLoadSignature = ref(null)
 
 // Three.js objects
 let scene = null
@@ -161,6 +163,10 @@ onUnmounted(() => {
 })
 
 watch(() => props.modelUrl, () => {
+  loadModel()
+})
+
+watch(() => props.fileExtension, () => {
   loadModel()
 })
 
@@ -260,6 +266,19 @@ function setupLighting() {
 async function loadModel() {
   if (!props.modelUrl || !props.fileExtension) return
 
+  const signature = `${props.modelUrl}|${props.fileExtension.toLowerCase()}`
+
+  // Prevent duplicate concurrent loads of the same asset
+  if (currentLoadSignature.value === signature) {
+    return
+  }
+
+  // Skip if already successfully loaded
+  if (lastLoadedSignature.value === signature && currentModel && !error.value) {
+    return
+  }
+
+  currentLoadSignature.value = signature
   loading.value = true
   error.value = null
 
@@ -319,6 +338,8 @@ async function loadModel() {
       centerAndScaleModel(model)
       
       loading.value = false
+      currentLoadSignature.value = null
+      lastLoadedSignature.value = signature
       emit('load', model)
     } else {
       throw new Error('Model loaded but is null/undefined')
@@ -326,6 +347,8 @@ async function loadModel() {
   } catch (err) {
     error.value = err.message || 'Failed to load 3D model'
     loading.value = false
+    currentLoadSignature.value = null
+    lastLoadedSignature.value = null
     emit('error', err)
   }
 }

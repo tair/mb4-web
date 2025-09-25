@@ -748,18 +748,11 @@ async function loadProjectData() {
     // Never populate the password field for security reasons - always leave empty
     formData.reviewer_login_password = ''
 
-    // Determine publication status based on available data
-    if (
-      overview.journal_url &&
-      overview.journal_volume &&
-      overview.article_pp
-    ) {
-      formData.publication_status = '0' // Published
-    } else if (overview.journal_title && overview.journal_year) {
-      formData.publication_status = '1' // In press
-    } else {
-      formData.publication_status = '2' // In prep or review
-    }
+    // Map journal_in_press from database to publication_status in form
+    // journal_in_press: 0 = Published, 1 = In press, 2 = Article in prep or in review
+    formData.publication_status = overview.journal_in_press !== null && overview.journal_in_press !== undefined 
+      ? String(overview.journal_in_press) 
+      : '2' // Default to "Article in prep or in review"
 
     // Handle journal title - check if it exists in the journals list
     if (formData.journal_title) {
@@ -818,6 +811,41 @@ async function loadJournals() {
   } finally {
     isLoadingJournals.value = false
   }
+}
+
+// Helper function to extract content from JATS paragraph tags or strip all HTML/XML tags
+function stripHtmlTags(text) {
+  if (!text || typeof text !== 'string') return text
+  
+  // First, try to extract content from jats:p tags
+  const jatsMatch = text.match(/<jats:p[^>]*>(.*?)<\/jats:p>/s)
+  if (jatsMatch) {
+    // Extract content from jats:p tags and strip any remaining tags
+    const jatsContent = jatsMatch[1]
+      .replace(/<[^>]*>/g, '') // Remove any nested HTML/XML tags
+      .replace(/&lt;/g, '<')   // Decode common HTML entities
+      .replace(/&gt;/g, '>')   
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ')
+      .trim() // Remove leading/trailing whitespace
+    
+    return jatsContent
+  }
+  
+  // If no jats:p tags found, strip all HTML/XML tags (fallback for plain text abstracts)
+  const stripped = text
+    .replace(/<[^>]*>/g, '') // Remove all HTML/XML tags
+    .replace(/&lt;/g, '<')   // Decode common HTML entities
+    .replace(/&gt;/g, '>')   
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .trim() // Remove leading/trailing whitespace
+  
+  return stripped
 }
 
 // Helper function to validate file types and show errors for unsupported formats
@@ -1038,8 +1066,8 @@ async function retrieveDOI() {
             formData.journal_title_other = value
           }
         } else if (field === 'abstract') {
-          // Map abstract field to description (always set, even if empty)
-          formData.description = value || ''
+          // Map abstract field to description, strip HTML/XML tags, and always set
+          formData.description = stripHtmlTags(value) || ''
         } else {
           if (!value) continue
           // Set other fields directly

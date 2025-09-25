@@ -44,6 +44,18 @@ type OverviewStats = {
   image_props?: ImageProperties
   stats: OverviewStat
   exemplar_media_id?: number
+  project_id?: number
+  published?: number
+  members?: any[]
+  article_authors?: string
+  article_title?: string
+  name?: string
+  journal_title?: string
+  journal_year?: string
+  journal_volume?: string
+  journal_number?: string
+  journal_in_press?: number
+  article_pp?: string
 }
 
 const props = defineProps<{
@@ -155,6 +167,52 @@ function popDownloadAlert() {
     <p style="color:#3D8DA3;">
       You are working on your project in the My Projects section of the site.
     </p>
+  </div>
+
+  <!-- Project Details Card -->
+  <div v-if="overview.article_authors || overview.name" class="card mb-4 border-0 shadow-sm">
+    <div class="card-body py-3">
+      <div class="row align-items-center">
+        <div class="col">
+          <div class="project-citation">
+            <span class="fw-semibold text-primary">Project {{ overview.project_id || projectId }}: </span>
+            <template v-if="overview.article_authors">
+              <span class="text-dark"> {{ overview.article_authors }}</span>
+            </template>
+            <template v-if="overview.article_authors && overview.journal_year">
+              <span class="text-muted">. </span>
+            </template>
+            <template v-if="overview.journal_year">
+              <span class="text-dark">{{ overview.journal_year }}</span>
+            </template>
+            <template v-if="overview.journal_year && (overview.article_title || overview.name)">
+              <span class="text-muted">. </span>
+            </template>
+            <template v-if="overview.article_title || overview.name">
+              <span class="fw-medium text-dark">{{ overview.article_title || overview.name }}</span>
+            </template>
+            <template v-if="(overview.article_title || overview.name) && overview.journal_title">
+              <span class="text-muted">. </span>
+            </template>
+            <template v-if="overview.journal_title">
+              <em class="text-secondary">{{ overview.journal_title }}</em>
+            </template>
+            <template v-if="overview.journal_title">
+              <span class="text-muted">. </span>
+            </template>
+            <template v-if="overview.journal_in_press === 0">
+              <span class="badge bg-success ms-2">Status of peer-reviewed publication: Published</span>
+            </template>
+            <template v-else-if="overview.journal_in_press === 1">
+              <span class="badge bg-warning text-dark ms-2">Status of peer-reviewed publication: In Press</span>
+            </template>
+            <template v-else-if="overview.journal_in_press === 2">
+              <span class="badge bg-secondary ms-2">Status of peer-reviewed publication: Article in prep or in review</span>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="row">
@@ -392,5 +450,25 @@ function popDownloadAlert() {
   width: 100%;
   height: auto;
   object-fit: contain;
+}
+
+/* Project Details Card Styling */
+.project-citation {
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.project-citation .text-muted {
+  opacity: 0.7;
+}
+
+.project-citation em {
+  font-style: italic;
+}
+
+.project-citation .badge {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 12px;
 }
 </style>

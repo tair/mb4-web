@@ -189,12 +189,74 @@ const is3DFile = computed(() => {
   return false
 })
 
-// Check if the media file is a video file
+// Check if the media file is a video file - ROBUST DETECTION
 const isVideoFile = computed(() => {
-  const filename = props.media_file?.media?.ORIGINAL_FILENAME || ''
-  const ext = filename.split('.').pop()?.toLowerCase()
+  if (!props.media_file) {
+    return false
+  }
+
+  const mediaData = props.media_file.media || props.media_file
+
+  // Method 1: Check media_type field
+  if (mediaData?.media_type && String(mediaData.media_type).toLowerCase() === 'video') {
+    return true
+  }
+
+  // Method 2: Check USE_ICON or related type fields
+  const useIconChecks = [
+    mediaData?.thumbnail?.USE_ICON,
+    mediaData?.original?.USE_ICON,
+    mediaData?.USE_ICON,
+    mediaData?.icon,
+    mediaData?.type
+  ]
+
+  for (let i = 0; i < useIconChecks.length; i++) {
+    const iconValue = useIconChecks[i]
+    if (iconValue && String(iconValue).toLowerCase() === 'video') {
+      return true
+    }
+  }
+
+  // Method 3: Check filename extensions across possible fields
+  const filenameChecks = [
+    mediaData?.ORIGINAL_FILENAME,
+    mediaData?.filename,
+    mediaData?.original_filename,
+    mediaData?.name,
+    mediaData?.original?.ORIGINAL_FILENAME,
+    props.media_file?.filename,
+    props.media_file?.original_filename
+  ]
+
   const videoExtensions = ['mp4', 'avi', 'mov', 'webm', 'mkv', 'wmv', 'flv', 'm4v']
-  return videoExtensions.includes(ext)
+
+  for (let i = 0; i < filenameChecks.length; i++) {
+    const filename = filenameChecks[i]
+    if (filename) {
+      const ext = filename.split('.').pop()?.toLowerCase()
+      if (ext && videoExtensions.includes(ext)) {
+        return true
+      }
+    }
+  }
+
+  // Method 4: Check MIME type
+  const mimeChecks = [
+    mediaData?.original?.MIMETYPE,
+    mediaData?.MIMETYPE,
+    mediaData?.mime_type,
+    mediaData?.mimetype
+  ]
+
+  for (let i = 0; i < mimeChecks.length; i++) {
+    const mime = mimeChecks[i]
+    if (mime && String(mime).toLowerCase().includes('video/')) {
+      return true
+    }
+  }
+
+  return false
 })
 
 // Track which extension we're trying for 3D files
@@ -265,9 +327,43 @@ const videoUrl = computed(() => {
   return null
 })
 
-// Get the MIME type for the video
+// Get the MIME type for the video (prefer server-provided MIME)
 const videoMimeType = computed(() => {
-  const ext = fileExtension.value
+  const mediaData = props.media_file?.media || props.media_file || {}
+
+  // Prefer MIME provided by the API if available
+  const mimeChecks = [
+    mediaData?.original?.MIMETYPE,
+    mediaData?.MIMETYPE,
+    mediaData?.mime_type,
+    mediaData?.mimetype
+  ]
+  for (let i = 0; i < mimeChecks.length; i++) {
+    const mime = mimeChecks[i]
+    if (mime && String(mime).toLowerCase().includes('video/')) {
+      return mime
+    }
+  }
+
+  // Fallback: infer from extension across common filename fields
+  const filenameChecks = [
+    mediaData?.ORIGINAL_FILENAME,
+    mediaData?.filename,
+    mediaData?.original_filename,
+    mediaData?.name,
+    mediaData?.original?.ORIGINAL_FILENAME,
+    props.media_file?.filename,
+    props.media_file?.original_filename
+  ]
+  let ext = ''
+  for (let i = 0; i < filenameChecks.length; i++) {
+    const filename = filenameChecks[i]
+    if (filename) {
+      ext = filename.split('.').pop()?.toLowerCase() || ''
+      if (ext) break
+    }
+  }
+
   const mimeTypes = {
     'mp4': 'video/mp4',
     'webm': 'video/webm',
@@ -340,8 +436,8 @@ const onModelError = (error) => {
 }
 
 const onModelLoad = (model) => {
-  // Reset the extension index for next time
-  currentExtensionIndex.value = 0
+  // Do not reset currentExtensionIndex here to avoid remount loops.
+  // It will be reset when the modal closes.
 }
 
 // Handle video loading events
@@ -541,7 +637,6 @@ function getHitsMessage(mediaObj) {
                 <!-- Three.js 3D Viewer for all 3D files -->
                 <ThreeJSViewer
                   v-if="is3DFile"
-                  :key="`3d-viewer-${fileExtension || 'stl'}-${currentExtensionIndex}`"
                   :modelUrl="modelUrl"
                   :fileExtension="fileExtension || 'stl'"
                   @load="onModelLoad"

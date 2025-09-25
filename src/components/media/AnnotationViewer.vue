@@ -1830,10 +1830,10 @@ export default {
     // Utility methods
     getDefaultLabel() {
       switch (this.type) {
-        case 'C': return 'Character annotation'
-        case 'T': return 'Taxon annotation'
-        case 'X': return 'Matrix annotation'
-        case 'M': 
+        case 'C': return 'No label'
+        case 'T': return 'No label'
+        case 'X': return 'No label'
+        case 'M': return 'No label'
         default: return ''
       }
     },
