@@ -34,6 +34,8 @@ export class ImageViewerDialog extends Modal {
   private annotationMountingUtility: VueMountingUtility | null = null
   private annotationContainer: HTMLElement | null = null
   private simpleImageViewer: SimpleImageViewer | null = null
+  private isUpdatingSide: boolean = false
+  private metadataDocumentClickHandler: ((e: MouseEvent) => void) | null = null
 
   constructor(
     type: string, 
@@ -577,6 +579,12 @@ export class ImageViewerDialog extends Modal {
         }
         this.annotationMountingUtility = null
       }
+
+      // Remove metadata outside click handler if set
+      if (this.metadataDocumentClickHandler) {
+        document.removeEventListener('click', this.metadataDocumentClickHandler)
+        this.metadataDocumentClickHandler = null
+      }
     }
   }
 
@@ -628,6 +636,9 @@ export class ImageViewerDialog extends Modal {
       metadataInfo.innerHTML = metadataHtml
       metadataLoading.style.display = 'none'
       metadataInfo.style.display = 'flex'
+
+      // Bind inline side action handlers
+      this.bindInlineSideActions()
       
     } catch (error) {
       console.error('Failed to setup media metadata:', error)
@@ -742,6 +753,27 @@ export class ImageViewerDialog extends Modal {
     } else if (metadata.view_id) {
       leftColumnItems.push(`<div class="metadata-item">
         <strong>View:</strong> View ID ${metadata.view_id}
+      </div>`)
+    }
+
+    // Side represented - with inline action link for dropdown
+    {
+      const value = typeof metadata.is_sided !== 'undefined' && metadata.is_sided !== null
+        ? Number(metadata.is_sided)
+        : 0
+      const sideText = this.getSideText(value)
+      const actionText = value === 0 ? 'Add a new side' : 'Modify the side'
+      leftColumnItems.push(`<div class="metadata-item">
+        <strong>Side:</strong>
+        <span class="metadata-side-display">${this.escapeHtml(sideText)}</span>
+        <span class="metadata-side-wrapper">
+          <button type="button" class="link-like-btn metadata-side-action" title="Change side">${this.escapeHtml(actionText)}</button>
+          <div class="viewer-side-menu" style="display:none;">
+            <button type="button" class="dropdown-item" data-side="1">Left side</button>
+            <button type="button" class="dropdown-item" data-side="2">Right side</button>
+            <button type="button" class="dropdown-item" data-side="0">Not applicable</button>
+          </div>
+        </span>
       </div>`)
     }
 
@@ -1266,6 +1298,62 @@ export class ImageViewerDialog extends Modal {
           min-height: 350px;
         }
       }
+
+      /* Inline side dropdown in metadata */
+      .mediaViewer .metadata-side-wrapper {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        margin-left: 0.25rem;
+      }
+      .mediaViewer .viewer-side-menu {
+        position: absolute;
+        left: 0;
+        top: auto;
+        bottom: calc(100% + 4px);
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        padding: 0.25rem 0;
+        z-index: 2000; /* above metadata */
+        min-width: 180px;
+        white-space: nowrap;
+      }
+      .mediaViewer .viewer-side-menu .dropdown-item {
+        width: 100%;
+        text-align: left;
+        background: transparent;
+        border: 0;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+      }
+      .mediaViewer .viewer-side-menu .dropdown-item:hover {
+        background: #f8f9fa;
+      }
+      .mediaViewer .link-like-btn {
+        background: transparent;
+        border: none;
+        color: #0d6efd;
+        cursor: pointer;
+        padding: 0;
+        margin-left: 0.25rem;
+        font-size: 0.73rem;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+      .mediaViewer .link-like-btn::after {
+        content: '▾'; /* small down caret */
+        font-size: 0.7rem;
+        line-height: 1;
+      }
+      .mediaViewer .link-like-btn:disabled {
+        color: #6c757d;
+        cursor: default;
+      }
     `
     document.head.appendChild(style)
   }
@@ -1296,8 +1384,150 @@ export class ImageViewerDialog extends Modal {
       'width=device-width, minimum-scale=1.0, maximum-scale=1.0, initial-scale=1.0, user-scalable=no, shrink-to-fit=no'
     )
 
+    // No header actions — side editing is handled within metadata panel
+
     // determine the max height of the dialog allowed
     this.onHandleResize()
+  }
+
+  /**
+   * Whether side editing should be allowed in this context
+   */
+  private shouldAllowSideEdit(): boolean {
+    // Only allow when not readonly or published and not for videos/3D
+    if (this.readonly || this.published) return false
+    if (this.is3DFile() || this.isVideoFile()) return false
+    return true
+  }
+
+  /**
+   * Bind metadata inline side action events after metadata is rendered
+   */
+  private bindInlineSideActions(): void {
+    try {
+      if (!this.shouldAllowSideEdit()) return
+      const annotationContainer = this.getElementByClass<HTMLElement>('annotation-viewer-container')
+      if (!annotationContainer) return
+      const actionBtn = annotationContainer.querySelector('.metadata-side-action') as HTMLButtonElement
+      const sideMenu = annotationContainer.querySelector('.metadata-side-wrapper .viewer-side-menu') as HTMLElement
+      if (!actionBtn || !sideMenu) return
+
+      actionBtn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const isShown = sideMenu.style.display !== 'none'
+        sideMenu.style.display = isShown ? 'none' : 'inline-block'
+        if (!isShown) {
+          // Always open upwards
+          sideMenu.style.top = 'auto'
+          sideMenu.style.bottom = 'calc(100% + 4px)'
+        }
+      })
+
+      const items = sideMenu.querySelectorAll<HTMLButtonElement>('.dropdown-item')
+      items.forEach((item) => {
+        item.addEventListener('click', async (ev) => {
+          ev.stopPropagation()
+          const value = Number((ev.currentTarget as HTMLButtonElement).dataset.side || '0')
+          sideMenu.style.display = 'none'
+          await this.updateMediaSide(value)
+        })
+      })
+
+      // Close on outside click
+      this.metadataDocumentClickHandler = (ev: MouseEvent) => {
+        if (!sideMenu.contains(ev.target as Node) && ev.target !== actionBtn) {
+          sideMenu.style.display = 'none'
+        }
+      }
+      document.addEventListener('click', this.metadataDocumentClickHandler)
+    } catch (e) {
+      console.warn('Failed to bind inline side actions:', e)
+    }
+  }
+
+  /**
+   * Update media sidedness via API and refresh metadata
+   */
+  private async updateMediaSide(isSided: number): Promise<void> {
+    if (this.isUpdatingSide) return
+    this.isUpdatingSide = true
+    try {
+      // Disable inline action while updating
+      const annotationContainer = this.getElementByClass<HTMLElement>('annotation-viewer-container')
+      const actionBtn = annotationContainer?.querySelector('.metadata-side-action') as HTMLButtonElement
+      if (actionBtn) actionBtn.disabled = true
+
+      const formData = new FormData()
+      formData.append('is_sided', String(isSided))
+
+      const endpoint = `/projects/${this.projectId}/media/${this.mediaId}/edit`
+      const response = await apiService.post(endpoint, formData, { timeout: 60000 })
+      if (!response.ok) {
+        throw new Error('Failed to update side')
+      }
+
+      // Refresh metadata panel if present
+      const containerForRefresh = this.getElementByClass<HTMLElement>('annotation-viewer-container')
+      if (containerForRefresh) {
+        const metadataContainer = containerForRefresh.querySelector('.media-metadata-container') as HTMLElement
+        if (metadataContainer) {
+          const metadataLoading = metadataContainer.querySelector('.metadata-loading') as HTMLElement
+          const metadataInfo = metadataContainer.querySelector('.metadata-info') as HTMLElement
+          if (metadataLoading && metadataInfo) {
+            metadataLoading.style.display = 'block'
+            metadataInfo.style.display = 'none'
+            const metadata = await this.fetchMediaMetadata()
+            const metadataHtml = this.generateMetadataHtml(metadata)
+            metadataInfo.innerHTML = metadataHtml
+            metadataLoading.style.display = 'none'
+            metadataInfo.style.display = 'flex'
+            // Rebind inline actions after re-render
+            this.bindInlineSideActions()
+          }
+        }
+      }
+
+      // Brief success indication on the inline action
+      if (actionBtn) {
+        const oldText = actionBtn.textContent || ''
+        actionBtn.textContent = '(saved)'
+        setTimeout(() => {
+          actionBtn.textContent = oldText
+        }, 1200)
+      }
+    } catch (err) {
+      console.error('Error updating media side:', err)
+      // Brief error indication
+      const annotationContainerErr = this.getElementByClass<HTMLElement>('annotation-viewer-container')
+      const actionBtn = annotationContainerErr?.querySelector('.metadata-side-action') as HTMLButtonElement
+      if (actionBtn) {
+        const oldText = actionBtn.textContent || ''
+        actionBtn.textContent = '(failed)'
+        setTimeout(() => {
+          actionBtn.textContent = oldText
+        }, 1500)
+      }
+    } finally {
+      const containerForFinally = this.getElementByClass<HTMLElement>('annotation-viewer-container')
+      const actionBtn = containerForFinally?.querySelector('.metadata-side-action') as HTMLButtonElement
+      if (actionBtn) actionBtn.disabled = false
+      this.isUpdatingSide = false
+    }
+  }
+
+  /**
+   * Map numeric is_sided to display text
+   */
+  private getSideText(value: number): string {
+    switch (value) {
+      case 1:
+        return 'left side'
+      case 2:
+        return 'right side'
+      case 0:
+      default:
+        return 'not applicable'
+    }
   }
 
   /**
