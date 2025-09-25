@@ -48,6 +48,7 @@ type OverviewStats = {
   published?: number
   members?: any[]
   article_authors?: string
+  article_title?: string
   name?: string
   journal_title?: string
   journal_year?: string
@@ -184,13 +185,13 @@ function popDownloadAlert() {
             <template v-if="overview.journal_year">
               <span class="text-dark">{{ overview.journal_year }}</span>
             </template>
-            <template v-if="overview.journal_year && overview.name">
+            <template v-if="overview.journal_year && (overview.article_title || overview.name)">
               <span class="text-muted">. </span>
             </template>
-            <template v-if="overview.name">
-              <span class="fw-medium text-dark">{{ overview.name }}</span>
+            <template v-if="overview.article_title || overview.name">
+              <span class="fw-medium text-dark">{{ overview.article_title || overview.name }}</span>
             </template>
-            <template v-if="overview.name && overview.journal_title">
+            <template v-if="(overview.article_title || overview.name) && overview.journal_title">
               <span class="text-muted">. </span>
             </template>
             <template v-if="overview.journal_title">
