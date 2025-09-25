@@ -12,6 +12,7 @@ import { mergeMatrix } from '@/lib/MatrixMerger.js'
 import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
 import { getTaxonomicUnitOptions } from '@/utils/taxa'
 import router from '@/router'
+import { csvToArray } from '@/utils/csv'
 
 const route = useRoute()
 const taxaStore = useTaxaStore()
@@ -193,6 +194,74 @@ async function importMatrix(event) {
   reader.readAsBinaryString(file)
 }
 
+async function importCsv(event) {
+  const files = event.target?.files
+  if (files == null || files.length == 0) {
+    return
+  }
+  const file = files[0]
+  const filename = (file.name || '').toLowerCase()
+
+  try {
+    if (
+      !filename.endsWith('.csv') &&
+      !filename.endsWith('.xlsx') &&
+      !filename.endsWith('.xls')
+    ) {
+      alert('Unsupported file type. Please upload a .csv or .xlsx file.')
+      return
+    }
+
+    const formData = new FormData()
+    formData.set('file', file)
+
+    const url = new URL(
+      `${import.meta.env.VITE_API_URL}/projects/${projectId}/matrices/parse-csv`
+    )
+    const response = await axios.post(url, formData, { timeout: 300000 })
+    const payload = response.data
+    if (!payload?.status || !payload?.matrix) {
+      throw new Error(payload?.message || 'Parse failed')
+    }
+
+    const { MatrixObject, CharacterType } = await import(
+      '@/lib/matrix-parser/MatrixObject.ts'
+    )
+    const m = payload.matrix
+    const matrix = new MatrixObject(m.format || 'NEXUS')
+    if (m.parameters && m.parameters.DATATYPE === 'CONTINUOUS') {
+      matrix.setCharacterParameter('DATATYPE', 'CONTINUOUS')
+    }
+
+    ;(m.characters || []).forEach((c, idx) => {
+      const insertedName = matrix.addCharacter(
+        idx,
+        c.name || `Character ${idx + 1}`
+      )
+      if (c.type === 1) {
+        matrix.setCharacterType(idx, CharacterType.CONTINUOUS)
+      }
+      if (Array.isArray(c.states)) {
+        for (const s of c.states) {
+          matrix.addCharacterState(insertedName, s.name || '')
+        }
+      }
+    })
+    ;(m.taxa || []).forEach((t) => {
+      if (t?.name) matrix.addTaxon(t.name)
+    })
+
+    Object.assign(importedMatrix, matrix)
+  } catch (e) {
+    console.error('Failed to parse CSV/XLSX (server):', e)
+    alert(
+      e?.response?.data?.message ||
+        e?.message ||
+        'Failed to parse CSV/XLSX file.'
+    )
+  }
+}
+
 function moveUpload() {
   moveToStep('step-1')
   return false
@@ -296,19 +365,34 @@ async function uploadMatrix() {
       }
     } else {
       // For new matrix creation, require file upload
-      const file = document.getElementById('upload')
-      if (!file.files[0]) {
+      const nexusInput = document.getElementById('upload')
+      const csvInput = document.getElementById('upload-csv')
+      const chosenFile = nexusInput?.files?.[0] || csvInput?.files?.[0]
+      if (!chosenFile) {
         uploadError.value = 'Please select a file to upload.'
         return
       }
-      formData.set('file', file.files[0])
+      formData.set('file', chosenFile)
     }
 
-    const serializedMatrix = serializeMatrix(importedMatrix)
-    formData.set('matrix', serializedMatrix)
+    // Only send serialized matrix for Nexus/TNT flow
+    let isCsvFlow = false
+    if (!isMerge) {
+      const nexusInput = document.getElementById('upload')
+      const csvInput = document.getElementById('upload-csv')
+      const hasCsv = !!csvInput?.files?.[0]
+      const hasNexus = !!nexusInput?.files?.[0]
+      isCsvFlow = hasCsv && !hasNexus
+    }
+    if (!isCsvFlow) {
+      const serializedMatrix = serializeMatrix(importedMatrix)
+      formData.set('matrix', serializedMatrix)
+    }
 
     const url = new URL(
-      `${import.meta.env.VITE_API_URL}/projects/${projectId}/matrices/upload`
+      `${import.meta.env.VITE_API_URL}/projects/${projectId}/matrices/${
+        isMerge ? 'upload' : isCsvFlow ? 'upload-csv' : 'upload'
+      }`
     )
 
     const response = await axios.post(url, formData, {
@@ -513,7 +597,6 @@ onUnmounted(() => {
                 accept=".nex,.nexus,.tnt"
                 class="form-control"
                 @change="importMatrix"
-                required="required"
               />
             </div>
             <div class="form-group">
@@ -522,6 +605,25 @@ onUnmounted(() => {
                 the project from this file</label
               >
               <textarea class="form-control" id="item-notes"></textarea>
+            </div>
+          </fieldset>
+          <fieldset class="form-group border p-3 mt-3">
+            <legend class="w-auto px-2">Or upload a CSV or Excel file</legend>
+            <p>
+              CSV/XLSX with character names in the first row and taxa in the
+              first column. If a second row contains state definitions, it will
+              be treated as a discrete matrix; otherwise, continuous.
+            </p>
+            <div class="form-group">
+              <label for="upload-csv">CSV/XLSX file to add to matrix</label>
+              <input
+                type="file"
+                id="upload-csv"
+                name="upload-csv"
+                accept=".csv,.xlsx"
+                class="form-control"
+                @change="importCsv"
+              />
             </div>
           </fieldset>
           <div class="btn-step-group">
@@ -637,9 +739,7 @@ onUnmounted(() => {
                   </td>
                   <td>
                     <b v-if="character.type == 1">(continuous character)</b>
-                    <b v-else-if="character.type == 2"
-                      >(meristic character)</b
-                    >
+                    <b v-else-if="character.type == 2">(meristic character)</b>
                     <ol v-else-if="character.states">
                       <li
                         v-for="state in character.states"
@@ -721,7 +821,10 @@ onUnmounted(() => {
                       v-model="editingCharacter.note"
                     ></textarea>
                   </div>
-                  <div class="form-group" v-if="editingCharacter.states?.length > 0">
+                  <div
+                    class="form-group"
+                    v-if="editingCharacter.states?.length > 0"
+                  >
                     <label>States</label><br />
                     <div class="character-states">
                       <div
