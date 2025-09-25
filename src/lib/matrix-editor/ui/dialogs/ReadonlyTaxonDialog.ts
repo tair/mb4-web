@@ -188,7 +188,8 @@ class MediaPane extends Component {
     const media = this.taxon.getMedia()
     for (let x = 0; x < media.length; x++) {
       const medium = media[x]
-      this.mediaGrid.addItem({ id: medium.getId(), image: medium.getTiny() })
+      // Use actual media_id for the grid item id so the viewer loads correctly
+      this.mediaGrid.addItem({ id: medium.getMediaId(), image: medium.getTiny() })
     }
   }
 
@@ -204,9 +205,11 @@ class MediaPane extends Component {
       const published = this.matrixModel.isPublished()
       // Find the corresponding taxon media object for the item
       const taxonMedium = this.taxon.getMediaById(item.id)
-      const mediaData = taxonMedium ? (taxonMedium as any).taxonMediaObj || {} : {}
-      
-      ImageViewerDialog.show('T', item.id, projectId, mediaData, true, null, published)
+      const mediaData = taxonMedium ? ((taxonMedium as any).taxonMediaObj || {}) : {}
+      // Ensure we pass the correct media_id to the viewer
+      const mediaId = taxonMedium ? taxonMedium.getMediaId() : item.id
+
+      ImageViewerDialog.show('T', mediaId, projectId, mediaData, true, null, published)
     }
   }
 }
