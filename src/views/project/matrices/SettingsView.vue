@@ -162,7 +162,6 @@ async function handleSubmit() {
   } catch (error) {
     console.error('Error updating matrix settings:', error)
     showError('Failed to update matrix settings. Please try again.')
-    errors.value.general = 'Failed to update matrix settings. Please try again.'
   } finally {
     isLoading.value = false
   }
@@ -196,7 +195,6 @@ async function confirmDelete() {
   } catch (error) {
     console.error('Error deleting matrix:', error)
     showError('Failed to delete matrix')
-    errors.value.general = 'Failed to delete matrix'
   } finally {
     isLoading.value = false
     deleteWithTaxaAndCharacters.value = false
@@ -286,10 +284,7 @@ onMounted(() => {
       </div>
 
       <form @submit.prevent="handleSubmit" class="list-form">
-        <!-- Error Messages -->
-        <div v-if="errors.general" class="alert alert-danger">
-          {{ errors.general }}
-        </div>
+      
 
         <!-- Matrix Settings -->
         <div class="form-group">

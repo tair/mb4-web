@@ -256,11 +256,10 @@ function moveToStep(step) {
 }
 
 let isUploading = ref(false)
-let uploadError = ref(null)
 
 async function uploadMatrix() {
   isUploading.value = true
-  uploadError.value = null
+  
 
   try {
     const formData = new FormData()
@@ -293,15 +292,14 @@ async function uploadMatrix() {
       if (mergeFile) {
         formData.set('file', mergeFile)
       } else {
-        uploadError.value =
-          'Merge file not found. Please go back and select a file again.'
+        showError('Merge file not found. Please go back and select a file again.')
         return
       }
     } else {
       // For new matrix creation, require file upload
       const file = document.getElementById('upload')
       if (!file.files[0]) {
-        uploadError.value = 'Please select a file to upload.'
+        showError('Please select a file to upload.')
         return
       }
       formData.set('file', file.files[0])
@@ -328,9 +326,10 @@ async function uploadMatrix() {
     }
   } catch (error) {
     console.error('Error uploading matrix:', error)
-    uploadError.value =
+    showError(
       error.response?.data?.message ||
-      'Failed to upload matrix. Please try again.'
+        'Failed to upload matrix. Please try again.'
+    )
   } finally {
     isUploading.value = false
   }
@@ -551,9 +550,7 @@ onUnmounted(() => {
               }}
             </button>
           </div>
-          <div v-if="uploadError" class="alert alert-danger mt-3" role="alert">
-            {{ uploadError }}
-          </div>
+          
         </div>
         <div class="row setup-content" id="step-2">
           <h5 v-if="route.query.merge === 'true'">
@@ -850,9 +847,7 @@ onUnmounted(() => {
             </button>
           </div>
         </div>
-        <div v-if="uploadError" class="alert alert-danger mt-3" role="alert">
-          {{ uploadError }}
-        </div>
+        
         <div class="modal" id="taxonModal" tabindex="-1">
           <div class="modal-dialog">
             <div class="modal-content">

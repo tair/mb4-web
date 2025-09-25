@@ -34,7 +34,6 @@ const formData = reactive({
 
 // Loading and error states
 const isCreating = ref(false)
-const createError = ref(null)
 const errors = ref({})
 
 // Check if project has taxa
@@ -50,8 +49,9 @@ function validateForm() {
   }
 
   if (!hasTaxa.value) {
-    errors.value.general =
+    showError(
       'Cannot create matrix: This project has no taxa. Please add taxa to the project first.'
+    )
     return false
   }
 
@@ -64,7 +64,6 @@ async function createMatrix() {
   }
 
   isCreating.value = true
-  createError.value = null
   errors.value = {}
 
   try {
@@ -89,7 +88,6 @@ async function createMatrix() {
     const errorMessage = error.response?.data?.message ||
       'Failed to create matrix. Please try again.'
     showError(errorMessage)
-    createError.value = errorMessage
   } finally {
     isCreating.value = false
   }
@@ -157,10 +155,7 @@ onUnmounted(() => {
         within the Matrix Editor using its built-in Character Editor.
       </div>
 
-      <!-- General error -->
-      <div v-if="errors.general" class="alert alert-danger">
-        {{ errors.general }}
-      </div>
+      
 
       <!-- Matrix Title -->
       <div class="form-group">
@@ -244,9 +239,7 @@ onUnmounted(() => {
         </button>
       </div>
 
-      <div v-if="createError" class="alert alert-danger mt-3" role="alert">
-        {{ createError }}
-      </div>
+      
     </form>
   </div>
 </template>
