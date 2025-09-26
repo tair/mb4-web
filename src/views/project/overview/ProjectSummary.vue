@@ -170,7 +170,7 @@ function popDownloadAlert() {
   </div>
 
   <!-- Project Details Card -->
-  <div v-if="overview.article_authors || overview.name" class="card mb-4 border-0 shadow-sm">
+  <div v-if="overview.published === 0" class="card mb-4 border-0 shadow-sm">
     <div class="card-body py-3">
       <div class="row align-items-center">
         <div class="col">

@@ -322,8 +322,8 @@ async function fecthMediaForSelectedTaxa() {
         const taxon = taxaStore.getTaxonById(taxonId)
         return getTaxonDisplayName(taxon)
       }).join(', ')
-      
-      fetchError.value = `There was a problem contacting ${importText}. Some or all of your requested taxa were not searched for. Please try your request again for the following taxa: ${taxaNames}`
+      showError(`There was a problem contacting ${importText}. Some or all of your requested taxa were not searched for. Please try your request again for the following taxa: ${taxaNames}`, 'Search Partially Failed')
+      fetchError.value = `There was a problem contacting ${importText}. Some or all of your requested taxa were not searched for.`
     }
 
     moveToStep('step-2')
@@ -339,6 +339,7 @@ async function fecthMediaForSelectedTaxa() {
     
     // Provide user-friendly error messages
     showError(`There was a problem contacting ${importText}. Some or all of your requested taxa were not searched for. Please try your request again for the following taxa: ${taxaNames}`, 'Search Failed')
+    fetchError.value = `There was a problem contacting ${importText}. Please try again.`
   } finally {
     isLoadingMedia.value = false
   }
@@ -773,13 +774,7 @@ function getTimestampInfo(taxon: any) {
               </div>
               <p class="mt-3">Searching {{ importText }} for media...</p>
             </div>
-            <div v-else-if="fetchError" class="alert alert-danger my-4" role="alert">
-              <h5 class="alert-heading">
-                <i class="fa-solid fa-exclamation-triangle me-2"></i>
-                Search Failed
-              </h5>
-              <p class="mb-0">{{ fetchError }}</p>
-              <hr>
+            <div v-else-if="fetchError" class="my-4">
               <div class="d-flex gap-2 mb-0">
                 <button 
                   type="button" 
