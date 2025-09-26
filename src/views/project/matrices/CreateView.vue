@@ -326,10 +326,17 @@ async function uploadMatrix() {
     }
   } catch (error) {
     console.error('Error uploading matrix:', error)
-    showError(
-      error.response?.data?.message ||
-        'Failed to upload matrix. Please try again.'
-    )
+    
+    // Check if the error suggests a retry
+    if (error.retry || error.code === 'DB_CONNECTION_ERROR' || error.code === 'DB_LOCK_TIMEOUT') {
+      uploadError.value = `${error.message || 'A temporary issue occurred. Please try uploading again.'}`
+    } else {
+      // Non-retryable error
+      uploadError.value =
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to upload matrix. Please check your file and try again.'
+    }
   } finally {
     isUploading.value = false
   }

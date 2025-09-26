@@ -153,6 +153,16 @@ class ApiService {
       }
     }
 
+    // Create error with additional metadata
+    const createError = (message, code, retry = false) => {
+      const error = new Error(message)
+      error.code = code
+      error.retry = retry
+      error.response = response
+      error.data = errorData
+      return error
+    }
+
     // Handle specific status codes
     switch (response.status) {
       case 401:
@@ -161,26 +171,50 @@ class ApiService {
         // Prefer server-provided message when available
         {
           const message = (errorData && (errorData.message || errorData.error)) || 'Authentication required'
-          throw new Error(message)
+          throw createError(message, 'UNAUTHORIZED')
         }
         
       case 403:
-        throw new Error('Access forbidden')
+        throw createError('Access forbidden', 'FORBIDDEN')
         
       case 404:
-        throw new Error('Resource not found')
+        throw createError('Resource not found', 'NOT_FOUND')
         
       case 422:
-        throw new Error(`Validation error: ${errorMessage}`)
+        throw createError(`Validation error: ${errorMessage}`, 'VALIDATION_ERROR')
         
       case 429:
-        throw new Error('Too many requests. Please try again later.')
+        throw createError('Too many requests. Please try again later.', 'RATE_LIMITED', true)
         
       case 500:
-        throw new Error('Server error. Please try again later.')
+        // Check for database errors that should be retried
+        if (errorData) {
+          const { code, retry, details } = errorData
+          
+          // Handle specific database error codes
+          if (code === 'DB_CONNECTION_ERROR' || code === 'DB_LOCK_TIMEOUT' || code === 'DB_DEADLOCK') {
+            const userMessage = details || errorMessage || 'A temporary database issue occurred. Please try again.'
+            throw createError(userMessage, code, retry !== false)
+          }
+          
+          // Generic database error
+          if (code === 'DB_ERROR') {
+            throw createError(
+              'Database operation failed. Please try again or contact support if the issue persists.',
+              code,
+              retry !== false
+            )
+          }
+        }
+        
+        // Default server error
+        throw createError('Server error. Please try again later.', 'SERVER_ERROR', true)
         
       default:
-        throw new Error(errorMessage || `HTTP ${response.status}`)
+        // Check if response data includes retry information
+        const shouldRetry = errorData?.retry === true
+        const code = errorData?.code || 'UNKNOWN_ERROR'
+        throw createError(errorMessage || `HTTP ${response.status}`, code, shouldRetry)
     }
   }
 
