@@ -156,8 +156,8 @@ onMounted(() => {
     </header>
     <div class="alert alert-info">
       <i class="fa fa-info-circle"></i>
-      Upload a ZIP archive containing CT scan slices in DICOM (.dcm, .dicom) or TIFF (.tif, .tiff) formats. 
-      Each slice will be stored as an individual media file that can be viewed using specialized medical imaging tools.
+      Upload a ZIP archive containing CT scan slices in DICOM (.dcm, .dicom) or TIFF (.tif, .tiff) formats.
+      The ZIP is stored as-is; slices are not unpacked into separate media files. A thumbnail is generated from the first image file found in the archive.
     </div>
     <form @submit.prevent="createStacksMedia">
       <div class="row setup-content">

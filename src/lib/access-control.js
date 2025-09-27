@@ -91,6 +91,10 @@ export class AccessControlService {
     if (systemAccess.canEdit) {
       return systemAccess
     }
+    // System-level view-only roles (e.g., anonymous reviewer)
+    if (systemAccess.shouldRedirect === true || systemAccess.level === 'anonymous_reviewer') {
+      return systemAccess
+    }
 
     // Check project-level permissions
     if (userMembership) {
@@ -125,6 +129,126 @@ export class AccessControlService {
   }
 
   /**
+   * Check if user can create a specific entity within a project
+   *
+   * @param {Object} params - Parameters object
+   * @param {string} params.entityType - Type of entity (from EntityType enum)
+   * @param {number} params.projectId - ID of the project
+   * @param {number} [params.userId] - Optional user id
+   * @returns {Promise<{canCreate: boolean, shouldRedirect: boolean, reason?: string, level?: string}>}
+   */
+  static async canCreateEntity({ entityType, projectId, userId = null }) {
+    const authStore = useAuthStore()
+    const projectUsersStore = useProjectUsersStore()
+
+    const currentUserId = userId || authStore.user?.userId
+    if (!currentUserId) {
+      return {
+        canCreate: false,
+        shouldRedirect: true,
+        reason: 'User not authenticated',
+        level: 'authentication',
+      }
+    }
+
+    // Ensure auth store is ready
+    if (!authStore.user?.access) {
+      authStore.fetchLocalStore()
+      if (!authStore.user?.access) {
+        return {
+          canCreate: false,
+          shouldRedirect: true,
+          reason: 'User authentication data incomplete',
+          level: 'authentication',
+        }
+      }
+    }
+
+    // System-level restrictions
+    const systemAccess = this._checkSystemAccess(authStore)
+    if (systemAccess.level === 'anonymous_reviewer') {
+      return {
+        canCreate: false,
+        shouldRedirect: true,
+        reason: 'Anonymous reviewers have view-only access',
+        level: 'anonymous_reviewer',
+      }
+    }
+    if (systemAccess.canEdit) {
+      return { canCreate: true, shouldRedirect: false, level: systemAccess.level }
+    }
+
+    // Ensure project users are loaded
+    if (!projectUsersStore.isLoaded) {
+      await projectUsersStore.fetchUsers(projectId)
+    }
+
+    // Get user's project membership
+    const userMembership = projectUsersStore.getUserById(currentUserId)
+
+    if (!userMembership) {
+      return {
+        canCreate: false,
+        shouldRedirect: true,
+        reason: 'User is not a member of this project',
+        level: 'project_membership',
+      }
+    }
+
+    // Project admin can create anything
+    if (userMembership.admin === true) {
+      return { canCreate: true, shouldRedirect: false, level: 'project_admin' }
+    }
+
+    // Membership-type based creation rules
+    switch (userMembership.membership_type) {
+      case MembershipType.ADMIN:
+        return { canCreate: true, shouldRedirect: false, level: 'full_member' }
+
+      case MembershipType.OBSERVER:
+        return {
+          canCreate: false,
+          shouldRedirect: false,
+          reason: 'Observer members cannot create content',
+          level: 'observer',
+        }
+
+      case MembershipType.CHARACTER_ANNOTATOR: {
+        // Only matrix module creations allowed
+        if (entityType === EntityType.MATRIX) {
+          return { canCreate: true, shouldRedirect: false, level: 'character_annotator' }
+        }
+        return {
+          canCreate: false,
+          shouldRedirect: false,
+          reason: 'Character annotators may only create matrix content',
+          level: 'character_annotator_restricted',
+        }
+      }
+
+      case MembershipType.BIBLIOGRAPHY_MAINTAINER: {
+        if (entityType === EntityType.BIBLIOGRAPHIC_REFERENCE) {
+          return { canCreate: true, shouldRedirect: false, level: 'bibliography_maintainer' }
+        }
+        return {
+          canCreate: false,
+          shouldRedirect: false,
+          reason: 'Bibliography maintainers may only create bibliographic references',
+          level: 'bibliography_maintainer_restricted',
+        }
+      }
+
+      default:
+        return {
+          canCreate: false,
+          shouldRedirect: true,
+          reason: 'Unknown membership type',
+          level: 'unknown_membership',
+        }
+    }
+  }
+
+  /**
    * Check system-level access (curators and system admins)
    * @private
    */
@@ -142,6 +266,15 @@ export class AccessControlService {
         canEdit: true,
         shouldRedirect: false,
         level: 'system_admin',
+      }
+    }
+
+    if (authStore.isAnonymousReviewer) {
+      return {
+        canEdit: false,
+        shouldRedirect: true,
+        reason: 'Anonymous reviewers have view-only access',
+        level: 'anonymous_reviewer',
       }
     }
 
@@ -178,35 +311,25 @@ export class AccessControlService {
         // Observer - cannot edit anything and should be redirected
         return {
           canEdit: false,
-          shouldRedirect: false,
+          shouldRedirect: true,
           reason: 'Observer members cannot edit any content',
           level: 'observer',
         }
 
       case MembershipType.CHARACTER_ANNOTATOR:
-        // Character annotator - can edit everything except characters and states
-        // Taxa, specimens, media, etc. are allowed
-        if (
-          entityType === EntityType.TAXON ||
-          entityType === EntityType.SPECIMEN ||
-          entityType === EntityType.MEDIA ||
-          entityType === EntityType.MEDIA_VIEW ||
-          entityType === EntityType.PROJECT_DOCUMENT ||
-          entityType === EntityType.PROJECT_DOCUMENT_FOLDER ||
-          entityType === EntityType.FOLIO
-        ) {
+        // Character annotator - may only edit matrix module content
+        if (entityType === EntityType.MATRIX) {
           return {
             canEdit: true,
             shouldRedirect: false,
             level: 'character_annotator',
           }
-        } else {
-          return {
-            canEdit: false,
-            shouldRedirect: false, // Show read-only form with explanation
-            reason: 'Character annotators cannot edit this type of content',
-            level: 'character_annotator_restricted',
-          }
+        }
+        return {
+          canEdit: false,
+          shouldRedirect: false, // allow view-only rendering
+          reason: 'Character annotators may only edit matrix content',
+          level: 'character_annotator_restricted',
         }
 
       case MembershipType.BIBLIOGRAPHY_MAINTAINER:
@@ -217,14 +340,13 @@ export class AccessControlService {
             shouldRedirect: false,
             level: 'bibliography_maintainer',
           }
-        } else {
-          return {
-            canEdit: false,
-            shouldRedirect: false, // Show read-only form with explanation
-            reason:
-              'Bibliography maintainers can only edit bibliographic references',
-            level: 'bibliography_maintainer_restricted',
-          }
+        }
+        return {
+          canEdit: false,
+          shouldRedirect: false,
+          reason:
+            'Bibliography maintainers can only edit bibliographic references',
+          level: 'bibliography_maintainer_restricted',
         }
 
       default:
@@ -326,6 +448,11 @@ export class AccessControlService {
       const entityName = entityType.replace('_', ' ')
 
       switch (accessResult.level) {
+        case 'anonymous_reviewer':
+          return {
+            type: 'error',
+            message: 'Anonymous reviewers have view-only access and cannot edit content.',
+          }
         case 'authentication':
           return {
             type: 'error',
@@ -432,6 +559,7 @@ export function createEntityEditGuard(entityType, entityLoader) {
           [EntityType.PROJECT_DOCUMENT_FOLDER]: 'MyProjectDocumentsView',
           [EntityType.BIBLIOGRAPHIC_REFERENCE]: 'MyProjectBibliographyListView',
           [EntityType.FOLIO]: 'MyProjectFoliosView',
+          [EntityType.MATRIX]: 'MyProjectMatrixView',
         }
 
         const listViewName = listViewRouteMap[entityType]

@@ -8,6 +8,7 @@ import { useNotifications } from '@/composables/useNotifications'
 import Tooltip from '@/components/main/Tooltip.vue'
 import { getTaxonomicUnitOptions } from '@/utils/taxa'
 import { apiService } from '@/services/apiService.js'
+import { AccessControlService, EntityType } from '@/lib/access-control.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -58,6 +59,11 @@ const showDeleteModal = ref(false)
 const deleteWithTaxaAndCharacters = ref(true)
 const canDelete = ref(false)
 
+// Access control state
+const accessChecked = ref(false)
+const accessResult = ref(null)
+const canEditMatrix = ref(false)
+
 // Computed
 
 // Methods
@@ -100,7 +106,7 @@ async function loadData() {
         ENABLE_STREAMING: otherOptions.ENABLE_STREAMING || false,
       }
 
-      // Check if user has permission to delete this matrix
+      // Check if user has permission to delete this matrix (server-level rule)
       try {
         const permissionResponse = await apiService.get(
           apiService.buildUrl(`/projects/${projectId}/matrices/${matrixId}/can-delete`)
@@ -111,6 +117,9 @@ async function loadData() {
         console.error('Error checking delete permission:', error)
         canDelete.value = false
       }
+
+      // Component-level access control for edit vs read-only
+      await checkAccess()
     }
 
     // Load taxa to get first taxon name (alphabetically)
@@ -130,6 +139,11 @@ async function loadData() {
 }
 
 async function handleSubmit() {
+  // Prevent submit if not allowed
+  if (!canEditMatrix.value) {
+    showError('You do not have permission to edit matrix settings.')
+    return
+  }
   isLoading.value = true
   errors.value = {}
 
@@ -168,6 +182,7 @@ async function handleSubmit() {
 }
 
 async function handleDelete() {
+  if (!canEditMatrix.value) return
   if (!matrix.value) return
   showDeleteModal.value = true
 }
@@ -263,6 +278,31 @@ function formatDate(dateString) {
 onMounted(() => {
   loadData()
 })
+
+// Access control helpers
+async function checkAccess() {
+  if (!matrix.value) return
+  // Ensure auth store is ready
+  if (!authStore.user?.access) {
+    authStore.fetchLocalStore()
+  }
+
+  try {
+    const result = await AccessControlService.canEditEntity({
+      entityType: EntityType.MATRIX,
+      projectId: parseInt(projectId),
+      entity: matrix.value,
+    })
+    accessResult.value = result
+    canEditMatrix.value = !!result.canEdit
+  } catch (e) {
+    console.error('Error checking access:', e)
+    accessResult.value = { canEdit: false, level: 'error' }
+    canEditMatrix.value = false
+  } finally {
+    accessChecked.value = true
+  }
+}
 </script>
 
 <template>
@@ -434,7 +474,7 @@ onMounted(() => {
 
         <!-- Form Buttons -->
         <div class="form-group">
-          <button type="submit" class="btn btn-primary" :disabled="isLoading">
+          <button type="submit" class="btn btn-primary" :disabled="isLoading || !canEditMatrix">
             {{ isLoading ? 'Saving...' : 'Save' }}
           </button>
           <RouterLink
@@ -444,7 +484,7 @@ onMounted(() => {
             Cancel
           </RouterLink>
           <button
-            v-if="canDelete"
+            v-if="canDelete && canEditMatrix"
             type="button"
             class="btn btn-danger ms-2"
             @click="handleDelete"

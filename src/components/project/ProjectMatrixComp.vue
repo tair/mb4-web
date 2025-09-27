@@ -897,7 +897,7 @@ onMounted(() => {
       <div class="buttons">
         <RouterLink
           :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/edit`"
-          target="_blank"
+          @click.prevent="$router.push({ name: 'MyProjectMatrixEditView', params: { projectId, matrixId: matrix.matrix_id } })"
         >
           <button type="button" class="btn btn-sm btn-secondary pencil-btn">
             <i class="fa-regular fa-pen-to-square"></i>
@@ -1003,7 +1003,7 @@ onMounted(() => {
         <div class="tab-content-buttons">
           <RouterLink
             :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/characters`"
-            target="_blank"
+            @click.prevent="$router.push({ name: 'MyProjectCharacterEditorView', params: { projectId, matrixId: matrix.matrix_id } })"
           >
             <button type="button" class="btn btn-primary">
               Edit Characters

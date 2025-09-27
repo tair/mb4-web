@@ -221,7 +221,7 @@ function validateSelectedTaxaAtPbdb() {
         </button>
       </RouterLink>
       <RouterLink :to="`/myprojects/${projectId}/taxa/extinct/edit`">
-        <button type="button" class="btn btn-m btn-outline-primary">
+        <button type="button" class="btn btn-m btn-outline-primary" @click.prevent="$router.push({ name: 'MyProjectTaxaExtinctEditView', params: { id: projectId } })">
           <span class="extinct-icon">†</span>
           <span> Edit Extinct Taxa</span>
         </button>

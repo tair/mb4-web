@@ -178,6 +178,7 @@ function filterByLetter(letter) {
               <div class="list-group-item-buttons">
                 <RouterLink
                   :to="`/myprojects/${projectId}/views/${mediaView.view_id}/edit`"
+                  @click.stop.prevent="$router.push({ name: 'MyProjectMediaViewEditView', params: { id: projectId, viewId: mediaView.view_id } })"
                 >
                   <button type="button" class="btn btn-sm btn-secondary">
                     <i class="fa-regular fa-pen-to-square"></i>
