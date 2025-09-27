@@ -257,8 +257,10 @@ class MediaPane extends Component {
       ? ((characterMedium as any).characterMediaObj || {})
       : {}
 
+    // Pass link_id when available so the details API can return character_display for labels
+    const linkId = (mediaData && (mediaData.link_id || mediaData.linkId)) || null
     // Open in readonly mode in published context
-    ImageViewerDialog.show('C', item.id, projectId, mediaData, true, null, published)
+    ImageViewerDialog.show('C', item.id, projectId, mediaData, true, linkId, published)
   }
 }
 

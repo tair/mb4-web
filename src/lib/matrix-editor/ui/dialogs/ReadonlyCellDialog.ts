@@ -425,8 +425,10 @@ class MediaPane extends Component {
       // Find the corresponding cell media object for the item
       const cellMedium = this.cellMedia.find(m => m.getId() === item.id)
       const mediaData = cellMedium ? (cellMedium as any).cellMediaObj || {} : {}
+      // Pass link_id when available so details API can return character_display for labels
+      const linkId = (mediaData && (mediaData.link_id || mediaData.linkId)) || null
       
-      ImageViewerDialog.show('X', item.id, projectId, mediaData, true, null, published)
+      ImageViewerDialog.show('X', item.id, projectId, mediaData, true, linkId, published)
     }
   }
 }
