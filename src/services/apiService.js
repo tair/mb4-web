@@ -190,21 +190,33 @@ class ApiService {
           throw new Error(message)
         }
         
-      case 403:
+      case 403: {
+        // Access forbidden - raise a toast
+        try {
+          const { useNotifications } = await import('@/composables/useNotifications.ts')
+          const { showError } = useNotifications()
+          showError(
+            (errorData && (errorData.message || errorData.error)) || 'You do not have permission to perform this action.',
+            'Permission Denied'
+          )
+        } catch (e) {
+          // Ignore if notifications fail to load
+        }
         throw new Error('Access forbidden')
-        
+      }
+      
       case 404:
         throw new Error('Resource not found')
-        
+      
       case 422:
         throw new Error(`Validation error: ${errorMessage}`)
-        
+      
       case 429:
         throw new Error('Too many requests. Please try again later.')
-        
+      
       case 500:
         throw new Error('Server error. Please try again later.')
-        
+      
       default:
         throw new Error(errorMessage || `HTTP ${response.status}`)
     }
