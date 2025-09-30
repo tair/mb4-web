@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch, defineAsyncComponent, h } from 'vue'
+import { ref, computed, defineAsyncComponent, h } from 'vue'
 import { toDateString } from '@/utils/date'
 import {
   getViewStatsTooltipText,
@@ -7,10 +7,8 @@ import {
 } from '@/utils/util.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import CustomModal from './CustomModal.vue'
-import MediaViewPanel from './MediaViewPanel.vue'
 import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 import { buildMediaUrl } from '@/utils/fileUtils.js'
-import annotationService from '@/services/annotationService.js'
 
 // Lazy load the annotation viewer for the zoom modal only
 const AnnotationViewer = defineAsyncComponent({
@@ -76,6 +74,11 @@ const props = defineProps({
   isProjectPublished: {
     type: Boolean,
     default: false
+  },
+  // Control whether to use linkId for annotation filtering (disable for edit/list contexts)
+  useAnnotationLinkId: {
+    type: Boolean,
+    default: true
   }
 })
 
@@ -85,32 +88,76 @@ const videoPlayer = ref(null)
 const viewStatsTooltipText = getViewStatsTooltipText()
 const downloadTooltipText = getDownloadTooltipText()
 
-// Preload annotations to avoid race condition
-const preloadAnnotations = async () => {
-  if (!showAnnotations.value || annotationsLoaded.value) return
+// Math CAPTCHA state
+const mathQuestion = ref('')
+const mathAnswer = ref(null)
+const userMathAnswer = ref('')
+const isCaptchaVerified = ref(false)
+
+// Reset modal state when closed
+const onModalClose = () => {
+  showZoomModal.value = false
+}
+
+// Reset download modal state when closed
+const onDownloadModalClose = () => {
+  showDownloadModal.value = false
+  // Reset captcha when modal closes
+  resetCaptcha()
+}
+
+// Math CAPTCHA functions
+const generateMathQuestion = () => {
+  let num1 = Math.floor(Math.random() * 10) + 1
+  let num2 = Math.floor(Math.random() * 10) + 1
+  const operators = ['+', '-', '×']
+  const operator = operators[Math.floor(Math.random() * operators.length)]
   
-  try {
-    const annotations = await annotationService.getAnnotations(
-      Number(props.project_id),
-      props.media_file?.media_id,
-      'M',
-      props.media_file?.media_id
-    )
-    
-    annotationsLoaded.value = true
-    annotationCount.value = annotations.length
-  } catch (error) {
-    console.error('Failed to preload annotations:', error)
-    annotationsLoaded.value = true
-    annotationCount.value = 0
+  let answer
+  switch (operator) {
+    case '+':
+      answer = num1 + num2
+      break
+    case '-':
+      // Ensure positive result
+      if (num1 < num2) {
+        [num1, num2] = [num2, num1]
+      }
+      answer = num1 - num2
+      break
+    case '×':
+      // Use smaller numbers for multiplication
+      const smallNum1 = Math.floor(Math.random() * 5) + 1
+      const smallNum2 = Math.floor(Math.random() * 5) + 1
+      mathQuestion.value = `${smallNum1} × ${smallNum2} = ?`
+      mathAnswer.value = smallNum1 * smallNum2
+      userMathAnswer.value = ''
+      isCaptchaVerified.value = false
+      return
+  }
+  
+  mathQuestion.value = `${num1} ${operator} ${num2} = ?`
+  mathAnswer.value = answer
+  userMathAnswer.value = ''
+  isCaptchaVerified.value = false
+}
+
+const verifyMathAnswer = () => {
+  const userAnswer = parseInt(userMathAnswer.value)
+  isCaptchaVerified.value = userAnswer === mathAnswer.value
+  
+  if (!isCaptchaVerified.value && userMathAnswer.value !== '') {
+    // Give user feedback but don't immediately regenerate
+    setTimeout(() => {
+      if (!isCaptchaVerified.value && userMathAnswer.value !== '') {
+        generateMathQuestion()
+      }
+    }, 1500)
   }
 }
 
-// Reset annotation state when modal closes
-const onModalClose = () => {
-  showZoomModal.value = false
-  annotationsLoaded.value = false
-  annotationCount.value = 0
+const resetCaptcha = () => {
+  generateMathQuestion()
 }
 
 // Check if the media file is a 3D file
@@ -204,36 +251,6 @@ const annotationsEnabled = computed(() => {
   return !is3DFile.value && !isVideoFile.value && props.canEdit && !props.isProjectPublished
 })
 
-// Check if annotations should be shown (read-only for published projects)
-const showAnnotations = computed(() => {
-  return !is3DFile.value && !isVideoFile.value
-})
-
-// Track if annotations are loaded and available
-const annotationsLoaded = ref(false)
-const annotationCount = ref(0)
-
-// Determine whether to use annotation viewer or regular media viewer
-// Use AnnotationViewer when user can edit OR when annotations exist
-const useAnnotationViewer = computed(() => {
-  if (!showAnnotations.value) return false
-  
-  // Always use if user can edit (they might want to add annotations)
-  if (annotationsEnabled.value) return true
-  
-  // Use if annotations exist (to view them)
-  if (annotationsLoaded.value && annotationCount.value > 0) return true
-  
-  // Default to false (use regular viewer) if can't edit and no annotations loaded yet
-  return false
-})
-
-// Watch for modal opening and preload annotations to avoid race condition
-watch(showZoomModal, (isOpen) => {
-  if (isOpen && showAnnotations.value && !annotationsLoaded.value) {
-    preloadAnnotations()
-  }
-})
 
 // Get the zoom display URL (3D model for 3D files, video for videos, large image for 2D files)
 const zoomDisplayUrl = computed(() => {
@@ -335,18 +352,18 @@ const onImageLoad = (event) => {
 // ============================================================================
 
 const onAnnotationsLoaded = (count) => {
-  annotationsLoaded.value = true
-  annotationCount.value = count
+  // Annotation count received from AnnotationViewer
 }
 
 const onAnnotationsSaved = () => {
+  // Annotations saved successfully
 }
 
 async function confirmDownload(fileSize, fileName) {
-  // if (!isCaptchaVerified) {
-  //   alert("Please complete the CAPTCHA");
-  //   return;
-  // }
+  if (!isCaptchaVerified.value) {
+    alert("Please complete the security verification before downloading.");
+    return;
+  }
   // CAPTCHA is completed, proceed with the download
   // For 3D files, videos, and TIFF files, always download the original file regardless of requested size
   const downloadSize = (is3DFile.value || isVideoFile.value || isOriginalTiffFile.value) ? 'original' : fileSize
@@ -496,32 +513,28 @@ function getHitsMessage(mediaObj) {
                     <p>Your browser doesn't support video playback.</p>
                   </video>
                 </div>
-                <!-- Annotation Viewer for 2D images (always used for 2D media) -->
+                <!-- Annotation Viewer for all 2D images -->
                 <AnnotationViewer
-                  v-if="!is3DFile && !isVideoFile"
+                  v-else-if="!is3DFile && !isVideoFile"
                   :media-id="media_file.media_id"
                   :project-id="Number(project_id)"
                   :media-url="zoomDisplayUrl"
                   :can-edit="annotationsEnabled"
-                  :link-id="media_file.media_id"
+                  :link-id="useAnnotationLinkId ? media_file.media_id : null"
+                  :save-link-id="media_file.media_id"
+                  :published="isProjectPublished"
                   type="M"
                   @annotationsLoaded="onAnnotationsLoaded"
                   @annotationsSaved="onAnnotationsSaved"
                 />
-
-                <!-- Fallback to regular image viewer (shouldn't normally be used for 2D) -->
-                <MediaViewPanel
-                  v-else
-                  :imgSrc="zoomDisplayUrl"
-                />
               </CustomModal>
-              <a class="nav-link" href="#" @click="showDownloadModal = true">
+              <a class="nav-link" href="#" @click="showDownloadModal = true; generateMathQuestion()">
                 Download
                 <Tooltip :content="downloadTooltipText"></Tooltip>
               </a>
               <CustomModal
                 :isVisible="showDownloadModal"
-                @close="showDownloadModal = false"
+                @close="onDownloadModalClose"
               >
                 <div>
                   <h2>Copyright Warning</h2>
@@ -532,8 +545,50 @@ function getHitsMessage(mediaObj) {
                     Please acknowledge that you have read and understood the
                     copyright warning before proceeding with the download.
                   </p>
+                  
+                  <!-- Math CAPTCHA Component -->
+                  <div class="math-captcha-container mb-3">
+                    <div class="math-captcha-header">
+                      <h5>Security Verification</h5>
+                      <small class="text-muted">Please solve this simple math problem to continue:</small>
+                    </div>
+                    
+                    <div class="math-captcha-question">
+                      <label class="math-question-label">{{ mathQuestion }}</label>
+                      <div class="math-input-group">
+                        <input 
+                          v-model="userMathAnswer" 
+                          type="number" 
+                          class="form-control math-input"
+                          placeholder="Enter answer"
+                          @input="verifyMathAnswer"
+                          :class="{ 'is-valid': isCaptchaVerified && userMathAnswer, 'is-invalid': !isCaptchaVerified && userMathAnswer }"
+                        />
+                        <button 
+                          type="button" 
+                          class="btn btn-outline-secondary btn-sm refresh-btn"
+                          @click="generateMathQuestion"
+                          title="Get a new question"
+                        >
+                          ↻
+                        </button>
+                      </div>
+                      
+                      <div class="math-feedback">
+                        <small v-if="isCaptchaVerified" class="text-success">
+                          ✓ Correct! You may now proceed with the download.
+                        </small>
+                        <small v-else-if="userMathAnswer && !isCaptchaVerified" class="text-danger">
+                          ✗ Incorrect answer. Please try again.
+                        </small>
+                      </div>
+                    </div>
+                  </div>
+                  
                   <button
                     class="btn btn-primary"
+                    :disabled="!isCaptchaVerified"
+                    :class="{ 'btn-success': isCaptchaVerified }"
                     @click="
                       confirmDownload(
                         'original',
@@ -541,7 +596,7 @@ function getHitsMessage(mediaObj) {
                       )
                     "
                   >
-                    I Acknowledge and Proceed
+                    {{ isCaptchaVerified ? 'I Acknowledge and Proceed' : 'Complete Security Check First' }}
                   </button>
                 </div>
               </CustomModal>
@@ -557,7 +612,7 @@ function getHitsMessage(mediaObj) {
             </p>
           </div>
           <div>
-            <p class="card-title" v-if="media_file.media['ORIGINAL_FILENAME']">
+            <p class="card-title filename-display" v-if="media_file.media['ORIGINAL_FILENAME']">
               Original filename: {{ media_file.media['ORIGINAL_FILENAME'] }}
             </p>
           </div>
@@ -645,8 +700,10 @@ function getHitsMessage(mediaObj) {
 
 <style scoped>
 .cc-icon {
-  width: 88;
-  height: 31;
+  max-width: 88px;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 1rem;
 }
 
 .card {
@@ -659,8 +716,8 @@ function getHitsMessage(mediaObj) {
 
 .card-img {
   margin: 1rem;
-  max-width: 100%;
-  max-height: 500px;
+  max-width: 400px;
+  max-height: 400px;
   width: auto;
   height: auto;
   object-fit: contain;
@@ -687,11 +744,6 @@ function getHitsMessage(mediaObj) {
 
 .nav-link:hover {
   text-decoration: underline;
-}
-
-.cc-icon {
-  max-width: 100px;
-  margin-bottom: 1rem;
 }
 
 .card-title,
@@ -774,5 +826,122 @@ p {
 
 .lazy-error-annotations {
   color: #dc3545;
+}
+
+/* Filename display styling */
+.filename-display {
+  max-width: 450px;
+  word-wrap: break-word;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
+
+/* Math CAPTCHA Styling */
+.math-captcha-container {
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  margin: 20px 0;
+}
+
+.math-captcha-header {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.math-captcha-header h5 {
+  color: #495057;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.math-captcha-question {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.math-question-label {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #343a40;
+  margin-bottom: 10px;
+  padding: 8px 16px;
+  background-color: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  min-width: 120px;
+  text-align: center;
+}
+
+.math-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.math-input {
+  width: 100px;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.math-input:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.math-input.is-valid {
+  border-color: #28a745;
+}
+
+.math-input.is-invalid {
+  border-color: #dc3545;
+}
+
+.refresh-btn {
+  width: 32px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+
+.refresh-btn:hover {
+  transform: rotate(90deg);
+  background-color: #e9ecef;
+}
+
+.math-feedback {
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.math-feedback small {
+  font-weight: 500;
+}
+
+/* Button state styling */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-success {
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: #218838;
+  border-color: #1e7e34;
 }
 </style>

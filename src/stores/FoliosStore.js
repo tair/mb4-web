@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
+import { apiService } from '@/services/apiService.js'
 
 export const useFoliosStore = defineStore({
   id: 'folios',
@@ -14,45 +14,38 @@ export const useFoliosStore = defineStore({
   },
   actions: {
     async fetch(projectId) {
-      const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/folios`
-      const response = await axios.get(url)
-      const folios = response.data.folios
+      const response = await apiService.get(`/projects/${projectId}/folios`)
+      const responseData = await response.json()
+        const folios = responseData.folios
       this.addFolios(folios)
 
       this.isLoaded = true
     },
     async create(projectId, folio) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/folios/create`
-      const response = await axios.post(url, { folio })
-      if (response.status == 200) {
-        const folio = response.data.folio
+      const response = await apiService.post(`/projects/${projectId}/folios/create`, { folio })
+      if (response.ok) {
+        const responseData = await response.json()
+        const folio = responseData.folio
         this.addFolios([folio])
         return true
       }
       return false
     },
     async edit(projectId, folioId, folio) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/folios/${folioId}/edit`
-      const response = await axios.post(url, { folio })
-      if (response.status == 200) {
-        const folio = response.data.folio
+      const response = await apiService.post(`/projects/${projectId}/folios/${folioId}/edit`, { folio })
+      if (response.ok) {
+        const responseData = await response.json()
+        const folio = responseData.folio
         this.addFolios([folio])
         return true
       }
       return false
     },
     async deleteIds(projectId, folioIds) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/folios/delete`
-      const response = await axios.post(url, {
+      const response = await apiService.post(`/projects/${projectId}/folios/delete`, {
         folio_ids: folioIds,
       })
-      if (response.status == 200) {
+      if (response.ok) {
         this.removeByFolioIds(folioIds)
         return true
       }

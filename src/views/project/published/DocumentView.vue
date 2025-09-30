@@ -17,6 +17,7 @@ import {
   HIT_TYPES,
   DOWNLOAD_TYPES,
 } from '@/lib/analytics.js'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 
@@ -34,7 +35,7 @@ async function onDownloadDocuments(documentUrl, filename, docId = null) {
     // Build S3 document URL using the new pattern
     const s3DocumentUrl = buildDocumentUrl(projectId, docId)
     console.log('documentUrl', s3DocumentUrl)
-    const response = await fetch(s3DocumentUrl)
+    const response = await apiService.get(s3DocumentUrl)
 
     if (!response.ok)
       throw new Error(`Failed to fetch the document: ${response.statusText}`)

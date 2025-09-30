@@ -1,35 +1,50 @@
 <script setup>
-import axios from 'axios'
 import router from '@/router'
-import { onMounted, computed } from 'vue'
+import { onMounted, computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDocumentsStore } from '@/stores/DocumentsStore'
+import { useNotifications } from '@/composables/useNotifications'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { folderSchema } from '@/views/project/documents/schema.js'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const projectId = route.params.id
 const folderId = parseInt(route.params.folderId)
 const folder = computed(() => documentsStore.getFolderById(folderId))
 
-const baseUrl = `${
-  import.meta.env.VITE_API_URL
-}/projects/${projectId}/documents/folder`
+const baseUrl = apiService.buildUrl(`/projects/${projectId}/documents/folder`)
 const documentsStore = useDocumentsStore()
+const { showError, showSuccess } = useNotifications()
+const isSaving = ref(false)
 
 async function editFolder(event) {
-  const formData = new FormData(event.currentTarget)
-  const jsonData = Object.fromEntries(formData)
+  if (isSaving.value) return // Prevent double submission
+  
+  isSaving.value = true
+  
+  try {
+    const formData = new FormData(event.currentTarget)
+    const jsonData = Object.fromEntries(formData)
 
-  const url = `${baseUrl}/${folderId}/edit`
-  const response = await axios.post(url, jsonData)
-  if (response.status != 200) {
-    alert(response.data?.message || 'Failed to modify folder')
-    return
+    const url = `${baseUrl}/${folderId}/edit`
+    const response = await apiService.post(url, jsonData)
+    
+    if (!response.ok) {
+      const errorData = await response.json()
+      showError(errorData?.message || 'Failed to modify folder')
+      return
+    }
+
+    showSuccess('Folder updated successfully!')
+    documentsStore.invalidate()
+    router.push({ path: `/myprojects/${projectId}/documents` })
+  } catch (error) {
+    console.error('Error updating folder:', error)
+    showError('Failed to update folder. Please try again.')
+  } finally {
+    isSaving.value = false
   }
-
-  documentsStore.invalidate()
-  router.push({ path: `/myprojects/${projectId}/documents` })
 }
 
 onMounted(() => {
@@ -65,10 +80,21 @@ onMounted(() => {
               class="btn btn-outline-primary"
               type="button"
               @click="$router.go(-1)"
+              :disabled="isSaving"
             >
               Cancel
             </button>
-            <button class="btn btn-primary" type="submit">Save</button>
+            <button 
+              class="btn btn-primary" 
+              type="submit"
+              :disabled="isSaving"
+            >
+              <span v-if="isSaving">
+                <i class="fa fa-spinner fa-spin me-2"></i>
+                Saving...
+              </span>
+              <span v-else>Save</span>
+            </button>
           </div>
         </div>
       </form>

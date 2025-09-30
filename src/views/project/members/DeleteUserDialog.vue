@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useAuthStore } from '@/stores/AuthStore'
+import { useNotifications } from '@/composables/useNotifications'
 
 const props = defineProps<{
   projectId: number | string
@@ -9,6 +10,7 @@ const props = defineProps<{
 }>()
 const projectUsersStore = useProjectUsersStore()
 const authStore = useAuthStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 // Check if current user is project admin
 const isCurrentUserProjectAdmin = computed(() => {
@@ -22,13 +24,13 @@ const isCurrentUserProjectAdmin = computed(() => {
 async function deleteUser(userId: number) {
   // Check if current user is project admin before allowing deletion
   if (!isCurrentUserProjectAdmin.value) {
-    alert('Only project administrators can delete members')
+    showWarning('Only project administrators can delete members', 'Access Denied')
     return
   }
   
   const deleted = await projectUsersStore.deleteUser(props.projectId, userId)
   if (!deleted) {
-    alert('Failed to delete user')
+    showError('Failed to delete user', 'Delete Failed')
   }
 }
 </script>

@@ -1,10 +1,10 @@
 <script setup>
-import axios from 'axios'
 import { useRoute } from 'vue-router'
 import { getBibliographyText } from '@/utils/bibliography'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
 import SearchSelectInput from '@/components/project/SearchSelectInput.vue'
 import BibliographyItem from '@/components/project/BibliographyItem.vue'
+import { apiService } from '@/services/apiService.js'
 
 defineProps({
   name: {
@@ -39,13 +39,12 @@ async function searchBibliographies(text) {
   }
 
   // Otherwise, perform the search API call and filter results
-  const url = `${
-    import.meta.env.VITE_API_URL
-  }/projects/${projectId}/bibliography/search`
-  const response = await axios.post(url, {
+  const url = apiService.buildUrl(`/projects/${projectId}/bibliography/search`)
+  const response = await apiService.post(url, {
     text: text,
   })
-  const bibliographyIds = response.data.results
+  const responseData = await response.json()
+  const bibliographyIds = responseData.results
   return bibliographiesStore.bibliographies.filter((bibliography) =>
     bibliographyIds.includes(bibliography.reference_id)
   )

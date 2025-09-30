@@ -1,7 +1,7 @@
 <script setup>
 import { Modal } from 'bootstrap'
 import { ref, nextTick } from 'vue'
-import axios from 'axios'
+import { apiService } from '@/services/apiService.js'
 
 const props = defineProps({
   onInstitutionCreated: Function,
@@ -26,18 +26,14 @@ async function searchInstitutions() {
     hasError.value = false
     errorMessage.value = ''
     
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/users/search-institutions`,
-      {
-        params: {
-          searchTerm: searchTerm.value,
-        },
-      }
-    )
-    institutionList.value = response.data
+    const response = await apiService.get('/users/search-institutions', { 
+      params: { searchTerm: searchTerm.value }
+    })
+    const data = await response.json()
+    institutionList.value = data
     
     // If no results found, show create form
-    if (response.data.length === 0) {
+    if (data.length === 0) {
       showCreateForm.value = true
       newInstitutionName.value = searchTerm.value
     } else {
@@ -45,7 +41,7 @@ async function searchInstitutions() {
     }
   } catch (error) {
     hasError.value = true
-    errorMessage.value = 'Error searching institutions: ' + (error.response?.data?.message || error.message)
+    errorMessage.value = 'Error searching institutions: ' + error.message
     console.error('Error searching institutions:', error)
   } finally {
     searchLoading.value = false
@@ -70,25 +66,24 @@ async function createInstitution() {
     hasError.value = false
     errorMessage.value = ''
     
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/users/create-institution`,
-      {
-        name: newInstitutionName.value.trim(),
-      }
-    )
+    const response = await apiService.post('/users/create-institution', {
+      name: newInstitutionName.value.trim(),
+    })
+    const data = await response.json()
     
     // Call the callback with the new institution
     if (props.onInstitutionCreated) {
-      props.onInstitutionCreated(response.data.institution)
+      props.onInstitutionCreated(data.institution)
     }
     
     closeModal()
   } catch (error) {
     hasError.value = true
-    if (error.response?.status === 409) {
+    // Check if it's a conflict error (409) based on error message
+    if (error.message && error.message.includes('409')) {
       errorMessage.value = 'Institution already exists. Please search for it above.'
     } else {
-      errorMessage.value = 'Error creating institution: ' + (error.response?.data?.message || error.message)
+      errorMessage.value = 'Error creating institution: ' + error.message
     }
     console.error('Error creating institution:', error)
   }

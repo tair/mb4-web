@@ -1,8 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
 import { RouterLink } from 'vue-router'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
+import { apiService } from '@/services/apiService.js'
 
 const isLoaded = ref(false)
 const stats = ref({
@@ -18,7 +18,7 @@ const stats = ref({
 
 onMounted(async () => {
   try {
-    const response = await axios.get(`${import.meta.env.VITE_API_URL}/duplication-requests/stats?limit=10`)
+    const response = await apiService.get('/duplication-requests/stats?limit=10')
     if (response.data.success) {
       stats.value = response.data.data
     }

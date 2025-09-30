@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
+import { apiService } from '@/services/apiService.js'
 
 export const useSpecimenCitationsStore = defineStore({
   id: 'specimen-citations',
@@ -32,22 +32,18 @@ export const useSpecimenCitationsStore = defineStore({
   },
   actions: {
     async fetchCitations(projectId, specimenId) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/specimens/${specimenId}/citations`
-      const response = await axios.get(url)
-      const citations = response.data.citations
+      const response = await apiService.get(`/projects/${projectId}/specimens/${specimenId}/citations`)
+      const responseData = await response.json()
+        const citations = responseData.citations
       this.addCitations(citations)
 
       this.isLoaded = true
     },
     async create(projectId, specimenId, citationData) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/specimens/${specimenId}/citations/create`
       try {
-        const response = await axios.post(url, { citation: citationData })
-        const newCitation = response.data.citation
+        const response = await apiService.post(`/projects/${projectId}/specimens/${specimenId}/citations/create`, { citation: citationData })
+        const responseData = await response.json()
+        const newCitation = responseData.citation
         this.addCitations([newCitation])
         return true
       } catch (error) {
@@ -55,14 +51,11 @@ export const useSpecimenCitationsStore = defineStore({
       }
     },
     async edit(projectId, specimenId, citationId, citation) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/specimens/${specimenId}/citations/${citationId}/edit`
-
       try {
-        const response = await axios.post(url, { citation })
-        if (response.status == 200) {
-          const updatedCitation = response.data.citation
+        const response = await apiService.post(`/projects/${projectId}/specimens/${specimenId}/citations/${citationId}/edit`, { citation })
+        if (response.ok) {
+          const responseData = await response.json()
+        const updatedCitation = responseData.citation
           this.removeCitationsByIds([updatedCitation.link_id])
           this.addCitations([updatedCitation])
           return true
@@ -73,13 +66,10 @@ export const useSpecimenCitationsStore = defineStore({
       }
     },
     async deleteIds(projectId, specimenId, citationIds) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/specimens/${specimenId}/citations/delete`
-      const response = await axios.post(url, {
+      const response = await apiService.post(`/projects/${projectId}/specimens/${specimenId}/citations/delete`, {
         citation_ids: citationIds,
       })
-      if (response.status == 200) {
+      if (response.ok) {
         this.removeCitationsByIds(citationIds)
         return true
       }

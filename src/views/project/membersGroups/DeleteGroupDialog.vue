@@ -1,18 +1,20 @@
 <script setup lang="ts">
 import { useProjectMemberGroupsStore } from '@/stores/ProjectMemberGroupsStore'
+import { useNotifications } from '@/composables/useNotifications'
 
 const props = defineProps<{
   projectId: number | string
   group?: any
 }>()
 const projectMemberGroupsStore = useProjectMemberGroupsStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 async function deleteGroup(groupId: number) {
   const deleted = await projectMemberGroupsStore.deleteGroup(
     props.projectId,
     groupId
   )
   if (!deleted) {
-    alert('Failed to delete group')
+    showError('Failed to delete group', 'Delete Failed')
   }
 }
 </script>

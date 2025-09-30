@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore'
+import { useNotifications } from '@/composables/useNotifications'
 
 const props = defineProps<{
   projectId: number | string
@@ -7,6 +8,7 @@ const props = defineProps<{
 }>()
 
 const projectInstitutionsStore = useProjectInstitutionStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 async function removeInstitution() {
   const institutionIds = props.institutions.map((v) => v.institution_id)
@@ -17,7 +19,7 @@ async function removeInstitution() {
   )
 
   if (!deleted) {
-    alert('Failed to delete Institution')
+    showError('Failed to delete Institution', 'Delete Failed')
   }
 }
 </script>

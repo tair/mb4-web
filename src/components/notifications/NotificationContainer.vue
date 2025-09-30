@@ -30,7 +30,7 @@ function removeNotification(id: string) {
 <style scoped>
 .notification-container {
   position: fixed;
-  top: 20px;
+  top: 24px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 9999;
@@ -38,7 +38,8 @@ function removeNotification(id: string) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  max-width: 90vw;
+  max-width: 500px;
+  width: 100%;
 }
 
 .notification-container > * {
@@ -48,7 +49,7 @@ function removeNotification(id: string) {
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .notification-container {
-    top: 10px;
+    top: 16px;
     left: 10px;
     right: 10px;
     transform: none;

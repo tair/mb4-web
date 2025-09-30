@@ -1,6 +1,7 @@
 <script setup>
-import axios from 'axios'
 import { ref } from 'vue'
+import { useNotifications } from '@/composables/useNotifications'
+import { apiService } from '@/services/apiService.js'
 
 const props = defineProps({
   projectId: {
@@ -12,6 +13,8 @@ const props = defineProps({
     required: true,
   },
 })
+
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 // TNT specific variables
 const tntFile = ref(null)
@@ -66,18 +69,18 @@ const newtechFusing = ref(true)
  * @param {File} file - The TNT file to validate
  * @returns {Promise<Object>} - Validation response data
  */
-const baseUrl = import.meta.env.VITE_API_URL
 async function apiValidateTntFile(file) {
   const formData = new FormData()
   formData.append('file', file)
 
-  const response = await axios.post(`${baseUrl}/tnt/validate`, formData, {
+  const response = await apiService.post('/tnt/validate', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
   })
 
-  return response.data
+  const responseData = await response.json()
+  return responseData
 }
 
 /**
@@ -89,13 +92,13 @@ async function apiExtractSpeciesFromFile(file) {
   const formData = new FormData()
   formData.append('file', file)
 
-  const response = await axios.post(`${baseUrl}/tnt/species`, formData, {
+  const response = await apiService.post(`/tnt/species`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
   })
-
-  return response.data
+  const responseData = await response.json()
+  return responseData
 }
 
 /**
@@ -123,13 +126,13 @@ async function apiAnalyzeTntFile(file, params) {
     formData.append('iterations', params.iterations)
   }
 
-  const response = await axios.post(`${baseUrl}/tnt/analyze`, formData, {
+  const response = await apiService.post(`/tnt/analyze`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
   })
-
-  return response.data
+  const responseData = await response.json()
+  return responseData
 }
 
 /**
@@ -138,10 +141,9 @@ async function apiAnalyzeTntFile(file, params) {
  * @returns {Promise<Object>} - Validation response data with species and cache key
  */
 async function apiValidateMatrix(matrixId) {
-  const response = await axios.post(
-    `${baseUrl}/tnt/matrices/${matrixId}/validate`
-  )
-  return response.data
+  const response = await apiService.post(`/tnt/matrices/${matrixId}/validate`)
+  const responseData = await response.json()
+  return responseData
 }
 
 /**
@@ -151,24 +153,16 @@ async function apiValidateMatrix(matrixId) {
  * @returns {Promise<string>} - Analysis results
  */
 async function apiAnalyzeCachedMatrix(cacheKey, params) {
-  const response = await axios.post(
-    `${baseUrl}/tnt/cached/${cacheKey}/analyze`,
-    {
-      outgroup: params.outgroup,
-      hold_value: params.holdValue,
-      search_type: params.searchType,
-      replications: params.replications,
-      trees_per_replication: params.treesPerReplication,
-      iterations: params.iterations,
-    },
-    {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    }
-  )
-
-  return response.data
+  const response = await apiService.post(`/tnt/cached/${cacheKey}/analyze`, {
+    outgroup: params.outgroup,
+    hold_value: params.holdValue,
+    search_type: params.searchType,
+    replications: params.replications,
+    trees_per_replication: params.treesPerReplication,
+    iterations: params.iterations,
+  })
+  const responseData = await response.json()
+  return responseData
 }
 
 // =============================================================================
@@ -409,7 +403,10 @@ function downloadNexusFile(content, filename) {
     console.log(`Downloaded: ${filename}`)
   } catch (error) {
     console.error('Error downloading nexus file:', error)
-    alert('Failed to download the analysis results file.')
+    showError(
+      'Failed to download the analysis results file.',
+      'Download Failed'
+    )
   }
 }
 
@@ -490,6 +487,7 @@ async function onRunMatrixTnt() {
         holdValue: tntHoldValue.value,
         status: 'completed',
         nex_content: responseData,
+        analysisParams: { ...analysisParams }, // Store complete analysis parameters
       }
 
       // Add to session results
@@ -593,6 +591,7 @@ async function onRunTnt() {
         holdValue: tntHoldValue.value,
         status: 'completed',
         nex_content: responseData,
+        analysisParams: { ...analysisParams }, // Store complete analysis parameters
       }
 
       // Add to session results
@@ -611,6 +610,35 @@ async function onRunTnt() {
   } finally {
     isUploadingTnt.value = false
   }
+}
+
+// Function to format analysis parameters for display
+function formatAnalysisParameters(params) {
+  if (!params) return 'No parameters available'
+
+  const formattedParams = []
+
+  // Base parameters
+  formattedParams.push(`Search Type: ${params.searchType}`)
+  formattedParams.push(`Outgroup: ${params.outgroup}`)
+  formattedParams.push(`Hold Value: ${params.holdValue}`)
+
+  // Search-specific parameters
+  if (params.searchType === 'traditional') {
+    if (params.replications)
+      formattedParams.push(`Replications: ${params.replications}`)
+    if (params.treesPerReplication)
+      formattedParams.push(
+        `Trees per Replication: ${params.treesPerReplication}`
+      )
+    if (params.swapAlgorithm)
+      formattedParams.push(`Swap Algorithm: ${params.swapAlgorithm}`)
+  } else if (params.searchType === 'new_technology') {
+    if (params.iterations)
+      formattedParams.push(`Iterations: ${params.iterations}`)
+  }
+
+  return formattedParams.join(', ')
 }
 </script>
 
@@ -1080,36 +1108,39 @@ async function onRunTnt() {
           <div
             v-for="result in sessionResults"
             :key="result.id"
-            class="result-item"
+            class="job-card"
           >
-            <div class="result-header">
-              <div class="result-info">
-                <div class="result-title">
+            <div class="job-header">
+              <div class="job-info">
+                <div class="job-title">
                   <strong>{{ result.originalFile }}</strong>
-                  <span
-                    class="result-status"
-                    :class="'status-' + result.status"
-                  >
+                  <span class="job-status" :class="'status-' + result.status">
                     {{ result.status }}
                   </span>
                 </div>
-                <div class="result-details">
-                  <small class="text-muted">
-                    <strong>Analysis Time:</strong> {{ result.timestamp }}<br />
-                    <strong>Outgroup:</strong> {{ result.outgroup }}<br />
-                    <strong>Hold Value:</strong> {{ result.holdValue }}
-                  </small>
+                <div class="job-details">
+                  <span
+                    ><strong>Analysis Time:</strong>
+                    {{ result.timestamp }}</span
+                  >
+                  <span><strong>Tool:</strong> TNT Analysis</span>
                 </div>
               </div>
-              <div class="result-actions">
+              <div class="job-actions">
                 <button
                   type="button"
-                  class="btn btn-success btn-sm"
+                  class="btn btn-primary btn-sm"
                   @click="downloadResultFile(result)"
                   title="Download NEXUS result file"
                 >
-                  <i class="fa-solid fa-download"></i> {{ result.filename }}
+                  <i class="fa-solid fa-download"></i> Download
                 </button>
+              </div>
+            </div>
+            <div class="job-metadata">
+              <div v-if="result.analysisParams" class="job-parameters">
+                <strong>Parameters:</strong>
+                {{ formatAnalysisParameters(result.analysisParams) }}
               </div>
             </div>
           </div>
@@ -1250,7 +1281,7 @@ async function onRunTnt() {
   border-color: #1e7e34;
 }
 
-/* Session Results List styling */
+/* Session Results List styling - CIPRES-style job cards */
 .session-results-section {
   border-top: 2px solid #007bff;
   padding-top: 15px;
@@ -1265,50 +1296,45 @@ async function onRunTnt() {
 .results-list {
   max-height: 400px;
   overflow-y: auto;
+}
+
+/* Job card styling matching CIPRES format */
+.job-card {
   border: 1px solid #dee2e6;
-  border-radius: 6px;
-}
-
-.result-item {
-  border-bottom: 1px solid #f0f0f0;
-  padding: 15px;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
   background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.result-item:last-child {
-  border-bottom: none;
-}
-
-.result-item:hover {
-  background-color: #f8f9fa;
-}
-
-.result-header {
+.job-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  margin-bottom: 12px;
 }
 
-.result-info {
+.job-info {
   flex: 1;
 }
 
-.result-title {
+.job-title {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 8px;
 }
 
-.result-title strong {
+.job-title strong {
+  font-size: 1.1em;
   color: #333;
-  font-size: 1rem;
 }
 
-.result-status {
-  padding: 2px 8px;
+.job-status {
+  padding: 4px 8px;
   border-radius: 4px;
-  font-size: 0.75em;
+  font-size: 0.85em;
   font-weight: 500;
   text-transform: uppercase;
 }
@@ -1319,32 +1345,57 @@ async function onRunTnt() {
   border: 1px solid #c3e6cb;
 }
 
+.status-running {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
 .status-failed {
   background-color: #f8d7da;
   color: #721c24;
   border: 1px solid #f5c6cb;
 }
 
-.status-processing {
-  background-color: #fff3cd;
-  color: #856404;
-  border: 1px solid #ffeaa7;
+.status-pending {
+  background-color: #e2e3e5;
+  color: #383d41;
+  border: 1px solid #d6d8db;
 }
 
-.result-details {
+.status-unknown {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+}
+
+.job-details {
+  display: flex;
+  gap: 20px;
   color: #666;
   font-size: 0.9em;
-  line-height: 1.4;
 }
 
-.result-actions {
+.job-actions {
   display: flex;
   gap: 8px;
   align-items: flex-start;
 }
 
-.result-actions .btn {
-  white-space: nowrap;
+.job-metadata {
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.job-parameters {
+  margin-bottom: 8px;
+  color: #555;
+  font-size: 0.9em;
+  line-height: 1.4;
+}
+
+.job-parameters:last-child {
+  margin-bottom: 0;
 }
 
 .session-actions {

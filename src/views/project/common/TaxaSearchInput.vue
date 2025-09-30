@@ -1,10 +1,10 @@
 <script setup>
-import axios from 'axios'
 import { useRoute } from 'vue-router'
 import { getTaxonName } from '@/utils/taxa'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import SearchSelectInput from '@/components/project/SearchSelectInput.vue'
 import TaxonomicName from '@/components/project/TaxonomicName.vue'
+import { apiService } from '@/services/apiService.js'
 
 defineProps({
   name: {
@@ -38,13 +38,12 @@ async function searchTaxa(text) {
   }
 
   // For search text, use the search API
-  const url = `${
-    import.meta.env.VITE_API_URL
-  }/projects/${projectId}/taxa/search`
-  const response = await axios.post(url, {
+  const url = apiService.buildUrl(`/projects/${projectId}/taxa/search`)
+  const response = await apiService.post(url, {
     text: text,
   })
-  const taxonIds = response.data.results
+  const responseData = await response.json()
+  const taxonIds = responseData.results
   return taxaStore.taxa.filter((taxon) => taxonIds.includes(taxon.taxon_id))
 }
 

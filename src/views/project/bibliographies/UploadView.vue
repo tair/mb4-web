@@ -2,23 +2,28 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
+import { useNotifications } from '@/composables/useNotifications'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 
 const route = useRoute()
 const router = useRouter()
 const projectId = parseInt(route.params.id)
 const bibliographiesStore = useBibliographiesStore()
+const { showError, showSuccess, showInfo } = useNotifications()
 
 const file = ref(null)
 const isUploading = ref(false)
 
 async function uploadBibliography(event) {
   event.preventDefault()
+  
   if (!file.value) {
-    alert('Please select a file to upload')
+    showError('Please select a file to upload')
     return
   }
 
+  if (isUploading.value) return // Prevent double submission
+  
   isUploading.value = true
   const formData = new FormData()
   formData.append('file', file.value)
@@ -27,23 +32,22 @@ async function uploadBibliography(event) {
     const importInfo = await bibliographiesStore.upload(projectId, formData)
 
     if (importInfo) {
-      // Show import statistics
-      const message =
-        `Import completed:\n` +
-        `- ${importInfo.import_count} new records imported\n` +
-        `- ${importInfo.update_count} records updated\n` +
-        `- ${importInfo.error_count} errors encountered`
-
-      alert(message)
-
+      // Show import statistics with detailed notification
+      const totalProcessed = importInfo.import_count + importInfo.update_count + importInfo.error_count
+      const successMessage = `Import completed successfully! Processed ${totalProcessed} records: ${importInfo.import_count} imported, ${importInfo.update_count} updated${importInfo.error_count > 0 ? `, ${importInfo.error_count} errors` : ''}.`
+      
       if (importInfo.error_count === 0) {
+        showSuccess(successMessage, 'Import Complete')
         router.push({ name: 'MyProjectBibliographyListView' })
+      } else {
+        showInfo(successMessage, 'Import Complete with Errors')
       }
     } else {
-      alert('Failed to upload bibliography file')
+      showError('Failed to upload bibliography file')
     }
   } catch (error) {
-    alert('Error uploading file: ' + error.message)
+    console.error('Error uploading bibliography file:', error)
+    showError(`Error uploading file: ${error.message || 'Please try again.'}`)
   } finally {
     isUploading.value = false
   }
@@ -142,7 +146,11 @@ async function uploadBibliography(event) {
 
         <div class="btn-form-group">
           <RouterLink :to="{ name: 'MyProjectBibliographyListView' }">
-            <button type="button" class="btn btn-outline-primary">
+            <button 
+              type="button" 
+              class="btn btn-outline-primary"
+              :disabled="isUploading"
+            >
               Cancel
             </button>
           </RouterLink>
@@ -151,7 +159,11 @@ async function uploadBibliography(event) {
             class="btn btn-primary"
             :disabled="isUploading || !file"
           >
-            {{ isUploading ? 'Uploading...' : 'Upload EndNote Data' }}
+            <span v-if="isUploading">
+              <i class="fa fa-spinner fa-spin me-2"></i>
+              Uploading...
+            </span>
+            <span v-else>Upload EndNote Data</span>
           </button>
         </div>
       </form>

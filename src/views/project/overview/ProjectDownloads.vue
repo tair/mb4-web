@@ -20,7 +20,7 @@ const foldThreshold = 20
   <div id="project-download">
     <h3>Project Downloads</h3>
 
-    <table class="table table-bordered table-striped">
+    <table class="table table-bordered table-striped table-sm small">
       <thead>
         <tr>
           <th scope="col">Type</th>

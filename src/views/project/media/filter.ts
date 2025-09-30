@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
+import { apiService } from '@/services/apiService.js'
 
 const specimensStore = useSpecimensStore()
 
@@ -23,11 +23,8 @@ type OtherFilterOption = {
 }
 
 async function fetchFilterMediaIds(projectId: number) {
-  const url = `${
-    import.meta.env.VITE_API_URL
-  }/projects/${projectId}/media/filter/ids`
-  const response = await axios.get(url)
-  return response.data
+  const response = await apiService.get(`/projects/${projectId}/media/filter/ids`)
+  const responseData = await response.json(); return responseData
 }
 
 export const otherFiltersOptions: OtherFilterOption = {

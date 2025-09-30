@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore'
+import { useNotifications } from '@/composables/useNotifications'
 import InstitutionSearchInput from '../common/InstitutionSearchInput.vue'
 
 const props = defineProps<{
@@ -11,13 +12,14 @@ let institutionId = props.institution.institution_id
 let institutionName = props.institution.name
 
 const projectInstitutionsStore = useProjectInstitutionStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 async function editInstitution() {
   if (
     institutionName == props.institution.name ||
     institutionName.trim().length == 0
   ) {
-    alert('Please update your desired edits')
+    showWarning('Please update your desired edits', 'No Changes Made')
     return
   }
 
@@ -29,7 +31,7 @@ async function editInstitution() {
   )
 
   if (!response) {
-    alert('Could not edit the chosen institution.')
+    showError('Could not edit the chosen institution.', 'Edit Failed')
   }
 }
 

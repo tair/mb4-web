@@ -490,27 +490,36 @@ export class CharacterMedia {
    * @return The icon tag of the media
    */
   getIcon(): Media {
-    return this.characterMediaObj['icon']
+    return this.characterMediaObj['thumbnail']
   }
 
   /**
    * @return The tiny url of the media
    */
   getTiny(): Media {
-    return this.characterMediaObj['tiny']
+    return this.characterMediaObj['thumbnail']
   }
 
   /**
    * @return The small tag of the media
    */
   getSmall(): Media {
-    return this.characterMediaObj['small']
+    return this.characterMediaObj['large']
+  }
+
+  /**
+   * @return The medium tag of the media
+   */
+  getMedium(): Media {
+    return this.characterMediaObj['large']
   }
 
   /**
    * @return The large tag of the media
    */
-  getMedium(): Media {
-    return this.characterMediaObj['medium']
+  getLarge(): Media {
+    return this.characterMediaObj['large']
   }
+
+
 }

@@ -24,7 +24,9 @@ const matricesFilter = ref('all')
 const referencesFilter = ref('all')
 const authorsFilter = ref('all')
 
-onMounted(() => {
+onMounted(async () => {
+  // Verify authentication with server before doing search
+  await authStore.verifyAuthenticationWithServer()
   doSearch(route.query.q || '')
 })
 

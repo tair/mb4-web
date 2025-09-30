@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useAuthStore } from '@/stores/AuthStore'
+import { useNotifications } from '@/composables/useNotifications'
 import { AccessControlService, EntityType } from '@/lib/access-control.js'
 import { schema } from '@/views/project/taxa/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
@@ -16,6 +17,7 @@ const taxonId = parseInt(route.params.taxonId)
 const projectUsersStore = useProjectUsersStore()
 const taxaStore = useTaxaStore()
 const authStore = useAuthStore()
+const { showError, showSuccess } = useNotifications()
 const isLoaded = computed(
   () => projectUsersStore.isLoaded && taxaStore.isLoaded
 )
@@ -147,7 +149,7 @@ function isFieldDisabled(field) {
 async function editTaxon(event) {
   // Prevent submission if user doesn't have access
   if (!canEditTaxon.value) {
-    alert('You do not have permission to edit this taxon.')
+    showError('You do not have permission to edit this taxon.')
     return
   }
 
@@ -168,13 +170,18 @@ async function editTaxon(event) {
     delete json[field]
   })
 
-  const success = await taxaStore.edit(projectId, taxonId, json)
-  if (!success) {
-    alert(response.data?.message || 'Failed to modify taxon')
-    return
+  try {
+    const success = await taxaStore.edit(projectId, taxonId, json)
+    if (success) {
+      showSuccess('Taxon updated successfully!')
+      router.replace({ path: `/myprojects/${projectId}/taxa` })
+    } else {
+      showError('Failed to modify taxon')
+    }
+  } catch (error) {
+    console.error('Error updating taxon:', error)
+    showError('Failed to modify taxon. Please try again.')
   }
-
-  router.replace({ path: `/myprojects/${projectId}/taxa` })
 }
 
 onMounted(() => {

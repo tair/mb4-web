@@ -4,12 +4,31 @@ import './CellsContent'
 import { CellStateNameNumberContent } from './CellsContent'
 import { CellStateNumberContent } from './CellsContent'
 import { ImageRenderer } from './ImageRenderer'
+import { LazyImageRenderer } from './LazyImageRenderer'
 import { isEmptyOrWhitespace } from '../mb'
 
 /**
  * The abstract class that defines how cells are rendered.
  */
 export abstract class CellRenderer {
+  protected projectId: number | null = null
+  protected isPublished: boolean = false
+
+  /**
+   * Sets the project ID for proper media URL building
+   * @param projectId The project ID
+   */
+  setProjectId(projectId: number) {
+    this.projectId = projectId
+  }
+
+  /**
+   * Sets whether this is a published project
+   * @param published Whether the project is published
+   */
+  setPublished(published: boolean) {
+    this.isPublished = published
+  }
   /**
    * The highlight mode index.
    */
@@ -343,8 +362,23 @@ export class CellStateNameImageRenderer extends CellRenderer {
 
   override renderCell(td: HTMLElement, data: { [key: string]: any }): void {
     td.textContent = CellContent(data, CellStateNameContent)
-    const images = new ImageRenderer('X')
+    const images = new LazyImageRenderer('X')
     images.setReadOnly(data.readonly)
+    
+    // Set project ID if available
+    if (this.projectId !== null) {
+      images.setProjectId(this.projectId)
+    }
+    
+    // Set published status
+    images.setPublished(this.isPublished)
+    
+    // Set cell ID from the first media item's link_id (all media in a cell share the same link_id)
+    if (data.media.length > 0) {
+      const cellId = data.media[0].getId() // getId() returns link_id for cell media
+      images.setCellId(cellId)
+    }
+    
     for (let x = 0; x < data.media.length; x++) {
       const media = data.media[x]
       const labelCount = media.getLabelCount()
@@ -353,7 +387,10 @@ export class CellStateNameImageRenderer extends CellRenderer {
         : undefined
       const tinyMedium = media.getTiny()
       if (tinyMedium) {
-        images.addImage(media.getId(), tinyMedium['url'], caption)
+        // Use getMediaId() to get actual media file ID, not getId() which returns link ID
+        // Pass the full media object data for TIFF detection
+        const mediaData = (media as any).cellMediaObj || {}
+        images.addImage(media.getMediaId(), tinyMedium['url'], caption, mediaData)
       }
     }
     images.render(td)
@@ -374,8 +411,23 @@ export class CellStateNumberImageRenderer extends CellRenderer {
 
   override renderCell(td: HTMLElement, data: { [key: string]: any }): void {
     td.textContent = CellContent(data, CellStateNumberContent)
-    const images = new ImageRenderer('X')
+    const images = new LazyImageRenderer('X')
     images.setReadOnly(data.readonly)
+    
+    // Set project ID if available
+    if (this.projectId !== null) {
+      images.setProjectId(this.projectId)
+    }
+    
+    // Set published status
+    images.setPublished(this.isPublished)
+    
+    // Set cell ID from the first media item's link_id (all media in a cell share the same link_id)
+    if (data.media.length > 0) {
+      const cellId = data.media[0].getId() // getId() returns link_id for cell media
+      images.setCellId(cellId)
+    }
+    
     for (let x = 0; x < data.media.length; x++) {
       const media = data.media[x]
       const labelCount = media.getLabelCount()
@@ -384,7 +436,10 @@ export class CellStateNumberImageRenderer extends CellRenderer {
         : undefined
       const tiny = media.getTiny()
       if (tiny) {
-        images.addImage(media.getId(), tiny['url'], caption)
+        // Use getMediaId() to get actual media file ID, not getId() which returns link ID
+        // Pass the full media object data for TIFF detection
+        const mediaData = (media as any).cellMediaObj || {}
+        images.addImage(media.getMediaId(), tiny['url'], caption, mediaData)
       }
     }
     images.render(td)

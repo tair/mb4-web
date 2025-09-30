@@ -86,6 +86,16 @@ function onSearch() {
                     Ask Us
                   </RouterLink>
                 </li>
+                <li class="nav-item mx-1">
+                  <a
+                    class="nav-link p-0 m-1 text-nowrap"
+                    href="https://buy.stripe.com/8wMbJh1UVeel1AA146"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Donate
+                  </a>
+                </li>
               </ul>
             </div>
           </div>

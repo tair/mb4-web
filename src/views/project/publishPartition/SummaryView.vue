@@ -1,10 +1,11 @@
 <script setup>
-import axios from 'axios'
 import router from '@/router'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { useProjectsStore } from '@/stores/ProjectsStore'
+import { useNotifications } from '@/composables/useNotifications'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -12,6 +13,7 @@ const partitionId = route.params.partitionId
 const isLoaded = ref(false)
 
 const projectsStore = useProjectsStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 const project = ref(null)
 
 let partition = null
@@ -31,22 +33,18 @@ onMounted(async () => {
   }
   project.value = projectsStore.getProjectById(projectId)
 
-  const url = `${
-    import.meta.env.VITE_API_URL
-  }/projects/${projectId}/publish/partition/${partitionId}`
-
-  const response = await axios.get(url)
-
-  partition = response.data.partition
-  taxa.value = response.data.taxaCount
-  characters.value = response.data.characterCount
-  onetimeMedia.value = response.data.onetimeMedia
-  media.value = response.data.mediaCount
-  labels.value = response.data.labelCount
-  documents.value = response.data.documentCount
-  bibliographicReferences.value = response.data.bibliographicReferenceCount
-  views.value = response.data.viewCount
-  specimens.value = response.data.specimenCount
+  const response = await apiService.get(`/projects/${projectId}/publish/partition/${partitionId}`)
+  const responseData = await response.json()
+  partition = responseData.partition
+  taxa.value = responseData.taxaCount
+  characters.value = responseData.characterCount
+  onetimeMedia.value = responseData.onetimeMedia
+  media.value = responseData.mediaCount
+  labels.value = responseData.labelCount
+  documents.value = responseData.documentCount
+  bibliographicReferences.value = responseData.bibliographicReferenceCount
+  views.value = responseData.viewCount
+  specimens.value = responseData.specimenCount
 
   isLoaded.value = true
 })
@@ -58,22 +56,21 @@ async function publishPartition(event) {
   const onetimeAction = formObject.onetimeAction || 1
 
   if (!taxa.value || !characters.value) {
-    alert(
-      'You cannot publish this partition because it is empty. Please add characters and taxa and try again.'
+    showWarning(
+      'You cannot publish this partition because it is empty. Please add characters and taxa and try again.',
+      'Empty Partition'
     )
     return
   }
 
-  const url = `${
-    import.meta.env.VITE_API_URL
-  }/projects/${projectId}/publish/partition/${partitionId}`
-  const response = await axios.post(url, { onetimeAction })
+  const url = apiService.buildUrl(`/projects/${projectId}/publish/partition/${partitionId}`)
+  const response = await apiService.post(url, { onetimeAction })
 
-  if (response.status == 200) {
-    alert('Publishing Partition')
+  if (response.ok) {
+    showInfo('Publishing Partition', 'Publishing')
     router.push({ path: `/myprojects/${projectId}/overview` })
   } else {
-    alert('Could not publish Partition')
+    showError('Could not publish Partition', 'Publish Failed')
   }
 }
 </script>

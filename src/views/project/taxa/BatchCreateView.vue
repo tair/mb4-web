@@ -3,6 +3,8 @@ import { useRoute } from 'vue-router'
 import { reactive, ref } from 'vue'
 import router from '@/router'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useNotifications } from '@/composables/useNotifications'
+import { NavigationPatterns } from '@/utils/navigationUtils.js'
 import { TaxaColumns, nameColumnMap, TAXA_COLUMN_NAMES } from '@/utils/taxa'
 import { capitalizeFirstLetter } from '@/utils/string'
 import Alert from '@/components/main/Alert.vue'
@@ -10,6 +12,7 @@ import Alert from '@/components/main/Alert.vue'
 const route = useRoute()
 const projectId = parseInt(route.params.id as string)
 const taxaStore = useTaxaStore()
+const { showError, showSuccess } = useNotifications()
 
 type Taxon = { [key in TaxaColumns]?: string } & { is_extinct?: string }
 
@@ -62,15 +65,16 @@ async function createTaxonBatch() {
     const created = await taxaStore.createBatch(projectId, validTaxa)
 
     if (created) {
-      router.replace({ path: `/myprojects/${projectId}/taxa` })
+      showSuccess('Taxa created successfully!')
+      await NavigationPatterns.afterBatchOperation(projectId, 'taxa')
     } else {
-      validationMessages.value.validation =
-        'Failed to create taxa. Please try again.'
+      showError('Failed to create taxa. Please try again.')
+      validationMessages.value.validation = 'Failed to create taxa. Please try again.'
     }
   } catch (error) {
     console.error('Error during batch creation:', error)
-    validationMessages.value.validation =
-      'Failed to create taxa. Please try again.'
+    showError('Failed to create taxa. Please try again.')
+    validationMessages.value.validation = 'Failed to create taxa. Please try again.'
   }
 }
 

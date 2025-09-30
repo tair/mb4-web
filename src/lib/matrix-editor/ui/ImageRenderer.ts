@@ -12,6 +12,9 @@ export class ImageRenderer extends Component {
   private static readonly ARROW_DOWN_TEXT: string = '\u25bc'
 
   private readonly type: string
+  private projectId: number | null = null
+  private cellId: number | null = null
+  private isPublished: boolean = false
 
   private imageUrls: ImageRendererUrl[]
   private currentImageIndex: number
@@ -27,6 +30,22 @@ export class ImageRenderer extends Component {
   }
 
   /**
+   * Sets the project ID for proper media URL building
+   * @param projectId The project ID
+   */
+  setProjectId(projectId: number) {
+    this.projectId = projectId
+  }
+
+  /**
+   * Sets the cell ID for annotation context
+   * @param cellId The cell/link ID
+   */
+  setCellId(cellId: number | null) {
+    this.cellId = cellId
+  }
+
+  /**
    * Sets the image as readonly
    * @param readonly The boolean which indicates whether this image render is readonly
    */
@@ -35,17 +54,27 @@ export class ImageRenderer extends Component {
   }
 
   /**
+   * Sets whether this is a published project
+   * @param published Whether the project is published
+   */
+  setPublished(published: boolean) {
+    this.isPublished = published
+  }
+
+  /**
    * Adds an image to the renderer
    *
    * @param id the id of the image
    * @param url the url of the image
    * @param caption the caption of the image
+   * @param mediaData the full media object data for TIFF detection
    */
-  addImage(id: number, url: string, caption?: string | null) {
+  addImage(id: number, url: string, caption?: string | null, mediaData?: any) {
     const imageUrl: ImageRendererUrl = {
       id: id,
       url: url,
       caption: caption || null,
+      mediaData: mediaData || null,
     }
 
     this.imageUrls.push(imageUrl)
@@ -164,7 +193,11 @@ export class ImageRenderer extends Component {
    */
   protected onHandleClick(e: Event) {
     const imageUrl = this.imageUrls[this.currentImageIndex]
-    ImageViewerDialog.show(this.type, imageUrl.id, this.isReadOnly)
+    
+    // Use actual media data from the stored mediaData for TIFF detection
+    const mediaData = imageUrl.mediaData || {}
+    ImageViewerDialog.show(this.type, imageUrl.id, this.projectId, mediaData, this.isReadOnly, this.cellId, this.isPublished)
+    
     e.stopPropagation()
     e.preventDefault()
     return true
@@ -190,4 +223,5 @@ interface ImageRendererUrl {
   url: string
   id: number
   caption: string | null
+  mediaData?: any // Store the full media object data for TIFF detection
 }

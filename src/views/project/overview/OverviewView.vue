@@ -33,6 +33,7 @@ onMounted(async () => {
         <div class="col-3">
           <ProjectOverviewSidePanel
             :overview="projectOverviewStore.overview"
+            :projectId="projectId"
           ></ProjectOverviewSidePanel>
         </div>
       </div>

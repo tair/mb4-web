@@ -26,7 +26,7 @@
           <input
             type="file"
             @change="handleExemplarMediaUpload"
-            accept="image/*"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/webp,image/tiff"
             class="form-control"
           />
           <button
@@ -210,6 +210,33 @@
 
       <div class="form-group">
         <label class="form-label">
+          Article DOI
+          <Tooltip :content="TOOLTIP_ARTICLE_DOI"></Tooltip>
+        </label>
+        <p class="field-description">
+          This information will be used to automatically create a bibliographic
+          reference and populate fields below. Changes made here will update the reference.
+        </p>
+        <div class="doi-input">
+          <input
+            v-model="formData.article_doi"
+            type="text"
+            class="form-control"
+            placeholder="10.xxxx/xxxxx"
+          />
+          <button
+            type="button"
+            @click="retrieveDOI"
+            class="btn-link"
+            title="Retrieve article information using DOI"
+          >
+            Retrieve
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">
           Journal Title
           <span
             class="required"
@@ -322,6 +349,25 @@
           >
             Logo not yet available for this journal
           </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">
+          Journal cover image (if missing above)
+          <Tooltip :content="getJournalCoverTooltip()"></Tooltip>
+        </label>
+        <div class="journal-cover-upload">
+          <input
+            type="file"
+            @change="handleJournalCoverUpload"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/webp,image/tiff"
+            class="form-control"
+            :disabled="isJournalCoverUploadDisabled"
+          />
+          <small v-if="isJournalCoverUploadDisabled" class="form-text text-muted">
+            Journal cover already available from selected journal
+          </small>
         </div>
       </div>
 
@@ -475,52 +521,6 @@
         />
       </div>
 
-      <div class="form-group">
-        <label class="form-label">
-          Journal cover image (if missing above)
-          <Tooltip :content="getJournalCoverTooltip()"></Tooltip>
-        </label>
-        <div class="journal-cover-upload">
-          <input
-            type="file"
-            @change="handleJournalCoverUpload"
-            accept="image/*"
-            class="form-control"
-            :disabled="isJournalCoverUploadDisabled"
-          />
-          <small v-if="isJournalCoverUploadDisabled" class="form-text text-muted">
-            Journal cover already available from selected journal
-          </small>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">
-          Article DOI
-          <Tooltip :content="TOOLTIP_ARTICLE_DOI"></Tooltip>
-        </label>
-        <p class="field-description">
-          This information will be used to automatically create a bibliographic
-          reference. Changes made here will update the reference.
-        </p>
-        <div class="doi-input">
-          <input
-            v-model="formData.article_doi"
-            type="text"
-            class="form-control"
-            placeholder="10.xxxx/xxxxx"
-          />
-          <button
-            type="button"
-            @click="retrieveDOI"
-            class="btn-link"
-            title="Retrieve article information using DOI"
-          >
-            Retrieve
-          </button>
-        </div>
-      </div>
-
       <div class="form-buttons">
         <button
           type="button"
@@ -554,7 +554,7 @@ import { ref, reactive, onMounted, computed, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProjectsStore } from '@/stores/ProjectsStore'
 import { useUserStore } from '@/stores/UserStore'
-import axios from 'axios'
+import { useNotifications } from '@/composables/useNotifications'
 import {
   getNSFFundedTooltip,
   getExemplarMediaTooltip,
@@ -565,14 +565,17 @@ import {
   getJournalCoverTooltip,
   TOOLTIP_ARTICLE_DOI,
 } from '@/utils/util.js'
+import { NavigationPatterns } from '@/utils/navigationUtils.js'
 
 import Tooltip from '@/components/main/Tooltip.vue'
 import FormLayout from '@/components/main/FormLayout.vue'
 import '@/assets/css/form.css'
+import { apiService } from '@/services/apiService.js'
 
 const router = useRouter()
 const projectsStore = useProjectsStore()
 const userStore = useUserStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 const formData = reactive({
   name: '',
@@ -659,10 +662,9 @@ function selectJournalFromKeyboard() {
 async function loadJournals() {
   try {
     isLoadingJournals.value = true
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/projects/journals`
-    )
-    journals.value = response.data
+    const response = await apiService.get('/projects/journals')
+    const data = await response.json()
+    journals.value = data
   } catch (error) {
     console.error('Error loading journals:', error)
   } finally {
@@ -670,9 +672,79 @@ async function loadJournals() {
   }
 }
 
+// Helper function to extract content from JATS paragraph tags or strip all HTML/XML tags
+function stripHtmlTags(text) {
+  if (!text || typeof text !== 'string') return text
+  
+  // First, try to extract content from jats:p tags
+  const jatsMatch = text.match(/<jats:p[^>]*>(.*?)<\/jats:p>/s)
+  if (jatsMatch) {
+    // Extract content from jats:p tags and strip any remaining tags
+    const jatsContent = jatsMatch[1]
+      .replace(/<[^>]*>/g, '') // Remove any nested HTML/XML tags
+      .replace(/&lt;/g, '<')   // Decode common HTML entities
+      .replace(/&gt;/g, '>')   
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ')
+      .trim() // Remove leading/trailing whitespace
+    
+    return jatsContent
+  }
+  
+  // If no jats:p tags found, strip all HTML/XML tags (fallback for plain text abstracts)
+  const stripped = text
+    .replace(/<[^>]*>/g, '') // Remove all HTML/XML tags
+    .replace(/&lt;/g, '<')   // Decode common HTML entities
+    .replace(/&gt;/g, '>')   
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .trim() // Remove leading/trailing whitespace
+  
+  return stripped
+}
+
+// Helper function to validate file types and show errors for unsupported formats
+function validateImageFile(file, fileType = 'image') {
+  if (!file) return true
+  
+  const fileName = file.name.toLowerCase()
+  const fileExtension = fileName.split('.').pop()
+  
+  // Check for HEIC files specifically
+  if (fileExtension === 'heic' || fileExtension === 'heif') {
+    showError(
+      `HEIC/HEIF files are not supported. Please convert your ${fileType} to JPEG, PNG, or another supported format.`,
+      'Unsupported File Format'
+    )
+    return false
+  }
+  
+  // Check for other unsupported formats
+  const supportedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'tif']
+  if (!supportedExtensions.includes(fileExtension)) {
+    showError(
+      `${fileExtension.toUpperCase()} files are not supported. Please use JPEG, PNG, GIF, BMP, WebP, or TIFF format.`,
+      'Unsupported File Format'
+    )
+    return false
+  }
+  
+  return true
+}
+
 function handleExemplarMediaUpload(event) {
   const file = event.target.files[0]
   if (file) {
+    // Validate file format
+    if (!validateImageFile(file, 'exemplar media')) {
+      // Clear the file input
+      event.target.value = ''
+      return
+    }
     formData.exemplar_media = file
   }
 }
@@ -705,16 +777,14 @@ const loadJournalCover = async (journalTitle) => {
   }
 
   try {
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/projects/journal-cover`,
-      {
-        params: { journalTitle },
-      }
-    )
+    const response = await apiService.get('/projects/journal-cover', {
+      params: { journalTitle }
+    })
+    const responseData = await response.json()
 
     // Check if we have a path and verify the image actually exists
-    if (response.data.coverPath && response.data.coverPath.trim() !== '') {
-      const coverPath = response.data.coverPath.trim()
+    if (responseData.coverPath && responseData.coverPath.trim() !== '') {
+      const coverPath = responseData.coverPath.trim()
       
       // Test if the image actually loads
       const imageExists = await testImageExists(coverPath)
@@ -796,25 +866,23 @@ async function retrieveDOI() {
   if (!formData.article_doi) return
 
   try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/projects/doi`,
-      {
-        article_doi: formData.article_doi,
-        newProject: true, // Since this is CreateView, we're always creating a new project
-      }
-    )
+    const response = await apiService.post('/projects/doi', {
+      article_doi: formData.article_doi,
+      newProject: true, // Since this is CreateView, we're always creating a new project
+    })
+    const responseData = await response.json()
 
-    if (response.data.status === 'ok') {
-      const fields = response.data.fields
+    if (responseData.status === 'ok') {
+      const fields = responseData.fields
 
       // Set project name to article title for new projects
       formData.name = fields.article_title
 
       // Handle each field from the response
       for (const [field, value] of Object.entries(fields)) {
-        if (!value) continue
-
         if (field === 'journal_title') {
+          if (!value) continue
+          
           // Check if journal exists in the dropdown
           const journalExists = journals.value.some(
             (journal) => journal.toLowerCase() === value.toLowerCase()
@@ -828,23 +896,33 @@ async function retrieveDOI() {
             showNewJournal.value = true
             formData.journal_title_other = value
           }
+        } else if (field === 'abstract') {
+          // Map abstract field to description, strip HTML/XML tags, and always set
+          formData.description = stripHtmlTags(value) || ''
         } else {
+          if (!value) continue
           // Set other fields directly
           formData[field] = value
         }
       }
     } else {
-      alert(response.data.errors.join('\n'))
+      showError(responseData.errors.join('\n'), 'DOI Retrieval Error')
     }
   } catch (error) {
     console.error('Error retrieving DOI:', error)
-    alert('Failed to retrieve DOI information. Please try again.')
+    showError('Failed to retrieve DOI information. Please try again.', 'DOI Retrieval Failed')
   }
 }
 
 function handleJournalCoverUpload(event) {
   const file = event.target.files[0]
   if (file) {
+    // Validate file format
+    if (!validateImageFile(file, 'journal cover')) {
+      // Clear the file input
+      event.target.value = ''
+      return
+    }
     formData.journal_cover = file
   }
 }
@@ -903,10 +981,9 @@ async function handleSubmit() {
 
     // Show success state briefly before redirecting
     projectCreated.value = true
-    await new Promise((resolve) => setTimeout(resolve, 800))
-
-    // Force full page refresh to bypass any cached 404 responses
-    window.location.href = `/myprojects/${project.project_id}/overview`
+    
+    // Use robust navigation with proper error handling
+    await NavigationPatterns.afterProjectCreate(project.project_id)
   } catch (err) {
     console.error('Error in handleSubmit:', err)
     error.value =
@@ -920,7 +997,7 @@ async function handleSubmit() {
 function validateForm() {
   // Basic validation
   if (!formData.name || formData.nsf_funded === '') {
-    alert('Please fill in all required fields')
+    showWarning('Please fill in all required fields', 'Validation Error')
     return false
   }
 
@@ -930,8 +1007,9 @@ function validateForm() {
     (!formData.reviewer_login_password ||
       formData.reviewer_login_password.trim() === '')
   ) {
-    alert(
-      'Please enter a reviewer login password when reviewer access is enabled'
+    showWarning(
+      'Please enter a reviewer login password when reviewer access is enabled',
+      'Reviewer Password Required'
     )
     return false
   }
@@ -942,7 +1020,7 @@ function validateForm() {
     formData.publication_status === '1'
   ) {
     if (formData.journal_title === '' && formData.journal_title_other === '') {
-      alert('Please enter journal title information')
+      showWarning('Please enter journal title information', 'Journal Title Required')
       return false
     }
 
@@ -963,7 +1041,7 @@ function validateForm() {
           formData[field].trim() === '') ||
         (typeof formData[field] === 'number' && isNaN(formData[field]))
       ) {
-        alert(`Please fill in ${field.replace(/_/g, ' ')}`)
+        showWarning(`Please fill in ${field.replace(/_/g, ' ')}`, 'Required Field Missing')
         return false
       }
     }
@@ -986,7 +1064,7 @@ function validateForm() {
             formData[field].trim() === '') ||
           (typeof formData[field] === 'number' && isNaN(formData[field]))
         ) {
-          alert(`Please fill in ${field.replace(/_/g, ' ')}`)
+          showWarning(`Please fill in ${field.replace(/_/g, ' ')}`, 'Required Field Missing')
           return false
         }
       }
@@ -995,14 +1073,15 @@ function validateForm() {
 
   // Author format validation
   if (formData.article_authors && formData.article_authors.includes(' and ')) {
-    alert('Article authors must be separated by commas, not "and"')
+    showWarning('Article authors must be separated by commas, not "and"', 'Author Format Error')
     return false
   }
 
   // DOI format validation
   if (formData.article_doi && !formData.article_doi.match(/^10\..*\/\S+$/)) {
-    alert(
-      'Invalid DOI format. Please enter the DOI as provided by the publisher.'
+    showWarning(
+      'Invalid DOI format. Please enter the DOI as provided by the publisher.',
+      'DOI Format Error'
     )
     return false
   }

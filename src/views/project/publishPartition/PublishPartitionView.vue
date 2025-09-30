@@ -1,9 +1,9 @@
 <script setup>
-import axios from 'axios'
 import router from '@/router'
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -16,12 +16,9 @@ onMounted(async () => {
 })
 
 async function getPartitions() {
-  const url = `${
-    import.meta.env.VITE_API_URL
-  }/projects/${projectId}/publish/partition`
-  const response = await axios.get(url)
-
-  partitions.value = response.data
+  const response = await apiService.get('/projects/${projectId}/publish/partitions')
+  const responseData = await response.json()
+  partitions.value = responseData
 }
 
 function selectPartition(event) {

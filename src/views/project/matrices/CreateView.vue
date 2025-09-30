@@ -1,23 +1,26 @@
 <script setup>
-import axios from 'axios'
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCharactersStore } from '@/stores/CharactersStore'
 import { useMatricesStore } from '@/stores/MatricesStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useFileTransferStore } from '@/stores/FileTransferStore'
+import { useNotifications } from '@/composables/useNotifications'
+import { NavigationPatterns } from '@/utils/navigationUtils.js'
 import { CharacterStateIncompleteType } from '@/lib/matrix-parser/MatrixObject.ts'
 import { getIncompleteStateText } from '@/lib/matrix-parser/text.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
 import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
 import { getTaxonomicUnitOptions } from '@/utils/taxa'
 import router from '@/router'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const taxaStore = useTaxaStore()
 const matricesStore = useMatricesStore()
 const charactersStore = useCharactersStore()
 const fileTransferStore = useFileTransferStore()
+const { showError, showSuccess } = useNotifications()
 const projectId = route.params.id
 
 // Taxonomic unit options for dropdown
@@ -96,21 +99,21 @@ function saveEditedCharacter() {
     for (const state of editingCharacter.value.states) {
       const stateName = state.name
       if (stateName == null || stateName.length == 0) {
-        alert('All states must have non-empty names.')
+        showError('All states must have non-empty names.')
         return
       }
       if (state.name.match(/State\ \d+$/)) {
-        alert(
+        showError(
           `You must rename the generic state: '${state.name}' or recode the character in the matrix.`
         )
         return
       }
       if (stateNames.has(stateName)) {
-        alert('All states must have unique names.')
+        showError('All states must have unique names.')
         return
       }
       if (stateName.length > 500) {
-        alert('All states must names that are under 500 characters.')
+        showError('All states must names that are under 500 characters.')
         return
       }
       stateNames.add(stateName)
@@ -187,7 +190,7 @@ async function importMatrix(event) {
   }
 
   reader.onerror = function () {
-    alert('Failed to read file')
+    showError('Failed to read file')
   }
 
   reader.readAsBinaryString(file)
@@ -200,7 +203,7 @@ function moveUpload() {
 
 async function moveToCharacters() {
   if (!importedMatrix.taxa || !importedMatrix.characters) {
-    alert('Please upload a valid matrix file first')
+    showError('Please upload a valid matrix file first')
     return false
   }
 
@@ -253,11 +256,10 @@ function moveToStep(step) {
 }
 
 let isUploading = ref(false)
-let uploadError = ref(null)
 
 async function uploadMatrix() {
   isUploading.value = true
-  uploadError.value = null
+  
 
   try {
     const formData = new FormData()
@@ -290,15 +292,14 @@ async function uploadMatrix() {
       if (mergeFile) {
         formData.set('file', mergeFile)
       } else {
-        uploadError.value =
-          'Merge file not found. Please go back and select a file again.'
+        showError('Merge file not found. Please go back and select a file again.')
         return
       }
     } else {
       // For new matrix creation, require file upload
       const file = document.getElementById('upload')
       if (!file.files[0]) {
-        uploadError.value = 'Please select a file to upload.'
+        showError('Please select a file to upload.')
         return
       }
       formData.set('file', file.files[0])
@@ -307,14 +308,10 @@ async function uploadMatrix() {
     const serializedMatrix = serializeMatrix(importedMatrix)
     formData.set('matrix', serializedMatrix)
 
-    const url = new URL(
-      `${import.meta.env.VITE_API_URL}/projects/${projectId}/matrices/upload`
-    )
-
-    const response = await axios.post(url, formData, {
+    const response = await apiService.post(`/projects/${projectId}/matrices/upload`, formData, {
       timeout: 300000, // 5 minutes timeout
     })
-    if (response.status === 200) {
+    if (response.ok) {
       // Clear the file from FileTransferStore after successful upload
       if (isMerge) {
         fileTransferStore.clearMergeFile()
@@ -324,14 +321,15 @@ async function uploadMatrix() {
       // Wait for store invalidation to complete
       await matricesStore.invalidate()
 
-      // Force a full page reload to ensure fresh data is loaded
-      window.location.href = `/myprojects/${projectId}/matrices`
+      // Use robust navigation with proper error handling
+      await NavigationPatterns.afterComplexResourceCreate(projectId, 'matrices')
     }
   } catch (error) {
     console.error('Error uploading matrix:', error)
-    uploadError.value =
+    showError(
       error.response?.data?.message ||
-      'Failed to upload matrix. Please try again.'
+        'Failed to upload matrix. Please try again.'
+    )
   } finally {
     isUploading.value = false
   }
@@ -552,9 +550,7 @@ onUnmounted(() => {
               }}
             </button>
           </div>
-          <div v-if="uploadError" class="alert alert-danger mt-3" role="alert">
-            {{ uploadError }}
-          </div>
+          
         </div>
         <div class="row setup-content" id="step-2">
           <h5 v-if="route.query.merge === 'true'">
@@ -851,9 +847,7 @@ onUnmounted(() => {
             </button>
           </div>
         </div>
-        <div v-if="uploadError" class="alert alert-danger mt-3" role="alert">
-          {{ uploadError }}
-        </div>
+        
         <div class="modal" id="taxonModal" tabindex="-1">
           <div class="modal-dialog">
             <div class="modal-content">

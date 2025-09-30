@@ -28,7 +28,7 @@ import UserResetPasswordView from '@/views/users/UserResetPasswordView.vue'
 import UserSetNewPasswordView from '@/views/users/UserSetNewPasswordView.vue'
 import UserView from '@/views/users/UserView.vue'
 import SearchView from '@/views/SearchView.vue'
-import axios from 'axios'
+import { apiService } from '@/services/apiService.js'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -225,12 +225,8 @@ const router = createRouter({
           component: ProjectView,
           beforeEnter: async (to, from, next) => {
             const projectId = to.params.id
-            console.log('projectId', projectId)
             const { exists, published, message } =
               await checkProjectExistsAndPublished(projectId)
-            console.log('exists', exists)
-            console.log('published', published)
-            console.log('message', message)
             if (!exists) {
               next({
                 name: 'NotFoundView',
@@ -283,6 +279,37 @@ const router = createRouter({
       path: '/project/:projectId/matrices/:matrixId/view',
       name: 'ProjectMatrixViewerView',
       component: () => import('@/views/project/published/MatrixViewerView.vue'),
+      beforeEnter: async (to, from, next) => {
+        const projectId = to.params.projectId
+        
+        try {
+          const { exists, published, message } = await checkProjectExistsAndPublished(projectId)
+          
+          // Security: Explicitly check that published is exactly true
+          if (!exists || published !== true) {
+            next({
+              name: 'NotFoundView',
+              query: {
+                message: message || 'This project is not accessible.',
+              },
+            })
+            return
+          }
+
+          // Only allow access if published is explicitly true
+          to.meta.published = published
+          next()
+        } catch (error) {
+          // Security: Any error in checking published status denies access
+          console.error('Route Guard Error:', error)
+          next({
+            name: 'NotFoundView',
+            query: {
+              message: 'Unable to verify project access permissions.',
+            },
+          })
+        }
+      },
     },
   ],
   scrollBehavior(to, from, savedPosition) {
@@ -362,10 +389,9 @@ async function requireSignInAndProfileConfirmation(to) {
 // Add a function to check if a project is published
 async function checkUnpublishedProjectStatus(projectId) {
   try {
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/projects/${projectId}/overview`
-    )
-    return response.data.overview.published === 1
+    const response = await apiService.get(`/projects/${projectId}/overview`)
+    const responseData = await response.json()
+    return responseData.overview.published === 1
   } catch (error) {
     console.error('Error checking if project is published:', error)
     return false
@@ -376,14 +402,13 @@ async function checkUnpublishedProjectStatus(projectId) {
 async function checkProjectExistsAndPublished(projectId) {
   try {
     // Check if the project exists on public projects
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/public/projects/${projectId}`
-    )
+    const response = await apiService.get(`/public/projects/${projectId}`)
+    const responseData = await response.json()
     return {
       exists: true,
-      published: response.data.published === 1,
+      published: responseData.published === 1,
       message:
-        response.data.published === 1
+        responseData.published === 1
           ? null
           : 'This project is not yet publicly available.',
     }

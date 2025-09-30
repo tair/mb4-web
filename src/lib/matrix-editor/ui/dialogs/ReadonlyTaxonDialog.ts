@@ -67,7 +67,7 @@ export class ReadonlyTaxonDialog extends Dialog {
 
     this.tabNavigator.addTab('Notes', new NotesPane(taxon))
     if (taxon.hasMedia()) {
-      this.tabNavigator.addTab('Media', new MediaPane(taxon))
+      this.tabNavigator.addTab('Media', new MediaPane(taxon, this.matrixModel))
     }
 
     this.tabNavigator.setSelectedTabIndex(selectedTabIndex)
@@ -140,12 +140,14 @@ class NotesPane extends Component {
  */
 class MediaPane extends Component {
   private readonly taxon: Taxon
+  private readonly matrixModel: MatrixModel
   private readonly mediaGrid: MediaGrid
 
-  constructor(taxon: Taxon) {
+  constructor(taxon: Taxon, matrixModel: MatrixModel) {
     super()
 
     this.taxon = taxon
+    this.matrixModel = matrixModel
 
     this.mediaGrid = new MediaGrid()
     this.mediaGrid.setRemoveable(false)
@@ -186,7 +188,8 @@ class MediaPane extends Component {
     const media = this.taxon.getMedia()
     for (let x = 0; x < media.length; x++) {
       const medium = media[x]
-      this.mediaGrid.addItem({ id: medium.getId(), image: medium.getTiny() })
+      // Use actual media_id for the grid item id so the viewer loads correctly
+      this.mediaGrid.addItem({ id: medium.getMediaId(), image: medium.getTiny() })
     }
   }
 
@@ -197,7 +200,16 @@ class MediaPane extends Component {
   protected onHandleDoubleClickCellMedia(e: CustomEvent<MediaGridItemEvent>) {
     const item = e.detail.item
     if (item) {
-      ImageViewerDialog.show('T', item.id, true)
+      // Use new signature with project ID and published state from matrix model
+      const projectId = this.matrixModel.getProjectId()
+      const published = this.matrixModel.isPublished()
+      // Find the corresponding taxon media object for the item
+      const taxonMedium = this.taxon.getMediaById(item.id)
+      const mediaData = taxonMedium ? ((taxonMedium as any).taxonMediaObj || {}) : {}
+      // Ensure we pass the correct media_id to the viewer
+      const mediaId = taxonMedium ? taxonMedium.getMediaId() : item.id
+
+      ImageViewerDialog.show('T', mediaId, projectId, mediaData, true, null, published)
     }
   }
 }

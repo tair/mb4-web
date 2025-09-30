@@ -4,6 +4,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useAuthStore } from '@/stores/AuthStore'
+import { useNotifications } from '@/composables/useNotifications'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import TextArea from '@/components/project/TextArea.vue'
 import TextInput from '@/components/project/TextInput.vue'
@@ -18,6 +19,7 @@ const existingUser = ref()
 
 const projectUsersStore = useProjectUsersStore()
 const authStore = useAuthStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 // Check if current user is project admin
 const isCurrentUserProjectAdmin = computed(() => {
@@ -31,7 +33,7 @@ const isCurrentUserProjectAdmin = computed(() => {
 async function check(event) {
   // Check if current user is project admin before allowing creation
   if (!isCurrentUserProjectAdmin.value) {
-    alert('Only project administrators can add new members')
+    showWarning('Only project administrators can add new members', 'Access Denied')
     return
   }
   
@@ -41,7 +43,7 @@ async function check(event) {
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   const isValid = emailPattern.test(json.email)
   if (!isValid) {
-    alert('E-mail address is not valid.')
+    showError('E-mail address is not valid.', 'Invalid Email')
     return
   }
   // email is valid so we store it for later use
@@ -58,16 +60,16 @@ async function check(event) {
       newProjectUser.value = result.user
       cont.value = true
     } else {
-      alert(result.errorMessage)
+      showError(result.errorMessage, 'Error')
     }
   } else {
-    alert('User is already a member of this project')
+    showWarning('User is already a member of this project', 'Already Member')
   }
 }
 async function create(event) {
   // Check if current user is project admin before allowing creation
   if (!isCurrentUserProjectAdmin.value) {
-    alert('Only project administrators can add new members')
+    showWarning('Only project administrators can add new members', 'Access Denied')
     return
   }
   
@@ -87,7 +89,7 @@ async function create(event) {
   if (success) {
     router.go(-1)
   } else {
-    alert('Failed to create member')
+    showError('Failed to create member', 'Creation Failed')
   }
 }
 onMounted(() => {
@@ -124,7 +126,7 @@ onMounted(() => {
             </div>
             <div class="btn-form-group">
               <button
-                class="btn btn-primary me-2"
+                class="btn btn-outline-primary me-2"
                 type="button"
                 @click="$router.go(-1)"
               >

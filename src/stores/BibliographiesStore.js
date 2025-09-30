@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
+import { apiService } from '@/services/apiService.js'
 
 export const useBibliographiesStore = defineStore({
   id: 'bibliographies',
@@ -14,47 +14,38 @@ export const useBibliographiesStore = defineStore({
   },
   actions: {
     async fetchBibliographies(projectId) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/bibliography`
-      const response = await axios.get(url)
-      const bibliographies = response.data.bibliographies || []
+      const response = await apiService.get(`/projects/${projectId}/bibliography`)
+      const responseData = await response.json()
+        const bibliographies = responseData.bibliographies || []
       this.addReferences(bibliographies)
 
       this.isLoaded = true
     },
     async deleteIds(projectId, referenceIds) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/bibliography/delete`
-      const response = await axios.post(url, {
+      const response = await apiService.post(`/projects/${projectId}/bibliography/delete`, {
         reference_ids: [referenceIds],
       })
-      if (response.status == 200) {
+      if (response.ok) {
         this.removeByReferenceIds(referenceIds)
         return true
       }
       return false
     },
     async create(projectId, reference) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/bibliography/create`
-      const response = await axios.post(url, reference)
-      if (response.status == 200) {
-        const bibliography = response.data.bibliography
+      const response = await apiService.post(`/projects/${projectId}/bibliography/create`, reference)
+      if (response.ok) {
+        const responseData = await response.json()
+        const bibliography = responseData.bibliography
         this.addReferences([bibliography])
         return true
       }
       return false
     },
     async edit(projectId, referenceId, reference) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/bibliography/${referenceId}/edit`
-      const response = await axios.post(url, reference)
-      if (response.status == 200) {
-        const bibliography = response.data.bibliography
+      const response = await apiService.post(`/projects/${projectId}/bibliography/${referenceId}/edit`, reference)
+      if (response.ok) {
+        const responseData = await response.json()
+        const bibliography = responseData.bibliography
         this.addReferences([bibliography])
         return true
       }
@@ -88,12 +79,9 @@ export const useBibliographiesStore = defineStore({
       }
     },
     async checkCitations(projectId, referenceIds) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/bibliography/check-citations`
-      const response = await axios.post(url, { reference_ids: referenceIds })
-      if (response.status === 200) {
-        return response.data.citations
+      const response = await apiService.post(`/projects/${projectId}/bibliography/check-citations`, { reference_ids: referenceIds })
+      if (response.ok) {
+        const responseData = await response.json(); return responseData.citations
       }
       return []
     },
@@ -102,19 +90,16 @@ export const useBibliographiesStore = defineStore({
       this.isLoaded = false
     },
     async upload(projectId, formData) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/bibliography/upload`
-      const response = await axios.post(url, formData, {
+      const response = await apiService.post(`/projects/${projectId}/bibliography/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       })
 
-      if (response.status === 200) {
+      if (response.ok) {
         // Refresh the bibliography list after successful upload
         await this.fetchBibliographies(projectId)
-        return response.data.import_info
+        const responseData = await response.json(); return responseData.import_info
       }
       return null
     },

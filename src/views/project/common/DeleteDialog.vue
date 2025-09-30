@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { Modal } from 'bootstrap'
+import { useNotifications } from '@/composables/useNotifications'
 
 const props = defineProps<{
   delete: () => Promise<boolean>
 }>()
+
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 async function handleDeleteButtonClicked() {
   const deleted = await props.delete()
@@ -19,7 +22,7 @@ async function handleDeleteButtonClicked() {
 
     modal.hide()
   } else {
-    alert('Failed to Delete')
+    showError('Failed to Delete', 'Delete Failed')
   }
 }
 </script>

@@ -66,6 +66,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { setCopyRight } from '@/lib/copyright.js'
+import { useNotifications } from '@/composables/useNotifications'
 
 const props = defineProps({
   projectId: {
@@ -79,6 +80,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['updated'])
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 const publish_cc0 = ref(props.initialValue)
 const isSaving = ref(false)
@@ -95,7 +97,7 @@ async function saveCopyrightPreference() {
     emit('updated', publish_cc0.value)
   } catch (error) {
     console.error('Error saving copyright preference:', error)
-    alert('Failed to save copyright preference. Please try again.')
+    showError('Failed to save copyright preference. Please try again.', 'Save Failed')
   } finally {
     isSaving.value = false
   }

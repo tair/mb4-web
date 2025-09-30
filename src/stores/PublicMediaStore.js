@@ -1,6 +1,6 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
 import { searchInObject } from '@/utils/util.js'
+import { apiService } from '@/services/apiService.js'
 
 export const usePublicMediaStore = defineStore({
   id: 'publicMedia',
@@ -53,6 +53,11 @@ export const usePublicMediaStore = defineStore({
     getMediaFilesByIdList(idList) {
       if (!idList || idList.length == 0) return null
       return this.full_media_files.filter((m) => idList.includes(m.media_id))
+    },
+    
+    getMediaFileById(mediaId) {
+      if (!this.full_media_files || !mediaId) return null
+      return this.full_media_files.find((m) => m.media_id == mediaId)
     },
     filterMediaFiles(searchStr) {
       if (!searchStr) {
@@ -216,15 +221,10 @@ export const usePublicMediaStore = defineStore({
       this.err = null
 
       try {
-        var getter = axios.create()
-        delete getter.defaults.headers.common['Authorization']
-
-        const url = `${
-          import.meta.env.VITE_API_URL
-        }/s3/media_files/prj_${project_id}.json`
-        const res = await getter.get(url)
-        this.media_files = res.data
-        this.full_media_files = res.data
+        const res = await apiService.get(`/s3/media_files/prj_${project_id}.json`)
+        const data = await res.json()
+        this.media_files = data
+        this.full_media_files = data
         this.project_id = project_id
         this.recalculatePageInfo()
         this.fetchByPage(1)

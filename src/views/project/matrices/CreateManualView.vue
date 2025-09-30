@@ -1,20 +1,23 @@
 <script setup>
-import axios from 'axios'
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMatricesStore } from '@/stores/MatricesStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useNotifications } from '@/composables/useNotifications'
+import { NavigationPatterns } from '@/utils/navigationUtils.js'
 import {
   getTaxonomicUnitOptions,
   getTaxonName,
   sortTaxaAlphabetically,
 } from '@/utils/taxa'
 import router from '@/router'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const router_instance = useRouter()
 const matricesStore = useMatricesStore()
 const taxaStore = useTaxaStore()
+const { showError, showSuccess } = useNotifications()
 
 const projectId = route.params.id
 
@@ -31,7 +34,6 @@ const formData = reactive({
 
 // Loading and error states
 const isCreating = ref(false)
-const createError = ref(null)
 const errors = ref({})
 
 // Check if project has taxa
@@ -47,8 +49,9 @@ function validateForm() {
   }
 
   if (!hasTaxa.value) {
-    errors.value.general =
+    showError(
       'Cannot create matrix: This project has no taxa. Please add taxa to the project first.'
+    )
     return false
   }
 
@@ -61,15 +64,11 @@ async function createMatrix() {
   }
 
   isCreating.value = true
-  createError.value = null
   errors.value = {}
 
   try {
-    const url = `${
-      import.meta.env.VITE_API_URL
-    }/projects/${projectId}/matrices/create`
 
-    const response = await axios.post(url, {
+    const response = await apiService.post(`/projects/${projectId}/matrices/create`, {
       title: formData.title,
       notes: formData.notes,
       otu: formData.otu,
@@ -77,17 +76,18 @@ async function createMatrix() {
     })
 
     if (response.status === 200) {
+      showSuccess('Matrix created successfully!')
       // Clear matrices store to refresh data
       await matricesStore.invalidate()
 
-      // Navigate to matrices list
-      window.location.href = `/myprojects/${projectId}/matrices`
+      // Use robust navigation with proper error handling
+      await NavigationPatterns.afterComplexResourceCreate(projectId, 'matrices')
     }
   } catch (error) {
     console.error('Error creating manual matrix:', error)
-    createError.value =
-      error.response?.data?.message ||
+    const errorMessage = error.response?.data?.message ||
       'Failed to create matrix. Please try again.'
+    showError(errorMessage)
   } finally {
     isCreating.value = false
   }
@@ -155,10 +155,7 @@ onUnmounted(() => {
         within the Matrix Editor using its built-in Character Editor.
       </div>
 
-      <!-- General error -->
-      <div v-if="errors.general" class="alert alert-danger">
-        {{ errors.general }}
-      </div>
+      
 
       <!-- Matrix Title -->
       <div class="form-group">
@@ -242,9 +239,7 @@ onUnmounted(() => {
         </button>
       </div>
 
-      <div v-if="createError" class="alert alert-danger mt-3" role="alert">
-        {{ createError }}
-      </div>
+      
     </form>
   </div>
 </template>

@@ -419,7 +419,14 @@ class MediaPane extends Component {
   protected onHandleDoubleClickCellMedia(e: CustomEvent<MediaGridItemEvent>) {
     const item = e.detail.item
     if (item) {
-      ImageViewerDialog.show('X', item.id, true)
+      // Use new signature with project ID and published state from matrix model  
+      const projectId = this.matrixModel.getProjectId()
+      const published = this.matrixModel.isPublished()
+      // Find the corresponding cell media object for the item
+      const cellMedium = this.cellMedia.find(m => m.getId() === item.id)
+      const mediaData = cellMedium ? (cellMedium as any).cellMediaObj || {} : {}
+      
+      ImageViewerDialog.show('X', item.id, projectId, mediaData, true, null, published)
     }
   }
 }

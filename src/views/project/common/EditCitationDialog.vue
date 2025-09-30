@@ -3,9 +3,11 @@ import { computed } from 'vue'
 import { Modal } from 'bootstrap'
 import { schema } from '@/views/project/common/citationSchema.js'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
+import { useNotifications } from '@/composables/useNotifications'
 import { getBibliographyText } from '@/utils/bibliography'
 
 const bibliographiesStore = useBibliographiesStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 const props = defineProps({
   citation: Object,
@@ -42,13 +44,14 @@ async function editCitation(event) {
       modal.hide()
       target.reset()
     } else {
-      alert('Failed to edit citation')
+      showError('Failed to edit citation', 'Edit Failed')
     }
   } catch (error) {
     console.error('Error editing citation:', error)
-    alert(
+    showError(
       'Failed to edit citation: ' +
-        (error.response?.data?.message || error.message || 'Unknown error')
+        (error.response?.data?.message || error.message || 'Unknown error'),
+      'Edit Error'
     )
   }
 }
