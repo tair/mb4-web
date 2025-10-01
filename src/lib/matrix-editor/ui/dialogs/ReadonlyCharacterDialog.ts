@@ -257,8 +257,21 @@ class MediaPane extends Component {
       ? ((characterMedium as any).characterMediaObj || {})
       : {}
 
+    // Pass link_id when available so the details API can return character_display for labels
+    const linkId = (mediaData && (mediaData.link_id || mediaData.linkId)) || null
+    
+    // Get character and state information for annotation context
+    const characterId = characterMedium ? characterMedium.getCharacterId() : null
+    const stateId = characterMedium ? characterMedium.getStateId() : null
+    
+    // Get character and state names for display in metadata
+    const characterName = this.character.getName()
+    const characterState = stateId ? this.character.getCharacterStateById(stateId) : null
+    const stateName = characterState ? characterState.getName() : null
+    const stateNumber = characterState ? characterState.getNumber() : null
+    
     // Open in readonly mode in published context
-    ImageViewerDialog.show('C', item.id, projectId, mediaData, true, null, published)
+    ImageViewerDialog.show('C', item.id, projectId, mediaData, true, linkId, published, characterId, stateId, characterName, stateName, stateNumber)
   }
 }
 

@@ -712,9 +712,9 @@ async function parseMatrixFile(file) {
           convertedMatrix.cellsArray = cellsArray
           parsedMatrix.value = convertedMatrix
         } else {
-          uploadErrors.value.general =
-            'Failed to parse matrix file. Please check the file format.'
-          parsedMatrix.value = null
+        uploadErrors.value.general =
+          'Failed to parse matrix file. Please ensure the file is a valid NEXUS or TNT format.'
+        parsedMatrix.value = null
         }
       } catch (error) {
         console.error('Error parsing matrix file:', error)

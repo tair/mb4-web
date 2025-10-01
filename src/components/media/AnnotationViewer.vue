@@ -481,6 +481,18 @@ export default {
     published: {
       type: Boolean,
       default: false
+    },
+    characterName: {
+      type: String,
+      default: null
+    },
+    stateName: {
+      type: String,
+      default: null
+    },
+    stateNumber: {
+      type: Number,
+      default: null
     }
   },
 
@@ -2040,6 +2052,18 @@ export default {
         return ''
       }
 
+      // For character media with character/state names provided directly, use them
+      // Use the same format as cells: "Character Name :: State Name (State Number)"
+      if (this.type === 'C' && this.characterName) {
+        let characterLabel = this.characterName
+        if (this.stateName && this.stateNumber !== null) {
+          characterLabel += ` :: ${this.stateName} (${this.stateNumber})`
+        } else if (this.stateName) {
+          characterLabel += ` :: ${this.stateName}`
+        }
+        return characterLabel
+      }
+
       // For character annotations (type 'C') and matrix annotations (type 'X'), try to get enhanced display
       if ((this.type === 'C' || this.type === 'X') && this.linkId) {
         const characterDisplay = await this.fetchCharacterDisplayInfo(this.linkId)
@@ -2071,6 +2095,19 @@ export default {
       // If showDefaultText is not enabled, return empty
       if (!this.shouldShowLabel(annotation)) {
         return ''
+      }
+
+      // For character media with character/state names provided directly, use them
+      // Use the same format as cells: "Character Name :: State Name (State Number)"
+      if (this.type === 'C' && this.characterName) {
+        let characterLabel = this.characterName
+        if (this.stateName && this.stateNumber !== null) {
+          characterLabel += ` :: ${this.stateName} (${this.stateNumber})`
+        } else if (this.stateName) {
+          characterLabel += ` :: ${this.stateName}`
+        }
+        this.enhancedLabelCache.set(cacheKey, characterLabel)
+        return characterLabel
       }
 
       // For character annotations and matrix annotations, check if we need to load enhanced display

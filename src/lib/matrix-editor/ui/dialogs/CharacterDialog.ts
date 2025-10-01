@@ -1050,7 +1050,20 @@ class MediaPane extends BasePane {
       const published = this.matrixModel.isPublished()
       // Pass the actual media data from the medium object instead of empty object
       const mediaData = (medium as any).characterMediaObj || {}
-      ImageViewerDialog.show('C', mediaId, projectId, mediaData, readonly, null, published)
+      // Pass link_id so details API can return character_display for labels
+      const linkId = medium.getId()
+      
+      // Get character and state information for annotation context
+      const characterId = medium.getCharacterId()
+      const stateId = medium.getStateId()
+      
+      // Get character and state names for display in metadata
+      const characterName = this.character.getName()
+      const characterState = stateId ? this.character.getCharacterStateById(stateId) : null
+      const stateName = characterState ? characterState.getName() : null
+      const stateNumber = characterState ? characterState.getNumber() : null
+      
+      ImageViewerDialog.show('C', mediaId, projectId, mediaData, readonly, linkId, published, characterId, stateId, characterName, stateName, stateNumber)
     }
     return true
   }
