@@ -904,6 +904,7 @@ onMounted(() => {
           </button>
         </RouterLink>
         <RouterLink
+          v-if="canEditMatrix"
           :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/edit`"
           @click.prevent="$router.push({ name: 'MyProjectMatrixEditView', params: { projectId, matrixId: matrix.matrix_id } })"
         >
