@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import Tooltip from '@/components/main/Tooltip.vue'
 import { formatBytes, formatNumber } from '@/utils/format'
-import { buildMediaUrl } from '@/utils/fileUtils.js'
+import { buildMediaUrl, getBestMediaUrl } from '@/utils/fileUtils.js'
 // import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore' // No longer needed
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watchEffect } from 'vue'
 import { useNotifications } from '@/composables/useNotifications'
 import { useAuthStore } from '@/stores/AuthStore.js'
 // import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
@@ -71,6 +71,7 @@ const VITE_HOST = import.meta.env?.VITE_HOST || 'http://morphobank.org'
 const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 const authStore = useAuthStore()
 const exemplarMedia = ref(null)
+const resolvedExemplarUrl = ref(null)
 const showFullDescription = ref(false)
 
 // Computed property to get overview data - now always uses props
@@ -106,28 +107,48 @@ onMounted(async () => {
   }
 })
 
+// Resolve best available image URL with graceful fallbacks
+watchEffect(() => {
+  if (!exemplarMedia.value?.media_id) {
+    resolvedExemplarUrl.value = null
+    return
+  }
+
+  const mediaJson = props.overview?.image_props?.media
+  // If API flags this as a 3D asset at root, show 3D icon
+  if (mediaJson && mediaJson.USE_ICON === '3d') {
+    resolvedExemplarUrl.value = '/images/3DImage.png'
+    return
+  }
+  // Prefer large, then medium, thumbnail, original
+  resolvedExemplarUrl.value = getBestMediaUrl(
+    mediaJson,
+    ['large', 'medium', 'thumbnail', 'original'],
+    props.projectId,
+    exemplarMedia.value.media_id
+  )
+})
+
+function onExemplarImgError(e) {
+  if (!exemplarMedia.value?.media_id) return
+  const currentSrc = e?.target?.src || ''
+  // If large/medium failed, try thumbnail next
+  if (!currentSrc.includes('/thumbnail')) {
+    resolvedExemplarUrl.value = buildMediaUrl(
+      props.projectId,
+      exemplarMedia.value.media_id,
+      'thumbnail'
+    )
+    return
+  }
+  // Final fallback
+  resolvedExemplarUrl.value = '/images/image-not-found.png'
+}
+
 const downloadTooltipText =
   'This tool downloads the entire project, all media, matrices and documents, as a zipped file. Please click on the menu to the left, if you only want a Matrix, certain Media or Documents.'
 
-// Check if the media file is a 3D file using USE_ICON
-const is3DFile = computed(() => {
-  return props.overview?.image_props?.media?.USE_ICON === '3d'
-})
-
-// Computed property to get the appropriate media URL (3D icon for 3D media, image URL for others)
-const exemplarMediaUrl = computed(() => {
-  if (!exemplarMedia.value?.media_id) {
-    return null
-  }
-
-  // Check if this is a 3D file that should use the 3D icon
-  if (is3DFile.value) {
-    return '/images/3DImage.png'
-  }
-
-  // For regular images, use the large variant
-  return buildMediaUrl(props.projectId, exemplarMedia.value.media_id, 'large')
-})
+// Width/height helpers remain; URL is handled via resolvedExemplarUrl
 
 function getWidth(mediaObj: { [key: string]: any }): string {
   if (mediaObj?.media?.large?.PIXEL_X) {
@@ -222,7 +243,9 @@ function popDownloadAlert() {
         <div v-if="exemplarMedia" class="d-flex flex-column">
           <div class="d-flex justify-content-center">
             <img
-              :src="exemplarMediaUrl"
+              v-if="resolvedExemplarUrl"
+              :src="resolvedExemplarUrl"
+              @error="onExemplarImgError"
               :style="{
                 width: getWidth(exemplarMedia),
                 height: getHeight(exemplarMedia),
@@ -236,6 +259,7 @@ function popDownloadAlert() {
               }"
               class="col-md-4 mt-1 ms-0 rounded float-sm-start"
             />
+            <div v-else class="thumbnil-block imgPlaceholderOverview p-2">Image unavailable</div>
           </div>
           <div class="text-block">
             <div
