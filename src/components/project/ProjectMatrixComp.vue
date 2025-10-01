@@ -896,10 +896,19 @@ onMounted(() => {
       </div>
       <div class="buttons">
         <RouterLink
+          :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/view`"
+          @click.prevent="$router.push({ name: 'MyProjectMatrixViewerView', params: { projectId, matrixId: matrix.matrix_id } })"
+        >
+          <button type="button" class="btn btn-sm btn-secondary view-btn" title="View matrix">
+            <i class="fa-regular fa-eye"></i>
+          </button>
+        </RouterLink>
+        <RouterLink
+          v-if="canEditMatrix"
           :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/edit`"
           @click.prevent="$router.push({ name: 'MyProjectMatrixEditView', params: { projectId, matrixId: matrix.matrix_id } })"
         >
-          <button type="button" class="btn btn-sm btn-secondary pencil-btn">
+          <button type="button" class="btn btn-sm btn-secondary pencil-btn" title="Edit matrix">
             <i class="fa-regular fa-pen-to-square"></i>
           </button>
         </RouterLink>
@@ -1759,19 +1768,23 @@ onMounted(() => {
   gap: 7px;
 }
 
-/* Orange themed pencil button */
+/* Orange themed view and edit buttons */
+.view-btn,
 .pencil-btn {
   background-color: var(--theme-orange, #ef782f) !important;
   border-color: var(--theme-orange, #ef782f) !important;
   color: white !important;
 }
 
+.view-btn:hover,
 .pencil-btn:hover {
   background-color: var(--theme-orange-hover, #d9682a) !important;
   border-color: var(--theme-orange-hover, #d9682a) !important;
   color: white !important;
 }
 
+.view-btn:focus,
+.view-btn:active,
 .pencil-btn:focus,
 .pencil-btn:active {
   background-color: var(--theme-orange-active, #c35a25) !important;

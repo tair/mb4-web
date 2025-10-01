@@ -266,6 +266,15 @@ const router = createRouter({
     },
     // Routes related to matrix editor
     {
+      path: '/myprojects/:projectId/matrices/:matrixId/view',
+      name: 'MyProjectMatrixViewerView',
+      component: () => import('@/views/project/matrices/MatrixViewerView.vue'),
+      beforeEnter: async (to, from, next) => {
+        to.meta.published = false
+        next()
+      },
+    },
+    {
       path: '/myprojects/:projectId/matrices/:matrixId/edit',
       name: 'MyProjectMatrixEditView',
       component: () => import('@/views/project/matrices/MatrixEditorView.vue'),
