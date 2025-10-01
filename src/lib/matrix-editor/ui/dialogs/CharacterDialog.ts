@@ -1052,7 +1052,18 @@ class MediaPane extends BasePane {
       const mediaData = (medium as any).characterMediaObj || {}
       // Pass link_id so details API can return character_display for labels
       const linkId = medium.getId()
-      ImageViewerDialog.show('C', mediaId, projectId, mediaData, readonly, linkId, published)
+      
+      // Get character and state information for annotation context
+      const characterId = medium.getCharacterId()
+      const stateId = medium.getStateId()
+      
+      // Get character and state names for display in metadata
+      const characterName = this.character.getName()
+      const characterState = stateId ? this.character.getCharacterStateById(stateId) : null
+      const stateName = characterState ? characterState.getName() : null
+      const stateNumber = characterState ? characterState.getNumber() : null
+      
+      ImageViewerDialog.show('C', mediaId, projectId, mediaData, readonly, linkId, published, characterId, stateId, characterName, stateName, stateNumber)
     }
     return true
   }

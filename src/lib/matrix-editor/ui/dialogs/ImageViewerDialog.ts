@@ -27,6 +27,11 @@ export class ImageViewerDialog extends Modal {
   private readonly readonly: boolean
   private readonly linkId: number | null
   private readonly published: boolean
+  private readonly characterId: number | null
+  private readonly stateId: number | null
+  private readonly characterName: string | null
+  private readonly stateName: string | null
+  private readonly stateNumber: number | null
   private readonly metaViewport: Element
   private currentMediaElement: HTMLElement | null = null
   
@@ -44,7 +49,12 @@ export class ImageViewerDialog extends Modal {
     mediaData?: any,
     readonly?: boolean | null,
     linkId?: number | null,
-    published?: boolean
+    published?: boolean,
+    characterId?: number | null,
+    stateId?: number | null,
+    characterName?: string | null,
+    stateName?: string | null,
+    stateNumber?: number | null
   ) {
     super()
 
@@ -53,8 +63,13 @@ export class ImageViewerDialog extends Modal {
     this.projectId = projectId
     this.mediaData = mediaData || {}
     this.readonly = !!readonly
-    this.linkId = linkId || null
+    this.linkId = linkId ?? null
     this.published = !!published
+    this.characterId = characterId ?? null
+    this.stateId = stateId ?? null
+    this.characterName = characterName ?? null
+    this.stateName = stateName ?? null
+    this.stateNumber = stateNumber ?? null  // Use ?? to preserve 0 values
     this.metaViewport = document.querySelector(
       'meta[name="viewport"]'
     ) as Element
@@ -497,6 +512,19 @@ export class ImageViewerDialog extends Modal {
       // Build media URL for the annotation viewer
       const mediaUrl = this.getZoomDisplayUrl()
       
+      // Determine contextType and contextId based on the media type and available info
+      let contextType = null
+      let contextId = null
+      
+      // For character media with state information, set context for better annotation filtering
+      if (this.type === 'C' && this.stateId !== null) {
+        contextType = 'character_state'
+        contextId = this.stateId
+      } else if (this.type === 'C' && this.characterId !== null) {
+        contextType = 'character'
+        contextId = this.characterId
+      }
+      
       // Mount the AnnotationViewer component
       await this.annotationMountingUtility.mount(this.annotationContainer, {
         component: AnnotationViewer,
@@ -507,9 +535,12 @@ export class ImageViewerDialog extends Modal {
           type: this.type,
           linkId: this.linkId, // Pass the cell link_id for matrix cells
           canEdit: !this.readonly,
-          contextType: null,
-          contextId: null,
-          published: this.published // Pass published state to AnnotationViewer
+          contextType: contextType,
+          contextId: contextId,
+          published: this.published, // Pass published state to AnnotationViewer
+          characterName: this.characterName, // Pass character name for label display
+          stateName: this.stateName, // Pass state name for label display
+          stateNumber: this.stateNumber // Pass state number for label display
         },
         withPinia: true
       })
@@ -823,9 +854,21 @@ export class ImageViewerDialog extends Modal {
     //   </div>`)
     // }
     
-    // Character information - using the pre-formatted display from backend
+    // Character information - using the pre-formatted display from backend OR direct character/state names
     if (metadata.character_display) {
       const characterText = metadata.character_display
+      rightColumnItems.push(`<div class="metadata-item">
+        <strong>Character:</strong> ${this.escapeHtml(characterText)}
+      </div>`)
+    } else if (this.characterName) {
+      // Display character and state information when provided directly (for character media)
+      // Use the same format as cells: "Character Name :: State Name (State Number)"
+      let characterText = this.characterName
+      if (this.stateName && this.stateNumber !== null) {
+        characterText += ` :: ${this.stateName} (${this.stateNumber})`
+      } else if (this.stateName) {
+        characterText += ` :: ${this.stateName}`
+      }
       rightColumnItems.push(`<div class="metadata-item">
         <strong>Character:</strong> ${this.escapeHtml(characterText)}
       </div>`)
@@ -1605,6 +1648,11 @@ export class ImageViewerDialog extends Modal {
    * @param readonly Whether the image viewer should be immutable
    * @param linkId Optional link ID for matrix cell context
    * @param published Whether the project is published (for correct API endpoint)
+   * @param characterId Optional character ID for annotation context
+   * @param stateId Optional state ID for annotation context
+   * @param characterName Optional character name for metadata display
+   * @param stateName Optional state name for metadata display
+   * @param stateNumber Optional state number for metadata display
    */
   static show(
     type: string, 
@@ -1613,7 +1661,12 @@ export class ImageViewerDialog extends Modal {
     mediaData?: any,
     readonly?: boolean | null,
     linkId?: number | null,
-    published?: boolean
+    published?: boolean,
+    characterId?: number | null,
+    stateId?: number | null,
+    characterName?: string | null,
+    stateName?: string | null,
+    stateNumber?: number | null
   ) {
     // Handle backwards compatibility with old signature: show(type, id, readonly)
     let projectId: number
@@ -1622,9 +1675,14 @@ export class ImageViewerDialog extends Modal {
     
     let actualLinkId: number | null
     let actualPublished: boolean
+    let actualCharacterId: number | null
+    let actualStateId: number | null
+    let actualCharacterName: string | null
+    let actualStateName: string | null
+    let actualStateNumber: number | null
     
     if (typeof projectIdOrReadonly === 'number' || projectIdOrReadonly === null) {
-      // New signature: show(type, id, projectId, mediaData?, readonly?, linkId?, published?)
+      // New signature: show(type, id, projectId, mediaData?, readonly?, linkId?, published?, characterId?, stateId?, characterName?, stateName?, stateNumber?)
       // projectId can be a number or null (null means derive from URL)
       if (projectIdOrReadonly === null) {
         // Derive project ID from URL when null is passed
@@ -1634,8 +1692,13 @@ export class ImageViewerDialog extends Modal {
       }
       actualMediaData = mediaData
       actualReadonly = !!readonly
-      actualLinkId = linkId || null
+      actualLinkId = linkId ?? null
       actualPublished = !!published
+      actualCharacterId = characterId ?? null
+      actualStateId = stateId ?? null
+      actualCharacterName = characterName ?? null
+      actualStateName = stateName ?? null
+      actualStateNumber = stateNumber ?? null  // Use ?? to preserve 0 values
     } else {
       // Old signature: show(type, id, readonly?) - need to derive projectId
       projectId = ImageViewerDialog.deriveProjectId()
@@ -1643,9 +1706,14 @@ export class ImageViewerDialog extends Modal {
       actualReadonly = !!projectIdOrReadonly
       actualLinkId = null // Old signature doesn't support linkId
       actualPublished = false // Old signature defaults to false
+      actualCharacterId = null
+      actualStateId = null
+      actualCharacterName = null
+      actualStateName = null
+      actualStateNumber = null
     }
     
-    const viewer = new ImageViewerDialog(type, id, projectId, actualMediaData, actualReadonly, actualLinkId, actualPublished)
+    const viewer = new ImageViewerDialog(type, id, projectId, actualMediaData, actualReadonly, actualLinkId, actualPublished, actualCharacterId, actualStateId, actualCharacterName, actualStateName, actualStateNumber)
     viewer.setVisible(true)
   }
 }
