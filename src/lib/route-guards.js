@@ -281,7 +281,7 @@ export function createEntityCreateGuard(entityType) {
 function createCancelOnDenyGuard(entityType, entityLoader) {
   return async (to, from, next) => {
     try {
-      const projectId = parseInt(to.params.id)
+      const projectId = parseInt(to.params.id || to.params.projectId)
       const entityIdParam =
         to.params.taxonId ||
         to.params.specimenId ||
@@ -346,13 +346,19 @@ export const requireMatrixEditAccess = createCancelOnDenyGuard(
 
 /**
  * Require the current user to be a Project Administrator for the project id in the route.
- * Curators and system admins are NOT implicitly allowed here; this is strictly project admin.
+ * System curators and admins are also allowed.
  */
 export async function requireProjectAdmin(to, from, next) {
   try {
     const authStore = useAuthStore()
     if (!authStore.user?.userId) {
       next({ name: 'UserLogin' })
+      return
+    }
+
+    // Allow curators and system administrators
+    if (authStore.isUserCurator || authStore.isUserAdministrator) {
+      next()
       return
     }
 
