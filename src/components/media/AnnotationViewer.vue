@@ -265,17 +265,18 @@
       <div
         v-for="(annotation, index) in annotations"
         :key="annotation.annotation_id"
+        v-show="shouldShowLabel(annotation)"
         :style="getAnnotationLabelStyle(annotation)"
         :class="['annotation-label', { 
           'selected': selectedAnnotation?.annotation_id === annotation.annotation_id,
           'numbered-label': labelMode === 'numbers',
-          'text-label': labelMode === 'text'
+          'text-label': labelMode === 'text',
+          'empty-placeholder': getDisplayLabelText(annotation) === '+'
         }]"
         @click="selectAnnotation(annotation)"
         @dblclick="editAnnotation(annotation)"
         @mousedown="startLabelDrag($event, annotation)"
-        :title="labelMode === 'numbers' ? `Annotation ${index + 1}: ${getDisplayLabelText(annotation)}` : `Annotation ${annotation.annotation_id}: ${getDisplayLabelText(annotation)}`"
-        v-show="shouldShowLabel(annotation)"
+        :title="labelMode === 'numbers' ? `Annotation ${index + 1}: ${getDisplayLabelText(annotation)}` : (getDisplayLabelText(annotation) === '+' ? `Click to add label` : `Annotation ${annotation.annotation_id}: ${getDisplayLabelText(annotation)}`)"
         @mouseenter="hoveredAnnotation = annotation"
         @mouseleave="hoveredAnnotation = null"
       >
@@ -585,9 +586,19 @@ export default {
       return this.canvas?.getBoundingClientRect()
     },
     
-    // Use saveLinkId if provided, otherwise fall back to mediaId for save operations
+    // Use saveLinkId if provided, otherwise fall back to linkId, and finally mediaId
+    // For type 'X' (matrix), 'C' (character), linkId is the matrix cell or character reference
+    // For type 'M' (media), linkId may be null, so use mediaId
     effectiveSaveLinkId() {
-      return this.saveLinkId !== null ? this.saveLinkId : this.mediaId
+      if (this.saveLinkId !== null) {
+        return this.saveLinkId
+      }
+      // Use linkId if provided (for matrix/character annotations)
+      if (this.linkId !== null) {
+        return this.linkId
+      }
+      // Fall back to mediaId for media-only annotations
+      return this.mediaId
     }
   },
 
@@ -1540,17 +1551,36 @@ export default {
     },
 
     getLabelPosition(annotation) {
-      // Check if we have a custom position for this annotation
+      // Priority 1: Check if we have a runtime-dragged position for this session
       const customPos = this.labelPositions.get(annotation.annotation_id)
       if (customPos) {
         return customPos
       }
 
-      // Calculate dynamic offset to place label about 100px above the annotation
+      // Priority 2: Use database-stored label position if available
+      // The API returns tx, ty from the database - we should use these!
+      if (annotation.tx !== undefined && annotation.tx !== null && 
+          annotation.ty !== undefined && annotation.ty !== null) {
+        const txVal = parseFloat(annotation.tx)
+        const tyVal = parseFloat(annotation.ty)
+        
+        // Validate that the values are actual numbers and within reasonable bounds
+        // Coordinates should be percentages (0-100), but allow some overflow for labels near edges
+        if (!isNaN(txVal) && !isNaN(tyVal) && 
+            txVal > -50 && txVal < 150 && tyVal > -50 && tyVal < 150) {
+          return {
+            x: txVal,
+            y: tyVal
+          }
+        }
+        // If invalid values, fall through to calculated default
+      }
+
+      // Priority 3: Calculate default position as fallback (only if no DB position exists)
       const displayHeight = this.canvasDisplayHeight || 500 // fallback height
       const desiredPixelOffset = 150
       
-      // Convert 100px to percentage of display height
+      // Convert 150px to percentage of display height
       const offsetYPercent = (desiredPixelOffset / displayHeight) * 100
       
       // Default position: slightly to the right and well above the annotation
@@ -1872,9 +1902,35 @@ export default {
 
     // Label visibility logic
     shouldShowLabel(annotation) {
+      // Safely get label text, handling null/undefined/empty
+      const rawLabel = annotation.label
+      const labelText = (rawLabel === null || rawLabel === undefined) ? '' : String(rawLabel).trim()
       
-      // Show label if showDefaultText is 1, true, or '1' (string)
-      return annotation.showDefaultText == 1 || annotation.showDefaultText === true || annotation.showDefaultText === '1'
+      // Check if annotation has ACTUAL custom text (not default/placeholder/empty text)
+      const isCustomText = labelText.length > 0 && 
+                          labelText !== 'No label' && 
+                          labelText.toLowerCase() !== 'no label'
+      
+      // ALWAYS show label if it has custom text
+      // This ensures connection lines are drawn for custom labels
+      if (isCustomText) {
+        return true
+      }
+      
+      // No custom text exists - check showDefaultText flag
+      const showDefaultTextEnabled = annotation.showDefaultText == 1 || 
+                                     annotation.showDefaultText === true || 
+                                     annotation.showDefaultText === '1'
+      
+      // Show if showDefaultText is ON (will display "No label" text)
+      if (showDefaultTextEnabled) {
+        return true
+      }
+      
+      // showDefaultText is OFF and no custom text
+      // Show small empty box if user can edit (so they can click to add label)
+      // Hide completely if published/read-only
+      return this.canEdit
     },
 
     getAnnotationLabelStyle(annotation) {
@@ -1966,6 +2022,23 @@ export default {
         // Clear enhanced label cache when annotations change
         this.enhancedLabelCache.clear()
         
+        // LOG: Show final rendering decisions for all annotations
+        console.log('🎯 FINAL LABEL RENDERING DECISIONS:')
+        this.annotations.forEach((ann, index) => {
+          const willShow = this.shouldShowLabel(ann)
+          const displayText = this.getDisplayLabelText(ann)
+          const isPlaceholder = displayText === '+'
+          console.log(`  [${index + 1}] Annotation ${ann.annotation_id}:`, {
+            label: ann.label,
+            showDefaultText: ann.showDefaultText,
+            canEdit: this.canEdit,
+            willShowLabel: willShow,
+            displayText: displayText || '(empty)',
+            isPlaceholder: isPlaceholder,
+            result: willShow ? (isPlaceholder ? '📍 SMALL PLACEHOLDER' : '✅ VISIBLE') : '❌ HIDDEN'
+          })
+        })
+        
         // Emit event for parent component
         this.$emit('annotationsLoaded', this.annotations.length)
         
@@ -2042,12 +2115,21 @@ export default {
 
     // Get enhanced label text for display
     async getEnhancedLabelText(annotation) {
-      // If annotation has a label, use it
-      if (annotation.label && annotation.label.trim()) {
-        return annotation.label
+      // Safely get label text, handling null/undefined/empty (same logic as shouldShowLabel)
+      const rawLabel = annotation.label
+      const labelText = (rawLabel === null || rawLabel === undefined) ? '' : String(rawLabel).trim()
+      
+      // Check if annotation has CUSTOM label text (not default/placeholder/empty text)
+      const isCustomText = labelText.length > 0 && 
+                          labelText !== 'No label' && 
+                          labelText.toLowerCase() !== 'no label'
+      
+      // If annotation has custom label, use it
+      if (isCustomText) {
+        return labelText
       }
 
-      // If showDefaultText is not enabled, return empty
+      // If showDefaultText is not enabled and no custom text, return empty
       if (!this.shouldShowLabel(annotation)) {
         return ''
       }
@@ -2072,29 +2154,46 @@ export default {
         }
       }
 
-      // Fallback to default label
+      // Fallback to default label only if showDefaultText is enabled
       return this.getDefaultLabel()
     },
 
     // Synchronous method for template - handles caching and triggers async loading
     getDisplayLabelText(annotation) {
-      const cacheKey = annotation.annotation_id || `temp-${Date.now()}`
+      // Safely get label text, handling null/undefined/empty (same logic as shouldShowLabel)
+      const rawLabel = annotation.label
+      const labelText = (rawLabel === null || rawLabel === undefined) ? '' : String(rawLabel).trim()
       
-      // If we have cached enhanced text, use it
-      if (this.enhancedLabelCache.has(cacheKey)) {
-        return this.enhancedLabelCache.get(cacheKey)
-      }
+      // Check if annotation has CUSTOM label text (not default/placeholder/empty text)
+      const isCustomText = labelText.length > 0 && 
+                          labelText !== 'No label' && 
+                          labelText.toLowerCase() !== 'no label'
       
-      // If annotation has a label, use it immediately
-      if (annotation.label && annotation.label.trim()) {
-        const labelText = annotation.label
-        this.enhancedLabelCache.set(cacheKey, labelText)
+      // If annotation has custom label text, use it immediately (no cache needed for custom text)
+      if (isCustomText) {
         return labelText
       }
 
-      // If showDefaultText is not enabled, return empty
+      // CRITICAL: If shouldShowLabel is false, return empty
       if (!this.shouldShowLabel(annotation)) {
         return ''
+      }
+      
+      // Check showDefaultText flag
+      const showDefaultTextEnabled = annotation.showDefaultText == 1 || 
+                                     annotation.showDefaultText === true || 
+                                     annotation.showDefaultText === '1'
+
+      // If showDefaultText is OFF but label is showing (because canEdit is true)
+      // Return a placeholder for the small empty box
+      if (!showDefaultTextEnabled && this.canEdit) {
+        return '+' // Small plus icon as placeholder
+      }
+
+      // Now check cache (only for default/enhanced text when showDefaultText is ON)
+      const cacheKey = annotation.annotation_id || `temp-${Date.now()}`
+      if (this.enhancedLabelCache.has(cacheKey)) {
+        return this.enhancedLabelCache.get(cacheKey)
       }
 
       // For character media with character/state names provided directly, use them
@@ -2125,7 +2224,7 @@ export default {
         }
       }
 
-      // Return default label for now
+      // Return default label only if showDefaultText is enabled
       const defaultLabel = this.getDefaultLabel()
       this.enhancedLabelCache.set(cacheKey, defaultLabel)
       return defaultLabel
@@ -2289,11 +2388,67 @@ export default {
       })
     },
 
-    endLabelDrag() {
+    async endLabelDrag() {
+      if (!this.draggedLabelAnnotation || !this.isDraggingLabel) {
+        this.isDraggingLabel = false
+        this.draggedLabelAnnotation = null
+        document.body.style.userSelect = ''
+        document.body.style.cursor = ''
+        return
+      }
+      
+      // Get the new position from labelPositions Map (set during drag)
+      const newPosition = this.labelPositions.get(this.draggedLabelAnnotation.annotation_id)
+      
+      // Store reference to annotation before clearing drag state
+      const annotationToSave = this.draggedLabelAnnotation
+      
+      // CRITICAL: Clear drag state flags IMMEDIATELY before async save
+      // This prevents the label from continuing to drag during the save operation
       this.isDraggingLabel = false
       this.draggedLabelAnnotation = null
       document.body.style.userSelect = ''
       document.body.style.cursor = ''
+      
+      // Save to database if user has edit permissions and we have a valid position
+      if (newPosition && this.canEdit && annotationToSave.annotation_id) {
+        try {
+          // Update the annotation with new label position (tx, ty)
+          const updatedAnnotation = {
+            ...annotationToSave,
+            tx: newPosition.x,
+            ty: newPosition.y,
+            tw: annotationToSave.tw || 1,
+            th: annotationToSave.th || 1
+          }
+          
+          // Find and update in local state immediately
+          const index = this.annotations.findIndex(a => a.annotation_id === updatedAnnotation.annotation_id)
+          if (index !== -1) {
+            this.annotations[index].tx = newPosition.x
+            this.annotations[index].ty = newPosition.y
+          }
+          
+          // Save to database
+          const linkIdForUpdate = updatedAnnotation.link_id || this.effectiveSaveLinkId
+          
+          await annotationService.updateAnnotation(
+            this.projectId,
+            this.mediaId,
+            this.type,
+            linkIdForUpdate,
+            updatedAnnotation
+          )
+          
+          this.showSaveStatus('Label position saved', 'success')
+        } catch (error) {
+          console.error('Failed to save label position:', error)
+          this.showSaveStatus('Failed to save label position', 'error')
+          // Remove from labelPositions so it falls back to previous position
+          this.labelPositions.delete(annotationToSave.annotation_id)
+          this.drawAnnotations()
+        }
+      }
     },
 
     // Panel dragging methods
@@ -2671,9 +2826,9 @@ export default {
   min-width: 120px !important;
   max-width: 300px !important;
   text-align: center !important;
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
+  /* REMOVED: display: block !important; - This was preventing v-show from working! */
+  /* REMOVED: visibility: visible !important; - This was preventing v-show from working! */
+  /* REMOVED: opacity: 1 !important; - This was preventing v-show from working! */
   line-height: 1.4 !important;
 }
 
@@ -2693,7 +2848,7 @@ export default {
   height: 40px !important;
   border-radius: 50% !important;
   padding: 0 !important;
-  display: flex !important;
+  display: flex; /* Removed !important to allow v-show to work */
   align-items: center !important;
   justify-content: center !important;
   font-size: 16px !important;
@@ -2724,6 +2879,31 @@ export default {
 
 .annotation-label.hidden {
   display: none;
+}
+
+/* Empty placeholder label - small clickable box to add label */
+.annotation-label.empty-placeholder {
+  min-width: 32px !important;
+  max-width: 32px !important;
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #007bff !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+  font-size: 18px !important;
+  opacity: 0.7;
+  transition: all 0.2s !important;
+  cursor: pointer !important;
+}
+
+.annotation-label.empty-placeholder:hover {
+  opacity: 1;
+  border-style: solid !important;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3) !important;
 }
 
 
