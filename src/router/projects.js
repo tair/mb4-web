@@ -3,6 +3,13 @@ import {
   requireSpecimenEditAccess,
   requireMediaEditAccess,
   requireDocumentEditAccess,
+  requireDocumentFolderEditAccess,
+  requireMediaViewEditAccess,
+  requireFolioEditAccess,
+  requireMatrixEditAccess,
+  createEntityCreateGuard,
+  requireBibliographyEditAccess,
+  requireProjectAdmin,
 } from '@/lib/route-guards.js'
 
 export const MY_PROJECT_VIEWS = [
@@ -62,6 +69,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/matrices/ChooseView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('matrix'),
   },
   {
     path: 'matrices/create',
@@ -79,6 +87,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/matrices/CreateView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('matrix'),
   },
   {
     path: 'matrices/create-manual',
@@ -96,6 +105,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/matrices/CreateManualView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('matrix'),
   },
   {
     path: 'matrices/:matrixId(\\d+)/settings',
@@ -147,6 +157,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/media/CreateView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('media'),
   },
   {
     path: 'media/create/batch',
@@ -164,6 +175,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/media/CreateBatchView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('media'),
   },
   {
     path: 'media/create/3d',
@@ -181,6 +193,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/media/Create3DView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('media'),
   },
   {
     path: 'media/create/video',
@@ -198,6 +211,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/media/CreateVideoView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('media'),
   },
   {
     path: 'media/create/stacks',
@@ -215,6 +229,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/media/CreateStacksView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('media'),
   },
   {
     path: 'media/curate',
@@ -232,6 +247,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/media/CurateView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('media'),
   },
   {
     path: 'media/import/eol',
@@ -250,6 +266,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/media/ImportView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('media'),
   },
   {
     path: 'media/import/idigbio',
@@ -268,6 +285,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/media/ImportView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('media'),
   },
   {
     path: 'media/:mediaId(\\d+)',
@@ -321,6 +339,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/members/ListView.vue'
       ),
+    beforeEnter: requireProjectAdmin,
   },
   {
     path: 'members/groups',
@@ -338,6 +357,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/membersGroups/ListView.vue'
       ),
+    beforeEnter: requireProjectAdmin,
   },
   {
     path: 'members/:userId(\\d+)/edit',
@@ -355,6 +375,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/members/EditView.vue'
       ),
+    beforeEnter: requireProjectAdmin,
   },
   {
     path: 'members/groups/:groupId(\\d+)/edit',
@@ -372,6 +393,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/membersGroups/EditView.vue'
       ),
+    beforeEnter: requireProjectAdmin,
   },
   {
     path: 'members/groups/create',
@@ -389,6 +411,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/membersGroups/CreateView.vue'
       ),
+    beforeEnter: requireProjectAdmin,
   },
   {
     path: 'members/create',
@@ -406,6 +429,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/members/CreateView.vue'
       ),
+    beforeEnter: requireProjectAdmin,
   },
   {
     path: 'views',
@@ -440,6 +464,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/views/CreateView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('media_view'),
   },
   {
     path: 'views/:viewId(\\d+)/edit',
@@ -457,6 +482,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/views/EditView.vue'
       ),
+    beforeEnter: requireMediaViewEditAccess,
   },
   {
     path: 'folios',
@@ -491,6 +517,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/folios/CreateView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('folio'),
   },
   {
     path: 'folios/:folioId(\\d+)',
@@ -516,6 +543,7 @@ export const MY_PROJECT_VIEWS = [
           import(
             /* webpackChunkName: "unpublished" */ '@/views/project/folios/EditView.vue'
           ),
+        beforeEnter: requireFolioEditAccess,
       },
       {
         path: 'media',
@@ -560,6 +588,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/specimens/CreateView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('specimen'),
   },
   {
     path: 'specimens/:specimenId(\\d+)',
@@ -613,6 +642,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/specimens/UploadView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('specimen'),
   },
   {
     path: 'bibliography',
@@ -647,6 +677,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/bibliographies/UploadView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('bibliographic_reference'),
   },
   {
     path: 'bibliography/create',
@@ -664,6 +695,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/bibliographies/CreateView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('bibliographic_reference'),
   },
   {
     path: 'bibliography/:referenceId(\\d+)/edit',
@@ -681,6 +713,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/bibliographies/EditView.vue'
       ),
+    beforeEnter: requireBibliographyEditAccess,
   },
   {
     path: 'documents',
@@ -715,6 +748,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/documents/CreateView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('project_document'),
   },
   {
     path: 'documents/:documentId(\\d+)/edit',
@@ -750,6 +784,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/documents/FolderCreateView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('project_document_folder'),
   },
   {
     path: 'documents/folders/:folderId(\\d+)/edit',
@@ -767,6 +802,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/documents/FolderEditView.vue'
       ),
+    beforeEnter: requireDocumentFolderEditAccess,
   },
   {
     path: 'taxa',
@@ -801,6 +837,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/taxa/CreateView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('taxon'),
   },
   {
     path: 'taxa/create/batch',
@@ -818,6 +855,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/taxa/BatchCreateView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('taxon'),
   },
   {
     path: 'taxa/upload',
@@ -835,6 +873,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/taxa/UploadView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('taxon'),
   },
   {
     path: 'taxa/extinct/edit',
@@ -852,6 +891,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/taxa/ExtinctTaxaEditView.vue'
       ),
+    beforeEnter: requireTaxonEditAccess,
   },
   {
     path: 'taxa/pbdb/import',
@@ -869,6 +909,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/taxa/PbdbImportView.vue'
       ),
+    beforeEnter: createEntityCreateGuard('taxon'),
   },
   {
     path: 'taxa/:taxonId(\\d+)/',
@@ -922,6 +963,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/institutions/ListView.vue'
       ),
+    beforeEnter: requireProjectAdmin,
   },
   {
     path: 'institutions/create',
@@ -939,6 +981,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/institutions/CreateView.vue'
       ),
+    beforeEnter: requireProjectAdmin,
   },
   {
     path: 'download',
@@ -973,6 +1016,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/duplication/RequestView.vue'
       ),
+    beforeEnter: requireProjectAdmin,
   },
   {
     path: 'publish/partition',
@@ -990,6 +1034,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/publishPartition/PublishPartitionView.vue'
       ),
+    beforeEnter: requireProjectAdmin,
   },
   {
     path: 'publish/partition/:partitionId',
@@ -1007,6 +1052,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/publishPartition/SummaryView.vue'
       ),
+    beforeEnter: requireProjectAdmin,
   },
   // Publication workflow routes
   {
@@ -1025,6 +1071,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/publish/PrerequisiteView.vue'
       ),
+    beforeEnter: requireProjectAdmin,
   },
 
   {
@@ -1047,6 +1094,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/publish/PreferencesView.vue'
       ),
+    beforeEnter: requireProjectAdmin,
   },
   {
     path: 'publish/final',
@@ -1068,5 +1116,6 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/publish/FinalView.vue'
       ),
+    beforeEnter: requireProjectAdmin,
   },
 ]

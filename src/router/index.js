@@ -29,6 +29,7 @@ import UserSetNewPasswordView from '@/views/users/UserSetNewPasswordView.vue'
 import UserView from '@/views/users/UserView.vue'
 import SearchView from '@/views/SearchView.vue'
 import { apiService } from '@/services/apiService.js'
+import { requireMatrixEditAccess, requireProjectAdmin } from '@/lib/route-guards.js'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -184,7 +185,7 @@ const router = createRouter({
             import(
               /* webpackChunkName: "unpublished" */ '@/views/project/home/EditProjectView.vue'
             ),
-          beforeEnter: requireSignInAndProfileConfirmation,
+          beforeEnter: [requireSignInAndProfileConfirmation, requireProjectAdmin],
         },
         {
           path: '/myprojects/:id(\\d+)',
@@ -268,12 +269,14 @@ const router = createRouter({
       path: '/myprojects/:projectId/matrices/:matrixId/edit',
       name: 'MyProjectMatrixEditView',
       component: () => import('@/views/project/matrices/MatrixEditorView.vue'),
+      beforeEnter: requireMatrixEditAccess,
     },
     {
       path: '/myprojects/:projectId/matrices/:matrixId/characters',
       name: 'MyProjectCharacterEditorView',
       component: () =>
         import('@/views/project/matrices/CharacterEditorView.vue'),
+      beforeEnter: requireMatrixEditAccess,
     },
     {
       path: '/project/:projectId/matrices/:matrixId/view',
@@ -333,6 +336,29 @@ router.afterEach((to, from) => {
   if (to.fullPath != from.fullPath) {
     console.timeEnd(to.fullPath)
   }
+  // Display toast errors passed via query (?error=...)
+  const maybeError = to.query && to.query.error
+  if (maybeError) {
+    // Support both string and array values
+    const message = Array.isArray(maybeError) ? maybeError[0] : maybeError
+    // Dynamically import notifications to avoid early Pinia usage
+    import('@/composables/useNotifications.ts')
+      .then(({ useNotifications }) => {
+        const { showError } = useNotifications()
+        if (message && String(message).trim().length > 0) {
+          showError(String(message), 'Permission Denied')
+        }
+      })
+      .catch(() => {})
+
+    // Clean the error param from URL to prevent repeat toasts
+    const newQuery = { ...to.query }
+    delete newQuery.error
+    // Avoid triggering navigation if nothing changed
+    if (to.query.error !== undefined) {
+      router.replace({ name: to.name, params: to.params, query: newQuery })
+    }
+  }
 })
 
 function requireSignIn(to) {
@@ -352,6 +378,11 @@ async function requireProfileConfirmation(to) {
   
   // Only check for authenticated users
   if (!authStore.hasValidAuthToken()) {
+    return
+  }
+
+  // Skip profile confirmation for anonymous reviewer sessions
+  if (authStore.isAnonymousReviewer) {
     return
   }
 

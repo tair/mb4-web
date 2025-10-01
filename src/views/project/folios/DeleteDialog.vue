@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useFoliosStore } from '@/stores/FoliosStore'
 import { useNotifications } from '@/composables/useNotifications'
+import { useAuthStore } from '@/stores/AuthStore'
+import { AccessControlService, EntityType } from '@/lib/access-control.js'
 const props = defineProps<{
   projectId: number | string
   folios: any[]
@@ -8,8 +10,27 @@ const props = defineProps<{
 
 const foliosStore = useFoliosStore()
 const { showError, showSuccess, showWarning, showInfo } = useNotifications()
+const authStore = useAuthStore()
 
 async function deleteFolios(folioIds: number[]) {
+  if (authStore.isAnonymousReviewer) {
+    showError('Anonymous reviewers have view-only access and cannot delete.', 'Permission Denied')
+    return
+  }
+  try {
+    const { projectId } = props
+    const result = await AccessControlService.canCreateEntity({
+      entityType: EntityType.FOLIO,
+      projectId: typeof projectId === 'string' ? parseInt(projectId) : projectId,
+    })
+    if (!result.canCreate) {
+      showError(result.reason || 'You do not have permission to delete folios.', 'Permission Denied')
+      return
+    }
+  } catch (e) {
+    showError('You do not have permission to delete folios.', 'Permission Denied')
+    return
+  }
   const deleted = foliosStore.deleteIds(props.projectId, folioIds)
   if (!deleted) {
     showError('Failed to delete folio', 'Delete Failed')

@@ -1,9 +1,17 @@
 import { useTaxaStore } from '@/stores/TaxaStore.js'
 import { useSpecimensStore } from '@/stores/SpecimensStore.js'
 import { useMediaStore } from '@/stores/MediaStore.js'
+import { useMediaViewsStore } from '@/stores/MediaViewsStore.js'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore.js'
 import { useDocumentsStore } from '@/stores/DocumentsStore.js'
-import { createEntityEditGuard, EntityType } from './access-control.js'
+import { useFoliosStore } from '@/stores/FoliosStore.js'
+import { useAuthStore } from '@/stores/AuthStore.js'
+import { useProjectUsersStore } from '@/stores/ProjectUsersStore.js'
+import {
+  createEntityEditGuard,
+  EntityType,
+  AccessControlService,
+} from './access-control.js'
 
 /**
  * Entity loaders for different types
@@ -52,6 +60,19 @@ async function loadMedia({ projectId, entityId }) {
 }
 
 /**
+ * Load a media view by ID
+ */
+async function loadMediaView({ projectId, entityId }) {
+  const mediaViewsStore = useMediaViewsStore()
+
+  if (!mediaViewsStore.isLoaded) {
+    await mediaViewsStore.fetchMediaViews(projectId)
+  }
+
+  return mediaViewsStore.getMediaViewById(entityId)
+}
+
+/**
  * Load a bibliographic reference by ID
  */
 async function loadBibliographicReference({ projectId, entityId }) {
@@ -91,6 +112,36 @@ async function loadDocumentFolder({ projectId, entityId }) {
   }
 
   return documentsStore.getFolderById(entityId)
+}
+
+/**
+ * Load a folio by ID
+ */
+async function loadFolio({ projectId, entityId }) {
+  const foliosStore = useFoliosStore()
+
+  if (!foliosStore.isLoaded) {
+    await foliosStore.fetch(projectId)
+  }
+
+  return foliosStore.getFolioById(entityId)
+}
+
+/**
+ * Load a matrix by ID
+ */
+async function loadMatrix({ projectId, entityId }) {
+  const { useMatricesStore } = await import('@/stores/MatricesStore.js')
+  const matricesStore = useMatricesStore()
+
+  if (!matricesStore.isLoaded) {
+    await matricesStore.fetchMatricesByProjectId(projectId)
+  }
+
+  const list = matricesStore.matrices || []
+  return Array.isArray(list)
+    ? list.find((m) => parseInt(m.matrix_id) === parseInt(entityId))
+    : null
 }
 
 /**
@@ -144,6 +195,197 @@ export const requireDocumentFolderEditAccess = createEntityEditGuard(
   EntityType.PROJECT_DOCUMENT_FOLDER,
   loadDocumentFolder
 )
+
+/**
+ * Route guard for media view edit access
+ */
+// Replaced below with cancel-on-deny variant
+
+/**
+ * Route guard for folio edit access
+ */
+export const requireFolioEditAccess = createEntityEditGuard(
+  EntityType.FOLIO,
+  loadFolio
+)
+
+/**
+ * Route guard for matrix edit access
+ */
+// Replaced below with cancel-on-deny variant
+
+/**
+ * Factory for create access guard per entity type
+ */
+export function createEntityCreateGuard(entityType) {
+  return async (to, from, next) => {
+    try {
+      const projectId = parseInt(to.params.id || to.params.projectId)
+      if (!projectId) {
+        next({ name: 'NotFoundView', query: { message: 'Invalid project' } })
+        return
+      }
+
+      const result = await AccessControlService.canCreateEntity({
+        entityType,
+        projectId,
+      })
+
+      if (!result.canCreate) {
+        // Redirect to the module list view with error message
+        const listViewRouteMap = {
+          [EntityType.TAXON]: 'MyProjectTaxaView',
+          [EntityType.SPECIMEN]: 'MyProjectSpecimensListView',
+          [EntityType.MEDIA]: 'MyProjectMediaView',
+          [EntityType.MEDIA_VIEW]: 'MyProjectMediaViewsView',
+          [EntityType.PROJECT_DOCUMENT]: 'MyProjectDocumentsView',
+          [EntityType.PROJECT_DOCUMENT_FOLDER]: 'MyProjectDocumentsView',
+          [EntityType.BIBLIOGRAPHIC_REFERENCE]: 'MyProjectBibliographyListView',
+          [EntityType.FOLIO]: 'MyProjectFoliosView',
+          [EntityType.MATRIX]: 'MyProjectMatrixView',
+        }
+
+        const listViewName = listViewRouteMap[entityType] || 'NotFoundView'
+        if (listViewName === 'NotFoundView') {
+          next({
+            name: 'NotFoundView',
+            query: {
+              message:
+                result.reason || 'You do not have permission to create here.',
+            },
+          })
+          return
+        }
+        next({
+          name: listViewName,
+          params: { id: projectId },
+          query: {
+            error: result.reason || 'You do not have permission to create here.',
+          },
+        })
+        return
+      }
+
+      next()
+    } catch (error) {
+      console.error('Create access control guard error:', error)
+      next({ name: 'NotFoundView', query: { message: 'Error checking permissions' } })
+    }
+  }
+}
+
+/**
+ * Guard wrapper that cancels navigation and shows toast on access denial for entity edit pages.
+ * Uses the existing createEntityEditGuard under the hood but overrides redirect behavior.
+ */
+function createCancelOnDenyGuard(entityType, entityLoader) {
+  return async (to, from, next) => {
+    try {
+      const projectId = parseInt(to.params.id)
+      const entityIdParam =
+        to.params.taxonId ||
+        to.params.specimenId ||
+        to.params.mediaId ||
+        to.params.documentId ||
+        to.params.folderId ||
+        to.params.referenceId ||
+        to.params.folioId ||
+        to.params.entityId ||
+        to.params.viewId ||
+        to.params.matrixId
+      const entityId = parseInt(entityIdParam)
+
+      if (!projectId || !entityId) {
+        next(false)
+        return
+      }
+
+      const entity = await entityLoader({ projectId, entityId, route: to })
+      if (!entity) {
+        next(false)
+        return
+      }
+
+      const accessResult = await AccessControlService.canEditEntity({
+        entityType,
+        projectId,
+        entity,
+      })
+
+      if (accessResult.shouldRedirect) {
+        try {
+          const { useNotifications } = await import('@/composables/useNotifications.ts')
+          const { showError } = useNotifications()
+          const msg =
+            accessResult.reason ||
+            `You do not have permission to access this ${entityType.toLowerCase()}`
+          showError(msg, 'Permission Denied')
+        } catch (e) {}
+        next(false)
+        return
+      }
+
+      next()
+    } catch (error) {
+      console.error('Cancel-on-deny guard error:', error)
+      next(false)
+    }
+  }
+}
+
+// Export cancel-on-deny variants for modules that should not navigate on denial
+export const requireMediaViewEditAccess = createCancelOnDenyGuard(
+  EntityType.MEDIA_VIEW,
+  loadMediaView
+)
+
+export const requireMatrixEditAccess = createCancelOnDenyGuard(
+  EntityType.MATRIX,
+  loadMatrix
+)
+
+/**
+ * Require the current user to be a Project Administrator for the project id in the route.
+ * Curators and system admins are NOT implicitly allowed here; this is strictly project admin.
+ */
+export async function requireProjectAdmin(to, from, next) {
+  try {
+    const authStore = useAuthStore()
+    if (!authStore.user?.userId) {
+      next({ name: 'UserLogin' })
+      return
+    }
+
+    const projectId = parseInt(to.params.id || to.params.projectId)
+    if (!projectId) {
+      next({ name: 'NotFoundView', query: { message: 'Invalid project' } })
+      return
+    }
+
+    const projectUsersStore = useProjectUsersStore()
+    if (!projectUsersStore.isLoaded) {
+      await projectUsersStore.fetchUsers(projectId)
+    }
+
+    const membership = projectUsersStore.getUserById(authStore.user.userId)
+    if (membership?.admin === true) {
+      next()
+      return
+    }
+
+    // Not a project admin - redirect back to overview with error
+    next({
+      name: 'MyProjectOverviewView',
+      params: { id: projectId },
+      query: {
+        error: 'Only project administrators can perform this action.',
+      },
+    })
+  } catch (error) {
+    console.error('Project admin guard error:', error)
+    next({ name: 'NotFoundView', query: { message: 'Error checking permissions' } })
+  }
+}
 
 /**
  * Helper function to create guards for other entity types
