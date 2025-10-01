@@ -3,6 +3,8 @@ import { ref } from 'vue'
 import { useDocumentsStore } from '@/stores/DocumentsStore'
 import type { S3Warning } from '@/types/documents'
 import { useNotifications } from '@/composables/useNotifications'
+import { useAuthStore } from '@/stores/AuthStore'
+import { AccessControlService, EntityType } from '@/lib/access-control.js'
 
 const props = defineProps<{
   projectId: number | string
@@ -11,12 +13,32 @@ const props = defineProps<{
 
 const documentsStore = useDocumentsStore()
 const { showError, showWarning } = useNotifications()
+const authStore = useAuthStore()
 
 const isDeleting = ref(false)
 
 async function deleteDocument(documentId: number) {
   if (isDeleting.value) return // Prevent double-clicking
   
+  // Permission checks
+  if (authStore.isAnonymousReviewer) {
+    showError('Anonymous reviewers have view-only access and cannot delete.', 'Permission Denied')
+    return
+  }
+  try {
+    const result = await AccessControlService.canCreateEntity({
+      entityType: EntityType.PROJECT_DOCUMENT,
+      projectId: typeof props.projectId === 'string' ? parseInt(props.projectId) : props.projectId,
+    })
+    if (!result.canCreate) {
+      showError(result.reason || 'You do not have permission to delete documents.', 'Permission Denied')
+      return
+    }
+  } catch (e) {
+    showError('You do not have permission to delete documents.', 'Permission Denied')
+    return
+  }
+
   isDeleting.value = true
   
   try {

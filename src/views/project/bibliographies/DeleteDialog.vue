@@ -3,6 +3,8 @@ import { ref, watch } from 'vue'
 import BibliographyItem from '@/components/project/BibliographyItem.vue'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
 import { useNotifications } from '@/composables/useNotifications'
+import { useAuthStore } from '@/stores/AuthStore'
+import { AccessControlService, EntityType } from '@/lib/access-control.js'
 
 const props = defineProps<{
   projectId: number | string
@@ -11,6 +13,7 @@ const props = defineProps<{
 
 const bibliographiesStore = useBibliographiesStore()
 const { showError, showSuccess, showWarning: showWarningNotification } = useNotifications()
+const authStore = useAuthStore()
 const citationInfo = ref([])
 const loading = ref(false)
 const showWarning = ref(false)
@@ -38,7 +41,7 @@ async function checkCitations() {
       referenceIds
     )
     citationInfo.value = citations
-    showWarning.value = citations.some((c) => c.total_count > 0)
+    showWarning.value = citations.some((c: any) => c.total_count > 0)
   } catch (error) {
     console.error('Error checking citations:', error)
     citationInfo.value = []
@@ -64,6 +67,24 @@ function getBibliographyTitle(referenceId: number): string {
 
 async function deleteBibliographies(referenceIds: number[]) {
   if (isDeleting.value) return // Prevent double submission
+  // Permission checks
+  if (authStore.isAnonymousReviewer) {
+    showError('Anonymous reviewers have view-only access and cannot delete.', 'Permission Denied')
+    return
+  }
+  try {
+    const result = await AccessControlService.canCreateEntity({
+      entityType: EntityType.BIBLIOGRAPHIC_REFERENCE,
+      projectId: typeof props.projectId === 'string' ? parseInt(props.projectId) : props.projectId,
+    })
+    if (!result.canCreate) {
+      showError(result.reason || 'You do not have permission to delete bibliographies.', 'Permission Denied')
+      return
+    }
+  } catch (e) {
+    showError('You do not have permission to delete bibliographies.', 'Permission Denied')
+    return
+  }
   
   isDeleting.value = true
   

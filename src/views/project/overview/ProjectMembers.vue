@@ -116,7 +116,7 @@ const props = defineProps<{
               <small v-else-if="member.member_role == '2'">
                 Character annotater
                 <Tooltip
-                  content="can edit everything but characters and states"
+                  content="can edit only matrix characters and states"
                 ></Tooltip
               ></small>
               <small v-else-if="member.member_role == '3'">

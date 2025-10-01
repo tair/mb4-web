@@ -475,11 +475,17 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label"> Journal Number </label>
+        <label class="form-label">
+          Journal Number
+          <span class="required" v-if="formData.publication_status === '0'"
+            >Required</span
+          >
+        </label>
         <input
           v-model="formData.journal_number"
           type="text"
           class="form-control"
+          :required="formData.publication_status === '0'"
         />
       </div>
 

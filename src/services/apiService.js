@@ -173,10 +173,22 @@ class ApiService {
           const message = (errorData && (errorData.message || errorData.error)) || 'Authentication required'
           throw createError(message, 'UNAUTHORIZED')
         }
-        
-      case 403:
-        throw createError('Access forbidden', 'FORBIDDEN')
-        
+
+      case 403: {
+        // Access forbidden - raise a toast
+        try {
+          const { useNotifications } = await import('@/composables/useNotifications.ts')
+          const { showError } = useNotifications()
+          showError(
+            (errorData && (errorData.message || errorData.error)) || 'You do not have permission to perform this action.',
+            'Permission Denied'
+          )
+        } catch (e) {
+          // Ignore if notifications fail to load
+        }
+        throw new Error('Access forbidden')
+      }
+      
       case 404:
         throw createError('Resource not found', 'NOT_FOUND')
         
@@ -209,7 +221,7 @@ class ApiService {
         
         // Default server error
         throw createError('Server error. Please try again later.', 'SERVER_ERROR', true)
-        
+
       default:
         // Check if response data includes retry information
         const shouldRetry = errorData?.retry === true

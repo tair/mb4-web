@@ -5,6 +5,8 @@ import SpecimenSearchInput from '@/views/project/common/SpecimenSearchInput.vue'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useNotifications } from '@/composables/useNotifications'
+import { useAuthStore } from '@/stores/AuthStore'
+import { AccessControlService, EntityType } from '@/lib/access-control.js'
 import { computed, onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{
@@ -36,6 +38,7 @@ onMounted(() => {
 // the specimen.
 const specimensStore = useSpecimensStore()
 const { showError, showSuccess } = useNotifications()
+const authStore = useAuthStore()
 const specimenIds = computed(() =>
   props.specimens.map((specimen) => specimen.specimen_id)
 )
@@ -71,6 +74,25 @@ function setRemappedSpecimenId(
 }
 
 async function handleDelete() {
+  // Block unauthorized deletes
+  if (authStore.isAnonymousReviewer) {
+    showError('Anonymous reviewers have view-only access and cannot delete.', 'Permission Denied')
+    return
+  }
+  try {
+    const { projectId } = props
+    const result = await AccessControlService.canCreateEntity({
+      entityType: EntityType.SPECIMEN,
+      projectId: typeof projectId === 'string' ? parseInt(projectId) : projectId,
+    })
+    if (!result.canCreate) {
+      showError(result.reason || 'You do not have permission to delete specimens.', 'Permission Denied')
+      return
+    }
+  } catch (e) {
+    showError('You do not have permission to delete specimens.', 'Permission Denied')
+    return
+  }
   try {
     const deleted = await specimensStore.deleteIds(
       props.projectId,
