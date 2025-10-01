@@ -897,7 +897,8 @@ onMounted(() => {
       <div class="buttons">
         <RouterLink
           :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/view`"
-          @click.prevent="$router.push({ name: 'MyProjectMatrixViewerView', params: { projectId, matrixId: matrix.matrix_id } })"
+          target="_blank"
+          rel="noopener"
         >
           <button type="button" class="btn btn-sm btn-secondary view-btn" title="View matrix">
             <i class="fa-regular fa-eye"></i>
@@ -906,7 +907,8 @@ onMounted(() => {
         <RouterLink
           v-if="canEditMatrix"
           :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/edit`"
-          @click.prevent="$router.push({ name: 'MyProjectMatrixEditView', params: { projectId, matrixId: matrix.matrix_id } })"
+          target="_blank"
+          rel="noopener"
         >
           <button type="button" class="btn btn-sm btn-secondary pencil-btn" title="Edit matrix">
             <i class="fa-regular fa-pen-to-square"></i>
@@ -1012,7 +1014,8 @@ onMounted(() => {
         <div class="tab-content-buttons">
           <RouterLink
             :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/characters`"
-            @click.prevent="$router.push({ name: 'MyProjectCharacterEditorView', params: { projectId, matrixId: matrix.matrix_id } })"
+            target="_blank"
+            rel="noopener"
           >
             <button type="button" class="btn btn-primary">
               Edit Characters
