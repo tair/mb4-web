@@ -200,12 +200,12 @@
 
 <script>
 import { reactive, ref } from 'vue'
-import axios from 'axios'
 import Alert from '../../components/main/Alert.vue'
 import SpamDetection from 'spam-detection'
 import { useAuthStore } from '@/stores/AuthStore.js'
 import FormLayout from '@/components/main/FormLayout.vue'
 import '@/assets/css/form.css'
+import { apiService } from '@/services/apiService.js'
 
 export default {
   components: {
@@ -297,8 +297,8 @@ export default {
     }
 
     const validateDescription = (description) => {
-      if (!description || description.length < 200) {
-        return 'The description must contain more than 200 characters. Please clearly state the problem and what was expected.'
+      if (!description || description.length < 75) {
+        return 'The description must contain at least 75 characters. Please clearly state the problem and what was expected.'
       }
 
       // Check for HTML links
@@ -501,15 +501,7 @@ export default {
       loading.value = true
       try {
         // Submit form data to API
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/email/contact-us-submit`,
-          formDataForSubmission,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
-        )
+        const response = await apiService.post('/email/contact-us-submit', formDataForSubmission)
         alert.customMessage =
           'Your email has been sent. MorphoBank will be back in touch with you very shortly!'
         alert.type = 'success'

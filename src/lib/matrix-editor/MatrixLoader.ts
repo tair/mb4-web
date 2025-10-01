@@ -1,3 +1,5 @@
+import { apiService } from '@/services/apiService.js'
+
 /**
  * Class that loads the matrix.
  * @param host The location of the server.
@@ -15,6 +17,14 @@ export class MatrixLoader {
     this.host = host
     this.readOnly = false
     this.isAborted = false
+  }
+
+  /**
+   * Gets the project ID
+   * @return The project ID
+   */
+  getProjectId(): number {
+    return this.projectId
   }
 
   /**
@@ -53,31 +63,35 @@ export class MatrixLoader {
     if (this.readOnly) {
       query['ro'] = 1
     }
-    const options = {
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-      credential: 'include',
-      body: JSON.stringify(query),
-    }
     const url = this.url + request.getMethod()
     return new Promise((resolve, reject) => {
       const fetchWithRequest = async () => {
         try {
-          const response = await fetch(url, options)
-          if (response.status == 401) {
-            sendRetries = request.getRetries()
-            return { errors: ['User is not signed in'] }
+          const response = await apiService.post(url, query, {
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+          })
+          // Try to parse JSON; if it fails for error responses, fall back to text
+          let data: any
+          try {
+            data = await response.json()
+          } catch (_e) {
+            if (!response.ok) {
+              const text = await response.text()
+              const message = text || response.statusText || 'Unknown error'
+              return Promise.reject(message)
+            }
+            throw _e
           }
-          const data = await response.json()
           try {
             // console.log(data)
             if (data['ok']) {
               resolve(data)
             } else {
-              const errorMessage = data['errors'].join(',')
+              const errorMessage = data['errors']?.join(',') || 'Unknown error'
               reject(errorMessage)
             }
           } catch (e) {

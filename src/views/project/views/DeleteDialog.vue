@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { useMediaViewsStore } from '@/stores/MediaViewsStore'
+import { useNotifications } from '@/composables/useNotifications'
 const props = defineProps<{
   projectId: number | string
   mediaViews: any[]
 }>()
 
 const mediaViewsStore = useMediaViewsStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 async function deleteMediaViews(viewIds: number[]) {
   const deleted = mediaViewsStore.deleteIds(props.projectId, viewIds)
   if (!deleted) {
-    alert('Failed to delete views')
+    showError('Failed to delete views', 'Delete Failed')
   }
 }
 </script>

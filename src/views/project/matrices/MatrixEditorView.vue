@@ -3,6 +3,7 @@ import { useRoute } from 'vue-router'
 import { onMounted, onUnmounted } from 'vue'
 import startMatrixEditor from '@/lib/matrix-editor/startMatrixEditor'
 import '@/assets/css/matrixEditor.css'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const projectId = parseInt(route.params.projectId, 10)
@@ -14,7 +15,7 @@ onMounted(() => {
     projectId,
     matrixId,
     isStreaming,
-    import.meta.env.VITE_API_URL
+    apiService.buildUrl('')
   )
 })
 

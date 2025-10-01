@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
+import { apiService } from '@/services/apiService.js'
 
 export const useTaxaStore = defineStore({
   id: 'taxa',
@@ -16,85 +16,71 @@ export const useTaxaStore = defineStore({
   },
   actions: {
     async fetch(projectId) {
-      const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/taxa`
-      const response = await axios.get(url)
-      const taxa = response.data.taxa
+      const response = await apiService.get(`/projects/${projectId}/taxa`)
+      const responseData = await response.json()
+        const taxa = responseData.taxa
       this.addTaxa(taxa)
 
-      this.partitions = response.data.partitions
-      this.matrices = response.data.matrices
+      this.partitions = responseData.partitions
+      this.matrices = responseData.matrices
 
       this.isLoaded = true
     },
     async fetchTaxaUsage(projectId, taxonIds) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/taxa/usages`
-      const response = await axios.post(url, {
+      const response = await apiService.post(`/projects/${projectId}/taxa/usages`, {
         taxon_ids: taxonIds,
       })
-      return response.data.usages
+      const responseData = await response.json(); return responseData.usages
     },
     async create(projectId, taxon) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/taxa/create`
-      const response = await axios.post(url, taxon)
-      if (response.status == 200) {
-        const taxon = response.data.taxon
+      const response = await apiService.post(`/projects/${projectId}/taxa/create`, taxon)
+      if (response.ok) {
+        const responseData = await response.json()
+        const taxon = responseData.taxon
         this.addTaxa([taxon])
         return true
       }
       return false
     },
     async createBatch(projectId, taxa) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/taxa//create/batch`
-      const response = await axios.post(url, { taxa: taxa })
-      if (response.status == 200) {
-        const taxa = response.data.taxa
+      const response = await apiService.post(`/projects/${projectId}/taxa/create/batch`, { taxa: taxa })
+      if (response.ok) {
+        const responseData = await response.json()
+        const taxa = responseData.taxa
         this.addTaxa(taxa)
         return true
       }
       return false
     },
     async edit(projectId, taxonId, taxon) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/taxa/${taxonId}/edit`
-      const response = await axios.post(url, taxon)
-      if (response.status == 200) {
-        const updatedTaxon = response.data.taxon
+      const response = await apiService.post(`/projects/${projectId}/taxa/${taxonId}/edit`, taxon)
+      if (response.ok) {
+        const responseData = await response.json()
+        const updatedTaxon = responseData.taxon
         this.addTaxa([updatedTaxon])
         return true
       }
       return false
     },
     async editIds(projectId, taxaIds, json) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/taxa/edit`
-      const response = await axios.post(url, {
+      const response = await apiService.post(`/projects/${projectId}/taxa/edit`, {
         taxa_ids: taxaIds,
         taxa: json,
       })
-      if (response.status == 200) {
-        const taxa = response.data.taxa
+      if (response.ok) {
+        const responseData = await response.json()
+        const taxa = responseData.taxa
         this.addTaxa(taxa)
         return true
       }
       return false
     },
     async deleteIds(projectId, taxonIds, remappedTaxonIds) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/taxa/delete`
-      const response = await axios.post(url, {
+      const response = await apiService.post(`/projects/${projectId}/taxa/delete`, {
         taxon_ids: taxonIds,
         remapped_taxon_ids: remappedTaxonIds,
       })
-      if (response.status == 200) {
+      if (response.ok) {
         this.removeByTaxonIds(taxonIds)
         return true
       }

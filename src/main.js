@@ -82,7 +82,7 @@ axios.interceptors.request.use(
   }
 )
 
-// Optional: Set up response interceptor for session-related error handling
+// Set up response interceptor for session and authentication error handling
 axios.interceptors.response.use(
   (response) => {
     return response
@@ -97,6 +97,38 @@ axios.interceptors.response.use(
       sessionManager.renewSession()
       // Optionally retry the request with new session
     }
+    
+    // Handle authentication errors by clearing local auth state and redirecting to login
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      // Import authStore and router dynamically to avoid circular dependency
+      Promise.all([
+        import('./stores/AuthStore.js'),
+        import('./router/index.js')
+      ]).then(([{ useAuthStore }, { default: router }]) => {
+        const authStore = useAuthStore()
+        // Only handle auth errors if we have auth data (to avoid clearing on public endpoints)
+        if (authStore.user?.authToken) {
+          console.log('Authentication error detected, clearing local auth state and redirecting to login')
+          authStore.invalidate()
+          
+          // Redirect to login page with current route as redirect parameter
+          const currentRoute = router.currentRoute.value
+          if (currentRoute.name !== 'UserLogin') {
+            router.push({ 
+              name: 'UserLogin', 
+              query: { 
+                redirect: currentRoute.name,
+                // Preserve query params if they exist
+                ...(Object.keys(currentRoute.query).length > 0 ? { originalQuery: JSON.stringify(currentRoute.query) } : {})
+              } 
+            })
+          }
+        }
+      }).catch(err => {
+        console.warn('Could not handle auth error:', err)
+      })
+    }
+    
     return Promise.reject(error)
   }
 )

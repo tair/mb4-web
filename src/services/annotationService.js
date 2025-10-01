@@ -9,7 +9,15 @@ import { apiService } from './apiService.js'
 
 class AnnotationService {
   constructor() {
-    this.baseUrl = '/services/projects'
+    this.baseUrl = '/projects'
+  }
+
+  /**
+   * Set the base URL based on whether the project is published
+   * @param {boolean} published - Whether the project is published
+   */
+  setPublished(published) {
+    this.baseUrl = published ? '/public/projects' : '/projects'
   }
 
   /**
@@ -293,6 +301,9 @@ class AnnotationService {
       user_name: annotation.user_name,
       created_on: annotation.created_on,
       updated_on: annotation.updated_on,
+      
+      // Link information (preserve original link_id for updates)
+      link_id: annotation.link_id,
       
       // Context
       contextType: annotation.context_type,

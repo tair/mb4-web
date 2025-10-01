@@ -119,7 +119,7 @@ export class MediaGrid extends Component {
     const mediaDiv = document.createElement('div')
     mb.setElementStyle(mediaDiv, 'align', 'center')
     mediaDiv.classList.add('mediaItem')
-    mediaDiv.innerHTML = MediaExports.toTag(item.image)
+    mediaDiv.innerHTML = MediaExports.toTag(item.image, 'thumbnail')
     const handler = this.getHandler()
     if (this.removeable) {
       const removeSpan = document.createElement('span')
@@ -135,15 +135,25 @@ export class MediaGrid extends Component {
       )
     }
     if (item.caption) {
-      const contentSpan = document.createElement('b')
+      const contentSpan = document.createElement('span')
       contentSpan.innerHTML = item.caption
       contentSpan.title = contentSpan.innerText
+      contentSpan.style.fontSize = '11px'
+      contentSpan.style.fontWeight = 'normal'
+      contentSpan.style.lineHeight = '1.2'
+      contentSpan.style.display = 'block'
+      contentSpan.style.marginTop = '2px'
+      contentSpan.style.textAlign = 'center'
       mediaDiv.appendChild(document.createElement('br'))
       mediaDiv.appendChild(contentSpan)
     }
-    handler.listen(mediaDiv, MobileFriendlyClickEventType, () =>
+    handler.listen(mediaDiv, MobileFriendlyClickEventType, (e) => {
+      // Prevent the table's double/click handler from also firing (which opens the media selector)
+      // when clicking directly on a media item. We only want to open the AnnotationViewer in that case.
+      e.stopPropagation()
+      e.preventDefault()
       this.doubleClickMediaItem(item)
-    )
+    })
     return mediaDiv
   }
 

@@ -83,4 +83,16 @@ export const schema = {
     label: 'Article DOI',
     view: TextInput,
   },
+  journal_in_press: {
+    label: 'Status of peer-reviewed publication?',
+    description: 'You must have a paper in press or published in a peer-reviewed journal to publish your project on MorphoBank.',
+    view: SelectInput,
+    args: {
+      options: {
+        'Published': 0,
+        'In press': 1,
+        'Article in prep or in review': 2,
+      },
+    },
+  },
 }

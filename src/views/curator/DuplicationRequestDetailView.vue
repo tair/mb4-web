@@ -1,10 +1,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 import { RouterLink } from 'vue-router'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import Alert from '@/components/main/Alert.vue'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -26,7 +26,7 @@ onMounted(async () => {
 
 async function loadRequest() {
   try {
-    const response = await axios.get(`${import.meta.env.VITE_API_URL}/duplication-requests/${requestId}`)
+    const response = await apiService.get(`/duplication-requests/${requestId}`)
     
     if (response.data.success) {
       request.value = response.data.data
@@ -52,7 +52,7 @@ async function updateStatus(newStatus) {
     validationMessages.value.error = ''
     validationMessages.value.success = ''
 
-    const response = await axios.put(`${import.meta.env.VITE_API_URL}/duplication-requests/${requestId}`, {
+    const response = await apiService.put(`/duplication-requests/${requestId}`, {
       status: newStatus,
       notes: notes.value
     })
@@ -76,7 +76,7 @@ async function deleteRequest() {
 
   try {
     isUpdating.value = true
-    const response = await axios.delete(`${import.meta.env.VITE_API_URL}/duplication-requests/${requestId}`)
+    const response = await apiService.delete(`/duplication-requests/${requestId}`)
     
     if (response.data.success) {
       router.push('/curator/duplication-requests')

@@ -2,17 +2,14 @@
 import { useRoute } from 'vue-router'
 import router from '@/router'
 import { useMediaViewsStore } from '@/stores/MediaViewsStore'
+import { useNotifications } from '@/composables/useNotifications'
 import { schema } from '@/views/project/views/schema.js'
-import Alert from '@/components/main/Alert.vue'
-import { reactive } from 'vue'
 
 const route = useRoute()
 const projectId = route.params.id
 
 const mediaViewsStore = useMediaViewsStore()
-const error = reactive({
-  create: null,
-})
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 async function create(event) {
   const formData = new FormData(event.currentTarget)
@@ -25,15 +22,16 @@ async function create(event) {
     .filter((name) => name)
 
   if (viewNames.length === 0) {
-    error.create = 'Please enter at least one view name'
+    showWarning('Please enter at least one view name', 'View Name Required')
     return
   }
 
   const result = await mediaViewsStore.create(projectId, json)
   if (result.success) {
+    showSuccess('Media view created successfully', 'View Created')
     router.go(-1)
   } else {
-    error.create = result.error || 'Failed to create media view'
+    showError(result.error || 'Failed to create media view', 'Creation Failed')
   }
 }
 </script>
@@ -57,7 +55,6 @@ async function create(event) {
           v-bind="definition.args"
         >
         </component>
-        <Alert :message="error" messageName="create" alertType="danger"></Alert>
       </div>
     </template>
     <div class="btn-form-group">

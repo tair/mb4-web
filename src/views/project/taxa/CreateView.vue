@@ -4,6 +4,8 @@ import { onMounted, computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useNotifications } from '@/composables/useNotifications'
+import { NavigationPatterns } from '@/utils/navigationUtils.js'
 import { schema } from '@/views/project/taxa/schema.js'
 import { TAXA_COLUMN_NAMES } from '@/utils/taxa'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
@@ -14,6 +16,7 @@ const projectId = parseInt(route.params.id)
 
 const projectUsersStore = useProjectUsersStore()
 const taxaStore = useTaxaStore()
+const { showError, showSuccess } = useNotifications()
 const isLoaded = computed(
   () => projectUsersStore.isLoaded && taxaStore.isLoaded
 )
@@ -103,13 +106,18 @@ async function createTaxon(event) {
     }
   })
 
-  const success = await taxaStore.create(projectId, json)
-  if (!success) {
-    alert(response.data?.message || 'Failed to create taxon')
-    return
+  try {
+    const success = await taxaStore.create(projectId, json)
+    if (success) {
+      showSuccess('Taxon created successfully!')
+      await NavigationPatterns.afterBatchOperation(projectId, 'taxa')
+    } else {
+      showError('Failed to create taxon')
+    }
+  } catch (error) {
+    console.error('Error creating taxon:', error)
+    showError('Failed to create taxon. Please try again.')
   }
-
-  router.replace({ path: `/myprojects/${projectId}/taxa` })
 }
 
 onMounted(() => {

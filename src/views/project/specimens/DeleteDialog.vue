@@ -4,6 +4,7 @@ import SpecimenName from '@/components/project/SpecimenName.vue'
 import SpecimenSearchInput from '@/views/project/common/SpecimenSearchInput.vue'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useNotifications } from '@/composables/useNotifications'
 import { computed, onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{
@@ -34,6 +35,7 @@ onMounted(() => {
 // Watch the input specimen so that we can fetch their usages when the user changes
 // the specimen.
 const specimensStore = useSpecimensStore()
+const { showError, showSuccess } = useNotifications()
 const specimenIds = computed(() =>
   props.specimens.map((specimen) => specimen.specimen_id)
 )
@@ -69,17 +71,23 @@ function setRemappedSpecimenId(
 }
 
 async function handleDelete() {
-  const deleted = await specimensStore.deleteIds(
-    props.projectId,
-    specimenIds.value,
-    Object.fromEntries(remappedSpecimenIds.entries())
-  )
-  if (deleted) {
-    const element = document.getElementById('specimensDeleteModal')
-    const modal = Modal.getInstance(element)
-    modal.hide()
-  } else {
-    alert('Failed to delete specimens')
+  try {
+    const deleted = await specimensStore.deleteIds(
+      props.projectId,
+      specimenIds.value,
+      Object.fromEntries(remappedSpecimenIds.entries())
+    )
+    if (deleted) {
+      showSuccess('Specimens deleted successfully!')
+      const element = document.getElementById('specimensDeleteModal')
+      const modal = Modal.getInstance(element)
+      modal.hide()
+    } else {
+      showError('Failed to delete specimens')
+    }
+  } catch (error) {
+    console.error('Error deleting specimens:', error)
+    showError('Failed to delete specimens. Please try again.')
   }
 }
 </script>

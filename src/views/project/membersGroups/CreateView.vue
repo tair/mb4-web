@@ -2,6 +2,7 @@
 import router from '@/router'
 import { useRoute } from 'vue-router'
 import { useProjectMemberGroupsStore } from '@/stores/ProjectMemberGroupsStore'
+import { useNotifications } from '@/composables/useNotifications'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { groupSchema } from '@/views/project/membersGroups/schema.js'
 
@@ -9,6 +10,7 @@ const route = useRoute()
 const projectId = route.params.id
 
 const projectMemberGroupsStore = useProjectMemberGroupsStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 async function create(event) {
   const formData = new FormData(event.currentTarget)
@@ -17,7 +19,7 @@ async function create(event) {
   if (success) {
     router.go(-1)
   } else {
-    alert('Failed to update group')
+    showError('Failed to create group', 'Create Failed')
   }
 }
 </script>
@@ -41,7 +43,7 @@ async function create(event) {
           </div>
           <div class="btn-form-group">
             <button
-              class="btn btn-primary me-2"
+              class="btn btn-outline-primary me-2"
               type="button"
               @click="$router.go(-1)"
             >

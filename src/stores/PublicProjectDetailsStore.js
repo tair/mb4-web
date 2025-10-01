@@ -1,6 +1,6 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
 import { searchInObject } from '@/utils/util.js'
+import { apiService } from '@/services/apiService.js'
 
 export const usePublicProjectDetailsStore = defineStore({
   id: 'publicProjectDetails',
@@ -148,37 +148,30 @@ export const usePublicProjectDetailsStore = defineStore({
       this.err = null
 
       try {
-        var getter = axios.create()
-        delete getter.defaults.headers.common['Authorization']
-
         //const url = `https://mb4-data.s3.us-west-2.amazonaws.com/prj_details/prj_${id}.json`
-        const url = `${
-          import.meta.env.VITE_API_URL
-        }/s3/prj_details/prj_${id}.json`
-        const res = await getter.get(url)
+        const res = await apiService.get(`/s3/prj_details/prj_${id}.json`)
+        const resData = await res.json()
 
-        const urlStats = `${
-          import.meta.env.VITE_API_URL
-        }/s3/prj_stats/prj_${id}.json`
-        const resStats = await getter.get(urlStats)
+        const resStats = await apiService.get(`/s3/prj_stats/prj_${id}.json`)
+        const resStatsData = await resStats.json()
 
-        this.overview = res.data.overview
-        this.stats = resStats.data
-        this.taxa_details = res.data.taxa_details
+        this.overview = resData.overview
+        this.stats = resStatsData
+        this.taxa_details = resData.taxa_details
         // add a default sort
         this.sortTaxaInDefaultOrder()
-        this.partitions = res.data.partitions
-        this.bibliography = res.data.bibliography
-        this.docs = res.data.docs
-        this.folios = res.data.folios
+        this.partitions = resData.partitions
+        this.bibliography = resData.bibliography
+        this.docs = resData.docs
+        this.folios = resData.folios
 
-        this.matrices = res.data.overview.matrices
-        this.media_views = res.data.media_views
-        this.specimen_details = res.data.specimen_details
+        this.matrices = resData.overview.matrices
+        this.media_views = resData.media_views
+        this.specimen_details = resData.specimen_details
         // add a default sort
         this.sortSpecimenInDefaultOrder()
         this.unidentified_specimen_details =
-          res.data.unidentified_specimen_details
+          resData.unidentified_specimen_details
 
         this.project_id = id
         this.loaded = true
@@ -437,21 +430,15 @@ export const usePublicProjectDetailsStore = defineStore({
         .toUpperCase()
     },
     getMatrixDownloadLink(projectId, matrixId, format, notes) {
-      const downloadUrl = `${
-        import.meta.env.VITE_API_URL
-      }/public/projects/${projectId}/matrices/${matrixId}/download?format=${format}&notes=${notes}`
+      const downloadUrl = apiService.buildUrl(`/public/projects/${projectId}/matrices/${matrixId}/download?format=${format}&notes=${notes}`)
       return downloadUrl
     },
     getMatrixCharListDownloadLink(projectId, matrixId, notes) {
-      const downloadUrl = `${
-        import.meta.env.VITE_API_URL
-      }/public/projects/${projectId}/matrices/${matrixId}/download/characters?notes=${notes}`
+      const downloadUrl = apiService.buildUrl(`/public/projects/${projectId}/matrices/${matrixId}/download/characters?notes=${notes}`)
       return downloadUrl
     },
     getMatrixOntologyDownloadLink(projectId, matrixId) {
-      const downloadUrl = `${
-        import.meta.env.VITE_API_URL
-      }/public/projects/${projectId}/matrices/${matrixId}/download/ontology`
+      const downloadUrl = apiService.buildUrl(`/public/projects/${projectId}/matrices/${matrixId}/download/ontology`)
       return downloadUrl
     },
   },

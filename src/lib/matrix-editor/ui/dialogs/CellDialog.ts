@@ -1223,14 +1223,20 @@ class MediaPane extends BasePane {
       MediaPane.AUTO_OPEN_MEDIA_WINDOW
     )
     this.openMediaCheckbox.setChecked(isAutoOpenMediaWindowSelected)
-    if (isAutoOpenMediaWindowSelected) {
+    // Determine whether the user can add media to cells (row access + action permission)
+    const projectProperties = this.matrixModel.getProjectProperties()
+    const canEditCells = projectProperties.isActionAllowed('editCellData')
+    const canAddMedia = this.hasAccess && canEditCells
+    if (isAutoOpenMediaWindowSelected && canAddMedia) {
       setTimeout(() => this.handleAddCellMedia, 350)
     }
 
-    if (!this.hasAccess) {
+    if (!canAddMedia) {
       const addTaxonMediaElement =
         this.getElementByClass<HTMLElement>('addCellMedia')
-      addTaxonMediaElement.title = CellDialog.LOCKED_MESSAGE
+      addTaxonMediaElement.title = this.hasAccess
+        ? 'You do not have permission to modify cells.'
+        : CellDialog.LOCKED_MESSAGE
       addTaxonMediaElement.classList.add('disabled')
       this.openMediaCheckbox.setEnabled(false)
     }
@@ -1244,7 +1250,10 @@ class MediaPane extends BasePane {
       MobileFriendlyClickEventType,
       (e: CustomEvent<MediaGridItemEvent>) => this.handleDoubleClickCellMedia(e)
     )
-    if (this.hasAccess) {
+    const projectProperties = this.matrixModel.getProjectProperties()
+    const canEditCells = projectProperties.isActionAllowed('editCellData')
+    const canAddMedia = this.hasAccess && canEditCells
+    if (canAddMedia) {
       this.getHandler()
         .listen(addTaxonMediaElement, EventType.CLICK, () =>
           this.handleAddCellMedia()
@@ -1348,7 +1357,18 @@ class MediaPane extends BasePane {
       .getCellInfo(this.taxonId, this.characterId)
     const medium = cellInfo.getMediaById(item.id)
     if (medium) {
-      ImageViewerDialog.show('X', medium.getId())
+      // Get project ID from matrix model
+      const projectId = this.matrixModel.getProjectId()
+      // medium.getId() returns link_id, medium.getMediaId() returns media_id
+      const linkId = medium.getId() // This is the cell link ID for annotation context
+      const mediaId = medium.getMediaId() // This is the actual media ID
+      
+      // Use new signature with all parameters, respect access permissions
+      const readonly = !this.hasAccess
+      const published = this.matrixModel.isPublished()
+      // Pass the actual media data from the medium object instead of empty object
+      const mediaData = (medium as any).cellMediaObj || {}
+      ImageViewerDialog.show('X', mediaId, projectId, mediaData, readonly, linkId, published)
     }
   }
 

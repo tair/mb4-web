@@ -6,6 +6,7 @@ import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
+import { useNotifications } from '@/composables/useNotifications'
 import MediaImage from '@/components/project/MediaImage.vue'
 
 const props = defineProps<{
@@ -24,6 +25,7 @@ const mediaViewsStore = useMediaViewsStore()
 const specimensStore = useSpecimensStore()
 const taxaStore = useTaxaStore()
 const projectUsersStore = useProjectUsersStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 const selectedMediaIds: Set<number> = reactive(new Set())
 
@@ -129,7 +131,7 @@ async function handleAdd() {
     modal.hide()
     reset()
   } else {
-    alert('Failed to add media')
+    showError('Failed to add media', 'Add Failed')
   }
 }
 

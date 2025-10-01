@@ -6,8 +6,14 @@ import NotificationContainer from '@/components/notifications/NotificationContai
 import '@/assets/css/buttons.css'
 const authStore = useAuthStore()
 
-onMounted(() => {
+onMounted(async () => {
+  // First restore from localStorage (with validation)
   authStore.fetchLocalStore()
+  
+  // If we have restored auth data, verify it with the server
+  if (authStore.user?.authToken) {
+    await authStore.verifyAuthenticationWithServer()
+  }
 })
 </script>
 <template>

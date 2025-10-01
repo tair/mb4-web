@@ -142,6 +142,9 @@ export const createSchema = {
     label: 'Select media file',
     view: FileInput,
     required: true,
+    args: {
+      accept: '.jpg,.jpeg,.png,.gif,.bmp,.webp,.tiff,.tif',
+    },
   },
 }
 

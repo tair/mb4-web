@@ -1039,7 +1039,18 @@ class MediaPane extends BasePane {
       e.stopPropagation()
       e.preventDefault()
       const medium = media[0]
-      ImageViewerDialog.show('C', medium.getId())
+      
+      // Get project ID from matrix model
+      const projectId = this.matrixModel.getProjectId()
+      // medium.getId() returns link_id, medium.getMediaId() returns media_id
+      const mediaId = medium.getMediaId() // Use actual media ID
+      
+      // Use new signature with project ID, respect matrix readonly state
+      const readonly = this.matrixModel.isReadonly()
+      const published = this.matrixModel.isPublished()
+      // Pass the actual media data from the medium object instead of empty object
+      const mediaData = (medium as any).characterMediaObj || {}
+      ImageViewerDialog.show('C', mediaId, projectId, mediaData, readonly, null, published)
     }
     return true
   }

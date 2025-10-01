@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { useFoliosStore } from '@/stores/FoliosStore'
+import { useNotifications } from '@/composables/useNotifications'
 const props = defineProps<{
   projectId: number | string
   folios: any[]
 }>()
 
 const foliosStore = useFoliosStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 async function deleteFolios(folioIds: number[]) {
   const deleted = foliosStore.deleteIds(props.projectId, folioIds)
   if (!deleted) {
-    alert('Failed to delete folio')
+    showError('Failed to delete folio', 'Delete Failed')
   }
 }
 </script>

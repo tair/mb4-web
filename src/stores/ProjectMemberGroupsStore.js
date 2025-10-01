@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
+import { apiService } from '@/services/apiService.js'
 
 export const useProjectMemberGroupsStore = defineStore({
   id: 'project-member-groups',
@@ -9,9 +9,9 @@ export const useProjectMemberGroupsStore = defineStore({
   }),
   actions: {
     async fetchGroups(projectId) {
-      const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/groups`
-      const response = await axios.get(url)
-      this.groups = response.data.groups
+      const response = await apiService.get(`/projects/${projectId}/groups`)
+      const responseData = await response.json()
+      this.groups = responseData.groups
       this.isLoaded = true
     },
     getGroupById(groupId) {
@@ -23,29 +23,24 @@ export const useProjectMemberGroupsStore = defineStore({
       return null
     },
     async deleteGroup(projectId, groupId) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/groups/delete`
-      const response = await axios.post(url, {
+      const response = await apiService.post(`/projects/${projectId}/groups/delete`, {
         group_id: groupId,
       })
-      if (response.status == 200) {
+      if (response.ok) {
         this.removeGroupById(groupId)
         return true
       }
       return false
     },
     async editGroup(projectId, groupId, changes) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/groups/${groupId}/edit`
-      const response = await axios.post(url, {
+      const response = await apiService.post(`/projects/${projectId}/groups/${groupId}/edit`, {
         group_id: groupId,
         group_name: changes.group_name,
         description: changes.description,
       })
-      if (response.status == 200) {
-        const group = response.data.group
+      if (response.ok) {
+        const responseData = await response.json()
+        const group = responseData.group
         this.removeGroupById(group.group_id)
         this.groups.push(group)
         return true
@@ -53,12 +48,10 @@ export const useProjectMemberGroupsStore = defineStore({
       return false
     },
     async createGroup(projectId, group) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/groups/create`
-      const response = await axios.post(url, { group })
-      if (response.status == 200) {
-        const group = response.data.group
+      const response = await apiService.post(`/projects/${projectId}/groups/create`, { group })
+      if (response.ok) {
+        const responseData = await response.json()
+        const group = responseData.group
         this.groups.push(group)
         return true
       }

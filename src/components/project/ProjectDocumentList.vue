@@ -1,4 +1,6 @@
 <script setup>
+import { apiService } from '@/services/apiService.js'
+
 const props = defineProps({
   projectId: {
     type: String,
@@ -9,9 +11,7 @@ const props = defineProps({
     required: true,
   },
 })
-const baseUrl = `${import.meta.env.VITE_API_URL}/projects/${
-  props.projectId
-}/documents`
+const baseUrl = apiService.buildUrl(`/projects/${props.projectId}/documents`)
 </script>
 <template>
   <ul class="list-group">

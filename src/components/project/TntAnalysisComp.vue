@@ -1,6 +1,7 @@
 <script setup>
-import axios from 'axios'
 import { ref } from 'vue'
+import { useNotifications } from '@/composables/useNotifications'
+import { apiService } from '@/services/apiService.js'
 
 const props = defineProps({
   projectId: {
@@ -12,6 +13,8 @@ const props = defineProps({
     required: true,
   },
 })
+
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 // TNT specific variables
 const tntFile = ref(null)
@@ -66,18 +69,18 @@ const newtechFusing = ref(true)
  * @param {File} file - The TNT file to validate
  * @returns {Promise<Object>} - Validation response data
  */
-const baseUrl = import.meta.env.VITE_API_URL
 async function apiValidateTntFile(file) {
   const formData = new FormData()
   formData.append('file', file)
 
-  const response = await axios.post(`${baseUrl}/tnt/validate`, formData, {
+  const response = await apiService.post('/tnt/validate', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
   })
 
-  return response.data
+  const responseData = await response.json()
+  return responseData
 }
 
 /**
@@ -89,13 +92,13 @@ async function apiExtractSpeciesFromFile(file) {
   const formData = new FormData()
   formData.append('file', file)
 
-  const response = await axios.post(`${baseUrl}/tnt/species`, formData, {
+  const response = await apiService.post(`/tnt/species`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
   })
-
-  return response.data
+  const responseData = await response.json()
+  return responseData
 }
 
 /**
@@ -123,13 +126,13 @@ async function apiAnalyzeTntFile(file, params) {
     formData.append('iterations', params.iterations)
   }
 
-  const response = await axios.post(`${baseUrl}/tnt/analyze`, formData, {
+  const response = await apiService.post(`/tnt/analyze`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
   })
-
-  return response.data
+  const responseData = await response.json()
+  return responseData
 }
 
 /**
@@ -138,10 +141,9 @@ async function apiAnalyzeTntFile(file, params) {
  * @returns {Promise<Object>} - Validation response data with species and cache key
  */
 async function apiValidateMatrix(matrixId) {
-  const response = await axios.post(
-    `${baseUrl}/tnt/matrices/${matrixId}/validate`
-  )
-  return response.data
+  const response = await apiService.post(`/tnt/matrices/${matrixId}/validate`)
+  const responseData = await response.json()
+  return responseData
 }
 
 /**
@@ -151,24 +153,16 @@ async function apiValidateMatrix(matrixId) {
  * @returns {Promise<string>} - Analysis results
  */
 async function apiAnalyzeCachedMatrix(cacheKey, params) {
-  const response = await axios.post(
-    `${baseUrl}/tnt/cached/${cacheKey}/analyze`,
-    {
-      outgroup: params.outgroup,
-      hold_value: params.holdValue,
-      search_type: params.searchType,
-      replications: params.replications,
-      trees_per_replication: params.treesPerReplication,
-      iterations: params.iterations,
-    },
-    {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    }
-  )
-
-  return response.data
+  const response = await apiService.post(`/tnt/cached/${cacheKey}/analyze`, {
+    outgroup: params.outgroup,
+    hold_value: params.holdValue,
+    search_type: params.searchType,
+    replications: params.replications,
+    trees_per_replication: params.treesPerReplication,
+    iterations: params.iterations,
+  })
+  const responseData = await response.json()
+  return responseData
 }
 
 // =============================================================================
@@ -409,7 +403,10 @@ function downloadNexusFile(content, filename) {
     console.log(`Downloaded: ${filename}`)
   } catch (error) {
     console.error('Error downloading nexus file:', error)
-    alert('Failed to download the analysis results file.')
+    showError(
+      'Failed to download the analysis results file.',
+      'Download Failed'
+    )
   }
 }
 
