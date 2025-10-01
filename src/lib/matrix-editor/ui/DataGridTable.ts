@@ -32,6 +32,7 @@ export class DataGridTable extends Component {
 
   private scrollableContainer: HTMLElement
   private lastSelectedElement: HTMLElement
+  private dragHandleColumnIndex: number | null
 
   constructor() {
     super()
@@ -40,6 +41,7 @@ export class DataGridTable extends Component {
     this.focusable = true
     this.selectable = false
     this.draggable = false
+    this.dragHandleColumnIndex = null
   }
 
   protected override createDom() {
@@ -83,6 +85,16 @@ export class DataGridTable extends Component {
    */
   setDraggable(draggable: boolean) {
     this.draggable = draggable
+  }
+
+  /**
+   * Sets the column index that should act as the drag handle. When set,
+   * only dragging from this column will initiate a row drag.
+   * Pass null to allow dragging from anywhere in the row.
+   * @param index the zero-based column index or null
+   */
+  setDragHandleColumnIndex(index: number | null) {
+    this.dragHandleColumnIndex = index
   }
 
   /**
@@ -206,6 +218,19 @@ export class DataGridTable extends Component {
         } else {
           td.innerHTML = String(label)
         }
+
+        // Mark drag handle cell and make it draggable if a handle column is configured.
+        if (
+          this.draggable &&
+          this.dragHandleColumnIndex != null &&
+          y === this.dragHandleColumnIndex
+        ) {
+          td.classList.add('dragHandle')
+          td.draggable = true
+          this.getHandler().listen(td, EventType.DRAGSTART, (e: DragEvent) =>
+            this.onHandleDragStart(e)
+          )
+        }
         tr.appendChild(td)
       }
       if (row.removeable) {
@@ -220,7 +245,8 @@ export class DataGridTable extends Component {
         tr.classList.add(DataGridTable.CSS.DISABLED)
       }
       if (this.draggable) {
-        tr.draggable = true
+        // Only make the entire row draggable if there is no specific drag handle
+        tr.draggable = this.dragHandleColumnIndex == null
         this.getHandler()
           .listen(tr, EventType.DRAGSTART, (e: DragEvent) =>
             this.onHandleDragStart(e)
@@ -391,6 +417,18 @@ export class DataGridTable extends Component {
     const tbody = element.getElementsByTagName('tbody')[0]
     const trs = tbody.getElementsByTagName('tr')
     const sourceElement = this.getParentTrElement<HTMLTableRowElement>(e.target)
+    // If a drag handle column is configured, only allow drag when starting from that cell
+    if (this.dragHandleColumnIndex != null && sourceElement) {
+      const startTd = this.getParentTdElement<HTMLTableCellElement>(e.target)
+      if (startTd) {
+        const tds = sourceElement.getElementsByTagName('td')
+        const columnIndex = mb.indexOf(tds, startTd)
+        if (columnIndex !== this.dragHandleColumnIndex) {
+          e.preventDefault()
+          return
+        }
+      }
+    }
     const sourceIndex = mb.indexOf(trs, sourceElement)
     e.dataTransfer!.clearData()
     e.dataTransfer!.setData('text/plain', String(sourceIndex))
@@ -467,6 +505,27 @@ export class DataGridTable extends Component {
 
     while (element) {
       if (element.tagName === 'TR') {
+        break
+      }
+      const parentNode = element.parentNode
+      if (element === parentNode) {
+        break
+      }
+      element = parentNode
+    }
+    return element as T
+  }
+
+  /**
+   * @param element The element to query
+   * @return The TD element of the cell.
+   */
+  private getParentTdElement<T extends Element>(element: any): T | null {
+    if (element === this.getElement()) {
+      return null
+    }
+    while (element) {
+      if (element.tagName === 'TD') {
         break
       }
       const parentNode = element.parentNode
