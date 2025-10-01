@@ -7,6 +7,8 @@ import { formatBytes } from '@/utils/format'
 import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore'
 import { useNotifications } from '@/composables/useNotifications'
 import { apiService } from '@/services/apiService.js'
+import { useAuthStore } from '@/stores/AuthStore'
+import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 
 type ProjectStats = {
   timestamp: string
@@ -32,6 +34,8 @@ const props = defineProps<{
 const route = useRoute()
 const projectOverviewStore = useProjectOverviewStore()
 const { showError, showSuccess, showInfo } = useNotifications()
+const authStore = useAuthStore()
+const projectUsersStore = useProjectUsersStore()
 const isRefreshing = ref(false)
 
 // Computed properties for better display
@@ -50,6 +54,19 @@ const diskUsageClass = computed(() => {
 const projectStatus = computed(() => {
   if (props.overview?.published === 1) return 'Published'
   return 'Currently Editing'
+})
+
+// Check if user has project admin access (includes curators and system admins)
+const isProjectAdmin = computed(() => {
+  // Curators and system admins always have access
+  if (authStore.isUserCurator || authStore.isUserAdministrator) {
+    return true
+  }
+
+  // Check if user is a project admin
+  if (!authStore.user?.userId) return false
+  const membership = projectUsersStore.getUserById(authStore.user.userId)
+  return membership?.admin === true
 })
 
 // Refresh disk usage only (lightweight)
@@ -154,42 +171,42 @@ const refreshStatistics = async () => {
               {{ isRefreshing ? 'Refreshing...' : 'To see an immediate update click here.' }}
             </button>
           </li>
-          <li class="list-group-item">
+          <li v-if="isProjectAdmin" class="list-group-item">
             <span class="fw-bold">
               <RouterLink :to="`/myprojects/${projectId}/edit`">
                 Edit project info
               </RouterLink>
             </span>
           </li>
-          <li class="list-group-item">
+          <li v-if="isProjectAdmin" class="list-group-item">
             <span class="fw-bold">
               <RouterLink :to="`/myprojects/${projectId}/institutions`">
                 Edit project institutions
               </RouterLink>
             </span>
           </li>
-          <li class="list-group-item">
+          <li v-if="isProjectAdmin" class="list-group-item">
             <span class="fw-bold">
               <RouterLink :to="`/myprojects/${projectId}/publish`">
                 Publish project
               </RouterLink>
             </span>
           </li>
-          <li class="list-group-item">
+          <li v-if="isProjectAdmin" class="list-group-item">
             <span class="fw-bold">
               <RouterLink :to="`/myprojects/${projectId}/publish/partition`">
                 Publish a partition
               </RouterLink>
             </span>
           </li>
-          <li class="list-group-item">
+          <li v-if="isProjectAdmin" class="list-group-item">
             <span class="fw-bold">
               <RouterLink :to="`/myprojects/${projectId}/members`">
                 Manage members
               </RouterLink>
             </span>
           </li>
-          <li class="list-group-item">
+          <li v-if="isProjectAdmin" class="list-group-item">
             <span class="fw-bold">
               <RouterLink :to="`/myprojects/${projectId}/members/groups`">
                 Manage members groups
@@ -199,7 +216,7 @@ const refreshStatistics = async () => {
               ></Tooltip>
             </span>
           </li>
-          <li class="list-group-item">
+          <li v-if="isProjectAdmin" class="list-group-item">
             <span class="fw-bold">
               <RouterLink :to="`/myprojects/${projectId}/duplication/request`">
                 Request Project Duplication
