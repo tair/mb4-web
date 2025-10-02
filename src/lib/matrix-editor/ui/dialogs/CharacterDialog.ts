@@ -576,6 +576,8 @@ class CharacterPane extends BasePane {
     const statesPane = this.getElementByClass('statesPane')
     this.statesGridTable.addColumn('#')
     this.statesGridTable.addColumn('State')
+    // Restrict drag to the first column (order number) so text selection works in the name input
+    this.statesGridTable.setDragHandleColumnIndex(0)
     this.statesGridTable.render(statesPane)
 
     this.orderingSelect.addItem({ text: 'Unordered', value: 0 })

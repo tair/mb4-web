@@ -223,6 +223,12 @@ async function editSpecimen(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
 
+  // Require taxon selection
+  if (!json.taxon_id || json.taxon_id === '' || json.taxon_id === 'undefined') {
+    showError('Please select a taxon before saving this specimen.')
+    return
+  }
+
   // Set the reference source
   json.reference_source = referenceSource.value
 
@@ -312,6 +318,7 @@ onMounted(() => {
               v-if="index === 'taxon_id'"
               :content="getTaxonTooltipText()"
             ></Tooltip>
+            <span v-if="index === 'taxon_id'" class="required">Required</span>
             <div v-if="index === 'taxon_id'" class="ms-2 d-inline-block">
               <RouterLink
                 :to="{

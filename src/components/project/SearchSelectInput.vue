@@ -21,6 +21,9 @@ const props = defineProps<{
 
   // Get the item's ID.
   getId: (item: any) => number
+  
+  // Whether this field is required (applies to the hidden value input)
+  required?: boolean
 }>()
 
 const emit = defineEmits(['select', 'updateTextboxString'])
@@ -122,6 +125,7 @@ function handleBlur() {
       v-if="name"
       type="hidden"
       :disabled="disabled"
+      :required="required === true"
     />
     <input
       @input="handleInput"

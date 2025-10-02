@@ -13,6 +13,10 @@ defineProps({
   value: {
     type: Number,
   },
+  required: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const route = useRoute()
@@ -59,6 +63,7 @@ function getItem(taxonId) {
     :get-id="getTaxonNumber"
     :getItem="getItem"
     :search="searchTaxa"
+    :required="required"
   >
     <template #item="taxon">
       <TaxonomicName :showExtinctMarker="true" :taxon="taxon" />
