@@ -80,6 +80,12 @@ async function create(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
 
+  // Require taxon selection
+  if (!json.taxon_id || json.taxon_id === '' || json.taxon_id === 'undefined') {
+    showError('Please select a taxon before creating a specimen.')
+    return
+  }
+
   // Remove hidden field values when "Unvouchered" is selected
   if (referenceSource.value === 1) {
     voucheredOnlyFields.forEach((fieldName) => {
@@ -113,6 +119,7 @@ async function create(event) {
       >
         <label for="index" class="form-label">
           {{ definition.label }}
+          <span v-if="index === 'taxon_id'" class="required">Required</span>
           <Tooltip
             v-if="index === 'reference_source'"
             :content="getSpecimenTypeTooltipText()"

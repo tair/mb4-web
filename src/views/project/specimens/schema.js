@@ -22,6 +22,9 @@ export const schema = {
     label: 'Taxonomic name',
     view: TaxaSearchInput,
     type: Number,
+    args: {
+      required: true,
+    },
   },
   institution_code: {
     label: 'Institution code for specimens repository',
