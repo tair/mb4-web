@@ -632,9 +632,9 @@ onUnmounted(() => {
             matrix.
           </h5>
 
-          <!-- PDF Upload Component for when 0 characters are found -->
+          <!-- PDF Upload Component for AI-based character extraction -->
           <PdfCharacterUpload 
-            v-if="importedMatrix?.characters?.size === 0"
+            :hasCharacters="(importedMatrix?.characters?.size ?? 0) > 0"
             @pdfProcessed="handlePdfProcessed"
             @resetCharacters="handleResetCharacters"
           />

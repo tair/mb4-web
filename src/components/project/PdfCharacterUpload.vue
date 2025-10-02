@@ -5,6 +5,13 @@ import axios from 'axios'
 
 const { showError, showSuccess } = useNotifications()
 
+const props = defineProps({
+  hasCharacters: {
+    type: Boolean,
+    default: false
+  }
+})
+
 const pdfFile = ref(null)
 const totalCharacters = ref(0)
 const isProcessing = ref(false)
@@ -108,7 +115,7 @@ defineExpose({
 
 <template>
   <div class="pdf-upload-container">
-    <div class="alert alert-info mb-3">
+    <div v-if="!hasCharacters" class="alert alert-info mb-3">
       <i class="fa-solid fa-info-circle me-2"></i>
       No matrices found in the uploaded file. You can upload a PDF document to extract character states automatically.
     </div>
@@ -269,6 +276,7 @@ defineExpose({
   background-color: #f8f9fa;
   border-bottom: 1px solid #dee2e6;
   padding: 0.75rem 1rem;
+  color: #000;
 }
 
 .card-body {
