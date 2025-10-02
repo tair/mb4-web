@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
@@ -119,6 +119,17 @@ onMounted(() => {
     taxaStore.fetch(projectId)
   }
 })
+
+// If user is viewing unidentified specimens and they become empty (e.g., after delete),
+// automatically switch back to identified view.
+watch(
+  () => specimensStore.unidentifiedSpecimens?.length,
+  (len) => {
+    if (showUnidentified.value && (!len || len === 0)) {
+      showUnidentified.value = false
+    }
+  }
+)
 
 function refresh() {
   specimensStore.fetchSpecimens(projectId)
