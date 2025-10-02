@@ -14,6 +14,7 @@ import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
 import { getTaxonomicUnitOptions } from '@/utils/taxa'
 import router from '@/router'
 import { apiService } from '@/services/apiService.js'
+import PdfCharacterUpload from '@/components/project/PdfCharacterUpload.vue'
 
 const route = useRoute()
 const taxaStore = useTaxaStore()
@@ -349,6 +350,75 @@ function convertNewlines(text) {
   return text.replace(/\n/g, '<br>')
 }
 
+// Track which characters were added from PDF extraction
+const pdfExtractedCharacterNames = ref(new Set())
+
+function handlePdfProcessed(responseData) {
+  console.log('PDF processing completed:', responseData)
+  
+  if (!responseData.success || !responseData.character_states) {
+    showError('Failed to process PDF data')
+    return
+  }
+
+  // Initialize matrix structure if needed
+  if (!importedMatrix.characters) {
+    importedMatrix.characters = new Map()
+  }
+  if (!importedMatrix.taxa) {
+    importedMatrix.taxa = new Map()
+  }
+  if (!importedMatrix.format) {
+    importedMatrix.format = 'NEXUS'
+  }
+  if (!importedMatrix.cells) {
+    importedMatrix.cells = []
+  }
+
+  // Clear previous PDF extracted characters tracking
+  pdfExtractedCharacterNames.value.clear()
+
+  // Convert the extracted character states into the matrix format
+  responseData.character_states.forEach((charData, index) => {
+    const characterName = charData.character
+    
+    // Create character object in the format expected by the matrix
+    const character = {
+      name: characterName,
+      characterNumber: index,
+      type: 0, // 0 = discrete character (with states)
+      states: charData.states.map((stateName, stateIndex) => ({
+        name: stateName,
+        num: stateIndex
+      })),
+      maxScoredStatePosition: charData.states.length - 1,
+      note: `Extracted from ${responseData.metadata.filename} (Score: ${charData.score}/10)`
+    }
+
+    // Add the character to the importedMatrix
+    importedMatrix.characters.set(characterName, character)
+    
+    // Track this character as PDF extracted
+    pdfExtractedCharacterNames.value.add(characterName)
+  })
+
+  showSuccess(`Successfully added ${responseData.character_states.length} characters to the matrix`)
+}
+
+function handleResetCharacters() {
+  console.log('Resetting PDF extracted characters')
+  
+  // Remove all PDF-extracted characters from the matrix
+  pdfExtractedCharacterNames.value.forEach(characterName => {
+    importedMatrix.characters.delete(characterName)
+  })
+  
+  // Clear the tracking set
+  pdfExtractedCharacterNames.value.clear()
+  
+  console.log(`Characters remaining in matrix: ${importedMatrix.characters?.size || 0}`)
+}
+
 onMounted(async () => {
   if (!taxaStore.isLoaded) {
     await taxaStore.fetch(projectId)
@@ -561,6 +631,13 @@ onUnmounted(() => {
             We found {{ importedMatrix?.characters?.size }} characters in your
             matrix.
           </h5>
+
+          <!-- PDF Upload Component for when 0 characters are found -->
+          <PdfCharacterUpload 
+            v-if="importedMatrix?.characters?.size === 0"
+            @pdfProcessed="handlePdfProcessed"
+            @resetCharacters="handleResetCharacters"
+          />
 
           <div
             v-if="Object.keys(duplicatedCharacters).length"
