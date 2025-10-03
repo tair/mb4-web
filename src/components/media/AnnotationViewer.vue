@@ -11,7 +11,7 @@
           title="Pan and select (Esc)"
         >
           <span class="tool-icon">✋</span>
-          Pan/Select
+          Pan
         </button>
         
         <!-- Drawing tools (only when user can edit) -->
@@ -63,20 +63,31 @@
         <button 
           @click="setLabelMode('text')"
           class="btn btn-outline"
-          :class="{ active: labelMode === 'text' }"
+          :class="{ active: labelMode === 'text' && !hideAllLabels }"
           title="Show text labels"
+          :disabled="hideAllLabels"
         >
-          <span class="mode-icon">ABC</span>
+          <span class="mode-icon"></span>
           Labels: Text
         </button>
         <button 
           @click="setLabelMode('numbers')"
           class="btn btn-outline"
-          :class="{ active: labelMode === 'numbers' }"
+          :class="{ active: labelMode === 'numbers' && !hideAllLabels }"
           title="Show numbered labels"
+          :disabled="hideAllLabels"
         >
-          <span class="mode-icon">123</span>
+          <span class="mode-icon"></span>
           Labels: Numbers
+        </button>
+        <button 
+          @click="toggleHideAllLabels"
+          class="btn btn-outline"
+          :class="{ active: hideAllLabels }"
+          title="Hide all labels"
+        >
+          <span class="mode-icon">👁️</span>
+          {{ hideAllLabels ? 'Show Labels' : 'Hide All' }}
         </button>
       </div>
       
@@ -99,7 +110,7 @@
             title="Help and keyboard shortcuts"
           >
             <span class="help-icon">?</span>
-            Help & Shortcuts
+            Help/Shortcuts
           </button>
           
           <!-- Help dropdown -->
@@ -193,15 +204,21 @@
               </div>
             </div>
             <div class="help-item">
-              <span class="help-icon-display">123</span>
+              <span class="help-icon-display"></span>
               <div class="help-text">
                 <strong>Number Mode</strong> - Shows small numbered circles instead of text labels to avoid clutter
               </div>
             </div>
             <div class="help-item">
-              <span class="help-icon-display">ABC</span>
+              <span class="help-icon-display"></span>
               <div class="help-text">
                 <strong>Text Mode</strong> - Shows full text labels on the image (can get cluttered with many annotations)
+              </div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon-display">👁️</span>
+              <div class="help-text">
+                <strong>Hide All Labels</strong> - Temporarily hide all labels and connection lines to view annotations without clutter
               </div>
             </div>
           </div>
@@ -218,6 +235,12 @@
               <span class="help-icon-display">✏️</span>
               <div class="help-text">
                 <strong>Edit</strong> - Double-click on annotations or labels to edit their properties
+              </div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon-display">↔️</span>
+              <div class="help-text">
+                <strong>Move Label</strong> - Click and drag labels to reposition them. You'll be prompted to save the new position when you release the mouse
               </div>
             </div>
             <div class="help-item">
@@ -424,11 +447,24 @@
       @delete="deleteAnnotation"
       :can-delete="canDeleteAnnotation(editingAnnotation)"
     />
+    
+    <!-- Confirm Label Position Save Modal -->
+    <ConfirmModal
+      v-if="showLabelSaveConfirm"
+      title="Save Label Position?"
+      message="Do you want to save the new label position? This will update the annotation in the database."
+      confirmText="Save Position"
+      cancelText="Cancel"
+      :loading="isSavingLabelPosition"
+      @confirm="confirmLabelSave"
+      @cancel="cancelLabelSave"
+    />
   </div>
 </template>
 
 <script>
 import AnnotationEditModal from './AnnotationEditModal.vue'
+import ConfirmModal from './ConfirmModal.vue'
 import { annotationService } from '../../services/annotationService.js'
 import { buildMediaUrl } from '../../utils/fileUtils.js'
 import { apiService } from '@/services/apiService.js'
@@ -437,7 +473,8 @@ export default {
   name: 'AnnotationViewer',
   
   components: {
-    AnnotationEditModal
+    AnnotationEditModal,
+    ConfirmModal
   },
 
   props: {
@@ -538,8 +575,9 @@ export default {
       showHelp: false,
       showOverview: false,
       showLabelsPanel: false,
-      labelMode: 'text', // 'numbers' or 'text'
+      labelMode: 'text', // 'numbers' or 'text' or 'hidden'
       hoveredAnnotation: null,
+      hideAllLabels: false, // Toggle to hide all labels
       
       // Panel dragging state
       isDraggingPanel: false,
@@ -564,6 +602,11 @@ export default {
       isDraggingLabel: false,
       draggedLabelAnnotation: null,
       dragStartLabelPos: { x: 0, y: 0 },
+      
+      // Label save confirmation modal state
+      showLabelSaveConfirm: false,
+      isSavingLabelPosition: false,
+      pendingLabelSave: null, // Store pending save data
       
       // Canvas display dimensions for consistent coordinate conversion
       canvasDisplayWidth: 0,
@@ -727,6 +770,15 @@ export default {
       if (mode === 'text' || mode === 'numbers') {
         this.labelMode = mode
       }
+    },
+
+    toggleHideAllLabels() {
+      this.hideAllLabels = !this.hideAllLabels
+      // Redraw annotations to update connection lines
+      this.$nextTick(() => {
+        this.drawAnnotations()
+        this.$forceUpdate()
+      })
     },
 
     // Overview methods
@@ -1902,6 +1954,11 @@ export default {
 
     // Label visibility logic
     shouldShowLabel(annotation) {
+      // If "Hide All Labels" is enabled, don't show any labels
+      if (this.hideAllLabels) {
+        return false
+      }
+      
       // Safely get label text, handling null/undefined/empty
       const rawLabel = annotation.label
       const labelText = (rawLabel === null || rawLabel === undefined) ? '' : String(rawLabel).trim()
@@ -1917,19 +1974,26 @@ export default {
         return true
       }
       
-      // No custom text exists - check showDefaultText flag
+      // In numbered mode, ALWAYS show the number label regardless of showDefaultText
+      // This fixes the bug where annotations disappear completely in read-only mode
+      if (this.labelMode === 'numbers') {
+        return true
+      }
+      
+      // In text mode, check showDefaultText flag
       const showDefaultTextEnabled = annotation.showDefaultText == 1 || 
                                      annotation.showDefaultText === true || 
-                                     annotation.showDefaultText === '1'
+                                     annotation.showDefaultText === '1' ||
+                                     annotation.showDefaultText === 'true'
       
-      // Show if showDefaultText is ON (will display "No label" text)
+      // Show if showDefaultText is ON (will display default text)
       if (showDefaultTextEnabled) {
         return true
       }
       
-      // showDefaultText is OFF and no custom text
+      // showDefaultText is OFF and no custom text in text mode
       // Show small empty box if user can edit (so they can click to add label)
-      // Hide completely if published/read-only
+      // Otherwise don't show text label (but number would have been shown above)
       return this.canEdit
     },
 
@@ -2182,7 +2246,8 @@ export default {
       // Check showDefaultText flag
       const showDefaultTextEnabled = annotation.showDefaultText == 1 || 
                                      annotation.showDefaultText === true || 
-                                     annotation.showDefaultText === '1'
+                                     annotation.showDefaultText === '1' ||
+                                     annotation.showDefaultText === 'true'
 
       // If showDefaultText is OFF but label is showing (because canEdit is true)
       // Return a placeholder for the small empty box
@@ -2388,7 +2453,7 @@ export default {
       })
     },
 
-    async endLabelDrag() {
+    endLabelDrag() {
       if (!this.draggedLabelAnnotation || !this.isDraggingLabel) {
         this.isDraggingLabel = false
         this.draggedLabelAnnotation = null
@@ -2403,8 +2468,8 @@ export default {
       // Store reference to annotation before clearing drag state
       const annotationToSave = this.draggedLabelAnnotation
       
-      // CRITICAL: Clear drag state flags IMMEDIATELY before async save
-      // This prevents the label from continuing to drag during the save operation
+      // CRITICAL: Clear drag state flags IMMEDIATELY
+      // This prevents the label from continuing to drag
       this.isDraggingLabel = false
       this.draggedLabelAnnotation = null
       document.body.style.userSelect = ''
@@ -2412,43 +2477,76 @@ export default {
       
       // Save to database if user has edit permissions and we have a valid position
       if (newPosition && this.canEdit && annotationToSave.annotation_id) {
-        try {
-          // Update the annotation with new label position (tx, ty)
-          const updatedAnnotation = {
-            ...annotationToSave,
-            tx: newPosition.x,
-            ty: newPosition.y,
-            tw: annotationToSave.tw || 1,
-            th: annotationToSave.th || 1
-          }
-          
-          // Find and update in local state immediately
-          const index = this.annotations.findIndex(a => a.annotation_id === updatedAnnotation.annotation_id)
-          if (index !== -1) {
-            this.annotations[index].tx = newPosition.x
-            this.annotations[index].ty = newPosition.y
-          }
-          
-          // Save to database
-          const linkIdForUpdate = updatedAnnotation.link_id || this.effectiveSaveLinkId
-          
-          await annotationService.updateAnnotation(
-            this.projectId,
-            this.mediaId,
-            this.type,
-            linkIdForUpdate,
-            updatedAnnotation
-          )
-          
-          this.showSaveStatus('Label position saved', 'success')
-        } catch (error) {
-          console.error('Failed to save label position:', error)
-          this.showSaveStatus('Failed to save label position', 'error')
-          // Remove from labelPositions so it falls back to previous position
-          this.labelPositions.delete(annotationToSave.annotation_id)
-          this.drawAnnotations()
+        // Store the pending save data and show confirmation modal
+        this.pendingLabelSave = {
+          annotation: annotationToSave,
+          position: newPosition
         }
+        this.showLabelSaveConfirm = true
       }
+    },
+    
+    async confirmLabelSave() {
+      if (!this.pendingLabelSave) return
+      
+      const { annotation, position } = this.pendingLabelSave
+      this.isSavingLabelPosition = true
+      
+      try {
+        // Update the annotation with new label position (tx, ty)
+        const updatedAnnotation = {
+          ...annotation,
+          tx: position.x,
+          ty: position.y,
+          tw: annotation.tw || 1,
+          th: annotation.th || 1
+        }
+        
+        // Find and update in local state immediately
+        const index = this.annotations.findIndex(a => a.annotation_id === updatedAnnotation.annotation_id)
+        if (index !== -1) {
+          this.annotations[index].tx = position.x
+          this.annotations[index].ty = position.y
+        }
+        
+        // Save to database
+        const linkIdForUpdate = updatedAnnotation.link_id || this.effectiveSaveLinkId
+        
+        await annotationService.updateAnnotation(
+          this.projectId,
+          this.mediaId,
+          this.type,
+          linkIdForUpdate,
+          updatedAnnotation
+        )
+        
+        this.showSaveStatus('Label position saved', 'success')
+      } catch (error) {
+        console.error('Failed to save label position:', error)
+        this.showSaveStatus('Failed to save label position', 'error')
+        // Remove from labelPositions so it falls back to previous position
+        this.labelPositions.delete(annotation.annotation_id)
+        this.drawAnnotations()
+      } finally {
+        this.isSavingLabelPosition = false
+        this.showLabelSaveConfirm = false
+        this.pendingLabelSave = null
+      }
+    },
+    
+    cancelLabelSave() {
+      if (!this.pendingLabelSave) return
+      
+      // User cancelled - remove the temporary position and revert to original
+      this.labelPositions.delete(this.pendingLabelSave.annotation.annotation_id)
+      this.$nextTick(() => {
+        this.$forceUpdate()
+        this.drawAnnotations()
+      })
+      
+      // Reset modal state
+      this.showLabelSaveConfirm = false
+      this.pendingLabelSave = null
     },
 
     // Panel dragging methods
@@ -2685,8 +2783,9 @@ export default {
 }
 
 .btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 .btn-primary {
@@ -2786,7 +2885,7 @@ export default {
   position: relative;
   background: #fff;
   overflow: hidden;
-  min-height: 400px;
+  min-height: 500px;
 }
 
 .media-image {
@@ -2969,7 +3068,7 @@ export default {
   border: 1px solid #ddd;
   border-radius: 8px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-  z-index: 9999 !important;
+  z-index: 99999 !important;
   min-width: 400px;
   max-width: 500px;
   max-height: 70vh;
