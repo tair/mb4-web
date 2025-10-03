@@ -129,9 +129,9 @@ watchEffect(() => {
   )
 })
 
-function onExemplarImgError(e) {
+function onExemplarImgError(e: Event) {
   if (!exemplarMedia.value?.media_id) return
-  const currentSrc = e?.target?.src || ''
+  const currentSrc = (e?.target as HTMLImageElement)?.src || ''
   // If large/medium failed, try thumbnail next
   if (!currentSrc.includes('/thumbnail')) {
     resolvedExemplarUrl.value = buildMediaUrl(
@@ -183,9 +183,11 @@ function popDownloadAlert() {
     </p>
   </div>
   
-  <div v-else-if="overview.published !== 1" class="alert alert-warning mb-3">
-    <h2 style="color:#3D8DA3;">This project is unpublished</h2>
-    <p style="color:#3D8DA3;">
+  <div v-else-if="overview.published !== 1" class="alert alert-light border-warning mb-3 py-2">
+    <h6 class="mb-1" style="color:#3D8DA3;">
+      <i class="fa-solid fa-info-circle"></i> This project is unpublished
+    </h6>
+    <p class="small mb-0" style="color:#3D8DA3;">
       You are working on your project in the My Projects section of the site.
     </p>
   </div>
