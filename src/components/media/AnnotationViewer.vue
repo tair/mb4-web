@@ -2087,6 +2087,7 @@ export default {
         this.enhancedLabelCache.clear()
         
         // LOG: Show final rendering decisions for all annotations
+        /*
         console.log('🎯 FINAL LABEL RENDERING DECISIONS:')
         this.annotations.forEach((ann, index) => {
           const willShow = this.shouldShowLabel(ann)
@@ -2102,6 +2103,7 @@ export default {
             result: willShow ? (isPlaceholder ? '📍 SMALL PLACEHOLDER' : '✅ VISIBLE') : '❌ HIDDEN'
           })
         })
+        */
         
         // Emit event for parent component
         this.$emit('annotationsLoaded', this.annotations.length)
