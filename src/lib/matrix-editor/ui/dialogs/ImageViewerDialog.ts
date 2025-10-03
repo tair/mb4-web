@@ -41,6 +41,9 @@ export class ImageViewerDialog extends Modal {
   private simpleImageViewer: SimpleImageViewer | null = null
   private isUpdatingSide: boolean = false
   private metadataDocumentClickHandler: ((e: MouseEvent) => void) | null = null
+  private metadataLoaded: boolean = false
+  private metadataExpanded: boolean = false
+  private metadataToggleClickHandler: ((e: MouseEvent) => void) | null = null
 
   constructor(
     type: string, 
@@ -76,7 +79,8 @@ export class ImageViewerDialog extends Modal {
     
     
     // Always use annotation viewer title since annotations are always enabled
-    this.setTitle('Media Annotation Viewer')
+    const title = published ? 'Media Annotation Viewer' : 'Media Annotation Editor'
+    this.setTitle(title)
     this.setDisposeOnHide(true)
   }
 
@@ -241,6 +245,14 @@ export class ImageViewerDialog extends Modal {
     
     // Clean up metadata container that's inside the annotation container
     if (this.annotationContainer) {
+      // Remove toggle click handler if registered
+      if (this.metadataToggleClickHandler) {
+        const toggleBtn = this.annotationContainer.querySelector('.metadata-toggle') as HTMLElement
+        if (toggleBtn) {
+          toggleBtn.removeEventListener('click', this.metadataToggleClickHandler)
+        }
+        this.metadataToggleClickHandler = null
+      }
       const metadataContainer = this.annotationContainer.querySelector('.media-metadata-container') as HTMLElement
       if (metadataContainer) {
         this.annotationContainer.removeChild(metadataContainer)
@@ -637,9 +649,17 @@ export class ImageViewerDialog extends Modal {
       // Create the metadata container element
       const metadataContainer = document.createElement('div')
       metadataContainer.className = 'media-metadata-container'
+      // Collapsed by default
+      metadataContainer.classList.add('collapsed')
       
       metadataContainer.innerHTML = `
-        <div class="media-metadata-content">
+        <div class="media-metadata-header">
+          <button type="button" class="metadata-toggle" aria-expanded="false" aria-controls="media-metadata-content">
+            <span class="toggle-caret"></span>
+            <span class="toggle-text">Show details</span>
+          </button>
+        </div>
+        <div id="media-metadata-content" class="media-metadata-content">
           <div class="metadata-loading">Loading metadata...</div>
           <div class="metadata-info" style="display: none;"></div>
         </div>
@@ -651,25 +671,45 @@ export class ImageViewerDialog extends Modal {
       // Get the newly created elements
       const metadataLoading = metadataContainer.querySelector('.metadata-loading') as HTMLElement
       const metadataInfo = metadataContainer.querySelector('.metadata-info') as HTMLElement
+      const toggleBtn = metadataContainer.querySelector('.metadata-toggle') as HTMLButtonElement
+      const toggleText = metadataContainer.querySelector('.toggle-text') as HTMLElement
 
-      if (!metadataLoading || !metadataInfo) {
+      if (!metadataLoading || !metadataInfo || !toggleBtn || !toggleText) {
         console.error('Failed to create metadata elements')
         return
       }
+      // Reset flags
+      this.metadataLoaded = false
+      this.metadataExpanded = false
 
-      // Fetch metadata
-      const metadata = await this.fetchMediaMetadata()
-      
-      // Generate metadata HTML
-      const metadataHtml = this.generateMetadataHtml(metadata)
-      
-      // Update content
-      metadataInfo.innerHTML = metadataHtml
-      metadataLoading.style.display = 'none'
-      metadataInfo.style.display = 'flex'
-
-      // Bind inline side action handlers
-      this.bindInlineSideActions()
+      // Bind toggle click to expand/collapse and lazy-load on first expand
+      this.metadataToggleClickHandler = async () => {
+        const isCollapsed = metadataContainer.classList.contains('collapsed')
+        if (isCollapsed) {
+          // Expanding
+          metadataContainer.classList.remove('collapsed')
+          toggleBtn.setAttribute('aria-expanded', 'true')
+          if (toggleText) toggleText.textContent = 'Hide details'
+          // Lazy load on first expand
+          if (!this.metadataLoaded) {
+            metadataLoading.style.display = 'block'
+            metadataInfo.style.display = 'none'
+            const metadata = await this.fetchMediaMetadata()
+            const metadataHtml = this.generateMetadataHtml(metadata)
+            metadataInfo.innerHTML = metadataHtml
+            metadataLoading.style.display = 'none'
+            metadataInfo.style.display = 'flex'
+            this.bindInlineSideActions()
+            this.metadataLoaded = true
+          }
+        } else {
+          // Collapsing
+          metadataContainer.classList.add('collapsed')
+          toggleBtn.setAttribute('aria-expanded', 'false')
+          if (toggleText) toggleText.textContent = 'Show details'
+        }
+      }
+      toggleBtn.addEventListener('click', this.metadataToggleClickHandler)
       
     } catch (error) {
       console.error('Failed to setup media metadata:', error)
@@ -992,6 +1032,10 @@ export class ImageViewerDialog extends Modal {
         border-bottom: 1px solid #dee2e6;
         padding: 1rem 1.5rem;
       }
+      .modal-annotation-viewer .modal-header .modal-title {
+        font-size: 0.95rem;
+        line-height: 1.1;
+      }
       
       .modal-annotation-viewer .modal-footer {
         flex-shrink: 0;
@@ -1114,6 +1158,54 @@ export class ImageViewerDialog extends Modal {
         position: relative;
         z-index: 10;
         box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.05);
+      }
+
+      /* Collapsed state reduces padding and hides content */
+      .mediaViewer .media-metadata-container.collapsed {
+        padding: 0.35rem 0.5rem;
+        background-color: #f8f9fa;
+      }
+      .mediaViewer .media-metadata-container.collapsed .media-metadata-content {
+        display: none !important;
+      }
+
+      .mediaViewer .media-metadata-header {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+      }
+      /* Add small space between the header (Hide details) and metadata when expanded */
+      .mediaViewer .media-metadata-container:not(.collapsed) .media-metadata-header {
+        margin-bottom: 0.4rem;
+      }
+      .mediaViewer .metadata-toggle {
+        background: transparent;
+        border: none;
+        color: #0d6efd;
+        cursor: pointer;
+        padding: 0;
+        font-size: 0.78rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+      .mediaViewer .metadata-toggle:disabled {
+        color: #6c757d;
+        cursor: default;
+      }
+      .mediaViewer .metadata-toggle .toggle-caret {
+        display: inline-block;
+        width: 0;
+        height: 0;
+        border-top: 5px solid transparent;
+        border-bottom: 5px solid transparent;
+        border-left: 6px solid currentColor;
+        transition: transform 0.15s ease;
+      }
+      .mediaViewer .media-metadata-container:not(.collapsed) .metadata-toggle .toggle-caret {
+        transform: rotate(90deg);
       }
 
       .mediaViewer .media-metadata-content {
