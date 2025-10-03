@@ -166,8 +166,9 @@ export const requireSpecimenEditAccess = createEntityEditGuard(
 
 /**
  * Route guard for media edit access
+ * Note: Allows observers/anonymous viewers to access in read-only mode
  */
-export const requireMediaEditAccess = createEntityEditGuard(
+export const requireMediaEditAccess = createViewAccessGuard(
   EntityType.MEDIA,
   loadMedia
 )
@@ -390,6 +391,106 @@ export async function requireProjectAdmin(to, from, next) {
   } catch (error) {
     console.error('Project admin guard error:', error)
     next({ name: 'NotFoundView', query: { message: 'Error checking permissions' } })
+  }
+}
+
+/**
+ * Factory for view access guard - allows anyone with project access to view the page
+ * The component itself will handle read-only mode via AccessControlService
+ * This is useful for pages like media edit where observers should see the page but not edit
+ */
+export function createViewAccessGuard(entityType, entityLoader) {
+  return async (to, from, next) => {
+    try {
+      const projectId = parseInt(to.params.id || to.params.projectId)
+      const entityIdParam =
+        to.params.taxonId ||
+        to.params.specimenId ||
+        to.params.mediaId ||
+        to.params.documentId ||
+        to.params.folderId ||
+        to.params.referenceId ||
+        to.params.folioId ||
+        to.params.entityId ||
+        to.params.viewId
+      const entityId = parseInt(entityIdParam)
+
+      if (!projectId || !entityId) {
+        next({
+          name: 'NotFoundView',
+          query: { message: 'Invalid project or entity ID' },
+        })
+        return
+      }
+
+      // Load the entity to ensure it exists
+      const entity = await entityLoader({ projectId, entityId, route: to })
+      if (!entity) {
+        next({
+          name: 'NotFoundView',
+          query: {
+            message: `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} not found`,
+          },
+        })
+        return
+      }
+
+      // Check if user has any project access (including observers/anonymous reviewers)
+      const authStore = useAuthStore()
+      const projectUsersStore = useProjectUsersStore()
+      
+      const currentUserId = authStore.user?.userId
+      if (!currentUserId) {
+        next({ name: 'UserLogin' })
+        return
+      }
+
+      // Ensure project users are loaded
+      if (!projectUsersStore.isLoaded) {
+        await projectUsersStore.fetchUsers(projectId)
+      }
+
+      // Check if user is system admin/curator (can access everything)
+      if (authStore.isUserAdministrator || authStore.isUserCurator) {
+        next()
+        return
+      }
+
+      // Check if user is anonymous reviewer for this project
+      if (authStore.isAnonymousReviewer) {
+        const anonymousProjectId = authStore.getAnonymousProjectId
+        if (parseInt(anonymousProjectId) === projectId) {
+          next()
+          return
+        } else {
+          next({
+            name: 'NotFoundView',
+            query: { message: 'You do not have access to this project' },
+          })
+          return
+        }
+      }
+
+      // Check if user is a project member (any membership type including observer)
+      const userMembership = projectUsersStore.getUserById(currentUserId)
+      if (userMembership) {
+        // Allow access - the component will handle read-only mode
+        next()
+        return
+      }
+
+      // User is not a member of this project
+      next({
+        name: 'NotFoundView',
+        query: { message: 'You do not have access to this project' },
+      })
+    } catch (error) {
+      console.error('View access guard error:', error)
+      next({
+        name: 'NotFoundView',
+        query: { message: 'Error checking permissions' },
+      })
+    }
   }
 }
 
