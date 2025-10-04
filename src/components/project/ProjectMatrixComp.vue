@@ -106,7 +106,8 @@ const nchains_specified = ref(4)
 const outgroups = new Map()
 outgroups.set('', 'None')
 for (const taxonName of taxonNames) {
-  outgroups.set(taxonName, taxonName)
+  const repTaxonName = taxonName.trim().replace(/\s+/g, '_')
+  outgroups.set(repTaxonName, repTaxonName)
 }
 const set_outgroup = ref(outgroups.keys()?.next()?.value)
 const runtime = ref(4.0)
