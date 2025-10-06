@@ -1444,7 +1444,7 @@ export default {
       const isSelected = this.selectedAnnotation?.annotation_id === annotation.annotation_id
       
       this.ctx.strokeStyle = isSelected ? '#007bff' : '#ff6b6b'
-      this.ctx.lineWidth = isSelected ? 3 : 2
+      this.ctx.lineWidth = isSelected ? 6 : 4
       this.ctx.fillStyle = 'rgba(255, 107, 107, 0.1)'
 
       const scaledAnnotation = this.scaleAnnotation(annotation)
@@ -1465,7 +1465,21 @@ export default {
     },
 
     drawRectangle(annotation) {
+      // Draw with a high-contrast outline behind the main stroke
+      const baseColor = this.ctx.strokeStyle
+      const baseWidth = this.ctx.lineWidth || 1
+      this.ctx.save()
+      this.ctx.lineJoin = 'round'
+      this.ctx.lineCap = 'round'
+      // Outline pass
+      this.ctx.strokeStyle = 'rgba(255,255,255,0.95)'
+      this.ctx.lineWidth = baseWidth + 4
       this.ctx.strokeRect(annotation.x, annotation.y, annotation.w, annotation.h)
+      // Foreground pass
+      this.ctx.strokeStyle = baseColor
+      this.ctx.lineWidth = baseWidth
+      this.ctx.strokeRect(annotation.x, annotation.y, annotation.w, annotation.h)
+      this.ctx.restore()
       if (this.selectedAnnotation?.annotation_id === annotation.annotation_id) {
         this.ctx.fillRect(annotation.x, annotation.y, annotation.w, annotation.h)
       }
@@ -1492,7 +1506,21 @@ export default {
       }
       
       this.ctx.closePath()
+      // Draw with a high-contrast outline behind the main stroke
+      const baseColor = this.ctx.strokeStyle
+      const baseWidth = this.ctx.lineWidth || 1
+      this.ctx.save()
+      this.ctx.lineJoin = 'round'
+      this.ctx.lineCap = 'round'
+      // Outline pass
+      this.ctx.strokeStyle = 'rgba(255,255,255,0.95)'
+      this.ctx.lineWidth = baseWidth + 4
       this.ctx.stroke()
+      // Foreground pass
+      this.ctx.strokeStyle = baseColor
+      this.ctx.lineWidth = baseWidth
+      this.ctx.stroke()
+      this.ctx.restore()
       
       if (this.selectedAnnotation?.annotation_id === annotation.annotation_id) {
         this.ctx.fill()
@@ -1503,17 +1531,29 @@ export default {
       if (!this.currentShape) return
 
       this.ctx.strokeStyle = '#007bff'
-      this.ctx.lineWidth = 2
+      this.ctx.lineWidth = 4
       
       const scaled = this.scaleAnnotation(this.currentShape)
+      // Outline + foreground pass for stronger visibility while drawing
+      const baseColor = this.ctx.strokeStyle
+      const baseWidth = this.ctx.lineWidth || 1
+      this.ctx.save()
+      this.ctx.lineJoin = 'round'
+      this.ctx.lineCap = 'round'
+      this.ctx.strokeStyle = 'rgba(255,255,255,0.95)'
+      this.ctx.lineWidth = baseWidth + 4
       this.ctx.strokeRect(scaled.x, scaled.y, scaled.w, scaled.h)
+      this.ctx.strokeStyle = baseColor
+      this.ctx.lineWidth = baseWidth
+      this.ctx.strokeRect(scaled.x, scaled.y, scaled.w, scaled.h)
+      this.ctx.restore()
     },
 
     drawPolygonInProgress() {
       if (this.polygonPoints.length < 2) return
 
       this.ctx.strokeStyle = '#007bff'
-      this.ctx.lineWidth = 2
+      this.ctx.lineWidth = 4
       this.ctx.setLineDash([5, 5])
 
       // Use stored display dimensions if available, otherwise fallback to canvas dimensions
@@ -1530,8 +1570,21 @@ export default {
         const point = this.polygonPoints[i]
         this.ctx.lineTo(offsetX + (point.x / 100) * displayWidth, offsetY + (point.y / 100) * displayHeight)
       }
-
+      // Outline + foreground dashed strokes
+      const baseColor = this.ctx.strokeStyle
+      const baseWidth = this.ctx.lineWidth || 1
+      this.ctx.save()
+      this.ctx.lineJoin = 'round'
+      this.ctx.lineCap = 'round'
+      // Outline (dashed, wider)
+      this.ctx.strokeStyle = 'rgba(255,255,255,0.95)'
+      this.ctx.lineWidth = baseWidth + 4
       this.ctx.stroke()
+      // Foreground (dashed, colored)
+      this.ctx.strokeStyle = baseColor
+      this.ctx.lineWidth = baseWidth
+      this.ctx.stroke()
+      this.ctx.restore()
       this.ctx.setLineDash([])
     },
 
