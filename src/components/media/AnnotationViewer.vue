@@ -818,7 +818,7 @@ export default {
         imageOffsetY = (mainRect.height - actualImageHeight) / 2
         initialFitScale = mainRect.width / naturalWidth
       } else {
-        // Image is taller - fits to container height, has horizontal white space  
+        // Image is taller - fits to container height; horizontally centered
         actualImageHeight = mainRect.height
         actualImageWidth = mainRect.height * aspectRatio
         imageOffsetY = 0
@@ -945,6 +945,17 @@ export default {
       // Setup canvas first to calculate display dimensions
       this.setupCanvas()
       
+      // Center horizontally (top-align vertically) for the initial view based on current zoom
+      const container = this.$refs.canvasContainer
+      if (container) {
+        const containerWidth = container.clientWidth
+        const z = this.viewerZoom
+        this.viewerOffset = {
+          x: (containerWidth - (containerWidth * z)) / (2 * z),
+          y: 0
+        }
+      }
+
       // Apply initial zoom transform immediately
       this.$nextTick(() => {
         this.updateImageTransform()
@@ -1024,7 +1035,7 @@ export default {
       this.canvasDisplayWidth = displayWidth
       this.canvasDisplayHeight = displayHeight
       this.canvasOffsetX = (containerWidth - displayWidth) / 2
-      this.canvasOffsetY = (containerHeight - displayHeight) / 2
+      this.canvasOffsetY = 0
       
       // Calculate scale factor (for backward compatibility)
       this.imageScale = displayWidth / naturalWidth
@@ -1068,7 +1079,18 @@ export default {
 
     resetZoom() {
       this.viewerZoom = 0.5 // Reset to default 50% zoom
-      this.viewerOffset = { x: 0, y: 0 }
+      // Re-center horizontally (top-align vertically) after resetting zoom
+      const container = this.$refs.canvasContainer
+      if (container) {
+        const containerWidth = container.clientWidth
+        const z = this.viewerZoom
+        this.viewerOffset = {
+          x: (containerWidth - (containerWidth * z)) / (2 * z),
+          y: 0
+        }
+      } else {
+        this.viewerOffset = { x: 0, y: 0 }
+      }
       this.updateImageTransform()
     },
 
@@ -2895,6 +2917,7 @@ export default {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  object-position: center top;
   transform-origin: top left;
 }
 
