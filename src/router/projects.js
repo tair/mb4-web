@@ -9,7 +9,8 @@ import {
   requireMatrixEditAccess,
   createEntityCreateGuard,
   requireBibliographyEditAccess,
-  requireProjectAdmin,
+  requireProjectOwnerOrCurator,
+  requireCuratorOnly,
 } from '@/lib/route-guards.js'
 
 export const MY_PROJECT_VIEWS = [
@@ -339,7 +340,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/members/ListView.vue'
       ),
-    beforeEnter: requireProjectAdmin,
+    beforeEnter: requireCuratorOnly,
   },
   {
     path: 'members/groups',
@@ -357,7 +358,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/membersGroups/ListView.vue'
       ),
-    beforeEnter: requireProjectAdmin,
+    beforeEnter: requireCuratorOnly,
   },
   {
     path: 'members/:userId(\\d+)/edit',
@@ -375,7 +376,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/members/EditView.vue'
       ),
-    beforeEnter: requireProjectAdmin,
+    beforeEnter: requireProjectOwnerOrCurator,
   },
   {
     path: 'members/groups/:groupId(\\d+)/edit',
@@ -393,7 +394,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/membersGroups/EditView.vue'
       ),
-    beforeEnter: requireProjectAdmin,
+    beforeEnter: requireProjectOwnerOrCurator,
   },
   {
     path: 'members/groups/create',
@@ -411,7 +412,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/membersGroups/CreateView.vue'
       ),
-    beforeEnter: requireProjectAdmin,
+    beforeEnter: requireProjectOwnerOrCurator,
   },
   {
     path: 'members/create',
@@ -429,7 +430,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/members/CreateView.vue'
       ),
-    beforeEnter: requireProjectAdmin,
+    beforeEnter: requireProjectOwnerOrCurator,
   },
   {
     path: 'views',
@@ -963,7 +964,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/institutions/ListView.vue'
       ),
-    beforeEnter: requireProjectAdmin,
+    beforeEnter: requireProjectOwnerOrCurator,
   },
   {
     path: 'institutions/create',
@@ -981,7 +982,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/institutions/CreateView.vue'
       ),
-    beforeEnter: requireProjectAdmin,
+    beforeEnter: requireProjectOwnerOrCurator,
   },
   {
     path: 'download',
@@ -1016,7 +1017,8 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/duplication/RequestView.vue'
       ),
-    beforeEnter: requireProjectAdmin,
+    // Any logged-in standard user can request
+    // Guard removed; rely on parent '/myprojects' auth + page-level handling
   },
   {
     path: 'publish/partition',
@@ -1034,7 +1036,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/publishPartition/PublishPartitionView.vue'
       ),
-    beforeEnter: requireProjectAdmin,
+    beforeEnter: requireProjectOwnerOrCurator,
   },
   {
     path: 'publish/partition/:partitionId',
@@ -1052,7 +1054,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/publishPartition/SummaryView.vue'
       ),
-    beforeEnter: requireProjectAdmin,
+    beforeEnter: requireProjectOwnerOrCurator,
   },
   // Publication workflow routes
   {
@@ -1071,7 +1073,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/publish/PrerequisiteView.vue'
       ),
-    beforeEnter: requireProjectAdmin,
+    beforeEnter: requireProjectOwnerOrCurator,
   },
 
   {
@@ -1094,7 +1096,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/publish/PreferencesView.vue'
       ),
-    beforeEnter: requireProjectAdmin,
+    beforeEnter: requireProjectOwnerOrCurator,
   },
   {
     path: 'publish/final',
@@ -1116,6 +1118,6 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/publish/FinalView.vue'
       ),
-    beforeEnter: requireProjectAdmin,
+    beforeEnter: requireProjectOwnerOrCurator,
   },
 ]

@@ -349,7 +349,7 @@ export const requireMatrixEditAccess = createCancelOnDenyGuard(
  * Require the current user to be a Project Administrator for the project id in the route.
  * System curators and admins are also allowed.
  */
-export async function requireProjectAdmin(to, from, next) {
+export async function requireProjectOwnerOrCurator(to, from, next) {
   try {
     const authStore = useAuthStore()
     if (!authStore.user?.userId) {
@@ -385,11 +385,40 @@ export async function requireProjectAdmin(to, from, next) {
       name: 'MyProjectOverviewView',
       params: { id: projectId },
       query: {
-        error: 'Only project administrators can perform this action.',
+        error: 'Only project owner or a curator can perform this action.',
       },
     })
   } catch (error) {
     console.error('Project admin guard error:', error)
+    next({ name: 'NotFoundView', query: { message: 'Error checking permissions' } })
+  }
+}
+
+/**
+ * Require the current user to be a system curator only (no owner fallback).
+ * Used for actions that must be restricted to curators.
+ */
+export async function requireCuratorOnly(to, from, next) {
+  try {
+    const authStore = useAuthStore()
+    if (!authStore.user?.userId) {
+      next({ name: 'UserLogin' })
+      return
+    }
+
+    if (authStore.isUserCurator) {
+      next()
+      return
+    }
+
+    const projectId = parseInt(to.params.id || to.params.projectId)
+    next({
+      name: 'MyProjectOverviewView',
+      params: { id: projectId },
+      query: { error: 'Only curators can perform this action.' },
+    })
+  } catch (error) {
+    console.error('Curator-only guard error:', error)
     next({ name: 'NotFoundView', query: { message: 'Error checking permissions' } })
   }
 }

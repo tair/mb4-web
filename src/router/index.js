@@ -29,7 +29,7 @@ import UserSetNewPasswordView from '@/views/users/UserSetNewPasswordView.vue'
 import UserView from '@/views/users/UserView.vue'
 import SearchView from '@/views/SearchView.vue'
 import { apiService } from '@/services/apiService.js'
-import { requireMatrixEditAccess, requireProjectAdmin } from '@/lib/route-guards.js'
+import { requireMatrixEditAccess, requireProjectOwnerOrCurator } from '@/lib/route-guards.js'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -185,7 +185,7 @@ const router = createRouter({
             import(
               /* webpackChunkName: "unpublished" */ '@/views/project/home/EditProjectView.vue'
             ),
-          beforeEnter: [requireSignInAndProfileConfirmation, requireProjectAdmin],
+          beforeEnter: [requireSignInAndProfileConfirmation, requireProjectOwnerOrCurator],
         },
         {
           path: '/myprojects/:id(\\d+)',
