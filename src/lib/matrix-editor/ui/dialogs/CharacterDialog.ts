@@ -74,7 +74,11 @@ export class CharacterDialog extends Dialog {
     super.createDom()
 
     const element = this.getElement()
-    element.classList.add('characterDialog', 'modal-lg')
+    element.classList.add('characterDialog')
+    const dialogElement = element.querySelector('.modal-dialog')
+    if (dialogElement) {
+      dialogElement.classList.add('modal-lg')
+    }
 
     const contentElement = this.getContentElement()
     contentElement.innerHTML = CharacterDialog.htmlContent()
@@ -508,14 +512,13 @@ class ContinuousCharacterPane extends BasePane {
         : 'Meristic'
     return (
       '<div class="characterPane">' +
-      '<div class="label">Type</div>' +
+      '<div class="headerRow">' +
+      '<div class="field typeField"><div class="label">Type</div><div class="value">' +
       type +
-      '<p></p>' +
-      '<div class="label">Name</div>' +
-      '<input class="nameInput" />' +
-      '<p></p>' +
-      '<div class="label">Notes</div>' +
-      '<textarea class="descriptionInput"></textarea>' +
+      '</div></div>' +
+      '<div class="field nameField"><div class="label">Name</div><input class="nameInput" /></div>' +
+      '</div>' +
+      '<div class="field notesField"><div class="label">Notes</div><textarea class="descriptionInput"></textarea></div>' +
       '</div>'
     )
   }
@@ -963,13 +966,11 @@ class CharacterPane extends BasePane {
   static htmlContent(): string {
     return (
       '<div class="characterPane">' +
-      '<div class="label">Type</div> Discrete<p></p>' +
-      '<div class="label">Name</div>' +
-      '<input class="nameInput" />' +
-      '<p></p>' +
-      '<div class="label">Notes</div>' +
-      '<textarea class="descriptionInput"></textarea>' +
-      '<p></p>' +
+      '<div class="headerRow">' +
+      '<div class="field typeField"><div class="label">Type</div><div class="value">Discrete</div></div>' +
+      '<div class="field nameField"><div class="label">Name</div><input class="nameInput" /></div>' +
+      '</div>' +
+      '<div class="field notesField"><div class="label">Notes</div><textarea class="descriptionInput"></textarea></div>' +
       '<span class="addCharacterState">+ Add new</span>' +
       '<div class="statesPane"></div>' +
       '</div>'
