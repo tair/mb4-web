@@ -47,7 +47,7 @@ const projectId = route.params.id
       <div class="matrix-choose-item">
         <RouterLink
           class="matrix-choose-link"
-          :to="`/myprojects/${projectId}/matrices/create`"
+          :to="`/myprojects/${projectId}/matrices/create?uploadType=csv`"
         >
           Create a matrix by uploading a CSV or Excel file
         </RouterLink>
