@@ -215,7 +215,7 @@ async function handleCsvConversion(file) {
   uploadError.value = ''
 
   try {
-    const { matrixObject, result } = await convertCsvToMatrix(file, showError)
+    const { matrixObject, result } = await convertCsvToMatrix(file, projectId, showError)
     Object.assign(importedMatrix, matrixObject)
     showSuccess(`Successfully converted ${file.name} to ${result.format.toUpperCase()} format`)
   } catch (error) {
