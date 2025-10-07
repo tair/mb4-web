@@ -518,7 +518,8 @@ class ContinuousCharacterPane extends BasePane {
       '</div></div>' +
       '<div class="field nameField"><div class="label">Name</div><input class="nameInput" /></div>' +
       '</div>' +
-      '<div class="field notesField"><div class="label">Notes</div><textarea class="descriptionInput"></textarea></div>' +
+      '<div class="label">Notes</div>' +
+      '<textarea class="descriptionInput" rows="7"></textarea>' +
       '</div>'
     )
   }
@@ -970,7 +971,9 @@ class CharacterPane extends BasePane {
       '<div class="field typeField"><div class="label">Type</div><div class="value">Discrete</div></div>' +
       '<div class="field nameField"><div class="label">Name</div><input class="nameInput" /></div>' +
       '</div>' +
-      '<div class="field notesField"><div class="label">Notes</div><textarea class="descriptionInput"></textarea></div>' +
+      '<div class="label">Notes</div>' +
+      '<textarea class="descriptionInput" rows="7"></textarea>' +
+      '<p></p>' +
       '<span class="addCharacterState">+ Add new</span>' +
       '<div class="statesPane"></div>' +
       '</div>'

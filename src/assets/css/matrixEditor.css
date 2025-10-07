@@ -1885,7 +1885,12 @@ div.loadingMessage > div,
 }
 
 .characterDialog .modal-content {
-  max-height: 88vh; /* increase vertical space */
+  max-height: none; /* allow container to expand with content */
+}
+
+/* Let modal body grow and show expanded textarea without clipping */
+.characterDialog .modal-body {
+  overflow: visible;
 }
 
 .characterDialog .characterPane p {
@@ -1913,39 +1918,27 @@ div.loadingMessage > div,
 
 .characterDialog .characterPane .descriptionInput {
   box-sizing: inherit !important;
-  /* Ensure at least ~5 rows of space; typical line-height ~1.2em => ~6em */
-  min-height: 6.5em !important;
-  height: auto !important;
-  resize: none;
+  /* Allow rows to control height; ensure ~7 rows baseline */
+  min-height: 9.5em; /* ~7 rows at ~1.35em line-height */
+  height: auto;
+  resize: vertical;
   width: 100%;
 }
 
-/* Layout: place Type and Name on the same row */
+/* Compact header row for type + name side-by-side */
 .characterDialog .characterPane .headerRow {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: flex-end;
 }
-
-/* Add a bit of breathing room under the header row */
-.characterDialog .characterPane .headerRow + .notesField {
-  margin-top: 10px;
-}
-
 .characterDialog .characterPane .headerRow .field {
   flex: 1 1 0;
 }
-
 .characterDialog .characterPane .headerRow .typeField {
-  flex: 0 0 200px; /* compact type field */
+  flex: 0 0 200px;
 }
-
 .characterDialog .characterPane .headerRow .value {
-  font-size: 0.9rem; /* slightly smaller to fit */
-}
-
-.characterDialog .characterPane .nameField .nameInput {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .characterDialog .characterPane .statesPane {
