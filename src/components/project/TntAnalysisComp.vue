@@ -105,7 +105,7 @@ async function apiExtractSpeciesFromFile(file) {
  * Analyzes a TNT file with specified parameters
  * @param {File} file - The TNT file to analyze
  * @param {Object} params - Analysis parameters
- * @returns {Promise<Object>} - Analysis response data
+ * @returns {Promise<string>} - Analysis response data (NEXUS format text)
  */
 async function apiAnalyzeTntFile(file, params) {
   const formData = new FormData()
@@ -131,7 +131,7 @@ async function apiAnalyzeTntFile(file, params) {
       'Content-Type': 'multipart/form-data',
     },
   })
-  const responseData = await response.json()
+  const responseData = await response.text()
   return responseData
 }
 
@@ -161,7 +161,7 @@ async function apiAnalyzeCachedMatrix(cacheKey, params) {
     trees_per_replication: params.treesPerReplication,
     iterations: params.iterations,
   })
-  const responseData = await response.json()
+  const responseData = await response.text()
   return responseData
 }
 
