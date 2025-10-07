@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { apiService } from '@/services/apiService.js'
 
 export const usePublishWorkflowStore = defineStore('publishWorkflow', {
   state: () => ({
@@ -184,17 +185,8 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
 
       try {
         // Call backend API to check publishing status
-        const response = await fetch(
-          `${
-            import.meta.env.VITE_API_URL
-          }/projects/${projectId}/publishing/validate/citation`,
-          {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${this.getAuthToken()}`,
-              'Content-Type': 'application/json',
-            },
-          }
+        const response = await apiService.get(
+          `/projects/${projectId}/publishing/validate/citation`
         )
 
         if (!response.ok) {
@@ -209,7 +201,6 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         }
 
         const data = await response.json()
-        console.log(data)
 
         this.validations.citations = {
           isValid: data.citation_complete || false,
@@ -240,17 +231,8 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
 
       try {
         // Call backend API to get publish form data (includes media validation)
-        const response = await fetch(
-          `${
-            import.meta.env.VITE_API_URL
-          }/projects/${projectId}/publishing/validate/media`,
-          {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${this.getAuthToken()}`,
-              'Content-Type': 'application/json',
-            },
-          }
+        const response = await apiService.get(
+          `/projects/${projectId}/publishing/validate/media`
         )
 
         if (!response.ok) {
@@ -258,7 +240,6 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         }
 
         const data = await response.json()
-        console.log(data)
 
         // Process media validation results
         const canPublish = data.canPublish !== false // Default to true if not specified
@@ -340,17 +321,8 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
     // Load existing preferences from backend
     async loadPreferences(projectId) {
       try {
-        const response = await fetch(
-          `${
-            import.meta.env.VITE_API_URL
-          }/projects/${projectId}/publishing/preferences`,
-          {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${this.getAuthToken()}`,
-              'Content-Type': 'application/json',
-            },
-          }
+        const response = await apiService.get(
+          `/projects/${projectId}/publishing/preferences`
         )
 
         if (!response.ok) {
@@ -419,17 +391,8 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
     // Load unpublished items from backend (fallback endpoint if not included in preferences)
     async loadUnpublishedItems(projectId) {
       try {
-        const response = await fetch(
-          `${
-            import.meta.env.VITE_API_URL
-          }/projects/${projectId}/publishing/unpublished-items`,
-          {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${this.getAuthToken()}`,
-              'Content-Type': 'application/json',
-            },
-          }
+        const response = await apiService.get(
+          `/projects/${projectId}/publishing/unpublished-items`
         )
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`)
@@ -475,20 +438,9 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
           no_personal_identifiable_info: preferences.noPersonalInfo ? 1 : 0,
         }
 
-        console.log('Sending preferences payload:', backendData)
-
-        const response = await fetch(
-          `${
-            import.meta.env.VITE_API_URL
-          }/projects/${projectId}/publishing/preferences`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${this.getAuthToken()}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(backendData),
-          }
+        const response = await apiService.post(
+          `/projects/${projectId}/publishing/preferences`,
+          backendData
         )
 
         if (!response.ok) {
@@ -531,17 +483,8 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         if (finalData) {
           this.finalData = { ...this.finalData, ...finalData }
         }
-        const response = await fetch(
-          `${
-            import.meta.env.VITE_API_URL
-          }/projects/${projectId}/publishing/publish`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${this.getAuthToken()}`,
-              'Content-Type': 'application/json',
-            },
-          }
+        const response = await apiService.post(
+          `/projects/${projectId}/publishing/publish`
         )
 
         if (!response.ok) {
@@ -549,7 +492,6 @@ export const usePublishWorkflowStore = defineStore('publishWorkflow', {
         }
 
         const data = await response.json()
-        console.log(data)
 
         this.publicationResult = {
           success: true,

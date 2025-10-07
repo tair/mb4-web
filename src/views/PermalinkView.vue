@@ -6,7 +6,7 @@
 </template>
 
 <script>
-import axios from 'axios'
+import { apiService } from '@/services/apiService.js'
 
 export default {
   data() {
@@ -55,29 +55,25 @@ export default {
     async handleProject(projectId) {
       try {
         // this endpoint only returns project data when it's public
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/public/projects/${projectId}`
-        )
-        const project = response.data
+        const response = await apiService.get(`/public/projects/${projectId}`)
+        const project = await response.json()
         window.location.href = `${import.meta.env.VITE_HOST}/project/${
           project.project_id
         }/overview`
       } catch (error) {
-        this.error = error.response.data.message
+        this.error = error.message
       }
     },
     async handleFolio(folioId) {
       try {
-        const folioResponse = await axios.get(
-          `${import.meta.env.VITE_API_URL}/public/projects/folios/${folioId}`
-        )
-        const folio = folioResponse.data
+        const folioResponse = await apiService.get(`/public/projects/folios/${folioId}`)
+        const folio = await folioResponse.json()
 
         window.location.href = `${import.meta.env.VITE_HOST}/project/${
           folio.project_id
         }/folios/${folio.folio_id}`
       } catch (error) {
-        this.error = error.response.data.message
+        this.error = error.message
       }
     },
   },

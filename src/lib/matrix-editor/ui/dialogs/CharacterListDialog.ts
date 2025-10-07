@@ -203,6 +203,7 @@ export class CharacterListDialog extends Dialog {
           this.matrixModel,
           this.readonly
         )
+        characterRenderer.setProjectId(this.matrixModel.getProjectId())
         break
       case 2:
       default:
@@ -210,6 +211,7 @@ export class CharacterListDialog extends Dialog {
           this.matrixModel,
           this.readonly
         )
+        characterRenderer.setProjectId(this.matrixModel.getProjectId())
         break
     }
     this.characterGrid.setRenderer(characterRenderer)

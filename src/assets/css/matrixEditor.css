@@ -499,6 +499,20 @@ div.matrixgridCells table {
   min-width: 166px;
 }
 
+.cellStateImages .matrixgrid tr td img {
+  object-fit: contain;
+}
+
+.cellStateImages .matrixgrid tr td img.thumbnail-media-image {
+  max-width: 160px;
+  max-height: 160px;
+}
+
+.cellStateImages .matrixgrid tr td img.large-media-image {
+  max-width: 160px;
+  max-height: 160px;
+}
+
 .loadingModal {
   font-size: 13px;
   left: 50%;
@@ -557,6 +571,17 @@ div.matrixgridCells table {
 
 .imageThumbnail img {
   margin: auto;
+  object-fit: contain;
+}
+
+.imageThumbnail img.thumbnail-media-image {
+  max-width: 140px;
+  max-height: 110px;
+}
+
+.imageThumbnail img.large-media-image {
+  max-width: 140px;
+  max-height: 110px;
 }
 
 .imageThumbnail .imageArrowDown,
@@ -567,6 +592,34 @@ div.matrixgridCells table {
 
 .imageThumbnail .imageArrowDown {
   top: 88%;
+}
+
+/* Make ImageRenderer arrows visible and clickable */
+.imageThumbnail .imageArrowUp,
+.imageThumbnail .imageArrowDown {
+  width: 18px;
+  height: 18px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 10px;
+  z-index: 2;
+}
+
+.imageThumbnail .imageArrowUp {
+  top: 6%;
+}
+
+.imageThumbnail .imageArrowUp::after {
+  content: '\25B2';
+}
+
+.imageThumbnail .imageArrowDown::after {
+  content: '\25BC';
 }
 
 .imageThumbnail .imageArrowDim {
@@ -1265,7 +1318,7 @@ ol.selectList li:hover span.remove {
 .addMediaDialog .addMedia {
   border: 1px solid #ddd;
   border-radius: var(--bs-border-radius);
-  height: 305px;
+  height: 400px;
   overflow: hidden;
   position: relative;
 }
@@ -1329,14 +1382,28 @@ ol.selectList li:hover span.remove {
 
 .mediaGrid .mediaItem {
   display: inline-block;
-  height: 100px;
+  height: 140px;
   margin: 5px;
-  overflow: hidden;
+  overflow: visible;
   padding: 5px;
   position: relative;
   text-overflow: ellipsis;
-  vertical-align: middle;
+  vertical-align: top;
   width: 120px;
+}
+
+.mediaGrid .mediaItem img {
+  object-fit: contain;
+}
+
+.mediaGrid .mediaItem img.thumbnail-media-image {
+  max-width: 110px;
+  max-height: 80px;
+}
+
+.mediaGrid .mediaItem img.large-media-image {
+  max-width: 110px;
+  max-height: 80px;
 }
 
 .mediaGrid .mediaItem:hover {
@@ -1813,6 +1880,14 @@ div.loadingMessage > div,
   font-weight: normal;
 }
 
+.characterDialog .modal-dialog.modal-lg {
+  max-width: 980px; /* slightly wider if needed */
+}
+
+.characterDialog .modal-content {
+  max-height: 88vh; /* increase vertical space */
+}
+
 .characterDialog .characterPane p {
   margin-top: 20px;
 }
@@ -1838,9 +1913,39 @@ div.loadingMessage > div,
 
 .characterDialog .characterPane .descriptionInput {
   box-sizing: inherit !important;
-  height: 50px !important;
+  /* Ensure at least ~5 rows of space; typical line-height ~1.2em => ~6em */
+  min-height: 6.5em !important;
+  height: auto !important;
   resize: none;
   width: 100%;
+}
+
+/* Layout: place Type and Name on the same row */
+.characterDialog .characterPane .headerRow {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+/* Add a bit of breathing room under the header row */
+.characterDialog .characterPane .headerRow + .notesField {
+  margin-top: 10px;
+}
+
+.characterDialog .characterPane .headerRow .field {
+  flex: 1 1 0;
+}
+
+.characterDialog .characterPane .headerRow .typeField {
+  flex: 0 0 200px; /* compact type field */
+}
+
+.characterDialog .characterPane .headerRow .value {
+  font-size: 0.9rem; /* slightly smaller to fit */
+}
+
+.characterDialog .characterPane .nameField .nameInput {
+  font-size: 0.95rem;
 }
 
 .characterDialog .characterPane .statesPane {
@@ -2187,6 +2292,17 @@ div.loadingMessage > div,
 .characterTooltip div.media img {
   display: block;
   margin: auto;
+  object-fit: contain;
+}
+
+.characterTooltip div.media img.thumbnail-media-image {
+  max-width: 75px;
+  max-height: 60px;
+}
+
+.characterTooltip div.media img.large-media-image {
+  max-width: 300px;
+  max-height: 200px;
 }
 
 .characterTooltip div.state {
@@ -2227,6 +2343,12 @@ div.loadingMessage > div,
   background: white;
   max-width: fit-content;
   z-index: 30000;
+}
+
+.characterMediaTooltip img.large-media-image {
+  max-width: 400px;
+  max-height: 300px;
+  object-fit: contain;
 }
 
 .checkerDialog header {

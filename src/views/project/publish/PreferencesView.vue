@@ -2,18 +2,18 @@
 import { onMounted, ref, reactive, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePublishWorkflowStore } from '@/stores/PublishWorkflowStore.js'
+import { useNotifications } from '@/composables/useNotifications'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 
 const route = useRoute()
 const router = useRouter()
 const publishStore = usePublishWorkflowStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 const projectId = route.params.id
 
 const isLoaded = ref(false)
 const isSaving = ref(false)
 const formValid = ref(false)
-
-const validationStatus = computed(() => publishStore.getValidationStatus)
 
 const preferences = reactive({
   fundingAcknowledgment: '',
@@ -90,13 +90,14 @@ function validateForm() {
 async function savePreferences() {
   // Validation matching the original PHP form (updated)
   if (preferences.extinctTaxaIdentified === null) {
-    alert('Please indicate if you have marked all extinct taxa.')
+    showWarning('Please indicate if you have marked all extinct taxa.', 'Extinct Taxa Status Required')
     return false
   }
 
   if (!preferences.noPersonalInfo) {
-    alert(
-      'Please indicate that your data upload has no identifiable personal information.'
+    showWarning(
+      'Please indicate that your data upload has no identifiable personal information.',
+      'Personal Information Confirmation Required'
     )
     return false
   }
@@ -110,11 +111,11 @@ async function savePreferences() {
       // Proceed to final step
       router.push(`/myprojects/${projectId}/publish/final`)
     } else {
-      alert('Error saving preferences: ' + result.message)
+      showError('Error saving preferences: ' + result.message, 'Save Failed')
     }
   } catch (error) {
     console.error('Error saving preferences:', error)
-    alert('An error occurred while saving preferences. Please try again.')
+    showError('An error occurred while saving preferences. Please try again.', 'Save Error')
   } finally {
     isSaving.value = false
   }
@@ -174,13 +175,6 @@ function updateCopyrightPreference(preference) {
       <!-- Intro/validation status removed per requirements -->
 
       <form @submit.prevent="savePreferences" id="publishingForm">
-        <!-- Funding Acknowledgment -->
-        <p style="font-size: 14px; line-height: 1.3em">
-          <b>Funding acknowledgment:</b>
-        </p>
-        <!-- NSF funded radio group removed -->
-
-        <br />
         <p style="font-size: 14px; line-height: 1.3em"><b>Extinct taxa:</b></p>
         <div class="formLabel">
           <div id="extinctTaxa">

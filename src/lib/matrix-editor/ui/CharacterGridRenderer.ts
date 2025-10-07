@@ -16,10 +16,28 @@ export abstract class CharacterGridRenderer {
 
   protected matrixModel: MatrixModel
   protected readonly: boolean
+  protected projectId: number | null = null
+  protected published: boolean = false
 
   constructor(matrixModel: MatrixModel, readonly: boolean) {
     this.matrixModel = matrixModel
     this.readonly = readonly
+  }
+
+  /**
+   * Sets the project ID for proper media URL building
+   * @param projectId The project ID
+   */
+  setProjectId(projectId: number) {
+    this.projectId = projectId
+  }
+
+  /**
+   * Sets whether this is a published project
+   * @param published Whether the project is published
+   */
+  setPublished(published: boolean) {
+    this.published = published
   }
 
   /**
@@ -101,12 +119,48 @@ export class CharacterDetailedGridRenderer extends CharacterGridRenderer {
     row.appendChild(characterStatesElement)
     const images = new ImageRenderer('C')
     images.setReadOnly(this.readonly)
+    
+    // Set project ID if available
+    if (this.projectId !== null) {
+      images.setProjectId(this.projectId)
+    }
+    
+    // Set published status from matrix model
+    images.setPublished(this.matrixModel.isPublished())
+    
     const characterMedia = character.getMedia()
+    
+    // Set cell ID for the first media item (like CellRenderer does)
+    if (characterMedia.length > 0) {
+      const cellId = characterMedia[0].getId() // getId() returns link_id for character media
+      images.setCellId(cellId)
+    }
+    
     for (let x = 0, l = characterMedia.length; x < l; x++) {
       const characterMedium = characterMedia[x]
       const tiny = characterMedium.getTiny()
       if (tiny) {
-        images.addImage(characterMedium.getId(), tiny['url'])
+        // Pass the full media object data for TIFF detection
+        const mediaData = (characterMedium as any).characterMediaObj || {}
+        
+        // Get character and state information for annotation context
+        const characterName = character.getName()
+        const stateId = characterMedium.getStateId()
+        let stateName: string | null = null
+        let stateNumber: number | null = null
+        
+        if (stateId) {
+          const characterState = character.getCharacterStateById(stateId)
+          if (characterState) {
+            stateName = characterState.getName()
+            // Don't use || operator as it treats 0 as falsy
+            stateNumber = characterState.getNumber() ?? null
+          }
+        }
+        
+        // Use getMediaId() to get the actual media_id, not getId() which returns link_id
+        // Pass null for caption (no visible caption on thumbnail), but pass character/state info separately
+        images.addImage(characterMedium.getMediaId(), tiny['url'], null, mediaData, characterName, stateName, stateNumber)
       }
     }
     const characterMediaElement = document.createElement('td')

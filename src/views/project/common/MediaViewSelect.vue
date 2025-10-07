@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMediaViewsStore } from '@/stores/MediaViewsStore'
+import { useNotifications } from '@/composables/useNotifications'
 import SelectInput from '@/components/project/SelectInput.vue'
 
 const props = defineProps({
@@ -22,6 +23,7 @@ const route = useRoute()
 const projectId = route.params.id
 
 const mediaViewsStore = useMediaViewsStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 // Inline creation state
 const showCreateForm = ref(false)
@@ -61,7 +63,7 @@ function toggleCreateForm() {
 
 async function createView() {
   if (!newViewName.value.trim()) {
-    alert('Please enter a view name')
+    showWarning('Please enter a view name', 'View Name Required')
     return
   }
 
@@ -80,11 +82,11 @@ async function createView() {
       showCreateForm.value = false
       newViewName.value = ''
     } else {
-      alert(result.error || 'Failed to create media view')
+      showError(result.error || 'Failed to create media view', 'Creation Failed')
     }
   } catch (error) {
     console.error('Error creating media view:', error)
-    alert('Failed to create media view')
+    showError('Failed to create media view', 'Creation Error')
   } finally {
     isCreating.value = false
   }

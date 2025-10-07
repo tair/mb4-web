@@ -2,13 +2,15 @@
 import router from '@/router'
 import { useRoute } from 'vue-router'
 import { useTaxaStore } from '@/stores/TaxaStore'
-import { nameColumnMap } from '@/utils/taxa'
+import { useNotifications } from '@/composables/useNotifications'
+import { nameColumnMap, TAXA_COLUMN_NAMES } from '@/utils/taxa'
 import { csvToArray } from '@/utils/csv'
 import { ref } from 'vue'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id as string)
 const taxaStore = useTaxaStore()
+const { showError, showSuccess } = useNotifications()
 
 // The list of taxa that will be set when the file is uploaded.
 const taxa = new Set()
@@ -31,7 +33,9 @@ function readFile(event: Event) {
 function parseContent(content: string) {
   const columnsMap: Map<string, string> = new Map([
     ['author', 'scientific_name_author'],
+    ['author*', 'scientific_name_author'],
     ['year', 'scientific_name_year'],
+    ['year*', 'scientific_name_year'],
     ['notes', 'notes'],
   ])
   nameColumnMap.forEach((value, key) =>
@@ -39,7 +43,8 @@ function parseContent(content: string) {
   )
 
   const rows = csvToArray(content)
-  const columnLabels = rows.shift().map((label) => label.toLowerCase())
+  const header = rows.shift()
+  const columnLabels = header.map((label) => label.toLowerCase())
   for (const columnLabel of columnLabels) {
     if (!columnsMap.has(columnLabel)) {
       throw `Invalid column label ${columnLabel} in taxa file.`
@@ -48,13 +53,25 @@ function parseContent(content: string) {
 
   taxa.clear()
   for (const row of rows) {
-    const taxon: { [key: string]: string } = {}
+    // Skip completely empty rows
+    if (row.every((cell) => !cell || cell.trim() === '')) {
+      continue
+    }
+
+    const taxon: { [key: string]: any } = {}
     for (let x = 0, l = row.length; x < l; ++x) {
       const value = row[x]
       if (value) {
         const fieldName = columnsMap.get(columnLabels[x])
         if (fieldName) {
-          taxon[fieldName] = value
+          if (fieldName === 'scientific_name_year') {
+            const numericYear = parseInt(String(value).trim(), 10)
+            if (!Number.isNaN(numericYear)) {
+              taxon[fieldName] = numericYear
+            }
+          } else {
+            taxon[fieldName] = value
+          }
         }
       }
     }
@@ -64,19 +81,37 @@ function parseContent(content: string) {
 
 async function createBatch() {
   if (taxa.size == 0) {
-    alert('There are no taxa specified in the upload file')
+    showError('There are no taxa specified in the upload file')
+    return
+  }
+
+  // Validate that each taxon has at least one taxonomic field populated
+  const taxaArray = Array.from(taxa) as Array<{ [key: string]: any }>
+  const invalid = taxaArray.filter((t) =>
+    !TAXA_COLUMN_NAMES.some((field) => {
+      const v = t[field]
+      return v !== undefined && String(v).trim() !== ''
+    })
+  )
+  if (invalid.length > 0) {
+    showError(
+      `Please fill in at least one taxonomic field for each taxon. ${invalid.length} taxon(s) have no taxonomic data.`
+    )
     return
   }
 
   isProcessing.value = true
   try {
-    const created = await taxaStore.createBatch(projectId, Array.from(taxa))
+    const created = await taxaStore.createBatch(projectId, taxaArray)
     if (created) {
+      showSuccess('Taxa uploaded successfully!')
       router.replace({ path: `/myprojects/${projectId}/taxa` })
+    } else {
+      showError('Failed to upload taxa')
     }
   } catch (error) {
     console.error('Error creating batch:', error)
-    alert('Failed to upload taxa. Please try again.')
+    showError('Failed to upload taxa. Please try again.')
   } finally {
     isProcessing.value = false
   }

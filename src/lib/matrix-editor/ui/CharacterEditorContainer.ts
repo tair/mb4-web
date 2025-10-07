@@ -392,10 +392,12 @@ export class CharacterEditorContainer extends Component {
           matrixModel,
           false
         )
+        characterRenderer.setProjectId(matrixModel.getProjectId())
         break
       case '2':
       default:
         characterRenderer = new CharacterMinimalGridRenderer(matrixModel, false)
+        characterRenderer.setProjectId(matrixModel.getProjectId())
         break
     }
     this.characterGrid.setRenderer(characterRenderer)

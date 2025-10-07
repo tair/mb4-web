@@ -2,7 +2,7 @@ import { Character, CharacterType } from '../../data/Characters'
 import { MediaGrid, MediaGridItemEvent } from '../MediaGrid'
 import { Citation } from '../../data/Citation'
 import { MatrixModel } from '../../MatrixModel'
-import { Component, MobileFriendlyClickEventType } from '../Component'
+import { Component, MobileFriendlyClickEventType, EventType } from '../Component'
 import { DataGridTable, DataRow } from '../DataGridTable'
 import { Dialog } from '../Dialog'
 import { TabNavigator } from '../TabNavigator'
@@ -55,7 +55,7 @@ export class ReadonlyCharacterDialog extends Dialog {
     this.tabNavigator.clearTabs()
     this.tabNavigator.addTab('Character', new CharacterPane(character))
     if (character!.hasMedia()) {
-      this.tabNavigator.addTab('Media', new MediaPane(character))
+    this.tabNavigator.addTab('Media', new MediaPane(this.matrixModel, character))
     }
     if (character!.getCitationCount()) {
       this.tabNavigator.addTab(
@@ -178,12 +178,14 @@ class CharacterPane extends Component {
  */
 
 class MediaPane extends Component {
+  private readonly matrixModel: MatrixModel
   private readonly character: Character
   private readonly mediaGrid: MediaGrid
 
-  constructor(character: Character) {
+  constructor(matrixModel: MatrixModel, character: Character) {
     super()
 
+    this.matrixModel = matrixModel
     this.character = character
 
     this.mediaGrid = new MediaGrid()
@@ -209,10 +211,12 @@ class MediaPane extends Component {
 
   override enterDocument() {
     super.enterDocument()
+    // Listen for the custom double-click event dispatched by MediaGrid
+    // Use arrow function to preserve `this` context
     this.getHandler().listen(
       this.mediaGrid,
-      MobileFriendlyClickEventType,
-      this.onHandleDoubleClickCellMedia
+      EventType.DBLCLICK,
+      (e: CustomEvent<MediaGridItemEvent>) => this.onHandleDoubleClickCellMedia(e)
     )
   }
 
@@ -229,7 +233,8 @@ class MediaPane extends Component {
       )
       const characterStateName = characterState ? characterState.getName() : ''
       const mediaItem = {
-        id: characterMedium.getId(),
+        // Use the actual media_id so the viewer can load the right media
+        id: characterMedium.getMediaId(),
         image: characterMedium.getTiny(),
         caption: characterStateName,
       }
@@ -243,7 +248,30 @@ class MediaPane extends Component {
    */
   protected onHandleDoubleClickCellMedia(e: CustomEvent<MediaGridItemEvent>) {
     const item = e.detail.item
-    ImageViewerDialog.show('C', item.id, true)
+    // Use new signature with project ID and published state from matrix model
+    const projectId = this.matrixModel.getProjectId()
+    const published = this.matrixModel.isPublished()
+    // Find the corresponding character media object for the clicked media_id
+    const characterMedium = this.character.getMediaByIds([item.id])?.[0]
+    const mediaData = characterMedium
+      ? ((characterMedium as any).characterMediaObj || {})
+      : {}
+
+    // Pass link_id when available so the details API can return character_display for labels
+    const linkId = (mediaData && (mediaData.link_id || mediaData.linkId)) || null
+    
+    // Get character and state information for annotation context
+    const characterId = characterMedium ? characterMedium.getCharacterId() : null
+    const stateId = characterMedium ? characterMedium.getStateId() : null
+    
+    // Get character and state names for display in metadata
+    const characterName = this.character.getName()
+    const characterState = stateId ? this.character.getCharacterStateById(stateId) : null
+    const stateName = characterState ? characterState.getName() : null
+    const stateNumber = characterState ? characterState.getNumber() : null
+    
+    // Open in readonly mode in published context
+    ImageViewerDialog.show('C', item.id, projectId, mediaData, true, linkId, published, characterId, stateId, characterName, stateName, stateNumber)
   }
 }
 

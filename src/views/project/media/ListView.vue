@@ -20,6 +20,7 @@ import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaCardComp from '@/components/project/MediaCardComp.vue'
 import { buildMediaUrl } from '@/utils/fileUtils.js'
 import { Tooltip } from 'bootstrap'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id)
@@ -537,7 +538,7 @@ function refresh() {
   foliosStore.fetch(projectId)
 }
 
-const baseUrl = `${import.meta.env.VITE_API_URL}/projects/${projectId}/media`
+const baseUrl = apiService.buildUrl(`/projects/${projectId}/media`)
 function onClickDownloadOriginalFilenames() {
   const url = `${baseUrl}/download/filenames`
   window.location.href = url
@@ -557,7 +558,7 @@ function downloadSelected() {
   selectedMediaFiles.forEach((mediaFile, index) => {
     // Add a small delay between downloads to avoid overwhelming the browser
     setTimeout(() => {
-      const downloadUrl = `${import.meta.env.VITE_API_URL}/public/media/${projectId}/serve/${mediaFile.media_id}/original`
+      const downloadUrl = apiService.buildUrl(`/public/media/${projectId}/serve/${mediaFile.media_id}/original`)
       // Create a temporary link element to trigger download
       const link = document.createElement('a')
       link.href = downloadUrl

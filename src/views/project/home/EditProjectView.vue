@@ -49,7 +49,7 @@
           <input
             type="file"
             @change="handleExemplarMediaUpload"
-            accept="image/*"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/webp,image/tiff"
             class="form-control"
           />
           <button
@@ -89,6 +89,25 @@
           <option value="1">Yes</option>
           <option value="0">No</option>
         </select>
+      </div>
+
+      <!-- Project Administrator Section -->
+      <h2 class="section-heading">PROJECT ADMINISTRATOR</h2>
+      <div class="section-dividing-line"></div>
+
+      <div class="form-group">
+        <label class="form-label">
+          Change Project Admin <br>
+          (Select a user from the list to promote them to Project Administrator)
+        </label>
+        <select v-model="selectedAdminUserId" class="form-control">
+          <option v-for="opt in adminDropdownOptions" :key="opt.value" :value="opt.value">
+            {{ opt.label }}
+          </option>
+        </select>
+        <div v-if="adminSelectionChanged" class="alert alert-danger" role="alert">
+          You are about to change this project's administrator and will lose access to this form upon saving. Only project administrators can edit project information.
+        </div>
       </div>
 
       <!-- Reviewer Access Section -->
@@ -169,6 +188,33 @@
           <option value="1">In press</option>
           <option value="2" selected>Article in prep or in review</option>
         </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">
+          Article DOI
+          <Tooltip :content="TOOLTIP_ARTICLE_DOI"></Tooltip>
+        </label>
+        <p class="field-description">
+          This information will be used to automatically create a bibliographic
+          reference and populate fields below. Changes made here will update the reference.
+        </p>
+        <div class="doi-input">
+          <input
+            v-model="formData.article_doi"
+            type="text"
+            class="form-control"
+            placeholder="10.xxxx/xxxxx"
+          />
+          <button
+            type="button"
+            @click="retrieveDOI"
+            class="btn-link"
+            title="Retrieve article information using DOI"
+          >
+            Retrieve
+          </button>
+        </div>
       </div>
 
       <div class="form-group">
@@ -290,6 +336,52 @@
 
       <div class="form-group">
         <label class="form-label">
+          Journal cover image (if missing above)
+          <Tooltip :content="getJournalCoverTooltip()"></Tooltip>
+        </label>
+
+        <!-- Display current uploaded journal cover -->
+        <div v-if="currentJournalCoverUrl" class="current-journal-cover-container">
+          <div class="current-journal-cover-wrapper">
+            <img
+              :src="currentJournalCoverUrl"
+              alt="Current Journal Cover"
+              class="current-journal-cover"
+            />
+            <div class="current-journal-cover-info">
+              <div class="current-journal-cover-filename">
+                Current: {{ currentJournalCover?.ORIGINAL_FILENAME || currentJournalCover?.filename }}
+              </div>
+              <button
+                type="button"
+                @click="clearCurrentJournalCover"
+                class="btn-link remove-cover-btn"
+              >
+                Remove current cover
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="journal-cover-upload">
+          <input
+            type="file"
+            @change="handleJournalCoverUpload"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/webp,image/tiff"
+            class="form-control"
+            :disabled="isJournalCoverUploadDisabled"
+          />
+          <small v-if="isJournalCoverUploadDisabled && !currentJournalCoverUrl" class="form-text text-muted">
+            Journal cover already available from selected journal
+          </small>
+          <small v-if="currentJournalCoverUrl" class="form-text text-muted">
+            Upload a new image to replace the current journal cover
+          </small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">
           Abstract
           <span
             class="required"
@@ -392,11 +484,17 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label"> Journal Number </label>
+        <label class="form-label">
+          Journal Number
+          <span class="required" v-if="formData.publication_status === '0'"
+            >Required</span
+          >
+        </label>
         <input
           v-model="formData.journal_number"
           type="text"
           class="form-control"
+          :required="formData.publication_status === '0'"
         />
       </div>
 
@@ -436,52 +534,6 @@
           class="form-control"
           :required="formData.publication_status === '0'"
         />
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">
-          Journal cover image (if missing above)
-          <Tooltip :content="getJournalCoverTooltip()"></Tooltip>
-        </label>
-        <div class="journal-cover-upload">
-          <input
-            type="file"
-            @change="handleJournalCoverUpload"
-            accept="image/*"
-            class="form-control"
-            :disabled="isJournalCoverUploadDisabled"
-          />
-          <small v-if="isJournalCoverUploadDisabled" class="form-text text-muted">
-            Journal cover already available from selected journal
-          </small>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">
-          Article DOI
-          <Tooltip :content="TOOLTIP_ARTICLE_DOI"></Tooltip>
-        </label>
-        <p class="field-description">
-          This information will be used to automatically create a bibliographic
-          reference. Changes made here will update the reference.
-        </p>
-        <div class="doi-input">
-          <input
-            v-model="formData.article_doi"
-            type="text"
-            class="form-control"
-            placeholder="10.xxxx/xxxxx"
-          />
-          <button
-            type="button"
-            @click="retrieveDOI"
-            class="btn-link"
-            title="Retrieve article information using DOI"
-          >
-            Retrieve
-          </button>
-        </div>
       </div>
 
       <div class="form-buttons">
@@ -580,9 +632,11 @@ import { ref, reactive, onMounted, computed, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useProjectsStore } from '@/stores/ProjectsStore'
 import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore'
+import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useUserStore } from '@/stores/UserStore'
+import { useNotifications } from '@/composables/useNotifications'
+import { NavigationPatterns } from '@/utils/navigationUtils.js'
 import ProjectContainerComp from '@/components/project/ProjectContainerComp.vue'
-import axios from 'axios'
 import {
   getNSFFundedTooltip,
   getExemplarMediaTooltip,
@@ -597,13 +651,16 @@ import {
 import Tooltip from '@/components/main/Tooltip.vue'
 import FormLayout from '@/components/main/FormLayout.vue'
 import '@/assets/css/form.css'
+import { apiService } from '@/services/apiService.js'
 
 const router = useRouter()
 const route = useRoute()
 const projectId = route.params.id
 const projectsStore = useProjectsStore()
 const projectOverviewStore = useProjectOverviewStore()
+const projectUsersStore = useProjectUsersStore()
 const userStore = useUserStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 const formData = reactive({
   name: '',
@@ -632,6 +689,8 @@ const journalSearch = ref('')
 const showNewJournal = ref(false)
 const journals = ref([])
 const journalCoverPath = ref(null)
+const currentJournalCover = ref(null) // Current uploaded journal cover data
+const currentJournalCoverUrl = ref(null) // URL for current uploaded journal cover
 const isLoading = ref(false)
 const isLoadingProject = ref(true)
 const error = ref(null)
@@ -645,6 +704,8 @@ const existingExemplarMedia = ref(false)
 const showDeleteDialog = ref(false)
 const isDeleting = ref(false)
 const originalAllowReviewerLogin = ref(false)
+const selectedAdminUserId = ref(null)
+const originalAdminUserId = ref(null)
 
 // Computed property for filtered journals based on search
 const filteredJournals = computed(() => {
@@ -658,13 +719,13 @@ const filteredJournals = computed(() => {
 
 // Computed property to determine if journal cover upload should be disabled
 const isJournalCoverUploadDisabled = computed(() => {
-  // Only disable if we're in journal selection mode AND we have a valid journal cover 
-  // that's actually being displayed (matches the v-if condition in template)
-  return !showNewJournal.value && !!journalCoverPath.value
+  // Disable if we're in journal selection mode AND we have a valid journal cover from journal title
+  // OR if we have a current uploaded journal cover
+  return (!showNewJournal.value && !!journalCoverPath.value) || !!currentJournalCoverUrl.value
 })
 
 onMounted(async () => {
-  await Promise.all([loadJournals(), loadProjectData()])
+  await Promise.all([loadJournals(), loadProjectData(), loadProjectUsers()])
   // Add click outside event listener
   document.addEventListener('click', handleJournalClickOutside)
 })
@@ -706,6 +767,9 @@ async function loadProjectData() {
     // Set flags for existing media
     existingExemplarMedia.value = !!overview.exemplar_media_id
 
+    // Load current journal cover if exists
+    await loadCurrentJournalCover(overview.journal_cover)
+
     // Set reviewer login settings
     const reviewerLoginEnabled = overview.allow_reviewer_login === 1 || overview.allow_reviewer_login === true
     formData.allow_reviewer_login = reviewerLoginEnabled
@@ -713,18 +777,11 @@ async function loadProjectData() {
     // Never populate the password field for security reasons - always leave empty
     formData.reviewer_login_password = ''
 
-    // Determine publication status based on available data
-    if (
-      overview.journal_url &&
-      overview.journal_volume &&
-      overview.article_pp
-    ) {
-      formData.publication_status = '0' // Published
-    } else if (overview.journal_title && overview.journal_year) {
-      formData.publication_status = '1' // In press
-    } else {
-      formData.publication_status = '2' // In prep or review
-    }
+    // Map journal_in_press from database to publication_status in form
+    // journal_in_press: 0 = Published, 1 = In press, 2 = Article in prep or in review
+    formData.publication_status = overview.journal_in_press !== null && overview.journal_in_press !== undefined 
+      ? String(overview.journal_in_press) 
+      : '2' // Default to "Article in prep or in review"
 
     // Handle journal title - check if it exists in the journals list
     if (formData.journal_title) {
@@ -738,6 +795,8 @@ async function loadProjectData() {
         formData.journal_title_other = formData.journal_title
         formData.journal_title = ''
       } else {
+        // Set journalSearch to show the current journal title in the input
+        journalSearch.value = formData.journal_title
         loadJournalCover(formData.journal_title)
       }
     }
@@ -750,6 +809,59 @@ async function loadProjectData() {
     isLoadingProject.value = false
   }
 }
+
+async function loadProjectUsers() {
+  try {
+    if (!projectUsersStore.isLoaded) {
+      await projectUsersStore.fetchUsers(projectId)
+    }
+    setOriginalAdminFromStore()
+  } catch (e) {
+    console.error('Error loading project users:', e)
+  }
+}
+
+function setOriginalAdminFromStore() {
+  const currentAdmin = projectUsersStore.users.find((u) => u.admin)
+  if (currentAdmin) {
+    originalAdminUserId.value = currentAdmin.user_id
+    if (selectedAdminUserId.value == null) {
+      selectedAdminUserId.value = currentAdmin.user_id
+    }
+  }
+}
+
+const adminDropdownOptions = computed(() => {
+  const users = projectUsersStore.users || []
+  if (!users.length) return []
+
+  const admin = users.find((u) => u.admin)
+  const others = users.filter((u) => !u.admin)
+    .sort((a, b) => {
+      const nameA = `${a.fname || ''} ${a.lname || ''}`.trim().toLowerCase()
+      const nameB = `${b.fname || ''} ${b.lname || ''}`.trim().toLowerCase()
+      return nameA.localeCompare(nameB)
+    })
+
+  const options = []
+  if (admin) {
+    const adminName = `${admin.fname || ''} ${admin.lname || ''}`.trim() || admin.email
+    options.push({ value: admin.user_id, label: `${adminName} *Current Admin*` })
+  }
+  for (const u of others) {
+    const name = `${u.fname || ''} ${u.lname || ''}`.trim() || u.email
+    options.push({ value: u.user_id, label: `${name} (${u.email})` })
+  }
+  return options
+})
+
+const adminSelectionChanged = computed(() => {
+  return (
+    selectedAdminUserId.value != null &&
+    originalAdminUserId.value != null &&
+    selectedAdminUserId.value !== originalAdminUserId.value
+  )
+})
 
 // Keyboard navigation for journal dropdown
 function navigateJournalDropdown(direction) {
@@ -773,10 +885,9 @@ function selectJournalFromKeyboard() {
 async function loadJournals() {
   try {
     isLoadingJournals.value = true
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/projects/journals`
-    )
-    journals.value = response.data
+    const response = await apiService.get('/projects/journals')
+    const responseData = await response.json()
+    journals.value = responseData
   } catch (error) {
     console.error('Error loading journals:', error)
   } finally {
@@ -784,9 +895,79 @@ async function loadJournals() {
   }
 }
 
+// Helper function to extract content from JATS paragraph tags or strip all HTML/XML tags
+function stripHtmlTags(text) {
+  if (!text || typeof text !== 'string') return text
+  
+  // First, try to extract content from jats:p tags
+  const jatsMatch = text.match(/<jats:p[^>]*>(.*?)<\/jats:p>/s)
+  if (jatsMatch) {
+    // Extract content from jats:p tags and strip any remaining tags
+    const jatsContent = jatsMatch[1]
+      .replace(/<[^>]*>/g, '') // Remove any nested HTML/XML tags
+      .replace(/&lt;/g, '<')   // Decode common HTML entities
+      .replace(/&gt;/g, '>')   
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ')
+      .trim() // Remove leading/trailing whitespace
+    
+    return jatsContent
+  }
+  
+  // If no jats:p tags found, strip all HTML/XML tags (fallback for plain text abstracts)
+  const stripped = text
+    .replace(/<[^>]*>/g, '') // Remove all HTML/XML tags
+    .replace(/&lt;/g, '<')   // Decode common HTML entities
+    .replace(/&gt;/g, '>')   
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .trim() // Remove leading/trailing whitespace
+  
+  return stripped
+}
+
+// Helper function to validate file types and show errors for unsupported formats
+function validateImageFile(file, fileType = 'image') {
+  if (!file) return true
+  
+  const fileName = file.name.toLowerCase()
+  const fileExtension = fileName.split('.').pop()
+  
+  // Check for HEIC files specifically
+  if (fileExtension === 'heic' || fileExtension === 'heif') {
+    showError(
+      `HEIC/HEIF files are not supported. Please convert your ${fileType} to JPEG, PNG, or another supported format.`,
+      'Unsupported File Format'
+    )
+    return false
+  }
+  
+  // Check for other unsupported formats
+  const supportedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'tif']
+  if (!supportedExtensions.includes(fileExtension)) {
+    showError(
+      `${fileExtension.toUpperCase()} files are not supported. Please use JPEG, PNG, GIF, BMP, WebP, or TIFF format.`,
+      'Unsupported File Format'
+    )
+    return false
+  }
+  
+  return true
+}
+
 function handleExemplarMediaUpload(event) {
   const file = event.target.files[0]
   if (file) {
+    // Validate file format
+    if (!validateImageFile(file, 'exemplar media')) {
+      // Clear the file input
+      event.target.value = ''
+      return
+    }
     formData.exemplar_media = file
     existingExemplarMedia.value = false
   }
@@ -814,6 +995,34 @@ function toggleJournalMode() {
   journalCoverPath.value = null
 }
 
+// Load current uploaded journal cover
+const loadCurrentJournalCover = async (journalCoverData) => {
+  currentJournalCover.value = null
+  currentJournalCoverUrl.value = null
+
+  if (!journalCoverData) {
+    return
+  }
+
+  try {
+    // Check if it's the new migrated format
+    if (journalCoverData.filename && journalCoverData.migrated) {
+      currentJournalCover.value = journalCoverData
+      const s3Key = `media_files/journal_covers/uploads/${journalCoverData.filename}`
+      currentJournalCoverUrl.value = apiService.buildUrl(`/s3/${s3Key}`)
+    }
+    // Handle old format if needed (though it should be migrated by now)
+    else if (journalCoverData.media_id) {
+      currentJournalCover.value = journalCoverData
+      // For old format, we might need to construct a different URL
+      // This is a fallback for any unmigrated covers
+      console.warn('Found old format journal cover, should be migrated:', journalCoverData)
+    }
+  } catch (err) {
+    console.error('Error loading current journal cover:', err)
+  }
+}
+
 // Load journal cover when journal is selected
 const loadJournalCover = async (journalTitle) => {
   if (!journalTitle || showNewJournal.value) {
@@ -822,16 +1031,14 @@ const loadJournalCover = async (journalTitle) => {
   }
 
   try {
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/projects/journal-cover`,
-      {
-        params: { journalTitle },
-      }
-    )
+    const response = await apiService.get('/projects/journal-cover', {
+      params: { journalTitle }
+    })
+    const responseData = await response.json()
 
     // Check if we have a path and verify the image actually exists
-    if (response.data.coverPath && response.data.coverPath.trim() !== '') {
-      const coverPath = response.data.coverPath.trim()
+    if (responseData.coverPath && responseData.coverPath.trim() !== '') {
+      const coverPath = responseData.coverPath.trim()
       
       // Test if the image actually loads
       const imageExists = await testImageExists(coverPath)
@@ -913,22 +1120,20 @@ async function retrieveDOI() {
   if (!formData.article_doi) return
 
   try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/projects/doi`,
-      {
-        article_doi: formData.article_doi,
-        newProject: false, // Since this is EditView, we're editing an existing project
-      }
-    )
+    const response = await apiService.post('/projects/doi', {
+      article_doi: formData.article_doi,
+      newProject: false, // Since this is EditView, we're editing an existing project
+    })
+    const responseData = await response.json()
 
-    if (response.data.status === 'ok') {
-      const fields = response.data.fields
+    if (responseData.status === 'ok') {
+      const fields = responseData.fields
 
       // Handle each field from the response
       for (const [field, value] of Object.entries(fields)) {
-        if (!value) continue
-
         if (field === 'journal_title') {
+          if (!value) continue
+          
           // Check if journal exists in the dropdown
           const journalExists = journals.value.some(
             (journal) => journal.toLowerCase() === value.toLowerCase()
@@ -942,25 +1147,42 @@ async function retrieveDOI() {
             showNewJournal.value = true
             formData.journal_title_other = value
           }
+        } else if (field === 'abstract') {
+          // Map abstract field to description, strip HTML/XML tags, and always set
+          formData.description = stripHtmlTags(value) || ''
         } else {
+          if (!value) continue
           // Set other fields directly
           formData[field] = value
         }
       }
     } else {
-      alert(response.data.errors.join('\n'))
+      showError(responseData.errors.join('\n'), 'DOI Retrieval Error')
     }
   } catch (error) {
     console.error('Error retrieving DOI:', error)
-    alert('Failed to retrieve DOI information. Please try again.')
+    showError('Failed to retrieve DOI information. Please try again.', 'DOI Retrieval Failed')
   }
 }
 
 function handleJournalCoverUpload(event) {
   const file = event.target.files[0]
   if (file) {
+    // Validate file format
+    if (!validateImageFile(file, 'journal cover')) {
+      // Clear the file input
+      event.target.value = ''
+      return
+    }
     formData.journal_cover = file
   }
+}
+
+function clearCurrentJournalCover() {
+  currentJournalCover.value = null
+  currentJournalCoverUrl.value = null
+  // Also clear any uploaded file
+  formData.journal_cover = null
 }
 
 // Watch for changes in journal cover availability and clear uploaded file if disabled
@@ -1008,26 +1230,43 @@ async function handleSubmit() {
       }
     }
 
-    // Only send journal cover file if user uploaded one (existing covers already available)
-    const journalCoverToSend = isJournalCoverUploadDisabled.value ? null : formData.journal_cover
+    // Determine journal cover action:
+    // - If user uploaded a new file, send it
+    // - If user removed current cover (currentJournalCover was cleared), send removal signal
+    // - Otherwise, don't send anything (keep existing)
+    let journalCoverToSend = null
+    let removeJournalCover = false
+    
+    if (formData.journal_cover) {
+      // User uploaded a new journal cover
+      journalCoverToSend = formData.journal_cover
+    } else if (currentJournalCover.value === null && projectOverviewStore.overview?.journal_cover) {
+      // User had a journal cover but removed it
+      removeJournalCover = true
+    }
     
     // Update project - journal covers processed immediately (cataloguing_status: 0)
     const success = await updateProject(
       projectData,
       journalCoverToSend,
-      formData.exemplar_media
+      formData.exemplar_media,
+      removeJournalCover
     )
 
     if (!success) {
       throw new Error('Failed to update project')
     }
 
+    // If admin selection changed, transfer project administrator
+    if (adminSelectionChanged.value) {
+      await transferProjectAdministrator()
+    }
+
     // Show success state briefly before redirecting
     projectUpdated.value = true
-    await new Promise((resolve) => setTimeout(resolve, 800))
-
-    // Force full page refresh to bypass any cached 404 responses
-    window.location.href = `/myprojects/${projectId}/overview`
+    
+    // Use robust navigation with proper error handling
+    await NavigationPatterns.afterEdit(projectId, 'overview', { delay: 800 })
   } catch (err) {
     console.error('Error in handleSubmit:', err)
     error.value =
@@ -1038,10 +1277,35 @@ async function handleSubmit() {
   }
 }
 
+async function transferProjectAdministrator() {
+  try {
+    const response = await apiService.put(
+      apiService.buildUrl(`/projects/${projectId}/update`),
+      { user_id: selectedAdminUserId.value }
+    )
+    if (response.status === 200) {
+      // Refresh caches so overview reflects new owner immediately
+      try { await projectsStore.fetchProjects(true) } catch {}
+      try { projectOverviewStore.invalidate() } catch {}
+      try { projectUsersStore.invalidate() } catch {}
+      return true
+    }
+    return false
+  } catch (error) {
+    console.error('Error transferring project administrator:', error)
+    showError(
+      "Failed to transfer project administrator. No changes were made to the project's ownership.",
+      'Administrator Transfer Failed'
+    )
+    throw error
+  }
+}
+
 async function updateProject(
   projectData,
   journalCoverFile = null,
-  exemplarMediaFile = null
+  exemplarMediaFile = null,
+  removeJournalCover = false
 ) {
   try {
     let requestData
@@ -1052,7 +1316,8 @@ async function updateProject(
       const formData = new FormData()
 
       // Add all project data as JSON string
-      formData.append('projectData', JSON.stringify(projectData))
+      const dataToSend = { ...projectData, removeJournalCover }
+      formData.append('projectData', JSON.stringify(dataToSend))
 
       // Add journal cover file if provided
       if (journalCoverFile) {
@@ -1068,21 +1333,27 @@ async function updateProject(
       // Don't set Content-Type header - let browser set it with boundary
     } else {
       // Use JSON for project data only
-      requestData = projectData
+      requestData = { ...projectData, removeJournalCover }
       headers = {
         'Content-Type': 'application/json',
       }
     }
 
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/projects/${projectId}/edit`,
+    const response = await apiService.post(
+      apiService.buildUrl(`/projects/${projectId}/edit`),
       requestData,
       { headers }
     )
 
-    // Refresh the projects cache
+    // Refresh the projects cache and invalidate project overview cache
     if (response.status === 200) {
       await projectsStore.fetchProjects(true) // Force refresh
+      projectOverviewStore.invalidate() // Invalidate cached overview data
+      
+      // Also trigger a fresh fetch if the overview was for this project
+      if (projectOverviewStore.currentProjectId === projectId) {
+        await projectOverviewStore.fetchProject(projectId)
+      }
     }
 
     return response.status === 200
@@ -1095,7 +1366,7 @@ async function updateProject(
 function validateForm() {
   // Basic validation
   if (!formData.name || formData.nsf_funded === '') {
-    alert('Please fill in all required fields')
+    showWarning('Please fill in all required fields', 'Validation Error')
     return false
   }
 
@@ -1108,8 +1379,9 @@ function validateForm() {
     
     // If enabling for the first time, require a password
     if (isEnablingForFirstTime && !hasEnteredNewPassword) {
-      alert(
-        'Please enter a reviewer login password when enabling reviewer access'
+      showWarning(
+        'Please enter a reviewer login password when enabling reviewer access',
+        'Reviewer Password Required'
       )
       return false
     }
@@ -1121,7 +1393,7 @@ function validateForm() {
     formData.publication_status === '1'
   ) {
     if (formData.journal_title === '' && formData.journal_title_other === '') {
-      alert('Please enter journal title information')
+      showWarning('Please enter journal title information', 'Journal Title Required')
       return false
     }
 
@@ -1142,7 +1414,7 @@ function validateForm() {
           formData[field].trim() === '') ||
         (typeof formData[field] === 'number' && isNaN(formData[field]))
       ) {
-        alert(`Please fill in ${field.replace(/_/g, ' ')}`)
+        showWarning(`Please fill in ${field.replace(/_/g, ' ')}`, 'Required Field Missing')
         return false
       }
     }
@@ -1165,7 +1437,7 @@ function validateForm() {
             formData[field].trim() === '') ||
           (typeof formData[field] === 'number' && isNaN(formData[field]))
         ) {
-          alert(`Please fill in ${field.replace(/_/g, ' ')}`)
+          showWarning(`Please fill in ${field.replace(/_/g, ' ')}`, 'Required Field Missing')
           return false
         }
       }
@@ -1174,14 +1446,15 @@ function validateForm() {
 
   // Author format validation
   if (formData.article_authors && formData.article_authors.includes(' and ')) {
-    alert('Article authors must be separated by commas, not "and"')
+    showWarning('Article authors must be separated by commas, not "and"', 'Author Format Error')
     return false
   }
 
   // DOI format validation
   if (formData.article_doi && !formData.article_doi.match(/^10\..*\/\S+$/)) {
-    alert(
-      'Invalid DOI format. Please enter the DOI as provided by the publisher.'
+    showWarning(
+      'Invalid DOI format. Please enter the DOI as provided by the publisher.',
+      'DOI Format Error'
     )
     return false
   }
@@ -1228,15 +1501,15 @@ async function deleteProject() {
   error.value = null
 
   try {
-    const response = await axios.delete(
-      `${import.meta.env.VITE_API_URL}/projects/${projectId}`
+    const response = await apiService.delete(
+      apiService.buildUrl(`/projects/${projectId}`)
     )
 
     if (response.status === 200) {
       // Show success message briefly before redirecting
       showDeleteDialog.value = false
       
-      // Force full page refresh to bypass any cached responses
+      // Navigate to projects list after deletion
       window.location.href = '/myprojects'
     } else {
       throw new Error('Failed to delete project')
@@ -1510,6 +1783,49 @@ function getLoadingText() {
   margin-bottom: 5px;
   font-size: 0.9em;
   color: #666;
+}
+
+.current-journal-cover-container {
+  margin: 15px 0;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.current-journal-cover-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.current-journal-cover {
+  max-width: 150px;
+  max-height: 100px;
+  object-fit: contain;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.current-journal-cover-info {
+  flex: 1;
+}
+
+.current-journal-cover-filename {
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.remove-cover-btn {
+  color: #dc3545;
+  font-size: 0.9em;
+}
+
+.remove-cover-btn:hover {
+  color: #c82333;
+  text-decoration: underline;
 }
 
 .spinner-border-sm {

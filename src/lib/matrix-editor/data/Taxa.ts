@@ -252,6 +252,6 @@ export class TaxonMedia {
    * @return The tiny taxon media
    */
   getTiny(): Media {
-    return this.taxonMediaObj['tiny']
+    return this.taxonMediaObj['thumbnail']
   }
 }

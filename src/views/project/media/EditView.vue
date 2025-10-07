@@ -1,6 +1,6 @@
 <script setup>
 import router from '@/router'
-import { onMounted, computed, ref, watch, defineAsyncComponent } from 'vue'
+import { onMounted, computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMediaStore } from '@/stores/MediaStore'
 import { useMediaViewsStore } from '@/stores/MediaViewsStore'
@@ -10,12 +10,11 @@ import { useTaxaStore } from '@/stores/TaxaStore'
 import { useAuthStore } from '@/stores/AuthStore'
 import { useProjectsStore } from '@/stores/ProjectsStore'
 import { AccessControlService, EntityType } from '@/lib/access-control.js'
+import { useNotifications } from '@/composables/useNotifications'
+import { NavigationPatterns } from '@/utils/navigationUtils.js'
 import { editSchema } from '@/views/project/media/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
-import { buildMediaUrl } from '@/utils/fileUtils.js'
-
-// Lazy load the annotation viewer
-const AnnotationViewer = defineAsyncComponent(() => import('@/components/media/AnnotationViewer.vue'))
+import MediaDetailsCompCompact from '@/components/project/MediaDetailsCompCompact.vue'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id)
@@ -28,14 +27,9 @@ const taxaStore = useTaxaStore()
 const mediaViewsStore = useMediaViewsStore()
 const authStore = useAuthStore()
 const projectsStore = useProjectsStore()
-const validationErrors = ref([])
+const { showError, showSuccess } = useNotifications()
 const isSubmitting = ref(false)
-const thumbnailError = ref(false)
 
-// Annotation state
-const showAnnotationModal = ref(false)
-const annotationCount = ref(0)
-const hasAnnotations = ref(false)
 
 const isLoaded = computed(
   () =>
@@ -43,49 +37,50 @@ const isLoaded = computed(
     mediaStore.isLoaded &&
     specimensStore.isLoaded &&
     taxaStore.isLoaded &&
-    mediaViewsStore.isLoaded
+    mediaViewsStore.isLoaded &&
+    projectsStore.isLoaded
 )
 const media = computed(() => mediaStore.getMediaById(mediaId))
 
-// Computed property for media thumbnail URL
-const thumbnailUrl = computed(() => {
-  if (!media.value || isSubmitting.value || thumbnailError.value) return null
-  
-  // Check if this is a 3D file
-  if (media.value.media_type === '3d' || media.value.thumbnail?.USE_ICON === '3d') {
-    return '/images/3DImage.png'
-  }
-  
-  // For videos and images, try to get thumbnail, fallback to large or original
-  return buildMediaUrl(projectId, mediaId, 'thumbnail') || 
-         buildMediaUrl(projectId, mediaId, 'large') || 
-         buildMediaUrl(projectId, mediaId, 'original')
+// Get current project to check if it's published
+const project = computed(() => projectsStore.getProjectById(projectId))
+const isProjectPublished = computed(() => {
+  // Only return the published status if projects are loaded
+  if (!projectsStore.isLoaded) return false
+  return project.value?.published === 1
 })
 
-// Full resolution image URL for annotation viewer
-const fullImageUrl = computed(() => {
+// Format media data for MediaDetailsComp
+const mediaFileForDetails = computed(() => {
   if (!media.value) return null
-  return buildMediaUrl(projectId, mediaId, 'large') || 
-         buildMediaUrl(projectId, mediaId, 'original')
+
+  return {
+    media: media.value,
+    media_id: mediaId,
+    // Add other fields that MediaDetailsComp might need
+    project_id: projectId,
+    // These might come from related stores, but for now we'll use empty defaults
+    taxon_name: '',
+    specimen_name: '',
+    specimen_notes: '',
+    view_name: '',
+    side_represented: '',
+    user_name: '',
+    copyright_holder: '',
+    copyright_permission: '',
+    references: [],
+    notes: '',
+    url: '',
+    url_description: '',
+    created_on: media.value?.created_on,
+    ancestor: null,
+    hits: media.value?.hits || 0,
+    downloads: media.value?.downloads || 0,
+    license: null
+  }
 })
 
-// Check if this media supports annotations
-const canShowAnnotations = computed(() => {
-  if (!media.value) return false
-  
-  // Only show annotations for 2D images (not 3D models or videos)
-  const is3D = media.value.media_type === '3d' || media.value.thumbnail?.USE_ICON === '3d'
-  const isVideo = media.value.media_type === 'video' || 
-                  (media.value.original?.ORIGINAL_FILENAME && 
-                   /\.(mp4|avi|mov|webm|mkv)$/i.test(media.value.original.ORIGINAL_FILENAME))
-  
-  return !is3D && !isVideo
-})
 
-// Handle thumbnail loading errors
-function handleThumbnailError() {
-  thumbnailError.value = true
-}
 
 // ACCESS CONTROL - Using centralized service
 const accessResult = ref(null)
@@ -157,15 +152,6 @@ watch(
   { immediate: true }
 )
 
-// Reset thumbnail error when media changes (e.g., after successful update)
-watch(
-  media,
-  () => {
-    if (media.value) {
-      thumbnailError.value = false
-    }
-  }
-)
 
 // Helper function to check if a field should be disabled
 function isFieldDisabled(field) {
@@ -210,7 +196,7 @@ function validateFormData(formData) {
 async function editMedia(event) {
   // Prevent submission if user doesn't have access
   if (!canEditMedia.value) {
-    alert('You do not have permission to edit this media.')
+    showError('You do not have permission to edit this media.')
     return
   }
 
@@ -219,7 +205,7 @@ async function editMedia(event) {
   // Validate form data
   const errors = validateFormData(formData)
   if (errors.length > 0) {
-    validationErrors.value = errors
+    showError(errors.join('; '), 'Validation Error')
     return
   }
   
@@ -230,9 +216,6 @@ async function editMedia(event) {
   // Remove the is_exemplar field from formData as the backend doesn't expect it
   formData.delete('is_exemplar')
   
-  // Clear any previous validation errors and errors
-  validationErrors.value = []
-  thumbnailError.value = false
   isSubmitting.value = true
 
   try {
@@ -243,7 +226,7 @@ async function editMedia(event) {
 
     const success = await mediaStore.edit(projectId, mediaId, formData)
     if (!success) {
-      alert('Failed to modify media')
+      showError('Failed to modify media')
       return
     }
 
@@ -253,37 +236,25 @@ async function editMedia(event) {
         // Set this media as the project exemplar
         const exemplarSuccess = await projectsStore.setExemplarMedia(projectId, mediaId)
         if (!exemplarSuccess) {
-          alert('Media updated successfully, but failed to set as project exemplar')
+          showError('Media updated successfully, but failed to set as project exemplar', 'Warning')
         }
       } catch (error) {
         console.error('Failed to set exemplar media:', error)
-        alert('Media updated successfully, but failed to set as project exemplar')
+        showError('Media updated successfully, but failed to set as project exemplar', 'Warning')
       }
     }
 
-    window.location.href = `/myprojects/${projectId}/media`
+    showSuccess('Media updated successfully!')
+    await NavigationPatterns.afterEdit(projectId, 'media')
   } catch (error) {
     console.error('Error editing media:', error)
-    alert('Failed to modify media')
+    showError('Failed to modify media', 'Update Failed')
   } finally {
     isSubmitting.value = false
   }
 }
 
-// Annotation event handlers
-function closeAnnotationModal() {
-  showAnnotationModal.value = false
-}
 
-function onAnnotationsLoaded(count) {
-  annotationCount.value = count
-  hasAnnotations.value = count > 0
-}
-
-function onAnnotationsSaved() {
-  // Annotations were saved - could show a success message or refresh data
-  console.log('Annotations saved successfully')
-}
 
 onMounted(() => {
   // Ensure auth store is loaded from localStorage
@@ -305,6 +276,9 @@ onMounted(() => {
   }
   if (!mediaViewsStore.isLoaded) {
     mediaViewsStore.fetchMediaViews(projectId)
+  }
+  if (!projectsStore.isLoaded) {
+    projectsStore.fetchProjects()
   }
 })
 </script>
@@ -330,84 +304,18 @@ onMounted(() => {
       {{ accessMessage.message }}
     </div>
 
-    <!-- Current Media Thumbnail -->
-    <div v-if="media" class="mb-4">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0">Current Media</h5>
-        <!-- Annotation button for 2D images in unpublished projects -->
-        <button 
-          v-if="canShowAnnotations" 
-          @click="showAnnotationModal = true"
-          class="btn btn-outline-primary btn-sm"
-          :disabled="isSubmitting"
-        >
-          <i class="fa fa-comment"></i>
-          {{ hasAnnotations ? 'View/Edit Annotations' : 'Add Annotations' }}
-        </button>
-      </div>
-      
-      <div class="thumbnail-container">
-        <!-- Loading state during submission -->
-        <div v-if="isSubmitting" class="d-flex align-items-center justify-content-center border rounded" style="width: 200px; height: 150px; background-color: #f8f9fa;">
-          <div class="text-center">
-            <div class="spinner-border spinner-border-sm text-primary mb-2" role="status">
-              <span class="visually-hidden">Processing...</span>
-            </div>
-            <div class="text-muted small">Processing media...</div>
-          </div>
-        </div>
-        
-        <!-- Thumbnail display when not submitting -->
-        <template v-else-if="thumbnailUrl && !thumbnailError">
-          <img 
-            :src="thumbnailUrl" 
-            :alt="`Media ${mediaId} thumbnail`"
-            class="img-thumbnail"
-            style="max-width: 200px; max-height: 200px; object-fit: contain;"
-            @error="handleThumbnailError"
-            @click="canShowAnnotations ? showAnnotationModal = true : null"
-            :style="{ cursor: canShowAnnotations ? 'pointer' : 'default' }"
-            :title="canShowAnnotations ? 'Click to view/edit annotations' : ''"
-          />
-        </template>
-        
-        <!-- Error state or no thumbnail -->
-        <div v-else class="d-flex align-items-center justify-content-center border rounded" style="width: 200px; height: 150px; background-color: #f8f9fa;">
-          <div class="text-center text-muted">
-            <i class="fa-solid fa-image fs-1 mb-2 opacity-50"></i>
-            <div class="small">
-              {{ thumbnailError ? 'Image temporarily unavailable' : 'No preview available' }}
-            </div>
-          </div>
-        </div>
-        
-        <div class="mt-2 text-muted small">
-          Media ID: M{{ mediaId }}
-          <span v-if="hasAnnotations" class="text-primary ms-2">
-            <i class="fa fa-comment"></i> {{ annotationCount }} annotation{{ annotationCount === 1 ? '' : 's' }}
-          </span>
-        </div>
-      </div>
+    <!-- Media Details Component -->
+    <div v-if="mediaFileForDetails" class="mb-4">
+      <h5 class="mb-3">Current Media</h5>
+      <MediaDetailsCompCompact
+        :media_file="mediaFileForDetails"
+        :project_id="projectId"
+        :can-edit="canEditMedia"
+        :is-project-published="false"
+        :use-annotation-link-id="false"
+      />
     </div>
 
-    <!-- Annotation Modal -->
-    <div v-if="showAnnotationModal" class="modal-overlay" @click.self="closeAnnotationModal">
-      <div class="modal-content-large">
-        <button class="annotation-modal-close" @click="closeAnnotationModal">
-          <i class="fa-regular fa-rectangle-xmark"></i>
-        </button>
-        <AnnotationViewer
-          :media-id="mediaId"
-          :project-id="projectId"
-          :media-url="fullImageUrl"
-          :can-edit="canEditMedia"
-          :link-id="mediaId"
-          type="M"
-          @annotationsLoaded="onAnnotationsLoaded"
-          @annotationsSaved="onAnnotationsSaved"
-        />
-      </div>
-    </div>
 
     <form @submit.prevent="editMedia">
       <div class="row setup-content">        
@@ -430,12 +338,6 @@ onMounted(() => {
           </component>
         </div>
         
-        <!-- Display validation errors -->
-        <div v-if="validationErrors.length > 0" class="alert alert-danger" role="alert">
-          <ul class="mb-0">
-            <li v-for="error in validationErrors" :key="error">{{ error }}</li>
-          </ul>
-        </div>
         
         <div class="btn-form-group">
           <RouterLink :to="{ name: 'MyProjectMediaView' }">

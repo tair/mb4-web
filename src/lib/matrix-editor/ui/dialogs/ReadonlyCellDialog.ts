@@ -73,7 +73,7 @@ export class ReadonlyCellDialog extends Dialog {
     }
     const cellMedia = cellInfo.getMedia()
     if (cellMedia) {
-      this.tabNavigator.addTab('Media', new MediaPane(cellMedia))
+      this.tabNavigator.addTab('Media', new MediaPane(cellMedia, this.matrixModel))
     }
     const citationCount = cellInfo.getCitationCount()
     if (citationCount) {
@@ -362,11 +362,13 @@ class NotesPane extends Component {
 class MediaPane extends Component {
   private readonly cellMedia: CellMedia[]
   private readonly mediaGrid: MediaGrid
+  private readonly matrixModel: MatrixModel
 
-  constructor(cellMedia: CellMedia[]) {
+  constructor(cellMedia: CellMedia[], matrixModel: MatrixModel) {
     super()
 
     this.cellMedia = cellMedia
+    this.matrixModel = matrixModel
 
     this.mediaGrid = new MediaGrid()
     this.mediaGrid.setRemoveable(false)
@@ -419,7 +421,19 @@ class MediaPane extends Component {
   protected onHandleDoubleClickCellMedia(e: CustomEvent<MediaGridItemEvent>) {
     const item = e.detail.item
     if (item) {
-      ImageViewerDialog.show('X', item.id, true)
+      // Use new signature with project ID and published state from matrix model  
+      const projectId = this.matrixModel.getProjectId()
+      const published = this.matrixModel.isPublished()
+      // Find the corresponding cell media object for the item
+      const cellMedium = this.cellMedia.find(m => m.getId() === item.id)
+      const mediaData = cellMedium ? (cellMedium as any).cellMediaObj || {} : {}
+      // Pass link_id when available so details API can return character_display for labels
+      const linkId = (mediaData && (mediaData.link_id || mediaData.linkId)) ?? null
+      
+      // Use getMediaId() to get the actual media_id, not getId() which returns link_id
+      const mediaId = cellMedium ? cellMedium.getMediaId() : item.id
+      
+      ImageViewerDialog.show('X', mediaId, projectId, mediaData, true, linkId, published)
     }
   }
 }

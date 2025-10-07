@@ -90,6 +90,7 @@ import cornerstoneWADOImageLoader from 'cornerstone-wado-image-loader'
 import cornerstoneTools from 'cornerstone-tools'
 import Hammer from 'hammerjs'
 import cornerstoneMath from 'cornerstone-math'
+import { apiService } from '@/services/apiService.js'
 
 cornerstoneTools.external.cornerstone = cornerstone
 cornerstoneTools.external.Hammer = Hammer
@@ -135,7 +136,7 @@ export default {
     // NEW: Check if file is actually a TIFF by examining the first few bytes
     async isActuallyTiff(url) {
       try {
-        const response = await fetch(url)
+        const response = await apiService.get(url)
         const buffer = await response.arrayBuffer()
         const view = new Uint8Array(buffer)
 
@@ -213,7 +214,7 @@ export default {
       const canvas = this.$refs.canvas
       const ctx = canvas.getContext('2d')
 
-      fetch(this.imgSrc)
+      apiService.get(this.imgSrc)
         .then((response) => response.arrayBuffer())
         .then((buffer) => {
           const tiff = new Tiff({

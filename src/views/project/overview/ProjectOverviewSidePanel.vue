@@ -1,27 +1,102 @@
-<script setup lang="ts">
-import { useRoute } from 'vue-router'
+<script setup>
+import { ref, computed } from 'vue'
 import Tooltip from '@/components/main/Tooltip.vue'
 import { toDMYDate, toDMYDateFromTimestamp } from '@/utils/date'
 import { formatBytes } from '@/utils/format'
+import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore'
+import { useNotifications } from '@/composables/useNotifications'
+import { apiService } from '@/services/apiService.js'
+import { useAuthStore } from '@/stores/AuthStore'
 
-type ProjectStats = {
-  timestamp: string
+const props = defineProps({
+  overview: Object,
+  projectId: [String, Number],
+})
+
+const projectOverviewStore = useProjectOverviewStore()
+const { showError, showSuccess, showInfo } = useNotifications()
+const authStore = useAuthStore()
+const isRefreshing = ref(false)
+
+// Computed properties for better display
+const diskUsagePercentage = computed(() => {
+  if (!props.overview?.disk_usage || !props.overview?.disk_usage_limit) return 0
+  return (props.overview.disk_usage / props.overview.disk_usage_limit) * 100
+})
+
+const diskUsageClass = computed(() => {
+  const percentage = diskUsagePercentage.value
+  if (percentage >= 95) return 'text-danger'
+  if (percentage >= 80) return 'text-warning'
+  return 'text-success'
+})
+
+const projectStatus = computed(() => {
+  if (props.overview?.published === 1) return 'Published'
+  return 'Currently Editing'
+})
+
+// Authorization helpers per requirements
+const isOwner = computed(() => {
+  const currentUserId = authStore.user?.userId
+  return currentUserId != null && props.overview?.user_id === currentUserId
+})
+
+const isCurator = computed(() => authStore.isUserCurator)
+
+const isLoggedIn = computed(() => !!authStore.user?.userId)
+
+const canEditProjectInfo = computed(() => isOwner.value || isCurator.value)
+const canEditInstitutions = computed(() => isCurator.value)
+const canPublish = computed(() => isOwner.value || isCurator.value)
+const canManageMembers = computed(() => isOwner.value || isCurator.value)
+const canEditMemberGroups = computed(() => isOwner.value || isCurator.value)
+const canRequestDuplication = computed(() => isLoggedIn.value)
+
+// Refresh disk usage only (lightweight)
+const isRefreshingDiskUsage = ref(false)
+const refreshDiskUsage = async () => {
+  if (isRefreshingDiskUsage.value) return
+  
+  isRefreshingDiskUsage.value = true
+  try {
+    await projectOverviewStore.refreshDiskUsage(props.projectId)
+    showSuccess('Disk usage updated', 'Refresh Complete')
+  } catch (error) {
+    console.error('Error refreshing disk usage:', error)
+    showError('Failed to refresh disk usage. Please try again.', 'Refresh Failed')
+  } finally {
+    isRefreshingDiskUsage.value = false
+  }
 }
 
-type OverviewStats = {
-  created_on: number
-  disk_usage: number
-  stats: ProjectStats
-  disk_usage_limit: number
-  institutions: (string | { name: string })[]
+// Refresh all statistics (full reload)
+const refreshStatistics = async () => {
+  if (isRefreshing.value) return
+  
+  isRefreshing.value = true
+  try {
+    showInfo('Refreshing project statistics...', 'Refresh Started')
+    
+    // Call the new refresh endpoint to regenerate cached stats
+    const response = await apiService.post(`/projects/${props.projectId}/refresh-stats`)
+    
+    if (!response.ok) {
+      throw new Error(`Failed to refresh stats: ${response.statusText}`)
+    }
+    
+    // After successful refresh, invalidate current data and re-fetch
+    projectOverviewStore.invalidate()
+    await projectOverviewStore.fetchProject(props.projectId)
+    
+    showSuccess('Project statistics refreshed successfully', 'Refresh Complete')
+  } catch (error) {
+    console.error('Error refreshing statistics:', error)
+    showError('Failed to refresh project statistics. Please try again.', 'Refresh Failed')
+  } finally {
+    isRefreshing.value = false
+  }
 }
-
-defineProps<{
-  overview: OverviewStats
-}>()
-
-const route = useRoute()
-const projectId = route.params.id
 </script>
 <template>
   <div class="mb-3">
@@ -30,56 +105,92 @@ const projectId = route.params.id
       <div class="card-body m-0 p-0 small">
         <ul class="list-group list-group-flush">
           <li class="list-group-item">
-            <span class="fw-bold">Created on: </span>
+            <span class="fw-bold">
+              {{ overview.published === 1 ? 'Currently Viewing:' : 'Currently Editing:' }}
+            </span><br>
+            MorphoBank Project {{ projectId }}
+          </li>
+          <li class="list-group-item">
+            <span class="fw-bold">Creation Date: </span>
             {{ toDMYDate(overview.created_on) }}
+          </li>
+          <li v-if="overview.partitioned_from_project_id" class="list-group-item">
+            <span class="fw-bold">Partitioned from project: </span>
+            <RouterLink :to="`/myprojects/${overview.partitioned_from_project_id}`">
+              P{{ overview.partitioned_from_project_id }}
+            </RouterLink>
+          </li>
+          <li v-if="overview.published === 1 && overview.published_on" class="list-group-item">
+            <span class="fw-bold">Publication Date: </span>
+            {{ toDMYDate(overview.published_on) }}
+          </li>
+          <li v-if="overview.partition_published_on" class="list-group-item">
+            <span class="fw-bold">Date of Last Publication of Partition: </span>
+            {{ toDMYDate(overview.partition_published_on) }}
           </li>
           <li class="list-group-item">
             <span class="fw-bold">Project disk usage: </span>
-            <span>{{ formatBytes(overview.disk_usage) }}</span
-            ><br />
-            <span>({{ formatBytes(overview.disk_usage_limit) }} max)</span>
+            <span :class="diskUsageClass">{{ formatBytes(overview.disk_usage) }}</span>
+            <br />
+            <span>({{ formatBytes(overview.disk_usage_limit) }} max - {{ diskUsagePercentage.toFixed(1) }}% used)</span>
+            <br />
+            <button 
+              class="btn btn-sm btn-link p-0 mt-1"
+              @click="refreshDiskUsage"
+              :disabled="isRefreshingDiskUsage"
+            >
+              <span v-if="isRefreshingDiskUsage" class="spinner-border spinner-border-sm me-1"></span>
+              {{ isRefreshingDiskUsage ? 'Refreshing...' : '🔄 Refresh disk usage' }}
+            </button>
           </li>
           <li class="list-group-item">
-            <span class="fw-bold">Statistics generated: </span>
+            <span class="fw-bold">Statistics generated: </span><br />
             {{ toDMYDateFromTimestamp(overview.stats.timestamp) }} <br />
-            <i>To see an immediate update click here.</i>
+            <button 
+              class="btn btn-sm btn-link p-0 mt-1 text-start"
+              @click="refreshStatistics"
+              :disabled="isRefreshing"
+            >
+              <span v-if="isRefreshing" class="spinner-border spinner-border-sm me-1"></span>
+              {{ isRefreshing ? 'Refreshing...' : 'To see an immediate update click here.' }}
+            </button>
           </li>
-          <li class="list-group-item">
+          <li v-if="canEditProjectInfo" class="list-group-item">
             <span class="fw-bold">
               <RouterLink :to="`/myprojects/${projectId}/edit`">
                 Edit project info
               </RouterLink>
             </span>
           </li>
-          <li class="list-group-item">
+          <li v-if="canEditInstitutions" class="list-group-item">
             <span class="fw-bold">
               <RouterLink :to="`/myprojects/${projectId}/institutions`">
                 Edit project institutions
               </RouterLink>
             </span>
           </li>
-          <li class="list-group-item">
+          <li v-if="canPublish" class="list-group-item">
             <span class="fw-bold">
               <RouterLink :to="`/myprojects/${projectId}/publish`">
                 Publish project
               </RouterLink>
             </span>
           </li>
-          <li class="list-group-item">
+          <li v-if="canPublish" class="list-group-item">
             <span class="fw-bold">
               <RouterLink :to="`/myprojects/${projectId}/publish/partition`">
                 Publish a partition
               </RouterLink>
             </span>
           </li>
-          <li class="list-group-item">
+          <li v-if="canManageMembers" class="list-group-item">
             <span class="fw-bold">
               <RouterLink :to="`/myprojects/${projectId}/members`">
                 Manage members
               </RouterLink>
             </span>
           </li>
-          <li class="list-group-item">
+          <li v-if="canEditMemberGroups" class="list-group-item">
             <span class="fw-bold">
               <RouterLink :to="`/myprojects/${projectId}/members/groups`">
                 Manage members groups
@@ -89,7 +200,7 @@ const projectId = route.params.id
               ></Tooltip>
             </span>
           </li>
-          <li class="list-group-item">
+          <li v-if="canRequestDuplication" class="list-group-item">
             <span class="fw-bold">
               <RouterLink :to="`/myprojects/${projectId}/duplication/request`">
                 Request Project Duplication
@@ -104,9 +215,13 @@ const projectId = route.params.id
     </div>
   </div>
 
-  <div v-if="overview.institutions && overview.institutions.length > 0">
+  <!-- Institution Information -->
+  <div v-if="overview.institutions && overview.institutions.length > 0" class="mb-3">
     <div class="card shadow">
-      <div class="card-header fw-bold">Authors' Institutions</div>
+      <div class="card-header fw-bold">
+        Authors' Institutions
+        <Tooltip content="This list may not be comprehensive. Please contact us if corrections are needed."></Tooltip>
+      </div>
       <div class="card-body m-0 p-0 small">
         <ul class="list-group list-group-flush">
           <li
@@ -122,6 +237,7 @@ const projectId = route.params.id
       </div>
     </div>
   </div>
+
 </template>
 
 <style>

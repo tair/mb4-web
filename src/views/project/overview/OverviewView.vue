@@ -15,9 +15,11 @@ const projectId = route.params.id
 const projectOverviewStore = useProjectOverviewStore()
 
 onMounted(async () => {
-  if (!projectOverviewStore.isLoaded) {
-    projectOverviewStore.fetchProject(projectId)
-  }
+  // Always refresh overview on mount to reflect possible ownership/admin changes
+  try {
+    projectOverviewStore.invalidate()
+    await projectOverviewStore.fetchProject(projectId)
+  } catch {}
 })
 </script>
 <template>
@@ -33,6 +35,7 @@ onMounted(async () => {
         <div class="col-3">
           <ProjectOverviewSidePanel
             :overview="projectOverviewStore.overview"
+            :projectId="projectId"
           ></ProjectOverviewSidePanel>
         </div>
       </div>

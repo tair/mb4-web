@@ -1,13 +1,14 @@
 <script setup>
-import axios from 'axios'
 import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getSpecimenName } from '@/utils/specimens'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useNotifications } from '@/composables/useNotifications'
 import SearchSelectInput from '@/components/project/SearchSelectInput.vue'
 import SpecimenName from '@/components/project/SpecimenName.vue'
 import TaxaSearchInput from '@/views/project/common/TaxaSearchInput.vue'
+import { apiService } from '@/services/apiService.js'
 
 const props = defineProps({
   name: {
@@ -28,6 +29,7 @@ const projectId = route.params.id
 
 const specimenStore = useSpecimensStore()
 const taxaStore = useTaxaStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
 // Inline creation state
 const showCreateForm = ref(false)
@@ -90,13 +92,12 @@ function getText(specimen) {
 }
 
 async function searchSpecimen(text) {
-  const url = `${
-    import.meta.env.VITE_API_URL
-  }/projects/${projectId}/specimens/search`
-  const response = await axios.post(url, {
+  const url = apiService.buildUrl(`/projects/${projectId}/specimens/search`)
+  const response = await apiService.post(url, {
     text: text,
   })
-  const specimenIds = response.data.results
+  const responseData = await response.json()
+  const specimenIds = responseData.results
   return specimenStore.specimens.filter((specimen) =>
     specimenIds.includes(specimen.specimen_id)
   )
@@ -133,7 +134,7 @@ function resetCreateForm() {
 
 async function createSpecimen() {
   if (!createFormData.value.taxon_id) {
-    alert('Please select a taxon')
+    showWarning('Please select a taxon', 'Taxon Selection Required')
     return
   }
 
@@ -176,11 +177,11 @@ async function createSpecimen() {
       showCreateForm.value = false
       resetCreateForm()
     } else {
-      alert('Failed to create specimen')
+      showError('Failed to create specimen', 'Creation Failed')
     }
   } catch (error) {
     console.error('Error creating specimen:', error)
-    alert('Failed to create specimen')
+    showError('Failed to create specimen', 'Creation Error')
   } finally {
     isCreating.value = false
   }

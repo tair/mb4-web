@@ -46,37 +46,71 @@
           </button>
         </div>
         
-        <!-- Save button (only when editing) -->
+      <!-- Save All button removed - individual saves happen instantly -->
+      
+      <!-- Label Display Mode Toggle -->
+      <div class="label-mode-controls">
         <button 
-          v-if="canEdit && hasUnsavedChanges" 
-          @click="saveAnnotations"
-          class="btn btn-primary"
-          :disabled="saving"
+          @click="toggleLabelsPanel"
+          class="btn btn-outline"
+          :class="{ active: showLabelsPanel }"
+          title="Open labels panel (annotations list)"
         >
-          <span class="save-icon">💾</span>
-          {{ saving ? 'Saving...' : 'Save All' }}
+          <span class="labels-icon">🏷️</span>
+          Labels Panel
         </button>
         
-        <!-- Overview button -->
-        <!-- <button 
-          @click="toggleOverview"
+        <button 
+          @click="setLabelMode('text')"
           class="btn btn-outline"
-          :class="{ active: showOverview }"
-          title="Show image overview"
+          :class="{ active: labelMode === 'text' && !hideAllLabels }"
+          title="Show text labels"
+          :disabled="hideAllLabels"
         >
-          <span class="overview-icon">🗺️</span>
-          Overview
-        </button> -->
-        
-        <!-- Help button -->
+          <span class="mode-icon"></span>
+          Labels: Text
+        </button>
+        <button 
+          @click="setLabelMode('numbers')"
+          class="btn btn-outline"
+          :class="{ active: labelMode === 'numbers' && !hideAllLabels }"
+          title="Show numbered labels"
+          :disabled="hideAllLabels"
+        >
+          <span class="mode-icon"></span>
+          Labels: Numbers
+        </button>
+        <button 
+          @click="toggleHideAllLabels"
+          class="btn btn-outline"
+          :class="{ active: hideAllLabels }"
+          title="Hide all labels"
+        >
+          <span class="mode-icon">👁️</span>
+          {{ hideAllLabels ? 'Show Labels' : 'Hide All' }}
+        </button>
+      </div>
+      
+      <!-- Overview button -->
+      <!-- <button 
+        @click="toggleOverview"
+        class="btn btn-outline"
+        :class="{ active: showOverview }"
+        title="Show image overview"
+      >
+        <span class="overview-icon">🗺️</span>
+        Overview
+      </button> -->
+      
+      <!-- Help button -->
         <div class="help-container">
           <button 
             @click="toggleHelp"
             class="btn btn-outline"
-            title="Show help"
+            title="Help and keyboard shortcuts"
           >
             <span class="help-icon">?</span>
-            Help
+            Help/Shortcuts
           </button>
           
           <!-- Help dropdown -->
@@ -152,16 +186,39 @@
 
           <div v-if="canEdit" class="help-section">
             <h5>Actions</h5>
-            <div class="help-item">
-              <span class="help-icon-display">💾</span>
-              <div class="help-text">
-                <strong>Save All</strong> - Save all unsaved annotations. (Shortcut: Ctrl+S)
-              </div>
-            </div>
+            <!-- Save All removed - annotations save instantly when edited -->
             <div class="help-item">
               <span class="help-icon-display">🗑️</span>
               <div class="help-text">
                 <strong>Delete</strong> - Select an annotation and press Delete key to remove it
+              </div>
+            </div>
+          </div>
+
+          <div class="help-section">
+            <h5>Label Display</h5>
+            <div class="help-item">
+              <span class="help-icon-display">🏷️</span>
+              <div class="help-text">
+                <strong>Labels Panel</strong> - Toggle the side panel to view all annotations in a clean list format
+              </div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon-display"></span>
+              <div class="help-text">
+                <strong>Number Mode</strong> - Shows small numbered circles instead of text labels to avoid clutter
+              </div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon-display"></span>
+              <div class="help-text">
+                <strong>Text Mode</strong> - Shows full text labels on the image (can get cluttered with many annotations)
+              </div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon-display">👁️</span>
+              <div class="help-text">
+                <strong>Hide All Labels</strong> - Temporarily hide all labels and connection lines to view annotations without clutter
               </div>
             </div>
           </div>
@@ -180,6 +237,18 @@
                 <strong>Edit</strong> - Double-click on annotations or labels to edit their properties
               </div>
             </div>
+            <div class="help-item">
+              <span class="help-icon-display">↔️</span>
+              <div class="help-text">
+                <strong>Move Label</strong> - Click and drag labels to reposition them. You'll be prompted to save the new position when you release the mouse
+              </div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon-display">🖱️</span>
+              <div class="help-text">
+                <strong>Hover</strong> - In number mode, hover over numbered labels to see full text in a tooltip
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -191,7 +260,7 @@
     <div class="annotation-canvas-container" ref="canvasContainer">
       <img 
         ref="mediaImage"
-        :src="mediaUrl"
+        :src="currentImageUrl || mediaUrl"
         @load="onImageLoad"
         @error="onImageError"
         alt="Media for annotation"
@@ -209,20 +278,45 @@
         @wheel.prevent="onCanvasWheel"
       ></canvas>
       
+      <!-- Loading overlay while image is loading or switching sources -->
+      <div v-if="isLoadingImage" class="image-loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading image…</div>
+      </div>
+      
       <!-- Annotation Labels -->
       <div
-        v-for="annotation in annotations"
+        v-for="(annotation, index) in annotations"
         :key="annotation.annotation_id"
+        v-show="shouldShowLabel(annotation)"
         :style="getAnnotationLabelStyle(annotation)"
         :class="['annotation-label', { 
-          'selected': selectedAnnotation?.annotation_id === annotation.annotation_id
+          'selected': selectedAnnotation?.annotation_id === annotation.annotation_id,
+          'numbered-label': labelMode === 'numbers',
+          'text-label': labelMode === 'text',
+          'empty-placeholder': getDisplayLabelText(annotation) === '+'
         }]"
         @click="selectAnnotation(annotation)"
         @dblclick="editAnnotation(annotation)"
-        :title="`Annotation ${annotation.annotation_id}: ${annotation.label}`"
-        v-show="shouldShowLabel(annotation)"
+        @mousedown="startLabelDrag($event, annotation)"
+        :title="labelMode === 'numbers' ? `Annotation ${index + 1}: ${getDisplayLabelText(annotation)}` : (getDisplayLabelText(annotation) === '+' ? `Click to add label` : `Annotation ${annotation.annotation_id}: ${getDisplayLabelText(annotation)}`)"
+        @mouseenter="hoveredAnnotation = annotation"
+        @mouseleave="hoveredAnnotation = null"
       >
-        {{ annotation.label }}
+        <span v-if="labelMode === 'numbers'" class="annotation-number">{{ index + 1 }}</span>
+        <span v-else>{{ getDisplayLabelText(annotation) }}</span>
+      </div>
+      
+      <!-- Hover Tooltip for numbered mode -->
+      <div
+        v-if="labelMode === 'numbers' && hoveredAnnotation"
+        class="annotation-tooltip"
+        :style="getTooltipStyle(hoveredAnnotation)"
+      >
+        <div class="tooltip-content">
+          <strong>Annotation {{ getAnnotationIndex(hoveredAnnotation) + 1 }}</strong>
+          <div>{{ getTooltipLabelText(hoveredAnnotation) }}</div>
+        </div>
       </div>
       
       <!-- Debug info (minimal) -->
@@ -231,6 +325,66 @@
         <div>Image loaded: {{ imageLoaded }}</div>
         <div>Refs ready: img={{ !!$refs.mediaImage }}, container={{ !!$refs.canvasContainer }}</div>
       </div> -->
+    </div>
+
+    <!-- Labels Panel -->
+    <div 
+      v-if="showLabelsPanel" 
+      class="labels-panel" 
+      ref="labelsPanel"
+      :style="getPanelStyle()"
+      :class="{ 'dragging': isDraggingPanel }"
+    >
+      <div 
+        class="labels-header"
+        @mousedown="startDragging"
+        :class="{ 'draggable': true }"
+      >
+        <span class="drag-handle">⋮⋮</span>
+        <span class="labels-title">Annotations ({{ annotations.length }})</span>
+        <button @click="showLabelsPanel = false" class="labels-close">✕</button>
+      </div>
+      <div class="labels-content">
+        <div v-if="annotations.length === 0" class="no-annotations">
+          No annotations yet
+        </div>
+        <div
+          v-for="(annotation, index) in annotations"
+          :key="annotation.annotation_id"
+          :class="['label-item', { 
+            'selected': selectedAnnotation?.annotation_id === annotation.annotation_id 
+          }]"
+          @click="selectAndFocusAnnotation(annotation)"
+          @dblclick="editAnnotation(annotation)"
+        >
+          <div class="label-number">{{ index + 1 }}</div>
+          <div class="label-details">
+            <div class="label-text">{{ getDisplayLabelText(annotation) || 'Unlabeled annotation' }}</div>
+            <div class="label-meta">
+              <span class="label-type">{{ getAnnotationTypeDisplay(annotation.type) }}</span>
+              <span v-if="annotation.annotation_id" class="label-id">ID: {{ annotation.annotation_id }}</span>
+            </div>
+          </div>
+          <div class="label-actions">
+            <button 
+              v-if="canEdit" 
+              @click.stop="editAnnotation(annotation)"
+              class="label-action-btn edit-btn"
+              title="Edit annotation"
+            >
+              ✏️
+            </button>
+            <button 
+              v-if="canDeleteAnnotation(annotation)" 
+              @click.stop="deleteAnnotation(annotation)"
+              class="label-action-btn delete-btn"
+              title="Delete annotation"
+            >
+              🗑️
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Image Overview Panel -->
@@ -242,7 +396,7 @@
       <div class="overview-container" ref="overviewContainer">
         <img 
           ref="overviewImage"
-          :src="mediaUrl"
+          :src="currentImageUrl || mediaUrl"
           @load="onOverviewImageLoad"
           @click="onOverviewClick"
           alt="Image overview"
@@ -272,7 +426,7 @@
     <!-- Keyboard Shortcuts Help -->
     <div v-if="canEdit && showKeyboardHints" class="keyboard-hints">
       <small>
-        Shortcuts: R=Rectangle, P=Point, G=Polygon, Esc=Pan, Ctrl+S=Save, Delete=Remove selected
+        Shortcuts: R=Rectangle, P=Point, G=Polygon, Esc=Pan, Delete=Remove selected
       </small>
     </div>
     
@@ -286,24 +440,41 @@
     <!-- Edit Annotation Modal -->
     <AnnotationEditModal
       v-if="editingAnnotation"
+      ref="editModal"
       :annotation="editingAnnotation"
       @save="updateAnnotation"
       @cancel="cancelEdit"
       @delete="deleteAnnotation"
       :can-delete="canDeleteAnnotation(editingAnnotation)"
     />
+    
+    <!-- Confirm Label Position Save Modal -->
+    <ConfirmModal
+      v-if="showLabelSaveConfirm"
+      title="Save Label Position?"
+      message="Do you want to save the new label position? This will update the annotation in the database."
+      confirmText="Save Position"
+      cancelText="Cancel"
+      :loading="isSavingLabelPosition"
+      @confirm="confirmLabelSave"
+      @cancel="cancelLabelSave"
+    />
   </div>
 </template>
 
 <script>
 import AnnotationEditModal from './AnnotationEditModal.vue'
+import ConfirmModal from './ConfirmModal.vue'
 import { annotationService } from '../../services/annotationService.js'
+import { buildMediaUrl } from '../../utils/fileUtils.js'
+import { apiService } from '@/services/apiService.js'
 
 export default {
   name: 'AnnotationViewer',
   
   components: {
-    AnnotationEditModal
+    AnnotationEditModal,
+    ConfirmModal
   },
 
   props: {
@@ -328,6 +499,11 @@ export default {
       type: Number,
       default: null
     },
+    // Separate linkId for save operations (defaults to mediaId if not provided)
+    saveLinkId: {
+      type: Number,
+      default: null
+    },
     canEdit: {
       type: Boolean,
       default: false
@@ -337,6 +513,22 @@ export default {
       default: null
     },
     contextId: {
+      type: Number,
+      default: null
+    },
+    published: {
+      type: Boolean,
+      default: false
+    },
+    characterName: {
+      type: String,
+      default: null
+    },
+    stateName: {
+      type: String,
+      default: null
+    },
+    stateNumber: {
       type: Number,
       default: null
     }
@@ -363,11 +555,12 @@ export default {
       
       // Image state
       imageLoaded: false,
+      isLoadingImage: true,
       imageScale: 1,
       imageOffset: { x: 0, y: 0 },
       
       // Viewer zoom and pan
-      viewerZoom: 1,
+      viewerZoom: 0.5,
       viewerOffset: { x: 0, y: 0 },
       isPanning: false,
       lastPanPoint: null,
@@ -380,7 +573,46 @@ export default {
       
       // UI states
       showHelp: false,
-      showOverview: false
+      showOverview: false,
+      showLabelsPanel: false,
+      labelMode: 'text', // 'numbers' or 'text' or 'hidden'
+      hoveredAnnotation: null,
+      hideAllLabels: false, // Toggle to hide all labels
+      
+      // Panel dragging state
+      isDraggingPanel: false,
+      panelPosition: { x: 20, y: 20 }, // Default position from right/top
+      dragStartPos: { x: 0, y: 0 },
+      dragStartPanelPos: { x: 0, y: 0 },
+      
+      // Character information cache for enhanced label display
+      characterDisplayCache: new Map(),
+      
+      // Enhanced label text cache to handle async loading
+      enhancedLabelCache: new Map(),
+      
+      // Image fallback state
+      currentImageUrl: null,
+      hasTriedFallback: false,
+      imageLoadTimer: null,
+      fallbackDelayMs: 3000,
+      
+      // Label positioning and dragging
+      labelPositions: new Map(), // Store custom label positions
+      isDraggingLabel: false,
+      draggedLabelAnnotation: null,
+      dragStartLabelPos: { x: 0, y: 0 },
+      
+      // Label save confirmation modal state
+      showLabelSaveConfirm: false,
+      isSavingLabelPosition: false,
+      pendingLabelSave: null, // Store pending save data
+      
+      // Canvas display dimensions for consistent coordinate conversion
+      canvasDisplayWidth: 0,
+      canvasDisplayHeight: 0,
+      canvasOffsetX: 0,
+      canvasOffsetY: 0
     }
   },
 
@@ -395,13 +627,45 @@ export default {
     
     canvasRect() {
       return this.canvas?.getBoundingClientRect()
+    },
+    
+    // Use saveLinkId if provided, otherwise fall back to linkId, and finally mediaId
+    // For type 'X' (matrix), 'C' (character), linkId is the matrix cell or character reference
+    // For type 'M' (media), linkId may be null, so use mediaId
+    effectiveSaveLinkId() {
+      if (this.saveLinkId !== null) {
+        return this.saveLinkId
+      }
+      // Use linkId if provided (for matrix/character annotations)
+      if (this.linkId !== null) {
+        return this.linkId
+      }
+      // Fall back to mediaId for media-only annotations
+      return this.mediaId
     }
   },
 
   mounted() {
+    // Configure annotation service for correct endpoint usage
+    annotationService.setPublished(this.published)
+    
     this.setupEventListeners()
     this.setupCanvas()
     this.loadAnnotations()
+    
+    // Apply initial zoom immediately to prevent 100% flash
+    this.$nextTick(() => {
+      if (this.$refs.mediaImage) {
+        this.updateImageTransform()
+      }
+    })
+    
+    // Additional safety: apply transform after a short delay to handle any timing issues
+    setTimeout(() => {
+      if (this.$refs.mediaImage) {
+        this.updateImageTransform()
+      }
+    }, 50)
     
     // Watch for refs to become available
     this.$nextTick(() => {
@@ -423,11 +687,32 @@ export default {
       },
       deep: true,
       immediate: true
+    },
+    
+    mediaUrl: {
+      handler(newUrl) {
+        // Reset fallback state when mediaUrl changes
+        this.currentImageUrl = newUrl
+        this.hasTriedFallback = false
+        this.imageLoaded = false
+        this.isLoadingImage = true
+        this.clearImageLoadTimer()
+        this.startImageLoadWatch()
+        
+        // Apply initial zoom when new image is set
+        this.$nextTick(() => {
+          if (this.$refs.mediaImage) {
+            this.updateImageTransform()
+          }
+        })
+      },
+      immediate: true
     }
   },
 
   beforeUnmount() {
     this.removeEventListeners()
+    this.clearImageLoadTimer()
   },
 
   methods: {
@@ -435,12 +720,16 @@ export default {
     setupEventListeners() {
       document.addEventListener('keydown', this.onKeyDown)
       document.addEventListener('click', this.onDocumentClick)
+      document.addEventListener('mousemove', this.onDocumentMouseMove)
+      document.addEventListener('mouseup', this.onDocumentMouseUp)
       window.addEventListener('resize', this.onWindowResize)
     },
 
     removeEventListeners() {
       document.removeEventListener('keydown', this.onKeyDown)
       document.removeEventListener('click', this.onDocumentClick)
+      document.removeEventListener('mousemove', this.onDocumentMouseMove)
+      document.removeEventListener('mouseup', this.onDocumentMouseUp)
       window.removeEventListener('resize', this.onWindowResize)
     },
 
@@ -456,6 +745,40 @@ export default {
           this.updateViewportIndicator()
         })
       }
+    },
+
+    toggleLabelsPanel() {
+      this.showLabelsPanel = !this.showLabelsPanel
+      
+      // Reset position to default when opening panel for the first time
+      if (this.showLabelsPanel && this.panelPosition.x === 20 && this.panelPosition.y === 20) {
+        // Calculate default position from the right side
+        const defaultRight = 20
+        const panelWidth = 350
+        this.panelPosition = { 
+          x: window.innerWidth - panelWidth - defaultRight, 
+          y: 20 
+        }
+      }
+    },
+
+    toggleLabelMode() {
+      this.labelMode = this.labelMode === 'numbers' ? 'text' : 'numbers'
+    },
+
+    setLabelMode(mode) {
+      if (mode === 'text' || mode === 'numbers') {
+        this.labelMode = mode
+      }
+    },
+
+    toggleHideAllLabels() {
+      this.hideAllLabels = !this.hideAllLabels
+      // Redraw annotations to update connection lines
+      this.$nextTick(() => {
+        this.drawAnnotations()
+        this.$forceUpdate()
+      })
     },
 
     // Overview methods
@@ -495,7 +818,7 @@ export default {
         imageOffsetY = (mainRect.height - actualImageHeight) / 2
         initialFitScale = mainRect.width / naturalWidth
       } else {
-        // Image is taller - fits to container height, has horizontal white space  
+        // Image is taller - fits to container height; horizontally centered
         actualImageHeight = mainRect.height
         actualImageWidth = mainRect.height * aspectRatio
         imageOffsetY = 0
@@ -616,18 +939,54 @@ export default {
     // Image handling
     onImageLoad() {
       this.imageLoaded = true
-      this.setupCanvas()
-      this.drawAnnotations()
+      this.isLoadingImage = false
+      this.clearImageLoadTimer()
       
-      // Force label update now that image is loaded
+      // Setup canvas first to calculate display dimensions
+      this.setupCanvas()
+      
+      // Center horizontally (top-align vertically) for the initial view based on current zoom
+      const container = this.$refs.canvasContainer
+      if (container) {
+        const containerWidth = container.clientWidth
+        const z = this.viewerZoom
+        this.viewerOffset = {
+          x: (containerWidth - (containerWidth * z)) / (2 * z),
+          y: 0
+        }
+      }
+
+      // Apply initial zoom transform immediately
       this.$nextTick(() => {
+        this.updateImageTransform()
+        this.drawAnnotations()
+        // Force label update after everything is set up
         this.$forceUpdate()
       })
+      
+      // Log successful load (helpful for debugging fallback behavior)
+      if (this.hasTriedFallback) {
+        console.warn('Successfully loaded fallback image (large version)')
+      }
     },
 
     onImageError() {
-      console.error('Failed to load media image')
-      this.showSaveStatus('Failed to load image', 'error')
+      console.error('Failed to load media image:', this.currentImageUrl || this.mediaUrl)
+      
+      // Try fallback to 'large' version if we haven't tried it yet
+      if (!this.hasTriedFallback) {
+        console.warn('Trying fallback to large version...')
+        this.hasTriedFallback = true
+        this.clearImageLoadTimer()
+        this.currentImageUrl = buildMediaUrl(this.projectId, this.mediaId, 'large')
+        this.imageLoaded = false
+        this.isLoadingImage = true
+        this.startImageLoadWatch()
+        return
+      }
+      
+      // If fallback also failed, show error
+      this.showSaveStatus('Failed to load image (tried original and large versions)', 'error')
     },
 
     setupCanvas() {
@@ -638,19 +997,48 @@ export default {
         return
       }
 
-      // Set canvas size to match image display size
-      const rect = img.getBoundingClientRect()
-      this.canvas.width = rect.width
-      this.canvas.height = rect.height
+      // Get natural image size and calculate display properties
+      const naturalWidth = img.naturalWidth
+      const naturalHeight = img.naturalHeight
+      const containerWidth = container.clientWidth
+      const containerHeight = container.clientHeight
+      
+      if (naturalWidth === 0 || naturalHeight === 0) {
+        // Image not fully loaded yet
+        return
+      }
+      
+      const aspectRatio = naturalWidth / naturalHeight
+      const containerAspect = containerWidth / containerHeight
+      
+      let displayWidth, displayHeight
+      
+      if (aspectRatio > containerAspect) {
+        displayWidth = containerWidth
+        displayHeight = containerWidth / aspectRatio
+      } else {
+        displayHeight = containerHeight
+        displayWidth = containerHeight * aspectRatio
+      }
+
+      // Make canvas fill the entire container like the image does
+      this.canvas.width = containerWidth
+      this.canvas.height = containerHeight
       
       // Position canvas to perfectly overlay the image
-      this.canvas.style.width = rect.width + 'px'
-      this.canvas.style.height = rect.height + 'px'
+      this.canvas.style.width = containerWidth + 'px'
+      this.canvas.style.height = containerHeight + 'px'  
       this.canvas.style.top = '0px'
       this.canvas.style.left = '0px'
       
-      // Calculate scale factor
-      this.imageScale = rect.width / img.naturalWidth
+      // Store display dimensions for coordinate conversion
+      this.canvasDisplayWidth = displayWidth
+      this.canvasDisplayHeight = displayHeight
+      this.canvasOffsetX = (containerWidth - displayWidth) / 2
+      this.canvasOffsetY = 0
+      
+      // Calculate scale factor (for backward compatibility)
+      this.imageScale = displayWidth / naturalWidth
       
       this.drawAnnotations()
     },
@@ -659,6 +1047,8 @@ export default {
       if (this.imageLoaded) {
         setTimeout(() => {
           this.setupCanvas()
+          // Force re-render of labels after canvas update
+          this.$forceUpdate()
         }, 100)
       }
     },
@@ -688,22 +1078,33 @@ export default {
     },
 
     resetZoom() {
-      this.viewerZoom = 1
-      this.viewerOffset = { x: 0, y: 0 }
+      this.viewerZoom = 0.5 // Reset to default 50% zoom
+      // Re-center horizontally (top-align vertically) after resetting zoom
+      const container = this.$refs.canvasContainer
+      if (container) {
+        const containerWidth = container.clientWidth
+        const z = this.viewerZoom
+        this.viewerOffset = {
+          x: (containerWidth - (containerWidth * z)) / (2 * z),
+          y: 0
+        }
+      } else {
+        this.viewerOffset = { x: 0, y: 0 }
+      }
       this.updateImageTransform()
     },
 
     updateImageTransform() {
-      
       const img = this.$refs.mediaImage
       const canvas = this.canvas
+      
+      // Don't apply transform if elements don't exist yet
+      if (!img) return
+      
       const transform = `scale(${this.viewerZoom}) translate(${this.viewerOffset.x}px, ${this.viewerOffset.y}px)`
       
-      
       // Apply the same transform to both image and canvas
-      if (img) {
-        img.style.transform = transform
-      }
+      img.style.transform = transform
       if (canvas) {
         canvas.style.transform = transform
       }
@@ -959,15 +1360,38 @@ export default {
 
       // Add to local state immediately for responsive UI
       this.annotations.push(annotation)
-      this.hasUnsavedChanges = true
       
       // Only redraw canvas - don't trigger full updates
       this.$nextTick(() => {
         this.drawAnnotations()
       })
 
-      // Note: Auto-save disabled - users will manually save using "Save All" button
-      // This prevents conflicts with manual save operations
+      // Save to database immediately
+      try {
+        const result = await annotationService.saveAnnotations(
+          this.projectId,
+          this.mediaId,
+          this.type,
+          this.effectiveSaveLinkId,
+          [annotation]
+        )
+        
+        // Update with server-assigned ID
+        if (result.labels && result.labels[0]) {
+          annotation.annotation_id = result.labels[0].annotation_id
+        }
+        
+        this.showSaveStatus('Annotation created and saved', 'success')
+      } catch (error) {
+        console.error('Failed to save new annotation:', error)
+        this.showSaveStatus('Failed to save annotation', 'error')
+        // Remove from local state if save failed
+        const index = this.annotations.findIndex(a => a === annotation)
+        if (index !== -1) {
+          this.annotations.splice(index, 1)
+          this.drawAnnotations()
+        }
+      }
     },
 
     // Canvas utility methods
@@ -1003,8 +1427,11 @@ export default {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
 
       this.annotations.forEach((annotation, index) => {
-
         this.drawAnnotation(annotation)
+        // Draw connection line between annotation and label
+        if (this.shouldShowLabel(annotation)) {
+          this.drawConnectionLine(annotation)
+        }
       })
 
       if (this.polygonPoints.length > 0) {
@@ -1017,7 +1444,7 @@ export default {
       const isSelected = this.selectedAnnotation?.annotation_id === annotation.annotation_id
       
       this.ctx.strokeStyle = isSelected ? '#007bff' : '#ff6b6b'
-      this.ctx.lineWidth = isSelected ? 3 : 2
+      this.ctx.lineWidth = isSelected ? 6 : 4
       this.ctx.fillStyle = 'rgba(255, 107, 107, 0.1)'
 
       const scaledAnnotation = this.scaleAnnotation(annotation)
@@ -1038,7 +1465,21 @@ export default {
     },
 
     drawRectangle(annotation) {
+      // Draw with a high-contrast outline behind the main stroke
+      const baseColor = this.ctx.strokeStyle
+      const baseWidth = this.ctx.lineWidth || 1
+      this.ctx.save()
+      this.ctx.lineJoin = 'round'
+      this.ctx.lineCap = 'round'
+      // Outline pass
+      this.ctx.strokeStyle = 'rgba(255,255,255,0.95)'
+      this.ctx.lineWidth = baseWidth + 4
       this.ctx.strokeRect(annotation.x, annotation.y, annotation.w, annotation.h)
+      // Foreground pass
+      this.ctx.strokeStyle = baseColor
+      this.ctx.lineWidth = baseWidth
+      this.ctx.strokeRect(annotation.x, annotation.y, annotation.w, annotation.h)
+      this.ctx.restore()
       if (this.selectedAnnotation?.annotation_id === annotation.annotation_id) {
         this.ctx.fillRect(annotation.x, annotation.y, annotation.w, annotation.h)
       }
@@ -1065,7 +1506,21 @@ export default {
       }
       
       this.ctx.closePath()
+      // Draw with a high-contrast outline behind the main stroke
+      const baseColor = this.ctx.strokeStyle
+      const baseWidth = this.ctx.lineWidth || 1
+      this.ctx.save()
+      this.ctx.lineJoin = 'round'
+      this.ctx.lineCap = 'round'
+      // Outline pass
+      this.ctx.strokeStyle = 'rgba(255,255,255,0.95)'
+      this.ctx.lineWidth = baseWidth + 4
       this.ctx.stroke()
+      // Foreground pass
+      this.ctx.strokeStyle = baseColor
+      this.ctx.lineWidth = baseWidth
+      this.ctx.stroke()
+      this.ctx.restore()
       
       if (this.selectedAnnotation?.annotation_id === annotation.annotation_id) {
         this.ctx.fill()
@@ -1076,53 +1531,214 @@ export default {
       if (!this.currentShape) return
 
       this.ctx.strokeStyle = '#007bff'
-      this.ctx.lineWidth = 2
+      this.ctx.lineWidth = 4
       
       const scaled = this.scaleAnnotation(this.currentShape)
+      // Outline + foreground pass for stronger visibility while drawing
+      const baseColor = this.ctx.strokeStyle
+      const baseWidth = this.ctx.lineWidth || 1
+      this.ctx.save()
+      this.ctx.lineJoin = 'round'
+      this.ctx.lineCap = 'round'
+      this.ctx.strokeStyle = 'rgba(255,255,255,0.95)'
+      this.ctx.lineWidth = baseWidth + 4
       this.ctx.strokeRect(scaled.x, scaled.y, scaled.w, scaled.h)
+      this.ctx.strokeStyle = baseColor
+      this.ctx.lineWidth = baseWidth
+      this.ctx.strokeRect(scaled.x, scaled.y, scaled.w, scaled.h)
+      this.ctx.restore()
     },
 
     drawPolygonInProgress() {
       if (this.polygonPoints.length < 2) return
 
       this.ctx.strokeStyle = '#007bff'
-      this.ctx.lineWidth = 2
+      this.ctx.lineWidth = 4
       this.ctx.setLineDash([5, 5])
 
-      const canvasWidth = this.canvas.width
-      const canvasHeight = this.canvas.height
+      // Use stored display dimensions if available, otherwise fallback to canvas dimensions
+      const displayWidth = this.canvasDisplayWidth || this.canvas.width
+      const displayHeight = this.canvasDisplayHeight || this.canvas.height
+      const offsetX = this.canvasOffsetX || 0
+      const offsetY = this.canvasOffsetY || 0
 
       this.ctx.beginPath()
       const firstPoint = this.polygonPoints[0]
-      this.ctx.moveTo((firstPoint.x / 100) * canvasWidth, (firstPoint.y / 100) * canvasHeight)
+      this.ctx.moveTo(offsetX + (firstPoint.x / 100) * displayWidth, offsetY + (firstPoint.y / 100) * displayHeight)
 
       for (let i = 1; i < this.polygonPoints.length; i++) {
         const point = this.polygonPoints[i]
-        this.ctx.lineTo((point.x / 100) * canvasWidth, (point.y / 100) * canvasHeight)
+        this.ctx.lineTo(offsetX + (point.x / 100) * displayWidth, offsetY + (point.y / 100) * displayHeight)
+      }
+      // Outline + foreground dashed strokes
+      const baseColor = this.ctx.strokeStyle
+      const baseWidth = this.ctx.lineWidth || 1
+      this.ctx.save()
+      this.ctx.lineJoin = 'round'
+      this.ctx.lineCap = 'round'
+      // Outline (dashed, wider)
+      this.ctx.strokeStyle = 'rgba(255,255,255,0.95)'
+      this.ctx.lineWidth = baseWidth + 4
+      this.ctx.stroke()
+      // Foreground (dashed, colored)
+      this.ctx.strokeStyle = baseColor
+      this.ctx.lineWidth = baseWidth
+      this.ctx.stroke()
+      this.ctx.restore()
+      this.ctx.setLineDash([])
+    },
+
+    drawConnectionLine(annotation) {
+      if (!this.ctx || !this.$refs.mediaImage || !this.$refs.canvasContainer) {
+        return
       }
 
-      this.ctx.stroke()
+      // Use the STORED display dimensions from setupCanvas to ensure consistency
+      const displayWidth = this.canvasDisplayWidth
+      const displayHeight = this.canvasDisplayHeight
+      const offsetX = this.canvasOffsetX
+      const offsetY = this.canvasOffsetY
+      
+      if (!displayWidth || !displayHeight) return
+      
+      // Calculate annotation center in percentage coordinates
+      let annotationCenterXPercent, annotationCenterYPercent
+
+      switch (annotation.type) {
+        case 'rect':
+          annotationCenterXPercent = parseFloat(annotation.x) + (parseFloat(annotation.w) / 2)
+          annotationCenterYPercent = parseFloat(annotation.y) + (parseFloat(annotation.h) / 2)
+          break
+        case 'point':
+          annotationCenterXPercent = parseFloat(annotation.x)
+          annotationCenterYPercent = parseFloat(annotation.y)
+          break
+        case 'poly':
+          if (annotation.points && annotation.points.length >= 6) {
+            let sumX = 0, sumY = 0
+            const pointCount = annotation.points.length / 2
+            for (let i = 0; i < annotation.points.length; i += 2) {
+              sumX += annotation.points[i]
+              sumY += annotation.points[i + 1]
+            }
+            annotationCenterXPercent = sumX / pointCount
+            annotationCenterYPercent = sumY / pointCount
+          } else {
+            return
+          }
+          break
+        default:
+          return
+      }
+
+      // Get label position
+      const labelPosition = this.getLabelPosition(annotation)
+      
+      // Position within the fitted image area (same calculation as labels)
+      const annotationX = offsetX + (annotationCenterXPercent / 100) * displayWidth
+      const annotationY = offsetY + (annotationCenterYPercent / 100) * displayHeight
+      const labelX = offsetX + (labelPosition.x / 100) * displayWidth
+      const labelY = offsetY + (labelPosition.y / 100) * displayHeight
+      
+      // Since canvas fills the container and has the same transform applied,
+      // we draw at the untransformed positions and let CSS handle the rest
+      const canvasAnnotationX = annotationX
+      const canvasAnnotationY = annotationY
+      const canvasLabelX = labelX
+      const canvasLabelY = labelY
+
+      // Draw connection line with high visibility (white outline + colored dashed)
+      this.ctx.save()
+      this.ctx.lineCap = 'round'
+      this.ctx.lineJoin = 'round'
+
+      // Outline pass (solid white behind for contrast)
+      this.ctx.strokeStyle = 'rgba(255,255,255,0.95)'
+      this.ctx.lineWidth = 6
       this.ctx.setLineDash([])
+      this.ctx.globalAlpha = 1
+      this.ctx.beginPath()
+      this.ctx.moveTo(canvasAnnotationX, canvasAnnotationY)
+      this.ctx.lineTo(canvasLabelX, canvasLabelY)
+      this.ctx.stroke()
+
+      // Foreground pass (colored dashed with subtle shadow)
+      this.ctx.strokeStyle = '#0d6efd'
+      this.ctx.lineWidth = 3
+      this.ctx.setLineDash([8, 6])
+      this.ctx.globalAlpha = 1
+      this.ctx.shadowColor = 'rgba(0,0,0,0.25)'
+      this.ctx.shadowBlur = 2
+      this.ctx.beginPath()
+      this.ctx.moveTo(canvasAnnotationX, canvasAnnotationY)
+      this.ctx.lineTo(canvasLabelX, canvasLabelY)
+      this.ctx.stroke()
+
+      this.ctx.restore()
+    },
+
+    getLabelPosition(annotation) {
+      // Priority 1: Check if we have a runtime-dragged position for this session
+      const customPos = this.labelPositions.get(annotation.annotation_id)
+      if (customPos) {
+        return customPos
+      }
+
+      // Priority 2: Use database-stored label position if available
+      // The API returns tx, ty from the database - we should use these!
+      if (annotation.tx !== undefined && annotation.tx !== null && 
+          annotation.ty !== undefined && annotation.ty !== null) {
+        const txVal = parseFloat(annotation.tx)
+        const tyVal = parseFloat(annotation.ty)
+        
+        // Validate that the values are actual numbers and within reasonable bounds
+        // Coordinates should be percentages (0-100), but allow some overflow for labels near edges
+        if (!isNaN(txVal) && !isNaN(tyVal) && 
+            txVal > -50 && txVal < 150 && tyVal > -50 && tyVal < 150) {
+          return {
+            x: txVal,
+            y: tyVal
+          }
+        }
+        // If invalid values, fall through to calculated default
+      }
+
+      // Priority 3: Calculate default position as fallback (only if no DB position exists)
+      const displayHeight = this.canvasDisplayHeight || 500 // fallback height
+      const desiredPixelOffset = 150
+      
+      // Convert 150px to percentage of display height
+      const offsetYPercent = (desiredPixelOffset / displayHeight) * 100
+      
+      // Default position: slightly to the right and well above the annotation
+      const offsetX = 2 // 2% to the right (reduced to keep labels closer to center)
+      const offsetY = -Math.max(8, offsetYPercent) // Use larger of 8% or calculated pixel equivalent
+      
+      return {
+        x: Math.min(95, Math.max(5, parseFloat(annotation.x) + offsetX)),
+        y: Math.max(5, parseFloat(annotation.y) + offsetY)
+      }
     },
 
     scaleAnnotation(annotation) {
       const img = this.$refs.mediaImage
       if (!img || !this.canvas) return annotation
       
-      // Get current image display size
-      const imgRect = img.getBoundingClientRect()
-      const canvasWidth = this.canvas.width
-      const canvasHeight = this.canvas.height
+      // Use stored display dimensions if available, otherwise fallback to canvas dimensions
+      const displayWidth = this.canvasDisplayWidth || this.canvas.width
+      const displayHeight = this.canvasDisplayHeight || this.canvas.height
+      const offsetX = this.canvasOffsetX || 0
+      const offsetY = this.canvasOffsetY || 0
       
       // Convert from percentage coordinates (0-100) to canvas pixels
       const scaled = {
         ...annotation,
-        x: (annotation.x / 100) * canvasWidth,
-        y: (annotation.y / 100) * canvasHeight,
-        w: (annotation.w / 100) * canvasWidth,
-        h: (annotation.h / 100) * canvasHeight,
-        tx: (annotation.tx / 100) * canvasWidth,
-        ty: (annotation.ty / 100) * canvasHeight
+        x: offsetX + (annotation.x / 100) * displayWidth,
+        y: offsetY + (annotation.y / 100) * displayHeight,
+        w: (annotation.w / 100) * displayWidth,
+        h: (annotation.h / 100) * displayHeight,
+        tx: offsetX + (annotation.tx / 100) * displayWidth,
+        ty: offsetY + (annotation.ty / 100) * displayHeight
       }
       
       // Handle polygon points conversion
@@ -1130,10 +1746,10 @@ export default {
         scaled.points = []
         for (let i = 0; i < annotation.points.length; i += 2) {
           // Convert x coordinate (even indices)
-          scaled.points[i] = (annotation.points[i] / 100) * canvasWidth
+          scaled.points[i] = offsetX + (annotation.points[i] / 100) * displayWidth
           // Convert y coordinate (odd indices)
           if (i + 1 < annotation.points.length) {
-            scaled.points[i + 1] = (annotation.points[i + 1] / 100) * canvasHeight
+            scaled.points[i + 1] = offsetY + (annotation.points[i + 1] / 100) * displayHeight
           }
         }
       }
@@ -1212,12 +1828,49 @@ export default {
       this.editingAnnotation = { ...annotation }
     },
 
-    updateAnnotation(updatedAnnotation) {
+    async updateAnnotation(updatedAnnotation) {
       const index = this.annotations.findIndex(a => a.annotation_id === updatedAnnotation.annotation_id)
+      
       if (index !== -1) {
+        // Ensure the updated annotation preserves the original link_id
+        const originalAnnotation = this.annotations[index]
+        updatedAnnotation.link_id = updatedAnnotation.link_id || originalAnnotation.link_id
+        
+        // Update local state immediately for responsive UI
         this.annotations[index] = { ...this.annotations[index], ...updatedAnnotation }
-        this.hasUnsavedChanges = true
+        
+        // Clear enhanced label cache for updated annotation
+        const cacheKey = updatedAnnotation.annotation_id
+        if (cacheKey) {
+          this.enhancedLabelCache.delete(cacheKey)
+        }
+        
         this.drawAnnotations()
+        
+        // Save to database immediately
+        try {
+          // Use the annotation's original link_id if available, otherwise use current context linkId
+          const linkIdForUpdate = updatedAnnotation.link_id || this.effectiveSaveLinkId
+          
+          await annotationService.updateAnnotation(
+            this.projectId,
+            this.mediaId,
+            this.type,
+            linkIdForUpdate,
+            updatedAnnotation
+          )
+          this.showSaveStatus('Annotation saved successfully', 'success')
+        } catch (error) {
+          console.error('Failed to save annotation:', error)
+          this.showSaveStatus('Failed to save annotation', 'error')
+          // Revert local changes if save failed
+          this.loadAnnotations()
+        } finally {
+          // Reset the modal's saving state
+          if (this.$refs.editModal) {
+            this.$refs.editModal.saving = false
+          }
+        }
       }
       this.editingAnnotation = null
     },
@@ -1256,7 +1909,7 @@ export default {
 
     canDeleteAnnotation(annotation) {
       // Users can delete their own annotations, project owners can delete any
-      return this.canEdit && annotation
+      return Boolean(this.canEdit && annotation)
     },
 
     // Data management - REMOVED DUPLICATE (keeping the correct one below)
@@ -1274,7 +1927,7 @@ export default {
             this.projectId,
             this.mediaId,
             this.type,
-            this.linkId,
+            this.effectiveSaveLinkId,
             unsavedAnnotations
           )
 
@@ -1333,16 +1986,14 @@ export default {
             this.deleteAnnotation(this.selectedAnnotation)
           }
           break
-        case 'KeyS':
-          if (event.ctrlKey || event.metaKey) {
-            event.preventDefault()
-            this.saveAnnotations()
-          }
-          break
+        // Ctrl+S removed - annotations save instantly when edited
       }
     },
 
     onDocumentClick(event) {
+      // Don't close panels if we just finished dragging
+      if (this.isDraggingPanel) return
+      
       // Close help when clicking outside
       const helpContainer = this.$refs.helpDropdown?.parentElement
       if (helpContainer && !helpContainer.contains(event.target)) {
@@ -1355,6 +2006,12 @@ export default {
       if (overviewPanel && !overviewPanel.contains(event.target) && !annotationControls) {
         this.showOverview = false
       }
+      
+      // Close labels panel when clicking outside (but not on any annotation controls)
+      const labelsPanel = this.$refs.labelsPanel
+      if (labelsPanel && !labelsPanel.contains(event.target) && !annotationControls) {
+        this.showLabelsPanel = false
+      }
     },
 
 
@@ -1362,19 +2019,57 @@ export default {
     // Utility methods
     getDefaultLabel() {
       switch (this.type) {
-        case 'C': return 'Character annotation'
-        case 'T': return 'Taxon annotation'
-        case 'X': return 'Matrix annotation'
-        case 'M': 
-        default: return 'Media annotation'
+        case 'C': return 'No label'
+        case 'T': return 'No label'
+        case 'X': return 'No label'
+        case 'M': return 'No label'
+        default: return ''
       }
     },
 
     // Label visibility logic
     shouldShowLabel(annotation) {
+      // If "Hide All Labels" is enabled, don't show any labels
+      if (this.hideAllLabels) {
+        return false
+      }
       
-      // Show label if showDefaultText is 1, true, or '1' (string)
-      return annotation.showDefaultText == 1 || annotation.showDefaultText === true || annotation.showDefaultText === '1'
+      // Safely get label text, handling null/undefined/empty
+      const rawLabel = annotation.label
+      const labelText = (rawLabel === null || rawLabel === undefined) ? '' : String(rawLabel).trim()
+      
+      // Check if annotation has ACTUAL custom text (not default/placeholder/empty text)
+      const isCustomText = labelText.length > 0 && 
+                          labelText !== 'No label' && 
+                          labelText.toLowerCase() !== 'no label'
+      
+      // ALWAYS show label if it has custom text
+      // This ensures connection lines are drawn for custom labels
+      if (isCustomText) {
+        return true
+      }
+      
+      // In numbered mode, ALWAYS show the number label regardless of showDefaultText
+      // This fixes the bug where annotations disappear completely in read-only mode
+      if (this.labelMode === 'numbers') {
+        return true
+      }
+      
+      // In text mode, check showDefaultText flag
+      const showDefaultTextEnabled = annotation.showDefaultText == 1 || 
+                                     annotation.showDefaultText === true || 
+                                     annotation.showDefaultText === '1' ||
+                                     annotation.showDefaultText === 'true'
+      
+      // Show if showDefaultText is ON (will display default text)
+      if (showDefaultTextEnabled) {
+        return true
+      }
+      
+      // showDefaultText is OFF and no custom text in text mode
+      // Show small empty box if user can edit (so they can click to add label)
+      // Otherwise don't show text label (but number would have been shown above)
+      return this.canEdit
     },
 
     getAnnotationLabelStyle(annotation) {
@@ -1388,24 +2083,46 @@ export default {
       // Get container dimensions 
       const containerRect = container.getBoundingClientRect()
       
-      // Get actual image display size (after CSS scaling)
-      const imgRect = img.getBoundingClientRect()
+      // Use the STORED display dimensions from setupCanvas to ensure consistency
+      const displayWidth = this.canvasDisplayWidth
+      const displayHeight = this.canvasDisplayHeight  
+      const offsetX = this.canvasOffsetX
+      const offsetY = this.canvasOffsetY
       
-      // Calculate position on the image itself (not container)
-      // Note: annotation.x and annotation.y are already percentages (0-100), so we divide by 100 to get decimal (0-1)
-      const xPercent = parseFloat(annotation.x) / 100
-      const yPercent = parseFloat(annotation.y) / 100
+      // Fallback to calculation if stored values aren't available yet
+      if (!displayWidth || !displayHeight) {
+        return { display: 'none' }
+      }
       
-      // Position relative to the displayed image
-      const labelX = imgRect.left + (xPercent * imgRect.width) - containerRect.left
-      const labelY = imgRect.top + (yPercent * imgRect.height) - containerRect.top
+      // Get label position (either custom or default)
+      const labelPosition = this.getLabelPosition(annotation)
+      const xPercent = labelPosition.x / 100
+      const yPercent = labelPosition.y / 100
+      
+      // The key insight: The image element fills the container, and transform applies to the container
+      // So we need to calculate position relative to the container, not the fitted image
+      const containerWidth = container.clientWidth
+      const containerHeight = container.clientHeight
+      
+      // Position within the fitted image area
+      const imageX = offsetX + (xPercent * displayWidth)
+      const imageY = offsetY + (yPercent * displayHeight)
+      
+      // Transform applies to the entire container from origin (0,0)
+      // scale(zoom) translate(offset) means:
+      // 1. Scale the entire container (including empty space)
+      // 2. Then translate
+      // Since translate comes AFTER scale in the CSS transform, the offset values are multiplied by zoom
+      const labelX = (imageX * this.viewerZoom) + (this.viewerOffset.x * this.viewerZoom)
+      const labelY = (imageY * this.viewerZoom) + (this.viewerOffset.y * this.viewerZoom)
+      
       
       
       
       const style = {
         position: 'absolute',
         left: `${labelX}px`,
-        top: `${labelY - 50}px`, // Position label above the annotation
+        top: `${labelY}px`,
         transform: 'translateX(-50%)', // Center the label horizontally
         zIndex: 999,
         background: 'rgba(255, 255, 255, 0.95)',
@@ -1440,6 +2157,28 @@ export default {
         
         
         this.annotations = annotations || []
+        
+        // Clear enhanced label cache when annotations change
+        this.enhancedLabelCache.clear()
+        
+        // LOG: Show final rendering decisions for all annotations
+        /*
+        console.log('🎯 FINAL LABEL RENDERING DECISIONS:')
+        this.annotations.forEach((ann, index) => {
+          const willShow = this.shouldShowLabel(ann)
+          const displayText = this.getDisplayLabelText(ann)
+          const isPlaceholder = displayText === '+'
+          console.log(`  [${index + 1}] Annotation ${ann.annotation_id}:`, {
+            label: ann.label,
+            showDefaultText: ann.showDefaultText,
+            canEdit: this.canEdit,
+            willShowLabel: willShow,
+            displayText: displayText || '(empty)',
+            isPlaceholder: isPlaceholder,
+            result: willShow ? (isPlaceholder ? '📍 SMALL PLACEHOLDER' : '✅ VISIBLE') : '❌ HIDDEN'
+          })
+        })
+        */
         
         // Emit event for parent component
         this.$emit('annotationsLoaded', this.annotations.length)
@@ -1484,6 +2223,500 @@ export default {
       setTimeout(() => {
         this.saveStatus = null
       }, 3000)
+    },
+
+    // Character information methods for enhanced label display
+    async fetchCharacterDisplayInfo(linkId) {
+      // Check cache first
+      if (this.characterDisplayCache.has(linkId)) {
+        return this.characterDisplayCache.get(linkId)
+      }
+
+      try {
+        const baseUrl = this.published ? '/public/projects' : '/projects'
+        const url = `${baseUrl}/${this.projectId}/media/${this.mediaId}/details?link_id=${linkId}`
+        
+        const response = await apiService.get(url)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch character info: ${response.statusText}`)
+        }
+
+        const responseData = await response.json()
+        const characterDisplay = responseData.media?.character_display || null
+
+        // Cache the result
+        this.characterDisplayCache.set(linkId, characterDisplay)
+        return characterDisplay
+
+      } catch (error) {
+        console.error('Error fetching character display info:', error)
+        return null
+      }
+    },
+
+    // Get enhanced label text for display
+    async getEnhancedLabelText(annotation) {
+      // Safely get label text, handling null/undefined/empty (same logic as shouldShowLabel)
+      const rawLabel = annotation.label
+      const labelText = (rawLabel === null || rawLabel === undefined) ? '' : String(rawLabel).trim()
+      
+      // Check if annotation has CUSTOM label text (not default/placeholder/empty text)
+      const isCustomText = labelText.length > 0 && 
+                          labelText !== 'No label' && 
+                          labelText.toLowerCase() !== 'no label'
+      
+      // If annotation has custom label, use it
+      if (isCustomText) {
+        return labelText
+      }
+
+      // If showDefaultText is not enabled and no custom text, return empty
+      if (!this.shouldShowLabel(annotation)) {
+        return ''
+      }
+
+      // For character media with character/state names provided directly, use them
+      // Use the same format as cells: "Character Name :: State Name (State Number)"
+      if (this.type === 'C' && this.characterName) {
+        let characterLabel = this.characterName
+        if (this.stateName && this.stateNumber !== null) {
+          characterLabel += ` :: ${this.stateName} (${this.stateNumber})`
+        } else if (this.stateName) {
+          characterLabel += ` :: ${this.stateName}`
+        }
+        return characterLabel
+      }
+
+      // For character annotations (type 'C') and matrix annotations (type 'X'), try to get enhanced display
+      if ((this.type === 'C' || this.type === 'X') && this.linkId) {
+        const characterDisplay = await this.fetchCharacterDisplayInfo(this.linkId)
+        if (characterDisplay) {
+          return characterDisplay
+        }
+      }
+
+      // Fallback to default label only if showDefaultText is enabled
+      return this.getDefaultLabel()
+    },
+
+    // Synchronous method for template - handles caching and triggers async loading
+    getDisplayLabelText(annotation) {
+      // Safely get label text, handling null/undefined/empty (same logic as shouldShowLabel)
+      const rawLabel = annotation.label
+      const labelText = (rawLabel === null || rawLabel === undefined) ? '' : String(rawLabel).trim()
+      
+      // Check if annotation has CUSTOM label text (not default/placeholder/empty text)
+      const isCustomText = labelText.length > 0 && 
+                          labelText !== 'No label' && 
+                          labelText.toLowerCase() !== 'no label'
+      
+      // If annotation has custom label text, use it immediately (no cache needed for custom text)
+      if (isCustomText) {
+        return labelText
+      }
+
+      // CRITICAL: If shouldShowLabel is false, return empty
+      if (!this.shouldShowLabel(annotation)) {
+        return ''
+      }
+      
+      // Check showDefaultText flag
+      const showDefaultTextEnabled = annotation.showDefaultText == 1 || 
+                                     annotation.showDefaultText === true || 
+                                     annotation.showDefaultText === '1' ||
+                                     annotation.showDefaultText === 'true'
+
+      // If showDefaultText is OFF but label is showing (because canEdit is true)
+      // Return a placeholder for the small empty box
+      if (!showDefaultTextEnabled && this.canEdit) {
+        return '+' // Small plus icon as placeholder
+      }
+
+      // Now check cache (only for default/enhanced text when showDefaultText is ON)
+      const cacheKey = annotation.annotation_id || `temp-${Date.now()}`
+      if (this.enhancedLabelCache.has(cacheKey)) {
+        return this.enhancedLabelCache.get(cacheKey)
+      }
+
+      // For character media with character/state names provided directly, use them
+      // Use the same format as cells: "Character Name :: State Name (State Number)"
+      if (this.type === 'C' && this.characterName) {
+        let characterLabel = this.characterName
+        if (this.stateName && this.stateNumber !== null) {
+          characterLabel += ` :: ${this.stateName} (${this.stateNumber})`
+        } else if (this.stateName) {
+          characterLabel += ` :: ${this.stateName}`
+        }
+        this.enhancedLabelCache.set(cacheKey, characterLabel)
+        return characterLabel
+      }
+
+      // For character annotations and matrix annotations, check if we need to load enhanced display
+      if ((this.type === 'C' || this.type === 'X') && this.linkId) {
+        // Check if we already have character display info
+        if (this.characterDisplayCache.has(this.linkId)) {
+          const characterDisplay = this.characterDisplayCache.get(this.linkId)
+          if (characterDisplay) {
+            this.enhancedLabelCache.set(cacheKey, characterDisplay)
+            return characterDisplay
+          }
+        } else {
+          // Trigger async loading (don't wait for it)
+          this.loadEnhancedLabelAsync(annotation, cacheKey)
+        }
+      }
+
+      // Return default label only if showDefaultText is enabled
+      const defaultLabel = this.getDefaultLabel()
+      this.enhancedLabelCache.set(cacheKey, defaultLabel)
+      return defaultLabel
+    },
+
+    // Async method to load enhanced label and update cache
+    async loadEnhancedLabelAsync(annotation, cacheKey) {
+      try {
+        const enhancedText = await this.getEnhancedLabelText(annotation)
+        this.enhancedLabelCache.set(cacheKey, enhancedText)
+        
+        // Force Vue to re-render the component
+        this.$forceUpdate()
+      } catch (error) {
+        console.error('Error loading enhanced label:', error)
+      }
+    },
+
+    // New methods for enhanced label UI
+    getAnnotationIndex(annotation) {
+      return this.annotations.findIndex(a => a.annotation_id === annotation.annotation_id)
+    },
+
+    getAnnotationTypeDisplay(type) {
+      const typeMap = {
+        'rect': 'Rectangle',
+        'point': 'Point', 
+        'poly': 'Polygon'
+      }
+      return typeMap[type] || type
+    },
+
+    selectAndFocusAnnotation(annotation) {
+      this.selectAnnotation(annotation)
+      // Optionally zoom to fit the annotation
+      // this.zoomToAnnotation(annotation)
+    },
+
+    getTooltipStyle(annotation) {
+      if (!this.$refs.mediaImage || !this.$refs.canvasContainer) {
+        return { display: 'none' }
+      }
+
+      const img = this.$refs.mediaImage
+      const container = this.$refs.canvasContainer
+      
+      // Use the STORED display dimensions from setupCanvas to ensure consistency
+      const displayWidth = this.canvasDisplayWidth
+      const displayHeight = this.canvasDisplayHeight
+      const offsetX = this.canvasOffsetX
+      const offsetY = this.canvasOffsetY
+      
+      if (!displayWidth || !displayHeight) {
+        return { display: 'none' }
+      }
+      
+      // Calculate position on the image itself
+      const xPercent = parseFloat(annotation.x) / 100
+      const yPercent = parseFloat(annotation.y) / 100
+      
+      // Calculate base position (where tooltip would be without any zoom/pan)
+      const baseX = offsetX + (xPercent * displayWidth)
+      const baseY = offsetY + (yPercent * displayHeight)
+      
+      // Apply the same transforms as the image and canvas
+      // Since translate comes AFTER scale in the CSS transform, the offset values are multiplied by zoom
+      const tooltipX = (baseX * this.viewerZoom) + (this.viewerOffset.x * this.viewerZoom)
+      const tooltipY = (baseY * this.viewerZoom) + (this.viewerOffset.y * this.viewerZoom)
+      
+      return {
+        position: 'absolute',
+        left: `${tooltipX}px`,
+        top: `${tooltipY - 80}px`, // Position tooltip above the annotation
+        transform: 'translateX(-50%)', // Center the tooltip horizontally
+        zIndex: 9999,
+        pointerEvents: 'none' // Don't interfere with mouse events
+      }
+    },
+
+    getTooltipLabelText(annotation) {
+      // Check if annotation has an actual custom label
+      if (annotation.label && annotation.label.trim()) {
+        return annotation.label
+      }
+      
+      // If no custom label but showDefaultText is enabled, use the enhanced label text
+      if (this.shouldShowLabel(annotation)) {
+        const enhancedText = this.getDisplayLabelText(annotation)
+        if (enhancedText && enhancedText.trim()) {
+          return enhancedText
+        }
+      }
+      
+      // If no custom label and no default text, show "No label"
+      return 'No label'
+    },
+
+    // Label dragging methods
+    startLabelDrag(event, annotation) {
+      // Prevent other interactions when dragging labels
+      event.stopPropagation()
+      event.preventDefault()
+      
+      this.isDraggingLabel = true
+      this.draggedLabelAnnotation = annotation
+      this.dragStartLabelPos = { x: event.clientX, y: event.clientY }
+      
+      // Prevent text selection while dragging
+      document.body.style.userSelect = 'none'
+      
+      // Set cursor style
+      document.body.style.cursor = 'grabbing'
+    },
+
+    updateLabelDrag(event) {
+      if (!this.isDraggingLabel || !this.draggedLabelAnnotation) return
+      
+      const img = this.$refs.mediaImage
+      const container = this.$refs.canvasContainer
+      
+      if (!img || !container) return
+      
+      const containerRect = container.getBoundingClientRect()
+      
+      // Use the STORED display dimensions from setupCanvas to ensure consistency
+      const displayWidth = this.canvasDisplayWidth
+      const displayHeight = this.canvasDisplayHeight
+      const offsetX = this.canvasOffsetX
+      const offsetY = this.canvasOffsetY
+      
+      if (!displayWidth || !displayHeight) return
+      
+      // Calculate mouse position relative to the container
+      const mouseX = event.clientX - containerRect.left
+      const mouseY = event.clientY - containerRect.top
+      
+      // Reverse the transform to get back to base coordinates
+      // CSS transform is: scale(zoom) translate(offset), which means: (basePos * zoom) + (offset * zoom)
+      // So: basePos = (screenPos - (offset * zoom)) / zoom
+      const baseMouseX = (mouseX - (this.viewerOffset.x * this.viewerZoom)) / this.viewerZoom
+      const baseMouseY = (mouseY - (this.viewerOffset.y * this.viewerZoom)) / this.viewerZoom
+      
+      // Calculate position relative to the base image
+      const relativeX = (baseMouseX - offsetX) / displayWidth
+      const relativeY = (baseMouseY - offsetY) / displayHeight
+      
+      // Convert to percentage coordinates with bounds checking
+      const newX = Math.max(0, Math.min(100, relativeX * 100))
+      const newY = Math.max(0, Math.min(100, relativeY * 100))
+      
+      // Store the new position
+      this.labelPositions.set(this.draggedLabelAnnotation.annotation_id, {
+        x: newX,
+        y: newY
+      })
+      
+      // Force re-render to update label position and line
+      this.$nextTick(() => {
+        this.$forceUpdate()
+        this.drawAnnotations()
+      })
+    },
+
+    endLabelDrag() {
+      if (!this.draggedLabelAnnotation || !this.isDraggingLabel) {
+        this.isDraggingLabel = false
+        this.draggedLabelAnnotation = null
+        document.body.style.userSelect = ''
+        document.body.style.cursor = ''
+        return
+      }
+      
+      // Get the new position from labelPositions Map (set during drag)
+      const newPosition = this.labelPositions.get(this.draggedLabelAnnotation.annotation_id)
+      
+      // Store reference to annotation before clearing drag state
+      const annotationToSave = this.draggedLabelAnnotation
+      
+      // CRITICAL: Clear drag state flags IMMEDIATELY
+      // This prevents the label from continuing to drag
+      this.isDraggingLabel = false
+      this.draggedLabelAnnotation = null
+      document.body.style.userSelect = ''
+      document.body.style.cursor = ''
+      
+      // Save to database if user has edit permissions and we have a valid position
+      if (newPosition && this.canEdit && annotationToSave.annotation_id) {
+        // Store the pending save data and show confirmation modal
+        this.pendingLabelSave = {
+          annotation: annotationToSave,
+          position: newPosition
+        }
+        this.showLabelSaveConfirm = true
+      }
+    },
+    
+    async confirmLabelSave() {
+      if (!this.pendingLabelSave) return
+      
+      const { annotation, position } = this.pendingLabelSave
+      this.isSavingLabelPosition = true
+      
+      try {
+        // Update the annotation with new label position (tx, ty)
+        const updatedAnnotation = {
+          ...annotation,
+          tx: position.x,
+          ty: position.y,
+          tw: annotation.tw || 1,
+          th: annotation.th || 1
+        }
+        
+        // Find and update in local state immediately
+        const index = this.annotations.findIndex(a => a.annotation_id === updatedAnnotation.annotation_id)
+        if (index !== -1) {
+          this.annotations[index].tx = position.x
+          this.annotations[index].ty = position.y
+        }
+        
+        // Save to database
+        const linkIdForUpdate = updatedAnnotation.link_id || this.effectiveSaveLinkId
+        
+        await annotationService.updateAnnotation(
+          this.projectId,
+          this.mediaId,
+          this.type,
+          linkIdForUpdate,
+          updatedAnnotation
+        )
+        
+        this.showSaveStatus('Label position saved', 'success')
+      } catch (error) {
+        console.error('Failed to save label position:', error)
+        this.showSaveStatus('Failed to save label position', 'error')
+        // Remove from labelPositions so it falls back to previous position
+        this.labelPositions.delete(annotation.annotation_id)
+        this.drawAnnotations()
+      } finally {
+        this.isSavingLabelPosition = false
+        this.showLabelSaveConfirm = false
+        this.pendingLabelSave = null
+      }
+    },
+    
+    cancelLabelSave() {
+      if (!this.pendingLabelSave) return
+      
+      // User cancelled - remove the temporary position and revert to original
+      this.labelPositions.delete(this.pendingLabelSave.annotation.annotation_id)
+      this.$nextTick(() => {
+        this.$forceUpdate()
+        this.drawAnnotations()
+      })
+      
+      // Reset modal state
+      this.showLabelSaveConfirm = false
+      this.pendingLabelSave = null
+    },
+
+    // Panel dragging methods
+    startDragging(event) {
+      // Don't start dragging if clicking on the close button
+      if (event.target.classList.contains('labels-close')) {
+        return
+      }
+      
+      this.isDraggingPanel = true
+      this.dragStartPos = { x: event.clientX, y: event.clientY }
+      this.dragStartPanelPos = { ...this.panelPosition }
+      
+      // Prevent text selection while dragging
+      event.preventDefault()
+      document.body.style.userSelect = 'none'
+    },
+
+    onDocumentMouseMove(event) {
+      // Handle panel dragging
+      if (this.isDraggingPanel) {
+        const deltaX = event.clientX - this.dragStartPos.x
+        const deltaY = event.clientY - this.dragStartPos.y
+        
+        // Calculate new position
+        let newX = this.dragStartPanelPos.x + deltaX
+        let newY = this.dragStartPanelPos.y + deltaY
+        
+        // Get viewport dimensions and panel dimensions
+        const viewport = {
+          width: window.innerWidth,
+          height: window.innerHeight
+        }
+        
+        const panelWidth = 350 // From CSS
+        const panelHeight = Math.min(viewport.height * 0.8, 600) // Max height from CSS
+        
+        // Constrain to viewport bounds
+        newX = Math.max(10, Math.min(viewport.width - panelWidth - 10, newX))
+        newY = Math.max(10, Math.min(viewport.height - panelHeight - 10, newY))
+        
+        this.panelPosition = { x: newX, y: newY }
+        return
+      }
+      
+      // Handle label dragging
+      if (this.isDraggingLabel && this.draggedLabelAnnotation) {
+        this.updateLabelDrag(event)
+        return
+      }
+    },
+
+    onDocumentMouseUp() {
+      if (this.isDraggingPanel) {
+        this.isDraggingPanel = false
+        document.body.style.userSelect = ''
+        return
+      }
+      
+      if (this.isDraggingLabel) {
+        this.endLabelDrag()
+        return
+      }
+    },
+
+    getPanelStyle() {
+      return {
+        position: 'fixed',
+        left: `${this.panelPosition.x}px`,
+        top: `${this.panelPosition.y}px`,
+        right: 'auto', // Override the CSS right positioning
+      }
+    },
+
+    // Image load monitoring and timeout fallback
+    startImageLoadWatch() {
+      this.clearImageLoadTimer()
+      this.imageLoadTimer = setTimeout(() => {
+        if (!this.imageLoaded && !this.hasTriedFallback) {
+          this.hasTriedFallback = true
+          this.currentImageUrl = buildMediaUrl(this.projectId, this.mediaId, 'large')
+          this.isLoadingImage = true
+          this.imageLoaded = false
+          this.clearImageLoadTimer()
+        }
+      }, this.fallbackDelayMs)
+    },
+
+    clearImageLoadTimer() {
+      if (this.imageLoadTimer) {
+        clearTimeout(this.imageLoadTimer)
+        this.imageLoadTimer = null
+      }
     }
   }
 }
@@ -1499,21 +2732,23 @@ export default {
 
 .annotation-controls {
   background: #fff;
-  padding: 12px;
+  padding: 10px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #ddd;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   position: relative;
   z-index: 10000;
+  min-height: 56px;
 }
 
 .annotation-tools {
   display: flex;
-  gap: 5px;
+  gap: 6px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .annotation-info,
@@ -1546,6 +2781,9 @@ export default {
   align-items: center;
   gap: 6px;
   transition: all 0.2s;
+  white-space: nowrap;
+  height: 36px;
+  box-sizing: border-box;
 }
 
 .annotation-tool:hover {
@@ -1567,31 +2805,46 @@ export default {
   margin-left: auto;
 }
 
+.label-mode-controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  height: 36px;
+}
+
 .help-container {
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
 }
 
 .zoom-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 8px;
+  gap: 4px;
+  padding: 4px;
   background: #f8f9fa;
-  border-radius: 4px;
+  border-radius: 6px;
   border: 1px solid #ddd;
+  height: 36px;
+  box-sizing: border-box;
 }
 
 .zoom-level {
   font-size: 12px;
   font-weight: 500;
   color: #666;
-  min-width: 40px;
+  min-width: 50px;
   text-align: center;
+  padding: 6px 8px;
+  background: white;
+  border-radius: 3px;
+  line-height: 1;
 }
 
 .btn {
-  padding: 8px 16px;
+  padding: 8px 12px;
   border: 1px solid #ccc;
   background: white;
   border-radius: 4px;
@@ -1601,11 +2854,15 @@ export default {
   align-items: center;
   gap: 6px;
   transition: all 0.2s;
+  white-space: nowrap;
+  height: 36px;
+  box-sizing: border-box;
 }
 
 .btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 .btn-primary {
@@ -1638,6 +2895,32 @@ export default {
   background: #f8f9fa;
   border-color: #007bff;
   color: #007bff;
+}
+
+/* Make the active selection visually stronger (glow) */
+.btn-outline.active {
+  background: #e7f1ff;
+  border-color: #007bff;
+  color: #0b5ed7;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Zoom control buttons */
+.zoom-controls .btn {
+  padding: 6px 8px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 3px;
+}
+
+.zoom-controls .btn:hover {
+  background: #e9ecef;
+}
+
+/* Clean alignment without forcing */
+.annotation-controls > * {
+  display: flex;
+  align-items: center;
 }
 
 .dropdown {
@@ -1679,13 +2962,15 @@ export default {
   position: relative;
   background: #fff;
   overflow: hidden;
-  min-height: 400px;
+  min-height: 500px;
 }
 
 .media-image {
   display: block;
-  max-width: 100%;
-  height: auto;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center top;
   transform-origin: top left;
 }
 
@@ -1707,17 +2992,60 @@ export default {
   font-size: 14px !important;
   font-weight: bold !important;
   color: #007bff !important;
-  cursor: pointer !important;
+  cursor: grab !important;
   z-index: 999 !important;
-  white-space: nowrap !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
   transition: all 0.2s !important;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
   pointer-events: auto !important;
-  min-width: 100px !important;
+  min-width: 120px !important;
+  max-width: 300px !important;
   text-align: center !important;
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
+  /* REMOVED: display: block !important; - This was preventing v-show from working! */
+  /* REMOVED: visibility: visible !important; - This was preventing v-show from working! */
+  /* REMOVED: opacity: 1 !important; - This was preventing v-show from working! */
+  line-height: 1.4 !important;
+}
+
+.annotation-label:active {
+  cursor: grabbing !important;
+}
+
+.annotation-label:hover {
+  box-shadow: 0 6px 12px rgba(0, 123, 255, 0.4) !important;
+  border-color: #0056b3 !important;
+}
+
+/* Numbered label style */
+.annotation-label.numbered-label {
+  min-width: 40px !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  display: flex; /* Removed !important to allow v-show to work */
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 16px !important;
+  font-weight: bold !important;
+  background: #007bff !important;
+  color: white !important;
+  border: 3px solid white !important;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.4) !important;
+}
+
+.annotation-label.numbered-label.selected {
+  background: #dc3545 !important;
+  border-color: #dc3545 !important;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4) !important;
+}
+
+.annotation-number {
+  font-size: 16px;
+  font-weight: bold;
+  color: inherit;
 }
 
 .annotation-label.selected {
@@ -1730,10 +3058,31 @@ export default {
   display: none;
 }
 
-.annotation-label:hover {
-  transform: scale(1.05);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+/* Empty placeholder label - small clickable box to add label */
+.annotation-label.empty-placeholder {
+  min-width: 32px !important;
+  max-width: 32px !important;
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #007bff !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+  font-size: 18px !important;
+  opacity: 0.7;
+  transition: all 0.2s !important;
+  cursor: pointer !important;
 }
+
+.annotation-label.empty-placeholder:hover {
+  opacity: 1;
+  border-style: solid !important;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3) !important;
+}
+
 
 .annotation-status {
   background: #f8f9fa;
@@ -1797,7 +3146,7 @@ export default {
   border: 1px solid #ddd;
   border-radius: 8px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-  z-index: 9999 !important;
+  z-index: 99999 !important;
   min-width: 400px;
   max-width: 500px;
   max-height: 70vh;
@@ -1957,6 +3306,9 @@ export default {
   .annotation-controls {
     flex-direction: column;
     align-items: stretch;
+    padding: 8px 10px;
+    gap: 8px;
+    min-height: auto;
   }
   
   .annotation-tools {
@@ -1969,8 +3321,19 @@ export default {
   
   .annotation-tool,
   .btn {
-    padding: 10px 14px;
-    font-size: 14px;
+    padding: 8px 12px;
+    font-size: 13px;
+    height: 38px;
+  }
+  
+  .zoom-controls {
+    width: 100%;
+    max-width: 200px;
+    margin: 0 auto;
+  }
+  
+  .label-mode-controls {
+    justify-content: center;
   }
   
   .help-dropdown {
@@ -2001,5 +3364,305 @@ export default {
   .overview-image {
     max-height: 150px;
   }
+}
+
+/* Tooltip styles */
+.annotation-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  border-radius: 6px;
+  padding: 0;
+  z-index: 100000;
+  pointer-events: none;
+  font-size: 13px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  min-width: 200px;
+}
+
+.tooltip-content {
+  padding: 10px 12px;
+}
+
+.tooltip-content strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #fff;
+  font-size: 14px;
+}
+
+/* Labels Panel styles */
+.labels-panel {
+  position: fixed;
+  /* top and right will be overridden by inline styles */
+  width: 350px;
+  max-width: 90vw;
+  max-height: 80vh;
+  background: white;
+  border: 2px solid #007bff;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  z-index: 99999;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s ease;
+}
+
+.labels-panel.dragging {
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  transform: rotate(1deg);
+}
+
+.labels-header {
+  background: #007bff;
+  color: white;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.labels-header.draggable {
+  cursor: grab;
+  user-select: none;
+}
+
+.labels-header.draggable:active {
+  cursor: grabbing;
+}
+
+.drag-handle {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-right: 8px;
+  line-height: 1;
+  font-weight: bold;
+  letter-spacing: -2px;
+}
+
+.labels-title {
+  flex: 1;
+}
+
+.labels-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.labels-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.labels-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.no-annotations {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 20px;
+}
+
+.label-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+}
+
+.label-item:hover {
+  border-color: #007bff;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+}
+
+.label-item.selected {
+  border-color: #007bff;
+  background: linear-gradient(135deg, #f8f9ff 0%, #e3f2fd 100%);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.label-number {
+  width: 32px;
+  height: 32px;
+  background: #007bff;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.label-item.selected .label-number {
+  background: #dc3545;
+}
+
+.label-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.label-text {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 15px;
+  margin-bottom: 6px;
+  word-wrap: break-word;
+  line-height: 1.4;
+  letter-spacing: 0.2px;
+}
+
+.label-item.selected .label-text {
+  color: #1e3a8a;
+  font-weight: 700;
+}
+
+.label-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #666;
+}
+
+.label-type {
+  background: #e9ecef;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.label-id {
+  font-family: monospace;
+}
+
+.label-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.label-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: background-color 0.2s;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.label-action-btn:hover {
+  background: #f8f9fa;
+}
+
+.edit-btn:hover {
+  background: #e3f2fd;
+}
+
+.delete-btn:hover {
+  background: #ffebee;
+}
+
+.image-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #007bff;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Image loading overlay */
+.image-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(248, 249, 250, 0.85);
+  z-index: 20;
+}
+
+.image-loading-overlay .loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 4px solid #e3e3e3;
+  border-top: 4px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+.image-loading-overlay .loading-text {
+  color: #495057;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>

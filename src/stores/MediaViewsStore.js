@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
+import { apiService } from '@/services/apiService.js'
 
 export const useMediaViewsStore = defineStore({
   id: 'media-views',
@@ -14,25 +14,23 @@ export const useMediaViewsStore = defineStore({
   },
   actions: {
     async fetchMediaViews(projectId) {
-      const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/views`
-      const response = await axios.get(url)
-      const mediaViews = response.data.views || []
+      const response = await apiService.get(`/projects/${projectId}/views`)
+      const responseData = await response.json()
+        const mediaViews = responseData.views || []
       this.addMediaViews(mediaViews)
 
       this.isLoaded = true
     },
     async create(projectId, data) {
       try {
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/projects/${projectId}/views/create`,
-          data
-        )
-        if (response.status === 200) {
+        const response = await apiService.post(`/projects/${projectId}/views/create`, data)
+        if (response.ok) {
+          const responseData = await response.json()
           // Handle both single view and bulk creation responses
-          if (response.data.view) {
-            this.addMediaViews([response.data.view])
-          } else if (response.data.views) {
-            this.addMediaViews(response.data.views)
+          if (responseData.view) {
+            this.addMediaViews([responseData.view])
+          } else if (responseData.views) {
+            this.addMediaViews(responseData.views)
           }
           return { success: true }
         }
@@ -59,25 +57,20 @@ export const useMediaViewsStore = defineStore({
       }
     },
     async edit(projectId, viewId, view) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/views/${viewId}/edit`
-      const response = await axios.post(url, view)
-      if (response.status == 200) {
-        const view = response.data.view
+      const response = await apiService.post(`/projects/${projectId}/views/${viewId}/edit`, view)
+      if (response.ok) {
+        const responseData = await response.json()
+        const view = responseData.view
         this.addMediaViews([view])
         return true
       }
       return false
     },
     async deleteIds(projectId, viewIds) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/views/delete`
-      const response = await axios.post(url, {
+      const response = await apiService.post(`/projects/${projectId}/views/delete`, {
         view_ids: viewIds,
       })
-      if (response.status == 200) {
+      if (response.ok) {
         this.removeByViewIds(viewIds)
         return true
       }

@@ -1,23 +1,28 @@
 <script setup>
-import axios from 'axios'
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCharactersStore } from '@/stores/CharactersStore'
 import { useMatricesStore } from '@/stores/MatricesStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useFileTransferStore } from '@/stores/FileTransferStore'
+import { useNotifications } from '@/composables/useNotifications'
+import { NavigationPatterns } from '@/utils/navigationUtils.js'
 import { CharacterStateIncompleteType } from '@/lib/matrix-parser/MatrixObject.ts'
 import { getIncompleteStateText } from '@/lib/matrix-parser/text.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
 import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
 import { getTaxonomicUnitOptions } from '@/utils/taxa'
 import router from '@/router'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const taxaStore = useTaxaStore()
 const matricesStore = useMatricesStore()
 const charactersStore = useCharactersStore()
 const fileTransferStore = useFileTransferStore()
+const { showError, showSuccess } = useNotifications()
+const uploadError = ref('')
+const uploadTask = ref({ id: null, status: null })
 const projectId = route.params.id
 
 // Taxonomic unit options for dropdown
@@ -96,21 +101,21 @@ function saveEditedCharacter() {
     for (const state of editingCharacter.value.states) {
       const stateName = state.name
       if (stateName == null || stateName.length == 0) {
-        alert('All states must have non-empty names.')
+        showError('All states must have non-empty names.')
         return
       }
       if (state.name.match(/State\ \d+$/)) {
-        alert(
+        showError(
           `You must rename the generic state: '${state.name}' or recode the character in the matrix.`
         )
         return
       }
       if (stateNames.has(stateName)) {
-        alert('All states must have unique names.')
+        showError('All states must have unique names.')
         return
       }
       if (stateName.length > 500) {
-        alert('All states must names that are under 500 characters.')
+        showError('All states must names that are under 500 characters.')
         return
       }
       stateNames.add(stateName)
@@ -187,7 +192,7 @@ async function importMatrix(event) {
   }
 
   reader.onerror = function () {
-    alert('Failed to read file')
+    showError('Failed to read file')
   }
 
   reader.readAsBinaryString(file)
@@ -200,7 +205,7 @@ function moveUpload() {
 
 async function moveToCharacters() {
   if (!importedMatrix.taxa || !importedMatrix.characters) {
-    alert('Please upload a valid matrix file first')
+    showError('Please upload a valid matrix file first')
     return false
   }
 
@@ -253,11 +258,10 @@ function moveToStep(step) {
 }
 
 let isUploading = ref(false)
-let uploadError = ref(null)
 
 async function uploadMatrix() {
   isUploading.value = true
-  uploadError.value = null
+  
 
   try {
     const formData = new FormData()
@@ -290,15 +294,14 @@ async function uploadMatrix() {
       if (mergeFile) {
         formData.set('file', mergeFile)
       } else {
-        uploadError.value =
-          'Merge file not found. Please go back and select a file again.'
+        showError('Merge file not found. Please go back and select a file again.')
         return
       }
     } else {
       // For new matrix creation, require file upload
       const file = document.getElementById('upload')
       if (!file.files[0]) {
-        uploadError.value = 'Please select a file to upload.'
+        showError('Please select a file to upload.')
         return
       }
       formData.set('file', file.files[0])
@@ -307,34 +310,80 @@ async function uploadMatrix() {
     const serializedMatrix = serializeMatrix(importedMatrix)
     formData.set('matrix', serializedMatrix)
 
-    const url = new URL(
-      `${import.meta.env.VITE_API_URL}/projects/${projectId}/matrices/upload`
-    )
-
-    const response = await axios.post(url, formData, {
-      timeout: 300000, // 5 minutes timeout
+    const response = await apiService.post(`/projects/${projectId}/matrices/upload`, formData, {
+      // Keep a moderate timeout; server returns 202 quickly
+      timeout: 60000,
     })
-    if (response.status === 200) {
-      // Clear the file from FileTransferStore after successful upload
+
+    // For async upload, expect 202 + taskId
+    if (response.status === 202) {
+      const data = await response.json()
+      uploadTask.value = { id: data.taskId, status: 'queued' }
+
+      // Poll task status until completed or failed
+      await pollTaskStatus(data.taskId)
+
+      // On success, clear state and navigate
+      const isMerge = route.query.merge === 'true'
       if (isMerge) {
         fileTransferStore.clearMergeFile()
         sessionStorage.removeItem('matrixMergeData')
       }
-
-      // Wait for store invalidation to complete
       await matricesStore.invalidate()
-
-      // Force a full page reload to ensure fresh data is loaded
-      window.location.href = `/myprojects/${projectId}/matrices`
+      await NavigationPatterns.afterComplexResourceCreate(projectId, 'matrices')
+      return
+    }
+    
+    // If server returned 200 (small matrix fast path), proceed as before
+    if (response.ok) {
+      const isMerge = route.query.merge === 'true'
+      if (isMerge) {
+        fileTransferStore.clearMergeFile()
+        sessionStorage.removeItem('matrixMergeData')
+      }
+      await matricesStore.invalidate()
+      await NavigationPatterns.afterComplexResourceCreate(projectId, 'matrices')
     }
   } catch (error) {
     console.error('Error uploading matrix:', error)
-    uploadError.value =
-      error.response?.data?.message ||
-      'Failed to upload matrix. Please try again.'
+    
+    // Check if the error suggests a retry
+    if (error.retry || error.code === 'DB_CONNECTION_ERROR' || error.code === 'DB_LOCK_TIMEOUT') {
+      uploadError.value = `${error.message || 'A temporary issue occurred. Please try uploading again.'}`
+    } else {
+      // Non-retryable error
+      uploadError.value =
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to upload matrix. Please check your file and try again.'
+    }
   } finally {
     isUploading.value = false
   }
+}
+
+async function pollTaskStatus(taskId) {
+  // Poll every 2s up to 30 minutes
+  const maxAttempts = 900
+  let attempts = 0
+  while (attempts < maxAttempts) {
+    attempts++
+    try {
+      const res = await apiService.get(`/tasks/${taskId}/status`)
+      const data = await res.json()
+      uploadTask.value.status = data.status
+      if (data.status === 'completed') return
+      if (data.status === 'failed') {
+        const msg = data.error?.message || 'Matrix import failed.'
+        throw new Error(msg)
+      }
+    } catch (e) {
+      // Bubble up failures
+      throw e
+    }
+    await new Promise(r => setTimeout(r, 2000))
+  }
+  throw new Error('Matrix import timed out. Please check later or retry.')
 }
 
 function cancelImport() {
@@ -545,16 +594,14 @@ onUnmounted(() => {
               ></span>
               {{
                 isProcessingMatrix
-                  ? 'Processing...'
+                  ? 'Parsing...'
                   : isUploading
                   ? 'Uploading...'
                   : 'Next'
               }}
             </button>
           </div>
-          <div v-if="uploadError" class="alert alert-danger mt-3" role="alert">
-            {{ uploadError }}
-          </div>
+          
         </div>
         <div class="row setup-content" id="step-2">
           <h5 v-if="route.query.merge === 'true'">
@@ -719,6 +766,7 @@ onUnmounted(() => {
                     <textarea
                       class="form-control"
                       v-model="editingCharacter.note"
+                      rows="5"
                     ></textarea>
                   </div>
                   <div class="form-group" v-if="editingCharacter.states?.length > 0">
@@ -851,9 +899,7 @@ onUnmounted(() => {
             </button>
           </div>
         </div>
-        <div v-if="uploadError" class="alert alert-danger mt-3" role="alert">
-          {{ uploadError }}
-        </div>
+        
         <div class="modal" id="taxonModal" tabindex="-1">
           <div class="modal-dialog">
             <div class="modal-content">
@@ -888,6 +934,7 @@ onUnmounted(() => {
                     <textarea
                       class="form-control"
                       v-model="editingTaxon.note"
+                      rows="5"
                     ></textarea>
                   </div>
                 </div>

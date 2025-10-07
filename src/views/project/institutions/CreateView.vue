@@ -3,6 +3,7 @@ import router from '@/router'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectInstitutionStore } from '@/stores/ProjectsInstitutionStore'
+import { useNotifications } from '@/composables/useNotifications'
 import InstitutionSearchInput from '@/views/project/common/InstitutionSearchInput.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import AddInstitutionDialog from '@/components/dialogs/AddInstitutionDialog.vue'
@@ -11,6 +12,7 @@ import { Modal } from 'bootstrap'
 const route = useRoute()
 const projectId = route.params.id
 const projectInstitutionsStore = useProjectInstitutionStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 const isLoaded = computed(() => projectInstitutionsStore.isLoaded)
 
 const institutionId = ref(null)
@@ -35,12 +37,12 @@ async function createInstitution() {
     )
 
     if (!result) {
-      alert('Could not add Institution to Project')
+      showError('Could not add Institution to Project', 'Add Failed')
     } else {
       await router.push({ path: `/myprojects/${projectId}/institutions` })
     }
   } else {
-    alert('Institution already associated with this project')
+    showWarning('Institution already associated with this project', 'Already Associated')
   }
 }
 

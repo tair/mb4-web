@@ -3,6 +3,7 @@ import { useRoute } from 'vue-router'
 import router from '@/router'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useNotifications } from '@/composables/useNotifications'
 import EditBatchDialog from '@/views/project/taxa/EditBatchDialog.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import TaxonomicName from '@/components/project/TaxonomicName.vue'
@@ -21,6 +22,7 @@ const projectId = route.params.id
 const taxaToDelete = ref([])
 
 const taxaStore = useTaxaStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 const isLoaded = computed(() => taxaStore.isLoaded)
 
 const rank = ref(TaxaColumns.GENUS)
@@ -177,12 +179,12 @@ function validateSelectedTaxaAtPbdb() {
     .map((t) => t.taxon_id)
 
   if (selectedTaxaIds.length === 0) {
-    alert('Please select at least one taxon to validate.')
+    showWarning('Please select at least one taxon to validate.', 'Selection Required')
     return
   }
 
   if (selectedTaxaIds.length > 100) {
-    alert('You can only validate up to 100 taxa at a time. Please select fewer taxa.')
+    showWarning('You can only validate up to 100 taxa at a time. Please select fewer taxa.', 'Too Many Selected')
     return
   }
 
@@ -219,7 +221,7 @@ function validateSelectedTaxaAtPbdb() {
         </button>
       </RouterLink>
       <RouterLink :to="`/myprojects/${projectId}/taxa/extinct/edit`">
-        <button type="button" class="btn btn-m btn-outline-primary">
+        <button type="button" class="btn btn-m btn-outline-primary" @click.prevent="$router.push({ name: 'MyProjectTaxaExtinctEditView', params: { id: projectId } })">
           <span class="extinct-icon">†</span>
           <span> Edit Extinct Taxa</span>
         </button>

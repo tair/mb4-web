@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
+import { apiService } from '@/services/apiService.js'
 
 export const useDocumentsStore = defineStore({
   id: 'documents',
@@ -20,12 +20,10 @@ export const useDocumentsStore = defineStore({
         this.isLoaded = false
       }
       
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/documents`
-      const response = await axios.get(url)
-      this.documents = response.data.documents
-      this.folders = response.data.folders
+      const response = await apiService.get(`/projects/${projectId}/documents`)
+      const responseData = await response.json()
+      this.documents = responseData.documents
+      this.folders = responseData.folders
       this.isLoaded = true
     },
     
@@ -35,12 +33,9 @@ export const useDocumentsStore = defineStore({
     },
     async create(projectId, documentFormData) {
       try {
-        const url = `${
-          import.meta.env.VITE_API_URL
-        }/projects/${projectId}/documents/create`
-        const response = await axios.post(url, documentFormData)
+        const response = await apiService.post(`/projects/${projectId}/documents/create`, documentFormData)
         
-        if (response.status == 200) {
+        if (response.ok) {
           // Invalidate cache so next list view shows fresh data
           this.isLoaded = false
           return { success: true }
@@ -55,12 +50,9 @@ export const useDocumentsStore = defineStore({
     },
     async edit(projectId, documentId, documentFormData) {
       try {
-        const url = `${
-          import.meta.env.VITE_API_URL
-        }/projects/${projectId}/documents/${documentId}/edit`
-        const response = await axios.post(url, documentFormData)
+        const response = await apiService.post(`/projects/${projectId}/documents/${documentId}/edit`, documentFormData)
         
-        if (response.status == 200) {
+        if (response.ok) {
           // Invalidate cache so next list view shows fresh data
           this.isLoaded = false
           return { success: true }
@@ -75,21 +67,19 @@ export const useDocumentsStore = defineStore({
     },
     async deleteDocuments(projectId, documentIds) {
       try {
-        const url = `${
-          import.meta.env.VITE_API_URL
-        }/projects/${projectId}/documents/delete`
-        const response = await axios.post(url, {
+        const response = await apiService.post(`/projects/${projectId}/documents/delete`, {
           document_ids: documentIds,
         })
         
-        if (response.status == 200) {
+        if (response.ok) {
           // Invalidate cache so next list view shows fresh data
           this.isLoaded = false
           
           // Check for S3 cleanup warnings
           const result = { success: true }
-          if (response.data.warnings) {
-            result.warnings = response.data.warnings
+          const responseData = await response.json()
+          if (responseData.warnings) {
+            result.warnings = responseData.warnings
           }
           return result
         }
@@ -103,19 +93,17 @@ export const useDocumentsStore = defineStore({
     },
     async deleteFolder(projectId, folderId) {
       try {
-        const url = `${
-          import.meta.env.VITE_API_URL
-        }/projects/${projectId}/documents/folder/${folderId}/delete`
-        const response = await axios.post(url)
+        const response = await apiService.post(`/projects/${projectId}/documents/folder/${folderId}/delete`)
         
-        if (response.status == 200) {
+        if (response.ok) {
           // Invalidate cache so next list view shows fresh data
           this.isLoaded = false
           
           // Check for S3 cleanup warnings
           const result = { success: true }
-          if (response.data.warnings) {
-            result.warnings = response.data.warnings
+          const responseData = await response.json()
+          if (responseData.warnings) {
+            result.warnings = responseData.warnings
           }
           return result
         }

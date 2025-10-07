@@ -4,6 +4,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { Modal } from 'bootstrap'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
+import { useNotifications } from '@/composables/useNotifications'
 
 const props = defineProps<{
   batchEdit: (formData: any) => Promise<boolean>
@@ -13,6 +14,7 @@ const route = useRoute()
 const projectId = route.params.id
 
 const bibliographiesStore = useBibliographiesStore()
+const { showError, showSuccess } = useNotifications()
 
 const menuCollapsed = ref({
   editExtinct: true,
@@ -23,20 +25,24 @@ async function handleSubmitClicked(event: Event) {
   const target = event.currentTarget as HTMLFormElement
   const formData = new FormData(target)
   const json = Object.fromEntries(formData)
-  const success = await props.batchEdit(json)
-  if (!success) {
-    alert('Failed to edit media files')
-    return
-  }
-
-  const element = document.getElementById('taxaEditModal')
-  if (!element) {
-    return
-  }
-
-  const modal = Modal.getInstance(element)
-  if (modal) {
-    modal.hide()
+  
+  try {
+    const success = await props.batchEdit(json)
+    if (success) {
+      showSuccess('Taxa updated successfully!')
+      const element = document.getElementById('taxaEditModal')
+      if (element) {
+        const modal = Modal.getInstance(element)
+        if (modal) {
+          modal.hide()
+        }
+      }
+    } else {
+      showError('Failed to edit taxa')
+    }
+  } catch (error) {
+    console.error('Error editing taxa:', error)
+    showError('Failed to edit taxa. Please try again.')
   }
 }
 

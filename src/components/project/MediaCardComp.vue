@@ -186,7 +186,8 @@ function hideEnlargedImage(imgId) {
 }
 */
 .cc-icon {
-  width: 88;
-  height: 31;
+  max-width: 88px;
+  height: auto;
+  object-fit: contain;
 }
 </style>

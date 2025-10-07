@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
+import { apiService } from '@/services/apiService.js'
 
 export const usePublicProjectsStore = defineStore({
   id: 'publicProjects',
@@ -10,6 +10,7 @@ export const usePublicProjectsStore = defineStore({
 
     /// browse data ////
     titles: null,
+    titlesGrouped: null,
     authors: '',
     journals: '',
     institutions: '',
@@ -105,11 +106,9 @@ export const usePublicProjectsStore = defineStore({
       this.err = null
 
       try {
-        var getter = axios.create()
-        delete getter.defaults.headers.common['Authorization']
-
-        const res = await getter.get(`${import.meta.env.VITE_API_URL}/public/projects/stats`)
-        this.stats = res.data
+        const res = await apiService.get('/public/projects/stats')
+        const data = await res.json()
+        this.stats = data
       } catch (e) {
         console.error(`store:projects:fetchProjectStats(): ${e}`)
         this.err = 'Error fetching project stats.'
@@ -126,12 +125,9 @@ export const usePublicProjectsStore = defineStore({
       this.err = null
 
       try {
-        var getter = axios.create()
-        delete getter.defaults.headers.common['Authorization']
-
-        const url = `${import.meta.env.VITE_API_URL}/s3/projects.json`
-        const res = await getter.get(url)
-        this.projects = res.data
+        const res = await apiService.get('/s3/projects.json')
+        const data = await res.json()
+        this.projects = data
         this.recalculatePageInfo()
         this.fetchByPage(1)
       } catch (e) {
@@ -146,8 +142,10 @@ export const usePublicProjectsStore = defineStore({
       // if already loaded, return them.
       if (this.titles) {
         this.titles.sort((a, b) => {
-          const A = a.name.trim().toUpperCase() // ignore upper and lowercase
-          const B = b.name.trim().toUpperCase() // ignore upper and lowercase
+          const aTitle = (a.article_title && a.article_title.trim()) || (a.name && a.name.trim()) || ''
+          const bTitle = (b.article_title && b.article_title.trim()) || (b.name && b.name.trim()) || ''
+          const A = aTitle.toUpperCase() // ignore upper and lowercase
+          const B = bTitle.toUpperCase() // ignore upper and lowercase
           if (A < B) return sort_by == 'asc' ? -1 : 1
           if (A > B) return sort_by != 'asc' ? -1 : 1
           return 0
@@ -160,11 +158,31 @@ export const usePublicProjectsStore = defineStore({
       this.err = null
 
       try {
-        const url = `${import.meta.env.VITE_API_URL}/public/projects/titles`
-        const res = await axios.get(url)
-        this.titles = res.data
+        const res = await apiService.get('/public/projects/titles')
+        const data = await res.json()
+        this.titles = data
       } catch (e) {
         console.error(`store:projects:fetchProjectTitles()`)
+        this.err = 'Error fetching project titles.'
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchProjectTitlesGrouped() {
+      // if already loaded, return them.
+      if (this.titlesGrouped) return this.titlesGrouped
+
+      this.loading = true
+      this.err = null
+
+      try {
+        const res = await apiService.get('/public/projects/titles_projects')
+        const data = await res.json()
+        this.titlesGrouped = data
+        return this.titlesGrouped
+      } catch (e) {
+        console.error(`store:projects:fetchProjectTitlesGrouped()`)
         this.err = 'Error fetching project titles.'
       } finally {
         this.loading = false
@@ -179,11 +197,9 @@ export const usePublicProjectsStore = defineStore({
       this.err = null
 
       try {
-        const url = `${
-          import.meta.env.VITE_API_URL
-        }/public/projects/authors_projects`
-        const res = await axios.get(url)
-        this.authors = res.data
+        const res = await apiService.get('/public/projects/authors_projects')
+        const data = await res.json()
+        this.authors = data
       } catch (e) {
         console.error(`store:projects:fetchProjectAuthor()`)
         this.err = 'Error fetching project authors.'
@@ -200,11 +216,9 @@ export const usePublicProjectsStore = defineStore({
       this.err = null
 
       try {
-        const url = `${
-          import.meta.env.VITE_API_URL
-        }/public/projects/journals_projects`
-        const res = await axios.get(url)
-        this.journals = res.data
+        const res = await apiService.get('/public/projects/journals_projects')
+        const data = await res.json()
+        this.journals = data
       } catch (e) {
         console.error(`store:projects:fetchProjectJournal()`)
         this.err = 'Error fetching project journals.'
@@ -238,11 +252,9 @@ export const usePublicProjectsStore = defineStore({
       this.err = null
 
       try {
-        const url = `${
-          import.meta.env.VITE_API_URL
-        }/public/projects/institutions`
-        const res = await axios.get(url)
-        this.institutions = res.data
+        const res = await apiService.get('/public/projects/institutions')
+        const data = await res.json()
+        this.institutions = data
       } catch (e) {
         console.error(`store:projects:fetchProjectInsitutions()`)
         this.err = 'Error fetching project institutions.'
@@ -258,11 +270,9 @@ export const usePublicProjectsStore = defineStore({
       this.morphoBankStatsLoading = true
 
       try {
-        var getter = axios.create()
-        delete getter.defaults.headers.common['Authorization']
-
-        const res = await getter.get(`${import.meta.env.VITE_API_URL}/stats/home`)
-        this.morphoBankStats = res.data
+        const res = await apiService.get('/stats/home')
+        const data = await res.json()
+        this.morphoBankStats = data
 
         return this.morphoBankStats
       } catch (e) {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Modal } from 'bootstrap'
 import { useMediaStore } from '@/stores/MediaStore'
+import { useNotifications } from '@/composables/useNotifications'
 import { useRoute } from 'vue-router'
 import { ref } from 'vue'
 
@@ -11,6 +12,7 @@ const props = defineProps<{
 const route = useRoute()
 const projectId = route.params.id
 const mediaStore = useMediaStore()
+const { showError, showSuccess } = useNotifications()
 const isDeleting = ref(false)
 
 async function handleDeleteButtonClicked() {
@@ -23,15 +25,16 @@ async function handleDeleteButtonClicked() {
     const success = await mediaStore.deleteIds(projectId, mediaIds)
 
     if (success) {
+      showSuccess(`Successfully deleted ${props.mediaToDelete.length} media items!`)
       const element = document.getElementById('mediaDeleteModal')
       const modal = Modal.getInstance(element)
       modal.hide()
     } else {
-      alert('Failed to delete media')
+      showError('Failed to delete media')
     }
   } catch (error) {
     console.error('Error deleting media:', error)
-    alert('Failed to delete media')
+    showError('Failed to delete media')
   } finally {
     isDeleting.value = false
   }

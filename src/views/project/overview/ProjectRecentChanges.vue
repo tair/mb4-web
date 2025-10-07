@@ -28,6 +28,7 @@ const temporalTypeText = [
   'In the last 30 days',
 ]
 
+
 defineProps<{
   recentChanges: Changes[]
 }>()
@@ -37,10 +38,10 @@ defineProps<{
     <h3>
       Recent Changes
       <Tooltip
-        content="Recent changes statsistics refer to the creation of new or modification of existing records.  They do not take into account usage throughout MorophoBank.  For example, saving a change to a specimen would count as a recent change in the Specimens column, whereas tagging a media file with a specimen would not."
+        content="Recent changes statistics refer to the creation of new or modification of existing records. They do not take into account usage throughout MorphoBank. For example, saving a change to a specimen would count as a recent change in the Specimens column, whereas tagging a media file with a specimen would not."
       ></Tooltip>
     </h3>
-    <table class="table table-bordered table-striped">
+    <table class="table table-bordered table-striped table-sm small">
       <thead>
         <tr>
           <th scope="col">&nbsp;</th>

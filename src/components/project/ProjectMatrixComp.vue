@@ -1,11 +1,11 @@
 <script setup>
-import axios from 'axios'
-
 import { ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMatricesStore } from '@/stores/MatricesStore'
 import { useFileTransferStore } from '@/stores/FileTransferStore'
 import { useDocumentsStore } from '@/stores/DocumentsStore'
+import { useNotifications } from '@/composables/useNotifications'
+import { apiService } from '@/services/apiService.js'
 import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import { getTaxonomicUnitOptions } from '@/utils/taxa'
@@ -54,6 +54,7 @@ const matricesStore = useMatricesStore()
 const fileTransferStore = useFileTransferStore()
 const taxaStore = useTaxaStore()
 const charactersStore = useCharactersStore()
+const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 const notes = ref(true)
 const format = ref(formats.keys()?.next()?.value)
 const partitionId = ref('')
@@ -72,9 +73,7 @@ const parsedMatrix = ref(null)
 const projectId = route.params.id
 const matrixId = props.matrix.matrix_id
 const taxonNames = props.matrix.taxonNames
-const baseUrl = `${
-  import.meta.env.VITE_API_URL
-}/projects/${projectId}/matrices/${matrixId}`
+const baseUrl = apiService.buildUrl(`/projects/${projectId}/matrices/${matrixId}`)
 
 const tools = new Map()
 tools.set('PAUPRAT', 'PAUP Ratchet')
@@ -107,7 +106,8 @@ const nchains_specified = ref(4)
 const outgroups = new Map()
 outgroups.set('', 'None')
 for (const taxonName of taxonNames) {
-  outgroups.set(taxonName, taxonName)
+  const repTaxonName = taxonName.trim().replace(/\s+/g, '_')
+  outgroups.set(repTaxonName, repTaxonName)
 }
 const set_outgroup = ref(outgroups.keys()?.next()?.value)
 const runtime = ref(4.0)
@@ -433,8 +433,8 @@ function validateJobName() {
 async function onRun() {
   if (!validateJobParameters()) {
     //if (validateMsg != null && validateMsg.startsWith("MrBayes block"))
-    if (validateMsg) alert(validateMsg)
-    else alert('Please fill out all the required fields')
+    if (validateMsg) showWarning(validateMsg, 'Validation Error')
+    else showWarning('Please fill out all the required fields', 'Missing Fields')
     return
   }
   const url = new URL(`${baseUrl}/run`)
@@ -498,10 +498,11 @@ async function onRun() {
 async function sendCipresRequest(url) {
   try {
     document.body.style.cursor = 'wait'
-    const response = await axios.post(url)
+    const response = await apiService.post(url)
+    const data = await response.json()
     document.body.style.cursor = 'default'
-    const msg = response.data?.message || 'Failed to submit job to CIPRES'
-    alert(msg)
+    const msg = data?.message || 'Failed to submit job to CIPRES'
+    showError(msg, 'Job Submission Failed')
     if (!msg.includes('fail') && !msg.includes('Fail')) {
       let urlNew = window.location.href
       if (urlNew.indexOf('?') > -1) {
@@ -558,7 +559,7 @@ async function onDownloadJob(
 
 async function onDownloadJobResults(url, filename, ck, cr) {
   try {
-    const response = await fetch(url, {
+    const response = await apiService.get(url, {
       headers: {
         'cipres-appkey': `${ck}`,
         Authorization: `Basic ${cr}`,
@@ -580,9 +581,10 @@ async function onDownloadJobResults(url, filename, ck, cr) {
     URL.revokeObjectURL(blobUrl) // Clean up
   } catch (error) {
     console.error('Error downloading the file:', error)
-    alert(
+    showError(
       'Failed to download results for ' +
-        (filename || documentUrl.split('/').pop())
+        (filename || documentUrl.split('/').pop()),
+      'Download Failed'
     )
   }
 }
@@ -711,9 +713,9 @@ async function parseMatrixFile(file) {
           convertedMatrix.cellsArray = cellsArray
           parsedMatrix.value = convertedMatrix
         } else {
-          uploadErrors.value.general =
-            'Failed to parse matrix file. Please check the file format.'
-          parsedMatrix.value = null
+        uploadErrors.value.general =
+          'Failed to parse matrix file. Please ensure the file is a valid NEXUS or TNT format.'
+        parsedMatrix.value = null
         }
       } catch (error) {
         console.error('Error parsing matrix file:', error)
@@ -895,10 +897,21 @@ onMounted(() => {
       </div>
       <div class="buttons">
         <RouterLink
+          :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/view`"
+          target="_blank"
+          rel="noopener"
+        >
+          <button type="button" class="btn btn-sm btn-secondary view-btn" title="View matrix">
+            <i class="fa-regular fa-eye"></i>
+          </button>
+        </RouterLink>
+        <RouterLink
+          v-if="canEditMatrix"
           :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/edit`"
           target="_blank"
+          rel="noopener"
         >
-          <button type="button" class="btn btn-sm btn-secondary pencil-btn">
+          <button type="button" class="btn btn-sm btn-secondary pencil-btn" title="Edit matrix">
             <i class="fa-regular fa-pen-to-square"></i>
           </button>
         </RouterLink>
@@ -1003,6 +1016,7 @@ onMounted(() => {
           <RouterLink
             :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/characters`"
             target="_blank"
+            rel="noopener"
           >
             <button type="button" class="btn btn-primary">
               Edit Characters
@@ -1758,19 +1772,23 @@ onMounted(() => {
   gap: 7px;
 }
 
-/* Orange themed pencil button */
+/* Orange themed view and edit buttons */
+.view-btn,
 .pencil-btn {
   background-color: var(--theme-orange, #ef782f) !important;
   border-color: var(--theme-orange, #ef782f) !important;
   color: white !important;
 }
 
+.view-btn:hover,
 .pencil-btn:hover {
   background-color: var(--theme-orange-hover, #d9682a) !important;
   border-color: var(--theme-orange-hover, #d9682a) !important;
   color: white !important;
 }
 
+.view-btn:focus,
+.view-btn:active,
 .pencil-btn:focus,
 .pencil-btn:active {
   background-color: var(--theme-orange-active, #c35a25) !important;

@@ -91,7 +91,8 @@ export abstract class MatrixAccessorContainer extends Component {
 
   constructor(
     protected matrixModel: MatrixModel,
-    gridHanlder: MatrixGridHandler
+    gridHanlder: MatrixGridHandler,
+    protected projectId: number
   ) {
     super()
     this.highlightComboBox = new Dropdown()
@@ -99,8 +100,8 @@ export abstract class MatrixAccessorContainer extends Component {
     this.cellRenderersComboBox = new Dropdown()
     this.registerDisposable(this.cellRenderersComboBox)
     this.matrixGrid = this.matrixModel.isStreaming()
-      ? new StreamingMatrixGrid(matrixModel, gridHanlder)
-      : new MatrixGrid(matrixModel, gridHanlder)
+      ? new StreamingMatrixGrid(matrixModel, gridHanlder, projectId)
+      : new MatrixGrid(matrixModel, gridHanlder, projectId)
   }
 
   protected override createDom() {
@@ -272,6 +273,11 @@ export abstract class MatrixAccessorContainer extends Component {
     characterRender.setCharacterRules(this.matrixModel.getCharacterRules())
     characterRender.setCharacterPreferences(this.matrixModel.getUserPreferences())
     characterRender.setShouldDisplayWarnings(this.matrixModel.hasAccessToAtleastOneTaxon())
+    
+    // Set published status on all renderers
+    cellRender.setPublished(this.matrixModel.isPublished())
+    characterRender.setPublished(this.matrixModel.isPublished())
+    taxaRender.setPublished(this.matrixModel.isPublished())
     
     this.matrixGrid.setCharacterRender(characterRender)
     this.matrixGrid.setTaxaRender(taxaRender)

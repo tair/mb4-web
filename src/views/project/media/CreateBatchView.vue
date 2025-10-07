@@ -7,6 +7,8 @@ import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
+import { useNotifications } from '@/composables/useNotifications'
+import { NavigationPatterns } from '@/utils/navigationUtils.js'
 import { batchSchema } from '@/views/project/media/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 
@@ -18,7 +20,8 @@ const mediaStore = useMediaStore()
 const specimensStore = useSpecimensStore()
 const taxaStore = useTaxaStore()
 const mediaViewsStore = useMediaViewsStore()
-const validationErrors = ref([])
+const { showError, showSuccess } = useNotifications()
+const isSubmitting = ref(false)
 const isLoaded = computed(
   () =>
     projectUsersStore.isLoaded &&
@@ -73,26 +76,28 @@ function validateRequiredFields(formData) {
 }
 
 async function createBatch(event) {
+  if (isSubmitting.value) return // Prevent double submission
+  
   const formData = new FormData(event.currentTarget)
   
   // Validate required fields
   const errors = validateRequiredFields(formData)
   if (errors.length > 0) {
-    validationErrors.value = errors
+    showError(errors.join('; '), 'Validation Error')
     return
   }
-  
-  // Clear any previous validation errors
-  validationErrors.value = []
+
+  isSubmitting.value = true
 
   try {
     const success = await mediaStore.createBatch(projectId, formData)
     if (!success) {
-      validationErrors.value = ['Failed to create media. Please check your input and try again.']
+      showError('Failed to create batch media. Please check your input and try again.')
       return
     }
 
-    router.push({ path: `/myprojects/${projectId}/media` })
+    showSuccess('Batch media uploaded successfully!')
+    await NavigationPatterns.afterBatchOperation(projectId, 'media')
   } catch (error) {
     console.error('Batch upload error:', error)
     
@@ -107,8 +112,10 @@ async function createBatch(event) {
       errorMessage = error.message
     }
     
-    // Display the error in the validation errors section
-    validationErrors.value = [errorMessage]
+    // Display the error as notification
+    showError(errorMessage, 'Batch Upload Failed')
+  } finally {
+    isSubmitting.value = false
   }
 }
 
@@ -159,12 +166,6 @@ onMounted(() => {
   <LoadingIndicator :isLoaded="isLoaded">
     <form @submit.prevent="createBatch">
       <div class="row setup-content">
-        <!-- Display validation errors -->
-        <div v-if="validationErrors.length > 0" class="alert alert-danger" role="alert">
-          <ul class="mb-0">
-            <li v-for="error in validationErrors" :key="error">{{ error }}</li>
-          </ul>
-        </div>
         
         <template v-for="(definition, index) in batchSchema" :key="index">
           <div v-if="!definition.existed" class="form-group">
@@ -182,10 +183,21 @@ onMounted(() => {
           </div>
         </template>
         <div class="btn-form-group">
-          <button class="btn btn-primary" type="button" @click="$router.go(-1)">
+          <button 
+            class="btn btn-outline-primary" 
+            type="button" 
+            @click="$router.go(-1)"
+            :disabled="isSubmitting"
+          >
             Cancel
           </button>
-          <button class="btn btn-primary" type="submit">Upload Batch</button>
+          <button class="btn btn-primary" type="submit" :disabled="isSubmitting">
+            <span v-if="isSubmitting">
+              <i class="fa fa-spinner fa-spin me-2"></i>
+              Uploading Batch...
+            </span>
+            <span v-else>Upload Batch</span>
+          </button>
         </div>
       </div>
     </form>

@@ -6,6 +6,7 @@ import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useAuthStore } from '@/stores/AuthStore'
+import { useNotifications } from '@/composables/useNotifications'
 import { AccessControlService, EntityType } from '@/lib/access-control.js'
 import { schema } from '@/views/project/specimens/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
@@ -23,6 +24,7 @@ const projectUsersStore = useProjectUsersStore()
 const specimensStore = useSpecimensStore()
 const taxaStore = useTaxaStore()
 const authStore = useAuthStore()
+const { showError, showSuccess } = useNotifications()
 
 const isLoaded = computed(
   () =>
@@ -214,12 +216,18 @@ async function refreshTaxa() {
 async function editSpecimen(event) {
   // Prevent submission if user doesn't have access
   if (!canEditSpecimen.value) {
-    alert('You do not have permission to edit this specimen.')
+    showError('You do not have permission to edit this specimen.')
     return
   }
 
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
+
+  // Require taxon selection
+  if (!json.taxon_id || json.taxon_id === '' || json.taxon_id === 'undefined') {
+    showError('Please select a taxon before saving this specimen.')
+    return
+  }
 
   // Set the reference source
   json.reference_source = referenceSource.value
@@ -241,13 +249,18 @@ async function editSpecimen(event) {
     delete json[field]
   })
 
-  const success = await specimensStore.edit(projectId, specimenId, json)
-  if (!success) {
-    alert('Failed to modify specimen')
-    return
+  try {
+    const success = await specimensStore.edit(projectId, specimenId, json)
+    if (success) {
+      showSuccess('Specimen updated successfully!')
+      router.push({ path: `/myprojects/${projectId}/specimens` })
+    } else {
+      showError('Failed to modify specimen')
+    }
+  } catch (error) {
+    console.error('Error updating specimen:', error)
+    showError('Failed to modify specimen. Please try again.')
   }
-
-  router.push({ path: `/myprojects/${projectId}/specimens` })
 }
 
 onMounted(() => {
@@ -305,6 +318,7 @@ onMounted(() => {
               v-if="index === 'taxon_id'"
               :content="getTaxonTooltipText()"
             ></Tooltip>
+            <span v-if="index === 'taxon_id'" class="required">Required</span>
             <div v-if="index === 'taxon_id'" class="ms-2 d-inline-block">
               <RouterLink
                 :to="{

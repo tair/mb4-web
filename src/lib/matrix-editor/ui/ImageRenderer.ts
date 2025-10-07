@@ -12,6 +12,9 @@ export class ImageRenderer extends Component {
   private static readonly ARROW_DOWN_TEXT: string = '\u25bc'
 
   private readonly type: string
+  private projectId: number | null = null
+  private cellId: number | null = null
+  private isPublished: boolean = false
 
   private imageUrls: ImageRendererUrl[]
   private currentImageIndex: number
@@ -27,6 +30,22 @@ export class ImageRenderer extends Component {
   }
 
   /**
+   * Sets the project ID for proper media URL building
+   * @param projectId The project ID
+   */
+  setProjectId(projectId: number) {
+    this.projectId = projectId
+  }
+
+  /**
+   * Sets the cell ID for annotation context
+   * @param cellId The cell/link ID
+   */
+  setCellId(cellId: number | null) {
+    this.cellId = cellId
+  }
+
+  /**
    * Sets the image as readonly
    * @param readonly The boolean which indicates whether this image render is readonly
    */
@@ -35,17 +54,33 @@ export class ImageRenderer extends Component {
   }
 
   /**
+   * Sets whether this is a published project
+   * @param published Whether the project is published
+   */
+  setPublished(published: boolean) {
+    this.isPublished = published
+  }
+
+  /**
    * Adds an image to the renderer
    *
    * @param id the id of the image
    * @param url the url of the image
    * @param caption the caption of the image
+   * @param mediaData the full media object data for TIFF detection
+   * @param characterName optional character name for annotation context
+   * @param stateName optional state name for annotation context
+   * @param stateNumber optional state number for annotation context
    */
-  addImage(id: number, url: string, caption?: string | null) {
+  addImage(id: number, url: string, caption?: string | null, mediaData?: any, characterName?: string | null, stateName?: string | null, stateNumber?: number | null) {
     const imageUrl: ImageRendererUrl = {
       id: id,
       url: url,
       caption: caption || null,
+      mediaData: mediaData || null,
+      characterName: characterName ?? null,
+      stateName: stateName ?? null,
+      stateNumber: stateNumber ?? null,  // Use ?? instead of || to preserve 0 values
     }
 
     this.imageUrls.push(imageUrl)
@@ -80,9 +115,21 @@ export class ImageRenderer extends Component {
 
     const element = this.getElement()
     const handler = this.getHandler()
-    handler.listen(element, MobileFriendlyClickEventType, (e) =>
+    handler.listen(element, MobileFriendlyClickEventType, (e) => {
+      const target = e.target as HTMLElement
+      // If click is on an arrow or within an arrow element, do not open dialog
+      if (
+        target?.classList?.contains('imageArrowUp') ||
+        target?.classList?.contains('imageArrowDown') ||
+        target?.closest('.imageArrowUp') ||
+        target?.closest('.imageArrowDown')
+      ) {
+        e.stopPropagation()
+        e.preventDefault()
+        return false
+      }
       this.onHandleClick(e)
-    )
+    })
 
     if (this.imageUrls.length <= 1) {
       return
@@ -97,6 +144,13 @@ export class ImageRenderer extends Component {
       .listen(downArrowElement, EventType.MOUSEDOWN, (e: Event) =>
         this.onHandleDownClick(e)
       )
+      // Add keyboard navigation for arrow keys
+      .listen(element, EventType.KEYDOWN, (e: KeyboardEvent) =>
+        this.onHandleKeyDown(e)
+      )
+    
+    // Make the element focusable so it can receive keyboard events
+    element.setAttribute('tabindex', '0')
   }
 
   /**
@@ -158,13 +212,53 @@ export class ImageRenderer extends Component {
   }
 
   /**
+   * Handles keyboard events for arrow key navigation
+   * @param e The keyboard event
+   */
+  protected onHandleKeyDown(e: KeyboardEvent) {
+    if (e.key === 'ArrowUp') {
+      this.onHandleUpClick(e)
+      return true
+    } else if (e.key === 'ArrowDown') {
+      this.onHandleDownClick(e)
+      return true
+    }
+    return false
+  }
+
+  /**
    * Handles events from pressing on the image
    *
    * @param e The event that triggerd this callback.
    */
   protected onHandleClick(e: Event) {
     const imageUrl = this.imageUrls[this.currentImageIndex]
-    ImageViewerDialog.show(this.type, imageUrl.id, this.isReadOnly)
+    
+    // Use actual media data from the stored mediaData for TIFF detection
+    const mediaData = imageUrl.mediaData || {}
+    
+    // Extract character/state info if available
+    const characterId = mediaData?.character_id ?? null
+    const stateId = mediaData?.state_id ?? null
+    const characterName = imageUrl.characterName ?? null
+    const stateName = imageUrl.stateName ?? null
+    const stateNumber = imageUrl.stateNumber ?? null  // Use ?? to preserve 0 values
+    
+    ImageViewerDialog.show(
+      this.type, 
+      imageUrl.id, 
+      this.projectId, 
+      mediaData, 
+      this.isReadOnly, 
+      this.cellId, 
+      this.isPublished,
+      characterId,
+      stateId,
+      characterName,
+      stateName,
+      stateNumber
+    )
+    
     e.stopPropagation()
     e.preventDefault()
     return true
@@ -178,6 +272,11 @@ export class ImageRenderer extends Component {
     if (this.imageUrls.length === 0) {
       return ''
     }
+    if (this.imageUrls.length === 1) {
+      // Single image: no arrows
+      return '<div class="imageCaption"></div>'
+    }
+    // Multiple images: show arrows
     return (
       '<div class="imageArrowUp imageArrowDim"></div>' +
       '<div class="imageCaption"></div>' +
@@ -190,4 +289,8 @@ interface ImageRendererUrl {
   url: string
   id: number
   caption: string | null
+  mediaData?: any // Store the full media object data for TIFF detection
+  characterName?: string | null // Character name for annotation context
+  stateName?: string | null // State name for annotation context
+  stateNumber?: number | null // State number for annotation context
 }

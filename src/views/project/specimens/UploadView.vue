@@ -2,7 +2,8 @@
 import router from '@/router'
 import { useRoute } from 'vue-router'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
-import { nameColumnMap } from '@/utils/taxa'
+import { useNotifications } from '@/composables/useNotifications'
+import { nameColumnMap, TAXA_COLUMN_NAMES } from '@/utils/taxa'
 import { csvToArray } from '@/utils/csv'
 import { sha256 } from '@/utils/digest'
 import { RouterLink } from 'vue-router'
@@ -11,6 +12,7 @@ import { ref } from 'vue'
 const route = useRoute()
 const projectId = parseInt(route.params.id as string)
 const specimensStore = useSpecimensStore()
+const { showError, showSuccess } = useNotifications()
 const isProcessing = ref(false)
 
 const specimens = new Set()
@@ -38,7 +40,9 @@ async function parseContent(content: string) {
     ])
     const taxaColumnsMap: Map<string, string> = new Map([
       ['author', 'scientific_name_author'],
+      ['author*', 'scientific_name_author'],
       ['year', 'scientific_name_year'],
+      ['year*', 'scientific_name_year'],
       ['notes', 'notes'],
     ])
     nameColumnMap.forEach((value, key) =>
@@ -63,7 +67,7 @@ async function parseContent(content: string) {
         continue
       }
 
-      const taxon: { [key: string]: string } = {}
+      const taxon: { [key: string]: any } = {}
       const specimen: { [key: string]: string } = {}
       for (let x = 0, l = row.length; x < l; ++x) {
         const value = row[x]
@@ -71,7 +75,14 @@ async function parseContent(content: string) {
           const columnLabel = columnLabels[x]
           if (taxaColumnsMap.has(columnLabel)) {
             const fieldName = taxaColumnsMap.get(columnLabel)
-            taxon[fieldName] = value
+            if (fieldName === 'scientific_name_year') {
+              const numericYear = parseInt(String(value).trim(), 10)
+              if (!Number.isNaN(numericYear)) {
+                taxon[fieldName] = numericYear
+              }
+            } else {
+              taxon[fieldName] = value
+            }
           }
           if (specimenColumnsMap.has(columnLabel)) {
             const fieldName = specimenColumnsMap.get(columnLabel)
@@ -80,10 +91,18 @@ async function parseContent(content: string) {
         }
       }
 
-      const hash = await sha256(JSON.stringify(taxon))
-      specimen.taxon_hash = hash
+      // Only create/link a taxon if at least one taxonomic field is present
+      const hasTaxonomy = TAXA_COLUMN_NAMES.some((field) => {
+        const v = taxon[field]
+        return v !== undefined && String(v).trim() !== ''
+      })
 
-      taxa.set(hash, taxon)
+      if (hasTaxonomy) {
+        const hash = await sha256(JSON.stringify(taxon))
+        specimen.taxon_hash = hash
+        taxa.set(hash, taxon)
+      }
+
       specimens.add(specimen)
     }
   } finally {
@@ -92,19 +111,37 @@ async function parseContent(content: string) {
 }
 
 async function createBatch() {
+  if (specimens.size === 0) {
+    showError('There are no specimens specified in the upload file')
+    return
+  }
+
+  // Ensure every specimen has a linked taxon (via computed taxon_hash)
+  const specimenArray = Array.from(specimens) as Array<{ [key: string]: any }>
+  const missingTaxa = specimenArray.filter((s) => !s.taxon_hash)
+  if (missingTaxa.length > 0) {
+    showError(
+      `Please provide at least one taxonomic field for each specimen. ${missingTaxa.length} specimen(s) are missing taxonomic data.`
+    )
+    return
+  }
+
   isProcessing.value = true
-  let created = false
   try {
-    created = await specimensStore.createBatch(
+    const created = await specimensStore.createBatch(
       projectId,
-      Array.from(specimens),
+      specimenArray,
       Object.fromEntries(taxa)
     )
     if (created) {
+      showSuccess('Specimens uploaded successfully!')
       await router.push(`/myprojects/${projectId}/specimens`)
+    } else {
+      showError('Failed to upload specimens')
     }
   } catch (error) {
     console.error('Error creating batch:', error)
+    showError('Failed to upload specimens. Please try again.')
   } finally {
     isProcessing.value = false
   }

@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
+import { apiService } from '@/services/apiService.js'
 
 /**
  * Defines a store for the users in the project. This is useful for retrieving
@@ -19,60 +19,55 @@ export const useProjectUsersStore = defineStore({
   },
   actions: {
     async fetchUsers(projectId) {
-      const url = `${import.meta.env.VITE_API_URL}/projects/${projectId}/users`
-      const response = await axios.get(url)
-      const users = response.data.users || []
+      const response = await apiService.get(`/projects/${projectId}/users`)
+      const responseData = await response.json()
+        const users = responseData.users || []
       this.addUsers(users)
 
       this.isLoaded = true
     },
     async editUser(projectId, userId, membership_type, group_ids) {
-      const user = this.getUserById(userId)
-      const linkId = user.link_id
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/users/${linkId}/edit`
-
-      const response = await axios.post(url, {
-        membership_type,
-        group_ids,
-      })
-      if (response.status == 200) {
-        user.group_ids = response.data.group_ids
-        user.membership_type = response.data.membership_type
-        return true
+      try {
+        const user = this.getUserById(userId)
+        const linkId = user.link_id
+        const response = await apiService.post(`/projects/${projectId}/users/${linkId}/edit`, {
+          membership_type,
+          group_ids,
+        })
+        if (response.ok) {
+          const responseData = await response.json()
+          user.group_ids = responseData.group_ids
+          user.membership_type = responseData.membership_type
+          return true
+        }
+        return false
+      } catch (error) {
+        console.error('Error editing user:', error)
+        return false
       }
-      return false
     },
     async isEmailAvailable(projectId, json) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/users/isEmailAvailable`
-      const response = await axios.post(url, json)
-      if (response.status == 200) {
-        return response.data
+      const response = await apiService.post(`/projects/${projectId}/users/isEmailAvailable`, json)
+      if (response.ok) {
+        const responseData = await response.json(); return responseData
       }
       return false
     },
     async createUser(projectId, json) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/users/create`
-      const response = await axios.post(url, { json })
-      if (response.status == 200) {
-        const user = response.data.user
+      const response = await apiService.post(`/projects/${projectId}/users/create`, { json })
+      if (response.ok) {
+        const responseData = await response.json()
+        const user = responseData.user
         this.addUsers([user])
         return true
       }
       return false
     },
     async addMember(projectId, json) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/users/add`
-      const response = await axios.post(url, { json })
-      if (response.status == 200) {
-        const user = response.data.user
+      const response = await apiService.post(`/projects/${projectId}/users/add`, { json })
+      if (response.ok) {
+        const responseData = await response.json()
+        const user = responseData.user
         this.addUsers([user])
         return true
       }
@@ -80,13 +75,10 @@ export const useProjectUsersStore = defineStore({
     },
     async deleteUser(projectId, userId) {
       const user = this.getUserById(userId)
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/users/delete`
-      const response = await axios.post(url, {
+      const response = await apiService.post(`/projects/${projectId}/users/delete`, {
         link_id: user.link_id,
       })
-      if (response.status == 200) {
+      if (response.ok) {
         this.map.delete(userId)
         return true
       }

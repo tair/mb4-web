@@ -164,7 +164,7 @@ import { useAuthStore } from '@/stores/AuthStore.js'
 import { useMessageStore } from '@/stores/MessageStore.js'
 import { getPasswordPattern, getPasswordRule } from '@/utils/util.js'
 import router from '../../router'
-import axios from 'axios'
+import { apiService } from '@/services/apiService.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import Alert from '@/components/main/Alert.vue'
 
@@ -222,7 +222,7 @@ onMounted(() => {
   }
 })
 
-const submitForm = () => {
+const submitForm = async () => {
   if (!validatePassword() || !confirmPassword()) return
   // Object to send to backend and also to contain all the inputs based on whether there is a cached token for ORCID
   let formObject = {}
@@ -246,23 +246,19 @@ const submitForm = () => {
   }
 
   // Make a request for a user with a given ID
-  axios
-    .post(authStore.getRegisterUrl(), formObject)
-    .then(function (response) {
-      // handle success
-      if (response.status === 201) {
-        messageStore.setSuccessMessage('User was created successfully!')
-        router.push({ path: '/users/login' })
-      } else {
-        // handle error
-        error.signup = 'An error occurred while creating user.'
-      }
-    })
-    .catch(function (e) {
+  try {
+    const response = await apiService.post(authStore.getRegisterUrl(), formObject)
+    if (response.ok) {
+      messageStore.setSuccessMessage('User was created successfully!')
+      router.push({ path: '/users/login' })
+    } else {
       // handle error
-      error.signup =
-        'An error occurred while creating user: ' + e.response.data.message
-    })
+      error.signup = 'An error occurred while creating user.'
+    }
+  } catch (e) {
+    // handle error
+    error.signup = 'An error occurred while creating user: ' + e.message
+  }
 }
 </script>
 

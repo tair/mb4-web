@@ -1,5 +1,5 @@
-import axios from 'axios'
 import { defineStore } from 'pinia'
+import { apiService } from '@/services/apiService.js'
 
 export const useMatricesStore = defineStore({
   id: 'matrices',
@@ -21,14 +21,12 @@ export const useMatricesStore = defineStore({
     },
 
     async fetchMatricesByProjectId(projectId) {
-      const url = `${
-        import.meta.env.VITE_API_URL
-      }/projects/${projectId}/matrices`
-      const response = await axios.get(url)
-      this.matrices = response.data.matrices
-      this.partitions = response.data.partitions
-      this.canEditMatrix = response.data.canEditMatrix
-      this.jobs = response.data.jobs
+      const response = await apiService.get(`/projects/${projectId}/matrices`)
+      const responseData = await response.json()
+      this.matrices = responseData.matrices
+      this.partitions = responseData.partitions
+      this.canEditMatrix = responseData.canEditMatrix
+      this.jobs = responseData.jobs
       this.isLoaded = true
     },
   },

@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { Modal } from 'bootstrap'
+import { useNotifications } from '@/composables/useNotifications'
 import { schema } from '@/views/project/media/schema.js'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
 import { useFoliosStore } from '@/stores/FoliosStore'
@@ -16,6 +17,8 @@ const projectId = route.params.id
 
 const bibliographiesStore = useBibliographiesStore()
 const foliosStore = useFoliosStore()
+const { showError, showSuccess } = useNotifications()
+const isSubmitting = ref(false)
 
 const menuCollapsed = ref({
   mediaEditCopyright: true,
@@ -28,13 +31,26 @@ const menuCollapsed = ref({
 })
 
 async function handleSubmitClicked(event: Event) {
-  const target = event.currentTarget as any
-  const formData = new FormData(target)
-  const json = Object.fromEntries(formData)
-  const success = await props.batchEdit(json)
-  if (!success) {
-    alert('Failed to edit media files')
-    return
+  if (isSubmitting.value) return // Prevent double submission
+  
+  isSubmitting.value = true
+  
+  try {
+    const target = event.currentTarget as any
+    const formData = new FormData(target)
+    const json = Object.fromEntries(formData)
+    const success = await props.batchEdit(json)
+    if (!success) {
+      showError('Failed to edit media files')
+      return
+    }
+    
+    showSuccess('Media files updated successfully!')
+  } catch (error) {
+    console.error('Batch edit error:', error)
+    showError('Failed to edit media files')
+  } finally {
+    isSubmitting.value = false
   }
 
   const element = document.getElementById('mediaEditModal')
@@ -348,7 +364,13 @@ onMounted(() => {
             >
               Cancel
             </button>
-            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="submit" class="btn btn-primary" :disabled="isSubmitting">
+              <span v-if="isSubmitting">
+                <i class="fa fa-spinner fa-spin me-2"></i>
+                Saving...
+              </span>
+              <span v-else>Save</span>
+            </button>
           </div>
         </div>
       </div>

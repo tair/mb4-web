@@ -3,22 +3,21 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
+import { useNotifications } from '@/composables/useNotifications'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { getTaxonName } from '@/utils/taxa'
-import axios from 'axios'
 import { useAuthStore } from '@/stores/AuthStore'
 import { AccessControlService, EntityType } from '@/lib/access-control.js'
+import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id)
 const taxaStore = useTaxaStore()
 const authStore = useAuthStore()
 const projectUsersStore = useProjectUsersStore()
+const { showError, showSuccess } = useNotifications()
 
 const isLoaded = computed(() => taxaStore.isLoaded && projectUsersStore.isLoaded)
-const notification = ref('')
-const notificationType = ref('success') // 'success' or 'error'
-const showNotification = ref(false)
 
 // Cache for access control results
 const accessCache = ref(new Map())
@@ -80,7 +79,7 @@ onMounted(async () => {
 
   const promises = []
   if (!taxaStore.isLoaded) {
-    promises.push(taxaStore.fetchTaxa(projectId))
+    promises.push(taxaStore.fetch(projectId))
   }
   if (!projectUsersStore.isLoaded) {
     promises.push(projectUsersStore.fetchUsers(projectId))
@@ -90,13 +89,11 @@ onMounted(async () => {
 })
 
 function displayNotification(message, type = 'success') {
-  notification.value = message
-  notificationType.value = type
-  showNotification.value = true
-  
-  setTimeout(() => {
-    showNotification.value = false
-  }, 5000)
+  if (type === 'error') {
+    showError(message)
+  } else {
+    showSuccess(message)
+  }
 }
 
 function handleItemClick(taxonId, isExtinctList) {
@@ -218,20 +215,16 @@ async function onDrop(event, toExtinct) {
 
 async function updateExtinctStatus(taxonIds, extinct) {
   try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/projects/${projectId}/taxa/extinct/batch`,
+    const response = await apiService.post(`/projects/${projectId}/taxa/extinct/batch`,
       {
         ids: taxonIds,
         extinct: extinct ? 1 : 0
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${authStore.accessToken}`,
-        },
       }
     )
     
-    if (response.data.status === 'ok') {
+    const responseData = await response.json()
+    
+    if (responseData.status === 'ok') {
       // Update local store
       for (const taxonId of taxonIds) {
         const taxon = taxaStore.taxa.find(t => t.taxon_id === taxonId)
@@ -244,7 +237,7 @@ async function updateExtinctStatus(taxonIds, extinct) {
       const action = extinct ? 'marked as extinct' : 'marked as living'
       displayNotification(`Successfully ${action} ${count} taxa`)
     } else {
-      throw new Error(response.data.errors?.[0] || 'Update failed')
+      throw new Error(responseData.errors?.[0] || 'Update failed')
     }
   } catch (error) {
     console.error('Error updating extinct status:', error)
@@ -300,13 +293,6 @@ async function canEditTaxon(taxon) {
         </p>
       </header>
 
-      <!-- Notification area -->
-      <div 
-        v-if="showNotification" 
-        :class="['notification', notificationType]"
-      >
-        {{ notification }}
-      </div>
 
       <!-- Main editor interface -->
       <div class="taxa-editor-container">
@@ -387,30 +373,6 @@ async function canEditTaxon(taxon) {
   font-style: italic;
 }
 
-.notification {
-  padding: 10px;
-  margin: 10px 0;
-  border-radius: 4px;
-  font-weight: bold;
-  animation: fadeIn 0.3s ease-in;
-}
-
-.notification.success {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
-}
-
-.notification.error {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
 
 .taxa-editor-container {
   display: flex;
