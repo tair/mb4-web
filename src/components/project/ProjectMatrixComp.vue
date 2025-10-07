@@ -106,7 +106,8 @@ const nchains_specified = ref(4)
 const outgroups = new Map()
 outgroups.set('', 'None')
 for (const taxonName of taxonNames) {
-  outgroups.set(taxonName, taxonName)
+  const repTaxonName = taxonName.trim().replace(/\s+/g, '_')
+  outgroups.set(repTaxonName, repTaxonName)
 }
 const set_outgroup = ref(outgroups.keys()?.next()?.value)
 const runtime = ref(4.0)
@@ -712,9 +713,9 @@ async function parseMatrixFile(file) {
           convertedMatrix.cellsArray = cellsArray
           parsedMatrix.value = convertedMatrix
         } else {
-          uploadErrors.value.general =
-            'Failed to parse matrix file. Please check the file format.'
-          parsedMatrix.value = null
+        uploadErrors.value.general =
+          'Failed to parse matrix file. Please ensure the file is a valid NEXUS or TNT format.'
+        parsedMatrix.value = null
         }
       } catch (error) {
         console.error('Error parsing matrix file:', error)
@@ -896,10 +897,21 @@ onMounted(() => {
       </div>
       <div class="buttons">
         <RouterLink
+          :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/view`"
+          target="_blank"
+          rel="noopener"
+        >
+          <button type="button" class="btn btn-sm btn-secondary view-btn" title="View matrix">
+            <i class="fa-regular fa-eye"></i>
+          </button>
+        </RouterLink>
+        <RouterLink
+          v-if="canEditMatrix"
           :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/edit`"
           target="_blank"
+          rel="noopener"
         >
-          <button type="button" class="btn btn-sm btn-secondary pencil-btn">
+          <button type="button" class="btn btn-sm btn-secondary pencil-btn" title="Edit matrix">
             <i class="fa-regular fa-pen-to-square"></i>
           </button>
         </RouterLink>
@@ -1004,6 +1016,7 @@ onMounted(() => {
           <RouterLink
             :to="`/myprojects/${projectId}/matrices/${matrix.matrix_id}/characters`"
             target="_blank"
+            rel="noopener"
           >
             <button type="button" class="btn btn-primary">
               Edit Characters
@@ -1759,19 +1772,23 @@ onMounted(() => {
   gap: 7px;
 }
 
-/* Orange themed pencil button */
+/* Orange themed view and edit buttons */
+.view-btn,
 .pencil-btn {
   background-color: var(--theme-orange, #ef782f) !important;
   border-color: var(--theme-orange, #ef782f) !important;
   color: white !important;
 }
 
+.view-btn:hover,
 .pencil-btn:hover {
   background-color: var(--theme-orange-hover, #d9682a) !important;
   border-color: var(--theme-orange-hover, #d9682a) !important;
   color: white !important;
 }
 
+.view-btn:focus,
+.view-btn:active,
 .pencil-btn:focus,
 .pencil-btn:active {
   background-color: var(--theme-orange-active, #c35a25) !important;

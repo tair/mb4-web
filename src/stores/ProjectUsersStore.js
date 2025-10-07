@@ -27,18 +27,24 @@ export const useProjectUsersStore = defineStore({
       this.isLoaded = true
     },
     async editUser(projectId, userId, membership_type, group_ids) {
-      const user = this.getUserById(userId)
-      const linkId = user.link_id
-      const response = await apiService.post(`/projects/${projectId}/users/${linkId}/edit`, {
-        membership_type,
-        group_ids,
-      })
-      if (response.ok) {
-        user.group_ids = responseData.group_ids
-        user.membership_type = responseData.membership_type
-        return true
+      try {
+        const user = this.getUserById(userId)
+        const linkId = user.link_id
+        const response = await apiService.post(`/projects/${projectId}/users/${linkId}/edit`, {
+          membership_type,
+          group_ids,
+        })
+        if (response.ok) {
+          const responseData = await response.json()
+          user.group_ids = responseData.group_ids
+          user.membership_type = responseData.membership_type
+          return true
+        }
+        return false
+      } catch (error) {
+        console.error('Error editing user:', error)
+        return false
       }
-      return false
     },
     async isEmailAvailable(projectId, json) {
       const response = await apiService.post(`/projects/${projectId}/users/isEmailAvailable`, json)

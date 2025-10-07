@@ -91,6 +91,25 @@
         </select>
       </div>
 
+      <!-- Project Administrator Section -->
+      <h2 class="section-heading">PROJECT ADMINISTRATOR</h2>
+      <div class="section-dividing-line"></div>
+
+      <div class="form-group">
+        <label class="form-label">
+          Change Project Admin <br>
+          (Select a user from the list to promote them to Project Administrator)
+        </label>
+        <select v-model="selectedAdminUserId" class="form-control">
+          <option v-for="opt in adminDropdownOptions" :key="opt.value" :value="opt.value">
+            {{ opt.label }}
+          </option>
+        </select>
+        <div v-if="adminSelectionChanged" class="alert alert-danger" role="alert">
+          You are about to change this project's administrator and will lose access to this form upon saving. Only project administrators can edit project information.
+        </div>
+      </div>
+
       <!-- Reviewer Access Section -->
       <h2 class="section-heading">
         SHARE MY DATA DURING REVIEW
@@ -465,11 +484,17 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label"> Journal Number </label>
+        <label class="form-label">
+          Journal Number
+          <span class="required" v-if="formData.publication_status === '0'"
+            >Required</span
+          >
+        </label>
         <input
           v-model="formData.journal_number"
           type="text"
           class="form-control"
+          :required="formData.publication_status === '0'"
         />
       </div>
 
@@ -607,6 +632,7 @@ import { ref, reactive, onMounted, computed, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useProjectsStore } from '@/stores/ProjectsStore'
 import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore'
+import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useUserStore } from '@/stores/UserStore'
 import { useNotifications } from '@/composables/useNotifications'
 import { NavigationPatterns } from '@/utils/navigationUtils.js'
@@ -632,6 +658,7 @@ const route = useRoute()
 const projectId = route.params.id
 const projectsStore = useProjectsStore()
 const projectOverviewStore = useProjectOverviewStore()
+const projectUsersStore = useProjectUsersStore()
 const userStore = useUserStore()
 const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
@@ -677,6 +704,8 @@ const existingExemplarMedia = ref(false)
 const showDeleteDialog = ref(false)
 const isDeleting = ref(false)
 const originalAllowReviewerLogin = ref(false)
+const selectedAdminUserId = ref(null)
+const originalAdminUserId = ref(null)
 
 // Computed property for filtered journals based on search
 const filteredJournals = computed(() => {
@@ -696,7 +725,7 @@ const isJournalCoverUploadDisabled = computed(() => {
 })
 
 onMounted(async () => {
-  await Promise.all([loadJournals(), loadProjectData()])
+  await Promise.all([loadJournals(), loadProjectData(), loadProjectUsers()])
   // Add click outside event listener
   document.addEventListener('click', handleJournalClickOutside)
 })
@@ -780,6 +809,59 @@ async function loadProjectData() {
     isLoadingProject.value = false
   }
 }
+
+async function loadProjectUsers() {
+  try {
+    if (!projectUsersStore.isLoaded) {
+      await projectUsersStore.fetchUsers(projectId)
+    }
+    setOriginalAdminFromStore()
+  } catch (e) {
+    console.error('Error loading project users:', e)
+  }
+}
+
+function setOriginalAdminFromStore() {
+  const currentAdmin = projectUsersStore.users.find((u) => u.admin)
+  if (currentAdmin) {
+    originalAdminUserId.value = currentAdmin.user_id
+    if (selectedAdminUserId.value == null) {
+      selectedAdminUserId.value = currentAdmin.user_id
+    }
+  }
+}
+
+const adminDropdownOptions = computed(() => {
+  const users = projectUsersStore.users || []
+  if (!users.length) return []
+
+  const admin = users.find((u) => u.admin)
+  const others = users.filter((u) => !u.admin)
+    .sort((a, b) => {
+      const nameA = `${a.fname || ''} ${a.lname || ''}`.trim().toLowerCase()
+      const nameB = `${b.fname || ''} ${b.lname || ''}`.trim().toLowerCase()
+      return nameA.localeCompare(nameB)
+    })
+
+  const options = []
+  if (admin) {
+    const adminName = `${admin.fname || ''} ${admin.lname || ''}`.trim() || admin.email
+    options.push({ value: admin.user_id, label: `${adminName} *Current Admin*` })
+  }
+  for (const u of others) {
+    const name = `${u.fname || ''} ${u.lname || ''}`.trim() || u.email
+    options.push({ value: u.user_id, label: `${name} (${u.email})` })
+  }
+  return options
+})
+
+const adminSelectionChanged = computed(() => {
+  return (
+    selectedAdminUserId.value != null &&
+    originalAdminUserId.value != null &&
+    selectedAdminUserId.value !== originalAdminUserId.value
+  )
+})
 
 // Keyboard navigation for journal dropdown
 function navigateJournalDropdown(direction) {
@@ -1175,6 +1257,11 @@ async function handleSubmit() {
       throw new Error('Failed to update project')
     }
 
+    // If admin selection changed, transfer project administrator
+    if (adminSelectionChanged.value) {
+      await transferProjectAdministrator()
+    }
+
     // Show success state briefly before redirecting
     projectUpdated.value = true
     
@@ -1187,6 +1274,30 @@ async function handleSubmit() {
       'An error occurred while updating the project'
   } finally {
     isLoading.value = false
+  }
+}
+
+async function transferProjectAdministrator() {
+  try {
+    const response = await apiService.put(
+      apiService.buildUrl(`/projects/${projectId}/update`),
+      { user_id: selectedAdminUserId.value }
+    )
+    if (response.status === 200) {
+      // Refresh caches so overview reflects new owner immediately
+      try { await projectsStore.fetchProjects(true) } catch {}
+      try { projectOverviewStore.invalidate() } catch {}
+      try { projectUsersStore.invalidate() } catch {}
+      return true
+    }
+    return false
+  } catch (error) {
+    console.error('Error transferring project administrator:', error)
+    showError(
+      "Failed to transfer project administrator. No changes were made to the project's ownership.",
+      'Administrator Transfer Failed'
+    )
+    throw error
   }
 }
 

@@ -11,7 +11,7 @@
           title="Pan and select (Esc)"
         >
           <span class="tool-icon">✋</span>
-          Pan/Select
+          Pan
         </button>
         
         <!-- Drawing tools (only when user can edit) -->
@@ -63,20 +63,31 @@
         <button 
           @click="setLabelMode('text')"
           class="btn btn-outline"
-          :class="{ active: labelMode === 'text' }"
+          :class="{ active: labelMode === 'text' && !hideAllLabels }"
           title="Show text labels"
+          :disabled="hideAllLabels"
         >
-          <span class="mode-icon">ABC</span>
+          <span class="mode-icon"></span>
           Labels: Text
         </button>
         <button 
           @click="setLabelMode('numbers')"
           class="btn btn-outline"
-          :class="{ active: labelMode === 'numbers' }"
+          :class="{ active: labelMode === 'numbers' && !hideAllLabels }"
           title="Show numbered labels"
+          :disabled="hideAllLabels"
         >
-          <span class="mode-icon">123</span>
+          <span class="mode-icon"></span>
           Labels: Numbers
+        </button>
+        <button 
+          @click="toggleHideAllLabels"
+          class="btn btn-outline"
+          :class="{ active: hideAllLabels }"
+          title="Hide all labels"
+        >
+          <span class="mode-icon">👁️</span>
+          {{ hideAllLabels ? 'Show Labels' : 'Hide All' }}
         </button>
       </div>
       
@@ -99,7 +110,7 @@
             title="Help and keyboard shortcuts"
           >
             <span class="help-icon">?</span>
-            Help & Shortcuts
+            Help/Shortcuts
           </button>
           
           <!-- Help dropdown -->
@@ -193,15 +204,21 @@
               </div>
             </div>
             <div class="help-item">
-              <span class="help-icon-display">123</span>
+              <span class="help-icon-display"></span>
               <div class="help-text">
                 <strong>Number Mode</strong> - Shows small numbered circles instead of text labels to avoid clutter
               </div>
             </div>
             <div class="help-item">
-              <span class="help-icon-display">ABC</span>
+              <span class="help-icon-display"></span>
               <div class="help-text">
                 <strong>Text Mode</strong> - Shows full text labels on the image (can get cluttered with many annotations)
+              </div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon-display">👁️</span>
+              <div class="help-text">
+                <strong>Hide All Labels</strong> - Temporarily hide all labels and connection lines to view annotations without clutter
               </div>
             </div>
           </div>
@@ -218,6 +235,12 @@
               <span class="help-icon-display">✏️</span>
               <div class="help-text">
                 <strong>Edit</strong> - Double-click on annotations or labels to edit their properties
+              </div>
+            </div>
+            <div class="help-item">
+              <span class="help-icon-display">↔️</span>
+              <div class="help-text">
+                <strong>Move Label</strong> - Click and drag labels to reposition them. You'll be prompted to save the new position when you release the mouse
               </div>
             </div>
             <div class="help-item">
@@ -265,17 +288,18 @@
       <div
         v-for="(annotation, index) in annotations"
         :key="annotation.annotation_id"
+        v-show="shouldShowLabel(annotation)"
         :style="getAnnotationLabelStyle(annotation)"
         :class="['annotation-label', { 
           'selected': selectedAnnotation?.annotation_id === annotation.annotation_id,
           'numbered-label': labelMode === 'numbers',
-          'text-label': labelMode === 'text'
+          'text-label': labelMode === 'text',
+          'empty-placeholder': getDisplayLabelText(annotation) === '+'
         }]"
         @click="selectAnnotation(annotation)"
         @dblclick="editAnnotation(annotation)"
         @mousedown="startLabelDrag($event, annotation)"
-        :title="labelMode === 'numbers' ? `Annotation ${index + 1}: ${getDisplayLabelText(annotation)}` : `Annotation ${annotation.annotation_id}: ${getDisplayLabelText(annotation)}`"
-        v-show="shouldShowLabel(annotation)"
+        :title="labelMode === 'numbers' ? `Annotation ${index + 1}: ${getDisplayLabelText(annotation)}` : (getDisplayLabelText(annotation) === '+' ? `Click to add label` : `Annotation ${annotation.annotation_id}: ${getDisplayLabelText(annotation)}`)"
         @mouseenter="hoveredAnnotation = annotation"
         @mouseleave="hoveredAnnotation = null"
       >
@@ -423,11 +447,24 @@
       @delete="deleteAnnotation"
       :can-delete="canDeleteAnnotation(editingAnnotation)"
     />
+    
+    <!-- Confirm Label Position Save Modal -->
+    <ConfirmModal
+      v-if="showLabelSaveConfirm"
+      title="Save Label Position?"
+      message="Do you want to save the new label position? This will update the annotation in the database."
+      confirmText="Save Position"
+      cancelText="Cancel"
+      :loading="isSavingLabelPosition"
+      @confirm="confirmLabelSave"
+      @cancel="cancelLabelSave"
+    />
   </div>
 </template>
 
 <script>
 import AnnotationEditModal from './AnnotationEditModal.vue'
+import ConfirmModal from './ConfirmModal.vue'
 import { annotationService } from '../../services/annotationService.js'
 import { buildMediaUrl } from '../../utils/fileUtils.js'
 import { apiService } from '@/services/apiService.js'
@@ -436,7 +473,8 @@ export default {
   name: 'AnnotationViewer',
   
   components: {
-    AnnotationEditModal
+    AnnotationEditModal,
+    ConfirmModal
   },
 
   props: {
@@ -481,6 +519,18 @@ export default {
     published: {
       type: Boolean,
       default: false
+    },
+    characterName: {
+      type: String,
+      default: null
+    },
+    stateName: {
+      type: String,
+      default: null
+    },
+    stateNumber: {
+      type: Number,
+      default: null
     }
   },
 
@@ -525,8 +575,9 @@ export default {
       showHelp: false,
       showOverview: false,
       showLabelsPanel: false,
-      labelMode: 'text', // 'numbers' or 'text'
+      labelMode: 'text', // 'numbers' or 'text' or 'hidden'
       hoveredAnnotation: null,
+      hideAllLabels: false, // Toggle to hide all labels
       
       // Panel dragging state
       isDraggingPanel: false,
@@ -552,6 +603,11 @@ export default {
       draggedLabelAnnotation: null,
       dragStartLabelPos: { x: 0, y: 0 },
       
+      // Label save confirmation modal state
+      showLabelSaveConfirm: false,
+      isSavingLabelPosition: false,
+      pendingLabelSave: null, // Store pending save data
+      
       // Canvas display dimensions for consistent coordinate conversion
       canvasDisplayWidth: 0,
       canvasDisplayHeight: 0,
@@ -573,9 +629,19 @@ export default {
       return this.canvas?.getBoundingClientRect()
     },
     
-    // Use saveLinkId if provided, otherwise fall back to mediaId for save operations
+    // Use saveLinkId if provided, otherwise fall back to linkId, and finally mediaId
+    // For type 'X' (matrix), 'C' (character), linkId is the matrix cell or character reference
+    // For type 'M' (media), linkId may be null, so use mediaId
     effectiveSaveLinkId() {
-      return this.saveLinkId !== null ? this.saveLinkId : this.mediaId
+      if (this.saveLinkId !== null) {
+        return this.saveLinkId
+      }
+      // Use linkId if provided (for matrix/character annotations)
+      if (this.linkId !== null) {
+        return this.linkId
+      }
+      // Fall back to mediaId for media-only annotations
+      return this.mediaId
     }
   },
 
@@ -706,6 +772,15 @@ export default {
       }
     },
 
+    toggleHideAllLabels() {
+      this.hideAllLabels = !this.hideAllLabels
+      // Redraw annotations to update connection lines
+      this.$nextTick(() => {
+        this.drawAnnotations()
+        this.$forceUpdate()
+      })
+    },
+
     // Overview methods
     onOverviewImageLoad() {
       this.$nextTick(() => {
@@ -743,7 +818,7 @@ export default {
         imageOffsetY = (mainRect.height - actualImageHeight) / 2
         initialFitScale = mainRect.width / naturalWidth
       } else {
-        // Image is taller - fits to container height, has horizontal white space  
+        // Image is taller - fits to container height; horizontally centered
         actualImageHeight = mainRect.height
         actualImageWidth = mainRect.height * aspectRatio
         imageOffsetY = 0
@@ -870,6 +945,17 @@ export default {
       // Setup canvas first to calculate display dimensions
       this.setupCanvas()
       
+      // Center horizontally (top-align vertically) for the initial view based on current zoom
+      const container = this.$refs.canvasContainer
+      if (container) {
+        const containerWidth = container.clientWidth
+        const z = this.viewerZoom
+        this.viewerOffset = {
+          x: (containerWidth - (containerWidth * z)) / (2 * z),
+          y: 0
+        }
+      }
+
       // Apply initial zoom transform immediately
       this.$nextTick(() => {
         this.updateImageTransform()
@@ -949,7 +1035,7 @@ export default {
       this.canvasDisplayWidth = displayWidth
       this.canvasDisplayHeight = displayHeight
       this.canvasOffsetX = (containerWidth - displayWidth) / 2
-      this.canvasOffsetY = (containerHeight - displayHeight) / 2
+      this.canvasOffsetY = 0
       
       // Calculate scale factor (for backward compatibility)
       this.imageScale = displayWidth / naturalWidth
@@ -993,7 +1079,18 @@ export default {
 
     resetZoom() {
       this.viewerZoom = 0.5 // Reset to default 50% zoom
-      this.viewerOffset = { x: 0, y: 0 }
+      // Re-center horizontally (top-align vertically) after resetting zoom
+      const container = this.$refs.canvasContainer
+      if (container) {
+        const containerWidth = container.clientWidth
+        const z = this.viewerZoom
+        this.viewerOffset = {
+          x: (containerWidth - (containerWidth * z)) / (2 * z),
+          y: 0
+        }
+      } else {
+        this.viewerOffset = { x: 0, y: 0 }
+      }
       this.updateImageTransform()
     },
 
@@ -1347,7 +1444,7 @@ export default {
       const isSelected = this.selectedAnnotation?.annotation_id === annotation.annotation_id
       
       this.ctx.strokeStyle = isSelected ? '#007bff' : '#ff6b6b'
-      this.ctx.lineWidth = isSelected ? 3 : 2
+      this.ctx.lineWidth = isSelected ? 6 : 4
       this.ctx.fillStyle = 'rgba(255, 107, 107, 0.1)'
 
       const scaledAnnotation = this.scaleAnnotation(annotation)
@@ -1368,7 +1465,21 @@ export default {
     },
 
     drawRectangle(annotation) {
+      // Draw with a high-contrast outline behind the main stroke
+      const baseColor = this.ctx.strokeStyle
+      const baseWidth = this.ctx.lineWidth || 1
+      this.ctx.save()
+      this.ctx.lineJoin = 'round'
+      this.ctx.lineCap = 'round'
+      // Outline pass
+      this.ctx.strokeStyle = 'rgba(255,255,255,0.95)'
+      this.ctx.lineWidth = baseWidth + 4
       this.ctx.strokeRect(annotation.x, annotation.y, annotation.w, annotation.h)
+      // Foreground pass
+      this.ctx.strokeStyle = baseColor
+      this.ctx.lineWidth = baseWidth
+      this.ctx.strokeRect(annotation.x, annotation.y, annotation.w, annotation.h)
+      this.ctx.restore()
       if (this.selectedAnnotation?.annotation_id === annotation.annotation_id) {
         this.ctx.fillRect(annotation.x, annotation.y, annotation.w, annotation.h)
       }
@@ -1395,7 +1506,21 @@ export default {
       }
       
       this.ctx.closePath()
+      // Draw with a high-contrast outline behind the main stroke
+      const baseColor = this.ctx.strokeStyle
+      const baseWidth = this.ctx.lineWidth || 1
+      this.ctx.save()
+      this.ctx.lineJoin = 'round'
+      this.ctx.lineCap = 'round'
+      // Outline pass
+      this.ctx.strokeStyle = 'rgba(255,255,255,0.95)'
+      this.ctx.lineWidth = baseWidth + 4
       this.ctx.stroke()
+      // Foreground pass
+      this.ctx.strokeStyle = baseColor
+      this.ctx.lineWidth = baseWidth
+      this.ctx.stroke()
+      this.ctx.restore()
       
       if (this.selectedAnnotation?.annotation_id === annotation.annotation_id) {
         this.ctx.fill()
@@ -1406,17 +1531,29 @@ export default {
       if (!this.currentShape) return
 
       this.ctx.strokeStyle = '#007bff'
-      this.ctx.lineWidth = 2
+      this.ctx.lineWidth = 4
       
       const scaled = this.scaleAnnotation(this.currentShape)
+      // Outline + foreground pass for stronger visibility while drawing
+      const baseColor = this.ctx.strokeStyle
+      const baseWidth = this.ctx.lineWidth || 1
+      this.ctx.save()
+      this.ctx.lineJoin = 'round'
+      this.ctx.lineCap = 'round'
+      this.ctx.strokeStyle = 'rgba(255,255,255,0.95)'
+      this.ctx.lineWidth = baseWidth + 4
       this.ctx.strokeRect(scaled.x, scaled.y, scaled.w, scaled.h)
+      this.ctx.strokeStyle = baseColor
+      this.ctx.lineWidth = baseWidth
+      this.ctx.strokeRect(scaled.x, scaled.y, scaled.w, scaled.h)
+      this.ctx.restore()
     },
 
     drawPolygonInProgress() {
       if (this.polygonPoints.length < 2) return
 
       this.ctx.strokeStyle = '#007bff'
-      this.ctx.lineWidth = 2
+      this.ctx.lineWidth = 4
       this.ctx.setLineDash([5, 5])
 
       // Use stored display dimensions if available, otherwise fallback to canvas dimensions
@@ -1433,8 +1570,21 @@ export default {
         const point = this.polygonPoints[i]
         this.ctx.lineTo(offsetX + (point.x / 100) * displayWidth, offsetY + (point.y / 100) * displayHeight)
       }
-
+      // Outline + foreground dashed strokes
+      const baseColor = this.ctx.strokeStyle
+      const baseWidth = this.ctx.lineWidth || 1
+      this.ctx.save()
+      this.ctx.lineJoin = 'round'
+      this.ctx.lineCap = 'round'
+      // Outline (dashed, wider)
+      this.ctx.strokeStyle = 'rgba(255,255,255,0.95)'
+      this.ctx.lineWidth = baseWidth + 4
       this.ctx.stroke()
+      // Foreground (dashed, colored)
+      this.ctx.strokeStyle = baseColor
+      this.ctx.lineWidth = baseWidth
+      this.ctx.stroke()
+      this.ctx.restore()
       this.ctx.setLineDash([])
     },
 
@@ -1528,17 +1678,36 @@ export default {
     },
 
     getLabelPosition(annotation) {
-      // Check if we have a custom position for this annotation
+      // Priority 1: Check if we have a runtime-dragged position for this session
       const customPos = this.labelPositions.get(annotation.annotation_id)
       if (customPos) {
         return customPos
       }
 
-      // Calculate dynamic offset to place label about 100px above the annotation
+      // Priority 2: Use database-stored label position if available
+      // The API returns tx, ty from the database - we should use these!
+      if (annotation.tx !== undefined && annotation.tx !== null && 
+          annotation.ty !== undefined && annotation.ty !== null) {
+        const txVal = parseFloat(annotation.tx)
+        const tyVal = parseFloat(annotation.ty)
+        
+        // Validate that the values are actual numbers and within reasonable bounds
+        // Coordinates should be percentages (0-100), but allow some overflow for labels near edges
+        if (!isNaN(txVal) && !isNaN(tyVal) && 
+            txVal > -50 && txVal < 150 && tyVal > -50 && tyVal < 150) {
+          return {
+            x: txVal,
+            y: tyVal
+          }
+        }
+        // If invalid values, fall through to calculated default
+      }
+
+      // Priority 3: Calculate default position as fallback (only if no DB position exists)
       const displayHeight = this.canvasDisplayHeight || 500 // fallback height
       const desiredPixelOffset = 150
       
-      // Convert 100px to percentage of display height
+      // Convert 150px to percentage of display height
       const offsetYPercent = (desiredPixelOffset / displayHeight) * 100
       
       // Default position: slightly to the right and well above the annotation
@@ -1860,9 +2029,47 @@ export default {
 
     // Label visibility logic
     shouldShowLabel(annotation) {
+      // If "Hide All Labels" is enabled, don't show any labels
+      if (this.hideAllLabels) {
+        return false
+      }
       
-      // Show label if showDefaultText is 1, true, or '1' (string)
-      return annotation.showDefaultText == 1 || annotation.showDefaultText === true || annotation.showDefaultText === '1'
+      // Safely get label text, handling null/undefined/empty
+      const rawLabel = annotation.label
+      const labelText = (rawLabel === null || rawLabel === undefined) ? '' : String(rawLabel).trim()
+      
+      // Check if annotation has ACTUAL custom text (not default/placeholder/empty text)
+      const isCustomText = labelText.length > 0 && 
+                          labelText !== 'No label' && 
+                          labelText.toLowerCase() !== 'no label'
+      
+      // ALWAYS show label if it has custom text
+      // This ensures connection lines are drawn for custom labels
+      if (isCustomText) {
+        return true
+      }
+      
+      // In numbered mode, ALWAYS show the number label regardless of showDefaultText
+      // This fixes the bug where annotations disappear completely in read-only mode
+      if (this.labelMode === 'numbers') {
+        return true
+      }
+      
+      // In text mode, check showDefaultText flag
+      const showDefaultTextEnabled = annotation.showDefaultText == 1 || 
+                                     annotation.showDefaultText === true || 
+                                     annotation.showDefaultText === '1' ||
+                                     annotation.showDefaultText === 'true'
+      
+      // Show if showDefaultText is ON (will display default text)
+      if (showDefaultTextEnabled) {
+        return true
+      }
+      
+      // showDefaultText is OFF and no custom text in text mode
+      // Show small empty box if user can edit (so they can click to add label)
+      // Otherwise don't show text label (but number would have been shown above)
+      return this.canEdit
     },
 
     getAnnotationLabelStyle(annotation) {
@@ -1954,6 +2161,25 @@ export default {
         // Clear enhanced label cache when annotations change
         this.enhancedLabelCache.clear()
         
+        // LOG: Show final rendering decisions for all annotations
+        /*
+        console.log('🎯 FINAL LABEL RENDERING DECISIONS:')
+        this.annotations.forEach((ann, index) => {
+          const willShow = this.shouldShowLabel(ann)
+          const displayText = this.getDisplayLabelText(ann)
+          const isPlaceholder = displayText === '+'
+          console.log(`  [${index + 1}] Annotation ${ann.annotation_id}:`, {
+            label: ann.label,
+            showDefaultText: ann.showDefaultText,
+            canEdit: this.canEdit,
+            willShowLabel: willShow,
+            displayText: displayText || '(empty)',
+            isPlaceholder: isPlaceholder,
+            result: willShow ? (isPlaceholder ? '📍 SMALL PLACEHOLDER' : '✅ VISIBLE') : '❌ HIDDEN'
+          })
+        })
+        */
+        
         // Emit event for parent component
         this.$emit('annotationsLoaded', this.annotations.length)
         
@@ -2030,14 +2256,35 @@ export default {
 
     // Get enhanced label text for display
     async getEnhancedLabelText(annotation) {
-      // If annotation has a label, use it
-      if (annotation.label && annotation.label.trim()) {
-        return annotation.label
+      // Safely get label text, handling null/undefined/empty (same logic as shouldShowLabel)
+      const rawLabel = annotation.label
+      const labelText = (rawLabel === null || rawLabel === undefined) ? '' : String(rawLabel).trim()
+      
+      // Check if annotation has CUSTOM label text (not default/placeholder/empty text)
+      const isCustomText = labelText.length > 0 && 
+                          labelText !== 'No label' && 
+                          labelText.toLowerCase() !== 'no label'
+      
+      // If annotation has custom label, use it
+      if (isCustomText) {
+        return labelText
       }
 
-      // If showDefaultText is not enabled, return empty
+      // If showDefaultText is not enabled and no custom text, return empty
       if (!this.shouldShowLabel(annotation)) {
         return ''
+      }
+
+      // For character media with character/state names provided directly, use them
+      // Use the same format as cells: "Character Name :: State Name (State Number)"
+      if (this.type === 'C' && this.characterName) {
+        let characterLabel = this.characterName
+        if (this.stateName && this.stateNumber !== null) {
+          characterLabel += ` :: ${this.stateName} (${this.stateNumber})`
+        } else if (this.stateName) {
+          characterLabel += ` :: ${this.stateName}`
+        }
+        return characterLabel
       }
 
       // For character annotations (type 'C') and matrix annotations (type 'X'), try to get enhanced display
@@ -2048,29 +2295,60 @@ export default {
         }
       }
 
-      // Fallback to default label
+      // Fallback to default label only if showDefaultText is enabled
       return this.getDefaultLabel()
     },
 
     // Synchronous method for template - handles caching and triggers async loading
     getDisplayLabelText(annotation) {
-      const cacheKey = annotation.annotation_id || `temp-${Date.now()}`
+      // Safely get label text, handling null/undefined/empty (same logic as shouldShowLabel)
+      const rawLabel = annotation.label
+      const labelText = (rawLabel === null || rawLabel === undefined) ? '' : String(rawLabel).trim()
       
-      // If we have cached enhanced text, use it
-      if (this.enhancedLabelCache.has(cacheKey)) {
-        return this.enhancedLabelCache.get(cacheKey)
-      }
+      // Check if annotation has CUSTOM label text (not default/placeholder/empty text)
+      const isCustomText = labelText.length > 0 && 
+                          labelText !== 'No label' && 
+                          labelText.toLowerCase() !== 'no label'
       
-      // If annotation has a label, use it immediately
-      if (annotation.label && annotation.label.trim()) {
-        const labelText = annotation.label
-        this.enhancedLabelCache.set(cacheKey, labelText)
+      // If annotation has custom label text, use it immediately (no cache needed for custom text)
+      if (isCustomText) {
         return labelText
       }
 
-      // If showDefaultText is not enabled, return empty
+      // CRITICAL: If shouldShowLabel is false, return empty
       if (!this.shouldShowLabel(annotation)) {
         return ''
+      }
+      
+      // Check showDefaultText flag
+      const showDefaultTextEnabled = annotation.showDefaultText == 1 || 
+                                     annotation.showDefaultText === true || 
+                                     annotation.showDefaultText === '1' ||
+                                     annotation.showDefaultText === 'true'
+
+      // If showDefaultText is OFF but label is showing (because canEdit is true)
+      // Return a placeholder for the small empty box
+      if (!showDefaultTextEnabled && this.canEdit) {
+        return '+' // Small plus icon as placeholder
+      }
+
+      // Now check cache (only for default/enhanced text when showDefaultText is ON)
+      const cacheKey = annotation.annotation_id || `temp-${Date.now()}`
+      if (this.enhancedLabelCache.has(cacheKey)) {
+        return this.enhancedLabelCache.get(cacheKey)
+      }
+
+      // For character media with character/state names provided directly, use them
+      // Use the same format as cells: "Character Name :: State Name (State Number)"
+      if (this.type === 'C' && this.characterName) {
+        let characterLabel = this.characterName
+        if (this.stateName && this.stateNumber !== null) {
+          characterLabel += ` :: ${this.stateName} (${this.stateNumber})`
+        } else if (this.stateName) {
+          characterLabel += ` :: ${this.stateName}`
+        }
+        this.enhancedLabelCache.set(cacheKey, characterLabel)
+        return characterLabel
       }
 
       // For character annotations and matrix annotations, check if we need to load enhanced display
@@ -2088,7 +2366,7 @@ export default {
         }
       }
 
-      // Return default label for now
+      // Return default label only if showDefaultText is enabled
       const defaultLabel = this.getDefaultLabel()
       this.enhancedLabelCache.set(cacheKey, defaultLabel)
       return defaultLabel
@@ -2253,10 +2531,99 @@ export default {
     },
 
     endLabelDrag() {
+      if (!this.draggedLabelAnnotation || !this.isDraggingLabel) {
+        this.isDraggingLabel = false
+        this.draggedLabelAnnotation = null
+        document.body.style.userSelect = ''
+        document.body.style.cursor = ''
+        return
+      }
+      
+      // Get the new position from labelPositions Map (set during drag)
+      const newPosition = this.labelPositions.get(this.draggedLabelAnnotation.annotation_id)
+      
+      // Store reference to annotation before clearing drag state
+      const annotationToSave = this.draggedLabelAnnotation
+      
+      // CRITICAL: Clear drag state flags IMMEDIATELY
+      // This prevents the label from continuing to drag
       this.isDraggingLabel = false
       this.draggedLabelAnnotation = null
       document.body.style.userSelect = ''
       document.body.style.cursor = ''
+      
+      // Save to database if user has edit permissions and we have a valid position
+      if (newPosition && this.canEdit && annotationToSave.annotation_id) {
+        // Store the pending save data and show confirmation modal
+        this.pendingLabelSave = {
+          annotation: annotationToSave,
+          position: newPosition
+        }
+        this.showLabelSaveConfirm = true
+      }
+    },
+    
+    async confirmLabelSave() {
+      if (!this.pendingLabelSave) return
+      
+      const { annotation, position } = this.pendingLabelSave
+      this.isSavingLabelPosition = true
+      
+      try {
+        // Update the annotation with new label position (tx, ty)
+        const updatedAnnotation = {
+          ...annotation,
+          tx: position.x,
+          ty: position.y,
+          tw: annotation.tw || 1,
+          th: annotation.th || 1
+        }
+        
+        // Find and update in local state immediately
+        const index = this.annotations.findIndex(a => a.annotation_id === updatedAnnotation.annotation_id)
+        if (index !== -1) {
+          this.annotations[index].tx = position.x
+          this.annotations[index].ty = position.y
+        }
+        
+        // Save to database
+        const linkIdForUpdate = updatedAnnotation.link_id || this.effectiveSaveLinkId
+        
+        await annotationService.updateAnnotation(
+          this.projectId,
+          this.mediaId,
+          this.type,
+          linkIdForUpdate,
+          updatedAnnotation
+        )
+        
+        this.showSaveStatus('Label position saved', 'success')
+      } catch (error) {
+        console.error('Failed to save label position:', error)
+        this.showSaveStatus('Failed to save label position', 'error')
+        // Remove from labelPositions so it falls back to previous position
+        this.labelPositions.delete(annotation.annotation_id)
+        this.drawAnnotations()
+      } finally {
+        this.isSavingLabelPosition = false
+        this.showLabelSaveConfirm = false
+        this.pendingLabelSave = null
+      }
+    },
+    
+    cancelLabelSave() {
+      if (!this.pendingLabelSave) return
+      
+      // User cancelled - remove the temporary position and revert to original
+      this.labelPositions.delete(this.pendingLabelSave.annotation.annotation_id)
+      this.$nextTick(() => {
+        this.$forceUpdate()
+        this.drawAnnotations()
+      })
+      
+      // Reset modal state
+      this.showLabelSaveConfirm = false
+      this.pendingLabelSave = null
     },
 
     // Panel dragging methods
@@ -2493,8 +2860,9 @@ export default {
 }
 
 .btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 .btn-primary {
@@ -2594,7 +2962,7 @@ export default {
   position: relative;
   background: #fff;
   overflow: hidden;
-  min-height: 400px;
+  min-height: 500px;
 }
 
 .media-image {
@@ -2602,6 +2970,7 @@ export default {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  object-position: center top;
   transform-origin: top left;
 }
 
@@ -2634,9 +3003,9 @@ export default {
   min-width: 120px !important;
   max-width: 300px !important;
   text-align: center !important;
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
+  /* REMOVED: display: block !important; - This was preventing v-show from working! */
+  /* REMOVED: visibility: visible !important; - This was preventing v-show from working! */
+  /* REMOVED: opacity: 1 !important; - This was preventing v-show from working! */
   line-height: 1.4 !important;
 }
 
@@ -2656,7 +3025,7 @@ export default {
   height: 40px !important;
   border-radius: 50% !important;
   padding: 0 !important;
-  display: flex !important;
+  display: flex; /* Removed !important to allow v-show to work */
   align-items: center !important;
   justify-content: center !important;
   font-size: 16px !important;
@@ -2687,6 +3056,31 @@ export default {
 
 .annotation-label.hidden {
   display: none;
+}
+
+/* Empty placeholder label - small clickable box to add label */
+.annotation-label.empty-placeholder {
+  min-width: 32px !important;
+  max-width: 32px !important;
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #007bff !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+  font-size: 18px !important;
+  opacity: 0.7;
+  transition: all 0.2s !important;
+  cursor: pointer !important;
+}
+
+.annotation-label.empty-placeholder:hover {
+  opacity: 1;
+  border-style: solid !important;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3) !important;
 }
 
 
@@ -2752,7 +3146,7 @@ export default {
   border: 1px solid #ddd;
   border-radius: 8px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-  z-index: 9999 !important;
+  z-index: 99999 !important;
   min-width: 400px;
   max-width: 500px;
   max-height: 70vh;

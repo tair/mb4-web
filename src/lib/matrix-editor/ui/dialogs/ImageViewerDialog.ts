@@ -27,6 +27,11 @@ export class ImageViewerDialog extends Modal {
   private readonly readonly: boolean
   private readonly linkId: number | null
   private readonly published: boolean
+  private readonly characterId: number | null
+  private readonly stateId: number | null
+  private readonly characterName: string | null
+  private readonly stateName: string | null
+  private readonly stateNumber: number | null
   private readonly metaViewport: Element
   private currentMediaElement: HTMLElement | null = null
   
@@ -36,6 +41,9 @@ export class ImageViewerDialog extends Modal {
   private simpleImageViewer: SimpleImageViewer | null = null
   private isUpdatingSide: boolean = false
   private metadataDocumentClickHandler: ((e: MouseEvent) => void) | null = null
+  private metadataLoaded: boolean = false
+  private metadataExpanded: boolean = false
+  private metadataToggleClickHandler: ((e: MouseEvent) => void) | null = null
 
   constructor(
     type: string, 
@@ -44,7 +52,12 @@ export class ImageViewerDialog extends Modal {
     mediaData?: any,
     readonly?: boolean | null,
     linkId?: number | null,
-    published?: boolean
+    published?: boolean,
+    characterId?: number | null,
+    stateId?: number | null,
+    characterName?: string | null,
+    stateName?: string | null,
+    stateNumber?: number | null
   ) {
     super()
 
@@ -53,15 +66,21 @@ export class ImageViewerDialog extends Modal {
     this.projectId = projectId
     this.mediaData = mediaData || {}
     this.readonly = !!readonly
-    this.linkId = linkId || null
+    this.linkId = linkId ?? null
     this.published = !!published
+    this.characterId = characterId ?? null
+    this.stateId = stateId ?? null
+    this.characterName = characterName ?? null
+    this.stateName = stateName ?? null
+    this.stateNumber = stateNumber ?? null  // Use ?? to preserve 0 values
     this.metaViewport = document.querySelector(
       'meta[name="viewport"]'
     ) as Element
     
     
     // Always use annotation viewer title since annotations are always enabled
-    this.setTitle('Media Annotation Viewer')
+    const title = published ? 'Media Annotation Viewer' : 'Media Annotation Editor'
+    this.setTitle(title)
     this.setDisposeOnHide(true)
   }
 
@@ -226,6 +245,14 @@ export class ImageViewerDialog extends Modal {
     
     // Clean up metadata container that's inside the annotation container
     if (this.annotationContainer) {
+      // Remove toggle click handler if registered
+      if (this.metadataToggleClickHandler) {
+        const toggleBtn = this.annotationContainer.querySelector('.metadata-toggle') as HTMLElement
+        if (toggleBtn) {
+          toggleBtn.removeEventListener('click', this.metadataToggleClickHandler)
+        }
+        this.metadataToggleClickHandler = null
+      }
       const metadataContainer = this.annotationContainer.querySelector('.media-metadata-container') as HTMLElement
       if (metadataContainer) {
         this.annotationContainer.removeChild(metadataContainer)
@@ -497,6 +524,19 @@ export class ImageViewerDialog extends Modal {
       // Build media URL for the annotation viewer
       const mediaUrl = this.getZoomDisplayUrl()
       
+      // Determine contextType and contextId based on the media type and available info
+      let contextType = null
+      let contextId = null
+      
+      // For character media with state information, set context for better annotation filtering
+      if (this.type === 'C' && this.stateId !== null) {
+        contextType = 'character_state'
+        contextId = this.stateId
+      } else if (this.type === 'C' && this.characterId !== null) {
+        contextType = 'character'
+        contextId = this.characterId
+      }
+      
       // Mount the AnnotationViewer component
       await this.annotationMountingUtility.mount(this.annotationContainer, {
         component: AnnotationViewer,
@@ -507,9 +547,12 @@ export class ImageViewerDialog extends Modal {
           type: this.type,
           linkId: this.linkId, // Pass the cell link_id for matrix cells
           canEdit: !this.readonly,
-          contextType: null,
-          contextId: null,
-          published: this.published // Pass published state to AnnotationViewer
+          contextType: contextType,
+          contextId: contextId,
+          published: this.published, // Pass published state to AnnotationViewer
+          characterName: this.characterName, // Pass character name for label display
+          stateName: this.stateName, // Pass state name for label display
+          stateNumber: this.stateNumber // Pass state number for label display
         },
         withPinia: true
       })
@@ -606,9 +649,17 @@ export class ImageViewerDialog extends Modal {
       // Create the metadata container element
       const metadataContainer = document.createElement('div')
       metadataContainer.className = 'media-metadata-container'
+      // Collapsed by default
+      metadataContainer.classList.add('collapsed')
       
       metadataContainer.innerHTML = `
-        <div class="media-metadata-content">
+        <div class="media-metadata-header">
+          <button type="button" class="metadata-toggle" aria-expanded="false" aria-controls="media-metadata-content">
+            <span class="toggle-caret"></span>
+            <span class="toggle-text">Show details</span>
+          </button>
+        </div>
+        <div id="media-metadata-content" class="media-metadata-content">
           <div class="metadata-loading">Loading metadata...</div>
           <div class="metadata-info" style="display: none;"></div>
         </div>
@@ -620,25 +671,45 @@ export class ImageViewerDialog extends Modal {
       // Get the newly created elements
       const metadataLoading = metadataContainer.querySelector('.metadata-loading') as HTMLElement
       const metadataInfo = metadataContainer.querySelector('.metadata-info') as HTMLElement
+      const toggleBtn = metadataContainer.querySelector('.metadata-toggle') as HTMLButtonElement
+      const toggleText = metadataContainer.querySelector('.toggle-text') as HTMLElement
 
-      if (!metadataLoading || !metadataInfo) {
+      if (!metadataLoading || !metadataInfo || !toggleBtn || !toggleText) {
         console.error('Failed to create metadata elements')
         return
       }
+      // Reset flags
+      this.metadataLoaded = false
+      this.metadataExpanded = false
 
-      // Fetch metadata
-      const metadata = await this.fetchMediaMetadata()
-      
-      // Generate metadata HTML
-      const metadataHtml = this.generateMetadataHtml(metadata)
-      
-      // Update content
-      metadataInfo.innerHTML = metadataHtml
-      metadataLoading.style.display = 'none'
-      metadataInfo.style.display = 'flex'
-
-      // Bind inline side action handlers
-      this.bindInlineSideActions()
+      // Bind toggle click to expand/collapse and lazy-load on first expand
+      this.metadataToggleClickHandler = async () => {
+        const isCollapsed = metadataContainer.classList.contains('collapsed')
+        if (isCollapsed) {
+          // Expanding
+          metadataContainer.classList.remove('collapsed')
+          toggleBtn.setAttribute('aria-expanded', 'true')
+          if (toggleText) toggleText.textContent = 'Hide details'
+          // Lazy load on first expand
+          if (!this.metadataLoaded) {
+            metadataLoading.style.display = 'block'
+            metadataInfo.style.display = 'none'
+            const metadata = await this.fetchMediaMetadata()
+            const metadataHtml = this.generateMetadataHtml(metadata)
+            metadataInfo.innerHTML = metadataHtml
+            metadataLoading.style.display = 'none'
+            metadataInfo.style.display = 'flex'
+            this.bindInlineSideActions()
+            this.metadataLoaded = true
+          }
+        } else {
+          // Collapsing
+          metadataContainer.classList.add('collapsed')
+          toggleBtn.setAttribute('aria-expanded', 'false')
+          if (toggleText) toggleText.textContent = 'Show details'
+        }
+      }
+      toggleBtn.addEventListener('click', this.metadataToggleClickHandler)
       
     } catch (error) {
       console.error('Failed to setup media metadata:', error)
@@ -823,9 +894,21 @@ export class ImageViewerDialog extends Modal {
     //   </div>`)
     // }
     
-    // Character information - using the pre-formatted display from backend
+    // Character information - using the pre-formatted display from backend OR direct character/state names
     if (metadata.character_display) {
       const characterText = metadata.character_display
+      rightColumnItems.push(`<div class="metadata-item">
+        <strong>Character:</strong> ${this.escapeHtml(characterText)}
+      </div>`)
+    } else if (this.characterName) {
+      // Display character and state information when provided directly (for character media)
+      // Use the same format as cells: "Character Name :: State Name (State Number)"
+      let characterText = this.characterName
+      if (this.stateName && this.stateNumber !== null) {
+        characterText += ` :: ${this.stateName} (${this.stateNumber})`
+      } else if (this.stateName) {
+        characterText += ` :: ${this.stateName}`
+      }
       rightColumnItems.push(`<div class="metadata-item">
         <strong>Character:</strong> ${this.escapeHtml(characterText)}
       </div>`)
@@ -949,6 +1032,10 @@ export class ImageViewerDialog extends Modal {
         border-bottom: 1px solid #dee2e6;
         padding: 1rem 1.5rem;
       }
+      .modal-annotation-viewer .modal-header .modal-title {
+        font-size: 0.95rem;
+        line-height: 1.1;
+      }
       
       .modal-annotation-viewer .modal-footer {
         flex-shrink: 0;
@@ -1071,6 +1158,54 @@ export class ImageViewerDialog extends Modal {
         position: relative;
         z-index: 10;
         box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.05);
+      }
+
+      /* Collapsed state reduces padding and hides content */
+      .mediaViewer .media-metadata-container.collapsed {
+        padding: 0.35rem 0.5rem;
+        background-color: #f8f9fa;
+      }
+      .mediaViewer .media-metadata-container.collapsed .media-metadata-content {
+        display: none !important;
+      }
+
+      .mediaViewer .media-metadata-header {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+      }
+      /* Add small space between the header (Hide details) and metadata when expanded */
+      .mediaViewer .media-metadata-container:not(.collapsed) .media-metadata-header {
+        margin-bottom: 0.4rem;
+      }
+      .mediaViewer .metadata-toggle {
+        background: transparent;
+        border: none;
+        color: #0d6efd;
+        cursor: pointer;
+        padding: 0;
+        font-size: 0.78rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+      .mediaViewer .metadata-toggle:disabled {
+        color: #6c757d;
+        cursor: default;
+      }
+      .mediaViewer .metadata-toggle .toggle-caret {
+        display: inline-block;
+        width: 0;
+        height: 0;
+        border-top: 5px solid transparent;
+        border-bottom: 5px solid transparent;
+        border-left: 6px solid currentColor;
+        transition: transform 0.15s ease;
+      }
+      .mediaViewer .media-metadata-container:not(.collapsed) .metadata-toggle .toggle-caret {
+        transform: rotate(90deg);
       }
 
       .mediaViewer .media-metadata-content {
@@ -1605,6 +1740,11 @@ export class ImageViewerDialog extends Modal {
    * @param readonly Whether the image viewer should be immutable
    * @param linkId Optional link ID for matrix cell context
    * @param published Whether the project is published (for correct API endpoint)
+   * @param characterId Optional character ID for annotation context
+   * @param stateId Optional state ID for annotation context
+   * @param characterName Optional character name for metadata display
+   * @param stateName Optional state name for metadata display
+   * @param stateNumber Optional state number for metadata display
    */
   static show(
     type: string, 
@@ -1613,7 +1753,12 @@ export class ImageViewerDialog extends Modal {
     mediaData?: any,
     readonly?: boolean | null,
     linkId?: number | null,
-    published?: boolean
+    published?: boolean,
+    characterId?: number | null,
+    stateId?: number | null,
+    characterName?: string | null,
+    stateName?: string | null,
+    stateNumber?: number | null
   ) {
     // Handle backwards compatibility with old signature: show(type, id, readonly)
     let projectId: number
@@ -1622,9 +1767,14 @@ export class ImageViewerDialog extends Modal {
     
     let actualLinkId: number | null
     let actualPublished: boolean
+    let actualCharacterId: number | null
+    let actualStateId: number | null
+    let actualCharacterName: string | null
+    let actualStateName: string | null
+    let actualStateNumber: number | null
     
     if (typeof projectIdOrReadonly === 'number' || projectIdOrReadonly === null) {
-      // New signature: show(type, id, projectId, mediaData?, readonly?, linkId?, published?)
+      // New signature: show(type, id, projectId, mediaData?, readonly?, linkId?, published?, characterId?, stateId?, characterName?, stateName?, stateNumber?)
       // projectId can be a number or null (null means derive from URL)
       if (projectIdOrReadonly === null) {
         // Derive project ID from URL when null is passed
@@ -1634,8 +1784,13 @@ export class ImageViewerDialog extends Modal {
       }
       actualMediaData = mediaData
       actualReadonly = !!readonly
-      actualLinkId = linkId || null
+      actualLinkId = linkId ?? null
       actualPublished = !!published
+      actualCharacterId = characterId ?? null
+      actualStateId = stateId ?? null
+      actualCharacterName = characterName ?? null
+      actualStateName = stateName ?? null
+      actualStateNumber = stateNumber ?? null  // Use ?? to preserve 0 values
     } else {
       // Old signature: show(type, id, readonly?) - need to derive projectId
       projectId = ImageViewerDialog.deriveProjectId()
@@ -1643,9 +1798,14 @@ export class ImageViewerDialog extends Modal {
       actualReadonly = !!projectIdOrReadonly
       actualLinkId = null // Old signature doesn't support linkId
       actualPublished = false // Old signature defaults to false
+      actualCharacterId = null
+      actualStateId = null
+      actualCharacterName = null
+      actualStateName = null
+      actualStateNumber = null
     }
     
-    const viewer = new ImageViewerDialog(type, id, projectId, actualMediaData, actualReadonly, actualLinkId, actualPublished)
+    const viewer = new ImageViewerDialog(type, id, projectId, actualMediaData, actualReadonly, actualLinkId, actualPublished, actualCharacterId, actualStateId, actualCharacterName, actualStateName, actualStateNumber)
     viewer.setVisible(true)
   }
 }

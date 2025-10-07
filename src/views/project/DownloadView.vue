@@ -9,29 +9,58 @@ const projectStore = useProjectOverviewStore()
 const projectId = route.params.id
 const isDownloading = ref(false)
 const downloadError = ref('')
+const downloadSuccess = ref('')
 
 onMounted(() => {
   projectStore.fetchProject(projectId)
 })
 async function downloadProject() {
   isDownloading.value = true
-  const response = await apiService.get(
-    `/projects/${projectId}/download/sdd?format=zip`,
-    {
-      headers: { Accept: 'application/zip' },
+  downloadError.value = ''
+  downloadSuccess.value = ''
+
+  try {
+    console.log('Downloading project:', projectId)
+    const response = await apiService.get(
+      `/projects/${projectId}/download/sdd?format=zip`,
+      {
+        headers: { Accept: 'application/zip' },
+      }
+    )
+
+    if (!response.ok) {
+      console.log('Download failed with status', response.status)
+      let errorMessage = 'Download failed. '
+      if (response.status === 404) {
+        errorMessage += 'Project not found or not available for download.'
+      } else if (response.status === 403) {
+        errorMessage +=
+          'Access denied. You may not have permission to download this project.'
+      } else if (response.status >= 500) {
+        errorMessage += 'Server error. Please try again later.'
+      } else {
+        errorMessage += `Server returned status ${response.status}.`
+      }
+      downloadError.value = errorMessage
+      isDownloading.value = false
+      return
     }
-  )
-  if (!response.ok) {
-    console.log('Download failed with status', response.status)
-    downloadError.value = 'Download failed with status ' + response.status
+
+    console.log('Download successful')
+    const blob = await response.blob()
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `project_${projectId}_sdd.zip`
+    link.click()
+    URL.revokeObjectURL(link.href)
+    
+    downloadSuccess.value = 'Project download completed successfully!'
+    isDownloading.value = false
+  } catch (error) {
+    console.error('Download error:', error)
+    downloadError.value = `Download failed: ${error.message}`
+    isDownloading.value = false
   }
-  const blob = await response.blob()
-  const link = document.createElement('a')
-  link.href = URL.createObjectURL(blob)
-  link.download = `project_${projectId}_sdd.zip`
-  link.click()
-  URL.revokeObjectURL(link.href)
-  isDownloading.value = false
 }
 </script>
 <template>
@@ -45,6 +74,14 @@ async function downloadProject() {
   <div v-else>
     <div class="download-component">
       <div class="download-section">
+        <div v-if="downloadError" class="error-alert">
+          <i class="fa-solid fa-exclamation-triangle"></i>
+          <span>{{ downloadError }}</span>
+        </div>
+        <div v-if="downloadSuccess" class="success-alert">
+          <i class="fa-solid fa-check-circle"></i>
+          <span>{{ downloadSuccess }}</span>
+        </div>
         <div class="download-button-container">
           <button
             class="btn btn-primary btn-download"
@@ -64,7 +101,6 @@ async function downloadProject() {
       </div>
     </div>
     <div class="download-info">
-      <p v-if="downloadError" class="status-error">{{ downloadError }}</p>
       <p>
         This tool downloads the entire project, all media, matrices and
         documents, as a zipped file. Please click on the menu to the left, if
@@ -105,11 +141,36 @@ async function downloadProject() {
   margin-bottom: 18px;
 }
 
-.status-error {
+.error-alert {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
   color: #721c24;
+  padding: 12px 20px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
-.status-success {
+
+.error-alert i {
+  font-size: 1.2em;
+}
+
+.success-alert {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
   color: #155724;
+  padding: 12px 20px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.success-alert i {
+  font-size: 1.2em;
 }
 
 .btn-download {

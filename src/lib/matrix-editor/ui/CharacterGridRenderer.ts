@@ -142,7 +142,25 @@ export class CharacterDetailedGridRenderer extends CharacterGridRenderer {
       if (tiny) {
         // Pass the full media object data for TIFF detection
         const mediaData = (characterMedium as any).characterMediaObj || {}
-        images.addImage(characterMedium.getId(), tiny['url'], null, mediaData)
+        
+        // Get character and state information for annotation context
+        const characterName = character.getName()
+        const stateId = characterMedium.getStateId()
+        let stateName: string | null = null
+        let stateNumber: number | null = null
+        
+        if (stateId) {
+          const characterState = character.getCharacterStateById(stateId)
+          if (characterState) {
+            stateName = characterState.getName()
+            // Don't use || operator as it treats 0 as falsy
+            stateNumber = characterState.getNumber() ?? null
+          }
+        }
+        
+        // Use getMediaId() to get the actual media_id, not getId() which returns link_id
+        // Pass null for caption (no visible caption on thumbnail), but pass character/state info separately
+        images.addImage(characterMedium.getMediaId(), tiny['url'], null, mediaData, characterName, stateName, stateNumber)
       }
     }
     const characterMediaElement = document.createElement('td')

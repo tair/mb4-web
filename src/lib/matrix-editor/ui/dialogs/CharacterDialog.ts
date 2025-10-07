@@ -74,7 +74,11 @@ export class CharacterDialog extends Dialog {
     super.createDom()
 
     const element = this.getElement()
-    element.classList.add('characterDialog', 'modal-lg')
+    element.classList.add('characterDialog')
+    const dialogElement = element.querySelector('.modal-dialog')
+    if (dialogElement) {
+      dialogElement.classList.add('modal-lg')
+    }
 
     const contentElement = this.getContentElement()
     contentElement.innerHTML = CharacterDialog.htmlContent()
@@ -508,14 +512,13 @@ class ContinuousCharacterPane extends BasePane {
         : 'Meristic'
     return (
       '<div class="characterPane">' +
-      '<div class="label">Type</div>' +
+      '<div class="headerRow">' +
+      '<div class="field typeField"><div class="label">Type</div><div class="value">' +
       type +
-      '<p></p>' +
-      '<div class="label">Name</div>' +
-      '<input class="nameInput" />' +
-      '<p></p>' +
-      '<div class="label">Notes</div>' +
-      '<textarea class="descriptionInput"></textarea>' +
+      '</div></div>' +
+      '<div class="field nameField"><div class="label">Name</div><input class="nameInput" /></div>' +
+      '</div>' +
+      '<div class="field notesField"><div class="label">Notes</div><textarea class="descriptionInput"></textarea></div>' +
       '</div>'
     )
   }
@@ -576,6 +579,8 @@ class CharacterPane extends BasePane {
     const statesPane = this.getElementByClass('statesPane')
     this.statesGridTable.addColumn('#')
     this.statesGridTable.addColumn('State')
+    // Restrict drag to the first column (order number) so text selection works in the name input
+    this.statesGridTable.setDragHandleColumnIndex(0)
     this.statesGridTable.render(statesPane)
 
     this.orderingSelect.addItem({ text: 'Unordered', value: 0 })
@@ -961,13 +966,11 @@ class CharacterPane extends BasePane {
   static htmlContent(): string {
     return (
       '<div class="characterPane">' +
-      '<div class="label">Type</div> Discrete<p></p>' +
-      '<div class="label">Name</div>' +
-      '<input class="nameInput" />' +
-      '<p></p>' +
-      '<div class="label">Notes</div>' +
-      '<textarea class="descriptionInput"></textarea>' +
-      '<p></p>' +
+      '<div class="headerRow">' +
+      '<div class="field typeField"><div class="label">Type</div><div class="value">Discrete</div></div>' +
+      '<div class="field nameField"><div class="label">Name</div><input class="nameInput" /></div>' +
+      '</div>' +
+      '<div class="field notesField"><div class="label">Notes</div><textarea class="descriptionInput"></textarea></div>' +
       '<span class="addCharacterState">+ Add new</span>' +
       '<div class="statesPane"></div>' +
       '</div>'
@@ -1050,7 +1053,20 @@ class MediaPane extends BasePane {
       const published = this.matrixModel.isPublished()
       // Pass the actual media data from the medium object instead of empty object
       const mediaData = (medium as any).characterMediaObj || {}
-      ImageViewerDialog.show('C', mediaId, projectId, mediaData, readonly, null, published)
+      // Pass link_id so details API can return character_display for labels
+      const linkId = medium.getId()
+      
+      // Get character and state information for annotation context
+      const characterId = medium.getCharacterId()
+      const stateId = medium.getStateId()
+      
+      // Get character and state names for display in metadata
+      const characterName = this.character.getName()
+      const characterState = stateId ? this.character.getCharacterStateById(stateId) : null
+      const stateName = characterState ? characterState.getName() : null
+      const stateNumber = characterState ? characterState.getNumber() : null
+      
+      ImageViewerDialog.show('C', mediaId, projectId, mediaData, readonly, linkId, published, characterId, stateId, characterName, stateName, stateNumber)
     }
     return true
   }

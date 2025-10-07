@@ -594,6 +594,34 @@ div.matrixgridCells table {
   top: 88%;
 }
 
+/* Make ImageRenderer arrows visible and clickable */
+.imageThumbnail .imageArrowUp,
+.imageThumbnail .imageArrowDown {
+  width: 18px;
+  height: 18px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 10px;
+  z-index: 2;
+}
+
+.imageThumbnail .imageArrowUp {
+  top: 6%;
+}
+
+.imageThumbnail .imageArrowUp::after {
+  content: '\25B2';
+}
+
+.imageThumbnail .imageArrowDown::after {
+  content: '\25BC';
+}
+
 .imageThumbnail .imageArrowDim {
   opacity: 0.3;
   -moz-opacity: 0.3;
@@ -1852,6 +1880,14 @@ div.loadingMessage > div,
   font-weight: normal;
 }
 
+.characterDialog .modal-dialog.modal-lg {
+  max-width: 980px; /* slightly wider if needed */
+}
+
+.characterDialog .modal-content {
+  max-height: 88vh; /* increase vertical space */
+}
+
 .characterDialog .characterPane p {
   margin-top: 20px;
 }
@@ -1877,9 +1913,39 @@ div.loadingMessage > div,
 
 .characterDialog .characterPane .descriptionInput {
   box-sizing: inherit !important;
-  height: 50px !important;
+  /* Ensure at least ~5 rows of space; typical line-height ~1.2em => ~6em */
+  min-height: 6.5em !important;
+  height: auto !important;
   resize: none;
   width: 100%;
+}
+
+/* Layout: place Type and Name on the same row */
+.characterDialog .characterPane .headerRow {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+/* Add a bit of breathing room under the header row */
+.characterDialog .characterPane .headerRow + .notesField {
+  margin-top: 10px;
+}
+
+.characterDialog .characterPane .headerRow .field {
+  flex: 1 1 0;
+}
+
+.characterDialog .characterPane .headerRow .typeField {
+  flex: 0 0 200px; /* compact type field */
+}
+
+.characterDialog .characterPane .headerRow .value {
+  font-size: 0.9rem; /* slightly smaller to fit */
+}
+
+.characterDialog .characterPane .nameField .nameInput {
+  font-size: 0.95rem;
 }
 
 .characterDialog .characterPane .statesPane {

@@ -1,13 +1,24 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import ProjectSideNav from '@/components/project/ProjectSideNav.vue'
+import UnpublishedProjectTitleComp from '@/components/project/UnpublishedProjectTitleComp.vue'
+import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore'
 
 const route = useRoute()
 const projectId = route.params.id as string
+const projectOverviewStore = useProjectOverviewStore()
+
 const breadcrumbs = computed(() => {
   const list = route.meta.breadcrumbs as any
   return list
+})
+
+// Ensure project overview is loaded for the title component
+onMounted(() => {
+  if (!projectOverviewStore.isLoaded) {
+    projectOverviewStore.fetchProject(projectId)
+  }
 })
 </script>
 <template>
@@ -30,6 +41,10 @@ const breadcrumbs = computed(() => {
       </li>
     </ol>
   </nav>
+  
+  <!-- Project Title Component -->
+  <UnpublishedProjectTitleComp />
+  
   <div class="row">
     <div class="col-2 border-end">
       <ProjectSideNav basePath="myprojects"></ProjectSideNav>

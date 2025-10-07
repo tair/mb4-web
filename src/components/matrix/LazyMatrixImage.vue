@@ -21,18 +21,24 @@
     />
     
     <!-- Navigation arrows for multiple images -->
-    <!-- <div v-if="imageUrls.length > 1" class="image-navigation">
+    <div v-if="imageUrls.length > 1" class="image-navigation">
       <div 
         :class="['image-arrow', 'image-arrow-up', { 'image-arrow-dim': currentIndex === 0 }]"
         @mousedown.stop="navigateUp"
+        @click.stop.prevent="navigateUp"
+        @touchstart.stop.prevent="navigateUp"
         :title="'▲'"
+        aria-label="Previous image"
       ></div>
       <div 
         :class="['image-arrow', 'image-arrow-down', { 'image-arrow-dim': currentIndex === imageUrls.length - 1 }]"
         @mousedown.stop="navigateDown"
+        @click.stop.prevent="navigateDown"
+        @touchstart.stop.prevent="navigateDown"
         :title="'▼'"
+        aria-label="Next image"
       ></div>
-    </div> -->
+    </div>
     
     <!-- Image caption -->
     <div v-if="currentImageUrl.caption" class="image-caption">
