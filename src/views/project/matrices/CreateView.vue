@@ -21,6 +21,8 @@ const matricesStore = useMatricesStore()
 const charactersStore = useCharactersStore()
 const fileTransferStore = useFileTransferStore()
 const { showError, showSuccess } = useNotifications()
+const uploadError = ref('')
+const uploadTask = ref({ id: null, status: null })
 const projectId = route.params.id
 
 // Taxonomic unit options for dropdown
@@ -309,19 +311,37 @@ async function uploadMatrix() {
     formData.set('matrix', serializedMatrix)
 
     const response = await apiService.post(`/projects/${projectId}/matrices/upload`, formData, {
-      timeout: 300000, // 5 minutes timeout
+      // Keep a moderate timeout; server returns 202 quickly
+      timeout: 60000,
     })
-    if (response.ok) {
-      // Clear the file from FileTransferStore after successful upload
+
+    // For async upload, expect 202 + taskId
+    if (response.status === 202) {
+      const data = await response.json()
+      uploadTask.value = { id: data.taskId, status: 'queued' }
+
+      // Poll task status until completed or failed
+      await pollTaskStatus(data.taskId)
+
+      // On success, clear state and navigate
+      const isMerge = route.query.merge === 'true'
       if (isMerge) {
         fileTransferStore.clearMergeFile()
         sessionStorage.removeItem('matrixMergeData')
       }
-
-      // Wait for store invalidation to complete
       await matricesStore.invalidate()
-
-      // Use robust navigation with proper error handling
+      await NavigationPatterns.afterComplexResourceCreate(projectId, 'matrices')
+      return
+    }
+    
+    // If server returned 200 (small matrix fast path), proceed as before
+    if (response.ok) {
+      const isMerge = route.query.merge === 'true'
+      if (isMerge) {
+        fileTransferStore.clearMergeFile()
+        sessionStorage.removeItem('matrixMergeData')
+      }
+      await matricesStore.invalidate()
       await NavigationPatterns.afterComplexResourceCreate(projectId, 'matrices')
     }
   } catch (error) {
@@ -340,6 +360,30 @@ async function uploadMatrix() {
   } finally {
     isUploading.value = false
   }
+}
+
+async function pollTaskStatus(taskId) {
+  // Poll every 2s up to 30 minutes
+  const maxAttempts = 900
+  let attempts = 0
+  while (attempts < maxAttempts) {
+    attempts++
+    try {
+      const res = await apiService.get(`/tasks/${taskId}/status`)
+      const data = await res.json()
+      uploadTask.value.status = data.status
+      if (data.status === 'completed') return
+      if (data.status === 'failed') {
+        const msg = data.error?.message || 'Matrix import failed.'
+        throw new Error(msg)
+      }
+    } catch (e) {
+      // Bubble up failures
+      throw e
+    }
+    await new Promise(r => setTimeout(r, 2000))
+  }
+  throw new Error('Matrix import timed out. Please check later or retry.')
 }
 
 function cancelImport() {
@@ -550,7 +594,7 @@ onUnmounted(() => {
               ></span>
               {{
                 isProcessingMatrix
-                  ? 'Processing...'
+                  ? 'Parsing...'
                   : isUploading
                   ? 'Uploading...'
                   : 'Next'
@@ -722,6 +766,7 @@ onUnmounted(() => {
                     <textarea
                       class="form-control"
                       v-model="editingCharacter.note"
+                      rows="5"
                     ></textarea>
                   </div>
                   <div class="form-group" v-if="editingCharacter.states?.length > 0">
@@ -889,6 +934,7 @@ onUnmounted(() => {
                     <textarea
                       class="form-control"
                       v-model="editingTaxon.note"
+                      rows="5"
                     ></textarea>
                   </div>
                 </div>

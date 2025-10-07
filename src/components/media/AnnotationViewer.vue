@@ -818,7 +818,7 @@ export default {
         imageOffsetY = (mainRect.height - actualImageHeight) / 2
         initialFitScale = mainRect.width / naturalWidth
       } else {
-        // Image is taller - fits to container height, has horizontal white space  
+        // Image is taller - fits to container height; horizontally centered
         actualImageHeight = mainRect.height
         actualImageWidth = mainRect.height * aspectRatio
         imageOffsetY = 0
@@ -945,6 +945,17 @@ export default {
       // Setup canvas first to calculate display dimensions
       this.setupCanvas()
       
+      // Center horizontally (top-align vertically) for the initial view based on current zoom
+      const container = this.$refs.canvasContainer
+      if (container) {
+        const containerWidth = container.clientWidth
+        const z = this.viewerZoom
+        this.viewerOffset = {
+          x: (containerWidth - (containerWidth * z)) / (2 * z),
+          y: 0
+        }
+      }
+
       // Apply initial zoom transform immediately
       this.$nextTick(() => {
         this.updateImageTransform()
@@ -1024,7 +1035,7 @@ export default {
       this.canvasDisplayWidth = displayWidth
       this.canvasDisplayHeight = displayHeight
       this.canvasOffsetX = (containerWidth - displayWidth) / 2
-      this.canvasOffsetY = (containerHeight - displayHeight) / 2
+      this.canvasOffsetY = 0
       
       // Calculate scale factor (for backward compatibility)
       this.imageScale = displayWidth / naturalWidth
@@ -1068,7 +1079,18 @@ export default {
 
     resetZoom() {
       this.viewerZoom = 0.5 // Reset to default 50% zoom
-      this.viewerOffset = { x: 0, y: 0 }
+      // Re-center horizontally (top-align vertically) after resetting zoom
+      const container = this.$refs.canvasContainer
+      if (container) {
+        const containerWidth = container.clientWidth
+        const z = this.viewerZoom
+        this.viewerOffset = {
+          x: (containerWidth - (containerWidth * z)) / (2 * z),
+          y: 0
+        }
+      } else {
+        this.viewerOffset = { x: 0, y: 0 }
+      }
       this.updateImageTransform()
     },
 
@@ -1422,7 +1444,7 @@ export default {
       const isSelected = this.selectedAnnotation?.annotation_id === annotation.annotation_id
       
       this.ctx.strokeStyle = isSelected ? '#007bff' : '#ff6b6b'
-      this.ctx.lineWidth = isSelected ? 3 : 2
+      this.ctx.lineWidth = isSelected ? 6 : 4
       this.ctx.fillStyle = 'rgba(255, 107, 107, 0.1)'
 
       const scaledAnnotation = this.scaleAnnotation(annotation)
@@ -1443,7 +1465,21 @@ export default {
     },
 
     drawRectangle(annotation) {
+      // Draw with a high-contrast outline behind the main stroke
+      const baseColor = this.ctx.strokeStyle
+      const baseWidth = this.ctx.lineWidth || 1
+      this.ctx.save()
+      this.ctx.lineJoin = 'round'
+      this.ctx.lineCap = 'round'
+      // Outline pass
+      this.ctx.strokeStyle = 'rgba(255,255,255,0.95)'
+      this.ctx.lineWidth = baseWidth + 4
       this.ctx.strokeRect(annotation.x, annotation.y, annotation.w, annotation.h)
+      // Foreground pass
+      this.ctx.strokeStyle = baseColor
+      this.ctx.lineWidth = baseWidth
+      this.ctx.strokeRect(annotation.x, annotation.y, annotation.w, annotation.h)
+      this.ctx.restore()
       if (this.selectedAnnotation?.annotation_id === annotation.annotation_id) {
         this.ctx.fillRect(annotation.x, annotation.y, annotation.w, annotation.h)
       }
@@ -1470,7 +1506,21 @@ export default {
       }
       
       this.ctx.closePath()
+      // Draw with a high-contrast outline behind the main stroke
+      const baseColor = this.ctx.strokeStyle
+      const baseWidth = this.ctx.lineWidth || 1
+      this.ctx.save()
+      this.ctx.lineJoin = 'round'
+      this.ctx.lineCap = 'round'
+      // Outline pass
+      this.ctx.strokeStyle = 'rgba(255,255,255,0.95)'
+      this.ctx.lineWidth = baseWidth + 4
       this.ctx.stroke()
+      // Foreground pass
+      this.ctx.strokeStyle = baseColor
+      this.ctx.lineWidth = baseWidth
+      this.ctx.stroke()
+      this.ctx.restore()
       
       if (this.selectedAnnotation?.annotation_id === annotation.annotation_id) {
         this.ctx.fill()
@@ -1481,17 +1531,29 @@ export default {
       if (!this.currentShape) return
 
       this.ctx.strokeStyle = '#007bff'
-      this.ctx.lineWidth = 2
+      this.ctx.lineWidth = 4
       
       const scaled = this.scaleAnnotation(this.currentShape)
+      // Outline + foreground pass for stronger visibility while drawing
+      const baseColor = this.ctx.strokeStyle
+      const baseWidth = this.ctx.lineWidth || 1
+      this.ctx.save()
+      this.ctx.lineJoin = 'round'
+      this.ctx.lineCap = 'round'
+      this.ctx.strokeStyle = 'rgba(255,255,255,0.95)'
+      this.ctx.lineWidth = baseWidth + 4
       this.ctx.strokeRect(scaled.x, scaled.y, scaled.w, scaled.h)
+      this.ctx.strokeStyle = baseColor
+      this.ctx.lineWidth = baseWidth
+      this.ctx.strokeRect(scaled.x, scaled.y, scaled.w, scaled.h)
+      this.ctx.restore()
     },
 
     drawPolygonInProgress() {
       if (this.polygonPoints.length < 2) return
 
       this.ctx.strokeStyle = '#007bff'
-      this.ctx.lineWidth = 2
+      this.ctx.lineWidth = 4
       this.ctx.setLineDash([5, 5])
 
       // Use stored display dimensions if available, otherwise fallback to canvas dimensions
@@ -1508,8 +1570,21 @@ export default {
         const point = this.polygonPoints[i]
         this.ctx.lineTo(offsetX + (point.x / 100) * displayWidth, offsetY + (point.y / 100) * displayHeight)
       }
-
+      // Outline + foreground dashed strokes
+      const baseColor = this.ctx.strokeStyle
+      const baseWidth = this.ctx.lineWidth || 1
+      this.ctx.save()
+      this.ctx.lineJoin = 'round'
+      this.ctx.lineCap = 'round'
+      // Outline (dashed, wider)
+      this.ctx.strokeStyle = 'rgba(255,255,255,0.95)'
+      this.ctx.lineWidth = baseWidth + 4
       this.ctx.stroke()
+      // Foreground (dashed, colored)
+      this.ctx.strokeStyle = baseColor
+      this.ctx.lineWidth = baseWidth
+      this.ctx.stroke()
+      this.ctx.restore()
       this.ctx.setLineDash([])
     },
 
@@ -2895,6 +2970,7 @@ export default {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  object-position: center top;
   transform-origin: top left;
 }
 
