@@ -362,9 +362,7 @@ function getProjectUrl(projectId, path = 'overview', isPublished = true) {
                       >
                         <span class="text-mb fw-bold"
                           >P{{ project.project_id }}-
-                          {{
-                            truncateProjectName(project.project_name, 40)
-                          }}</span
+                          {{ project.project_name }}</span
                         >
                         <span
                           v-if="

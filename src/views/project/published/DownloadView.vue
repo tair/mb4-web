@@ -11,6 +11,7 @@ const projectId = route.params.id
 
 const isDownloading = ref(false)
 const downloadError = ref('')
+const downloadSuccess = ref('')
 
 onMounted(() => {
   projectStore.fetchProject(projectId)
@@ -19,6 +20,7 @@ onMounted(() => {
 async function downloadProject() {
   isDownloading.value = true
   downloadError.value = ''
+  downloadSuccess.value = ''
 
   try {
     console.log('Downloading project:', projectId)
@@ -55,6 +57,8 @@ async function downloadProject() {
       link.download = `project_${projectId}_sdd.zip`
       link.click()
       URL.revokeObjectURL(link.href)
+      
+      downloadSuccess.value = 'Project download completed successfully!'
     } catch (blobError) {
       console.log('Blob processing error:', blobError.message)
       downloadError.value =
@@ -93,6 +97,10 @@ async function downloadProject() {
         <div v-if="downloadError" class="error-alert">
           <i class="fa-solid fa-exclamation-triangle"></i>
           <span>{{ downloadError }}</span>
+        </div>
+        <div v-if="downloadSuccess" class="success-alert">
+          <i class="fa-solid fa-check-circle"></i>
+          <span>{{ downloadSuccess }}</span>
         </div>
         <div class="download-button-container">
           <button
@@ -173,6 +181,23 @@ async function downloadProject() {
 }
 
 .error-alert i {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.success-alert {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.success-alert i {
   font-size: 16px;
   flex-shrink: 0;
 }
