@@ -582,12 +582,15 @@ onUnmounted(() => {
                 Upload an existing NEXUS or TNT file as the basis of your matrix
               </template>
             </legend>
-            <p v-if="uploadType === 'csv'">
-              Upload a CSV or Excel file containing your morphological matrix data.
-              The file will be automatically converted to NEXUS or TNT format.
-              Your matrix must have taxa as rows and characters as columns, with
-              character names as the first row.
-            </p>
+            <div v-if="uploadType === 'csv'" class="csv-upload-instructions">
+              <p>
+                Upload a CSV or Excel file containing your morphological matrix data. 
+                The file will be automatically converted to NEXUS or TNT format.
+              </p>
+              <p><strong>For continuous data:</strong> your matrix must have taxa as rows and characters as columns, with character names as the first row.</p>
+              <p><strong>For discrete data:</strong> your matrix must have taxa as rows and characters as columns, with character names in Row 1 and character states in Row 2 for each matched character column.</p>
+              <p><strong>Mixed continuous and discrete character CSV or Excel files are currently NOT handled.</strong></p>
+            </div>
             <p v-else>
               Note - your matrix must have character names for all the
               characters and these character names must each be different. If
@@ -1218,5 +1221,21 @@ div.matrix-confirmation-screen table td {
 
 .hidden-step {
   display: none !important;
+}
+
+.csv-upload-instructions {
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.csv-upload-instructions p {
+  margin-bottom: 10px;
+}
+
+.csv-upload-instructions p:last-child {
+  margin-bottom: 0;
 }
 </style>

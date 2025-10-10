@@ -65,8 +65,21 @@ export async function convertCsvToMatrix(file, projectId, showError) {
       }
     } catch (parseError) {
       console.error('Parse error details:', parseError)
-      console.error('Full content being parsed:', result.content)
-      throw new Error(`Failed to parse converted file: ${parseError.message}. The CSV/Excel file may have formatting issues.`)
+      
+      // Provide user-friendly error messages based on the error type
+      let userMessage = 'Failed to convert CSV/Excel file.'
+      
+      if (parseError.message.includes('Character information is missing')) {
+        userMessage = 'Character information is missing from your CSV/Excel file. Please ensure your file has character names in the first row (for continuous data) or character names in Row 1 and character states in Row 2 (for discrete data).'
+      } else if (parseError.message.includes('Character data is incomplete')) {
+        userMessage = 'Character and state information are missing or incomplete in your CSV/Excel file. Please check that your file follows the correct format with character names and states properly defined.'
+      } else if (parseError.message.includes('Cannot read properties of null')) {
+        userMessage = 'The converted matrix file is missing character or state definitions. Please ensure your CSV/Excel file has the correct structure with character names and state information.'
+      } else {
+        userMessage = `${parseError.message}. Please check your CSV/Excel file format and try again.`
+      }
+      
+      throw new Error(userMessage)
     }
   } catch (error) {
     console.error('Error converting CSV/Excel:', error)
