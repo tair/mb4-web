@@ -823,7 +823,7 @@ onUnmounted(() => {
                     <textarea
                       class="form-control"
                       v-model="editingCharacter.note"
-                      rows="5"
+                      rows="10"
                     ></textarea>
                   </div>
                   <div class="form-group" v-if="editingCharacter.states?.length > 0">
@@ -991,7 +991,7 @@ onUnmounted(() => {
                     <textarea
                       class="form-control"
                       v-model="editingTaxon.note"
-                      rows="5"
+                      rows="10"
                     ></textarea>
                   </div>
                 </div>

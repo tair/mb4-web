@@ -79,7 +79,7 @@ export class ImageViewerDialog extends Modal {
     
     
     // Always use annotation viewer title since annotations are always enabled
-    const title = published ? 'Media Annotation Viewer' : 'Media Annotation Editor'
+    const title = readonly ? 'Media Annotation Viewer' : 'Media Annotation Editor'
     this.setTitle(title)
     this.setDisposeOnHide(true)
   }
