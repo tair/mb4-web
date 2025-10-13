@@ -182,6 +182,17 @@ const PUBLISHED_PROJECT_DETAIL_VIEWS = [
       }
     },
   },
+  {
+    path: 'duplication/request',
+    name: 'ProjectDuplicationRequestView',
+    meta: {
+      itemName: 'duplication',
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "published" */ '@/views/project/duplication/RequestView.vue'
+      ),
+  },
 ]
 
 export { PUBLISHED_PROJECT_VIEWS, PUBLISHED_PROJECT_DETAIL_VIEWS }
