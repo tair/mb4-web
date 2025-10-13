@@ -203,7 +203,7 @@ function updateCopyrightPreference(preference) {
           <br />
           <a
             href="#"
-            @click="router.push(`/myprojects/${projectId}/taxa/extinct/edit`)"
+            @click="router.push(`/myprojects/${projectId}/taxa`)"
             class="text-primary"
             >Do this now &raquo;</a
           >
