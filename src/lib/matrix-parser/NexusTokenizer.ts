@@ -205,11 +205,6 @@ export class NexusTokenizer extends AbstractBaseTokenizer {
           // NOTE: When inside single quotes, double quotes are treated as regular characters
           // When inside double quotes, single quotes are treated as regular characters  
           cstring.push(character)
-          
-          // Safety check to prevent infinite loops
-          // if (cstring.length > 1000) {
-          //   throw new Error('Quoted string too long - missing closing quote')
-          // }
         }
         
         break
