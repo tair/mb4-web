@@ -164,7 +164,7 @@ export abstract class AbstractBaseTokenizer extends Tokenizer {
           
           // Safety check to prevent infinite loops
           if (cstring.length > 200) {
-            throw new Error('Quoted string too long - missing closing quote')
+            // throw new Error('Quoted string too long - missing closing quote')
           }
         }
         // After processing a complete quoted string, we should stop tokenizing

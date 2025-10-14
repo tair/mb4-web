@@ -207,9 +207,9 @@ export class NexusTokenizer extends AbstractBaseTokenizer {
           cstring.push(character)
           
           // Safety check to prevent infinite loops
-          if (cstring.length > 1000) {
-            throw new Error('Quoted string too long - missing closing quote')
-          }
+          // if (cstring.length > 1000) {
+          //   throw new Error('Quoted string too long - missing closing quote')
+          // }
         }
         
         break
