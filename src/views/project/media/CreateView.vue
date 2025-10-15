@@ -126,6 +126,12 @@ function validateRequiredFields(formData) {
       )
     }
 
+    // Validate that copyright_permission is not contradictory
+    // Value 4 = "Copyright expired or work otherwise in public domain"
+    if (copyrightPermissionValue === 4) {
+      errors.push('Cannot select "Copyright expired or work otherwise in public domain" when media is under copyright')
+    }
+
     // Check copyright_license - must not be the "not set" option (value 0)
     const copyrightLicense = formData.get('copyright_license')
     const copyrightLicenseValue = parseInt(String(copyrightLicense), 10)
@@ -134,6 +140,12 @@ function validateRequiredFields(formData) {
       errors.push(
         'Media reuse license must be selected when media is under copyright (cannot use "Media reuse policy not set")'
       )
+    }
+
+    // Validate that copyright_license is not contradictory
+    // Value 1 = "CC0 - relinquish copyright"
+    if (copyrightLicenseValue === 1) {
+      errors.push('Cannot select "CC0 - relinquish copyright" when media is under copyright')
     }
   }
 
@@ -158,6 +170,11 @@ async function createMedia(event) {
   if (isSubmitting.value) return // Prevent double submission
   
   const formData = new FormData(event.currentTarget)
+
+  // FIX: Explicitly set is_copyrighted to 0 if checkbox is unchecked
+  if (!formData.has('is_copyrighted')) {
+    formData.set('is_copyrighted', '0')
+  }
 
   // Validate required fields
   const errors = validateRequiredFields(formData)
