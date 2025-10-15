@@ -293,10 +293,15 @@ export const useAuthStore = defineStore({
 
         return true
       } catch (e) {
-        console.error(
-          `store:auth:resetpassword(): ${e}\n${e.response.data.message}`
-        )
-        this.err = e.response.data.message
+        // Use standardized error from apiService: prefer e.message, fallback to parsed data
+        let errMsg = 'Reset password failed.'
+        if (e && typeof e.message === 'string' && e.message.trim().length > 0) {
+          errMsg = e.message
+        } else if (e && e.data && typeof e.data.message === 'string' && e.data.message.trim().length > 0) {
+          errMsg = e.data.message
+        }
+        console.error(`store:auth:resetPassword(): ${errMsg}`)
+        this.err = errMsg
         return false
       } finally {
         this.loading = false
@@ -317,10 +322,14 @@ export const useAuthStore = defineStore({
 
         return true
       } catch (e) {
-        console.error(
-          `store:auth:resetpassword(): ${e}\n${e.response.data.message}`
-        )
-        this.err = e.response.data.message
+        let errMsg = 'Set new password failed.'
+        if (e && typeof e.message === 'string' && e.message.trim().length > 0) {
+          errMsg = e.message
+        } else if (e && e.data && typeof e.data.message === 'string' && e.data.message.trim().length > 0) {
+          errMsg = e.data.message
+        }
+        console.error(`store:auth:setNewPassword(): ${errMsg}`)
+        this.err = errMsg
         return false
       } finally {
         this.loading = false
