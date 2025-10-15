@@ -30,6 +30,46 @@ const menuCollapsed = ref({
   mediaEditModalPublication: true,
 })
 
+function validateFormData(formData: FormData) {
+  const errors: string[] = []
+  
+  // Conditional validation for copyright fields
+  const copyrightCheckbox = formData.get('is_copyrighted')
+  const isCopyrighted = copyrightCheckbox === '1' || copyrightCheckbox === 1
+  
+  if (isCopyrighted) {
+    // Check copyright_permission - must not be the default "not set" option (value 0)
+    const copyrightPermission = formData.get('copyright_permission')
+    const copyrightPermissionValue = parseInt(String(copyrightPermission), 10)
+    
+    if (isNaN(copyrightPermissionValue) || copyrightPermissionValue === 0) {
+      errors.push('Copyright permission must be selected when media is under copyright (cannot use "Copyright permission not set")')
+    }
+    
+    // Validate that copyright_permission is not contradictory
+    // Value 4 = "Copyright expired or work otherwise in public domain"
+    if (copyrightPermissionValue === 4) {
+      errors.push('Cannot select "Copyright expired or work otherwise in public domain" when media is under copyright')
+    }
+    
+    // Check copyright_license - must not be the default "not set" option (value 0)
+    const copyrightLicense = formData.get('copyright_license')
+    const copyrightLicenseValue = parseInt(String(copyrightLicense), 10)
+    
+    if (isNaN(copyrightLicenseValue) || copyrightLicenseValue === 0) {
+      errors.push('Media reuse license must be selected when media is under copyright (cannot use "Media reuse policy not set")')
+    }
+    
+    // Validate that copyright_license is not contradictory
+    // Value 1 = "CC0 - relinquish copyright"
+    if (copyrightLicenseValue === 1) {
+      errors.push('Cannot select "CC0 - relinquish copyright" when media is under copyright')
+    }
+  }
+  
+  return errors
+}
+
 async function handleSubmitClicked(event: Event) {
   if (isSubmitting.value) return // Prevent double submission
   
@@ -38,6 +78,20 @@ async function handleSubmitClicked(event: Event) {
   try {
     const target = event.currentTarget as any
     const formData = new FormData(target)
+    
+    // FIX: Explicitly set is_copyrighted to 0 if checkbox is unchecked
+    if (!formData.has('is_copyrighted')) {
+      formData.set('is_copyrighted', '0')
+    }
+    
+    // Validate form data
+    const errors = validateFormData(formData)
+    if (errors.length > 0) {
+      showError(errors.join('; '), 'Validation Error')
+      isSubmitting.value = false
+      return
+    }
+    
     const json = Object.fromEntries(formData)
     const success = await props.batchEdit(json)
     if (!success) {
