@@ -349,27 +349,29 @@
         <div class="loading-text">Loading image…</div>
       </div>
       
-      <!-- Annotation Labels -->
-      <div
-        v-for="(annotation, index) in annotations"
-        :key="annotation.annotation_id"
-        v-show="shouldShowLabel(annotation)"
-        :style="getAnnotationLabelStyle(annotation)"
-        :class="['annotation-label', { 
-          'selected': selectedAnnotation?.annotation_id === annotation.annotation_id,
-          'numbered-label': labelMode === 'numbers',
-          'text-label': labelMode === 'text',
-          'empty-placeholder': getDisplayLabelText(annotation) === '+'
-        }]"
-        @click="selectAnnotation(annotation)"
-        @dblclick="editAnnotation(annotation)"
-        @mousedown="startLabelDrag($event, annotation)"
-        :title="labelMode === 'numbers' ? `Annotation ${index + 1}: ${getDisplayLabelText(annotation)}` : (getDisplayLabelText(annotation) === '+' ? `Click to add label` : `Annotation ${annotation.annotation_id}: ${getDisplayLabelText(annotation)}`)"
-        @mouseenter="hoveredAnnotation = annotation"
-        @mouseleave="hoveredAnnotation = null"
-      >
-        <span v-if="labelMode === 'numbers'" class="annotation-number">{{ index + 1 }}</span>
-        <span v-else>{{ getDisplayLabelText(annotation) }}</span>
+      <!-- Annotation Labels Container - receives same transform as canvas/image -->
+      <div class="annotation-labels-container" ref="labelsContainer">
+        <div
+          v-for="(annotation, index) in annotations"
+          :key="annotation.annotation_id"
+          v-show="shouldShowLabel(annotation)"
+          :style="getAnnotationLabelStyle(annotation)"
+          :class="['annotation-label', { 
+            'selected': selectedAnnotation?.annotation_id === annotation.annotation_id,
+            'numbered-label': labelMode === 'numbers',
+            'text-label': labelMode === 'text',
+            'empty-placeholder': getDisplayLabelText(annotation) === '+'
+          }]"
+          @click="selectAnnotation(annotation)"
+          @dblclick="editAnnotation(annotation)"
+          @mousedown="startLabelDrag($event, annotation)"
+          :title="labelMode === 'numbers' ? `Annotation ${index + 1}: ${getDisplayLabelText(annotation)}` : (getDisplayLabelText(annotation) === '+' ? `Click to add label` : `Annotation ${annotation.annotation_id}: ${getDisplayLabelText(annotation)}`)"
+          @mouseenter="hoveredAnnotation = annotation"
+          @mouseleave="hoveredAnnotation = null"
+        >
+          <span v-if="labelMode === 'numbers'" class="annotation-number">{{ index + 1 }}</span>
+          <span v-else>{{ getDisplayLabelText(annotation) }}</span>
+        </div>
       </div>
       
       <!-- Hover Tooltip for numbered mode -->
@@ -1135,27 +1137,27 @@ export default {
     updateImageTransform() {
       const img = this.$refs.mediaImage
       const canvas = this.canvas
+      const labelsContainer = this.$refs.labelsContainer
       
       // Don't apply transform if elements don't exist yet
       if (!img) return
       
       const transform = `scale(${this.viewerZoom}) translate(${this.viewerOffset.x}px, ${this.viewerOffset.y}px)`
       
-      // Apply the same transform to both image and canvas
+      // Apply the same transform to image, canvas, AND labels container
+      // This keeps everything perfectly in sync
       img.style.transform = transform
       if (canvas) {
         canvas.style.transform = transform
+      }
+      if (labelsContainer) {
+        labelsContainer.style.transform = transform
       }
       
       // Update viewport indicator in overview
       this.updateViewportIndicator()
       
-      // Only force label position update when needed
-      if (this.annotations.length > 0) {
-        this.$nextTick(() => {
-          this.$forceUpdate()
-        })
-      }
+      // No need to force update anymore - CSS transforms handle positioning automatically
     },
 
     // Mouse event handlers
@@ -2169,9 +2171,6 @@ export default {
       const img = this.$refs.mediaImage
       const container = this.$refs.canvasContainer
       
-      // Get container dimensions 
-      const containerRect = container.getBoundingClientRect()
-      
       // Use the STORED display dimensions from setupCanvas to ensure consistency
       const displayWidth = this.canvasDisplayWidth
       const displayHeight = this.canvasDisplayHeight  
@@ -2188,31 +2187,22 @@ export default {
       const xPercent = labelPosition.x / 100
       const yPercent = labelPosition.y / 100
       
-      // The key insight: The image element fills the container, and transform applies to the container
-      // So we need to calculate position relative to the container, not the fitted image
-      const containerWidth = container.clientWidth
-      const containerHeight = container.clientHeight
+      // Calculate base position in fitted image coordinate space
+      // The labels container will receive the SAME CSS transform as the canvas,
+      // so we only need to provide base coordinates here - zoom/pan handled by CSS
+      const labelX = offsetX + (xPercent * displayWidth)
+      const labelY = offsetY + (yPercent * displayHeight)
       
-      // Position within the fitted image area
-      const imageX = offsetX + (xPercent * displayWidth)
-      const imageY = offsetY + (yPercent * displayHeight)
-      
-      // Transform applies to the entire container from origin (0,0)
-      // scale(zoom) translate(offset) means:
-      // 1. Scale the entire container (including empty space)
-      // 2. Then translate
-      // Since translate comes AFTER scale in the CSS transform, the offset values are multiplied by zoom
-      const labelX = (imageX * this.viewerZoom) + (this.viewerOffset.x * this.viewerZoom)
-      const labelY = (imageY * this.viewerZoom) + (this.viewerOffset.y * this.viewerZoom)
-      
-      
-      
+      // Apply inverse scale to counteract the container's zoom scaling
+      // This keeps labels at their original size regardless of zoom level
+      const inverseScale = 1 / this.viewerZoom
       
       const style = {
         position: 'absolute',
         left: `${labelX}px`,
         top: `${labelY}px`,
-        transform: 'translateX(-50%)', // Center the label horizontally
+        transform: `translate(-50%, -50%) scale(${inverseScale})`,
+        transformOrigin: 'center center',
         zIndex: 999,
         background: 'rgba(255, 255, 255, 0.95)',
         border: '3px solid #007bff',
@@ -2227,8 +2217,6 @@ export default {
         minWidth: '100px',
         textAlign: 'center'
       }
-      
-      
       
       return style
     },
@@ -3069,6 +3057,17 @@ export default {
   left: 0;
   pointer-events: auto;
   z-index: 10;
+  transform-origin: top left;
+}
+
+.annotation-labels-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 20;
   transform-origin: top left;
 }
 
