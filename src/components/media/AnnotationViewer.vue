@@ -118,12 +118,89 @@
         <div class="help-content">
           <h4 class="help-title">Annotation Tools Help</h4>
           
+          <!-- Keyboard Shortcuts Section (shown first for prominence) -->
+          <div class="help-section keyboard-shortcuts-section">
+            <h5>⌨️ Keyboard Shortcuts</h5>
+            
+            <div class="shortcuts-group">
+              <h6>General</h6>
+              <div class="help-item shortcut-item">
+                <kbd>?</kbd>
+                <span class="shortcut-description">Toggle this help dialog</span>
+              </div>
+              <div class="help-item shortcut-item">
+                <kbd>Esc</kbd>
+                <span class="shortcut-description">Close help / Switch to Pan tool</span>
+              </div>
+            </div>
+
+            <div class="shortcuts-group">
+              <h6>Label Display</h6>
+              <div class="help-item shortcut-item">
+                <kbd>Tab</kbd>
+                <span class="shortcut-description">Toggle hide all labels</span>
+              </div>
+              <div class="help-item shortcut-item">
+                <kbd>L</kbd>
+                <span class="shortcut-description">Toggle labels panel</span>
+              </div>
+              <div class="help-item shortcut-item">
+                <kbd>N</kbd>
+                <span class="shortcut-description">Toggle number/text label mode</span>
+              </div>
+            </div>
+
+            <div class="shortcuts-group">
+              <h6>Zoom</h6>
+              <div class="help-item shortcut-item">
+                <kbd>+</kbd> or <kbd>=</kbd>
+                <span class="shortcut-description">Zoom in</span>
+              </div>
+              <div class="help-item shortcut-item">
+                <kbd>-</kbd>
+                <span class="shortcut-description">Zoom out</span>
+              </div>
+              <div class="help-item shortcut-item">
+                <kbd>0</kbd>
+                <span class="shortcut-description">Reset zoom</span>
+              </div>
+              <div class="help-item shortcut-item">
+                <span class="help-icon-display" style="font-size: 14px;">🖱️</span>
+                <span class="shortcut-description">Mouse wheel to zoom in/out</span>
+              </div>
+            </div>
+
+            <div v-if="canEdit" class="shortcuts-group">
+              <h6>Drawing Tools</h6>
+              <div class="help-item shortcut-item">
+                <kbd>R</kbd>
+                <span class="shortcut-description">Rectangle tool</span>
+              </div>
+              <div class="help-item shortcut-item">
+                <kbd>P</kbd>
+                <span class="shortcut-description">Point tool</span>
+              </div>
+              <div class="help-item shortcut-item">
+                <kbd>G</kbd>
+                <span class="shortcut-description">Polygon tool</span>
+              </div>
+            </div>
+
+            <div v-if="canEdit" class="shortcuts-group">
+              <h6>Editing</h6>
+              <div class="help-item shortcut-item">
+                <kbd>Delete</kbd> or <kbd>Backspace</kbd>
+                <span class="shortcut-description">Delete selected annotation</span>
+              </div>
+            </div>
+          </div>
+
           <div class="help-section">
             <h5>Navigation Tools</h5>
             <div class="help-item">
               <span class="help-icon-display">✋</span>
               <div class="help-text">
-                <strong>Pan Tool</strong> - Click and drag to move around the image. Click on annotations to select them. (Shortcut: Esc)
+                <strong>Pan Tool</strong> - Click and drag to move around the image. Click on annotations to select them.
               </div>
             </div>
           </div>
@@ -133,19 +210,19 @@
             <div class="help-item">
               <span class="help-icon-display">▢</span>
               <div class="help-text">
-                <strong>Rectangle</strong> - Click and drag to draw rectangular annotations. (Shortcut: R)
+                <strong>Rectangle</strong> - Click and drag to draw rectangular annotations.
               </div>
             </div>
             <div class="help-item">
               <span class="help-icon-display">●</span>
               <div class="help-text">
-                <strong>Point</strong> - Click to place point annotations at specific locations. (Shortcut: P)
+                <strong>Point</strong> - Click to place point annotations at specific locations.
               </div>
             </div>
             <div class="help-item">
               <span class="help-icon-display">▲</span>
               <div class="help-text">
-                <strong>Polygon</strong> - Click multiple points to create polygon shapes. Right-click or click near the start to finish. (Shortcut: G)
+                <strong>Polygon</strong> - Click multiple points to create polygon shapes. Right-click or click near the start to finish.
               </div>
             </div>
           </div>
@@ -170,19 +247,7 @@
                 <strong>Reset Zoom</strong> - Return to original size and position
               </div>
             </div>
-                          <div class="help-item">
-                <span class="help-icon-display">🖱️</span>
-                <div class="help-text">
-                  <strong>Mouse Wheel</strong> - Scroll to zoom in/out
-                </div>
-              </div>
-              <!-- <div class="help-item">
-                <span class="help-icon-display">🗺️</span>
-                <div class="help-text">
-                  <strong>Overview</strong> - Show image overview with current viewport. Click anywhere in overview to pan to that location.
-                </div>
-              </div> -->
-            </div>
+          </div>
 
           <div v-if="canEdit" class="help-section">
             <h5>Actions</h5>
@@ -408,33 +473,6 @@
           :style="getViewportIndicatorStyle()"
         ></div>
       </div>
-    </div>
-
-    <!-- Annotation Status -->
-    <div class="annotation-status">
-      <span class="annotation-count">
-        {{ annotations.length }} annotation{{ annotations.length === 1 ? '' : 's' }}
-        <span v-if="!canEdit && annotations.length > 0" class="readonly-indicator">
-          (read-only)
-        </span>
-      </span>
-      <span v-if="saveStatus" class="save-status" :class="saveStatus.type">
-        {{ saveStatus.message }}
-      </span>
-    </div>
-
-    <!-- Keyboard Shortcuts Help -->
-    <div v-if="canEdit && showKeyboardHints" class="keyboard-hints">
-      <small>
-        Shortcuts: R=Rectangle, P=Point, G=Polygon, Esc=Pan, Delete=Remove selected
-      </small>
-    </div>
-    
-    <!-- Universal Shortcuts Help (for all users) -->
-    <div v-else-if="showKeyboardHints" class="keyboard-hints">
-      <small>
-        Shortcuts: Mouse wheel=Zoom, Click+drag=Pan (when pan tool selected)
-      </small>
     </div>
 
     <!-- Edit Annotation Modal -->
@@ -1960,6 +1998,61 @@ export default {
         return
       }
 
+      // Universal shortcuts (available to all users)
+      switch (event.code) {
+        case 'Tab':
+          // Tab - Toggle hide all labels
+          event.preventDefault()
+          this.toggleHideAllLabels()
+          return
+        case 'KeyL':
+          // L - Toggle labels panel
+          event.preventDefault()
+          this.toggleLabelsPanel()
+          return
+        case 'KeyN':
+          // N - Toggle number/text mode
+          event.preventDefault()
+          this.toggleLabelMode()
+          return
+        case 'Equal':
+        case 'NumpadAdd':
+          // + or = - Zoom in
+          event.preventDefault()
+          this.zoomIn()
+          return
+        case 'Minus':
+        case 'NumpadSubtract':
+          // - - Zoom out
+          event.preventDefault()
+          this.zoomOut()
+          return
+        case 'Digit0':
+        case 'Numpad0':
+          // 0 - Reset zoom
+          event.preventDefault()
+          this.resetZoom()
+          return
+        case 'Slash':
+          // ? (shift+/) - Toggle help
+          if (event.shiftKey) {
+            event.preventDefault()
+            this.toggleHelp()
+            return
+          }
+          break
+        case 'Escape':
+          // Escape - Set pan tool OR close help dialog if open
+          event.preventDefault()
+          if (this.showHelp) {
+            this.showHelp = false
+          } else if (this.canEdit) {
+            this.setTool('pan')
+          }
+          return
+      }
+
+      // Editor-only shortcuts
       if (!this.canEdit) return
 
       switch (event.code) {
@@ -1974,10 +2067,6 @@ export default {
         case 'KeyG':
           event.preventDefault()
           this.setTool('poly')
-          break
-        case 'Escape':
-          event.preventDefault()
-          this.setTool('pan')
           break
         case 'Delete':
         case 'Backspace':
@@ -3224,6 +3313,78 @@ export default {
 .help-text strong {
   color: #333;
   font-weight: 600;
+}
+
+/* Keyboard shortcuts specific styles */
+.keyboard-shortcuts-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.keyboard-shortcuts-section h5 {
+  margin-bottom: 16px;
+  font-size: 16px;
+}
+
+.shortcuts-group {
+  margin-bottom: 16px;
+}
+
+.shortcuts-group:last-child {
+  margin-bottom: 0;
+}
+
+.shortcuts-group h6 {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.shortcut-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding: 6px 8px;
+  background: white;
+  border-radius: 4px;
+}
+
+.shortcut-item:hover {
+  background: #f8f9fa;
+}
+
+.shortcut-item:last-child {
+  margin-bottom: 0;
+}
+
+.shortcut-description {
+  flex: 1;
+  font-size: 13px;
+  color: #495057;
+}
+
+kbd {
+  display: inline-block;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #333;
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  font-family: 'Monaco', 'Courier New', monospace;
+  white-space: nowrap;
+  min-width: 24px;
+  text-align: center;
 }
 
 /* Overview panel styles */
