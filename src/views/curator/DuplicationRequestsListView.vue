@@ -44,10 +44,11 @@ async function loadRequests() {
     params.append('limit', pagination.value.limit)
     
     const response = await apiService.get(`/duplication-requests?${params}`)
+    const data = await response.json()
     
-    if (response.data.success) {
-      requests.value = response.data.data.requests
-      pagination.value = response.data.data.pagination
+    if (data.success) {
+      requests.value = data.data.requests
+      pagination.value = data.data.pagination
     }
   } catch (error) {
     console.error('Error loading duplication requests:', error)

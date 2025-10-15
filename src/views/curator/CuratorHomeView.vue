@@ -19,8 +19,9 @@ const stats = ref({
 onMounted(async () => {
   try {
     const response = await apiService.get('/duplication-requests/stats?limit=10')
-    if (response.data.success) {
-      stats.value = response.data.data
+    const data = await response.json()
+    if (data.success) {
+      stats.value = data.data
     }
   } catch (error) {
     console.error('Error loading curator stats:', error)
