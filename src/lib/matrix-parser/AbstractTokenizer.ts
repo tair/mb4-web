@@ -161,11 +161,6 @@ export abstract class AbstractBaseTokenizer extends Tokenizer {
           // NOTE: When inside single quotes, double quotes are treated as regular characters
           // When inside double quotes, single quotes are treated as regular characters  
           cstring.push(character)
-          
-          // Safety check to prevent infinite loops
-          if (cstring.length > 200) {
-            throw new Error('Quoted string too long - missing closing quote')
-          }
         }
         // After processing a complete quoted string, we should stop tokenizing
         // and return this token immediately, regardless of what follows

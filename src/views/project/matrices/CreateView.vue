@@ -12,6 +12,7 @@ import { getIncompleteStateText } from '@/lib/matrix-parser/text.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
 import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
 import { getTaxonomicUnitOptions } from '@/utils/taxa'
+import { convertCsvToMatrix } from '@/utils/csvConverter.js'
 import router from '@/router'
 import { apiService } from '@/services/apiService.js'
 
@@ -24,6 +25,8 @@ const { showError, showSuccess } = useNotifications()
 const uploadError = ref('')
 const uploadTask = ref({ id: null, status: null })
 const projectId = route.params.id
+const isConvertingCsv = ref(false)
+const uploadType = computed(() => route.query.uploadType || 'nexus')
 
 // Taxonomic unit options for dropdown
 const taxonomicUnits = getTaxonomicUnitOptions()
@@ -178,13 +181,22 @@ function saveEditedTaxon() {
 }
 
 async function importMatrix(event) {
-  const parser = await import('@/lib/matrix-parser/parseMatrix.ts')
   const files = event.target?.files
   if (files == null || files.length == 0) {
     return
   }
 
   const file = files[0]
+  
+  // Check if this is a CSV/Excel file that needs conversion
+  const fileExt = file.name.toLowerCase().split('.').pop()
+  if (uploadType.value === 'csv' && (fileExt === 'csv' || fileExt === 'xlsx')) {
+    await handleCsvConversion(file)
+    return
+  }
+
+  // Normal NEX/TNT file processing
+  const parser = await import('@/lib/matrix-parser/parseMatrix.ts')
   const reader = new FileReader()
   reader.onload = function () {
     const matrixObject = parser.parseMatrix(reader.result)
@@ -196,6 +208,26 @@ async function importMatrix(event) {
   }
 
   reader.readAsBinaryString(file)
+}
+
+async function handleCsvConversion(file) {
+  isConvertingCsv.value = true
+  uploadError.value = ''
+
+  try {
+    const { matrixObject, result } = await convertCsvToMatrix(file, projectId, showError)
+    Object.assign(importedMatrix, matrixObject)
+    showSuccess(`Successfully converted ${file.name} to ${result.format.toUpperCase()} format`)
+  } catch (error) {
+    // Error already handled and displayed by convertCsvToMatrix
+    // Clear the file input
+    const fileInput = document.getElementById('upload')
+    if (fileInput) {
+      fileInput.value = ''
+    }
+  } finally {
+    isConvertingCsv.value = false
+  }
 }
 
 function moveUpload() {
@@ -543,27 +575,50 @@ onUnmounted(() => {
 
           <fieldset class="form-group border p-3">
             <legend class="w-auto px-2">
-              Upload an existing NEXUS or TNT file as the basis of your matrix
+              <template v-if="uploadType === 'csv'">
+                Upload a CSV or Excel file to convert and create your matrix
+              </template>
+              <template v-else>
+                Upload an existing NEXUS or TNT file as the basis of your matrix
+              </template>
             </legend>
-            <p>
+            <div v-if="uploadType === 'csv'" class="csv-upload-instructions">
+              <p>
+                Upload a CSV or Excel file containing your morphological matrix data. 
+                The file will be automatically converted to NEXUS or TNT format.
+              </p>
+              <p><strong>For continuous data:</strong> your matrix must have taxa as rows and characters as columns, with character names as the first row.</p>
+              <p><strong>For discrete data:</strong> your matrix must have taxa as rows and characters as columns, with character names in Row 1 and character states in Row 2 for each matched character column.</p>
+              <p><strong>Mixed continuous and discrete character CSV or Excel files are currently NOT handled.</strong></p>
+            </div>
+            <p v-else>
               Note - your matrix must have character names for all the
               characters and these character names must each be different. If
               this is a file with combined molecular and morphological data, or
               molecular data only, it must be submitted to the Documents area.
             </p>
             <div class="form-group">
-              <label for="matrix-notes"
-                >NEXUS or TNT file to add to matrix</label
-              >
+              <label for="matrix-notes">
+                <template v-if="uploadType === 'csv'">
+                  CSV or Excel file to convert and add to matrix
+                </template>
+                <template v-else>
+                  NEXUS or TNT file to add to matrix
+                </template>
+              </label>
               <input
                 type="file"
                 id="upload"
                 name="upload"
-                accept=".nex,.nexus,.tnt"
+                :accept="uploadType === 'csv' ? '.csv,.xlsx' : '.nex,.nexus,.tnt'"
                 class="form-control"
                 @change="importMatrix"
                 required="required"
               />
+              <small v-if="isConvertingCsv" class="text-info d-block mt-2">
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                Converting CSV/Excel file to matrix format...
+              </small>
             </div>
             <div class="form-group">
               <label for="item-notes"
@@ -584,16 +639,18 @@ onUnmounted(() => {
             <button
               class="btn btn-primary btn-step-next"
               type="submit"
-              :disabled="isUploading || isProcessingMatrix"
+              :disabled="isUploading || isProcessingMatrix || isConvertingCsv"
             >
               <span
-                v-if="isProcessingMatrix"
+                v-if="isProcessingMatrix || isConvertingCsv"
                 class="spinner-border spinner-border-sm me-2"
                 role="status"
                 aria-hidden="true"
               ></span>
               {{
-                isProcessingMatrix
+                isConvertingCsv
+                  ? 'Converting...'
+                  : isProcessingMatrix
                   ? 'Parsing...'
                   : isUploading
                   ? 'Uploading...'
@@ -1164,5 +1221,21 @@ div.matrix-confirmation-screen table td {
 
 .hidden-step {
   display: none !important;
+}
+
+.csv-upload-instructions {
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.csv-upload-instructions p {
+  margin-bottom: 10px;
+}
+
+.csv-upload-instructions p:last-child {
+  margin-bottom: 0;
 }
 </style>

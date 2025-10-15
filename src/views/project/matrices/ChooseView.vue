@@ -44,6 +44,14 @@ const projectId = route.params.id
           Create a matrix by uploading an existing Nexus or TNT file
         </RouterLink>
       </div>
+      <div class="matrix-choose-item">
+        <RouterLink
+          class="matrix-choose-link"
+          :to="`/myprojects/${projectId}/matrices/create?uploadType=csv`"
+        >
+          Create a matrix by uploading a CSV or Excel file
+        </RouterLink>
+      </div>
     </div>
   </div>
 </template>
