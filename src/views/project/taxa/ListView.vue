@@ -220,8 +220,8 @@ function validateSelectedTaxaAtPbdb() {
           <span> Import File</span>
         </button>
       </RouterLink>
-      <RouterLink :to="`/myprojects/${projectId}/taxa/extinct/edit`">
-        <button type="button" class="btn btn-m btn-outline-primary" @click.prevent="$router.push({ name: 'MyProjectTaxaExtinctEditView', params: { id: projectId } })">
+      <RouterLink :to="{ name: 'MyProjectTaxaExtinctEditView', params: { id: projectId } }">
+        <button type="button" class="btn btn-m btn-outline-primary">
           <span class="extinct-icon">†</span>
           <span> Edit Extinct Taxa</span>
         </button>
@@ -358,12 +358,14 @@ function validateSelectedTaxaAtPbdb() {
         </div>
       </div>
       <div class="selection-bar">
-        <label class="item">
+        <label class="item" title="Select all">
           <input
             type="checkbox"
             class="form-check-input"
             v-model="allSelected"
             :indeterminate.prop="someSelected && !allSelected"
+            aria-label="Select all items"
+            title="Select all"
           />
         </label>
         <span v-if="!someSelected" class="item" @click="refresh">

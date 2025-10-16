@@ -1235,12 +1235,14 @@ function fixMediaWithoutViews() {
 
       <!-- Selection Bar for batch operations -->
       <div v-if="someSelected" class="selection-bar mb-3">
-        <label class="item">
+        <label class="item" title="Select all">
           <input
             type="checkbox"
             class="form-check-input"
             v-model="allSelected"
             :indeterminate.prop="someSelected && !allSelected"
+            aria-label="Select all items"
+            title="Select all"
           />
           <span class="ms-1">{{
             someSelected
