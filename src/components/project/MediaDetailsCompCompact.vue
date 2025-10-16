@@ -11,6 +11,7 @@ import MediaViewPanel from './MediaViewPanel.vue'
 import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 import { buildMediaUrl } from '@/utils/fileUtils.js'
 import annotationService from '@/services/annotationService.js'
+import { apiService } from '@/services/apiService.js'
 
 // Lazy load the annotation viewer for the zoom modal only
 const AnnotationViewer = defineAsyncComponent({
@@ -90,6 +91,11 @@ const videoPlayer = ref(null)
 const viewStatsTooltipText = getViewStatsTooltipText()
 const downloadTooltipText = getDownloadTooltipText()
 
+// Video URL state (for pre-signed URLs)
+const videoUrl = ref(null)
+const loadingVideoUrl = ref(false)
+const videoUrlError = ref(null)
+
 // Preload annotations to avoid race condition
 const preloadAnnotations = async () => {
   if (!showAnnotations.value || annotationsLoaded.value) return
@@ -111,6 +117,44 @@ const preloadAnnotations = async () => {
   }
 }
 
+// Fetch pre-signed URL for video files
+const fetchVideoUrl = async () => {
+  if (!isVideoFile.value || !props.project_id || !props.media_file?.media_id) {
+    return
+  }
+
+  loadingVideoUrl.value = true
+  videoUrlError.value = null
+  videoUrl.value = null
+
+  try {
+    const response = await apiService.get(
+      `/public/media/${props.project_id}/video-url/${props.media_file.media_id}`
+    )
+    const data = await response.json()
+    
+    if (data.success && data.url) {
+      videoUrl.value = data.url
+    } else {
+      throw new Error('Failed to get video URL')
+    }
+  } catch (error) {
+    console.error('Error fetching video URL:', error)
+    videoUrlError.value = 'Failed to load video. Please try again.'
+    // Fallback to direct URL (will still have issues but shows error)
+    videoUrl.value = buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
+  } finally {
+    loadingVideoUrl.value = false
+  }
+}
+
+// Watch for zoom modal opening and fetch video URL if needed
+watch(showZoomModal, (newValue) => {
+  if (newValue && isVideoFile.value) {
+    fetchVideoUrl()
+  }
+})
+
 // Reset annotation state when modal closes
 const onModalClose = () => {
   showZoomModal.value = false
@@ -118,6 +162,11 @@ const onModalClose = () => {
   annotationCount.value = 0
   // Reset 3D format attempt index for next time
   currentExtensionIndex.value = 0
+  // Clear video URL when modal closes to save memory
+  if (isVideoFile.value) {
+    videoUrl.value = null
+    videoUrlError.value = null
+  }
 }
 
 // Check if the media file is a 3D file - ROBUST DETECTION
@@ -319,14 +368,6 @@ const modelUrl = computed(() => {
   return null
 })
 
-// Get the video URL for video player
-const videoUrl = computed(() => {
-  if (isVideoFile.value) {
-    return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
-  }
-  return null
-})
-
 // Get the MIME type for the video (prefer server-provided MIME)
 const videoMimeType = computed(() => {
   const mediaData = props.media_file?.media || props.media_file || {}
@@ -513,33 +554,55 @@ const onAnnotationsSaved = () => {
 }
 
 async function confirmDownload(fileSize, fileName) {
-  // if (!isCaptchaVerified) {
-  //   alert("Please complete the CAPTCHA");
-  //   return;
-  // }
   // CAPTCHA is completed, proceed with the download
   // For 3D files, videos, and TIFF files, always download the original file regardless of requested size
   const downloadSize = (is3DFile.value || isVideoFile.value || isOriginalTiffFile.value) ? 'original' : fileSize
-  const downloadUrl = buildMediaUrl(
-    props.project_id,
-    props.media_file?.media_id,
-    downloadSize
-  )
+  
+  let downloadUrl
   let downloadFileName = fileName
+  
+  // For videos, use pre-signed URL to avoid proxy timeout
+  if (isVideoFile.value) {
+    try {
+      const response = await apiService.get(
+        `/public/media/${props.project_id}/video-url/${props.media_file.media_id}`,
+        { params: { download: 'true' } }
+      )
+      const data = await response.json()
+      
+      if (data.success && data.url) {
+        downloadUrl = data.url
+        // Use the filename from the response if available
+        if (data.filename && !downloadFileName) {
+          downloadFileName = data.filename
+        }
+      } else {
+        throw new Error('Failed to get video download URL')
+      }
+    } catch (error) {
+      console.error('Error fetching video download URL:', error)
+      alert('Failed to download video. Please try again.')
+      return
+    }
+  } else {
+    // For non-video files, use regular URL
+    downloadUrl = buildMediaUrl(
+      props.project_id,
+      props.media_file?.media_id,
+      downloadSize
+    )
+  }
+  
   if (!downloadFileName) {
     downloadFileName = getLastElementFromUrl(downloadUrl)
   }
-  // TODO: create download blob after put the media file behind the API
-  // const response = await fetch(downloadUrl);
-  // const blob = await response.blob();
-  // const url = URL.createObjectURL(blob);
+  
   const link = document.createElement('a')
   link.href = downloadUrl
   link.download = downloadFileName
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
-  // URL.revokeObjectURL(url);
 
   showDownloadModal.value = false
   logDownload({
@@ -644,7 +707,19 @@ function getHitsMessage(mediaObj) {
                 />
                 <!-- Video Player for video files -->
                 <div v-else-if="isVideoFile" class="video-player-container">
+                  <!-- Loading state -->
+                  <div v-if="loadingVideoUrl" class="video-loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading video...</p>
+                  </div>
+                  <!-- Error state -->
+                  <div v-else-if="videoUrlError" class="video-error">
+                    <p>{{ videoUrlError }}</p>
+                    <button @click="fetchVideoUrl" class="btn btn-primary btn-sm">Retry</button>
+                  </div>
+                  <!-- Video player -->
                   <video
+                    v-else-if="videoUrl"
                     ref="videoPlayer"
                     controls
                     preload="auto"
@@ -985,6 +1060,36 @@ p {
   width: auto;
   height: auto;
   border-radius: 4px;
+}
+
+/* Video loading and error states */
+.video-loading,
+.video-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: #fff;
+  text-align: center;
+}
+
+.video-loading .loading-spinner {
+  border: 4px solid #333;
+  border-top: 4px solid #fff;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.video-error {
+  color: #ff6b6b;
+}
+
+.video-error p {
+  margin-bottom: 1rem;
 }
 
 /* Annotation loading states */
