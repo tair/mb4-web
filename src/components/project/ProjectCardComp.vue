@@ -8,16 +8,6 @@ const props = defineProps({
   project: Object,
 })
 
-// Extract media ID from filename
-const mediaId = computed(() => {
-  const filename = props.project?.image_props?.media?.FILENAME
-  if (!filename) {
-    return null
-  }
-  const match = filename.match(/media_files_media_(\d+)_preview/)
-  return match ? match[1] : null
-})
-
 // Check if this is a 3D media file using USE_ICON
 const is3DFile = computed(() => {
   return props.project?.image_props?.media?.USE_ICON === '3d'
@@ -33,14 +23,36 @@ const journalCoverUrl = computed(() => {
 
 // Get the appropriate media URL (3D icon for 3D media, image URL for others)
 const mediaUrl = computed(() => {
+  const imageProps = props.project?.image_props
+  
   // Check if this is a 3D file that should use the 3D icon
   if (is3DFile.value) {
     return '/images/3DImage.png'
   }
 
-  // For regular images, use the large variant if we have mediaId
-  if (mediaId.value) {
-    return buildMediaUrl(props.project.project_id, mediaId.value, 'large')
+  // First approach: Use S3_KEY directly if available (current format)
+  const s3Key = imageProps?.media?.S3_KEY
+  if (s3Key) {
+    // Replace thumbnail with large for better display quality
+    // S3_KEY format: media_files/images/{project_id}/{media_id}/{project_id}_{media_id}_{variant}.jpg
+    const largeS3Key = s3Key.replace(/_thumbnail\./, '_large.')
+    return apiService.buildUrl(`/s3/${largeS3Key}`)
+  }
+  
+  // Second approach: Extract media_id from FILENAME (legacy format)
+  const filename = imageProps?.media?.FILENAME
+  if (filename) {
+    // Match both _preview and _thumbnail formats
+    const match = filename.match(/media_files_media_(\d+)_(?:preview|thumbnail)/)
+    if (match) {
+      const mediaId = match[1]
+      return buildMediaUrl(props.project.project_id, mediaId, 'large')
+    }
+  }
+  
+  // Third approach: Use media_id directly if provided (future format after backend update)
+  if (imageProps?.media_id) {
+    return buildMediaUrl(props.project.project_id, imageProps.media_id, 'large')
   }
 
   return null
