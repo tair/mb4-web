@@ -892,7 +892,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/taxa/ExtinctTaxaEditView.vue'
       ),
-    beforeEnter: requireTaxonEditAccess,
+    beforeEnter: createEntityCreateGuard('taxon'),
   },
   {
     path: 'taxa/pbdb/import',

@@ -5,7 +5,7 @@ import { useTaxaStore } from '@/stores/TaxaStore'
 import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
 import { useNotifications } from '@/composables/useNotifications'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
-import { getTaxonName } from '@/utils/taxa'
+import { getTaxonName, sortTaxaAlphabetically, TaxaColumns } from '@/utils/taxa'
 import { useAuthStore } from '@/stores/AuthStore'
 import { AccessControlService, EntityType } from '@/lib/access-control.js'
 import { apiService } from '@/services/apiService.js'
@@ -43,23 +43,29 @@ function getTaxonEditability(taxon) {
   return false
 }
 
-// Enhanced taxa lists with access control info
-const livingTaxa = computed(() => 
-  taxaStore.taxa
-    .filter(taxon => !taxon.is_extinct)
-    .map(taxon => ({
-      ...taxon,
-      canEdit: getTaxonEditability(taxon)
-    }))
+// Enhanced taxa lists with access control info, sorted like taxa list page
+const livingTaxa = computed(() =>
+  sortTaxaAlphabetically(
+    taxaStore.taxa
+      .filter(taxon => !taxon.is_extinct)
+      .map(taxon => ({
+        ...taxon,
+        canEdit: getTaxonEditability(taxon),
+      })),
+    TaxaColumns.GENUS
+  )
 )
 
-const extinctTaxa = computed(() => 
-  taxaStore.taxa
-    .filter(taxon => taxon.is_extinct)
-    .map(taxon => ({
-      ...taxon,
-      canEdit: getTaxonEditability(taxon)
-    }))
+const extinctTaxa = computed(() =>
+  sortTaxaAlphabetically(
+    taxaStore.taxa
+      .filter(taxon => taxon.is_extinct)
+      .map(taxon => ({
+        ...taxon,
+        canEdit: getTaxonEditability(taxon),
+      })),
+    TaxaColumns.GENUS
+  )
 )
 
 // Selection state for multi-select
