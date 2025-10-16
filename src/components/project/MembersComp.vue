@@ -64,7 +64,7 @@ const isCurrentUserProjectAdmin = computed(() => {
             : user.membership_type == 1
             ? 'Observer (cannot edit)'
             : user.membership_type == 2
-            ? 'Character annotater (can edit everything but characters and states)'
+            ? 'Matrix scorer (cannot edit character or state names, can edit other data)'
             : user.membership_type == 3
             ? 'Bibliography maintainer (can edit bibliography only)'
             : ''

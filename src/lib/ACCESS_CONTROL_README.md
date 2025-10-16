@@ -23,7 +23,7 @@ The access control system consists of three main components:
 
 - **Type 0 (Full Member)** - Can edit all content types
 - **Type 1 (Observer)** - Cannot edit anything
-- **Type 2 (Character Annotator)** - Can edit characters/states but not taxa, specimens, media, etc.
+- **Type 2 (Matrix Scorer)** - Can create taxa, specimens, media, media views, folios, bibliographic references, and documents. Can score cells and add media/citations/comments to characters, but cannot edit character or state names or create new matrices.
 - **Type 3 (Bibliography Maintainer)** - Can only edit bibliographic references
 
 ### Access Levels:

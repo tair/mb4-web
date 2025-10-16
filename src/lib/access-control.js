@@ -7,7 +7,7 @@ import { useProjectUsersStore } from '@/stores/ProjectUsersStore.js'
 export const MembershipType = {
   ADMIN: 0, // Full membership (can edit everything)
   OBSERVER: 1, // Observer (cannot edit)
-  CHARACTER_ANNOTATOR: 2, // Character annotator (can edit everything but characters and states)
+  CHARACTER_ANNOTATOR: 2, // Matrix scorer (cannot edit character or state names, can edit other data)
   BIBLIOGRAPHY_MAINTAINER: 3, // Bibliography maintainer (can edit bibliography only)
 }
 
@@ -214,14 +214,22 @@ export class AccessControlService {
         }
 
       case MembershipType.CHARACTER_ANNOTATOR: {
-        // Only matrix module creations allowed
-        if (entityType === EntityType.MATRIX) {
+        // Matrix Scorers can create taxa, specimens, media, views, folios, bibliography, and documents
+        if (entityType === EntityType.MATRIX || 
+            entityType === EntityType.TAXON ||
+            entityType === EntityType.SPECIMEN ||
+            entityType === EntityType.MEDIA ||
+            entityType === EntityType.MEDIA_VIEW ||
+            entityType === EntityType.FOLIO ||
+            entityType === EntityType.BIBLIOGRAPHIC_REFERENCE ||
+            entityType === EntityType.PROJECT_DOCUMENT ||
+            entityType === EntityType.PROJECT_DOCUMENT_FOLDER) {
           return { canCreate: true, shouldRedirect: false, level: 'character_annotator' }
         }
         return {
           canCreate: false,
           shouldRedirect: false,
-          reason: 'Character annotators may only create matrix content',
+          reason: 'Matrix scorers may only create taxa, specimens, media, views, folios, bibliography, documents, and matrix content',
           level: 'character_annotator_restricted',
         }
       }
@@ -328,7 +336,7 @@ export class AccessControlService {
         return {
           canEdit: false,
           shouldRedirect: false, // allow view-only rendering
-          reason: 'Character annotators may only edit matrix content',
+          reason: 'Matrix scorers may only edit matrix content',
           level: 'character_annotator_restricted',
         }
 
@@ -473,7 +481,7 @@ export class AccessControlService {
           return {
             type: 'error',
             message:
-              'You have Character Annotator status and cannot edit this type of content.',
+              'You have Matrix Scorer status and cannot edit this type of content.',
           }
         case 'bibliography_maintainer_restricted':
           return {

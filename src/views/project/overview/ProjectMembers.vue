@@ -114,9 +114,9 @@ const props = defineProps<{
                 Observer <Tooltip content="cannot edit"></Tooltip
               ></small>
               <small v-else-if="member.member_role == '2'">
-                Character annotater
+                Matrix scorer
                 <Tooltip
-                  content="can edit only matrix characters and states"
+                  content="cannot edit character or state names, can edit other data"
                 ></Tooltip
               ></small>
               <small v-else-if="member.member_role == '3'">

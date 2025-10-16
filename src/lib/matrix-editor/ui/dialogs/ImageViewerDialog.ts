@@ -308,7 +308,7 @@ export class ImageViewerDialog extends Modal {
   /**
    * Setup the appropriate media element after DOM creation
    */
-  private setupMediaElement() {
+  private async setupMediaElement() {
     try {
       // Use getElementByClass to follow matrix editor patterns
       const container = this.getElementByClass<HTMLElement>('media-content')
@@ -339,7 +339,7 @@ export class ImageViewerDialog extends Modal {
       // Create the media viewer - the server will handle file serving
 
       // Create the viewer regardless of metadata availability
-      this.createMediaViewer(container, loadingOverlay, errorOverlay)
+      await this.createMediaViewer(container, loadingOverlay, errorOverlay)
 
     } catch (error) {
       console.error('Failed to setup media element:', error)
@@ -350,12 +350,12 @@ export class ImageViewerDialog extends Modal {
   /**
    * Create the appropriate media viewer based on detected type
    */
-  private createMediaViewer(container: HTMLElement, loadingOverlay: HTMLElement, errorOverlay: HTMLElement) {
+  private async createMediaViewer(container: HTMLElement, loadingOverlay: HTMLElement, errorOverlay: HTMLElement) {
   
     if (this.is3DFile()) {
       this.create3DViewer(container)
     } else if (this.isVideoFile()) {
-      this.createVideoPlayer(container)
+      await this.createVideoPlayer(container)
     } else {
       this.createImageViewer(container)
     }
@@ -400,44 +400,89 @@ export class ImageViewerDialog extends Modal {
   }
 
   /**
-   * Create video player
+   * Create video player (async to fetch pre-signed URL)
    */
-  private createVideoPlayer(container: HTMLElement) {
+  private async createVideoPlayer(container: HTMLElement) {
     const videoContainer = document.createElement('div')
     videoContainer.className = 'video-player-container'
 
-    const video = document.createElement('video')
-    video.className = 'video-player'
-    video.controls = true
-    video.preload = 'auto'
-    video.crossOrigin = 'anonymous'
-    video.muted = false
-    video.playsInline = true
-
-    const source = document.createElement('source')
-    source.src = this.getZoomDisplayUrl()
-    source.type = this.getVideoMimeType()
-
-    const fallbackText = document.createElement('p')
-    fallbackText.textContent = "Your browser doesn't support video playback."
-
-    video.appendChild(source)
-    video.appendChild(fallbackText)
-    videoContainer.appendChild(video)
-
-    // Add event listeners
-    video.onerror = (event) => {
-      const videoUrl = this.getZoomDisplayUrl()
-      console.error('Video failed to load:', videoUrl, event)
-      this.showError(`Failed to load video: ${videoUrl}`)
-    }
-
-    video.onloadedmetadata = () => {
-      const videoUrl = this.getZoomDisplayUrl()
-    }
-
+    // Show loading state
+    const loadingDiv = document.createElement('div')
+    loadingDiv.className = 'video-loading'
+    loadingDiv.innerHTML = `
+      <div class="loading-spinner"></div>
+      <p>Loading video...</p>
+    `
+    videoContainer.appendChild(loadingDiv)
     container.appendChild(videoContainer)
-    this.currentMediaElement = video
+
+    try {
+      // Fetch pre-signed URL from API
+      const apiUrl = (import.meta as any).env.VITE_API_URL || ''
+      const response = await fetch(
+        `${apiUrl}/public/media/${this.projectId}/video-url/${this.mediaId}`
+      )
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch video URL: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      if (!data.success || !data.url) {
+        throw new Error('Invalid response from video URL endpoint')
+      }
+
+      // Remove loading state
+      videoContainer.removeChild(loadingDiv)
+
+      // Create video player
+      const video = document.createElement('video')
+      video.className = 'video-player'
+      video.controls = true
+      video.preload = 'auto'
+      video.crossOrigin = 'anonymous'
+      video.muted = false
+      video.playsInline = true
+
+      const source = document.createElement('source')
+      source.src = data.url  // Use pre-signed URL
+      source.type = this.getVideoMimeType()
+
+      const fallbackText = document.createElement('p')
+      fallbackText.textContent = "Your browser doesn't support video playback."
+
+      video.appendChild(source)
+      video.appendChild(fallbackText)
+      videoContainer.appendChild(video)
+
+      // Add event listeners
+      video.onerror = (event) => {
+        console.error('Video failed to load:', event)
+        this.showError('Failed to load video')
+      }
+
+      video.onloadedmetadata = () => {
+        // Video metadata loaded successfully
+      }
+
+      this.currentMediaElement = video
+    } catch (error) {
+      // Remove loading state and show error
+      if (videoContainer.contains(loadingDiv)) {
+        videoContainer.removeChild(loadingDiv)
+      }
+
+      const errorDiv = document.createElement('div')
+      errorDiv.className = 'video-error'
+      errorDiv.innerHTML = `
+        <p>Failed to load video. Please try again.</p>
+        <button class="btn btn-primary btn-sm" onclick="location.reload()">Retry</button>
+      `
+      videoContainer.appendChild(errorDiv)
+
+      console.error('Error loading video:', error)
+      this.showError(`Failed to load video: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
   }
 
   /**

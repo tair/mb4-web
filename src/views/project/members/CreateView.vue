@@ -174,7 +174,7 @@ onMounted(() => {
                 v-bind:options="{
                   'Full membership (can edit everything)': 0,
                   'Observer (cannot edit)': 1,
-                  'Character annotater (can edit everything but characters and states)': 2,
+                  'Matrix scorer (cannot edit character or state names, can edit other data)': 2,
                   'Bibliography maintainer (can edit bibliography only)': 3,
                 }"
               >
