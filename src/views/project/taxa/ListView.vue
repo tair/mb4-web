@@ -358,12 +358,14 @@ function validateSelectedTaxaAtPbdb() {
         </div>
       </div>
       <div class="selection-bar">
-        <label class="item">
+        <label class="item" title="Select all">
           <input
             type="checkbox"
             class="form-check-input"
             v-model="allSelected"
             :indeterminate.prop="someSelected && !allSelected"
+            aria-label="Select all items"
+            title="Select all"
           />
         </label>
         <span v-if="!someSelected" class="item" @click="refresh">
