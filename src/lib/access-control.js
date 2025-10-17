@@ -209,7 +209,7 @@ export class AccessControlService {
         return {
           canCreate: false,
           shouldRedirect: false,
-          reason: 'Observer members cannot create content',
+          reason: 'Observer members cannot create/edit/delete content',
           level: 'observer',
         }
 
@@ -320,7 +320,7 @@ export class AccessControlService {
         return {
           canEdit: false,
           shouldRedirect: true,
-          reason: 'Observer members cannot edit any content',
+          reason: 'Observer members cannot create/edit/delete any content',
           level: 'observer',
         }
 

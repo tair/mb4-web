@@ -27,10 +27,11 @@ onMounted(async () => {
 async function loadRequest() {
   try {
     const response = await apiService.get(`/duplication-requests/${requestId}`)
+    const data = await response.json()
     
-    if (response.data.success) {
-      request.value = response.data.data
-      notes.value = ''
+    if (data.success) {
+      request.value = data.data
+      notes.value = data.data.notes || ''
     }
   } catch (error) {
     console.error('Error loading duplication request:', error)
@@ -56,8 +57,9 @@ async function updateStatus(newStatus) {
       status: newStatus,
       notes: notes.value
     })
+    const data = await response.json()
 
-    if (response.data.success) {
+    if (data.success) {
       validationMessages.value.success = 'Request updated successfully!'
       await loadRequest() // Reload to get updated data
     }
@@ -77,8 +79,9 @@ async function deleteRequest() {
   try {
     isUpdating.value = true
     const response = await apiService.delete(`/duplication-requests/${requestId}`)
+    const data = await response.json()
     
-    if (response.data.success) {
+    if (data.success) {
       router.push('/curator/duplication-requests')
     }
   } catch (error) {
