@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { useMessageStore } from './MessageStore'
+import { useProjectUsersStore } from './ProjectUsersStore'
 import sessionManager from '@/lib/session-manager.js'
 import { apiService } from '@/services/apiService.js'
 
@@ -72,6 +73,10 @@ export const useAuthStore = defineStore({
 
       // Clear session on logout
       sessionManager.clearSession()
+
+      // Clear project-specific stores to prevent stale data when switching users
+      const projectUsersStore = useProjectUsersStore()
+      projectUsersStore.invalidate()
 
       apiService
         .post('/auth/logout')

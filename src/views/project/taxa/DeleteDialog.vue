@@ -4,6 +4,8 @@ import TaxonomicName from '@/components/project/TaxonomicName.vue'
 import TaxaSearchInput from '@/views/project/common/TaxaSearchInput.vue'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useNotifications } from '@/composables/useNotifications'
+import { useAuthStore } from '@/stores/AuthStore'
+import { AccessControlService, EntityType } from '@/lib/access-control.js'
 import { computed, onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{
@@ -35,6 +37,7 @@ onMounted(() => {
 // the taxa selected to be deleted.
 const taxaStore = useTaxaStore()
 const { showError, showSuccess } = useNotifications()
+const authStore = useAuthStore()
 const taxonIds = computed(() => props.taxa.map((taxon) => taxon.taxon_id))
 watch(taxonIds, async (ids) => {
   usages.value = await taxaStore.fetchTaxaUsage(props.projectId, ids)
@@ -73,6 +76,26 @@ function setRemappedTaxonId(originalTaxonId: number, remappedTaxonId: number) {
 }
 
 async function handleDelete() {
+  // Permission checks - Block unauthorized deletes
+  if (authStore.isAnonymousReviewer) {
+    showError('Anonymous reviewers have view-only access and cannot delete.', 'Permission Denied')
+    return
+  }
+  
+  try {
+    const result = await AccessControlService.canCreateEntity({
+      entityType: EntityType.TAXON,
+      projectId: typeof props.projectId === 'string' ? parseInt(props.projectId) : props.projectId,
+    })
+    if (!result.canCreate) {
+      showError(result.reason || 'You do not have permission to delete taxa.', 'Permission Denied')
+      return
+    }
+  } catch (e) {
+    showError('You do not have permission to delete taxa.', 'Permission Denied')
+    return
+  }
+  
   try {
     const deleted = await taxaStore.deleteIds(
       props.projectId,
