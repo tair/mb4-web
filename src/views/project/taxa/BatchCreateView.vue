@@ -62,19 +62,22 @@ async function createTaxonBatch() {
   const validTaxa = taxa.filter((taxon: Taxon) => validateTaxon(taxon))
 
   try {
-    const created = await taxaStore.createBatch(projectId, validTaxa)
+    const result = await taxaStore.createBatch(projectId, validTaxa)
 
-    if (created) {
+    if (result.success) {
       showSuccess('Taxa created successfully!')
       await NavigationPatterns.afterBatchOperation(projectId, 'taxa')
     } else {
-      showError('Failed to create taxa. Please try again.')
-      validationMessages.value.validation = 'Failed to create taxa. Please try again.'
+      const errorMsg = result.message || 'Failed to create taxa. Please try again.'
+      showError(errorMsg)
+      validationMessages.value.validation = errorMsg
     }
   } catch (error) {
     console.error('Error during batch creation:', error)
-    showError('Failed to create taxa. Please try again.')
-    validationMessages.value.validation = 'Failed to create taxa. Please try again.'
+    // The apiService throws errors with our custom messages, so use error.message
+    const errorMsg = error.message || 'Failed to create taxa. Please try again.'
+    showError(errorMsg)
+    validationMessages.value.validation = errorMsg
   }
 }
 

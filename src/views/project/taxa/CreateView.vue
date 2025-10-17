@@ -107,16 +107,17 @@ async function createTaxon(event) {
   })
 
   try {
-    const success = await taxaStore.create(projectId, json)
-    if (success) {
+    const result = await taxaStore.create(projectId, json)
+    if (result.success) {
       showSuccess('Taxon created successfully!')
       await NavigationPatterns.afterBatchOperation(projectId, 'taxa')
     } else {
-      showError('Failed to create taxon')
+      showError(result.message || 'Failed to create taxon')
     }
   } catch (error) {
     console.error('Error creating taxon:', error)
-    showError('Failed to create taxon. Please try again.')
+    // The apiService throws errors with our custom messages, so use error.message
+    showError(error.message || 'Failed to create taxon. Please try again.')
   }
 }
 
