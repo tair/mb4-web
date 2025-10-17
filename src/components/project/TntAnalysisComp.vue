@@ -61,6 +61,35 @@ const newtechDrift = ref(true)
 const newtechFusing = ref(true)
 
 // =============================================================================
+// PARAMETER PREPARATION
+// =============================================================================
+
+/**
+ * Prepares analysis parameters from UI state using consistent naming
+ * @returns {Object} - Complete analysis parameters with consistent names
+ */
+function prepareAnalysisParameters() {
+  const params = {
+    outgroup: tntOutgroup.value,
+    search_type: searchType.value,
+    hold: tntHoldValue.value, // This applies to all search types
+  }
+
+  // Add search-specific parameters using consistent naming
+  if (searchType.value === 'traditional') {
+    params.replicates = traditionalReplications.value
+    // Note: treesPerReplication is separate from the general hold value
+    params.treesPerReplication = traditionalTreesPerReplication.value
+    params.swapAlgorithm = traditionalSwapAlgorithm.value // Default: 'tbr'
+  } else if (searchType.value === 'new_technology') {
+    params.hits = newtechIterations.value
+  }
+  // Implicit search only uses: outgroup, search_type, hold
+
+  return params
+}
+
+// =============================================================================
 // API FUNCTIONS
 // =============================================================================
 
@@ -113,18 +142,10 @@ async function apiAnalyzeTntFile(file, params) {
   // Append the uploaded TNT file directly
   formData.append('file', file)
 
-  // Add other parameters from the form
-  formData.append('outgroup', params.outgroup)
-  formData.append('hold_value', params.holdValue)
-  formData.append('search_type', params.searchType)
-
-  // Add search-specific parameters
-  if (params.searchType === 'traditional') {
-    formData.append('replications', params.replications)
-    formData.append('trees_per_replication', params.treesPerReplication)
-  } else if (params.searchType === 'new_technology') {
-    formData.append('iterations', params.iterations)
-  }
+  // Add all parameters directly (no mapping needed)
+  Object.entries(params).forEach(([key, value]) => {
+    formData.append(key, value)
+  })
 
   const response = await apiService.post(`/tnt/analyze`, formData, {
     headers: {
@@ -153,14 +174,27 @@ async function apiValidateMatrix(matrixId) {
  * @returns {Promise<string>} - Analysis results
  */
 async function apiAnalyzeCachedMatrix(cacheKey, params) {
-  const response = await apiService.post(`/tnt/cached/${cacheKey}/analyze`, {
+  // Convert TNT parameter names to backend service parameter names
+  const requestBody = {
     outgroup: params.outgroup,
-    hold_value: params.holdValue,
-    search_type: params.searchType,
-    replications: params.replications,
-    trees_per_replication: params.treesPerReplication,
-    iterations: params.iterations,
-  })
+    search_type: params.search_type,
+  }
+
+  // Add search-specific parameters with backend service naming
+  if (params.search_type === 'traditional') {
+    requestBody.replications = params.replicates
+    requestBody.trees_per_replication = params.treesPerReplication
+    requestBody.swapAlgorithm = params.swapAlgorithm
+  } else if (params.search_type === 'new_technology') {
+    requestBody.iterations = params.hits
+  }
+  
+  // Add hold parameter for all search types
+  if (params.hold) {
+    requestBody.hold = params.hold
+  }
+
+  const response = await apiService.post(`/tnt/cached/${cacheKey}/analyze`, requestBody)
   const responseData = await response.text()
   return responseData
 }
@@ -447,21 +481,8 @@ async function onRunMatrixTnt() {
 
     isAnalyzingMatrix.value = true
 
-    // Prepare analysis parameters
-    const analysisParams = {
-      outgroup: tntOutgroup.value,
-      holdValue: tntHoldValue.value,
-      searchType: searchType.value,
-    }
-
-    // Add search-specific parameters
-    if (searchType.value === 'traditional') {
-      analysisParams.replications = traditionalReplications.value
-      analysisParams.treesPerReplication = traditionalTreesPerReplication.value
-      analysisParams.swapAlgorithm = traditionalSwapAlgorithm.value
-    } else if (searchType.value === 'new_technology') {
-      analysisParams.iterations = newtechIterations.value
-    }
+    // Prepare analysis parameters using consolidated function
+    const analysisParams = prepareAnalysisParameters()
 
     console.log(
       'Submitting matrix TNT analysis with cache key:',
@@ -484,7 +505,7 @@ async function onRunMatrixTnt() {
         originalFile: `Matrix ${props.matrixId}`,
         timestamp: new Date().toLocaleString(),
         outgroup: tntOutgroup.value,
-        holdValue: tntHoldValue.value,
+        // holdValue removed - not used by TNT
         status: 'completed',
         nex_content: responseData,
         analysisParams: { ...analysisParams }, // Store complete analysis parameters
@@ -550,21 +571,8 @@ async function onRunTnt() {
 
     isUploadingTnt.value = true
 
-    // Prepare analysis parameters
-    const analysisParams = {
-      outgroup: tntOutgroup.value,
-      holdValue: tntHoldValue.value,
-      searchType: searchType.value,
-    }
-
-    // Add search-specific parameters
-    if (searchType.value === 'traditional') {
-      analysisParams.replications = traditionalReplications.value
-      analysisParams.treesPerReplication = traditionalTreesPerReplication.value
-      analysisParams.swapAlgorithm = traditionalSwapAlgorithm.value
-    } else if (searchType.value === 'new_technology') {
-      analysisParams.iterations = newtechIterations.value
-    }
+    // Prepare analysis parameters using consolidated function
+    const analysisParams = prepareAnalysisParameters()
 
     console.log('Submitting TNT file:', tntFile.value.name)
 
@@ -588,7 +596,7 @@ async function onRunTnt() {
         originalFile: tntFile.value.name,
         timestamp: new Date().toLocaleString(),
         outgroup: tntOutgroup.value,
-        holdValue: tntHoldValue.value,
+        // holdValue removed - not used by TNT
         status: 'completed',
         nex_content: responseData,
         analysisParams: { ...analysisParams }, // Store complete analysis parameters
@@ -618,24 +626,33 @@ function formatAnalysisParameters(params) {
 
   const formattedParams = []
 
+  // Format search type to match nexus file naming
+  let searchTypeDisplay = params.search_type
+  if (params.search_type === 'implicit') {
+    searchTypeDisplay = 'Implicit enumeration'
+  } else if (params.search_type === 'traditional') {
+    searchTypeDisplay = 'Traditional search'
+  } else if (params.search_type === 'new_technology') {
+    searchTypeDisplay = 'New technology search'
+  }
+
   // Base parameters
-  formattedParams.push(`Search Type: ${params.searchType}`)
+  formattedParams.push(`Search Type: ${searchTypeDisplay}`)
   formattedParams.push(`Outgroup: ${params.outgroup}`)
-  formattedParams.push(`Hold Value: ${params.holdValue}`)
+  if (params.hold)
+    formattedParams.push(`Hold Value: ${params.hold}`)
 
   // Search-specific parameters
-  if (params.searchType === 'traditional') {
-    if (params.replications)
-      formattedParams.push(`Replications: ${params.replications}`)
+  if (params.search_type === 'traditional') {
+    if (params.replicates)
+      formattedParams.push(`Replications: ${params.replicates}`)
     if (params.treesPerReplication)
-      formattedParams.push(
-        `Trees per Replication: ${params.treesPerReplication}`
-      )
+      formattedParams.push(`Trees per Replication: ${params.treesPerReplication}`)
     if (params.swapAlgorithm)
       formattedParams.push(`Swap Algorithm: ${params.swapAlgorithm}`)
-  } else if (params.searchType === 'new_technology') {
-    if (params.iterations)
-      formattedParams.push(`Iterations: ${params.iterations}`)
+  } else if (params.search_type === 'new_technology') {
+    if (params.hits)
+      formattedParams.push(`Iterations: ${params.hits}`)
   }
 
   return formattedParams.join(', ')
