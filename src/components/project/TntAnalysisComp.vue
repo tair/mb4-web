@@ -662,10 +662,12 @@ function formatAnalysisParameters(params) {
 <template>
   <div class="tnt-analysis-container">
     <h6>TNT (Tree analysis using New Technology) Analysis</h6>
-    <p>
-      Please try this BETA tool and send any feedback to
-      <router-link to="/askus">Contact Support</router-link>
-    </p>
+    
+    <!-- Acknowledgment Section -->
+    <div class="acknowledgment-section mb-3 p-3 bg-light border-start border-4 border-info">
+      <p class="mb-2 text-muted small">       MorphoBank gratefully acknowledges Dr. Pablo Goloboff (CONICET – Fundación Miguel Lillo, Argentina) for granting permission to include the TNT algorithm in the platform.
+      </p>
+    </div>
 
     <!-- Error Messages -->
     <div v-if="tntUploadErrors.general" class="alert alert-danger mb-3">
