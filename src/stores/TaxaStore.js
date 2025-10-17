@@ -38,9 +38,24 @@ export const useTaxaStore = defineStore({
         const responseData = await response.json()
         const taxon = responseData.taxon
         this.addTaxa([taxon])
-        return true
+        return { success: true }
       }
-      return false
+      // Return error details from the API
+      try {
+        const errorData = await response.json()
+        return { 
+          success: false, 
+          message: errorData.message || 'Failed to create taxon',
+          details: errorData
+        }
+      } catch (e) {
+        console.error('Error parsing error response:', e)
+        return { 
+          success: false, 
+          message: `Failed to create taxon (HTTP ${response.status})`,
+          details: {}
+        }
+      }
     },
     async createBatch(projectId, taxa) {
       const response = await apiService.post(`/projects/${projectId}/taxa/create/batch`, { taxa: taxa })
@@ -48,9 +63,24 @@ export const useTaxaStore = defineStore({
         const responseData = await response.json()
         const taxa = responseData.taxa
         this.addTaxa(taxa)
-        return true
+        return { success: true }
       }
-      return false
+      // Return error details from the API
+      try {
+        const errorData = await response.json()
+        return { 
+          success: false, 
+          message: errorData.message || 'Failed to create taxa',
+          details: errorData
+        }
+      } catch (e) {
+        console.error('Error parsing error response:', e)
+        return { 
+          success: false, 
+          message: 'Failed to create taxa',
+          details: {}
+        }
+      }
     },
     async edit(projectId, taxonId, taxon) {
       const response = await apiService.post(`/projects/${projectId}/taxa/${taxonId}/edit`, taxon)

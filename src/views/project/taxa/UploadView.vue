@@ -102,16 +102,17 @@ async function createBatch() {
 
   isProcessing.value = true
   try {
-    const created = await taxaStore.createBatch(projectId, taxaArray)
-    if (created) {
+    const result = await taxaStore.createBatch(projectId, taxaArray)
+    if (result.success) {
       showSuccess('Taxa uploaded successfully!')
       router.replace({ path: `/myprojects/${projectId}/taxa` })
     } else {
-      showError('Failed to upload taxa')
+      showError(result.message || 'Failed to upload taxa')
     }
   } catch (error) {
     console.error('Error creating batch:', error)
-    showError('Failed to upload taxa. Please try again.')
+    // The apiService throws errors with our custom messages, so use error.message
+    showError(error.message || 'Failed to upload taxa. Please try again.')
   } finally {
     isProcessing.value = false
   }
