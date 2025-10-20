@@ -5,6 +5,7 @@ import Tooltip from '@/components/main/Tooltip.vue'
 import { toDMYDate } from '@/utils/date'
 import { getViewStatsTooltipText } from '@/utils/util.js'
 import { useAuthStore } from '@/stores/AuthStore'
+import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 
 type Views = {
   total: number
@@ -40,6 +41,7 @@ const props = defineProps<{
 const route = useRoute()
 const projectId = route.params.id
 const authStore = useAuthStore()
+const projectStore = usePublicProjectDetailsStore()
 
 const viewTooltipText = getViewStatsTooltipText()
 
@@ -51,6 +53,22 @@ const isMember = computed(() => {
 })
 
 const canRequestDuplication = computed(() => isLoggedIn.value && isMember.value)
+
+// Prefer published stats JSON only; show 'unavailable' if missing
+const projectViewsDisplay = computed(() => {
+  const total = projectStore?.stats?.project_views?.total
+  return typeof total === 'number' ? total : 'N/A'
+})
+
+const downloadsMDisplay = computed(() => {
+  const val = projectStore?.stats?.project_downloads?.M
+  return typeof val === 'number' ? val : 'N/A'
+})
+
+const downloadsXDisplay = computed(() => {
+  const val = projectStore?.stats?.project_downloads?.X
+  return typeof val === 'number' ? val : 'N/A'
+})
 </script>
 
 <template>
@@ -75,21 +93,21 @@ const canRequestDuplication = computed(() => isLoggedIn.value && isMember.value)
             <router-link class="fw-bold" to="#project-view"
               >Project Views </router-link
             ><Tooltip :content="viewTooltipText"></Tooltip>:
-            {{ overview.project_views?.total || 0 }}
+            {{ projectViewsDisplay }}
           </li>
-          <li class="list-group-item" v-if="overview.project_downloads?.M">
+          <li class="list-group-item">
             <router-link class="fw-bold" to="#project-download"
               >Media downloads
             </router-link>
             <Tooltip :content="viewTooltipText"></Tooltip>:
-            {{ overview.project_downloads.M }}
+            {{ downloadsMDisplay }}
           </li>
-          <li class="list-group-item" v-if="overview.project_downloads?.X">
+          <li class="list-group-item">
             <router-link class="fw-bold" to="#project-download"
               >Matrix downloads
             </router-link>
             <Tooltip :content="viewTooltipText"></Tooltip>:
-            {{ overview.project_downloads.X }}
+            {{ downloadsXDisplay }}
           </li>
           <li v-if="canRequestDuplication" class="list-group-item">
             <span class="fw-bold">
