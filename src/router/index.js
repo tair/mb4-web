@@ -6,6 +6,7 @@ import {
   PUBLISHED_PROJECT_DETAIL_VIEWS,
   PUBLISHED_PROJECT_VIEWS,
 } from '@/router/published.js'
+import { legacyRoutes } from '@/router/oldMappingReroute.js'
 import AdminHomeView from '@/views/admin/AdminHomeView.vue'
 import AdminView from '@/views/admin/AdminView.vue'
 import ApiView from '@/views/misc/ApiView.vue'
@@ -257,6 +258,13 @@ const router = createRouter({
           path: '/project',
           redirect: '/projects',
         },
+
+        // ============================================
+        // LEGACY URL REDIRECTS (Old PHP URLs)
+        // See: src/router/oldMappingReroute.js
+        // ============================================
+        ...legacyRoutes,
+
         {
           path: '/:catchAll(.*)*',
           name: 'NotFoundView',
