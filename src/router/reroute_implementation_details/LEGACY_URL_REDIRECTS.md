@@ -12,10 +12,12 @@ The new Vue.js application uses modern clean URLs. This redirect system ensures 
 
 ## Implementation Details
 
-All redirects are implemented in `/src/router/index.js` with:
+All redirects are implemented in `/src/router/oldMappingReroute.js` with:
 - A helper function `createProjectRedirect()` that extracts `project_id` query parameters
+- Explicit path parameter routes that handle `project_id` in the URL path
 - Direct route redirects for static mappings
 - Support for both `/index.php/` prefixed and non-prefixed URLs
+- Proper array-to-path joining for multi-segment `/index.php/` URLs
 - Case-sensitive matching
 
 ## Complete Redirect Mapping
@@ -50,12 +52,19 @@ All redirects are implemented in `/src/router/index.js` with:
 
 ### 3. User Projects - MyProjects (Implemented)
 
-All MyProjects URLs extract `project_id` from query parameters and construct the appropriate new URL.
+All MyProjects URLs extract `project_id` from either query parameters or path parameters and construct the appropriate new URL.
+
+**Supported URL Formats:**
+- Query parameter: `/MyProjects/List/ProjectOverview?project_id=123`
+- Path parameter: `/MyProjects/List/ProjectOverview/project_id/123`
+
+Both formats redirect to the same new URL.
 
 | Old URL Pattern | New URL Pattern | Example |
 |----------------|-----------------|---------|
 | `/MyProjects/List/index` | `/myprojects` | Project list |
-| `/MyProjects/List/ProjectOverview?project_id=123` | `/myprojects/123/overview` | Project overview |
+| `/MyProjects/List/ProjectOverview?project_id=123` | `/myprojects/123/overview` | Project overview (query) |
+| `/MyProjects/List/ProjectOverview/project_id/123` | `/myprojects/123/overview` | Project overview (path) |
 | `/MyProjects/List/DownloadProjectPage?project_id=123` | `/myprojects/123/download` | Download project |
 | `/MyProjects/Media/index?project_id=123` | `/myprojects/123/media` | Media list |
 | `/MyProjects/Media/form?project_id=123` | `/myprojects/123/media/create` | Create media |
@@ -82,12 +91,19 @@ All MyProjects URLs extract `project_id` from query parameters and construct the
 
 ### 4. Published Projects - Public View (Implemented)
 
-All published project URLs extract `project_id` from query parameters.
+All published project URLs extract `project_id` from either query parameters or path parameters.
+
+**Supported URL Formats:**
+- Query parameter: `/Projects/ProjectOverview?project_id=123`
+- Path parameter: `/Projects/ProjectOverview/project_id/123`
+
+Both formats redirect to the same new URL.
 
 | Old URL Pattern | New URL Pattern | Example |
 |----------------|-----------------|---------|
 | `/Projects/index` | `/projects/journal_year` | Browse projects |
-| `/Projects/ProjectOverview?project_id=123` | `/project/123/overview` | Project overview |
+| `/Projects/ProjectOverview?project_id=123` | `/project/123/overview` | Project overview (query) |
+| `/Projects/ProjectOverview/project_id/123` | `/project/123/overview` | Project overview (path) |
 | `/Projects/matrices?project_id=123` | `/project/123/matrices` | Published matrices |
 | `/Projects/media?project_id=123` | `/project/123/media` | Published media |
 | `/Projects/Taxa?project_id=123` | `/project/123/taxa` | Published taxa |
@@ -167,15 +183,22 @@ The following legacy URLs are not yet implemented in the new Vue.js application 
 - `/logs/*` - All log viewing pages
 - `/system/Error/Show` - Error display page
 
-## Query Parameter Handling
+## Project ID Handling
 
-The redirect system intelligently handles `project_id` query parameters:
+The redirect system intelligently handles `project_id` in two formats:
 
-1. **With project_id**: Extracts the ID and constructs the proper project-specific URL
-   - Example: `/MyProjects/Media/index?project_id=456` → `/myprojects/456/media`
+### Format 1: Query Parameter (e.g., `?project_id=123`)
+- Example: `/MyProjects/Media/index?project_id=456` → `/myprojects/456/media`
+- Example: `/Projects/ProjectOverview?project_id=456` → `/project/456/overview`
 
-2. **Without project_id**: Redirects to the general section or fallback
-   - Example: `/MyProjects/Media/index` → `/myprojects` (fallback to project list)
+### Format 2: Path Parameter (e.g., `/project_id/123`)
+- Example: `/MyProjects/Media/index/project_id/456` → `/myprojects/456/media`
+- Example: `/Projects/ProjectOverview/project_id/456` → `/project/456/overview`
+- Example: `/index.php/Projects/ProjectOverview/project_id/456` → `/project/456/overview`
+
+### Without project_id
+When no project ID is provided, redirects to the general section or fallback:
+- Example: `/MyProjects/Media/index` → `/myprojects` (fallback to project list)
 
 ## Case Sensitivity
 
@@ -193,7 +216,7 @@ To test these redirects:
    https://morphobank.org/index.php/LoginReg/form → https://morphobank.org/users/login
    ```
 
-2. **Dynamic redirects** (with project_id):
+2. **Dynamic redirects with query parameters**:
    ```
    https://morphobank.org/MyProjects/Media/index?project_id=123
    → https://morphobank.org/myprojects/123/media
@@ -202,7 +225,19 @@ To test these redirects:
    → https://morphobank.org/project/456/taxa
    ```
 
-3. **Fallback redirects** (no project_id provided):
+3. **Dynamic redirects with path parameters**:
+   ```
+   https://morphobank.org/MyProjects/Media/index/project_id/123
+   → https://morphobank.org/myprojects/123/media
+   
+   https://morphobank.org/index.php/Projects/ProjectOverview/project_id/456
+   → https://morphobank.org/project/456/overview
+   
+   https://morphobank.org/Projects/Taxa/project_id/789
+   → https://morphobank.org/project/789/taxa
+   ```
+
+4. **Fallback redirects** (no project_id provided):
    ```
    https://morphobank.org/MyProjects/Media/index
    → https://morphobank.org/myprojects
