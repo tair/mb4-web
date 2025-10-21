@@ -42,7 +42,7 @@ This document provides test cases to verify that legacy PHP URLs correctly redir
 | `http://localhost:81/MyProjects/Media/index` | `http://localhost:81/myprojects` | Media (no project) |
 | `http://localhost:81/MyProjects/Taxa/index` | `http://localhost:81/myprojects` | Taxa (no project) |
 
-### 4. MyProjects - With project_id (Replace 123 with actual project ID)
+### 4. MyProjects - With project_id Query Parameter (Replace 123 with actual project ID)
 
 | Test URL | Expected Redirect | Description |
 |----------|-------------------|-------------|
@@ -59,6 +59,24 @@ This document provides test cases to verify that legacy PHP URLs correctly redir
 | `http://localhost:81/MyProjects/Members/index?project_id=123` | `http://localhost:81/myprojects/123/members` | Members |
 | `http://localhost:81/MyProjects/Publishing/publishForm?project_id=123` | `http://localhost:81/myprojects/123/publish` | Publish |
 
+### 4b. MyProjects - With project_id Path Parameter (Replace 123 with actual project ID)
+
+| Test URL | Expected Redirect | Description |
+|----------|-------------------|-------------|
+| `http://localhost:81/MyProjects/List/ProjectOverview/project_id/123` | `http://localhost:81/myprojects/123/overview` | Project overview |
+| `http://localhost:81/index.php/MyProjects/List/ProjectOverview/project_id/123` | `http://localhost:81/myprojects/123/overview` | With PHP prefix |
+| `http://localhost:81/MyProjects/Media/index/project_id/123` | `http://localhost:81/myprojects/123/media` | Media list |
+| `http://localhost:81/MyProjects/Media/form/project_id/123` | `http://localhost:81/myprojects/123/media/create` | Create media |
+| `http://localhost:81/MyProjects/Media/BatchForm/project_id/123` | `http://localhost:81/myprojects/123/media/create/batch` | Batch upload |
+| `http://localhost:81/MyProjects/Taxa/index/project_id/123` | `http://localhost:81/myprojects/123/taxa` | Taxa list |
+| `http://localhost:81/MyProjects/Taxa/form/project_id/123` | `http://localhost:81/myprojects/123/taxa/create` | Create taxon |
+| `http://localhost:81/MyProjects/Specimens/index/project_id/123` | `http://localhost:81/myprojects/123/specimens` | Specimens list |
+| `http://localhost:81/MyProjects/Matrices/index/project_id/123` | `http://localhost:81/myprojects/123/matrices` | Matrices list |
+| `http://localhost:81/MyProjects/Bibliography/index/project_id/123` | `http://localhost:81/myprojects/123/bibliography` | Bibliography |
+| `http://localhost:81/MyProjects/Views/index/project_id/123` | `http://localhost:81/myprojects/123/views` | Media views |
+| `http://localhost:81/MyProjects/Members/index/project_id/123` | `http://localhost:81/myprojects/123/members` | Members |
+| `http://localhost:81/MyProjects/Publishing/publishForm/project_id/123` | `http://localhost:81/myprojects/123/publish` | Publish |
+
 ### 5. MyProjects - With PHP prefix
 
 | Test URL | Expected Redirect | Description |
@@ -73,7 +91,7 @@ This document provides test cases to verify that legacy PHP URLs correctly redir
 | `http://localhost:81/Projects/index` | `http://localhost:81/projects/journal_year` | Browse projects |
 | `http://localhost:81/index.php/Projects/index` | `http://localhost:81/projects/journal_year` | Browse with PHP prefix |
 
-### 7. Published Projects - With project_id (Replace 456 with actual project ID)
+### 7. Published Projects - With project_id Query Parameter (Replace 456 with actual project ID)
 
 | Test URL | Expected Redirect | Description |
 |----------|-------------------|-------------|
@@ -86,6 +104,21 @@ This document provides test cases to verify that legacy PHP URLs correctly redir
 | `http://localhost:81/Projects/ProjectDocuments?project_id=456` | `http://localhost:81/project/456/documents` | Documents |
 | `http://localhost:81/Projects/BibliographicReferences?project_id=456` | `http://localhost:81/project/456/bibliography` | Bibliography |
 | `http://localhost:81/Projects/FoliosList?project_id=456` | `http://localhost:81/project/456/folios` | Folios |
+
+### 7b. Published Projects - With project_id Path Parameter (Replace 456 with actual project ID)
+
+| Test URL | Expected Redirect | Description |
+|----------|-------------------|-------------|
+| `http://localhost:81/Projects/ProjectOverview/project_id/456` | `http://localhost:81/project/456/overview` | Project overview |
+| `http://localhost:81/index.php/Projects/ProjectOverview/project_id/456` | `http://localhost:81/project/456/overview` | With PHP prefix |
+| `http://localhost:81/Projects/matrices/project_id/456` | `http://localhost:81/project/456/matrices` | Published matrices |
+| `http://localhost:81/Projects/media/project_id/456` | `http://localhost:81/project/456/media` | Published media |
+| `http://localhost:81/Projects/Taxa/project_id/456` | `http://localhost:81/project/456/taxa` | Published taxa |
+| `http://localhost:81/Projects/Specimens/project_id/456` | `http://localhost:81/project/456/specimens` | Published specimens |
+| `http://localhost:81/Projects/MediaViews/project_id/456` | `http://localhost:81/project/456/views` | Media views |
+| `http://localhost:81/Projects/ProjectDocuments/project_id/456` | `http://localhost:81/project/456/documents` | Documents |
+| `http://localhost:81/Projects/BibliographicReferences/project_id/456` | `http://localhost:81/project/456/bibliography` | Bibliography |
+| `http://localhost:81/Projects/FoliosList/project_id/456` | `http://localhost:81/project/456/folios` | Folios |
 
 ### 8. Admin Pages
 
@@ -157,20 +190,27 @@ Examples:
 
 1. **Case Sensitivity**: All redirects are case-sensitive. `/MyProjects/Media/index` works, but `/myprojects/media/index` will not match.
 
-2. **Query Parameters**: The `project_id` parameter is extracted and incorporated into the new URL path. Other query parameters are preserved.
+2. **Two project_id Formats**: The system supports both formats from the legacy PHP application:
+   - **Query Parameter**: `?project_id=123` (e.g., `/Projects/ProjectOverview?project_id=123`)
+   - **Path Parameter**: `/project_id/123` (e.g., `/Projects/ProjectOverview/project_id/123`)
 
-3. **Fallback Behavior**: If a URL requires a `project_id` but none is provided, it redirects to the general section (e.g., `/myprojects`).
+3. **Query Parameters**: The `project_id` parameter is extracted (from either query or path) and incorporated into the new URL path. Other query parameters are preserved.
 
-4. **PHP Prefix**: All URLs with `/index.php/` prefix are handled by stripping the prefix first, then applying the appropriate redirect.
+4. **Fallback Behavior**: If a URL requires a `project_id` but none is provided, it redirects to the general section (e.g., `/myprojects`).
+
+5. **PHP Prefix**: All URLs with `/index.php/` prefix are handled by stripping the prefix first, then applying the appropriate redirect. The prefix stripper properly handles multi-segment paths.
 
 ## Verification Checklist
 
 - [ ] Static public pages redirect correctly
 - [ ] Authentication pages redirect correctly
 - [ ] MyProjects URLs without project_id redirect to /myprojects
-- [ ] MyProjects URLs with project_id extract ID and redirect correctly
-- [ ] Published project URLs with project_id extract ID and redirect correctly
-- [ ] PHP-prefixed URLs (/index.php/) are handled correctly
+- [ ] MyProjects URLs with project_id query parameter (?project_id=123) redirect correctly
+- [ ] MyProjects URLs with project_id path parameter (/project_id/123) redirect correctly
+- [ ] Published project URLs with project_id query parameter redirect correctly
+- [ ] Published project URLs with project_id path parameter redirect correctly
+- [ ] PHP-prefixed URLs (/index.php/) are handled correctly for both formats
+- [ ] Multi-segment paths with /index.php/ prefix are properly joined with slashes
 - [ ] Admin URLs redirect to /admin
 - [ ] Curator URLs redirect to /curator
 - [ ] Unimplemented pages redirect to homepage
