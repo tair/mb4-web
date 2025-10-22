@@ -294,6 +294,13 @@ let isUploading = ref(false)
 async function uploadMatrix() {
   isUploading.value = true
   
+  // Frontend validation to prevent malformed matrices from reaching backend
+  const validationResult = validateMatrixForUpload(importedMatrix)
+  if (!validationResult.ok) {
+    showError(validationResult.message)
+    isUploading.value = false
+    return
+  }
 
   try {
     const formData = new FormData()
@@ -391,6 +398,34 @@ async function uploadMatrix() {
     }
   } finally {
     isUploading.value = false
+  }
+}
+
+function validateMatrixForUpload(matrix) {
+  try {
+    const normalized = JSON.parse(serializeMatrix(matrix))
+    const taxa = Array.isArray(normalized.taxa) ? normalized.taxa : []
+    const characters = Array.isArray(normalized.characters) ? normalized.characters : []
+    const cells = Array.isArray(normalized.cells) ? normalized.cells : []
+
+    if (!taxa.length || !characters.length || !cells.length) {
+      return { ok: false, message: 'Invalid matrix: missing taxa, characters, or cells.' }
+    }
+    if (cells.length !== taxa.length) {
+      return { ok: false, message: `Invalid matrix: ${cells.length} rows but ${taxa.length} taxa.` }
+    }
+    for (let i = 0; i < cells.length; i++) {
+      if (!Array.isArray(cells[i]) || cells[i].length !== characters.length) {
+        const colCount = Array.isArray(cells[i]) ? cells[i].length : 0
+        return {
+          ok: false,
+          message: `Invalid matrix: row ${i + 1} has ${colCount} columns; expected ${characters.length}.`,
+        }
+      }
+    }
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, message: 'Invalid matrix: could not serialize for validation.' }
   }
 }
 
