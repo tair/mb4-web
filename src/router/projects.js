@@ -11,6 +11,7 @@ import {
   requireBibliographyEditAccess,
   requireProjectOwnerOrCurator,
   requireCuratorOnly,
+  requireNonObserverMember,
 } from '@/lib/route-guards.js'
 
 export const MY_PROJECT_VIEWS = [
@@ -340,7 +341,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/members/ListView.vue'
       ),
-    beforeEnter: requireCuratorOnly,
+    beforeEnter: requireProjectOwnerOrCurator,
   },
   {
     path: 'members/groups',
@@ -358,7 +359,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/membersGroups/ListView.vue'
       ),
-    beforeEnter: requireCuratorOnly,
+    beforeEnter: requireProjectOwnerOrCurator,
   },
   {
     path: 'members/:userId(\\d+)/edit',
@@ -1017,8 +1018,7 @@ export const MY_PROJECT_VIEWS = [
       import(
         /* webpackChunkName: "unpublished" */ '@/views/project/duplication/RequestView.vue'
       ),
-    // Any logged-in standard user can request
-    // Guard removed; rely on parent '/myprojects' auth + page-level handling
+    beforeEnter: requireNonObserverMember,
   },
   {
     path: 'publish/partition',

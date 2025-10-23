@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import Tooltip from '@/components/main/Tooltip.vue'
 import { toDMYDate, toDMYDateFromTimestamp } from '@/utils/date'
 import { formatBytes } from '@/utils/format'
@@ -7,6 +7,8 @@ import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore'
 import { useNotifications } from '@/composables/useNotifications'
 import { apiService } from '@/services/apiService.js'
 import { useAuthStore } from '@/stores/AuthStore'
+import { useProjectUsersStore } from '@/stores/ProjectUsersStore'
+import { MembershipType } from '@/lib/access-control.js'
 
 const props = defineProps({
   overview: Object,
@@ -16,7 +18,15 @@ const props = defineProps({
 const projectOverviewStore = useProjectOverviewStore()
 const { showError, showSuccess, showInfo } = useNotifications()
 const authStore = useAuthStore()
+const projectUsersStore = useProjectUsersStore()
 const isRefreshing = ref(false)
+
+// Ensure project users are loaded for permission checks
+onMounted(async () => {
+  if (!projectUsersStore.isLoaded && props.projectId) {
+    await projectUsersStore.fetchUsers(props.projectId)
+  }
+})
 
 // Computed properties for better display
 const diskUsagePercentage = computed(() => {
@@ -51,7 +61,32 @@ const canEditInstitutions = computed(() => isCurator.value)
 const canPublish = computed(() => isOwner.value || isCurator.value)
 const canManageMembers = computed(() => isOwner.value || isCurator.value)
 const canEditMemberGroups = computed(() => isOwner.value || isCurator.value)
-const canRequestDuplication = computed(() => isLoggedIn.value)
+
+// Project duplication should only be available to full members, project admins, and curators
+const canRequestDuplication = computed(() => {
+  if (!isLoggedIn.value) return false
+  
+  // Anonymous reviewers cannot request duplication
+  if (authStore.isAnonymousReviewer) return false
+  
+  // Curators can always request duplication
+  if (isCurator.value) return true
+  
+  // Check membership type for regular users
+  const currentUserId = authStore.user?.userId
+  if (currentUserId && projectUsersStore.isLoaded) {
+    const membership = projectUsersStore.getUserById(currentUserId)
+    if (membership) {
+      // Only full members (type 0/ADMIN) and project admins can request duplication
+      // Block: observers (1), matrix scorers (2), bibliography maintainers (3)
+      if (membership.admin === true || membership.membership_type === MembershipType.ADMIN) {
+        return true
+      }
+    }
+  }
+  
+  return false
+})
 
 // Refresh disk usage only (lightweight)
 const isRefreshingDiskUsage = ref(false)
