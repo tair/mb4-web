@@ -16,7 +16,7 @@ onMounted(async () => {
 })
 
 async function getPartitions() {
-  const response = await apiService.get('/projects/${projectId}/publish/partitions')
+  const response = await apiService.get(`/projects/${projectId}/publish/partitions`)
   const responseData = await response.json()
   partitions.value = responseData
 }
