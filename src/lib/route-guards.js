@@ -424,6 +424,85 @@ export async function requireCuratorOnly(to, from, next) {
 }
 
 /**
+ * Require full project member (for actions like duplication requests)
+ * Allows: curators, admins, full members (type 0), project administrators
+ * Denies: observers (type 1), matrix scorers (type 2), bibliography maintainers (type 3), anonymous reviewers, non-members
+ */
+export async function requireNonObserverMember(to, from, next) {
+  try {
+    const authStore = useAuthStore()
+    const projectUsersStore = useProjectUsersStore()
+    
+    if (!authStore.user?.userId) {
+      next({ name: 'UserLogin' })
+      return
+    }
+
+    // Allow curators and system administrators
+    if (authStore.isUserCurator || authStore.isUserAdministrator) {
+      next()
+      return
+    }
+
+    // Block anonymous reviewers
+    if (authStore.isAnonymousReviewer) {
+      const projectId = parseInt(to.params.id || to.params.projectId)
+      next({
+        name: 'MyProjectOverviewView',
+        params: { id: projectId },
+        query: { error: 'Anonymous reviewers cannot perform this action.' },
+      })
+      return
+    }
+
+    const projectId = parseInt(to.params.id || to.params.projectId)
+    if (!projectId) {
+      next({ name: 'NotFoundView', query: { message: 'Invalid project' } })
+      return
+    }
+
+    // Ensure project users are loaded
+    if (!projectUsersStore.isLoaded) {
+      await projectUsersStore.fetchUsers(projectId)
+    }
+
+    const membership = projectUsersStore.getUserById(authStore.user.userId)
+    
+    // Check if user is a project member
+    if (!membership) {
+      next({
+        name: 'NotFoundView',
+        query: { message: 'You do not have access to this project' },
+      })
+      return
+    }
+
+    // Allow project administrators (admin === true)
+    if (membership.admin === true) {
+      next()
+      return
+    }
+
+    // Allow only full members (membership_type 0)
+    // Block: observers (1), matrix scorers (2), bibliography maintainers (3)
+    if (membership.membership_type === 0) {
+      next()
+      return
+    }
+
+    // All other membership types are blocked
+    next({
+      name: 'MyProjectOverviewView',
+      params: { id: projectId },
+      query: { error: 'Only full project members can perform this action.' },
+    })
+  } catch (error) {
+    console.error('Non-observer member guard error:', error)
+    next({ name: 'NotFoundView', query: { message: 'Error checking permissions' } })
+  }
+}
+
+/**
  * Factory for view access guard - allows anyone with project access to view the page
  * The component itself will handle read-only mode via AccessControlService
  * This is useful for pages like media edit where observers should see the page but not edit
