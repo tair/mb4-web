@@ -122,8 +122,16 @@ class ApiService {
    */
   async handleResponse(response) {
     if (response.ok) {
+      console.log(`[API-DEBUG] Response OK:`, response.status, response.url)
       return response
     }
+
+    console.error(`[API-DEBUG] Response Error:`, {
+      status: response.status,
+      statusText: response.statusText,
+      url: response.url,
+      type: response.type
+    })
 
     // Try to get error message from response
     let errorMessage = response.statusText
@@ -131,24 +139,27 @@ class ApiService {
     
     try {
       errorData = await response.clone().json()
+      console.error(`[API-DEBUG] Error data:`, errorData)
       if (errorData.message) {
         errorMessage = errorData.message
       } else if (errorData.error) {
         errorMessage = errorData.error
       }
     } catch (e) {
+      console.error(`[API-DEBUG] Failed to parse error response as JSON:`, e.message)
       // If response is not JSON, try to handle as blob for 401 errors
       if (response.status === 401) {
         try {
           const blob = await response.clone().blob()
           const blobText = await blob.text()
+          console.error(`[API-DEBUG] 401 blob text:`, blobText)
           try {
             errorData = JSON.parse(blobText)
           } catch (parseError) {
-            console.error('Error parsing blob response:', parseError)
+            console.error('[API-DEBUG] Error parsing blob response:', parseError)
           }
         } catch (blobError) {
-          console.error('Error reading blob:', blobError)
+          console.error('[API-DEBUG] Error reading blob:', blobError)
         }
       }
     }
@@ -235,18 +246,24 @@ class ApiService {
    * @param {Object} errorData - Error response data that may contain redirectUri
    */
   async handleUnauthorized(errorData = null) {
-    console.log('Interceptor caught error: 401')
+    console.error('[API-DEBUG] 🚨 401 Unauthorized - Starting handler')
+    console.error('[API-DEBUG] Current URL:', window.location.href)
+    console.error('[API-DEBUG] Error data:', errorData)
+    console.error('[API-DEBUG] Cookies present:', document.cookie ? 'yes' : 'no')
+    console.error('[API-DEBUG] Cookie content (first 200 chars):', document.cookie.substring(0, 200))
+    console.error('[API-DEBUG] LocalStorage mb-user:', localStorage.getItem('mb-user') ? 'present' : 'absent')
     
     // Check if we have a redirectUri in the error response
     if (errorData && errorData.redirectUri) {
       // Redirect to the provided URI with current location as redirect parameter
       const redirectUrl = `${errorData.redirectUri}&redirect=${encodeURIComponent(window.location.href)}`
-      console.log('Redirecting due to authentication required:', redirectUrl)
+      console.error('[API-DEBUG] Redirecting due to authentication required:', redirectUrl)
       window.location.href = redirectUrl
       return
     }
     
     // Clear stored user data (matches what AuthStore does)
+    console.log('[API-DEBUG] Clearing localStorage auth data')
     localStorage.removeItem('mb-user')
     localStorage.removeItem('orcid-user')
     
@@ -340,11 +357,31 @@ class ApiService {
       ...fetchOptions
     }
 
+    console.log(`[API-DEBUG] GET Request:`, {
+      url,
+      endpoint,
+      params,
+      headers,
+      credentials: config.credentials,
+      cookies: document.cookie ? 'present' : 'none'
+    })
+
     try {
       const response = await fetch(url, config)
+      console.log(`[API-DEBUG] GET Response:`, {
+        url,
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
+      })
       return this.handleResponse(response)
     } catch (error) {
-      console.error('GET request failed:', error)
+      console.error('[API-DEBUG] GET request failed:', {
+        url,
+        error: error.message,
+        stack: error.stack
+      })
       throw error
     }
   }
@@ -379,11 +416,31 @@ class ApiService {
       }
     }
 
+    console.log(`[API-DEBUG] POST Request:`, {
+      url,
+      endpoint,
+      headers,
+      credentials: config.credentials,
+      cookies: document.cookie ? 'present' : 'none',
+      dataType: data instanceof FormData ? 'FormData' : typeof data
+    })
+
     try {
       const response = await fetch(url, config)
+      console.log(`[API-DEBUG] POST Response:`, {
+        url,
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
+      })
       return this.handleResponse(response)
     } catch (error) {
-      console.error('POST request failed:', error)
+      console.error('[API-DEBUG] POST request failed:', {
+        url,
+        error: error.message,
+        stack: error.stack
+      })
       throw error
     }
   }

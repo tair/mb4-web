@@ -53,6 +53,12 @@ export const useAuthStore = defineStore({
   },
   actions: {
     invalidate() {
+      console.log('[AUTH-STORE-DEBUG] Invalidating auth state')
+      console.log('[AUTH-STORE-DEBUG] Previous user:', {
+        userId: this.user?.userId,
+        email: this.user?.userEmail,
+        hasToken: !!this.user?.authToken
+      })
       this.user = {
         authToken: null,
         authTokenExpiry: null,
@@ -110,21 +116,30 @@ export const useAuthStore = defineStore({
     },
 
     async verifyAuthenticationWithServer() {
+      console.log('[AUTH-STORE-DEBUG] Verifying authentication with server')
+      console.log('[AUTH-STORE-DEBUG] Has valid token locally:', this.hasValidAuthToken())
+      
       if (!this.hasValidAuthToken()) {
+        console.log('[AUTH-STORE-DEBUG] No valid local auth token')
         return false
       }
+
+      console.log('[AUTH-STORE-DEBUG] Making verification request to server')
+      console.log('[AUTH-STORE-DEBUG] Cookies:', document.cookie ? 'present' : 'absent')
 
       try {
         // Use the dedicated authentication verification endpoint
         const response = await apiService.get('/users/verify-authentication')
         const responseData = await response.json()
         
+        console.log('[AUTH-STORE-DEBUG] Verification response:', responseData)
+        
         // Optionally update user info if the server provides updated data
         if (responseData && responseData.authenticated) {
-          console.log('Authentication verified with server')
+          console.log('[AUTH-STORE-DEBUG] ✅ Authentication verified with server')
           return true
         } else {
-          console.log('Server returned non-authenticated response')
+          console.error('[AUTH-STORE-DEBUG] ❌ Server returned non-authenticated response')
           this.invalidate()
           const message = useMessageStore()
           message.setSessionTimeOutMessage()
@@ -132,9 +147,15 @@ export const useAuthStore = defineStore({
           return false
         }
       } catch (error) {
+        console.error('[AUTH-STORE-DEBUG] Verification failed:', {
+          message: error.message,
+          status: error.response?.status,
+          code: error.code
+        })
+        
         if (error.response && (error.response.status === 401 || error.response.status === 403)) {
           // Token is invalid on server side, clear local state
-          console.log('Server rejected auth token, clearing local authentication state')
+          console.error('[AUTH-STORE-DEBUG] ❌ Server rejected auth token (401/403), clearing local authentication state')
           this.invalidate()
           const message = useMessageStore()
           message.setSessionTimeOutMessage()
@@ -142,7 +163,7 @@ export const useAuthStore = defineStore({
           return false
         }
         // For other errors, assume auth is still valid to avoid false negatives
-        console.warn('Could not verify authentication with server:', error.message)
+        console.warn('[AUTH-STORE-DEBUG] Could not verify authentication with server (non-auth error):', error.message)
         return true
       }
     },
