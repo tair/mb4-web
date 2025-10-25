@@ -39,22 +39,13 @@ if (document.readyState === 'loading') {
 // Set up axios interceptors for automatic session header injection
 axios.interceptors.request.use(
   (config) => {
-    console.log('[AXIOS-INTERCEPTOR-DEBUG] Request interceptor - outgoing request:', {
-      url: config.url,
-      method: config.method,
-      headers: config.headers,
-      withCredentials: config.withCredentials
-    })
-
     // Skip session headers for public endpoints (if explicitly marked)
     if (config.skipSessionHeaders) {
-      console.log('[AXIOS-INTERCEPTOR-DEBUG] Skipping session headers (marked as public)')
       return config
     }
 
     // Ensure session manager is initialized before using it
     if (!sessionManager.initialized) {
-      console.log('[AXIOS-INTERCEPTOR-DEBUG] Initializing session manager')
       sessionManager.init()
     }
 
@@ -66,37 +57,27 @@ axios.interceptors.request.use(
       const sessionKey = sessionManager.getSessionKey()
       if (sessionKey) {
         config.headers['x-session-key'] = sessionKey
-        console.log('[AXIOS-INTERCEPTOR-DEBUG] Added session key header')
-      } else {
-        console.log('[AXIOS-INTERCEPTOR-DEBUG] No session key available')
       }
 
       // Add fingerprint header for bot detection
       const fingerprint = sessionManager.getFingerprint()
       if (fingerprint) {
         config.headers['x-session-fingerprint'] = fingerprint
-        console.log('[AXIOS-INTERCEPTOR-DEBUG] Added fingerprint header')
       }
 
       // Update session activity on each request
       sessionManager.updateSessionActivity()
     } catch (error) {
       console.warn(
-        '[AXIOS-INTERCEPTOR-DEBUG] Session management failed in request interceptor:',
+        'Session management failed in request interceptor:',
         error.message
       )
       // Continue with request even if session operations fail
     }
 
-    console.log('[AXIOS-INTERCEPTOR-DEBUG] Final request config:', {
-      url: config.url,
-      headers: config.headers
-    })
-
     return config
   },
   (error) => {
-    console.error('[AXIOS-INTERCEPTOR-DEBUG] Request interceptor error:', error)
     return Promise.reject(error)
   }
 )
@@ -104,55 +85,34 @@ axios.interceptors.request.use(
 // Set up response interceptor for session and authentication error handling
 axios.interceptors.response.use(
   (response) => {
-    console.log('[AXIOS-INTERCEPTOR-DEBUG] Response received:', {
-      status: response.status,
-      url: response.config?.url,
-      statusText: response.statusText
-    })
     return response
   },
   (error) => {
-    console.error('[AXIOS-INTERCEPTOR-DEBUG] Response error:', {
-      status: error.response?.status,
-      url: error.config?.url,
-      message: error.message,
-      data: error.response?.data
-    })
-
     // Handle session-related errors (e.g., if server requests session renewal)
     if (
       error.response &&
       error.response.status === 401 &&
       error.response.data?.renewSession
     ) {
-      console.log('[AXIOS-INTERCEPTOR-DEBUG] Server requested session renewal')
       sessionManager.renewSession()
       // Optionally retry the request with new session
     }
     
     // Handle authentication errors by clearing local auth state and redirecting to login
     if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      console.error('[AXIOS-INTERCEPTOR-DEBUG] 🚨 Authentication error detected (401/403)')
       // Import authStore and router dynamically to avoid circular dependency
       Promise.all([
         import('./stores/AuthStore.js'),
         import('./router/index.js')
       ]).then(([{ useAuthStore }, { default: router }]) => {
         const authStore = useAuthStore()
-        console.log('[AXIOS-INTERCEPTOR-DEBUG] Auth store loaded, checking user state')
-        console.log('[AXIOS-INTERCEPTOR-DEBUG] Has auth token:', !!authStore.user?.authToken)
-        
         // Only handle auth errors if we have auth data (to avoid clearing on public endpoints)
         if (authStore.user?.authToken) {
-          console.error('[AXIOS-INTERCEPTOR-DEBUG] User has token, clearing auth state and redirecting')
           authStore.invalidate()
           
           // Redirect to login page with current route as redirect parameter
           const currentRoute = router.currentRoute.value
-          console.log('[AXIOS-INTERCEPTOR-DEBUG] Current route:', currentRoute.name)
-          
           if (currentRoute.name !== 'UserLogin') {
-            console.log('[AXIOS-INTERCEPTOR-DEBUG] Redirecting to login')
             router.push({ 
               name: 'UserLogin', 
               query: { 
@@ -162,11 +122,9 @@ axios.interceptors.response.use(
               } 
             })
           }
-        } else {
-          console.log('[AXIOS-INTERCEPTOR-DEBUG] No auth token present, skipping redirect (likely public endpoint)')
         }
       }).catch(err => {
-        console.error('[AXIOS-INTERCEPTOR-DEBUG] Could not handle auth error:', err)
+        console.warn('Could not handle auth error:', err)
       })
     }
     
