@@ -142,6 +142,8 @@ export class MatrixModel extends EventTarget {
    * @param clientId The client ID.
    */
   setClientId(clientId: string | null) {
+    console.log('[MATRIX-MODEL-DEBUG] Setting client ID:', clientId)
+    console.log('[MATRIX-MODEL-DEBUG] Previous client ID:', this.clientId)
     this.clientId = clientId
   }
 
@@ -2963,14 +2965,31 @@ export class MatrixModel extends EventTarget {
    * @param event The event to send to the server.
    */
   sendEvent(event: { [key: string]: any }): Promise<void | Object> {
+    console.log('[MATRIX-MODEL-DEBUG] sendEvent called with:', event)
+    console.log('[MATRIX-MODEL-DEBUG] Current client ID:', this.clientId)
+    
     if (!this.clientId) {
+      console.error('[MATRIX-MODEL-DEBUG] ❌ Cannot send event: No client ID (SSE connection not established)')
+      console.error('[MATRIX-MODEL-DEBUG] Please reload the page to reconnect')
+      alert('Matrix editor connection lost. Please reload the page to continue editing.')
       return Promise.resolve()
     }
+    
+    console.log('[MATRIX-MODEL-DEBUG] Sending event to server with client_id:', this.clientId)
     const request = new Request('sendEvent')
       .addParameter('id', this.matrixId)
       .addParameter('client_id', this.clientId)
       .addParameter('event', event)
-    return this.loader.send(request).catch((error) => this.onError(error))
+    return this.loader.send(request).catch((error) => {
+      // Check if it's a sync connection error (412)
+      if (error && error.code === 'SYNC_REQUIRED') {
+        console.error('[MATRIX-MODEL-DEBUG] ❌ Server rejected event: Sync connection lost')
+        this.clientId = null // Clear client ID since it's invalid
+        alert('Matrix editor connection lost. Please reload the page to continue editing.')
+        return Promise.resolve()
+      }
+      return this.onError(error)
+    })
   }
 
   /**

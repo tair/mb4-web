@@ -202,6 +202,23 @@ class ApiService {
       
       case 404:
         throw createError('Resource not found', 'NOT_FOUND')
+      
+      case 412: {
+        // Precondition failed - usually matrix editor sync connection required
+        console.error('[API-DEBUG] 412 Precondition Failed:', errorData)
+        
+        // Check if it's a matrix editor sync issue
+        if (errorData && errorData.code === 'SYNC_REQUIRED') {
+          console.error('[API-DEBUG] Matrix editor sync connection lost, user should refresh')
+          // Don't throw - let the matrix editor handle it
+          // The matrix editor should detect this and prompt user to refresh
+        }
+        
+        throw createError(
+          (errorData && (errorData.message || errorData.errors?.[0])) || 'Precondition failed',
+          errorData?.code || 'PRECONDITION_FAILED'
+        )
+      }
         
       case 422:
         throw createError(`Validation error: ${errorMessage}`, 'VALIDATION_ERROR')

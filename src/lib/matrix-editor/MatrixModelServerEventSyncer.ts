@@ -54,7 +54,10 @@ export class MatrixModelServerEventSyncer {
    */
   start() {
     const userId = this.matrixModel.getProjectProperties().getUserId()
+    console.log('[MATRIX-SYNC-DEBUG] Starting MatrixModelServerEventSyncer, User ID:', userId)
+    
     if (userId == null) {
+      console.error('[MATRIX-SYNC-DEBUG] ❌ FAILED: No user ID available, cannot establish sync')
       return
     }
 
@@ -64,7 +67,16 @@ export class MatrixModelServerEventSyncer {
     )
 
     const userLocation = this.url + userId + '/sync'
+    console.log('[MATRIX-SYNC-DEBUG] Establishing SSE connection to:', userLocation)
+    
     const serverEvents = new EventSource(userLocation)
+    
+    console.log('[MATRIX-SYNC-DEBUG] EventSource created, readyState:', serverEvents.readyState)
+    
+    serverEvents.addEventListener('open', () => {
+      console.log('[MATRIX-SYNC-DEBUG] ✅ SSE connection opened successfully')
+    })
+    
     serverEvents.addEventListener('sync', () => this.onHandleEventSourceSync())
     serverEvents.addEventListener('init', (e) =>
       this.onHandleEventSourceInitialize(e)
@@ -84,6 +96,7 @@ export class MatrixModelServerEventSyncer {
    * Handles events from server-side events which indicate the connection was closed.
    */
   protected onHandleEventSourceClose() {
+    console.log('[MATRIX-SYNC-DEBUG] SSE connection closed, clearing client ID')
     this.matrixModel.setClientId(null)
   }
 
@@ -91,7 +104,13 @@ export class MatrixModelServerEventSyncer {
    * Handles events from server-side events which indicate the connection received an error.
    */
   protected onHandleEventSourceError(e: Event, serverEvents: EventSource) {
+    console.error('[MATRIX-SYNC-DEBUG] ❌ SSE connection error:', {
+      readyState: serverEvents.readyState,
+      url: serverEvents.url,
+      eventType: e.type
+    })
     serverEvents.close()
+    console.log('[MATRIX-SYNC-DEBUG] SSE connection closed due to error')
   }
 
   /**
@@ -99,6 +118,7 @@ export class MatrixModelServerEventSyncer {
    * the server.
    */
   protected onHandleEventSourceSync() {
+    console.log('[MATRIX-SYNC-DEBUG] Received sync event from server')
     this.throttledSync.fire()
   }
 
@@ -106,8 +126,11 @@ export class MatrixModelServerEventSyncer {
    * Handles events from server-side events which indicate that this client is registered.
    */
   protected onHandleEventSourceInitialize(e: MessageEvent<any>) {
+    console.log('[MATRIX-SYNC-DEBUG] Received init event from server:', e.data)
     const data = JSON.parse(e.data)
-    this.matrixModel.setClientId(data['client_id'])
+    const clientId = data['client_id']
+    console.log('[MATRIX-SYNC-DEBUG] ✅ Client registered with ID:', clientId)
+    this.matrixModel.setClientId(clientId)
   }
 
   /**
