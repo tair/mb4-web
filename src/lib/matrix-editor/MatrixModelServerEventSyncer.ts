@@ -109,8 +109,24 @@ export class MatrixModelServerEventSyncer {
       url: serverEvents.url,
       eventType: e.type
     })
-    serverEvents.close()
-    console.log('[MATRIX-SYNC-DEBUG] SSE connection closed due to error')
+    
+    // EventSource will automatically try to reconnect unless we close it
+    // Only close and notify user if the connection is actually closed/failed
+    if (serverEvents.readyState === EventSource.CLOSED) {
+      console.error('[MATRIX-SYNC-DEBUG] Connection permanently closed, attempting manual reconnect in 5 seconds...')
+      serverEvents.close()
+      
+      // Clear client ID since connection is lost
+      this.matrixModel.setClientId(null)
+      
+      // Attempt to reconnect after a delay
+      setTimeout(() => {
+        console.log('[MATRIX-SYNC-DEBUG] Attempting to reconnect SSE...')
+        this.start()
+      }, 5000)
+    } else {
+      console.log('[MATRIX-SYNC-DEBUG] Connection error but EventSource will auto-retry')
+    }
   }
 
   /**
