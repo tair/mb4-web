@@ -65,6 +65,7 @@ export class MatrixModelServerEventSyncer {
 
     const userLocation = this.url + userId + '/sync'
     const serverEvents = new EventSource(userLocation)
+    
     serverEvents.addEventListener('sync', () => this.onHandleEventSourceSync())
     serverEvents.addEventListener('init', (e) =>
       this.onHandleEventSourceInitialize(e)
@@ -91,7 +92,17 @@ export class MatrixModelServerEventSyncer {
    * Handles events from server-side events which indicate the connection received an error.
    */
   protected onHandleEventSourceError(e: Event, serverEvents: EventSource) {
-    serverEvents.close()
+    // EventSource will automatically try to reconnect unless we close it
+    // Only close and notify user if the connection is actually closed/failed
+    if (serverEvents.readyState === EventSource.CLOSED) {
+      serverEvents.close()
+      // Clear client ID since connection is lost
+      this.matrixModel.setClientId(null)
+      // Attempt to reconnect after a delay
+      setTimeout(() => {
+        this.start()
+      }, 5000)
+    }
   }
 
   /**
@@ -107,7 +118,8 @@ export class MatrixModelServerEventSyncer {
    */
   protected onHandleEventSourceInitialize(e: MessageEvent<any>) {
     const data = JSON.parse(e.data)
-    this.matrixModel.setClientId(data['client_id'])
+    const clientId = data['client_id']
+    this.matrixModel.setClientId(clientId)
   }
 
   /**

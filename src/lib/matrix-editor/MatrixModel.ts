@@ -2964,13 +2964,23 @@ export class MatrixModel extends EventTarget {
    */
   sendEvent(event: { [key: string]: any }): Promise<void | Object> {
     if (!this.clientId) {
+      alert('Matrix editor connection lost. Please reload the page to continue editing.')
       return Promise.resolve()
     }
+    
     const request = new Request('sendEvent')
       .addParameter('id', this.matrixId)
       .addParameter('client_id', this.clientId)
       .addParameter('event', event)
-    return this.loader.send(request).catch((error) => this.onError(error))
+    return this.loader.send(request).catch((error) => {
+      // Check if it's a sync connection error (412)
+      if (error && error.code === 'SYNC_REQUIRED') {
+        this.clientId = null // Clear client ID since it's invalid
+        alert('Matrix editor connection lost. Please reload the page to continue editing.')
+        return Promise.resolve()
+      }
+      return this.onError(error)
+    })
   }
 
   /**

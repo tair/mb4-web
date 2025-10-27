@@ -191,6 +191,13 @@ class ApiService {
       
       case 404:
         throw createError('Resource not found', 'NOT_FOUND')
+      
+      case 412:
+        // Precondition failed - usually matrix editor sync connection required
+        throw createError(
+          (errorData && (errorData.message || errorData.errors?.[0])) || 'Precondition failed',
+          errorData?.code || 'PRECONDITION_FAILED'
+        )
         
       case 422:
         throw createError(`Validation error: ${errorMessage}`, 'VALIDATION_ERROR')
