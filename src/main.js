@@ -21,6 +21,7 @@ app.use(router)
 
 // Session Management Setup
 import sessionManager from './lib/session-manager.js'
+import { isInternalApi } from './utils/session-utils.js'
 import axios from 'axios'
 
 // Initialize session manager when DOM is ready
@@ -36,43 +37,44 @@ if (document.readyState === 'loading') {
   sessionManager.init()
 }
 
-// Set up axios interceptors for automatic session header injection
+// Set up axios interceptors for session management
 axios.interceptors.request.use(
   (config) => {
-    // Skip session headers for public endpoints (if explicitly marked)
-    if (config.skipSessionHeaders) {
-      return config
-    }
-
-    // Ensure session manager is initialized before using it
-    if (!sessionManager.initialized) {
-      sessionManager.init()
-    }
-
-    try {
-      // Auto-renew session if needed before making requests
-      sessionManager.autoRenewIfNeeded()
-
-      // Add session key header to all requests
-      const sessionKey = sessionManager.getSessionKey()
-      if (sessionKey) {
-        config.headers['x-session-key'] = sessionKey
+    // Check if this is an internal API call
+    const isInternal = isInternalApi(config.url)
+    
+    // Only add session headers for internal APIs
+    if (isInternal) {
+      // Ensure session manager is initialized before using it
+      if (!sessionManager.initialized) {
+        sessionManager.init()
       }
 
-      // Add fingerprint header for bot detection
-      const fingerprint = sessionManager.getFingerprint()
-      if (fingerprint) {
-        config.headers['x-session-fingerprint'] = fingerprint
-      }
+      try {
+        // Auto-renew session if needed before making requests
+        sessionManager.autoRenewIfNeeded()
 
-      // Update session activity on each request
-      sessionManager.updateSessionActivity()
-    } catch (error) {
-      console.warn(
-        'Session management failed in request interceptor:',
-        error.message
-      )
-      // Continue with request even if session operations fail
+        // Add session key header to internal API requests
+        const sessionKey = sessionManager.getSessionKey()
+        if (sessionKey) {
+          config.headers['x-session-key'] = sessionKey
+        }
+
+        // Add fingerprint header for bot detection
+        const fingerprint = sessionManager.getFingerprint()
+        if (fingerprint) {
+          config.headers['x-session-fingerprint'] = fingerprint
+        }
+
+        // Update session activity on each request
+        sessionManager.updateSessionActivity()
+      } catch (error) {
+        console.warn(
+          'Session management failed in request interceptor:',
+          error.message
+        )
+        // Continue with request even if session operations fail
+      }
     }
 
     return config
