@@ -11,6 +11,8 @@
  * - Comprehensive error handling for all HTTP methods
  */
 
+import sessionManager from '@/lib/session-manager.js'
+
 class ApiService {
   constructor() {
     // Use empty string for relative URLs - works for most cases
@@ -22,13 +24,45 @@ class ApiService {
   }
 
   /**
-   * Get default headers
+   * Get default headers (includes session tracking headers)
    * @returns {Object} Headers object
    */
   getDefaultHeaders() {
     // Backend uses httpOnly cookies for auth, not Authorization headers
     // The browser automatically sends cookies with credentials: 'include'
-    return { ...this.defaultHeaders }
+    const headers = { ...this.defaultHeaders }
+    
+    // Add session headers for tracking and analytics
+    try {
+      // Ensure session manager is initialized
+      if (!sessionManager.initialized) {
+        sessionManager.init()
+      }
+      
+      // Add session key header
+      const sessionKey = sessionManager.getSessionKey()
+      if (sessionKey) {
+        headers['x-session-key'] = sessionKey
+      }
+      
+      // Add fingerprint header for bot detection
+      const fingerprint = sessionManager.getFingerprint()
+      if (fingerprint) {
+        headers['x-session-fingerprint'] = fingerprint
+      }
+      
+      // Auto-renew session if needed
+      sessionManager.autoRenewIfNeeded()
+      
+      // Update session activity
+      sessionManager.updateSessionActivity()
+    } catch (error) {
+      // Silently fail if session manager is not available
+      // Session headers are optional and shouldn't break requests
+      console.warn('Failed to add session headers:', error)
+    }
+    
+    return headers
   }
 
 
