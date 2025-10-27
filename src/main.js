@@ -108,6 +108,7 @@ axios.interceptors.response.use(
         const authStore = useAuthStore()
         // Only handle auth errors if we have auth data (to avoid clearing on public endpoints)
         if (authStore.user?.authToken) {
+          console.log('Authentication error detected, clearing local auth state and redirecting to login')
           authStore.invalidate()
           
           // Redirect to login page with current route as redirect parameter

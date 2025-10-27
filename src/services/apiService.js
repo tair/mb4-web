@@ -242,10 +242,13 @@ class ApiService {
    * @param {Object} errorData - Error response data that may contain redirectUri
    */
   async handleUnauthorized(errorData = null) {
+    console.log('Interceptor caught error: 401')
+    
     // Check if we have a redirectUri in the error response
     if (errorData && errorData.redirectUri) {
       // Redirect to the provided URI with current location as redirect parameter
       const redirectUrl = `${errorData.redirectUri}&redirect=${encodeURIComponent(window.location.href)}`
+      console.log('Redirecting due to authentication required:', redirectUrl)
       window.location.href = redirectUrl
       return
     }
@@ -258,6 +261,7 @@ class ApiService {
     try {
       const { useAuthStore } = await import('@/stores/AuthStore.js')
       const authStore = useAuthStore()
+      console.log('ApiService: Authentication error detected, redirecting to login')
       // Clear any local auth state if present
       try { authStore.invalidate() } catch {}
       // Ensure redirect to login regardless of prior auth state

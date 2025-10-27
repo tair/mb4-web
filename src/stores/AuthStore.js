@@ -121,8 +121,10 @@ export const useAuthStore = defineStore({
         
         // Optionally update user info if the server provides updated data
         if (responseData && responseData.authenticated) {
+          console.log('Authentication verified with server')
           return true
         } else {
+          console.log('Server returned non-authenticated response')
           this.invalidate()
           const message = useMessageStore()
           message.setSessionTimeOutMessage()
@@ -132,6 +134,7 @@ export const useAuthStore = defineStore({
       } catch (error) {
         if (error.response && (error.response.status === 401 || error.response.status === 403)) {
           // Token is invalid on server side, clear local state
+          console.log('Server rejected auth token, clearing local authentication state')
           this.invalidate()
           const message = useMessageStore()
           message.setSessionTimeOutMessage()
