@@ -9,7 +9,11 @@
  * - Blob response handling for authentication errors
  * - Token management and cleanup
  * - Comprehensive error handling for all HTTP methods
+ * - Session tracking with headers for internal APIs only
  */
+
+import sessionManager from '@/lib/session-manager.js'
+import { isInternalApi } from '@/utils/session-utils.js'
 
 class ApiService {
   constructor() {
@@ -29,6 +33,50 @@ class ApiService {
     // Backend uses httpOnly cookies for auth, not Authorization headers
     // The browser automatically sends cookies with credentials: 'include'
     return { ...this.defaultHeaders }
+  }
+
+  /**
+   * Get session headers for internal API calls only
+   * @param {string} url - The URL being called
+   * @returns {Object} Session headers object (empty if external API)
+   */
+  getSessionHeaders(url) {
+    // Skip session headers for external APIs (use shared utility)
+    if (!isInternalApi(url)) {
+      return {}
+    }
+
+    const headers = {}
+    
+    try {
+      // Ensure session manager is initialized
+      if (!sessionManager.initialized) {
+        sessionManager.init()
+      }
+      
+      // Auto-renew session if needed
+      sessionManager.autoRenewIfNeeded()
+      
+      // Add session key header
+      const sessionKey = sessionManager.getSessionKey()
+      if (sessionKey) {
+        headers['x-session-key'] = sessionKey
+      }
+      
+      // Add fingerprint header for bot detection
+      const fingerprint = sessionManager.getFingerprint()
+      if (fingerprint) {
+        headers['x-session-fingerprint'] = fingerprint
+      }
+      
+      // Update session activity
+      sessionManager.updateSessionActivity()
+    } catch (error) {
+      console.warn('Failed to add session headers:', error)
+      // Continue without session headers - shouldn't break the request
+    }
+    
+    return headers
   }
 
 
@@ -339,7 +387,11 @@ class ApiService {
   async get(endpoint, options = {}) {
     const { params, headers: optionHeaders, ...fetchOptions } = options
     const url = this.buildUrl(endpoint, params)
-    const headers = { ...this.getDefaultHeaders(), ...(optionHeaders || {}) }
+    const headers = { 
+      ...this.getDefaultHeaders(), 
+      ...this.getSessionHeaders(url),  // Add session headers for internal APIs
+      ...(optionHeaders || {}) 
+    }
     const config = {
       method: 'GET',
       headers,
@@ -366,7 +418,11 @@ class ApiService {
   async post(endpoint, data = null, options = {}) {
     const url = this.buildUrl(endpoint)
     const { headers: optionHeaders, ...otherOptions } = options
-    const headers = { ...this.getDefaultHeaders(), ...(optionHeaders || {}) }
+    const headers = { 
+      ...this.getDefaultHeaders(), 
+      ...this.getSessionHeaders(url),  // Add session headers for internal APIs
+      ...(optionHeaders || {}) 
+    }
     const config = {
       method: 'POST',
       headers,
@@ -405,7 +461,11 @@ class ApiService {
   async put(endpoint, data = null, options = {}) {
     const url = this.buildUrl(endpoint)
     const { headers: optionHeaders, ...otherOptions } = options
-    const headers = { ...this.getDefaultHeaders(), ...(optionHeaders || {}) }
+    const headers = { 
+      ...this.getDefaultHeaders(), 
+      ...this.getSessionHeaders(url),  // Add session headers for internal APIs
+      ...(optionHeaders || {}) 
+    }
     const config = {
       method: 'PUT',
       headers,
@@ -443,7 +503,11 @@ class ApiService {
   async patch(endpoint, data = null, options = {}) {
     const url = this.buildUrl(endpoint)
     const { headers: optionHeaders, ...otherOptions } = options
-    const headers = { ...this.getDefaultHeaders(), ...(optionHeaders || {}) }
+    const headers = { 
+      ...this.getDefaultHeaders(), 
+      ...this.getSessionHeaders(url),  // Add session headers for internal APIs
+      ...(optionHeaders || {}) 
+    }
     const config = {
       method: 'PATCH',
       headers,
@@ -481,7 +545,11 @@ class ApiService {
   async delete(endpoint, data = null, options = {}) {
     const url = this.buildUrl(endpoint)
     const { headers: optionHeaders, ...otherOptions } = options
-    const headers = { ...this.getDefaultHeaders(), ...(optionHeaders || {}) }
+    const headers = { 
+      ...this.getDefaultHeaders(), 
+      ...this.getSessionHeaders(url),  // Add session headers for internal APIs
+      ...(optionHeaders || {}) 
+    }
     const config = {
       method: 'DELETE',
       headers,

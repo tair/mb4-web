@@ -211,6 +211,7 @@ async function editCitation(linkId, json) {
             aria-label="Select all items"
             title="Select all"
           />
+          <span class="ms-2">Select All</span>
         </label>
         <span v-if="!someSelected" class="item" @click="refresh">
           <i class="fa-solid fa-arrow-rotate-right"></i>

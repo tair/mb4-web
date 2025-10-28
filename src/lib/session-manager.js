@@ -111,10 +111,8 @@ class SessionManager {
    * Load existing session or create new one
    */
   loadOrCreateSession() {
-    // Try to load existing session from localStorage
-    const storedSession = this.safeGetItem(
-      `${SESSION_CONFIG.STORAGE_PREFIX}-key`
-    )
+    // Load existing session from localStorage
+    const storedSession = this.safeGetItem(`${SESSION_CONFIG.STORAGE_PREFIX}-key`)
 
     if (storedSession && this.isValidSessionKey(storedSession)) {
       this.sessionKey = storedSession
@@ -129,6 +127,8 @@ class SessionManager {
    */
   createNewSession() {
     this.sessionKey = this.generateSecureSessionId()
+    
+    // Store in localStorage
     this.safeSetItem(`${SESSION_CONFIG.STORAGE_PREFIX}-key`, this.sessionKey)
     this.safeSetItem(
       `${SESSION_CONFIG.STORAGE_PREFIX}-created`,
@@ -299,9 +299,11 @@ class SessionManager {
    * Clear session
    */
   clearSession() {
+    // Clear localStorage
     this.safeRemoveItem(`${SESSION_CONFIG.STORAGE_PREFIX}-key`)
     this.safeRemoveItem(`${SESSION_CONFIG.STORAGE_PREFIX}-created`)
     this.safeRemoveItem(`${SESSION_CONFIG.STORAGE_PREFIX}-activity`)
+    
     this.sessionKey = null
   }
 
