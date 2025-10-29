@@ -1171,7 +1171,7 @@ export class MatrixModel extends EventTarget {
       .addParameter('citation_id', citationId)
       .addParameter('pp', pages)
       .addParameter('notes', notes)
-    const result: { [key: string]: any } = this.loader.send(request)
+    const result: { [key: string]: any } = await this.loader.send(request)
 
     let citation
     if (linkId) {
