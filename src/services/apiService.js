@@ -28,7 +28,39 @@ class ApiService {
   getDefaultHeaders() {
     // Backend uses httpOnly cookies for auth, not Authorization headers
     // The browser automatically sends cookies with credentials: 'include'
-    return { ...this.defaultHeaders }
+    const headers = { ...this.defaultHeaders }
+    
+    // Add session headers if available (required for analytics and session tracking)
+    try {
+      // Dynamically import session manager to avoid circular dependencies
+      if (typeof window !== 'undefined' && window.sessionManager) {
+        // Ensure session manager is initialized
+        if (!window.sessionManager.initialized) {
+          window.sessionManager.init()
+        }
+        
+        // Auto-renew session if needed before making requests
+        window.sessionManager.autoRenewIfNeeded()
+        
+        const sessionKey = window.sessionManager.getSessionKey()
+        if (sessionKey) {
+          headers['x-session-key'] = sessionKey
+        }
+        
+        const fingerprint = window.sessionManager.getFingerprint()
+        if (fingerprint) {
+          headers['x-session-fingerprint'] = fingerprint
+        }
+        
+        // Update session activity on each request
+        window.sessionManager.updateSessionActivity()
+      }
+    } catch (error) {
+      // Silently fail - session headers are optional for most requests
+      console.debug('Could not add session headers:', error)
+    }
+    
+    return headers
   }
 
 

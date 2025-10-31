@@ -23,6 +23,9 @@ app.use(router)
 import sessionManager from './lib/session-manager.js'
 import axios from 'axios'
 
+// Expose sessionManager globally for apiService to access
+window.sessionManager = sessionManager
+
 // Initialize session manager when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   sessionManager.init()
