@@ -24,6 +24,9 @@ import sessionManager from './lib/session-manager.js'
 import { isInternalApi } from './utils/session-utils.js'
 import axios from 'axios'
 
+// Expose sessionManager globally for apiService to access
+window.sessionManager = sessionManager
+
 // Initialize session manager when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   sessionManager.init()
