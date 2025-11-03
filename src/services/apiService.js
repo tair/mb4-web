@@ -26,45 +26,12 @@ class ApiService {
   }
 
   /**
-   * Get default headers
+   * Get default headers (base headers for all requests)
    * @returns {Object} Headers object
    */
   getDefaultHeaders() {
-    // Backend uses httpOnly cookies for auth, not Authorization headers
-    // The browser automatically sends cookies with credentials: 'include'
-    const headers = { ...this.defaultHeaders }
-    
-    // Add session headers if available (required for analytics and session tracking)
-    try {
-      // Dynamically import session manager to avoid circular dependencies
-      if (typeof window !== 'undefined' && window.sessionManager) {
-        // Ensure session manager is initialized
-        if (!window.sessionManager.initialized) {
-          window.sessionManager.init()
-        }
-        
-        // Auto-renew session if needed before making requests
-        window.sessionManager.autoRenewIfNeeded()
-        
-        const sessionKey = window.sessionManager.getSessionKey()
-        if (sessionKey) {
-          headers['x-session-key'] = sessionKey
-        }
-        
-        const fingerprint = window.sessionManager.getFingerprint()
-        if (fingerprint) {
-          headers['x-session-fingerprint'] = fingerprint
-        }
-        
-        // Update session activity on each request
-        window.sessionManager.updateSessionActivity()
-      }
-    } catch (error) {
-      // Silently fail - session headers are optional for most requests
-      console.debug('Could not add session headers:', error)
-    }
-    
-    return headers
+    // Return only base headers - session headers are added separately via getSessionHeaders
+    return { ...this.defaultHeaders }
   }
 
   /**
@@ -421,7 +388,7 @@ class ApiService {
     const url = this.buildUrl(endpoint, params)
     const headers = { 
       ...this.getDefaultHeaders(), 
-      ...this.getSessionHeaders(url),  // Add session headers for internal APIs
+      ...this.getSessionHeaders(url),  // Add session headers for internal APIs only
       ...(optionHeaders || {}) 
     }
     const config = {
@@ -452,7 +419,7 @@ class ApiService {
     const { headers: optionHeaders, ...otherOptions } = options
     const headers = { 
       ...this.getDefaultHeaders(), 
-      ...this.getSessionHeaders(url),  // Add session headers for internal APIs
+      ...this.getSessionHeaders(url),  // Add session headers for internal APIs only
       ...(optionHeaders || {}) 
     }
     const config = {
@@ -495,7 +462,7 @@ class ApiService {
     const { headers: optionHeaders, ...otherOptions } = options
     const headers = { 
       ...this.getDefaultHeaders(), 
-      ...this.getSessionHeaders(url),  // Add session headers for internal APIs
+      ...this.getSessionHeaders(url),  // Add session headers for internal APIs only
       ...(optionHeaders || {}) 
     }
     const config = {
@@ -537,7 +504,7 @@ class ApiService {
     const { headers: optionHeaders, ...otherOptions } = options
     const headers = { 
       ...this.getDefaultHeaders(), 
-      ...this.getSessionHeaders(url),  // Add session headers for internal APIs
+      ...this.getSessionHeaders(url),  // Add session headers for internal APIs only
       ...(optionHeaders || {}) 
     }
     const config = {
@@ -579,7 +546,7 @@ class ApiService {
     const { headers: optionHeaders, ...otherOptions } = options
     const headers = { 
       ...this.getDefaultHeaders(), 
-      ...this.getSessionHeaders(url),  // Add session headers for internal APIs
+      ...this.getSessionHeaders(url),  // Add session headers for internal APIs only
       ...(optionHeaders || {}) 
     }
     const config = {
@@ -629,20 +596,22 @@ class ApiService {
     }
 
     const { headers: optionHeaders, ...otherOptions } = options
-    const mergedHeaders = { ...this.getDefaultHeaders(), ...(optionHeaders || {}) }
+    const headers = { 
+      ...this.getDefaultHeaders(),
+      ...this.getSessionHeaders(url),  // Add session headers for internal APIs only
+      ...(optionHeaders || {}) 
+    }
+    
+    // Remove Content-Type header for FormData (browser sets it with boundary)
+    delete headers['Content-Type']
+    
     const config = {
       method: 'POST',
-      headers: {
-        // Don't set Content-Type for FormData
-        ...mergedHeaders
-      },
+      headers,
       body: formData,
       credentials: 'include',
       ...otherOptions
     }
-
-    // Remove Content-Type header for FormData
-    delete config.headers['Content-Type']
 
     try {
       const response = await fetch(url, config)
