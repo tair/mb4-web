@@ -1609,6 +1609,10 @@ class CitationsPane extends BasePane {
         notes
       )
       .then(() => {
+        // Update the citation object with the new values
+        citation.setPages(pages)
+        citation.setNotes(notes)
+        
         const citations = cellInfo.getCitations()
         this.redrawCellCitations(citations)
         this.savingLabel.saved()

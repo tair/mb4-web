@@ -47,7 +47,7 @@ export class EditCitationDialog extends Modal {
   override enterDocument() {
     super.enterDocument()
     const handler = this.getHandler()
-    handler.listen(this, EventType.SELECT, (e: KeyboardEvent) =>
+    handler.listen(this, EventType.SELECT, (e: any) =>
       this.onHandleSelect(e)
     )
   }
@@ -57,8 +57,9 @@ export class EditCitationDialog extends Modal {
    *
    * @param e The event that triggered this callback.
    */
-  private onHandleSelect(e: KeyboardEvent) {
-    if (e.key === ModalDefaultButtonKeys.OK) {
+  private onHandleSelect(e: any) {
+    const buttonKey = e.detail?.key || e.key
+    if (buttonKey === ModalDefaultButtonKeys.SAVE) {
       const pagesElement = this.getElementByClass<HTMLInputElement>('pages')
       const notesElement = this.getElementByClass<HTMLInputElement>('notes')
       this.successCallback(pagesElement.value, notesElement.value).then(() =>
