@@ -1,0 +1,55 @@
+[ec2-user@ip-172-31-2-87 ~]$ sudo cat /etc/httpd/conf.d/vhosts.conf
+<VirtualHost *:80>
+    ServerName beta.morphobank.org
+    Redirect permanent / https://beta.morphobank.org/
+</VirtualHost>
+
+<VirtualHost *:443>
+    ErrorLog  logs/web.error_log
+    CustomLog logs/web.access_log combined
+    <Proxy *>
+        Order deny,allow
+        Allow from all
+    </Proxy>
+
+    <Proxy balancer://mb4-web>
+        BalancerMember http://localhost:4000 route=node1
+        Order allow,deny
+        Allow from all 
+    </Proxy>
+
+    <Proxy balancer://mb4-service>
+        BalancerMember http://localhost:8080 route=node1
+        Order allow,deny
+        Allow from all 
+    </Proxy>
+
+    <Proxy balancer://mb4-matrixeditor>
+         BalancerMember http://localhost:4002 route=node1
+        Order allow,deny
+        Allow from all 
+    </Proxy>
+
+    SSLEngine on
+    SSLCertificateFile /etc/ssl/certs/morphobank/star.morphobank.org.crt
+    SSLCertificateKeyFile /etc/ssl/certs/morphobank/star.morphobank.org.key
+    SSLCertificateChainFile /etc/ssl/certs/morphobank/ov_chain.txt
+
+    # Enable URL rewriting for legacy API endpoints
+    RewriteEngine On
+    
+    # Legacy API endpoint rewrites - MUST come BEFORE ProxyPass
+    # Redirect /service.php/* to /services/service/*
+    RewriteRule ^/service\.php/(.*)$ /services/service/$1 [PT,QSA,L]
+    
+    # Redirect /index.php/service.php/* to /services/service/*
+    RewriteRule ^/index\.php/service\.php/(.*)$ /services/service/$1 [PT,QSA,L]
+
+    ProxyPreserveHost ON
+    ProxyPass         /services/   http://localhost:8080/
+    ProxyPassReverse  /     http://localhost:8080/
+    ProxyPass         /editor/    http://localhost:4002/
+    ProxyPassReverse  /     http://localhost:4002/
+    ProxyPass         /      balancer://mb4-web/
+    ProxyPassReverse  /      http://localhost:4000/
+</VirtualHost>

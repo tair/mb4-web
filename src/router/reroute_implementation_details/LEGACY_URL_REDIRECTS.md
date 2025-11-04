@@ -39,6 +39,34 @@ All redirects are implemented in `/src/router/oldMappingReroute.js` with:
 | `/index.php/TermsOfUse/index` | `/terms` | Terms with PHP prefix |
 | `/index.php/TermsOfUse/Form` | `/terms` | Terms form with PHP prefix |
 
+### API Documentation Page (Implemented)
+| Old URL | New URL | Notes |
+|---------|---------|-------|
+| `/About/api` | `/api` | API documentation page |
+| `/index.php/About/api` | `/api` | API documentation with PHP prefix |
+
+### API Service Endpoints (Implemented at Proxy Level)
+| Old URL Pattern | New URL Pattern | Notes |
+|----------------|-----------------|-------|
+| `/service.php/:command/:resourceType` | `/services/service/:command/:resourceType` | API service endpoints (Apache/nginx rewrite) |
+| `/index.php/service.php/:command/:resourceType` | `/services/service/:command/:resourceType` | API service with PHP prefix (Apache/nginx rewrite) |
+
+**Examples:**
+- `/service.php/List/PublishedProjects` → `/services/service/List/PublishedProjects`
+- `/index.php/service.php/List/ProjectMedia?project_id=44` → `/services/service/List/ProjectMedia?project_id=44`
+- `/service.php/List/ProjectTaxonomy?project_id=44` → `/services/service/List/ProjectTaxonomy?project_id=44`
+
+**Implementation:** These redirects are handled at the **Apache httpd/nginx proxy level** using RewriteRule directives, NOT in the Vue Router. This ensures they work for all clients including curl, scripts, and external API consumers.
+
+**Apache Configuration Example:**
+```apache
+RewriteEngine On
+RewriteRule ^/service\.php/(.*)$ /services/service/$1 [PT,QSA,L]
+RewriteRule ^/index\.php/service\.php/(.*)$ /services/service/$1 [PT,QSA,L]
+```
+
+**Note:** All query parameters (e.g., `project_id`) are preserved during redirection via the `QSA` flag.
+
 ### 2. Authentication Pages (Implemented)
 
 | Old URL | New URL | Notes |
