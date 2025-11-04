@@ -77,6 +77,12 @@ export const legacyRoutes = [
     redirect: '/',
   },
 
+  // API documentation page
+  {
+    path: '/About/api',
+    redirect: '/api',
+  },
+
   // 2. Authentication Pages
   {
     path: '/LoginReg/form',

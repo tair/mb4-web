@@ -34,7 +34,16 @@ This document provides test cases to verify that legacy PHP URLs correctly redir
 | `http://localhost:81/LoginReg/resetSend` | `http://localhost:81/users/resetpassword` | Password reset |
 | `http://localhost:81/LoginReg/resetSave` | `http://localhost:81/users/set-new-password` | Set new password |
 
-### 3. MyProjects - Without project_id (Fallback)
+### 3. API Documentation Page
+
+| Test URL | Expected Redirect | Description |
+|----------|-------------------|-------------|
+| `http://localhost:81/About/api` | `http://localhost:81/api` | API documentation |
+| `http://localhost:81/index.php/About/api` | `http://localhost:81/api` | API documentation with PHP prefix |
+
+**Note:** API Service Endpoints (`/service.php/*`) are handled at the Apache/nginx proxy level, not in the Vue Router. See Apache httpd configuration for the rewrite rules.
+
+### 4. MyProjects - Without project_id (Fallback)
 
 | Test URL | Expected Redirect | Description |
 |----------|-------------------|-------------|
@@ -42,7 +51,7 @@ This document provides test cases to verify that legacy PHP URLs correctly redir
 | `http://localhost:81/MyProjects/Media/index` | `http://localhost:81/myprojects` | Media (no project) |
 | `http://localhost:81/MyProjects/Taxa/index` | `http://localhost:81/myprojects` | Taxa (no project) |
 
-### 4. MyProjects - With project_id Query Parameter (Replace 123 with actual project ID)
+### 5. MyProjects - With project_id Query Parameter (Replace 123 with actual project ID)
 
 | Test URL | Expected Redirect | Description |
 |----------|-------------------|-------------|
@@ -59,7 +68,7 @@ This document provides test cases to verify that legacy PHP URLs correctly redir
 | `http://localhost:81/MyProjects/Members/index?project_id=123` | `http://localhost:81/myprojects/123/members` | Members |
 | `http://localhost:81/MyProjects/Publishing/publishForm?project_id=123` | `http://localhost:81/myprojects/123/publish` | Publish |
 
-### 4b. MyProjects - With project_id Path Parameter (Replace 123 with actual project ID)
+### 5b. MyProjects - With project_id Path Parameter (Replace 123 with actual project ID)
 
 | Test URL | Expected Redirect | Description |
 |----------|-------------------|-------------|
@@ -77,21 +86,21 @@ This document provides test cases to verify that legacy PHP URLs correctly redir
 | `http://localhost:81/MyProjects/Members/index/project_id/123` | `http://localhost:81/myprojects/123/members` | Members |
 | `http://localhost:81/MyProjects/Publishing/publishForm/project_id/123` | `http://localhost:81/myprojects/123/publish` | Publish |
 
-### 5. MyProjects - With PHP prefix
+### 6. MyProjects - With PHP prefix
 
 | Test URL | Expected Redirect | Description |
 |----------|-------------------|-------------|
 | `http://localhost:81/index.php/MyProjects/List/index` | `http://localhost:81/myprojects` | Via PHP prefix |
 | `http://localhost:81/index.php/MyProjects/Media/index?project_id=123` | `http://localhost:81/myprojects/123/media` | Media via PHP prefix |
 
-### 6. Published Projects - Without project_id
+### 7. Published Projects - Without project_id
 
 | Test URL | Expected Redirect | Description |
 |----------|-------------------|-------------|
 | `http://localhost:81/Projects/index` | `http://localhost:81/projects/journal_year` | Browse projects |
 | `http://localhost:81/index.php/Projects/index` | `http://localhost:81/projects/journal_year` | Browse with PHP prefix |
 
-### 7. Published Projects - With project_id Query Parameter (Replace 456 with actual project ID)
+### 8. Published Projects - With project_id Query Parameter (Replace 456 with actual project ID)
 
 | Test URL | Expected Redirect | Description |
 |----------|-------------------|-------------|
@@ -105,7 +114,7 @@ This document provides test cases to verify that legacy PHP URLs correctly redir
 | `http://localhost:81/Projects/BibliographicReferences?project_id=456` | `http://localhost:81/project/456/bibliography` | Bibliography |
 | `http://localhost:81/Projects/FoliosList?project_id=456` | `http://localhost:81/project/456/folios` | Folios |
 
-### 7b. Published Projects - With project_id Path Parameter (Replace 456 with actual project ID)
+### 8b. Published Projects - With project_id Path Parameter (Replace 456 with actual project ID)
 
 | Test URL | Expected Redirect | Description |
 |----------|-------------------|-------------|
@@ -120,7 +129,7 @@ This document provides test cases to verify that legacy PHP URLs correctly redir
 | `http://localhost:81/Projects/BibliographicReferences/project_id/456` | `http://localhost:81/project/456/bibliography` | Bibliography |
 | `http://localhost:81/Projects/FoliosList/project_id/456` | `http://localhost:81/project/456/folios` | Folios |
 
-### 8. Admin Pages
+### 9. Admin Pages
 
 | Test URL | Expected Redirect | Description |
 |----------|-------------------|-------------|
@@ -128,7 +137,7 @@ This document provides test cases to verify that legacy PHP URLs correctly redir
 | `http://localhost:81/Administration/Analytics/index` | `http://localhost:81/admin` | Analytics |
 | `http://localhost:81/index.php/Administration/ProjectStats/index` | `http://localhost:81/admin` | Project stats |
 
-### 9. Curator Pages
+### 10. Curator Pages
 
 | Test URL | Expected Redirect | Description |
 |----------|-------------------|-------------|
@@ -136,14 +145,14 @@ This document provides test cases to verify that legacy PHP URLs correctly redir
 | `http://localhost:81/Curator/Dashboard/index` | `http://localhost:81/curator` | Curator dashboard |
 | `http://localhost:81/index.php/Curator/InstitutionRequests/index` | `http://localhost:81/curator` | Institution requests |
 
-### 10. User Preferences
+### 11. User Preferences
 
 | Test URL | Expected Redirect | Description |
 |----------|-------------------|-------------|
 | `http://localhost:81/system/Preferences/EditProfilePrefs` | `http://localhost:81/users/myprofile` | Edit profile |
 | `http://localhost:81/index.php/system/Preferences/EditProfilePrefs` | `http://localhost:81/users/myprofile` | Edit profile with PHP prefix |
 
-### 11. Unimplemented Pages (Should redirect to homepage)
+### 12. Unimplemented Pages (Should redirect to homepage)
 
 | Test URL | Expected Redirect | Description |
 |----------|-------------------|-------------|
@@ -204,6 +213,8 @@ Examples:
 
 - [ ] Static public pages redirect correctly
 - [ ] Authentication pages redirect correctly
+- [ ] API documentation page (/About/api) redirects to /api (Vue Router)
+- [ ] API service endpoints (/service.php/*) work via curl/API clients (Apache/nginx proxy rewrite)
 - [ ] MyProjects URLs without project_id redirect to /myprojects
 - [ ] MyProjects URLs with project_id query parameter (?project_id=123) redirect correctly
 - [ ] MyProjects URLs with project_id path parameter (/project_id/123) redirect correctly
