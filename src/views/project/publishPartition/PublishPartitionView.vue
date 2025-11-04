@@ -16,7 +16,7 @@ onMounted(async () => {
 })
 
 async function getPartitions() {
-  const response = await apiService.get('/projects/${projectId}/publish/partitions')
+  const response = await apiService.get(`/projects/${projectId}/publish/partitions`)
   const responseData = await response.json()
   partitions.value = responseData
 }
@@ -63,26 +63,27 @@ function selectPartition(event) {
     <div v-if="partitions.length > 0">
       <form @submit.prevent="selectPartition">
         <p>Please select a partition to publish:</p>
-        <ul class="list-group">
-          <div class="list-group-item-content">
-            <li
-              v-for="partition in partitions"
-              :key="partition.partition_id"
-              class="list-group-item"
-            >
-              <input
-                class="form-check-input"
-                type="radio"
-                name="selectedPartition"
-                :value="partition.partition_id"
-              />
-              <div class="list-group-item-name">
-                {{ partition.name }}
-              </div>
-            </li>
+        <div class="radio-options">
+          <div
+            v-for="partition in partitions"
+            :key="partition.partition_id"
+            class="form-check"
+          >
+            <input
+              class="form-check-input"
+              type="radio"
+              name="selectedPartition"
+              :id="`partition-${partition.partition_id}`"
+              :value="partition.partition_id"
+            />
+            <label class="form-check-label" :for="`partition-${partition.partition_id}`">
+              {{ partition.name }}
+            </label>
           </div>
-        </ul>
-        <button type="submit">Start Publishing Process</button>
+        </div>
+        <div class="btn-form-group">
+          <button type="submit" class="btn btn-primary">Start Publishing Process</button>
+        </div>
       </form>
     </div>
     <div v-else>
@@ -90,3 +91,37 @@ function selectPartition(event) {
     </div>
   </LoadingIndicator>
 </template>
+
+<style scoped>
+.radio-options {
+  margin: 20px 0;
+}
+
+.form-check {
+  margin-bottom: 12px;
+  padding-left: 25px;
+}
+
+.form-check-input {
+  margin-top: 0.25rem;
+  margin-left: -25px;
+  cursor: pointer;
+}
+
+.form-check-label {
+  cursor: pointer;
+  margin-left: 5px;
+  display: inline-block;
+}
+
+.btn-form-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 30px;
+  margin-bottom: 20px;
+}
+
+.btn-form-group .btn {
+  min-width: 100px;
+}
+</style>
