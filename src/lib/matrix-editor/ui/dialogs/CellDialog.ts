@@ -1566,11 +1566,13 @@ class CitationsPane extends BasePane {
       alert('The citation no longer exist')
       return
     }
-    const editCitationDialog = new EditCitationDialog(
+    const editCitationDialog = EditCitationDialog.create(
       citation,
       (pages, notes) => this.handleEditCellCitation(id, pages, notes)
     )
-    editCitationDialog.setVisible(true)
+    if (editCitationDialog) {
+      editCitationDialog.setVisible(true)
+    }
   }
 
   /**

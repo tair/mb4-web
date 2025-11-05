@@ -11,6 +11,7 @@ import { Modal, ModalDefaultButtons, ModalDefaultButtonKeys } from '../Modal'
 export class EditCitationDialog extends Modal {
   private readonly citation: Citation
   private readonly successCallback: (p1: string, p2: string) => Promise<void>
+  private static activeDialog: EditCitationDialog | null = null
 
   constructor(
     citation: Citation,
@@ -26,6 +27,21 @@ export class EditCitationDialog extends Modal {
     this.setHasTitleCloseButton(false)
     this.addButton(ModalDefaultButtons.SAVE)
     this.addButton(ModalDefaultButtons.CANCEL)
+  }
+  
+  static create(
+    citation: Citation,
+    successCallback: (p1: string, p2: string) => Promise<void>
+  ): EditCitationDialog | null {
+    // Prevent creating multiple dialogs at once
+    if (EditCitationDialog.activeDialog && !EditCitationDialog.activeDialog.isDisposed()) {
+      console.warn('EditCitationDialog: Another dialog is already active, ignoring request')
+      return null
+    }
+    
+    const dialog = new EditCitationDialog(citation, successCallback)
+    EditCitationDialog.activeDialog = dialog
+    return dialog
   }
 
   override createDom() {
@@ -62,9 +78,13 @@ export class EditCitationDialog extends Modal {
     if (buttonKey === ModalDefaultButtonKeys.SAVE) {
       const pagesElement = this.getElementByClass<HTMLInputElement>('pages')
       const notesElement = this.getElementByClass<HTMLInputElement>('notes')
-      this.successCallback(pagesElement.value, notesElement.value).then(() =>
-        this.dispose()
-      )
+      
+      this.successCallback(pagesElement.value, notesElement.value)
+        .then(() => this.dispose())
+        .catch((error) => {
+          console.error('Failed to save citation:', error)
+          this.dispose()
+        })
       return false
     }
   }
