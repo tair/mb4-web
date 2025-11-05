@@ -373,8 +373,19 @@ export const legacyRoutes = [
     redirect: '/',
   },
   {
+    path: '/Projects/viewMatrix/matrix_id/:matrixId/project_id/:projectId',
+    redirect: (to) => `/project/${to.params.projectId}/matrices/${to.params.matrixId}/view`,
+  },
+  {
     path: '/Projects/viewMatrix',
-    redirect: '/',
+    redirect: (to) => {
+      const matrixId = to.query.matrix_id
+      const projectId = to.query.project_id
+      if (matrixId && projectId && /^\d+$/.test(matrixId) && /^\d+$/.test(projectId)) {
+        return `/project/${projectId}/matrices/${matrixId}/view`
+      }
+      return '/projects/journal_year'
+    },
   },
   {
     path: '/Projects/MediaViewer',

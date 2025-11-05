@@ -70,7 +70,10 @@ onMounted(() => {
       publication, including tree files, combined data files or other
       explanatory documents. Media (2D and 3D images) should not be loaded here
       - please add these to the Media tab.
+      <strong>The maximum accepted file size for a document is 300 MB.</strong>
     </div>
+    <!-- add small space here -->
+    <div class="mb-3"></div>
     <div :if="documentsStore.folders.length > 0">
       <strong>{{ documentsStore.folders.length }} Document Folders</strong>
       <div class="accordion" id="accordionFolders">

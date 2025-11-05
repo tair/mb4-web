@@ -175,6 +175,7 @@ onMounted(() => {
       <i class="fa fa-info-circle"></i>
       Upload a ZIP archive containing CT scan slices in DICOM (.dcm, .dicom) or TIFF (.tif, .tiff) formats.
       The ZIP is stored as-is; slices are not unpacked into separate media files. A thumbnail is generated from the first image file found in the archive.
+      <strong>The maximum accepted file size for a ZIP archive is 1.5 GB.</strong>
     </div>
     <form @submit.prevent="createStacksMedia">
       <div class="row setup-content">
