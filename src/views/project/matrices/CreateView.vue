@@ -188,6 +188,9 @@ async function importMatrix(event) {
 
   const file = files[0]
   
+  // Clear any previous errors
+  uploadError.value = ''
+  
   // Check if this is a CSV/Excel file that needs conversion
   const fileExt = file.name.toLowerCase().split('.').pop()
   if (uploadType.value === 'csv' && (fileExt === 'csv' || fileExt === 'xlsx')) {
@@ -199,12 +202,31 @@ async function importMatrix(event) {
   const parser = await import('@/lib/matrix-parser/parseMatrix.ts')
   const reader = new FileReader()
   reader.onload = function () {
-    const matrixObject = parser.parseMatrix(reader.result)
-    Object.assign(importedMatrix, matrixObject)
+    try {
+      const result = parser.parseMatrixWithErrors(reader.result)
+      if (result.error) {
+        // Display validation error below the upload field (not notification)
+        uploadError.value = result.error.userMessage
+        // Clear the file input
+        const fileInput = document.getElementById('upload')
+        if (fileInput) {
+          fileInput.value = ''
+        }
+        return
+      }
+      if (result.matrixObject) {
+        Object.assign(importedMatrix, result.matrixObject)
+        uploadError.value = '' // Clear error on success
+      } else {
+        uploadError.value = 'Failed to parse matrix file. Please ensure the file is a valid NEXUS or TNT format.'
+      }
+    } catch (error) {
+      uploadError.value = 'Failed to parse matrix file: ' + (error instanceof Error ? error.message : 'Unknown error')
+    }
   }
 
   reader.onerror = function () {
-    showError('Failed to read file')
+    uploadError.value = 'Failed to read file'
   }
 
   reader.readAsBinaryString(file)
@@ -215,11 +237,18 @@ async function handleCsvConversion(file) {
   uploadError.value = ''
 
   try {
-    const { matrixObject, result } = await convertCsvToMatrix(file, projectId, showError)
+    // Create a custom error handler that stores errors in uploadError.value
+    const errorHandler = (message) => {
+      uploadError.value = message
+      throw new Error(message) // Throw to trigger catch block
+    }
+    
+    const { matrixObject, result } = await convertCsvToMatrix(file, projectId, errorHandler)
     Object.assign(importedMatrix, matrixObject)
+    uploadError.value = '' // Clear any errors on success
     showSuccess(`Successfully converted ${file.name} to ${result.format.toUpperCase()} format`)
   } catch (error) {
-    // Error already handled and displayed by convertCsvToMatrix
+    // Error already stored in uploadError.value by errorHandler
     // Clear the file input
     const fileInput = document.getElementById('upload')
     if (fileInput) {
@@ -231,16 +260,21 @@ async function handleCsvConversion(file) {
 }
 
 function moveUpload() {
+  // Clear any previous errors when going back to upload step
+  uploadError.value = ''
   moveToStep('step-1')
   return false
 }
 
 async function moveToCharacters() {
   if (!importedMatrix.taxa || !importedMatrix.characters) {
-    showError('Please upload a valid matrix file first')
+    uploadError.value = 'Please upload a valid matrix file first'
     return false
   }
 
+  // Clear upload error when successfully moving forward
+  uploadError.value = ''
+  
   isProcessingMatrix.value = true
   try {
     if (taxaStore.isLoaded && charactersStore.isLoaded) {
@@ -654,6 +688,11 @@ onUnmounted(() => {
                 <span class="spinner-border spinner-border-sm me-1" role="status"></span>
                 Converting CSV/Excel file to matrix format...
               </small>
+              
+              <!-- Validation Error Display -->
+              <div v-if="uploadError" class="alert alert-danger mt-3 mb-0">
+                {{ uploadError }}
+              </div>
             </div>
             <div class="form-group">
               <label for="item-notes"
@@ -715,12 +754,14 @@ onUnmounted(() => {
             </span>
             <ul>
               <li v-for="(characters, key) in duplicatedCharacters">
-                {{ characters.length }} characters named "{{ key }}".
-                Duplicate{{ characters.length ? 's have' : ' has' }} been
+                {{ characters.length + 1 }} characters named "{{ key }}".
+                Duplicate{{ characters.length > 1? 's have' : ' has' }} been
                 renamed to "{{
-                  characters.slice(0, -1).join('", "') +
-                  '", and "' +
-                  characters.at(-1)
+                  characters.length === 1
+                    ? characters[0]
+                    : characters.length === 2
+                      ? characters[0] + '" and "' + characters[1]
+                      : characters.slice(0, -1).join('", "') + '", and "' + characters.at(-1)
                 }}"
               </li>
             </ul>

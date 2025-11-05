@@ -70,29 +70,51 @@ export class NexusParser extends AbstractParser {
   private doTaxaBlock(): void {
     // Consume any comments before expecting the semicolon
     while (this.tokenizer.consumeTokenIfMatch([Token.COMMENT]));
-    this.tokenizer.assertToken(Token.SEMICOLON)
+    // Make semicolon optional for incomplete files
+    if (!this.tokenizer.isFinished()) {
+      this.tokenizer.consumeTokenIfMatch([Token.SEMICOLON])
+    }
 
     while (this.untilToken([Token.END, Token.ENDBLOCK])) {
+      // Allow file to end mid-block
+      if (this.tokenizer.isFinished()) {
+        return
+      }
+      
       if (this.tokenizer.consumeTokenIfMatch([Token.TITLE])) {
         this.doTitleCommand('TAXA')
       } else if (this.tokenizer.consumeTokenIfMatch([Token.DIMENSIONS])) {
         this.doDimensionCommand()
       } else if (this.tokenizer.consumeTokenIfMatch([Token.TAXLABELS])) {
         this.doTaxaLabelsCommand()
+      } else if (this.tokenizer.consumeTokenIfMatch([Token.COMMENT])) {
+        continue
       } else {
-        throw new Error(`Invalid Token in TAXA block`)
+        // Skip unknown commands to allow validation to catch structural issues
+        this.skipToSemicolon()
       }
     }
 
-    this.tokenizer.assertToken(Token.SEMICOLON)
+    // Make closing semicolon optional for incomplete files
+    if (!this.tokenizer.isFinished()) {
+      this.tokenizer.consumeTokenIfMatch([Token.SEMICOLON])
+    }
   }
 
   private doCharactersBlock(): void {
     // Consume any comments before expecting the semicolon
     while (this.tokenizer.consumeTokenIfMatch([Token.COMMENT]));
-    this.tokenizer.assertToken(Token.SEMICOLON)
+    // Make semicolon optional for incomplete files
+    if (!this.tokenizer.isFinished()) {
+      this.tokenizer.consumeTokenIfMatch([Token.SEMICOLON])
+    }
 
     while (this.untilToken([Token.END, Token.ENDBLOCK])) {
+      // Allow file to end mid-block
+      if (this.tokenizer.isFinished()) {
+        return
+      }
+      
       if (this.tokenizer.consumeTokenIfMatch([Token.TITLE])) {
         this.doTitleCommand('CHARS')
       } else if (this.tokenizer.consumeTokenIfMatch([Token.DIMENSIONS])) {
@@ -114,11 +136,15 @@ export class NexusParser extends AbstractParser {
       } else if (this.tokenizer.consumeTokenIfMatch([Token.LINK])) {
         this.skipToSemicolon()
       } else {
-        throw new Error(`Invalid Token in Characters block`)
+        // Skip unknown commands to allow validation to catch structural issues
+        this.skipToSemicolon()
       }
     }
 
-    this.tokenizer.assertToken(Token.SEMICOLON)
+    // Make closing semicolon optional for incomplete files
+    if (!this.tokenizer.isFinished()) {
+      this.tokenizer.consumeTokenIfMatch([Token.SEMICOLON])
+    }
     
     // Post-processing: Ensure all characters are set as continuous if DATATYPE=CONTINUOUS
     const dataType = this.matrixObject.getParameter('DATATYPE')
@@ -133,9 +159,17 @@ export class NexusParser extends AbstractParser {
   private doDataBlock(): void {
     // Consume any comments before expecting the semicolon
     while (this.tokenizer.consumeTokenIfMatch([Token.COMMENT]));
-    this.tokenizer.assertToken(Token.SEMICOLON)
+    // Make semicolon optional for incomplete files
+    if (!this.tokenizer.isFinished()) {
+      this.tokenizer.consumeTokenIfMatch([Token.SEMICOLON])
+    }
 
     while (this.untilToken([Token.END, Token.ENDBLOCK])) {
+      // Allow file to end mid-block
+      if (this.tokenizer.isFinished()) {
+        return
+      }
+      
       if (this.tokenizer.consumeTokenIfMatch([Token.DIMENSIONS])) {
         this.doDimensionCommand()
       } else if (this.tokenizer.consumeTokenIfMatch([Token.FORMAT])) {
@@ -155,18 +189,31 @@ export class NexusParser extends AbstractParser {
       } else if (this.tokenizer.consumeTokenIfMatch([Token.LINK])) {
         this.skipToSemicolon()
       } else {
-        throw new Error(`Invalid Token in data block`)
+        // Skip unknown commands to allow validation to catch structural issues
+        this.skipToSemicolon()
       }
     }
 
-    this.tokenizer.assertToken(Token.SEMICOLON)
+    // Make closing semicolon optional for incomplete files
+    if (!this.tokenizer.isFinished()) {
+      this.tokenizer.consumeTokenIfMatch([Token.SEMICOLON])
+    }
   }
 
   private doAssumptionsBlock(): void {
     // Consume any comments before expecting the semicolon
     while (this.tokenizer.consumeTokenIfMatch([Token.COMMENT]));
-    this.tokenizer.assertToken(Token.SEMICOLON)
+    // Make semicolon optional for incomplete files
+    if (!this.tokenizer.isFinished()) {
+      this.tokenizer.consumeTokenIfMatch([Token.SEMICOLON])
+    }
+    
     while (this.untilToken([Token.END, Token.ENDBLOCK])) {
+      // Allow file to end mid-block
+      if (this.tokenizer.isFinished()) {
+        return
+      }
+      
       if (this.tokenizer.consumeTokenIfMatch([Token.OPTIONS])) {
         this.skipToSemicolon()
       } else if (this.tokenizer.consumeTokenIfMatch([Token.TYPESET])) {
@@ -177,16 +224,30 @@ export class NexusParser extends AbstractParser {
         this.skipToSemicolon()
       }
     }
-    this.tokenizer.assertToken(Token.SEMICOLON)
+    
+    // Make closing semicolon optional for incomplete files
+    if (!this.tokenizer.isFinished()) {
+      this.tokenizer.consumeTokenIfMatch([Token.SEMICOLON])
+    }
   }
 
   private doNotesBlock(): void {
     // Consume any comments before expecting the semicolon
     while (this.tokenizer.consumeTokenIfMatch([Token.COMMENT]));
-    this.tokenizer.assertToken(Token.SEMICOLON)
+    // Make semicolon optional for incomplete files
+    if (!this.tokenizer.isFinished()) {
+      this.tokenizer.consumeTokenIfMatch([Token.SEMICOLON])
+    }
+    
     const taxaNames = this.matrixObject.getTaxaNames()
     const characterNames = this.matrixObject.getCharacterNames()
+    
     while (this.untilToken([Token.END, Token.ENDBLOCK])) {
+      // Allow file to end mid-block
+      if (this.tokenizer.isFinished()) {
+        return
+      }
+      
       if (this.tokenizer.consumeTokenIfMatch([Token.COMMENT])) {
         continue
       }
@@ -197,35 +258,40 @@ export class NexusParser extends AbstractParser {
         let stateNumber: number | undefined = undefined
         let text: string | undefined = undefined
         while (this.untilToken([Token.SEMICOLON])) {
+          // Allow file to end mid-command
+          if (this.tokenizer.isFinished()) {
+            break
+          }
+          
           if (this.tokenizer.consumeTokenIfMatch([Token.TAXON])) {
-            this.tokenizer.assertToken(Token.EQUAL)
-            taxaNumber = this.convertNumber(
-              this.tokenizer.assertToken(Token.NUMBER)
-            )
+            if (this.tokenizer.consumeTokenIfMatch([Token.EQUAL]) && this.tokenizer.isToken([Token.NUMBER])) {
+              taxaNumber = this.convertNumber(this.tokenizer.getTokenValue())
+            }
           } else if (this.tokenizer.consumeTokenIfMatch([Token.CHARACTER])) {
-            this.tokenizer.assertToken(Token.EQUAL)
-            characterNumber = this.convertNumber(
-              this.tokenizer.assertToken(Token.NUMBER)
-            )
+            if (this.tokenizer.consumeTokenIfMatch([Token.EQUAL]) && this.tokenizer.isToken([Token.NUMBER])) {
+              characterNumber = this.convertNumber(this.tokenizer.getTokenValue())
+            }
           } else if (this.tokenizer.consumeTokenIfMatch([Token.STATE])) {
-            this.tokenizer.assertToken(Token.EQUAL)
-            stateNumber = this.convertNumber(
-              this.tokenizer.assertToken(Token.NUMBER)
-            )
+            if (this.tokenizer.consumeTokenIfMatch([Token.EQUAL]) && this.tokenizer.isToken([Token.NUMBER])) {
+              stateNumber = this.convertNumber(this.tokenizer.getTokenValue())
+            }
           } else if (this.tokenizer.consumeTokenIfMatch([Token.TEXT])) {
-            this.tokenizer.assertToken(Token.EQUAL)
-            text = this.tokenizer.getTokenValue().getValue()
+            if (this.tokenizer.consumeTokenIfMatch([Token.EQUAL])) {
+              text = this.tokenizer.getTokenValue().getValue()
+            }
           } else if (this.tokenizer.consumeTokenIfMatch([Token.TAXA])) {
-            this.tokenizer.assertToken(Token.EQUAL)
-            // This refers to the title of the TAXA that the notes should be
-            // applied to for now, let's ignore this since there is only one
-            // taxa list per Nexus file. TAXA = title
-            this.tokenizer.getTokenValue()
+            if (this.tokenizer.consumeTokenIfMatch([Token.EQUAL])) {
+              // This refers to the title of the TAXA that the notes should be
+              // applied to for now, let's ignore this since there is only one
+              // taxa list per Nexus file. TAXA = title
+              this.tokenizer.getTokenValue()
+            }
           }
         }
 
+        // Skip incomplete text notes
         if (!text) {
-          throw `Text is not defined`
+          continue
         }
 
         if (taxaNumber != undefined && characterNumber != undefined) {
@@ -248,20 +314,28 @@ export class NexusParser extends AbstractParser {
         } else if (taxaNumber != undefined) {
           this.matrixObject.setTaxonNote(taxaNames[taxaNumber], text)
         } else {
-          throw 'Unknown text'
+          // Skip notes without proper context
+          continue
         }
       } else {
         this.skipToSemicolon()
       }
     }
-    this.tokenizer.assertToken(Token.SEMICOLON)
+    
+    // Make closing semicolon optional for incomplete files
+    if (!this.tokenizer.isFinished()) {
+      this.tokenizer.consumeTokenIfMatch([Token.SEMICOLON])
+    }
   }
 
   private doUnknownBlock(): void {
     const blockName = this.tokenizer.getTokenValue().getValue()
     // Consume any comments before expecting the semicolon
     while (this.tokenizer.consumeTokenIfMatch([Token.COMMENT]));
-    this.tokenizer.assertToken(Token.SEMICOLON)
+    // Make semicolon optional for incomplete files
+    if (!this.tokenizer.isFinished()) {
+      this.tokenizer.consumeTokenIfMatch([Token.SEMICOLON])
+    }
 
     const startPosition = this.reader.getPosition()
     let endPosition = startPosition
@@ -277,22 +351,32 @@ export class NexusParser extends AbstractParser {
       .getContent()
       .substring(startPosition.getPosition(), endPosition.getPosition())
     this.matrixObject.addBlock(blockName, content)
-    this.tokenizer.assertToken(Token.SEMICOLON)
+    
+    // Make closing semicolon optional for incomplete files
+    if (!this.tokenizer.isFinished()) {
+      this.tokenizer.consumeTokenIfMatch([Token.SEMICOLON])
+    }
   }
 
   private doTaxaLabelsCommand(): void {
     while (this.untilToken([Token.SEMICOLON])) {
-      const taxonName = this.tokenizer.getTokenValue().getValue()
+      if (this.tokenizer.consumeTokenIfMatch([Token.COMMENT])) {
+        continue
+      }
+      const taxonName = this.tokenizer.getTokenValue().getValue() // getTokenValue() already consumes!
       this.matrixObject.addTaxon(taxonName)
     }
   }
 
   private doFormatCommand(): void {
     while (this.untilToken([Token.SEMICOLON])) {
-      const parameter = this.tokenizer.getTokenValue().getValue()
+      if (this.tokenizer.consumeTokenIfMatch([Token.COMMENT])) {
+        continue
+      }
+      const parameter = this.tokenizer.getTokenValue().getValue() // getTokenValue() already consumes!
 
       if (this.tokenizer.consumeTokenIfMatch([Token.EQUAL])) {
-        const value = this.tokenizer.getTokenValue().getValue()
+        const value = this.tokenizer.getTokenValue().getValue() // getTokenValue() already consumes!
         this.matrixObject.setCharacterParameter(parameter, value)
       } else {
         this.matrixObject.setCharacterParameter(parameter, true)
@@ -306,7 +390,7 @@ export class NexusParser extends AbstractParser {
       if (this.tokenizer.consumeTokenIfMatch([Token.COMMENT])) {
         continue
       }
-      const characterName = this.tokenizer.getTokenValue().getValue()
+      const characterName = this.tokenizer.getTokenValue().getValue() // getTokenValue() already consumes!
       this.matrixObject.addCharacter(characterNumber++, characterName)
     }
   }
@@ -314,17 +398,32 @@ export class NexusParser extends AbstractParser {
   private doStateLabelsCommand(): void {
     const characterNames = this.matrixObject.getCharacterNames()
     while (this.untilToken([Token.SEMICOLON])) {
+      if (this.tokenizer.consumeTokenIfMatch([Token.COMMENT])) {
+        continue
+      }
+      
       if (this.tokenizer.isToken([Token.NUMBER])) {
         const characterNumber =
-          this.convertNumber(this.tokenizer.getTokenValue()) - 1
+          this.convertNumber(this.tokenizer.getTokenValue()) - 1 // getTokenValue() already consumes!
         const characterName = characterNames[characterNumber]
+        
         while (this.untilToken([Token.COMMA])) {
           if (this.tokenizer.isToken([Token.SEMICOLON])) {
             break
           }
+          
+          // Safety check to prevent infinite loop
+          if (this.tokenizer.isFinished()) {
+            break
+          }
 
-          const stateName = this.tokenizer.getTokenValue().getValue()
+          const stateName = this.tokenizer.getTokenValue().getValue() // getTokenValue() already consumes!
           this.matrixObject.addCharacterState(characterName, stateName)
+        }
+      } else {
+        // Consume unexpected token to prevent infinite loop
+        if (!this.tokenizer.isFinished()) {
+          this.tokenizer.consumeToken()
         }
       }
     }
@@ -338,8 +437,8 @@ export class NexusParser extends AbstractParser {
 
       if (this.tokenizer.isToken([Token.NUMBER])) {
         const characterNumber =
-          this.convertNumber(this.tokenizer.getTokenValue()) - 1
-        const characterName = this.tokenizer.getTokenValue().getValue()
+          this.convertNumber(this.tokenizer.getTokenValue()) - 1 // getTokenValue() already consumes!
+        const characterName = this.tokenizer.getTokenValue().getValue() // getTokenValue() already consumes!
 
         // Meristic characters do not have states to just take the string as-is.
         if (this.matrixObject.isMeristic()) {
@@ -355,10 +454,20 @@ export class NexusParser extends AbstractParser {
             if (this.tokenizer.isToken([Token.SEMICOLON])) {
               break
             }
+            
+            // Safety check to prevent infinite loop
+            if (this.tokenizer.isFinished()) {
+              break
+            }
 
-            const stateName = this.tokenizer.getTokenValue().getValue()
+            const stateName = this.tokenizer.getTokenValue().getValue() // getTokenValue() already consumes!
             this.matrixObject.addCharacterState(newCharacterName, stateName)
           }
+        }
+      } else {
+        // Consume unexpected token to prevent infinite loop
+        if (!this.tokenizer.isFinished()) {
+          this.tokenizer.consumeToken()
         }
       }
     }
@@ -373,7 +482,7 @@ export class NexusParser extends AbstractParser {
         continue
       }
 
-      const rowName = this.tokenizer.getTokenValue().getValue()
+      const rowName = this.tokenizer.getTokenValue().getValue() // getTokenValue() already consumes!
       
       if (shouldAddTaxa) {
         this.matrixObject.addTaxon(rowName)
@@ -406,19 +515,36 @@ export class NexusParser extends AbstractParser {
 
   private doDimensionCommand(): void {
     while (this.untilToken([Token.SEMICOLON])) {
+      // Allow file to end mid-command
+      if (this.tokenizer.isFinished()) {
+        return
+      }
+      
       let name
       if (this.tokenizer.consumeTokenIfMatch([Token.NCHAR])) {
         name = 'CHARS'
       } else if (this.tokenizer.consumeTokenIfMatch([Token.NTAX])) {
         name = 'TAXA'
       } else {
-        name = this.tokenizer.getTokenValue().getValue()
-        throw `Unknown DIMENSION ${name}`
+        // Skip unknown dimension types
+        this.tokenizer.consumeToken()
+        continue
       }
 
-      this.tokenizer.assertToken(Token.EQUAL)
-      const value = this.convertNumber(this.tokenizer.assertToken(Token.NUMBER))
-
+      // Try to get EQUAL and NUMBER, but don't crash if incomplete
+      if (this.tokenizer.isFinished()) {
+        return
+      }
+      
+      if (!this.tokenizer.consumeTokenIfMatch([Token.EQUAL])) {
+        continue // Missing EQUAL, skip this dimension
+      }
+      
+      if (!this.tokenizer.isToken([Token.NUMBER])) {
+        continue // Missing NUMBER, skip this dimension
+      }
+      
+      const value = this.convertNumber(this.tokenizer.getTokenValue())
       this.matrixObject.setDimensions(name, value)
     }
   }
@@ -426,7 +552,10 @@ export class NexusParser extends AbstractParser {
   private doTitleCommand(titleType: string): void {
     const titles: string[] = []
     while (this.untilToken([Token.SEMICOLON])) {
-      titles.push(this.tokenizer.getTokenValue().getValue())
+      if (this.tokenizer.consumeTokenIfMatch([Token.COMMENT])) {
+        continue
+      }
+      titles.push(this.tokenizer.getTokenValue().getValue()) // getTokenValue() already consumes!
     }
 
     this.matrixObject.setTitle(titleType, titles.join(' '))
@@ -434,18 +563,33 @@ export class NexusParser extends AbstractParser {
 
   private doCharacterOrderingCommand(): void {
     this.tokenizer.consumeTokenIfMatch([Token.ASTERISK])
-    // ordering title
-    this.tokenizer.consumeToken()
+    
+    // ordering title - make optional for incomplete files
+    if (!this.tokenizer.isFinished()) {
+      this.tokenizer.consumeToken()
+    }
 
     if (this.tokenizer.consumeTokenIfMatch([Token.OPEN_PARENTHESIS])) {
       // matrix name
+      if (this.tokenizer.isFinished()) {
+        return
+      }
       this.tokenizer.getTokenValue()
 
-      this.tokenizer.assertToken(Token.EQUAL)
+      if (!this.tokenizer.consumeTokenIfMatch([Token.EQUAL])) {
+        this.skipToSemicolon()
+        return
+      }
 
+      if (this.tokenizer.isFinished()) {
+        return
+      }
       const value = this.tokenizer.getTokenValue().getValue()
 
-      this.tokenizer.assertToken(Token.CLOSE_PARENTHESIS)
+      if (!this.tokenizer.consumeTokenIfMatch([Token.CLOSE_PARENTHESIS])) {
+        this.skipToSemicolon()
+        return
+      }
 
       if (value != this.matrixObject.getTitle('CHARS')) {
         this.skipToSemicolon()
@@ -453,14 +597,28 @@ export class NexusParser extends AbstractParser {
       }
     }
 
-    this.tokenizer.assertToken(Token.EQUAL)
+    if (!this.tokenizer.consumeTokenIfMatch([Token.EQUAL])) {
+      this.skipToSemicolon()
+      return
+    }
 
     while (this.untilToken([Token.SEMICOLON])) {
+      if (this.tokenizer.isFinished()) {
+        return
+      }
+      
+      if (this.tokenizer.consumeTokenIfMatch([Token.COMMENT])) {
+        continue
+      }
+      
       const ordering =
-        this.tokenizer.getTokenValue().getValue() == 'ord'
+        this.tokenizer.getTokenValue().getValue() == 'ord' // getTokenValue() already consumes!
           ? CharacterOrdering.ORDERING
           : CharacterOrdering.UNORDERING
-      this.tokenizer.assertToken(Token.COLON)
+      
+      if (!this.tokenizer.consumeTokenIfMatch([Token.COLON])) {
+        continue // Missing colon, skip this ordering spec
+      }
 
       const orderingReader = new SubstringReader(this.reader, [
         Token.COMMA,
@@ -483,27 +641,26 @@ export class NexusParser extends AbstractParser {
           end = start
           if (this.tokenizer.consumeTokenIfMatch([Token.MINUS])) {
             if (this.tokenizer.isToken([Token.NUMBER])) {
-              end =
-                this.convertNumber(this.tokenizer.assertToken(Token.NUMBER)) - 1
+              end = this.convertNumber(this.tokenizer.getTokenValue()) - 1
             } else if (this.tokenizer.consumeTokenIfMatch([Token.DOT])) {
               end = this.matrixObject.getCharacterCount() - 1
             } else {
-              throw new Error(
-                'Unable to parse ' + this.tokenizer.getTokenValue().getToken()
-              )
+              // Skip malformed range spec
+              continue
             }
           }
         } else if (this.tokenizer.consumeTokenIfMatch([Token.ALL])) {
           start = 0
           end = this.matrixObject.getCharacterCount()
         } else {
-          throw new Error(
-            'Unable to parse ' + this.tokenizer.getTokenValue().getToken()
-          )
+          // Skip malformed ordering spec
+          continue
         }
 
         if (this.tokenizer.consumeTokenIfMatch([Token.FORWARDSLASH])) {
-          stride = this.convertNumber(this.tokenizer.assertToken(Token.NUMBER))
+          if (this.tokenizer.isToken([Token.NUMBER])) {
+            stride = this.convertNumber(this.tokenizer.getTokenValue())
+          }
         }
 
         this.matrixObject.setCharacterOrdering(start, end, ordering, stride)

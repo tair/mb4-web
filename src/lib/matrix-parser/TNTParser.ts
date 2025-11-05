@@ -36,12 +36,17 @@ export class TNTParser extends AbstractParser {
     }
     if (this.tokenizer.consumeTokenIfMatch([Token.NSTATES])) {
       while (this.untilToken([Token.SEMICOLON])) {
+        if (this.tokenizer.isFinished()) {
+          break
+        }
         if (this.tokenizer.consumeTokenIfMatch([Token.DNA])) {
           this.matrixObject.setDataType(DataType.DNA)
-          throw new Error('DNA TNT files are not supported')
+          // Don't throw - let validation handle it
         }
         // Consume the next token.
-        this.tokenizer.consumeToken()
+        if (!this.tokenizer.isFinished()) {
+          this.tokenizer.consumeToken()
+        }
       }
       return true
     }
@@ -74,19 +79,26 @@ export class TNTParser extends AbstractParser {
 
   private doXreadCommand(): void {
     if (!this.tokenizer.isToken([Token.NUMBER])) {
+      if (this.tokenizer.isFinished()) {
+        return // File ended before dimensions
+      }
       const tokenValue = this.tokenizer.getTokenValue()
       const description = tokenValue.getValue()
       this.matrixObject.setTitle('MATRIX', description)
     }
 
-    const characterCount = this.convertNumber(
-      this.tokenizer.assertToken(Token.NUMBER)
-    )
+    // Get character count - critical for parsing
+    if (this.tokenizer.isFinished() || !this.tokenizer.isToken([Token.NUMBER])) {
+      return // Incomplete, let validation catch it
+    }
+    const characterCount = this.convertNumber(this.tokenizer.getTokenValue())
     this.matrixObject.setDimensions('CHARS', characterCount)
 
-    const taxaCount = this.convertNumber(
-      this.tokenizer.assertToken(Token.NUMBER)
-    )
+    // Get taxa count - critical for parsing
+    if (this.tokenizer.isFinished() || !this.tokenizer.isToken([Token.NUMBER])) {
+      return // Incomplete, let validation catch it
+    }
+    const taxaCount = this.convertNumber(this.tokenizer.getTokenValue())
     this.matrixObject.setDimensions('TAXA', taxaCount)
 
     // Initialize character types as discrete by default
@@ -366,15 +378,28 @@ export class TNTParser extends AbstractParser {
 
   private doCnamesCommand(): void {
     while (this.untilToken([Token.SEMICOLON])) {
+      if (this.tokenizer.isFinished()) {
+        return
+      }
+      
       if (this.tokenizer.consumeTokenIfMatch([Token.COMMENT])) {
         continue
       }
 
-      this.tokenizer.assertToken(Token.OPEN_SBRACKET)
+      if (!this.tokenizer.consumeTokenIfMatch([Token.OPEN_SBRACKET])) {
+        // Skip malformed character name spec
+        this.tokenizer.consumeToken()
+        continue
+      }
 
-      const characterNumber = this.convertNumber(
-        this.tokenizer.assertToken(Token.NUMBER)
-      )
+      if (!this.tokenizer.isToken([Token.NUMBER])) {
+        continue
+      }
+      const characterNumber = this.convertNumber(this.tokenizer.getTokenValue())
+      
+      if (this.tokenizer.isFinished()) {
+        return
+      }
       const characterName = this.tokenizer.getTokenValue().getValue().replace(/_/g, ' ')
       const newCharacterName = this.matrixObject.addCharacter(
         characterNumber,
@@ -382,7 +407,15 @@ export class TNTParser extends AbstractParser {
       )
 
       while (this.untilToken([Token.SEMICOLON])) {
+        if (this.tokenizer.isFinished()) {
+          break
+        }
+        
         this.tokenizer.consumeTokenIfMatch([Token.COLON])
+        
+        if (this.tokenizer.isFinished()) {
+          break
+        }
         const stateName = this.tokenizer.getTokenValue().getValue().replace(/_/g, ' ')
         this.matrixObject.addCharacterState(newCharacterName, stateName)
 
@@ -420,7 +453,9 @@ export class TNTParser extends AbstractParser {
       } else if (this.tokenizer.consumeTokenIfMatch([Token.MINUS])) {
         isAdditive = false
       } else if (this.tokenizer.consumeTokenIfMatch([Token.BLACKSLASH])) {
-        weight = this.convertNumber(this.tokenizer.assertToken(Token.NUMBER))
+        if (this.tokenizer.isToken([Token.NUMBER])) {
+          weight = this.convertNumber(this.tokenizer.getTokenValue())
+        }
       } else if (this.tokenizer.consumeTokenIfMatch([Token.ASTERISK])) {
         isActive = true
         isAdditive = true
@@ -428,16 +463,16 @@ export class TNTParser extends AbstractParser {
         weight = 1
       } else {
         if (this.tokenizer.consumeTokenIfMatch([Token.DOT])) {
-          startNumber = this.convertNumber(
-            this.tokenizer.assertToken(Token.NUMBER)
-          )
+          if (this.tokenizer.isToken([Token.NUMBER])) {
+            startNumber = this.convertNumber(this.tokenizer.getTokenValue())
+          }
         } else if (this.tokenizer.isToken([Token.NUMBER])) {
           startNumber = this.convertNumber(this.tokenizer.getTokenValue())
           endNumber = startNumber
           if (this.tokenizer.consumeTokenIfMatch([Token.DOT])) {
-            endNumber = this.convertNumber(
-              this.tokenizer.assertToken(Token.NUMBER)
-            )
+            if (this.tokenizer.isToken([Token.NUMBER])) {
+              endNumber = this.convertNumber(this.tokenizer.getTokenValue())
+            }
           }
         }
 
@@ -455,27 +490,40 @@ export class TNTParser extends AbstractParser {
   }
 
   private doNotesBlockCommand(): void {
-    let numberOfComments = this.convertNumber(
-      this.tokenizer.assertToken(Token.NUMBER)
-    )
+    if (!this.tokenizer.isToken([Token.NUMBER])) {
+      this.skipToSemicolon()
+      return
+    }
+    let numberOfComments = this.convertNumber(this.tokenizer.getTokenValue())
 
     const taxaNames = this.matrixObject.getTaxaNames()
     const characterNames = this.matrixObject.getCharacterNames()
+    
     while (this.untilToken([Token.SEMICOLON])) {
+      if (this.tokenizer.isFinished()) {
+        return
+      }
+      
       if (this.tokenizer.consumeTokenIfMatch([Token.COMMENT])) {
         continue
       }
 
-      this.tokenizer.assertToken(Token.OPEN_SBRACKET)
+      if (!this.tokenizer.consumeTokenIfMatch([Token.OPEN_SBRACKET])) {
+        // Skip malformed note
+        this.tokenizer.consumeToken()
+        continue
+      }
 
-      const taxonNumber = this.convertNumber(
-        this.tokenizer.assertToken(Token.NUMBER)
-      )
+      if (!this.tokenizer.isToken([Token.NUMBER])) {
+        continue
+      }
+      const taxonNumber = this.convertNumber(this.tokenizer.getTokenValue())
       const taxonName = taxaNames[taxonNumber]
 
-      const characterNumber = this.convertNumber(
-        this.tokenizer.assertToken(Token.NUMBER)
-      )
+      if (!this.tokenizer.isToken([Token.NUMBER])) {
+        continue
+      }
+      const characterNumber = this.convertNumber(this.tokenizer.getTokenValue())
       const characterName = characterNames[characterNumber]
 
       const commentsReader = new SubstringReader(this.reader, [
@@ -494,8 +542,9 @@ export class TNTParser extends AbstractParser {
       )
       --numberOfComments
     }
+    // Don't throw error for comment count mismatch - file might be incomplete
     if (numberOfComments != 0) {
-      throw new Error('Incorrect number of comments ' + numberOfComments)
+      console.warn('Comment count mismatch: expected 0 remaining, got ' + numberOfComments)
     }
   }
 
