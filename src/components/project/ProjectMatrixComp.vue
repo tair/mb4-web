@@ -611,7 +611,15 @@ async function parseMatrixFile(file) {
 
     reader.onload = function () {
       try {
-        const matrixObject = parser.parseMatrix(reader.result)
+        const result = parser.parseMatrixWithErrors(reader.result)
+        if (result.error) {
+          // Display validation error to the user
+          uploadErrors.value.general = result.error.userMessage
+          parsedMatrix.value = null
+          return
+        }
+        
+        const matrixObject = result.matrixObject
         if (matrixObject) {
           // Convert MatrixObject to serializable format for sessionStorage
           const convertedMatrix = {

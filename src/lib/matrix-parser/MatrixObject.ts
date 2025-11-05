@@ -34,6 +34,10 @@ export class MatrixObject {
     this.dataType = dataType
   }
 
+  getDataType(): DataType {
+    return this.dataType
+  }
+
   setTitle(key: string, title: string): void {
     this.title.set(key, title)
   }
@@ -44,6 +48,10 @@ export class MatrixObject {
 
   setDimensions(key: string, value: number): void {
     this.dimensions[key] = value
+  }
+
+  getDimensions(): { [key: string]: number } {
+    return this.dimensions
   }
 
   addTaxon(taxonName: string) {
@@ -84,7 +92,7 @@ export class MatrixObject {
    *
    * In order to support duplicate characters, the name may be updated with a
    * postfix. For example, duplicate names of "Homo Sapien" will be renamed to
-   * "Homo Sapien - 1" and "Homo Sapien 2".
+   * "Homo Sapien - 2" and "Homo Sapien - 3".
    *
    * @param characterNumber The number of the character.
    * @param characterName The name of the character.
@@ -241,7 +249,7 @@ export class MatrixObject {
     isNameTaken: (name: string) => boolean
   ): string {
     let serializedName = name
-    for (let i = 1; isNameTaken(serializedName); i++) {
+    for (let i = 2; isNameTaken(serializedName); i++) {
       serializedName = `${name} - ${i}`
     }
     return serializedName
@@ -378,4 +386,29 @@ export enum DataType {
   REGULAR = 0,
   MERISTIC = 1,
   DNA = 2,
+}
+
+export enum MatrixErrorType {
+  MOLECULAR_DATA_PRESENT = 'MOLECULAR_DATA_PRESENT',
+  UNSUPPORTED_DATATYPE = 'UNSUPPORTED_DATATYPE',
+  NO_CHARACTERS = 'NO_CHARACTERS',
+  UNDEFINED_CHARACTERS = 'UNDEFINED_CHARACTERS',
+  NO_TAXA = 'NO_TAXA',
+  UNDEFINED_TAXA = 'UNDEFINED_TAXA',
+  CHARACTERS_AND_MATRIX_ROWS_UNEQUAL = 'CHARACTERS_AND_MATRIX_ROWS_UNEQUAL',
+  TAXA_AND_MATRIX_ROWS_UNEQUAL = 'TAXA_AND_MATRIX_ROWS_UNEQUAL',
+  TAXA_AND_CELLS_UNEQUAL = 'TAXA_AND_CELLS_UNEQUAL',
+}
+
+export class MatrixValidationError extends Error {
+  errorType: MatrixErrorType
+  userMessage: string
+
+  constructor(errorType: MatrixErrorType, userMessage: string) {
+    super(userMessage)
+    this.name = 'MatrixValidationError'
+    this.errorType = errorType
+    this.userMessage = userMessage
+    Object.setPrototypeOf(this, MatrixValidationError.prototype)
+  }
 }
