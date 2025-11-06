@@ -45,8 +45,14 @@
           <Tooltip :content="getExemplarMediaTooltip()"></Tooltip>
         </label>
 
+        <!-- Loading state -->
+        <div v-if="isLoadingCuratedMedia" class="alert alert-secondary">
+          <i class="fa fa-spinner fa-spin me-2"></i>
+          Loading curated media...
+        </div>
+
         <!-- If project has curated media -->
-        <div v-if="curatedMedia.length > 0">
+        <div v-else-if="curatedMedia.length > 0">
           <select 
             v-model="formData.exemplar_media_id" 
             class="form-control"
@@ -96,14 +102,14 @@
             </div>
             <div class="mt-2 text-muted text-center">
               <small>
-                <i class="fa fa-bone me-1"></i>Specimen #{{ selectedExemplarMedia.specimen_id }}
-                <i class="fa fa-eye ms-3 me-1"></i>{{ getViewName(selectedExemplarMedia.view_id) }}
+                <i class="fa fa-bone me-1"></i>{{ stripHtmlTags(selectedExemplarMedia.specimen_name) || `Specimen #${selectedExemplarMedia.specimen_id}` }}
+                <i class="fa fa-eye ms-3 me-1"></i>{{ selectedExemplarMedia.view_name || getViewName(selectedExemplarMedia.view_id) }}
               </small>
             </div>
           </div>
         </div>
 
-        <!-- If no curated media exists -->
+        <!-- If no curated media exists (only show after loading completes) -->
         <div v-else class="alert alert-info">
           <i class="fa fa-info-circle me-2"></i>
           No curated media available. 
@@ -743,6 +749,7 @@ const selectedAdminUserId = ref(null)
 const originalAdminUserId = ref(null)
 const curatedMedia = ref([])
 const mediaViews = ref([])
+const isLoadingCuratedMedia = ref(false)
 
 // Computed property for filtered journals based on search
 const filteredJournals = computed(() => {
@@ -939,6 +946,7 @@ async function loadJournals() {
 }
 
 async function fetchCuratedMedia() {
+  isLoadingCuratedMedia.value = true
   try {
     const response = await apiService.get(`/projects/${projectId}/media`)
     if (response.ok) {
@@ -954,6 +962,8 @@ async function fetchCuratedMedia() {
     }
   } catch (error) {
     console.error('Error fetching curated media:', error)
+  } finally {
+    isLoadingCuratedMedia.value = false
   }
 }
 
@@ -972,8 +982,16 @@ async function fetchMediaViews() {
 function getMediaDescription(media) {
   if (!media) return ''
   const parts = []
-  if (media.specimen_id) parts.push(` - Specimen #${media.specimen_id}`)
-  if (media.view_id) {
+  // Use specimen_name from API if available, otherwise fall back to specimen ID
+  if (media.specimen_name) {
+    parts.push(` - ${stripHtmlTags(media.specimen_name)}`)
+  } else if (media.specimen_id) {
+    parts.push(` - Specimen #${media.specimen_id}`)
+  }
+  // Use view_name from API if available, otherwise look it up or use ID
+  if (media.view_name) {
+    parts.push(` - ${media.view_name}`)
+  } else if (media.view_id) {
     const viewName = getViewName(media.view_id)
     if (viewName) parts.push(` - ${viewName}`)
   }
