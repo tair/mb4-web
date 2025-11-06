@@ -38,42 +38,78 @@
         />
       </div>
 
-      <!-- Exemplar Media Upload -->
+      <!-- Exemplar Media Selection -->
       <div class="form-group">
         <label class="form-label">
           Exemplar Media
           <Tooltip :content="getExemplarMediaTooltip()"></Tooltip>
         </label>
 
-        <div class="exemplar-upload">
-          <input
-            type="file"
-            @change="handleExemplarMediaUpload"
-            accept="image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/webp,image/tiff"
+        <!-- If project has curated media -->
+        <div v-if="curatedMedia.length > 0">
+          <select 
+            v-model="formData.exemplar_media_id" 
             class="form-control"
-          />
-          <button
-            v-if="formData.exemplar_media"
-            type="button"
-            @click="clearExemplarMedia"
-            class="btn-link"
           >
-            Clear
-          </button>
+            <option :value="null">No exemplar selected</option>
+            <option 
+              v-for="media in curatedMedia" 
+              :key="media.media_id"
+              :value="media.media_id"
+            >
+              Media #{{ media.media_id }}{{ getMediaDescription(media) }}
+            </option>
+          </select>
+          
+          <!-- Show preview of selected exemplar -->
+          <div v-if="selectedExemplarMedia" class="media-preview mt-3 p-3" style="
+            background: linear-gradient(135deg, #fffbf0 0%, #fff8e1 100%);
+            border: 2px solid #FFD700;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.2);
+          ">
+            <div class="d-flex align-items-start gap-2 mb-2">
+              <span style="
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 4px 10px;
+                background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+                color: #000;
+                font-size: 0.7rem;
+                font-weight: 600;
+                border-radius: 12px;
+                box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+              ">
+                <i class="fa fa-star" style="font-size: 0.75rem;"></i>
+                <span style="letter-spacing: 0.3px;">PROJECT EXEMPLAR</span>
+              </span>
+              <span class="text-muted" style="font-size: 0.85rem;">Media #{{ selectedExemplarMedia.media_id }}</span>
+            </div>
+            <div class="text-center">
+              <img 
+                :src="getMediaThumbnailUrl(selectedExemplarMedia)" 
+                alt="Exemplar preview"
+                class="img-thumbnail"
+                style="max-width: 300px; max-height: 300px; object-fit: contain; background: white;"
+              />
+            </div>
+            <div class="mt-2 text-muted text-center">
+              <small>
+                <i class="fa fa-bone me-1"></i>Specimen #{{ selectedExemplarMedia.specimen_id }}
+                <i class="fa fa-eye ms-3 me-1"></i>{{ getViewName(selectedExemplarMedia.view_id) }}
+              </small>
+            </div>
+          </div>
         </div>
 
-        <div v-if="formData.exemplar_media" class="media-result">
-          <div class="media-result-caption">
-            Selected file: {{ formData.exemplar_media.name }}
-          </div>
-        </div>
-        <div v-else-if="existingExemplarMedia" class="media-result">
-          <div class="media-result-caption">
-            Current exemplar media (ID: {{ formData.exemplar_media_id }})
-          </div>
-        </div>
-        <div v-else class="media-placeholder">
-          <img src="/images/img_placeholder.jpg" alt="No media selected" />
+        <!-- If no curated media exists -->
+        <div v-else class="alert alert-info">
+          <i class="fa fa-info-circle me-2"></i>
+          No curated media available. 
+          <RouterLink :to="`/myprojects/${projectId}/media/create`" class="alert-link">
+            Upload and curate media first
+          </RouterLink>
         </div>
       </div>
 
@@ -681,8 +717,7 @@ const formData = reactive({
   disk_space_usage: 5368709120, // Default 5GB in bytes
   publication_status: '2', // Default to "Article in prep or in review"
   journal_cover: null, // Journal cover file
-  exemplar_media: null, // Exemplar media file
-  exemplar_media_id: null, // Existing exemplar media ID
+  exemplar_media_id: null, // Existing exemplar media ID (selected from dropdown)
 })
 
 const journalSearch = ref('')
@@ -706,6 +741,8 @@ const isDeleting = ref(false)
 const originalAllowReviewerLogin = ref(false)
 const selectedAdminUserId = ref(null)
 const originalAdminUserId = ref(null)
+const curatedMedia = ref([])
+const mediaViews = ref([])
 
 // Computed property for filtered journals based on search
 const filteredJournals = computed(() => {
@@ -724,8 +761,14 @@ const isJournalCoverUploadDisabled = computed(() => {
   return (!showNewJournal.value && !!journalCoverPath.value) || !!currentJournalCoverUrl.value
 })
 
+// Computed property for selected exemplar media
+const selectedExemplarMedia = computed(() => {
+  if (!formData.exemplar_media_id) return null
+  return curatedMedia.value.find(m => m.media_id === formData.exemplar_media_id)
+})
+
 onMounted(async () => {
-  await Promise.all([loadJournals(), loadProjectData(), loadProjectUsers()])
+  await Promise.all([loadJournals(), loadProjectData(), loadProjectUsers(), fetchCuratedMedia(), fetchMediaViews()])
   // Add click outside event listener
   document.addEventListener('click', handleJournalClickOutside)
 })
@@ -895,6 +938,59 @@ async function loadJournals() {
   }
 }
 
+async function fetchCuratedMedia() {
+  try {
+    const response = await apiService.get(`/projects/${projectId}/media`)
+    if (response.ok) {
+      const data = await response.json()
+      // Filter to only show curated media (status 0) with specimen, view, and copyright info
+      curatedMedia.value = data.media.filter(m => 
+        m.cataloguing_status === 0 && 
+        m.specimen_id && 
+        m.view_id &&
+        m.is_copyrighted !== null &&
+        m.media_type === 'image'
+      )
+    }
+  } catch (error) {
+    console.error('Error fetching curated media:', error)
+  }
+}
+
+async function fetchMediaViews() {
+  try {
+    const response = await apiService.get(`/projects/${projectId}/media/views`)
+    if (response.ok) {
+      const data = await response.json()
+      mediaViews.value = data.media_views || []
+    }
+  } catch (error) {
+    console.error('Error fetching media views:', error)
+  }
+}
+
+function getMediaDescription(media) {
+  if (!media) return ''
+  const parts = []
+  if (media.specimen_id) parts.push(` - Specimen #${media.specimen_id}`)
+  if (media.view_id) {
+    const viewName = getViewName(media.view_id)
+    if (viewName) parts.push(` - ${viewName}`)
+  }
+  return parts.join('')
+}
+
+function getViewName(viewId) {
+  if (!viewId) return 'Unknown'
+  const view = mediaViews.value.find(v => v.view_id === viewId)
+  return view ? view.name : `View #${viewId}`
+}
+
+function getMediaThumbnailUrl(media) {
+  if (!media || !media.media_id) return '/images/img_placeholder.jpg'
+  return apiService.buildUrl(`/public/media/${projectId}/serve/${media.media_id}/thumbnail`)
+}
+
 // Helper function to extract content from JATS paragraph tags or strip all HTML/XML tags
 function stripHtmlTags(text) {
   if (!text || typeof text !== 'string') return text
@@ -959,25 +1055,6 @@ function validateImageFile(file, fileType = 'image') {
   return true
 }
 
-function handleExemplarMediaUpload(event) {
-  const file = event.target.files[0]
-  if (file) {
-    // Validate file format
-    if (!validateImageFile(file, 'exemplar media')) {
-      // Clear the file input
-      event.target.value = ''
-      return
-    }
-    formData.exemplar_media = file
-    existingExemplarMedia.value = false
-  }
-}
-
-function clearExemplarMedia() {
-  formData.exemplar_media = null
-  existingExemplarMedia.value = false
-  formData.exemplar_media_id = null
-}
 
 function toggleJournalMode() {
   showNewJournal.value = !showNewJournal.value
@@ -1209,8 +1286,8 @@ async function handleSubmit() {
 
     // Add all form fields to JSON
     for (const [key, value] of Object.entries(formData)) {
-      if (key === 'journal_cover' || key === 'exemplar_media') {
-        // Skip file uploads - will be passed separately
+      if (key === 'journal_cover') {
+        // Skip file upload - will be passed separately
         continue
       } else if (key === 'reviewer_login_password') {
         // Only send password if user has entered one (don't send empty string)
@@ -1249,7 +1326,7 @@ async function handleSubmit() {
     const success = await updateProject(
       projectData,
       journalCoverToSend,
-      formData.exemplar_media,
+      null, // No longer uploading exemplar media files
       removeJournalCover
     )
 

@@ -9,6 +9,8 @@ import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import { useFoliosStore } from '@/stores/FoliosStore'
 import { useFolioMediaStore } from '@/stores/FolioMediaStore'
+import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore'
+import { useProjectsStore } from '@/stores/ProjectsStore'
 import { useNotifications } from '@/composables/useNotifications'
 import { getTaxonForMediaId } from '@/views/project/utils'
 import { TaxaFriendlyNames, nameColumnMap } from '@/utils/taxa'
@@ -32,6 +34,8 @@ const mediaViewsStore = useMediaViewsStore()
 const projectUsersStore = useProjectUsersStore()
 const foliosStore = useFoliosStore()
 const folioMediaStore = useFolioMediaStore()
+const projectOverviewStore = useProjectOverviewStore()
+const projectsStore = useProjectsStore()
 const { showSuccess, showError } = useNotifications()
 const isLoaded = computed(
   () =>
@@ -43,6 +47,11 @@ const isLoaded = computed(
     foliosStore.isLoaded
 )
 
+// Get the project exemplar media ID
+const projectExemplarMediaId = computed(() => {
+  return projectOverviewStore.overview?.exemplar_media_id || null
+})
+
 const mediaToDelete = ref([])
 const sortFunction = ref(sortByMediaId)
 const thumbnailView = ref(true)
@@ -52,6 +61,9 @@ const selectedPageSize = ref(25)
 
 // Track selection state using a reactive object keyed by media_id
 const selectedMedia = reactive({})
+
+// Track hover state for exemplar button - reactive object keyed by media_id
+const hoveredMedia = reactive({})
 
 // Filter state management - make it reactive
 const serializedFilterName = `mediaFilter[${projectId}]`
@@ -825,6 +837,24 @@ function getMediaTooltipContent(media_file) {
   return tooltip.replace(/<br\/>$/, '')
 }
 
+// Function to set a media file as the project exemplar
+async function setAsExemplar(mediaId) {
+  try {
+    const success = await projectsStore.setExemplarMedia(projectId, mediaId)
+    if (success) {
+      showSuccess('Media set as project exemplar successfully')
+      // Refresh project overview to get updated exemplar_media_id
+      await projectOverviewStore.fetchProject(projectId)
+    } else {
+      showError('Failed to set media as project exemplar')
+    }
+  } catch (error) {
+    console.error('Error setting exemplar media:', error)
+    const errorMsg = error.response?.data?.message || error.message || 'Failed to set media as project exemplar'
+    showError(errorMsg)
+  }
+}
+
 // Function to navigate to curate view for media without views
 function fixMediaWithoutViews() {
   // Navigate to the curate view which is designed for batch editing media
@@ -1308,28 +1338,94 @@ function fixMediaWithoutViews() {
           v-for="(media_file, n) in paginatedMedia"
           :key="n"
         >
-          <RouterLink
-            :to="`/myprojects/${projectId}/media/${media_file.media_id}/edit`"
-            class="nav-link"
-          >
-            <!-- Checkbox for selection (project-specific feature) -->
-            <input
-              class="form-check-input media-checkbox"
-              type="checkbox"
-              v-model="selectedMedia[media_file.media_id]"
-              @click.stop=""
-            />
-            <MediaCardComp
-              :key="media_file.media_id"
-              :media_file="media_file"
-              :full_view="thumbnailView"
-              :project_id="projectId"
-              data-bs-toggle="tooltip"
-              data-bs-html="true"
-              :data-bs-title="getMediaTooltipContent(media_file)"
-              :title="getMediaTooltipContent(media_file)"
-            ></MediaCardComp>
-          </RouterLink>
+          <div class="media-card-wrapper position-relative" 
+               @mouseenter="hoveredMedia[media_file.media_id] = true"
+               @mouseleave="hoveredMedia[media_file.media_id] = false">
+            <!-- Exemplar Badge - Bottom left corner -->
+            <div 
+              v-if="media_file.media_id === projectExemplarMediaId"
+              class="position-absolute bottom-0 start-0"
+              style="z-index: 10; margin: 8px;"
+              title="Project Exemplar"
+            >
+              <span style="
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 4px 10px;
+                background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+                color: #000;
+                font-size: 0.7rem;
+                font-weight: 600;
+                border-radius: 12px;
+                box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+                border: 1px solid rgba(255, 215, 0, 0.3);
+              ">
+                <i class="fa fa-star" style="font-size: 0.75rem; color: #000;"></i>
+                <span style="letter-spacing: 0.3px;">EXEMPLAR</span>
+              </span>
+            </div>
+            
+            <!-- Quick Set Exemplar Button - Only visible on hover -->
+            <transition name="fade">
+              <button
+                v-if="hoveredMedia[media_file.media_id] &&
+                      media_file.media_type === 'image' && 
+                      media_file.cataloguing_status === 0 && 
+                      media_file.specimen_id && 
+                      media_file.view_id && 
+                      media_file.is_copyrighted !== null &&
+                      media_file.media_id !== projectExemplarMediaId"
+                @click.stop="setAsExemplar(media_file.media_id)"
+                class="position-absolute bottom-0 end-0"
+                style="
+                  z-index: 10;
+                  margin: 8px;
+                  background: rgba(255, 255, 255, 0.95);
+                  border: 1px solid rgba(0, 0, 0, 0.1);
+                  border-radius: 50%;
+                  width: 32px;
+                  height: 32px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  cursor: pointer;
+                  transition: all 0.2s ease;
+                  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+                "
+                onmouseover="this.style.background='#FFD700'; this.style.transform='scale(1.1)'; this.style.boxShadow='0 4px 12px rgba(255, 215, 0, 0.5)'"
+                onmouseout="this.style.background='rgba(255, 255, 255, 0.95)'; this.style.transform='scale(1)'; this.style.boxShadow='0 2px 6px rgba(0, 0, 0, 0.15)'"
+                title="Set as Project Exemplar"
+              >
+                <i class="fa fa-star" style="font-size: 0.9rem; color: #666; transition: color 0.2s ease;" 
+                   onmouseover="this.style.color='#000'"
+                   onmouseout="this.style.color='#666'"></i>
+              </button>
+            </transition>
+
+            <RouterLink
+              :to="`/myprojects/${projectId}/media/${media_file.media_id}/edit`"
+              class="nav-link"
+            >
+              <!-- Checkbox for selection (project-specific feature) -->
+              <input
+                class="form-check-input media-checkbox"
+                type="checkbox"
+                v-model="selectedMedia[media_file.media_id]"
+                @click.stop=""
+              />
+              <MediaCardComp
+                :key="media_file.media_id"
+                :media_file="media_file"
+                :full_view="thumbnailView"
+                :project_id="projectId"
+                data-bs-toggle="tooltip"
+                data-bs-html="true"
+                :data-bs-title="getMediaTooltipContent(media_file)"
+                :title="getMediaTooltipContent(media_file)"
+              ></MediaCardComp>
+            </RouterLink>
+          </div>
         </div>
       </div>
     </div>
@@ -1521,5 +1617,13 @@ function fixMediaWithoutViews() {
 /* Cursor pointer utility class */
 .cursor-pointer {
   cursor: pointer;
+}
+
+/* Fade transition for exemplar button */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
 }
 </style>

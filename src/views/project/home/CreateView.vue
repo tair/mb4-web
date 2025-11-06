@@ -15,40 +15,6 @@
         />
       </div>
 
-      <!-- Exemplar Media Upload -->
-      <div class="form-group">
-        <label class="form-label">
-          Exemplar Media
-          <Tooltip :content="getExemplarMediaTooltip()"></Tooltip>
-        </label>
-
-        <div class="exemplar-upload">
-          <input
-            type="file"
-            @change="handleExemplarMediaUpload"
-            accept="image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/webp,image/tiff"
-            class="form-control"
-          />
-          <button
-            v-if="formData.exemplar_media"
-            type="button"
-            @click="clearExemplarMedia"
-            class="btn-link"
-          >
-            Clear
-          </button>
-        </div>
-
-        <div v-if="formData.exemplar_media" class="media-result">
-          <div class="media-result-caption">
-            Selected file: {{ formData.exemplar_media.name }}
-          </div>
-        </div>
-        <div v-else class="media-placeholder">
-          <img src="/images/img_placeholder.jpg" alt="No media selected" />
-        </div>
-      </div>
-
       <div class="form-group">
         <label class="form-label">
           Is your research project supported by the U.S. National Science
@@ -563,7 +529,6 @@ import { useUserStore } from '@/stores/UserStore'
 import { useNotifications } from '@/composables/useNotifications'
 import {
   getNSFFundedTooltip,
-  getExemplarMediaTooltip,
   getReviewerAccessTooltip,
   getAllowReviewerLoginTooltip,
   getDiskSpaceUsageTooltip,
@@ -602,7 +567,6 @@ const formData = reactive({
   disk_space_usage: 5368709120, // Default 5GB in bytes
   publication_status: '2', // Default to "Article in prep or in review"
   journal_cover: null, // Journal cover file
-  exemplar_media: null, // Exemplar media file
 })
 
 const journalSearch = ref('')
@@ -740,23 +704,6 @@ function validateImageFile(file, fileType = 'image') {
   }
   
   return true
-}
-
-function handleExemplarMediaUpload(event) {
-  const file = event.target.files[0]
-  if (file) {
-    // Validate file format
-    if (!validateImageFile(file, 'exemplar media')) {
-      // Clear the file input
-      event.target.value = ''
-      return
-    }
-    formData.exemplar_media = file
-  }
-}
-
-function clearExemplarMedia() {
-  formData.exemplar_media = null
 }
 
 function toggleJournalMode() {
@@ -957,8 +904,8 @@ async function handleSubmit() {
 
     // Add all form fields to JSON
     for (const [key, value] of Object.entries(formData)) {
-      if (key === 'journal_cover' || key === 'exemplar_media') {
-        // Skip file uploads - will be passed separately
+      if (key === 'journal_cover') {
+        // Skip file upload - will be passed separately
         continue
       } else if (key === 'allow_reviewer_login') {
         // Ensure allow_reviewer_login is sent as 0 or 1
@@ -978,7 +925,7 @@ async function handleSubmit() {
     const project = await projectsStore.createProject(
       projectData,
       journalCoverToSend,
-      formData.exemplar_media
+      null // No longer uploading exemplar media during project creation
     )
 
     if (!project) {
@@ -1126,16 +1073,11 @@ function getLoadingText() {
     return 'Project created successfully!'
   }
 
-  // Journal covers processed immediately, exemplar media goes to curation
+  // Journal covers processed immediately
   const hasJournalCover = !isJournalCoverUploadDisabled.value && formData.journal_cover
-  const hasExemplarMedia = formData.exemplar_media
 
-  if (hasJournalCover && hasExemplarMedia) {
-    return 'Processing images and creating project...'
-  } else if (hasJournalCover) {
+  if (hasJournalCover) {
     return 'Processing journal cover and creating project...'
-  } else if (hasExemplarMedia) {
-    return 'Uploading exemplar media and creating project...'
   } else {
     return 'Creating project...'
   }
@@ -1357,27 +1299,6 @@ function getLoadingText() {
 
 .password-toggle-btn:hover:not(:disabled) {
   color: var(--mb-orange);
-}
-
-.exemplar-upload {
-  margin: 10px 0;
-  padding: 10px;
-  border: 1px solid #eee;
-  border-radius: 4px;
-  background-color: #f9f9f9;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.exemplar-upload .form-control {
-  flex: 1;
-}
-
-.exemplar-upload .form-label {
-  margin-bottom: 5px;
-  font-size: 0.9em;
-  color: #666;
 }
 
 .spinner-border-sm {
