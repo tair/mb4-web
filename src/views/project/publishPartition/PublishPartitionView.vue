@@ -6,7 +6,6 @@ import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
-const projectId = route.params.id
 const isLoaded = ref(false)
 let partitions = ref([])
 
@@ -16,6 +15,7 @@ onMounted(async () => {
 })
 
 async function getPartitions() {
+  const projectId = route.params.id
   const response = await apiService.get(`/projects/${projectId}/publish/partitions`)
   const responseData = await response.json()
   partitions.value = responseData
@@ -25,6 +25,7 @@ function selectPartition(event) {
   const formData = new FormData(event.target)
   const formObject = Object.fromEntries(formData.entries())
 
+  const projectId = route.params.id
   const partitionId = formObject.selectedPartition
   router.push({
     path: `/myprojects/${projectId}/publish/partition/${partitionId}`,
