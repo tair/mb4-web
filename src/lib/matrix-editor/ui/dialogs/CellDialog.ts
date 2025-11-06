@@ -965,12 +965,12 @@ class ContinousDataPane extends BasePane {
     }
     const startInputElement =
       this.getElementByClass<HTMLInputElement>('start-input')
-    startInputElement.value = String(startValue)
+    startInputElement.value = startValue !== undefined && startValue !== null ? String(startValue) : ''
     startInputElement.disabled = !this.hasAccess
     if (character!.getType() === CharacterType.CONTINUOUS) {
       const endInputElement =
         this.getElementByClass<HTMLInputElement>('end-input')
-      endInputElement.value = String(endValue)
+      endInputElement.value = endValue !== undefined && endValue !== null ? String(endValue) : ''
       endInputElement.disabled = !this.hasAccess
     }
   }
@@ -984,13 +984,13 @@ class ContinousDataPane extends BasePane {
         this.handleStatusChange()
       )
       .listen(startInputElement, EventType.CHANGE, () =>
-        this.handleValueChange()
+        this.handleValueChange('start')
       )
     const character = this.matrixModel.getCharacters().getById(this.characterId)
     if (character!.getType() == CharacterType.CONTINUOUS) {
       const endInputElement = this.getElementByClass('end-input')
       handler.listen(endInputElement, EventType.CHANGE, () =>
-        this.handleValueChange()
+        this.handleValueChange('end')
       )
     }
   }
@@ -1021,23 +1021,54 @@ class ContinousDataPane extends BasePane {
   }
 
   /**
-   * Handles when the status select has been changed.
+   * Handles when the value inputs have changed.
+   * 
+   * @param triggerField Which field triggered the change: 'start' or 'end'.
+   *                     'start': Validate and save start field only (no end validation)
+   *                     'end': Validate all fields comprehensively and save
    */
-  private handleValueChange() {
+  private handleValueChange(triggerField: 'start' | 'end') {
     const startInputElement =
       this.getElementByClass<HTMLInputElement>('start-input')
     const start = mb.isEmptyOrWhitespace(startInputElement.value)
       ? null
       : parseFloat(startInputElement.value)
+    
+    // Always validate start value
     if (start !== null && isNaN(start)) {
       alert('Start value must be a number')
       return
     }
+    
     const endInputElement =
       this.getElementByClass<HTMLInputElement>('end-input')
     const end = mb.isEmptyOrWhitespace(endInputElement.value)
       ? null
       : parseFloat(endInputElement.value)
+    
+    // If triggered from start field, validate start only and save immediately
+    if (triggerField === 'start') {
+      // Validate end silently (no alerts) - just check if it's a valid number or empty
+      if (end !== null && isNaN(end)) {
+        // End field has invalid data, don't save yet
+        return
+      }
+      // Don't check start > end relationship yet - user might still be editing
+      // Just save whatever we have
+      this.savingLabel.saving()
+      this.matrixModel
+        .setContinuousValues([this.taxonId], [this.characterId], start, end)
+        .then(() => {
+          this.savingLabel.saved()
+        })
+        .catch((e) => {
+          this.savingLabel.failed()
+          alert(e)
+        })
+      return
+    }
+    
+    // If triggered from end field, validate everything comprehensively
     if (end !== null && isNaN(end)) {
       alert('End value must be a number')
       return
@@ -1050,6 +1081,8 @@ class ContinousDataPane extends BasePane {
       alert('Start must be less than the end value.')
       return
     }
+    
+    // Save the values
     this.savingLabel.saving()
     this.matrixModel
       .setContinuousValues([this.taxonId], [this.characterId], start, end)
