@@ -76,9 +76,11 @@ async function publishPartition(event) {
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
-    <RouterLink :to="`/myprojects/${projectId}/publish/partition`">
-      <button type="button">Go Back</button>
-    </RouterLink>
+    <div class="action-buttons-top">
+      <RouterLink :to="`/myprojects/${projectId}/publish/partition`">
+        <button type="button" class="btn btn-outline-primary">Go Back</button>
+      </RouterLink>
+    </div>
 
     <h1>Partition: {{ partition.name }}</h1>
     <p>
@@ -122,54 +124,128 @@ async function publishPartition(event) {
             or choose to keep the media in the current project, the new parition
             based project or both (bypassing one-time use).
           </p>
-          <li v-for="media in onetimeMedia" class="list-group-item">
-            <RouterLink :to="`/myprojects/${projectId}/media/${media}`">
-              M{{ media }}
-            </RouterLink>
-          </li>
+          <ul class="media-list">
+            <li v-for="media in onetimeMedia" :key="media">
+              <RouterLink :to="`/myprojects/${projectId}/media/${media}`">
+                M{{ media }}
+              </RouterLink>
+            </li>
+          </ul>
           <p>How would you like to handle onetime use media?</p>
-          <div class="list-group-item-name">
-            <label class="item">
+          <div class="radio-options">
+            <div class="form-check">
               <input
                 type="radio"
                 class="form-check-input"
                 name="onetimeAction"
+                id="onetimeAction1"
                 value="1"
                 :checked="true"
               />
-              Keep onetime use media in existing project.
-            </label>
-          </div>
-          <div class="list-group-item-name">
-            <label class="item">
+              <label class="form-check-label" for="onetimeAction1">
+                Keep onetime use media in existing project.
+              </label>
+            </div>
+            <div class="form-check">
               <input
                 type="radio"
                 class="form-check-input"
                 name="onetimeAction"
+                id="onetimeAction100"
                 value="100"
               />
-              Move onetime use media to new project.
-            </label>
-          </div>
-          <div class="list-group-item-name">
-            <label class="item">
+              <label class="form-check-label" for="onetimeAction100">
+                Move onetime use media to new project.
+              </label>
+            </div>
+            <div class="form-check">
               <input
                 type="radio"
                 class="form-check-input"
                 name="onetimeAction"
+                id="onetimeActionBoth"
                 value="1"
               />
-              Use one-time use media in both existing project and new partition
-              based project.
-            </label>
+              <label class="form-check-label" for="onetimeActionBoth">
+                Use one-time use media in both existing project and new partition
+                based project.
+              </label>
+            </div>
           </div>
         </div>
-        <RouterLink :to="`/myprojects/${projectId}/overview`">
-          <button type="button" class="btn btn-outline-primary">Cancel</button>
-        </RouterLink>
-
-        <button type="submit">Publish</button>
+        <div class="btn-form-group">
+          <RouterLink :to="`/myprojects/${projectId}/overview`">
+            <button type="button" class="btn btn-outline-primary">Cancel</button>
+          </RouterLink>
+          <button type="submit" class="btn btn-primary">Publish</button>
+        </div>
       </form>
     </div>
   </LoadingIndicator>
 </template>
+
+<style scoped>
+.action-buttons-top {
+  margin-bottom: 20px;
+}
+
+.action-buttons-top .btn {
+  margin-bottom: 10px;
+}
+
+.media-list {
+  list-style: none;
+  padding: 0;
+  margin: 15px 0;
+}
+
+.media-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.media-list li:last-child {
+  border-bottom: none;
+}
+
+.media-list a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.media-list a:hover {
+  text-decoration: underline;
+}
+
+.radio-options {
+  margin: 20px 0;
+}
+
+.form-check {
+  margin-bottom: 12px;
+  padding-left: 25px;
+}
+
+.form-check-input {
+  margin-top: 0.25rem;
+  margin-left: -25px;
+  cursor: pointer;
+}
+
+.form-check-label {
+  cursor: pointer;
+  margin-left: 5px;
+  display: inline-block;
+}
+
+.btn-form-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 30px;
+  margin-bottom: 20px;
+}
+
+.btn-form-group .btn {
+  min-width: 100px;
+}
+</style>
