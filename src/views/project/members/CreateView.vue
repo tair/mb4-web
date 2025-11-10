@@ -21,8 +21,11 @@ const projectUsersStore = useProjectUsersStore()
 const authStore = useAuthStore()
 const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
-// Check if current user is project admin
+// Check if current user is project admin or system curator or administrator
 const isCurrentUserProjectAdmin = computed(() => {
+  // System curators have full access
+  if (authStore.isUserCurator || authStore.isUserAdministrator) return true
+  
   const currentUserId = authStore.user?.userId
   if (!currentUserId) return false
   
@@ -31,9 +34,9 @@ const isCurrentUserProjectAdmin = computed(() => {
 })
 
 async function check(event) {
-  // Check if current user is project admin before allowing creation
+  // Check if current user is project admin or curator or administrator before allowing creation
   if (!isCurrentUserProjectAdmin.value) {
-    showWarning('Only project administrators can add new members', 'Access Denied')
+    showWarning('Only project administrators and curators and administrators can add new members', 'Access Denied')
     return
   }
   
@@ -67,9 +70,9 @@ async function check(event) {
   }
 }
 async function create(event) {
-  // Check if current user is project admin before allowing creation
+  // Check if current user is project admin or curator or administrator before allowing creation
   if (!isCurrentUserProjectAdmin.value) {
-    showWarning('Only project administrators can add new members', 'Access Denied')
+    showWarning('Only project administrators and curators and administrators can add new members', 'Access Denied')
     return
   }
   
@@ -103,7 +106,7 @@ onMounted(() => {
   <LoadingIndicator :isLoaded="projectUsersStore.isLoaded">
     <div v-if="!isCurrentUserProjectAdmin" class="alert alert-warning">
       <h5>Access Denied</h5>
-      <p>Only project administrators can add new members.</p>
+      <p>Only project administrators and curators and administrators can add new members.</p>
       <button
         class="btn btn-primary"
         type="button"

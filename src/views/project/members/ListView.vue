@@ -15,8 +15,11 @@ const authStore = useAuthStore()
 const numOfUsers = computed(() => projectUsersStore.users?.length)
 const userToDelete = ref({})
 
-// Check if current user is project admin
+// Check if current user is project admin or system curator or administrator
 const isCurrentUserProjectAdmin = computed(() => {
+  // System curators have full access
+  if (authStore.isUserCurator || authStore.isUserAdministrator) return true
+  
   const currentUserId = authStore.user?.userId
   if (!currentUserId) return false
   
