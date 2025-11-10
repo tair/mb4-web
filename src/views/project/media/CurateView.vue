@@ -11,6 +11,8 @@ import MediaCard from '@/components/project/MediaCard.vue'
 import { buildMediaUrl } from '@/utils/fileUtils.js'
 import { useNotifications } from '@/composables/useNotifications'
 import CurationBatchDialog from './CurationBatchDialog.vue'
+import ViewBatchDialog from './ViewBatchDialog.vue'
+import SpecimenBatchDialog from './SpecimenBatchDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -220,46 +222,67 @@ watch(
   <LoadingIndicator :isLoaded="isLoaded" :key="`curate-${projectId}`">
     <header>
       <div class="alert alert-info">
-        <h5><i class="fa fa-info-circle me-2"></i>Curation Workflow</h5>
-        <p class="mb-2">
-          Your uploaded media need to be curated before they can be released.
-          Each media item must have both a <strong>specimen</strong> and a
-          <strong>view</strong> assigned.
-        </p>
-        <div class="row">
-          <div class="col-md-6">
-            <strong>How to curate:</strong>
-            <ol class="mb-0">
-              <li>Select one or more media items using the checkboxes</li>
-              <li>Click "Assign Specimen & View" to open the batch editor</li>
-              <li>Choose the specimen and view for the selected items</li>
-              <li>Click "Assign" to complete the process</li>
-              <li>Click "Release Media" to release the media</li>
-            </ol>
-          </div>
-          <div class="col-md-6">
-            <strong>Status indicators:</strong>
-            <ul class="mb-0">
-              <li><span class="badge bg-success">Green</span> = Assigned</li>
-              <li><span class="badge bg-danger">Red</span> = Missing</li>
-            </ul>
+        <h5 class="mb-0">
+          <button
+            class="btn btn-link text-decoration-none text-start w-100 p-0 collapsed"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#curationWorkflowHelp"
+            aria-expanded="false"
+            aria-controls="curationWorkflowHelp"
+          >
+            <i class="fa fa-info-circle me-2"></i>Curation Workflow
+            <i class="fa fa-chevron-down ms-2 collapse-icon"></i>
+          </button>
+        </h5>
+        <div class="collapse" id="curationWorkflowHelp">
+          <div class="mt-3">
+            <p class="mb-2">
+              Your uploaded media need to be curated before they can be released.
+              Each media item must have both a <strong>specimen</strong> and a
+              <strong>view</strong> assigned.
+            </p>
+            <div class="row">
+              <div class="col-md-6">
+                <strong>How to curate:</strong>
+                <ol class="mb-0">
+                  <li>Select one or more media items using the checkboxes</li>
+                  <li>Choose an assignment option:
+                    <ul class="mt-1">
+                      <li><strong>Assign View</strong> - Assign the same view to multiple items that may have different specimens</li>
+                      <li><strong>Assign Specimen</strong> - Assign the same specimen to multiple items that may have different views</li>
+                      <li><strong>Assign Specimen, View & Release</strong> - Assign both and release immediately</li>
+                    </ul>
+                  </li>
+                  <li>Or use <strong>Release Media</strong> to release items that already have both assigned</li>
+                </ol>
+              </div>
+              <div class="col-md-6">
+                <strong>Status indicators:</strong>
+                <ul class="mb-0">
+                  <li><span class="badge bg-success">Green</span> = Assigned</li>
+                  <li><span class="badge bg-danger">Red</span> = Missing</li>
+                </ul>
+                <p class="mt-2 mb-0"><small><strong>Tip:</strong> Use "Assign View Only" when multiple items share the same view but have different specimens, or vice versa.</small></p>
+              </div>
+            </div>
+            <hr />
+            <p class="mb-0">
+              <i class="fa fa-exclamation-triangle me-2"></i>
+              Make sure you have
+              <RouterLink
+                :to="`/myprojects/${projectId}/specimens/`"
+                class="alert-link"
+                >specimens</RouterLink
+              >
+              and
+              <RouterLink :to="`/myprojects/${projectId}/views/`" class="alert-link"
+                >views</RouterLink
+              >
+              created before starting curation.
+            </p>
           </div>
         </div>
-        <hr />
-        <p class="mb-0">
-          <i class="fa fa-exclamation-triangle me-2"></i>
-          Make sure you have
-          <RouterLink
-            :to="`/myprojects/${projectId}/specimens/`"
-            class="alert-link"
-            >specimens</RouterLink
-          >
-          and
-          <RouterLink :to="`/myprojects/${projectId}/views/`" class="alert-link"
-            >views</RouterLink
-          >
-          created before starting curation.
-        </p>
       </div>
     </header>
     <br />
@@ -286,7 +309,31 @@ watch(
           data-bs-target="#curationBatchModal"
         >
           <i class="fa fa-edit"></i>
-          <span> Assign Specimen & View</span>
+          <span> Assign Specimen, View & Release</span>
+        </button>
+
+        <!-- Assign View Only Button -->
+        <button
+          v-if="someSelected"
+          type="button"
+          class="btn btn-outline-primary btn-sm"
+          data-bs-toggle="modal"
+          data-bs-target="#viewBatchModal"
+        >
+          <i class="fa fa-eye"></i>
+          <span> Assign View</span>
+        </button>
+
+        <!-- Assign Specimen Only Button -->
+        <button
+          v-if="someSelected"
+          type="button"
+          class="btn btn-outline-primary btn-sm"
+          data-bs-toggle="modal"
+          data-bs-target="#specimenBatchModal"
+        >
+          <i class="fa fa-bone"></i>
+          <span> Assign Specimen</span>
         </button>
 
         <!-- Release Button (only enabled if all selected have specimen and view) -->
@@ -428,9 +475,42 @@ watch(
     :batchEdit="batchEditMedia"
     :selectedMedia="selectedMedia"
   />
+
+  <!-- View Only Batch Dialog -->
+  <ViewBatchDialog
+    :batchEdit="batchEditMedia"
+    :selectedMedia="selectedMedia"
+  />
+
+  <!-- Specimen Only Batch Dialog -->
+  <SpecimenBatchDialog
+    :batchEdit="batchEditMedia"
+    :selectedMedia="selectedMedia"
+  />
 </template>
 <style scoped>
 @import '@/views/project/styles.css';
+
+/* Collapsible workflow header */
+.alert-info .btn-link {
+  color: inherit;
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.alert-info .btn-link:hover {
+  color: inherit;
+  opacity: 0.8;
+}
+
+.alert-info .btn-link .collapse-icon {
+  font-size: 0.875rem;
+  transition: transform 0.3s ease;
+}
+
+.alert-info .btn-link:not(.collapsed) .collapse-icon {
+  transform: rotate(180deg);
+}
 
 .media-checkbox {
   border: var(--bs-card-border-width) solid var(--bs-card-border-color);
