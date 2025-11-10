@@ -74,8 +74,17 @@ const exemplarMedia = ref(null)
 const resolvedExemplarUrl = ref(null)
 const showFullDescription = ref(false)
 
+const MAX_DOWNLOAD_SIZE = 500 * 1024 * 1024 // 500MB in bytes
+const curatorEmail = 'curator@morphobank.org'
+
 // Computed property to get overview data - now always uses props
 const overview = computed(() => props.overview)
+
+// Check if project is too large for download
+const isProjectTooLarge = computed(() => {
+  const mediaSize = props.overview?.stats?.media_size || 0
+  return mediaSize > MAX_DOWNLOAD_SIZE
+})
 
 // Check if current user is a member of this project
 const isCurrentUserMember = computed(() => {
@@ -370,15 +379,22 @@ function popDownloadAlert() {
             {{ formatBytes(overview.stats.media_size) }}
           </div>
           <div class="mt-3">
-            <router-link to="download">
-              <button
-                class="btn btn-primary margin-right"
-                @click="popDownloadAlert()"
-              >
-                Download Project SDD file
-              </button>
-            </router-link>
-            <Tooltip :content="downloadTooltipText"></Tooltip>
+            <div v-if="isProjectTooLarge" class="size-limit-message">
+              <strong>Data &gt;500MB.</strong>
+              <a :href="`mailto:${curatorEmail}`" class="curator-link">Contact a curator</a>
+              for download assistance.
+            </div>
+            <template v-else>
+              <router-link to="download">
+                <button
+                  class="btn btn-primary margin-right"
+                  @click="popDownloadAlert()"
+                >
+                  Download Project SDD file
+                </button>
+              </router-link>
+              <Tooltip :content="downloadTooltipText"></Tooltip>
+            </template>
           </div>
         </div>
       </div>
@@ -486,6 +502,28 @@ function popDownloadAlert() {
 
 .project-citation .text-muted {
   opacity: 0.7;
+}
+
+.size-limit-message {
+  text-align: center;
+  padding: 12px 14px;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  color: #856404;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.curator-link {
+  color: #0056b3;
+  text-decoration: underline;
+  font-weight: 600;
+  margin: 0 4px;
+}
+
+.curator-link:hover {
+  color: #003d82;
 }
 
 .project-citation em {
