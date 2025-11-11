@@ -221,31 +221,31 @@ watch(
 <template>
   <LoadingIndicator :isLoaded="isLoaded" :key="`curate-${projectId}`">
     <header>
-      <div class="alert alert-info">
+      <div class="alert alert-info compact-workflow">
         <h5 class="mb-0">
           <button
-            class="btn btn-link text-decoration-none text-start w-100 p-0 collapsed"
+            class="btn btn-link text-decoration-none text-start w-100 p-0"
             type="button"
             data-bs-toggle="collapse"
             data-bs-target="#curationWorkflowHelp"
-            aria-expanded="false"
+            aria-expanded="true"
             aria-controls="curationWorkflowHelp"
           >
             <i class="fa fa-info-circle me-2"></i>Curation Workflow
             <i class="fa fa-chevron-down ms-2 collapse-icon"></i>
           </button>
         </h5>
-        <div class="collapse" id="curationWorkflowHelp">
-          <div class="mt-3">
-            <p class="mb-2">
+        <div class="collapse show" id="curationWorkflowHelp">
+          <div class="mt-2">
+            <p class="mb-2 small">
               Your uploaded media need to be curated before they can be released.
               Each media item must have both a <strong>specimen</strong> and a
               <strong>view</strong> assigned.
             </p>
-            <div class="row">
+            <div class="row g-2">
               <div class="col-md-6">
-                <strong>How to curate:</strong>
-                <ol class="mb-0">
+                <strong class="small">How to curate:</strong>
+                <ol class="mb-0 small compact-list">
                   <li>Select one or more media items using the checkboxes</li>
                   <li>Choose an assignment option:
                     <ul class="mt-1">
@@ -258,16 +258,16 @@ watch(
                 </ol>
               </div>
               <div class="col-md-6">
-                <strong>Status indicators:</strong>
-                <ul class="mb-0">
+                <strong class="small">Status indicators:</strong>
+                <ul class="mb-0 small compact-list">
                   <li><span class="badge bg-success">Green</span> = Assigned</li>
                   <li><span class="badge bg-danger">Red</span> = Missing</li>
                 </ul>
-                <p class="mt-2 mb-0"><small><strong>Tip:</strong> Use "Assign View Only" when multiple items share the same view but have different specimens, or vice versa.</small></p>
+                <!-- <p class="mt-2 mb-0"><small><strong>Tip:</strong> Use "Assign View Only" when multiple items share the same view but have different specimens, or vice versa.</small></p> -->
               </div>
             </div>
-            <hr />
-            <p class="mb-0">
+            <hr class="my-2" />
+            <p class="mb-0 small">
               <i class="fa fa-exclamation-triangle me-2"></i>
               Make sure you have
               <RouterLink
@@ -491,10 +491,29 @@ watch(
 <style scoped>
 @import '@/views/project/styles.css';
 
+/* Compact workflow styling */
+.compact-workflow {
+  padding: 0.75rem 1rem;
+}
+
+.compact-workflow .compact-list {
+  margin-bottom: 0.25rem;
+}
+
+.compact-workflow .compact-list li {
+  margin-bottom: 0.25rem;
+  line-height: 1.4;
+}
+
+.compact-workflow .compact-list ul {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
 /* Collapsible workflow header */
 .alert-info .btn-link {
   color: inherit;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 500;
 }
 
