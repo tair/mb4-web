@@ -35,7 +35,7 @@ function validateFormData(formData: FormData) {
   
   // Conditional validation for copyright fields
   const copyrightCheckbox = formData.get('is_copyrighted')
-  const isCopyrighted = copyrightCheckbox === '1' || copyrightCheckbox === 1
+  const isCopyrighted = copyrightCheckbox === '1' || parseInt(copyrightCheckbox as string) === 1
   
   if (isCopyrighted) {
     // Check copyright_permission - must not be the default "not set" option (value 0)
@@ -79,9 +79,80 @@ async function handleSubmitClicked(event: Event) {
     const target = event.currentTarget as any
     const formData = new FormData(target)
     
-    // FIX: Explicitly set is_copyrighted to 0 if checkbox is unchecked
-    if (!formData.has('is_copyrighted')) {
-      formData.set('is_copyrighted', '0')
+    // Only include fields from expanded accordions to avoid overwriting unrelated fields
+    const json: Record<string, any> = {}
+    
+    // Helper to check if accordion is expanded
+    const isExpanded = (id: string) => {
+      const element = document.getElementById(id)
+      return element?.classList.contains('show')
+    }
+    
+    // Copyright fields - only include if accordion is expanded
+    if (isExpanded('mediaEditCopyright')) {
+      // Handle checkbox - if not in formData, it means unchecked
+      if (formData.has('is_copyrighted')) {
+        json.is_copyrighted = formData.get('is_copyrighted')
+      } else {
+        json.is_copyrighted = '0'
+      }
+      
+      // Always include these fields from the form when copyright accordion is expanded
+      const copyrightPermission = formData.get('copyright_permission')
+      const copyrightLicense = formData.get('copyright_license')
+      const copyrightInfo = formData.get('copyright_info')
+      
+      if (copyrightPermission !== null) {
+        json.copyright_permission = copyrightPermission
+      }
+      if (copyrightLicense !== null) {
+        json.copyright_license = copyrightLicense
+      }
+      if (copyrightInfo !== null && copyrightInfo !== '') {
+        json.copyright_info = copyrightInfo
+      }
+    }
+    
+    // View fields - only include if accordion is expanded
+    if (isExpanded('mediaEditView')) {
+      if (formData.has('view_id')) {
+        json.view_id = formData.get('view_id')
+      }
+    }
+    
+    // Folio fields - only include if accordion is expanded
+    if (isExpanded('mediaEditFolio')) {
+      if (formData.has('folio_id')) {
+        json.folio_id = formData.get('folio_id')
+      }
+    }
+    
+    // Side fields - only include if accordion is expanded
+    if (isExpanded('mediaEditSide')) {
+      if (formData.has('is_sided')) {
+        json.is_sided = formData.get('is_sided')
+      }
+    }
+    
+    // Specimen fields - only include if accordion is expanded
+    if (isExpanded('mediaEditSpecimen')) {
+      if (formData.has('specimen_id')) {
+        json.specimen_id = formData.get('specimen_id')
+      }
+    }
+    
+    // Bibliography fields - only include if accordion is expanded
+    if (isExpanded('mediaEditBibliography')) {
+      if (formData.has('reference_id')) {
+        json.reference_id = formData.get('reference_id')
+      }
+    }
+    
+    // Publication fields - only include if accordion is expanded
+    if (isExpanded('mediaEditModalPublication')) {
+      if (formData.has('published')) {
+        json.published = formData.get('published')
+      }
     }
     
     // Validate form data
@@ -92,7 +163,6 @@ async function handleSubmitClicked(event: Event) {
       return
     }
     
-    const json = Object.fromEntries(formData)
     const success = await props.batchEdit(json)
     if (!success) {
       showError('Failed to edit media files')
@@ -180,7 +250,6 @@ onMounted(() => {
                     </label>
                     <component
                       :is="schema.is_copyrighted.view"
-                      :disabled="menuCollapsed['mediaEditCopyright']"
                       name="is_copyrighted"
                     >
                     </component>
@@ -191,7 +260,6 @@ onMounted(() => {
                     </label>
                     <component
                       :is="schema.copyright_permission.view"
-                      :disabled="menuCollapsed['mediaEditCopyright']"
                       name="copyright_permission"
                       v-bind="schema.copyright_permission.args"
                     >
@@ -203,7 +271,6 @@ onMounted(() => {
                     </label>
                     <component
                       :is="schema.copyright_license.view"
-                      :disabled="menuCollapsed['mediaEditCopyright']"
                       name="copyright_license"
                       v-bind="schema.copyright_license.args"
                     >
@@ -216,7 +283,6 @@ onMounted(() => {
                     </label>
                     <component
                       :is="schema.copyright_info.view"
-                      :disabled="menuCollapsed['mediaEditCopyright']"
                       name="copyright_info"
                     ></component>
                   </div>
@@ -243,7 +309,6 @@ onMounted(() => {
                       </label>
                       <component
                         :is="schema.view_id.view"
-                        :disabled="menuCollapsed['mediaEditView']"
                         name="view_id"
                       >
                       </component>
@@ -269,7 +334,6 @@ onMounted(() => {
                     <div class="form-group">
                       <label class="form-label"> Folio </label>
                       <select
-                        :disabled="menuCollapsed['mediaEditFolio']"
                         name="folio_id"
                       >
                         <option
@@ -305,7 +369,6 @@ onMounted(() => {
                       </label>
                       <component
                         :is="schema.is_sided.view"
-                        :disabled="menuCollapsed['mediaEditSide']"
                         name="is_sided"
                         v-bind="schema.is_sided.args"
                       >
@@ -335,7 +398,6 @@ onMounted(() => {
                       </label>
                       <component
                         :is="schema.specimen_id.view"
-                        :disabled="menuCollapsed['mediaEditSpecimen']"
                         name="specimen_id"
                       >
                       </component>
@@ -367,7 +429,6 @@ onMounted(() => {
                       </label>
                       <component
                         :is="BibliographySearchInput"
-                        :disabled="menuCollapsed['mediaEditBibliography']"
                         name="reference_id"
                       >
                       </component>
@@ -399,8 +460,7 @@ onMounted(() => {
                       </label>
                       <component
                         :is="schema.published.view"
-                        :disabled="menuCollapsed['mediaEditModalPublication']"
-                        name="status"
+                        name="published"
                         v-bind="schema.published.args"
                       >
                       </component>

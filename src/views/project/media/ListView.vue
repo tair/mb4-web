@@ -1263,8 +1263,8 @@ function fixMediaWithoutViews() {
         </div>
       </div>
 
-      <!-- Selection Bar for batch operations -->
-      <div v-if="someSelected" class="selection-bar mb-3">
+      <!-- Selection Bar for batch operations - Always visible -->
+      <div class="selection-bar mb-3">
         <label class="item" title="Select all">
           <input
             type="checkbox"
@@ -1284,15 +1284,17 @@ function fixMediaWithoutViews() {
         </label>
         <span
           class="item"
+          :class="{ disabled: !someSelected }"
           data-bs-toggle="modal"
-          data-bs-target="#mediaEditModal"
+          :data-bs-target="someSelected ? '#mediaEditModal' : ''"
           :title="batchEditTooltip"
         >
           <i class="fa-regular fa-pen-to-square"></i>
         </span>
         <span
           class="item"
-          @click="downloadSelected"
+          :class="{ disabled: !someSelected }"
+          @click="someSelected ? downloadSelected() : null"
           data-bs-toggle="tooltip"
           :data-bs-title="downloadSelectedTooltip"
           :title="downloadSelectedTooltip"
@@ -1302,7 +1304,8 @@ function fixMediaWithoutViews() {
         <span
           v-if="foliosStore.folios.length > 0"
           class="item"
-          @click="toggleFolioOptions"
+          :class="{ disabled: !someSelected }"
+          @click="someSelected ? toggleFolioOptions() : null"
           data-bs-toggle="tooltip"
           :data-bs-title="addToFolioTooltip"
           :title="addToFolioTooltip"
@@ -1311,12 +1314,13 @@ function fixMediaWithoutViews() {
         </span>
         <span
           class="item"
+          :class="{ disabled: !someSelected }"
           data-bs-toggle="modal"
-          data-bs-target="#mediaDeleteModal"
+          :data-bs-target="someSelected ? '#mediaDeleteModal' : ''"
           @click="
-            mediaToDelete = filteredMedia.filter(
+            someSelected ? (mediaToDelete = filteredMedia.filter(
               (b) => selectedMedia[b.media_id]
-            )
+            )) : null
           "
           :title="deleteSelectedTooltip"
         >
@@ -1498,6 +1502,16 @@ function fixMediaWithoutViews() {
 
 .selection-bar .item:hover {
   background-color: #e9ecef;
+}
+
+.selection-bar .item.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.selection-bar .item.disabled:hover {
+  background-color: transparent;
 }
 
 /* Alert styling */

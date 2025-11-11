@@ -17,8 +17,11 @@ const authStore = useAuthStore()
 const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 const user = computed(() => projectUsersStore.getUserById(userId))
 
-// Check if current user is project admin
+// Check if current user is project admin or system curator or administrator
 const isCurrentUserProjectAdmin = computed(() => {
+  // System curators and administrators have full access
+  if (authStore.isUserCurator || authStore.isUserAdministrator) return true
+  
   const currentUserId = authStore.user?.userId
   if (!currentUserId) return false
   
@@ -27,9 +30,9 @@ const isCurrentUserProjectAdmin = computed(() => {
 })
 
 async function edit(event) {
-  // Check if current user is project admin before allowing edit
+  // Check if current user is project admin, curator, or administrator before allowing edit
   if (!isCurrentUserProjectAdmin.value) {
-    showWarning('Only project administrators can edit member permissions', 'Access Denied')
+    showWarning('Only project administrators, curators, and administrators can edit member permissions', 'Access Denied')
     return
   }
   
@@ -67,7 +70,7 @@ onMounted(() => {
       
       <div v-if="!isCurrentUserProjectAdmin" class="alert alert-warning">
         <h5>Access Denied</h5>
-        <p>Only project administrators can edit member permissions.</p>
+        <p>Only project administrators, curators, and administrators can edit member permissions.</p>
         <button
           class="btn btn-primary"
           type="button"

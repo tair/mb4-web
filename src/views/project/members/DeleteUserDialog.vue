@@ -12,8 +12,11 @@ const projectUsersStore = useProjectUsersStore()
 const authStore = useAuthStore()
 const { showError, showSuccess, showWarning, showInfo } = useNotifications()
 
-// Check if current user is project admin
+// Check if current user is project admin or system curator or administrator
 const isCurrentUserProjectAdmin = computed(() => {
+  // System curators and administrators have full access
+  if (authStore.isUserCurator || authStore.isUserAdministrator) return true
+  
   const currentUserId = authStore.user?.userId
   if (!currentUserId) return false
   
@@ -22,9 +25,9 @@ const isCurrentUserProjectAdmin = computed(() => {
 })
 
 async function deleteUser(userId: number) {
-  // Check if current user is project admin before allowing deletion
+  // Check if current user is project admin, curator, or administrator before allowing deletion
   if (!isCurrentUserProjectAdmin.value) {
-    showWarning('Only project administrators can delete members', 'Access Denied')
+    showWarning('Only project administrators, curators, and administrators can delete members', 'Access Denied')
     return
   }
   
