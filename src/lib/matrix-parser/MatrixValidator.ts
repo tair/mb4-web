@@ -89,7 +89,8 @@ function validateCharacterAndTaxaCounts(matrixObject: MatrixObject): void {
       
       const missingCharNumbers = getMissingCharacterNumbers(declaredChars, matrixObject)
       
-      let errorMessage = `Your Nexus file could not be imported because it does not explicitly define names for all characters. `
+      const fileFormat = matrixObject.getFormat() || 'matrix'
+      let errorMessage = `Your ${fileFormat} file could not be imported because it does not explicitly define names for all characters. `
       
       if (hasDuplicates) {
         errorMessage += `There appear to be parsing errors in your CHARSTATELABELS block. `
