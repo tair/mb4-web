@@ -23,6 +23,7 @@ const taxaStore = useTaxaStore()
 const mediaStore = useMediaStore()
 const { showError, showSuccess } = useNotifications()
 const isSubmitting = ref(false)
+const formKey = ref(0) // Key to force component re-render
 
 const menuCollapsed = ref({
   mediaEditView: false, // Start expanded for curation
@@ -261,6 +262,17 @@ onMounted(() => {
       })
     }
   })
+
+  // Force component re-render when modal is shown to reflect current selection
+  const modalElement = document.getElementById('curationBatchModal')
+  if (modalElement) {
+    modalElement.addEventListener('shown.bs.modal', () => {
+      // Clear validation errors
+      validationErrors.value = []
+      // Increment key to force component re-render with fresh props
+      formKey.value++
+    })
+  }
 })
 </script>
 <template>
@@ -321,6 +333,7 @@ onMounted(() => {
                         :is="schema.view_id.view"
                         :disabled="menuCollapsed['mediaEditView']"
                         :value="currentViewId"
+                        :key="`curation-view-${formKey}`"
                         name="view_id"
                       >
                       </component>
@@ -357,6 +370,7 @@ onMounted(() => {
                         :is="schema.specimen_id.view"
                         :disabled="menuCollapsed['mediaEditSpecimen']"
                         :value="currentSpecimenId"
+                        :key="`curation-specimen-${formKey}`"
                         name="specimen_id"
                       >
                       </component>
