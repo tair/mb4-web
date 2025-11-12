@@ -15,9 +15,9 @@ async function create(event) {
   const formData = new FormData(event.currentTarget)
   const json = Object.fromEntries(formData)
 
-  // Get the view names and split by comma
+  // Get the view names and split by semicolon
   const viewNames = json.name
-    .split(',')
+    .split(';')
     .map((name) => name.trim())
     .filter((name) => name)
 
@@ -26,9 +26,19 @@ async function create(event) {
     return
   }
 
-  const result = await mediaViewsStore.create(projectId, json)
+  // Send the split names as an array to create multiple views
+  const dataToSend = {
+    ...json,
+    names: viewNames  // Use 'names' (plural) to send array of view names
+  }
+  delete dataToSend.name  // Remove the original unsplit name field
+
+  const result = await mediaViewsStore.create(projectId, dataToSend)
   if (result.success) {
-    showSuccess('Media view created successfully', 'View Created')
+    const message = viewNames.length > 1 
+      ? `${viewNames.length} media views created successfully` 
+      : 'Media view created successfully'
+    showSuccess(message, 'View Created')
     router.go(-1)
   } else {
     showError(result.error || 'Failed to create media view', 'Creation Failed')
@@ -45,7 +55,7 @@ async function create(event) {
         <label for="index" class="form-label">
           {{ definition.label }}
           <span v-if="definition.allowMultiple" class="multiple-values-hint">
-            (Multiple values can be entered, separated by commas)
+            (Multiple values can be entered, separated by a semicolon)
           </span>
         </label>
         <component

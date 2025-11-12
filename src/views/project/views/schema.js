@@ -8,7 +8,7 @@ export const schema = {
     view: TextInput,
     allowMultiple: true,
     args: {
-      placeholder: 'Enter view names separated by commas',
+      placeholder: 'Enter view names separated by semicolons',
     },
   },
   user_id: {
