@@ -739,11 +739,19 @@ const loadJournalCover = async (journalTitle) => {
     if (responseData.coverPath && responseData.coverPath.trim() !== '') {
       const coverPath = responseData.coverPath.trim()
       
+      // Extract filename from the old path (could be full URL or relative path)
+      // e.g., "https://morphobank.org/themes/default/graphics/journalIcons/cladistics.jpg" -> "cladistics.jpg"
+      const filename = coverPath.split('/').pop()
+      
+      // Build the new S3 URL
+      const s3Key = `media_files/journal_covers/${filename}`
+      const newCoverPath = apiService.buildUrl(`/s3/${s3Key}`)
+      
       // Test if the image actually loads
-      const imageExists = await testImageExists(coverPath)
+      const imageExists = await testImageExists(newCoverPath)
       
       if (imageExists) {
-        journalCoverPath.value = coverPath
+        journalCoverPath.value = newCoverPath
       } else {
         journalCoverPath.value = null
       }
