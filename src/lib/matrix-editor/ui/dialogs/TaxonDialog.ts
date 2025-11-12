@@ -97,6 +97,7 @@ export class TaxonDialog extends Dialog {
       new AccessPane(this.matrixModel, taxon, this.savingLabel)
     )
     this.tabNavigator.setSelectedTabIndex(TaxonDialog.LAST_SELECTED_TAB_INDEX)
+    this.tabNavigator.redraw()
     this.updateTaxonName()
   }
 

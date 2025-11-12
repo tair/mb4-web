@@ -71,6 +71,7 @@ export class ReadonlyTaxonDialog extends Dialog {
     }
 
     this.tabNavigator.setSelectedTabIndex(selectedTabIndex)
+    this.tabNavigator.redraw()
     const taxonNameElement = this.getElementByClass('taxonName ')
     const userPreferences = this.matrixModel.getUserPreferences()
     const numberingMode = userPreferences.getDefaultNumberingMode()

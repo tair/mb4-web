@@ -109,6 +109,60 @@ export class TabNavigator extends Component {
   }
 
   /**
+   * Redraws the tabs with current tab components.
+   * This should be called after clearing and adding new tabs.
+   */
+  redraw() {
+    if (!this.isInDocument()) {
+      return
+    }
+
+    const element = this.getElement()
+    
+    // Clear the existing DOM content
+    element.innerHTML = ''
+    
+    // Regenerate the HTML with the new tabs
+    element.innerHTML = this.htmlContent()
+    
+    // Re-establish event handlers for the new tabs
+    const handler = this.getHandler()
+    const tabButtonElements = element.querySelectorAll('button')
+    tabButtonElements.forEach((tabButtonElement) => {
+      const tab = new Tab(tabButtonElement)
+      this.tabs.push(tab)
+      handler.listen(tabButtonElement, EventType.CLICK, (event) => {
+        event.preventDefault()
+        tab.show()
+      })
+      handler.listen(tabButtonElement, TabNavigator.EventType.SHOW, (event) => {
+        const button = event.target
+        const key = button.dataset['mbKey']
+        const paneId = button.dataset['bsTarget']
+        const component = this.tabComponents.get(key)
+        const paneElement = element.querySelector(paneId)
+        if (component && !component.isInDocument()) {
+          // For some reason, bootstrap is not setting class names when the component is rendering.
+          paneElement.classList.add('show', 'active')
+          component.render(paneElement)
+        }
+      })
+      handler.listen(
+        tabButtonElement,
+        TabNavigator.EventType.SHOWN,
+        (event) => {
+          const button = event.target
+          const key = button.dataset['mbKey']
+          this.handleTabSelect(key)
+        }
+      )
+    })
+    
+    // Update the selected tab to show it
+    this.updateSelectedTab()
+  }
+
+  /**
    * @return Index of the currently selected tab (-1 if none).
    */
   getSelectedTabIndex(): number {

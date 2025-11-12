@@ -158,6 +158,7 @@ export class CharacterDialog extends Dialog {
     this.tabNavigator.setSelectedTabIndex(
       CharacterDialog.LAST_SELECTED_TAB_INDEX
     )
+    this.tabNavigator.redraw()
     this.updateCharacterName()
   }
 

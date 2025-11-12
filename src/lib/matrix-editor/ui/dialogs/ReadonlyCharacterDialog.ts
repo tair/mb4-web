@@ -63,6 +63,7 @@ export class ReadonlyCharacterDialog extends Dialog {
         new CitationsPane(this.matrixModel, character)
       )
     }
+    this.tabNavigator.redraw()
     this.updateCharacterName()
   }
 

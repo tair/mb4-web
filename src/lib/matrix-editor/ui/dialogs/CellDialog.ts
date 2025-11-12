@@ -251,6 +251,7 @@ export class CellDialog extends Dialog {
       )
     )
     this.tabNavigator.setSelectedTabIndex(CellDialog.LAST_SELECTED_TAB_INDEX)
+    this.tabNavigator.redraw()
     this.updateCellName()
 
     // If there's a warning and we have access to the taxa, let's update the scored on timestamp
