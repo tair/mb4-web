@@ -39,7 +39,12 @@ async function createInstitution() {
     if (!result) {
       showError('Could not add Institution to Project', 'Add Failed')
     } else {
-      await router.push({ path: `/myprojects/${projectId}/institutions` })
+      // Determine redirect path based on current route
+      const isPublishedRoute = route.path.startsWith('/project/')
+      const redirectPath = isPublishedRoute 
+        ? `/project/${projectId}/institutions`
+        : `/myprojects/${projectId}/institutions`
+      await router.push({ path: redirectPath })
     }
   } else {
     showWarning('Institution already associated with this project', 'Already Associated')
@@ -74,7 +79,7 @@ const handleInstitutionCreated = (institution) => {
     </header>
 
     <div class="action-bar">
-      <RouterLink :to="`/myProjects/${projectId}/institutions`">
+      <RouterLink :to="route.path.startsWith('/project/') ? `/project/${projectId}/institutions` : `/myprojects/${projectId}/institutions`">
         <button type="button" class="btn btn-m btn-outline-primary">
           <i class="fa fa-arrow-left"></i>
           <span>Back to Institutions</span>
