@@ -67,7 +67,6 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { apiService } from '@/services/apiService.js'
 
 // Dynamic loader imports for better performance
 const loaderCache = new Map()
@@ -141,6 +140,9 @@ const loading = ref(false)
 const error = ref(null)
 const lastLoadedSignature = ref(null)
 const currentLoadSignature = ref(null)
+
+// Abort controller for canceling in-flight model loads
+let modelAbortController = null
 
 // Three.js objects
 let scene = null
@@ -278,6 +280,16 @@ async function loadModel() {
     return
   }
 
+  // Abort any in-flight model load
+  if (modelAbortController) {
+    modelAbortController.abort()
+    modelAbortController = null
+  }
+
+  // Create new abort controller for this load
+  modelAbortController = new AbortController()
+  const signal = modelAbortController.signal
+
   currentLoadSignature.value = signature
   loading.value = true
   error.value = null
@@ -303,20 +315,20 @@ async function loadModel() {
 
     switch (extension) {
       case 'ply':
-        model = await loadPLY()
+        model = await loadPLY(signal)
         break
       case 'stl':
-        model = await loadSTL()
+        model = await loadSTL(signal)
         break
       case 'obj':
-        model = await loadOBJ()
+        model = await loadOBJ(signal)
         break
       case 'gltf':
       case 'glb':
-        model = await loadGLTF()
+        model = await loadGLTF(signal)
         break
       case 'fbx':
-        model = await loadFBX()
+        model = await loadFBX(signal)
         break
       default:
         throw new Error(`Unsupported file format: ${extension.toUpperCase()}`)
@@ -345,6 +357,10 @@ async function loadModel() {
       throw new Error('Model loaded but is null/undefined')
     }
   } catch (err) {
+    // Ignore aborted requests
+    if (err.name === 'AbortError' || signal.aborted) {
+      return
+    }
     error.value = err.message || 'Failed to load 3D model'
     loading.value = false
     currentLoadSignature.value = null
@@ -355,136 +371,116 @@ async function loadModel() {
 
 
 
-async function loadPLY() {
+async function loadPLY(signal) {
   const loader = await getLoader('ply')
-  return new Promise((resolve, reject) => {
-    loader.load(
-      props.modelUrl,
-      (geometry) => {
-        // Ensure geometry has proper normals - many PLY files lack them
-        if (!geometry.attributes.normal) {
-          geometry.computeVertexNormals()
-        }
-        
-        // Always use cream color for all PLY models - using MeshLambertMaterial for better reliability
-        const material = new THREE.MeshLambertMaterial({ 
-          color: 0xFFF8DC, // Cream color
-          side: THREE.DoubleSide
-        })
-        
-        const mesh = new THREE.Mesh(geometry, material)
-        mesh.castShadow = true
-        mesh.receiveShadow = true
-        
-        resolve(mesh)
-      },
-      (progress) => {
-        // Progress callback - can be used for progress bar if needed
-      },
-      (error) => {
-        reject(new Error(`Failed to load PLY file: ${error.message}`))
-      }
-    )
+  
+  // Fetch file with abort signal (use plain fetch for S3 URLs to avoid CORS issues)
+  const response = await fetch(props.modelUrl, { signal })
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+  }
+  
+  const arrayBuffer = await response.arrayBuffer()
+  const geometry = loader.parse(arrayBuffer)
+  
+  // Ensure geometry has proper normals - many PLY files lack them
+  if (!geometry.attributes.normal) {
+    geometry.computeVertexNormals()
+  }
+  
+  // Always use cream color for all PLY models - using MeshLambertMaterial for better reliability
+  const material = new THREE.MeshLambertMaterial({ 
+    color: 0xFFF8DC, // Cream color
+    side: THREE.DoubleSide
   })
+  
+  const mesh = new THREE.Mesh(geometry, material)
+  mesh.castShadow = true
+  mesh.receiveShadow = true
+  
+  return mesh
 }
 
-async function loadSTL() {
+async function loadSTL(signal) {
   const loader = await getLoader('stl')
   
-  return new Promise(async (resolve, reject) => {
-    
-    const onLoad = (geometry) => {
-      // Ensure geometry has proper normals - STL files can also lack them
-      if (!geometry.attributes.normal) {
-        geometry.computeVertexNormals()
+  // Fetch file with abort signal (use plain fetch for S3 URLs to avoid CORS issues)
+  const response = await fetch(props.modelUrl, { signal })
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+  }
+  
+  const arrayBuffer = await response.arrayBuffer()
+  const geometry = loader.parse(arrayBuffer)
+  
+  // Ensure geometry has proper normals - STL files can also lack them
+  if (!geometry.attributes.normal) {
+    geometry.computeVertexNormals()
+  }
+  
+  // Always use cream color for all STL models
+  const material = new THREE.MeshLambertMaterial({ 
+    color: 0xFFF8DC, // Cream color
+    side: THREE.DoubleSide
+  })
+  
+  const mesh = new THREE.Mesh(geometry, material)
+  mesh.castShadow = true
+  mesh.receiveShadow = true
+  
+  return mesh
+}
+
+async function loadOBJ(signal) {
+  const loader = await getLoader('obj')
+  
+  // Fetch file with abort signal (use plain fetch for S3 URLs to avoid CORS issues)
+  const response = await fetch(props.modelUrl, { signal })
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+  }
+  
+  const text = await response.text()
+  const object = loader.parse(text)
+  
+  // Apply cream material to all meshes in the object
+  object.traverse((child) => {
+    if (child.isMesh) {
+      // Ensure geometry has proper normals - OBJ files can also lack them
+      if (!child.geometry.attributes.normal) {
+        child.geometry.computeVertexNormals()
       }
       
-      // Always use cream color for all STL models
-      const material = new THREE.MeshLambertMaterial({ 
+      // Always use cream color for all OBJ models
+      child.material = new THREE.MeshLambertMaterial({ 
         color: 0xFFF8DC, // Cream color
         side: THREE.DoubleSide
       })
       
-      const mesh = new THREE.Mesh(geometry, material)
-      mesh.castShadow = true
-      mesh.receiveShadow = true
-      resolve(mesh)
-    }
-    
-    const onProgress = (progress) => {
-      // Progress callback - can be used for progress bar if needed
-    }
-    
-    const onError = async (error) => {
-      // Try fallback loading method
-      try {
-        const response = await apiService.get(props.modelUrl)
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-        }
-        
-        const arrayBuffer = await response.arrayBuffer()
-        const geometry = loader.parse(arrayBuffer)
-        onLoad(geometry)
-      } catch (fallbackErr) {
-        reject(new Error(`Failed to load STL file: ${error.message || error}`))
-      }
-    }
-    
-    try {
-      // Configure loader for cross-origin requests
-      if (loader.setCrossOrigin) {
-        loader.setCrossOrigin('anonymous')
-      }
-      
-      loader.load(props.modelUrl, onLoad, onProgress, onError)
-    } catch (err) {
-      await onError(err)
+      child.castShadow = true
+      child.receiveShadow = true
     }
   })
+  
+  return object
 }
 
-async function loadOBJ() {
-  const loader = await getLoader('obj')
-  return new Promise((resolve, reject) => {
-    loader.load(
-      props.modelUrl,
-      (object) => {
-        // Apply cream material to all meshes in the object
-        object.traverse((child) => {
-          if (child.isMesh) {
-            // Ensure geometry has proper normals - OBJ files can also lack them
-            if (!child.geometry.attributes.normal) {
-              child.geometry.computeVertexNormals()
-            }
-            
-            // Always use cream color for all OBJ models
-            child.material = new THREE.MeshLambertMaterial({ 
-              color: 0xFFF8DC, // Cream color
-              side: THREE.DoubleSide
-            })
-            
-            child.castShadow = true
-            child.receiveShadow = true
-          }
-        })
-        resolve(object)
-      },
-      (progress) => {
-        // Progress callback - can be used for progress bar if needed
-      },
-      (error) => {
-        reject(new Error(`Failed to load OBJ file: ${error.message}`))
-      }
-    )
-  })
-}
-
-async function loadGLTF() {
+async function loadGLTF(signal) {
   const loader = await getLoader('gltf')
+  
+  // Fetch file with abort signal (use plain fetch for S3 URLs to avoid CORS issues)
+  const response = await fetch(props.modelUrl, { signal })
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+  }
+  
+  const arrayBuffer = await response.arrayBuffer()
+  
+  // Parse the GLTF data
   return new Promise((resolve, reject) => {
-    loader.load(
-      props.modelUrl,
+    loader.parse(
+      arrayBuffer,
+      '', // resource path
       (gltf) => {
         const model = gltf.scene
         
@@ -508,50 +504,44 @@ async function loadGLTF() {
         
         resolve(model)
       },
-      (progress) => {
-        // Progress callback - can be used for progress bar if needed
-      },
       (error) => {
-        reject(new Error(`Failed to load GLTF file: ${error.message}`))
+        reject(new Error(`Failed to parse GLTF file: ${error.message || error}`))
       }
     )
   })
 }
 
-async function loadFBX() {
+async function loadFBX(signal) {
   const loader = await getLoader('fbx')
-  return new Promise((resolve, reject) => {
-    loader.load(
-      props.modelUrl,
-      (object) => {
-        object.traverse((child) => {
-          if (child.isMesh) {
-            // Ensure geometry has proper normals
-            if (!child.geometry.attributes.normal) {
-              child.geometry.computeVertexNormals()
-            }
-            
-            // Always use cream color for all FBX models
-            child.material = new THREE.MeshLambertMaterial({ 
-              color: 0xFFF8DC, // Cream color
-              side: THREE.DoubleSide
-            })
-            
-            child.castShadow = true
-            child.receiveShadow = true
-          }
-        })
-        
-        resolve(object)
-      },
-      (progress) => {
-        // Progress callback - can be used for progress bar if needed
-      },
-      (error) => {
-        reject(new Error(`Failed to load FBX file: ${error.message}`))
+  
+  // Fetch file with abort signal (use plain fetch for S3 URLs to avoid CORS issues)
+  const response = await fetch(props.modelUrl, { signal })
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+  }
+  
+  const arrayBuffer = await response.arrayBuffer()
+  const object = loader.parse(arrayBuffer, '')
+  
+  object.traverse((child) => {
+    if (child.isMesh) {
+      // Ensure geometry has proper normals
+      if (!child.geometry.attributes.normal) {
+        child.geometry.computeVertexNormals()
       }
-    )
+      
+      // Always use cream color for all FBX models
+      child.material = new THREE.MeshLambertMaterial({ 
+        color: 0xFFF8DC, // Cream color
+        side: THREE.DoubleSide
+      })
+      
+      child.castShadow = true
+      child.receiveShadow = true
+    }
   })
+  
+  return object
 }
 
 function centerAndScaleModel(model) {
@@ -668,6 +658,12 @@ function retryLoad() {
 }
 
 function cleanup() {
+  // Abort any in-flight model load
+  if (modelAbortController) {
+    modelAbortController.abort()
+    modelAbortController = null
+  }
+  
   if (animationId) {
     cancelAnimationFrame(animationId)
   }
