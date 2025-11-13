@@ -96,6 +96,12 @@ const videoUrl = ref(null)
 const loadingVideoUrl = ref(false)
 const videoUrlError = ref(null)
 
+// 3D Model URL state (for pre-signed URLs)
+const modelUrlPresigned = ref(null)
+const loadingModelUrl = ref(false)
+const modelUrlError = ref(null)
+const modelAbortController = ref(null)
+
 // Preload annotations to avoid race condition
 const preloadAnnotations = async () => {
   if (!showAnnotations.value || annotationsLoaded.value) return
@@ -148,25 +154,96 @@ const fetchVideoUrl = async () => {
   }
 }
 
-// Watch for zoom modal opening and fetch video URL if needed
+// Fetch pre-signed URL for 3D model files
+const fetchModelUrl = async () => {
+  // Cancel any in-flight request
+  if (modelAbortController.value) {
+    modelAbortController.value.abort()
+  }
+  
+  if (!is3DFile.value || !props.project_id || !props.media_file?.media_id) {
+    return
+  }
+
+  // Create new abort controller for this request
+  const controller = new AbortController()
+  modelAbortController.value = controller
+
+  loadingModelUrl.value = true
+  modelUrlError.value = null
+  modelUrlPresigned.value = null
+
+  try {
+    const response = await apiService.get(
+      `/public/media/${props.project_id}/media-url/${props.media_file.media_id}`,
+      { 
+        params: { fileSize: 'original' },
+        signal: controller.signal
+      }
+    )
+    const data = await response.json()
+    
+    if (data.success && data.url) {
+      modelUrlPresigned.value = data.url
+    } else {
+      throw new Error('Failed to get 3D model URL')
+    }
+  } catch (error) {
+    // Ignore aborted requests
+    if (error.name === 'AbortError') {
+      return
+    }
+    console.error('Error fetching 3D model URL:', error)
+    modelUrlError.value = 'Failed to load 3D model. Please try again.'
+    // Fallback to direct URL (may timeout for large files)
+    modelUrlPresigned.value = buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
+  } finally {
+    // Only clear loading state if this is still the active request
+    if (modelAbortController.value === controller) {
+      loadingModelUrl.value = false
+      modelAbortController.value = null
+    }
+  }
+}
+
+// Watch for zoom modal opening and fetch URLs if needed
 watch(showZoomModal, (newValue) => {
-  if (newValue && isVideoFile.value) {
-    fetchVideoUrl()
+  if (newValue) {
+    if (isVideoFile.value) {
+      fetchVideoUrl()
+    } else if (is3DFile.value) {
+      fetchModelUrl()
+    }
   }
 })
 
 // Reset annotation state when modal closes
 const onModalClose = () => {
-  showZoomModal.value = false
+  // IMPORTANT: Clear URLs and state FIRST before closing modal
+  // This ensures ThreeJSViewer unmounts cleanly
   annotationsLoaded.value = false
   annotationCount.value = 0
-  // Reset 3D format attempt index for next time
   currentExtensionIndex.value = 0
-  // Clear video URL when modal closes to save memory
+  
+  // Cancel any in-flight model URL request
+  if (modelAbortController.value) {
+    modelAbortController.value.abort()
+    modelAbortController.value = null
+  }
+  
+  // Clear URLs when modal closes to save memory
   if (isVideoFile.value) {
     videoUrl.value = null
     videoUrlError.value = null
   }
+  if (is3DFile.value) {
+    modelUrlPresigned.value = null
+    modelUrlError.value = null
+    loadingModelUrl.value = false
+  }
+  
+  // Close modal last
+  showZoomModal.value = false
 }
 
 // Check if the media file is a 3D file - ROBUST DETECTION
@@ -360,10 +437,11 @@ const mainDisplayUrl = computed(() => {
   return buildMediaUrl(props.project_id, props.media_file?.media_id, 'thumbnail')
 })
 
-// Get the 3D model URL for model-viewer
+// Get the 3D model URL for model-viewer (use pre-signed URL if available to avoid timeouts)
 const modelUrl = computed(() => {
   if (is3DFile.value) {
-    return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
+    // Use pre-signed URL if available, otherwise fall back to regular URL
+    return modelUrlPresigned.value || buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
   }
   return null
 })
@@ -561,13 +639,19 @@ async function confirmDownload(fileSize, fileName) {
   let downloadUrl
   let downloadFileName = fileName
   
-  // For videos, use pre-signed URL to avoid proxy timeout
-  if (isVideoFile.value) {
+  // For videos and 3D files, use pre-signed URL to avoid proxy timeout for large files
+  if (isVideoFile.value || is3DFile.value) {
     try {
-      const response = await apiService.get(
-        `/public/media/${props.project_id}/video-url/${props.media_file.media_id}`,
-        { params: { download: 'true' } }
-      )
+      // Use video-url endpoint for videos, media-url for everything else
+      const endpoint = isVideoFile.value 
+        ? `/public/media/${props.project_id}/video-url/${props.media_file.media_id}`
+        : `/public/media/${props.project_id}/media-url/${props.media_file.media_id}`
+      
+      const params = isVideoFile.value 
+        ? { download: 'true' }
+        : { fileSize: downloadSize, download: 'true' }
+      
+      const response = await apiService.get(endpoint, { params })
       const data = await response.json()
       
       if (data.success && data.url) {
@@ -577,15 +661,15 @@ async function confirmDownload(fileSize, fileName) {
           downloadFileName = data.filename
         }
       } else {
-        throw new Error('Failed to get video download URL')
+        throw new Error(`Failed to get ${isVideoFile.value ? 'video' : 'media'} download URL`)
       }
     } catch (error) {
-      console.error('Error fetching video download URL:', error)
-      alert('Failed to download video. Please try again.')
+      console.error(`Error fetching ${isVideoFile.value ? 'video' : 'media'} download URL:`, error)
+      alert(`Failed to download ${isVideoFile.value ? 'video' : 'file'}. Please try again.`)
       return
     }
   } else {
-    // For non-video files, use regular URL
+    // For regular image files, use regular URL (they're usually small)
     downloadUrl = buildMediaUrl(
       props.project_id,
       props.media_file?.media_id,
@@ -698,13 +782,27 @@ function getHitsMessage(mediaObj) {
                 @close="onModalClose"
               >
                 <!-- Three.js 3D Viewer for all 3D files -->
-                <ThreeJSViewer
-                  v-if="is3DFile"
-                  :modelUrl="modelUrl"
-                  :fileExtension="fileExtension || 'stl'"
-                  @load="onModelLoad"
-                  @error="onModelError"
-                />
+                <div v-if="is3DFile" class="model-viewer-container">
+                  <!-- Loading state -->
+                  <div v-if="loadingModelUrl" class="model-loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading 3D model...</p>
+                  </div>
+                  <!-- Error state -->
+                  <div v-else-if="modelUrlError" class="model-error">
+                    <p>{{ modelUrlError }}</p>
+                    <button @click="fetchModelUrl" class="btn btn-primary btn-sm">Retry</button>
+                  </div>
+                  <!-- 3D Viewer -->
+                  <ThreeJSViewer
+                    v-else-if="modelUrl && showZoomModal"
+                    :key="`model-viewer-${media_file?.media_id}-${modelUrl}`"
+                    :modelUrl="modelUrl"
+                    :fileExtension="fileExtension || 'stl'"
+                    @load="onModelLoad"
+                    @error="onModelError"
+                  />
+                </div>
                 <!-- Video Player for video files -->
                 <div v-else-if="isVideoFile" class="video-player-container">
                   <!-- Loading state -->
@@ -1089,6 +1187,46 @@ p {
 }
 
 .video-error p {
+  margin-bottom: 1rem;
+}
+
+/* 3D Model loading and error states */
+.model-viewer-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  padding: 1rem;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+}
+
+.model-loading,
+.model-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: #333;
+  text-align: center;
+}
+
+.model-loading .loading-spinner {
+  border: 4px solid #e3e3e3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.model-error {
+  color: #dc3545;
+}
+
+.model-error p {
   margin-bottom: 1rem;
 }
 
