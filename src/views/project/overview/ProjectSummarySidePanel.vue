@@ -22,6 +22,10 @@ type Member = {
   lname: string
 }
 
+type Institution = {
+  name: string
+}
+
 type OverviewStats = {
   created_on: number
   published_on: number
@@ -30,7 +34,7 @@ type OverviewStats = {
   project_views: Views
   project_downloads: Downloads
   journal_url: string
-  institutions: string[]
+  institutions: (string | Institution)[]
   members?: Member[]
 }
 
@@ -46,13 +50,23 @@ const projectStore = usePublicProjectDetailsStore()
 const viewTooltipText = getViewStatsTooltipText()
 
 const isLoggedIn = computed(() => !!authStore.user?.userId)
+const isCurator = computed(() => authStore.isUserCurator)
+const isAdmin = computed(() => authStore.isUserAdministrator)
 
 const isMember = computed(() => {
   if (!authStore.user?.userId || !props.overview?.members) return false
   return props.overview.members.some((member: Member) => member.user_id === authStore.user.userId)
 })
 
-const canRequestDuplication = computed(() => isLoggedIn.value && isMember.value)
+const canEditProjectInfo = computed(() => isCurator.value || isAdmin.value)
+const canEditInstitutions = computed(() => isCurator.value || isAdmin.value)
+
+const canRequestDuplication = computed(() => {
+  // Curators and admins can always request duplication
+  if (isCurator.value || isAdmin.value) return true
+  // Members can also request duplication
+  return isLoggedIn.value && isMember.value
+})
 
 // Prefer published stats JSON only; show 'unavailable' if missing
 const projectViewsDisplay = computed(() => {
@@ -109,6 +123,20 @@ const downloadsXDisplay = computed(() => {
             <Tooltip :content="viewTooltipText"></Tooltip>:
             {{ downloadsXDisplay }}
           </li>
+          <li v-if="canEditProjectInfo" class="list-group-item">
+            <span class="fw-bold">
+              <RouterLink :to="`/project/${projectId}/edit`">
+                Edit project info
+              </RouterLink>
+            </span>
+          </li>
+          <li v-if="canEditInstitutions" class="list-group-item">
+            <span class="fw-bold">
+              <RouterLink :to="`/project/${projectId}/institutions`">
+                Edit project institutions
+              </RouterLink>
+            </span>
+          </li>
           <li v-if="canRequestDuplication" class="list-group-item">
             <span class="fw-bold">
               <RouterLink :to="`/project/${projectId}/duplication/request`">
@@ -139,7 +167,9 @@ const downloadsXDisplay = computed(() => {
             :key="idx"
             v-for="(institution, idx) in overview.institutions"
           >
-            {{ institution.name }}
+            {{
+              typeof institution === 'string' ? institution : institution.name
+            }}
           </li>
         </ul>
       </div>

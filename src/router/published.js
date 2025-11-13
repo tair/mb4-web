@@ -183,6 +183,39 @@ const PUBLISHED_PROJECT_DETAIL_VIEWS = [
     },
   },
   {
+    path: 'edit',
+    name: 'ProjectEditView',
+    meta: {
+      itemName: 'edit',
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "published" */ '@/views/project/published/EditProjectView.vue'
+      ),
+  },
+  {
+    path: 'institutions',
+    name: 'ProjectEditInstitutionsView',
+    meta: {
+      itemName: 'institutions',
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "published" */ '@/views/project/published/EditInstitutionsView.vue'
+      ),
+  },
+  {
+    path: 'institutions/create',
+    name: 'ProjectCreateInstitutionView',
+    meta: {
+      itemName: 'institutions',
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "published" */ '@/views/project/institutions/CreateView.vue'
+      ),
+  },
+  {
     path: 'duplication/request',
     name: 'ProjectDuplicationRequestView',
     meta: {
