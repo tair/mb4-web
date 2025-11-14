@@ -774,7 +774,9 @@ const selectedExemplarMedia = computed(() => {
 })
 
 onMounted(async () => {
-  await Promise.all([loadJournals(), loadProjectData(), loadProjectUsers(), fetchCuratedMedia(), fetchMediaViews()])
+  // Load journals first, then load project data (which needs journals list to check if journal exists)
+  await loadJournals()
+  await Promise.all([loadProjectData(), loadProjectUsers(), fetchCuratedMedia(), fetchMediaViews()])
   // Add click outside event listener
   document.addEventListener('click', handleJournalClickOutside)
 })

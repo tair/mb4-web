@@ -486,7 +486,7 @@ async function confirmDownload(fileSize, fileName) {
   const downloadSize = (is3DFile.value || isVideoFile.value || isOriginalTiffFile.value) ? 'original' : fileSize
   
   let downloadUrl
-  let downloadFileName = fileName
+  let downloadFileName
   
   // For videos and 3D files, use pre-signed URL to avoid proxy timeout for large files
   if (isVideoFile.value || is3DFile.value) {
@@ -505,10 +505,8 @@ async function confirmDownload(fileSize, fileName) {
       
       if (data.success && data.url) {
         downloadUrl = data.url
-        // Use the filename from the response if available
-        if (data.filename && !downloadFileName) {
-          downloadFileName = data.filename
-        }
+        // Use the filename from the response (backend now returns M{mediaId}.{extension})
+        downloadFileName = data.filename || generateDownloadFilename(props.media_file.media_id, getExtensionFromUrl(downloadUrl))
       } else {
         throw new Error(`Failed to get ${isVideoFile.value ? 'video' : 'media'} download URL`)
       }
@@ -524,10 +522,9 @@ async function confirmDownload(fileSize, fileName) {
       props.media_file?.media_id,
       downloadSize
     )
-  }
-  
-  if (!downloadFileName) {
-    downloadFileName = getLastElementFromUrl(downloadUrl)
+    // Extract extension from media file data or URL, default to jpg
+    const extension = getMediaFileExtension() || getExtensionFromUrl(downloadUrl) || fileExtension.value || 'jpg'
+    downloadFileName = generateDownloadFilename(props.media_file.media_id, extension)
   }
   
   const link = document.createElement('a')
@@ -545,9 +542,61 @@ async function confirmDownload(fileSize, fileName) {
   })
 }
 
-function getLastElementFromUrl(url) {
-  const parts = url.split('/')
-  return parts[parts.length - 1]
+/**
+ * Generate download filename in the format M{mediaId}.{extension}
+ * @param {number|string} mediaId - The media ID
+ * @param {string} extension - File extension without dot (e.g., "jpg", "mp4", "tif")
+ * @returns {string} Download filename in format M{mediaId}.{extension}
+ */
+function generateDownloadFilename(mediaId, extension) {
+  const ext = extension || 'jpg'
+  return `M${mediaId}.${ext}`
+}
+
+/**
+ * Extract file extension from media file data
+ * @returns {string|null} File extension without dot, or null if not found
+ */
+function getMediaFileExtension() {
+  const mediaData = props.media_file?.media
+  
+  // Try to get extension from original media data
+  if (mediaData?.original) {
+    const original = mediaData.original
+    // Check S3 key
+    if (original.s3_key || original.S3_KEY) {
+      const s3Key = original.s3_key || original.S3_KEY
+      const match = s3Key.match(/\.([a-z0-9]+)$/i)
+      if (match) return match[1].toLowerCase()
+    }
+    // Check filename
+    if (original.FILENAME) {
+      const match = original.FILENAME.match(/\.([a-z0-9]+)$/i)
+      if (match) return match[1].toLowerCase()
+    }
+  }
+  
+  // Try ORIGINAL_FILENAME
+  if (mediaData?.ORIGINAL_FILENAME) {
+    const match = mediaData.ORIGINAL_FILENAME.match(/\.([a-z0-9]+)$/i)
+    if (match) return match[1].toLowerCase()
+  }
+  
+  return null
+}
+
+/**
+ * Extract file extension from URL
+ * @param {string} url - The URL to extract extension from
+ * @returns {string|null} File extension without dot, or null if not found
+ */
+function getExtensionFromUrl(url) {
+  if (!url) return null
+  // Remove query parameters first
+  const urlWithoutQuery = url.split('?')[0]
+  // Extract extension from the last part of the URL
+  const match = urlWithoutQuery.match(/\.([a-z0-9]+)$/i)
+  return match ? match[1].toLowerCase() : null
 }
 
 function getAncestorMessage(mediaObj) {

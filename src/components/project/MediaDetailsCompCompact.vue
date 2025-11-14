@@ -12,6 +12,7 @@ import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 import { buildMediaUrl } from '@/utils/fileUtils.js'
 import annotationService from '@/services/annotationService.js'
 import { apiService } from '@/services/apiService.js'
+import { getCopyrightImagePath, getCopyrightTitle } from '@/utils/copyright.ts'
 
 // Lazy load the annotation viewer for the zoom modal only
 const AnnotationViewer = defineAsyncComponent({
@@ -389,9 +390,112 @@ const isVideoFile = computed(() => {
 const currentExtensionIndex = ref(0)
 const threeDExtensionFallbacks = ['stl', 'ply', 'obj'] // Try STL first, then PLY, then OBJ
 
+// Get the original filename from various possible locations
+const originalFilename = computed(() => {
+  const mediaData = props.media_file?.media || props.media_file
+  
+  // Try multiple possible locations for the filename
+  const filenameChecks = [
+    mediaData?.ORIGINAL_FILENAME,
+    mediaData?.original_filename,
+    props.media_file?.original_filename,
+    mediaData?.filename,
+    mediaData?.name
+  ]
+  
+  for (let i = 0; i < filenameChecks.length; i++) {
+    const filename = filenameChecks[i]
+    if (filename) {
+      return filename
+    }
+  }
+  
+  return null
+})
+
+// Build license information from raw values using the copyright utility
+const licenseInfo = computed(() => {
+  // Check both nested (media.media) and top-level locations for copyright fields
+  // This handles different data structures from different API endpoints
+  // Convert to numbers for proper comparison (values might come as strings)
+  const isCopyrightedRaw = props.media_file?.media?.is_copyrighted ?? props.media_file?.is_copyrighted
+  const copyrightPermissionRaw = props.media_file?.media?.copyright_permission ?? props.media_file?.copyright_permission
+  const copyrightLicenseRaw = props.media_file?.media?.copyright_license ?? props.media_file?.copyright_license
+  
+  // If we have raw values, always rebuild from them to ensure freshness
+  // Only use pre-built license if raw values are not available
+  if (isCopyrightedRaw === null || isCopyrightedRaw === undefined) {
+    // Fallback to pre-built license object if available
+    if (props.media_file?.license) {
+      return props.media_file.license
+    }
+    return null
+  }
+  
+  // Convert to numbers/int for proper comparison
+  // Note: isCopyrighted can be 0 (not copyrighted), 1 (copyrighted), or null (not set)
+  const isCopyrighted = isCopyrightedRaw == null ? null : (isCopyrightedRaw === '' ? null : Number(isCopyrightedRaw))
+  const copyrightPermission = copyrightPermissionRaw == null ? null : (copyrightPermissionRaw === '' ? null : Number(copyrightPermissionRaw))
+  const copyrightLicense = copyrightLicenseRaw == null ? null : (copyrightLicenseRaw === '' ? null : Number(copyrightLicenseRaw))
+  
+  // Replicate backend logic from MediaFile.getLicenseImage
+  // This matches the logic in mb4-service-1/src/models/media-file.js
+  const result = {
+    isOneTimeUse: false,
+    image: null,
+    description: getCopyrightTitle(copyrightPermission, copyrightLicense)
+  }
+  
+  const licenseMap = {
+    1: 'CC-0.png',
+    2: 'CC-BY.png',
+    3: 'CC-BY-NC.png',
+    4: 'CC-BY-SA.png',
+    5: 'CC-BY-NC-SA.png',
+    6: 'CC-BY-ND.png',
+    7: 'CC-BY-NC-ND.png',
+  }
+  
+  // Explicitly check for 1 (copyrighted) vs 0 (not copyrighted)
+  if (isCopyrighted === 1) {
+    if (copyrightPermission == 4) {
+      result.image = 'PDM.png'
+    } else if (copyrightLicense > 0 && copyrightLicense < 8) {
+      result.image = licenseMap[copyrightLicense]
+    } else if (copyrightLicense == 8) {
+      result.isOneTimeUse = true
+    }
+  } else if (isCopyrighted === 0) {
+    // Media is NOT copyrighted - always show CC-0
+    result.image = 'CC-0.png'
+  }
+  
+  return result
+})
+
+// Get copyright holder from various possible locations
+const copyrightHolder = computed(() => {
+  // First check if it's already provided
+  if (props.media_file?.copyright_holder) {
+    return props.media_file.copyright_holder
+  }
+  
+  // Check copyright_info field
+  if (props.media_file?.copyright_info) {
+    return props.media_file.copyright_info
+  }
+  
+  // Fallback: build from user name if media is copyrighted
+  if (props.media_file?.is_copyrighted && props.media_file?.user_name) {
+    return props.media_file.user_name
+  }
+  
+  return null
+})
+
 // Get the file extension - NEVER empty for 3D files
 const fileExtension = computed(() => {
-  const filename = props.media_file?.media?.ORIGINAL_FILENAME || ''
+  const filename = originalFilename.value || ''
   const ext = filename.split('.').pop()?.toLowerCase()
   
   // If we have a valid 3D extension from filename, use it
@@ -637,7 +741,7 @@ async function confirmDownload(fileSize, fileName) {
   const downloadSize = (is3DFile.value || isVideoFile.value || isOriginalTiffFile.value) ? 'original' : fileSize
   
   let downloadUrl
-  let downloadFileName = fileName
+  let downloadFileName
   
   // For videos and 3D files, use pre-signed URL to avoid proxy timeout for large files
   if (isVideoFile.value || is3DFile.value) {
@@ -656,10 +760,8 @@ async function confirmDownload(fileSize, fileName) {
       
       if (data.success && data.url) {
         downloadUrl = data.url
-        // Use the filename from the response if available
-        if (data.filename && !downloadFileName) {
-          downloadFileName = data.filename
-        }
+        // Use the filename from the response (backend now returns M{mediaId}.{extension})
+        downloadFileName = data.filename || generateDownloadFilename(props.media_file.media_id, getExtensionFromUrl(downloadUrl))
       } else {
         throw new Error(`Failed to get ${isVideoFile.value ? 'video' : 'media'} download URL`)
       }
@@ -675,10 +777,9 @@ async function confirmDownload(fileSize, fileName) {
       props.media_file?.media_id,
       downloadSize
     )
-  }
-  
-  if (!downloadFileName) {
-    downloadFileName = getLastElementFromUrl(downloadUrl)
+    // Extract extension from media file data or URL, default to jpg
+    const extension = getMediaFileExtension() || getExtensionFromUrl(downloadUrl) || 'jpg'
+    downloadFileName = generateDownloadFilename(props.media_file.media_id, extension)
   }
   
   const link = document.createElement('a')
@@ -696,9 +797,67 @@ async function confirmDownload(fileSize, fileName) {
   })
 }
 
-function getLastElementFromUrl(url) {
-  const parts = url.split('/')
-  return parts[parts.length - 1]
+/**
+ * Generate download filename in the format M{mediaId}.{extension}
+ * @param {number|string} mediaId - The media ID
+ * @param {string} extension - File extension without dot (e.g., "jpg", "mp4", "tif")
+ * @returns {string} Download filename in format M{mediaId}.{extension}
+ */
+function generateDownloadFilename(mediaId, extension) {
+  const ext = extension || 'jpg'
+  return `M${mediaId}.${ext}`
+}
+
+/**
+ * Extract file extension from media file data
+ * @returns {string|null} File extension without dot, or null if not found
+ */
+function getMediaFileExtension() {
+  const mediaData = props.media_file?.media || props.media_file
+  
+  // Try to get extension from original media data
+  if (mediaData?.original) {
+    const original = mediaData.original
+    // Check S3 key
+    if (original.s3_key || original.S3_KEY) {
+      const s3Key = original.s3_key || original.S3_KEY
+      const match = s3Key.match(/\.([a-z0-9]+)$/i)
+      if (match) return match[1].toLowerCase()
+    }
+    // Check filename
+    if (original.FILENAME) {
+      const match = original.FILENAME.match(/\.([a-z0-9]+)$/i)
+      if (match) return match[1].toLowerCase()
+    }
+  }
+  
+  // Try ORIGINAL_FILENAME
+  if (mediaData?.ORIGINAL_FILENAME) {
+    const match = mediaData.ORIGINAL_FILENAME.match(/\.([a-z0-9]+)$/i)
+    if (match) return match[1].toLowerCase()
+  }
+  
+  // Try original_filename
+  if (props.media_file?.original_filename) {
+    const match = props.media_file.original_filename.match(/\.([a-z0-9]+)$/i)
+    if (match) return match[1].toLowerCase()
+  }
+  
+  return null
+}
+
+/**
+ * Extract file extension from URL
+ * @param {string} url - The URL to extract extension from
+ * @returns {string|null} File extension without dot, or null if not found
+ */
+function getExtensionFromUrl(url) {
+  if (!url) return null
+  // Remove query parameters first
+  const urlWithoutQuery = url.split('?')[0]
+  // Extract extension from the last part of the URL
+  const match = urlWithoutQuery.match(/\.([a-z0-9]+)$/i)
+  return match ? match[1].toLowerCase() : null
 }
 
 function getAncestorMessage(mediaObj) {
@@ -876,7 +1035,7 @@ function getHitsMessage(mediaObj) {
                     @click="
                       confirmDownload(
                         'original',
-                        media_file.media['ORIGINAL_FILENAME']
+                        originalFilename
                       )
                     "
                   >
@@ -886,18 +1045,23 @@ function getHitsMessage(mediaObj) {
               </CustomModal>
             </div>
           </div>
-          <div v-if="media_file.license && media_file.license.image">
-            <img :src="`/images/${media_file.license.image}`" class="cc-icon compact-cc" />
+          <div v-if="licenseInfo && licenseInfo.image">
+            <img :src="`/images/${licenseInfo.image}`" class="cc-icon compact-cc" />
           </div>
-          <div v-if="media_file.license && media_file.license.isOneTimeUse">
+          <div v-if="licenseInfo && licenseInfo.isOneTimeUse">
             <p class="compact-text">
               Copyright license for future use: Media released for onetime use,
               no reuse without permission
             </p>
           </div>
+          <div v-if="copyrightHolder">
+            <p class="compact-text">
+              <strong>Copyright holder:</strong> {{ copyrightHolder }}
+            </p>
+          </div>
           <div>
-            <p class="card-title compact-title" v-if="media_file.media['ORIGINAL_FILENAME']">
-              Original filename: {{ media_file.media['ORIGINAL_FILENAME'] }}
+            <p class="card-title compact-title" v-if="originalFilename">
+              Original filename: {{ originalFilename }}
             </p>
           </div>
         </div>
@@ -933,9 +1097,9 @@ function getHitsMessage(mediaObj) {
           <strong>Media loaded by</strong>
           <p>{{ media_file.user_name }}</p>
         </div>
-        <div class="info-item" v-if="media_file.copyright_holder">
+        <div class="info-item" v-if="copyrightHolder">
           <strong>Copyright holder</strong>
-          <p>{{ media_file.copyright_holder }}</p>
+          <p>{{ copyrightHolder }}</p>
         </div>
         <div class="info-item" v-if="media_file.copyright_permission">
           <strong>Copyright information</strong>
