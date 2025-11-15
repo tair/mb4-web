@@ -299,8 +299,8 @@ const convertedMediaList = computed(() => {
     media: {
       ...media.media, // Keep all original media data including USE_ICON
       thumbnail: {
-        WIDTH: media.media?.thumbnail?.WIDTH || 120,
-        HEIGHT: media.media?.thumbnail?.HEIGHT || 120,
+        WIDTH: 120,
+        HEIGHT: 120,
         ...media.media?.thumbnail // Preserve all original thumbnail properties including USE_ICON
       }
     },
@@ -574,14 +574,49 @@ function downloadSelected() {
       // Create a temporary link element to trigger download
       const link = document.createElement('a')
       link.href = downloadUrl
-      // Use a more descriptive filename with media ID
-      link.download = `M${mediaFile.media_id}_${mediaFile.view_name || 'media'}_original`
+      // Extract extension from media file data or default to jpg
+      // The backend will set Content-Disposition header, but we set download attribute for consistency
+      const extension = getMediaExtension(mediaFile) || 'jpg'
+      link.download = `M${mediaFile.media_id}.${extension}`
       link.style.display = 'none'
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
     }, index * 100) // 100ms delay between each download
   })
+}
+
+/**
+ * Extract file extension from media file object
+ * @param {Object} mediaFile - Media file object
+ * @returns {string|null} File extension without dot, or null if not found
+ */
+function getMediaExtension(mediaFile) {
+  if (!mediaFile) return null
+  
+  // Try to get extension from original filename
+  if (mediaFile.original_filename) {
+    const match = mediaFile.original_filename.match(/\.([a-z0-9]+)$/i)
+    if (match) return match[1].toLowerCase()
+  }
+  
+  // Try to get extension from media object
+  if (mediaFile.media && mediaFile.media.original) {
+    const original = mediaFile.media.original
+    // Check S3 key
+    if (original.s3_key || original.S3_KEY) {
+      const s3Key = original.s3_key || original.S3_KEY
+      const match = s3Key.match(/\.([a-z0-9]+)$/i)
+      if (match) return match[1].toLowerCase()
+    }
+    // Check filename
+    if (original.FILENAME) {
+      const match = original.FILENAME.match(/\.([a-z0-9]+)$/i)
+      if (match) return match[1].toLowerCase()
+    }
+  }
+  
+  return null
 }
 
 // Folio tools functions

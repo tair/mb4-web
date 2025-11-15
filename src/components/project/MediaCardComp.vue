@@ -77,8 +77,8 @@ function hideEnlargedImage(imgId) {
                 )
           "
           :style="{
-            width: (media_file.media.thumbnail?.WIDTH || 120) + 'px',
-            height: (media_file.media.thumbnail?.HEIGHT || 120) + 'px',
+            width: 120 + 'px',
+            height: 120 + 'px',
             backgroundSize: '20px',
             backgroundRepeat: 'no-repeat',
             backgroundImage: 'url(' + '/images/loader.png' + ')',
