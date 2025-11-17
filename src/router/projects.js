@@ -1021,6 +1021,24 @@ export const MY_PROJECT_VIEWS = [
     beforeEnter: requireNonObserverMember,
   },
   {
+    path: 'admin/assign',
+    name: 'MyProjectAdminAssignView',
+    meta: {
+      itemName: 'admin',
+      breadcrumbs: [
+        {
+          label: 'assign administrator',
+          to: 'MyProjectAdminAssignView',
+        },
+      ],
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "unpublished" */ '@/views/project/published/AssignView.vue'
+      ),
+    beforeEnter: requireProjectOwnerOrCurator,
+  },
+  {
     path: 'publish/partition',
     name: 'MyProjectPublishPartitionView',
     meta: {

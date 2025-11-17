@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import Tooltip from '@/components/main/Tooltip.vue'
+import ConfirmModal from '@/components/media/ConfirmModal.vue'
 import { toDMYDate } from '@/utils/date'
 import { getViewStatsTooltipText } from '@/utils/util.js'
 import { useAuthStore } from '@/stores/AuthStore'
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
+import { apiService } from '@/services/apiService.js'
 
 type Views = {
   total: number
@@ -43,11 +45,16 @@ const props = defineProps<{
 }>()
 
 const route = useRoute()
+const router = useRouter()
 const projectId = route.params.id
 const authStore = useAuthStore()
 const projectStore = usePublicProjectDetailsStore()
 
 const viewTooltipText = getViewStatsTooltipText()
+
+// Unpublish state
+const showUnpublishModal = ref(false)
+const isUnpublishing = ref(false)
 
 const isLoggedIn = computed(() => !!authStore.user?.userId)
 const isCurator = computed(() => authStore.isUserCurator)
@@ -83,6 +90,42 @@ const downloadsXDisplay = computed(() => {
   const val = projectStore?.stats?.project_downloads?.X
   return typeof val === 'number' ? val : 'N/A'
 })
+
+// Check if project is published
+const isProjectPublished = computed(() => {
+  return props.overview?.published_on && props.overview.published_on > 0
+})
+
+// Unpublish functions
+const handleUnpublishClick = () => {
+  showUnpublishModal.value = true
+}
+
+const cancelUnpublish = () => {
+  showUnpublishModal.value = false
+}
+
+const confirmUnpublish = async () => {
+  isUnpublishing.value = true
+  try {
+    const response = await apiService.post(
+      `/projects/${projectId}/publishing/unpublish`
+    )
+    if (response.ok) {
+      // Redirect to the unpublished project overview page
+      router.push(`/myprojects/${projectId}/overview`)
+    } else {
+      const error = await response.json()
+      alert(`Failed to unpublish project: ${error.message || 'Unknown error'}`)
+    }
+  } catch (error) {
+    console.error('Error unpublishing project:', error)
+    alert('An error occurred while unpublishing the project.')
+  } finally {
+    isUnpublishing.value = false
+    showUnpublishModal.value = false
+  }
+}
 </script>
 
 <template>
@@ -147,10 +190,42 @@ const downloadsXDisplay = computed(() => {
               ></Tooltip>
             </span>
           </li>
+          <li v-if="canEditProjectInfo && isProjectPublished" class="list-group-item">
+            <span class="fw-bold">
+              <a href="javascript:void(0)" @click="handleUnpublishClick" class="text-danger">
+                Unpublish Project
+              </a>
+              <Tooltip
+                content="Only curators and administrators can unpublish a project. This action will make the project private and remove it from public view. Use this with caution."
+              ></Tooltip>
+            </span>
+          </li>
+          <li v-if="canEditProjectInfo" class="list-group-item">
+            <span class="fw-bold">
+              <RouterLink :to="`/project/${projectId}/admin/assign`">
+                Assign Project Administrator
+              </RouterLink>
+              <Tooltip
+                content="Select a new project administrator from the existing project members. The new administrator will have full control over the project."
+              ></Tooltip>
+            </span>
+          </li>
         </ul>
       </div>
     </div>
   </div>
+
+  <!-- Unpublish Confirmation Modal -->
+  <ConfirmModal
+    v-if="showUnpublishModal"
+    title="Unpublish Project"
+    message="Are you sure you want to unpublish this project? This will make the project private and remove it from public view. This action should be done with caution."
+    confirmText="Unpublish"
+    cancelText="Cancel"
+    :loading="isUnpublishing"
+    @confirm="confirmUnpublish"
+    @cancel="cancelUnpublish"
+  />
 
   <div v-if="overview.nsf_funded" class="text-center mb-2">
     <span class="sm-font">This research is supported by</span>

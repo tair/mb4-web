@@ -71,6 +71,168 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 // Dynamic loader imports for better performance
 const loaderCache = new Map()
 
+// Maximum vertices per draw call to avoid WebGL limits
+// Using 15M for better compatibility across different GPUs/browsers
+const MAX_VERTICES_PER_BATCH = 15000000 // 15M vertices per batch
+
+/**
+ * Splits a geometry into multiple smaller geometries if it exceeds the vertex limit.
+ * Handles both indexed and non-indexed geometries correctly.
+ * Returns an array of geometries, each with at most MAX_VERTICES_PER_BATCH vertices.
+ */
+function splitGeometryIntoBatches(geometry) {
+  const positionAttribute = geometry.attributes.position
+  if (!positionAttribute) {
+    console.error('Geometry has no position attribute')
+    return [geometry]
+  }
+  
+  const totalVertices = positionAttribute.count
+  
+  // If within limit, return as single-item array
+  if (totalVertices <= MAX_VERTICES_PER_BATCH) {
+    return [geometry]
+  }
+  
+  console.log(`Splitting geometry with ${totalVertices.toLocaleString()} vertices into batches of ${MAX_VERTICES_PER_BATCH.toLocaleString()}`)
+  
+  // For indexed geometries, convert to non-indexed first to avoid breaking triangles
+  // This is safer than trying to split indexed geometry across batch boundaries
+  if (geometry.index) {
+    console.log('Converting indexed geometry to non-indexed for safe batching')
+    geometry = geometry.toNonIndexed()
+  }
+  
+  const batches = []
+  const numBatches = Math.ceil(totalVertices / MAX_VERTICES_PER_BATCH)
+  
+  // Get all attributes from the geometry
+  const attributes = geometry.attributes
+  
+  for (let batchIndex = 0; batchIndex < numBatches; batchIndex++) {
+    const startVertex = batchIndex * MAX_VERTICES_PER_BATCH
+    const endVertex = Math.min(startVertex + MAX_VERTICES_PER_BATCH, totalVertices)
+    const batchVertexCount = endVertex - startVertex
+    
+    // Create new geometry for this batch
+    const batchGeometry = new THREE.BufferGeometry()
+    
+    // Copy position attribute
+    const srcPositions = attributes.position
+    const positions = new Float32Array(batchVertexCount * 3)
+    for (let i = 0; i < batchVertexCount; i++) {
+      const srcIndex = startVertex + i
+      positions[i * 3] = srcPositions.getX(srcIndex)
+      positions[i * 3 + 1] = srcPositions.getY(srcIndex)
+      positions[i * 3 + 2] = srcPositions.getZ(srcIndex)
+    }
+    batchGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    
+    // Copy normal attribute if it exists
+    if (attributes.normal) {
+      const srcNormals = attributes.normal
+      const normals = new Float32Array(batchVertexCount * 3)
+      for (let i = 0; i < batchVertexCount; i++) {
+        const srcIndex = startVertex + i
+        normals[i * 3] = srcNormals.getX(srcIndex)
+        normals[i * 3 + 1] = srcNormals.getY(srcIndex)
+        normals[i * 3 + 2] = srcNormals.getZ(srcIndex)
+      }
+      batchGeometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3))
+    }
+    
+    // Copy color attribute if it exists
+    if (attributes.color) {
+      const srcColors = attributes.color
+      const colors = new Float32Array(batchVertexCount * 3)
+      for (let i = 0; i < batchVertexCount; i++) {
+        const srcIndex = startVertex + i
+        colors[i * 3] = srcColors.getX(srcIndex)
+        colors[i * 3 + 1] = srcColors.getY(srcIndex)
+        colors[i * 3 + 2] = srcColors.getZ(srcIndex)
+      }
+      batchGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+    }
+    
+    // Copy UV attribute if it exists
+    if (attributes.uv) {
+      const srcUVs = attributes.uv
+      const uvs = new Float32Array(batchVertexCount * 2)
+      for (let i = 0; i < batchVertexCount; i++) {
+        const srcIndex = startVertex + i
+        uvs[i * 2] = srcUVs.getX(srcIndex)
+        uvs[i * 2 + 1] = srcUVs.getY(srcIndex)
+      }
+      batchGeometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2))
+    }
+    
+    batches.push(batchGeometry)
+    console.log(`Batch ${batchIndex + 1}/${numBatches}: ${batchVertexCount.toLocaleString()} vertices`)
+  }
+  
+  // Dispose original geometry to free memory
+  geometry.dispose()
+  
+  return batches
+}
+
+/**
+ * Creates meshes from a geometry, splitting into batches if needed.
+ * Returns either a single mesh or a THREE.Group containing multiple meshes.
+ * @param {THREE.BufferGeometry} geometry - The geometry to create meshes from
+ * @param {THREE.Material} material - The material to use (will be shared across all batches)
+ * @param {Object} transform - Optional transform to apply (position, rotation, scale)
+ */
+function createMeshFromGeometry(geometry, material, transform = null) {
+  try {
+    const geometries = splitGeometryIntoBatches(geometry)
+    
+    if (geometries.length === 1) {
+      // Single mesh
+      const mesh = new THREE.Mesh(geometries[0], material)
+      mesh.castShadow = true
+      mesh.receiveShadow = true
+      
+      // Apply transform if provided
+      if (transform) {
+        if (transform.position) mesh.position.copy(transform.position)
+        if (transform.rotation) mesh.rotation.copy(transform.rotation)
+        if (transform.scale) mesh.scale.copy(transform.scale)
+      }
+      
+      return mesh
+    } else {
+      // Multiple meshes in a group - share the same material for efficiency
+      const group = new THREE.Group()
+      
+      for (let i = 0; i < geometries.length; i++) {
+        const mesh = new THREE.Mesh(geometries[i], material)
+        mesh.castShadow = true
+        mesh.receiveShadow = true
+        mesh.name = `batch_${i}`
+        group.add(mesh)
+      }
+      
+      // Apply transform to the group if provided
+      if (transform) {
+        if (transform.position) group.position.copy(transform.position)
+        if (transform.rotation) group.rotation.copy(transform.rotation)
+        if (transform.scale) group.scale.copy(transform.scale)
+      }
+      
+      console.log(`Created ${geometries.length} batched meshes in a group (sharing material)`)
+      return group
+    }
+  } catch (error) {
+    console.error('Error creating batched mesh:', error)
+    // Fallback: create a single mesh without batching
+    const mesh = new THREE.Mesh(geometry, material)
+    mesh.castShadow = true
+    mesh.receiveShadow = true
+    return mesh
+  }
+}
+
 async function getLoader(type) {
   if (loaderCache.has(type)) {
     return loaderCache.get(type)
@@ -394,11 +556,8 @@ async function loadPLY(signal) {
     side: THREE.DoubleSide
   })
   
-  const mesh = new THREE.Mesh(geometry, material)
-  mesh.castShadow = true
-  mesh.receiveShadow = true
-  
-  return mesh
+  // Use batching to handle large geometries
+  return createMeshFromGeometry(geometry, material)
 }
 
 async function loadSTL(signal) {
@@ -424,11 +583,8 @@ async function loadSTL(signal) {
     side: THREE.DoubleSide
   })
   
-  const mesh = new THREE.Mesh(geometry, material)
-  mesh.castShadow = true
-  mesh.receiveShadow = true
-  
-  return mesh
+  // Use batching to handle large geometries
+  return createMeshFromGeometry(geometry, material)
 }
 
 async function loadOBJ(signal) {
@@ -443,7 +599,16 @@ async function loadOBJ(signal) {
   const text = await response.text()
   const object = loader.parse(text)
   
-  // Apply cream material to all meshes in the object
+  // Create a new group to hold batched meshes
+  const batchedGroup = new THREE.Group()
+  
+  // Create shared material once for all meshes (more efficient)
+  const sharedMaterial = new THREE.MeshLambertMaterial({ 
+    color: 0xFFF8DC, // Cream color
+    side: THREE.DoubleSide
+  })
+  
+  // Apply cream material and batching to all meshes in the object
   object.traverse((child) => {
     if (child.isMesh) {
       // Ensure geometry has proper normals - OBJ files can also lack them
@@ -451,18 +616,19 @@ async function loadOBJ(signal) {
         child.geometry.computeVertexNormals()
       }
       
-      // Always use cream color for all OBJ models
-      child.material = new THREE.MeshLambertMaterial({ 
-        color: 0xFFF8DC, // Cream color
-        side: THREE.DoubleSide
-      })
+      // Create batched mesh(es) from this geometry with transform
+      const transform = {
+        position: child.position,
+        rotation: child.rotation,
+        scale: child.scale
+      }
       
-      child.castShadow = true
-      child.receiveShadow = true
+      const batchedMesh = createMeshFromGeometry(child.geometry, sharedMaterial, transform)
+      batchedGroup.add(batchedMesh)
     }
   })
   
-  return object
+  return batchedGroup.children.length > 0 ? batchedGroup : object
 }
 
 async function loadGLTF(signal) {
@@ -484,6 +650,15 @@ async function loadGLTF(signal) {
       (gltf) => {
         const model = gltf.scene
         
+        // Create a new group to hold batched meshes
+        const batchedGroup = new THREE.Group()
+        
+        // Create shared material once for all meshes (more efficient)
+        const sharedMaterial = new THREE.MeshLambertMaterial({ 
+          color: 0xFFF8DC, // Cream color
+          side: THREE.DoubleSide
+        })
+        
         model.traverse((child) => {
           if (child.isMesh) {
             // Ensure geometry has proper normals
@@ -491,18 +666,19 @@ async function loadGLTF(signal) {
               child.geometry.computeVertexNormals()
             }
             
-            // Always use cream color for all GLTF models
-            child.material = new THREE.MeshLambertMaterial({ 
-              color: 0xFFF8DC, // Cream color
-              side: THREE.DoubleSide
-            })
+            // Create batched mesh(es) from this geometry with transform
+            const transform = {
+              position: child.position,
+              rotation: child.rotation,
+              scale: child.scale
+            }
             
-            child.castShadow = true
-            child.receiveShadow = true
+            const batchedMesh = createMeshFromGeometry(child.geometry, sharedMaterial, transform)
+            batchedGroup.add(batchedMesh)
           }
         })
         
-        resolve(model)
+        resolve(batchedGroup.children.length > 0 ? batchedGroup : model)
       },
       (error) => {
         reject(new Error(`Failed to parse GLTF file: ${error.message || error}`))
@@ -523,6 +699,15 @@ async function loadFBX(signal) {
   const arrayBuffer = await response.arrayBuffer()
   const object = loader.parse(arrayBuffer, '')
   
+  // Create a new group to hold batched meshes
+  const batchedGroup = new THREE.Group()
+  
+  // Create shared material once for all meshes (more efficient)
+  const sharedMaterial = new THREE.MeshLambertMaterial({ 
+    color: 0xFFF8DC, // Cream color
+    side: THREE.DoubleSide
+  })
+  
   object.traverse((child) => {
     if (child.isMesh) {
       // Ensure geometry has proper normals
@@ -530,18 +715,19 @@ async function loadFBX(signal) {
         child.geometry.computeVertexNormals()
       }
       
-      // Always use cream color for all FBX models
-      child.material = new THREE.MeshLambertMaterial({ 
-        color: 0xFFF8DC, // Cream color
-        side: THREE.DoubleSide
-      })
+      // Create batched mesh(es) from this geometry with transform
+      const transform = {
+        position: child.position,
+        rotation: child.rotation,
+        scale: child.scale
+      }
       
-      child.castShadow = true
-      child.receiveShadow = true
+      const batchedMesh = createMeshFromGeometry(child.geometry, sharedMaterial, transform)
+      batchedGroup.add(batchedMesh)
     }
   })
   
-  return object
+  return batchedGroup.children.length > 0 ? batchedGroup : object
 }
 
 function centerAndScaleModel(model) {
