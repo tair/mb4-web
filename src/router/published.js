@@ -226,6 +226,17 @@ const PUBLISHED_PROJECT_DETAIL_VIEWS = [
         /* webpackChunkName: "published" */ '@/views/project/duplication/RequestView.vue'
       ),
   },
+  {
+    path: 'admin/assign',
+    name: 'ProjectAdminAssignView',
+    meta: {
+      itemName: 'admin',
+    },
+    component: () =>
+      import(
+        /* webpackChunkName: "published" */ '@/views/project/published/AssignView.vue'
+      ),
+  },
 ]
 
 export { PUBLISHED_PROJECT_VIEWS, PUBLISHED_PROJECT_DETAIL_VIEWS }

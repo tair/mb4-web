@@ -1059,11 +1059,6 @@ function getHitsMessage(mediaObj) {
               <strong>Copyright holder:</strong> {{ copyrightHolder }}
             </p>
           </div>
-          <div>
-            <p class="card-title compact-title" v-if="originalFilename">
-              Original filename: {{ originalFilename }}
-            </p>
-          </div>
         </div>
       </div>
     </div>
@@ -1072,6 +1067,10 @@ function getHitsMessage(mediaObj) {
         <div class="info-item">
           <strong>Morphobank media number</strong>
           <p>{{ 'M' + media_file.media_id }}</p>
+        </div>
+        <div class="info-item" v-if="originalFilename">
+          <strong>Original filename</strong>
+          <p>{{ originalFilename }}</p>
         </div>
         <div class="info-item">
           <strong>Taxonomic name</strong>
@@ -1155,7 +1154,7 @@ function getHitsMessage(mediaObj) {
   align-items: center;
   margin: 0;
   padding: 0rem;
-  max-width: 200px;
+  max-width: 250px;
 }
 
 .compact-img {
@@ -1173,6 +1172,8 @@ function getHitsMessage(mediaObj) {
   align-items: center;
   text-align: center;
   padding: 0.25rem;
+  width: 100%;
+  overflow: hidden;
 }
 
 .compact-nav {
@@ -1204,6 +1205,17 @@ function getHitsMessage(mediaObj) {
 .compact-text {
   margin: 0.25rem 0;
   font-size: 0.9rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
+  width: 100%;
+  hyphens: auto;
+}
+
+.compact-body > div {
+  width: 100%;
+  max-width: 100%;
 }
 
 .compact-info {
