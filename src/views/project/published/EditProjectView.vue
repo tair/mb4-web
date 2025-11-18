@@ -24,6 +24,18 @@
   >
     <FormLayout title="EDIT PROJECT">
       <form @submit.prevent="handleSubmit" class="list-form">
+      <div v-if="showCacheWarning" class="cache-warning-banner">
+        <i class="fa fa-info-circle me-2"></i>
+        <span>Project updates may take a few minutes to reflect. Please refresh the page manually to see updates as old values may be cached by your browser.</span>
+        <button 
+          type="button" 
+          class="cache-warning-close" 
+          @click="showCacheWarning = false"
+          aria-label="Dismiss warning"
+        >
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
       <!-- Basic Project Information -->
       <div class="form-group">
         <label class="form-label">
@@ -749,6 +761,7 @@ const originalAdminUserId = ref(null)
 const curatedMedia = ref([])
 const mediaViews = ref([])
 const isLoadingCuratedMedia = ref(false)
+const showCacheWarning = ref(true)
 
 // Computed property for filtered journals based on search
 const filteredJournals = computed(() => {
@@ -2050,6 +2063,51 @@ function getLoadingText() {
   background-color: #dc3545;
   border-color: #dc3545;
   opacity: 0.65;
+}
+
+.cache-warning-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  background-color: #e7f3ff;
+  border: 1px solid #b3d9ff;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #004085;
+  position: relative;
+}
+
+.cache-warning-banner i.fa-info-circle {
+  color: #0066cc;
+  flex-shrink: 0;
+}
+
+.cache-warning-banner span {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.cache-warning-close {
+  background: none;
+  border: none;
+  color: #004085;
+  cursor: pointer;
+  padding: 0;
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.cache-warning-close:hover {
+  opacity: 1;
 }
 </style>
 
