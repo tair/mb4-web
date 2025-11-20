@@ -160,6 +160,22 @@ export class TabNavigator extends Component {
     
     // Update the selected tab to show it
     this.updateSelectedTab()
+    
+    // After redrawing, ensure the tab content area can receive focus for keyboard navigation.
+    // When the user interacts with checkboxes/inputs and then navigates, the redraw destroys
+    // those elements and focus is lost. We need to restore focus so keyboard events continue
+    // to be captured by the parent dialog.
+    const tabContent = element.querySelector('.tab-content')
+    if (tabContent) {
+      // Make tab content focusable
+      tabContent.setAttribute('tabindex', '-1')
+      
+      // If focus was lost (activeElement is body or outside the tab navigator), restore it
+      const activeElement = document.activeElement
+      if (!element.contains(activeElement) || activeElement === document.body) {
+        (tabContent as HTMLElement).focus()
+      }
+    }
   }
 
   /**
