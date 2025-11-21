@@ -16,6 +16,21 @@ import {
 export function validate(matrixObject: MatrixObject): boolean {
   // First validate the basic structure and data type
   validateDataType(matrixObject)
+  
+  // Allow empty matrices (no characters) - these will be populated later via PDF upload
+  const numCharacters = matrixObject.getCharacterCount()
+  if (numCharacters === 0) {
+    // Still validate taxa if present
+    const numTaxa = matrixObject.getTaxonCount()
+    if (numTaxa === 0) {
+      throw new MatrixValidationError(
+        MatrixErrorType.UNDEFINED_TAXA,
+        'Unfortunately your matrix file could not be imported but this is easy to fix! This matrix does not explicitly define names for all taxa. Please give all taxa unique names in your desktop program and reload.'
+      )
+    }
+    return true // Allow empty character matrix
+  }
+  
   validateCharacterAndTaxaCounts(matrixObject)
   
   // Then validate the cells and character states

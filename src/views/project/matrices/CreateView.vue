@@ -15,6 +15,7 @@ import { getTaxonomicUnitOptions } from '@/utils/taxa'
 import { convertCsvToMatrix } from '@/utils/csvConverter.js'
 import router from '@/router'
 import { apiService } from '@/services/apiService.js'
+import AiCharacterExtractor from '@/components/AiCharacterExtractor.vue'
 
 const route = useRoute()
 const taxaStore = useTaxaStore()
@@ -205,16 +206,24 @@ async function importMatrix(event) {
     try {
       const result = parser.parseMatrixWithErrors(reader.result)
       if (result.error) {
-        // Display validation error below the upload field (not notification)
-        uploadError.value = result.error.userMessage
-        // Clear the file input
-        const fileInput = document.getElementById('upload')
-        if (fileInput) {
-          fileInput.value = ''
+        // Check if this is the "no characters" error - if so, we'll allow proceeding with an empty matrix
+        const isNoCharactersError = result.error.userMessage?.includes('does not explicitly define names for all characters')
+        
+        if (isNoCharactersError && result.matrixObject) {
+          // Allow proceeding with empty matrix - user can add characters via PDF on the characters screen
+          Object.assign(importedMatrix, result.matrixObject)
+          uploadError.value = '' // Clear error, we'll handle this in the characters screen
+        } else {
+          // Display validation error below the upload field (not notification)
+          uploadError.value = result.error.userMessage
+          // Clear the file input
+          const fileInput = document.getElementById('upload')
+          if (fileInput) {
+            fileInput.value = ''
+          }
+          return
         }
-        return
-      }
-      if (result.matrixObject) {
+      } else if (result.matrixObject) {
         Object.assign(importedMatrix, result.matrixObject)
         uploadError.value = '' // Clear error on success
       } else {
@@ -499,6 +508,27 @@ function cancelImport() {
 
 function convertNewlines(text) {
   return text.replace(/\n/g, '<br>')
+}
+
+// Handle characters extracted from AI
+function handleCharactersExtracted(extractedCharacters) {
+  // Initialize characters Map if it doesn't exist
+  if (!importedMatrix.characters) {
+    importedMatrix.characters = new Map()
+  }
+
+  // Add each extracted character to the importedMatrix
+  for (const character of extractedCharacters) {
+    const characterIndex = importedMatrix.characters.size
+    character.characterNumber = characterIndex
+    importedMatrix.characters.set(characterIndex, character)
+  }
+}
+
+// Handle extraction errors
+function handleExtractionError(error) {
+  console.error('AI extraction error:', error)
+  showError(error instanceof Error ? error.message : 'Failed to extract characters')
 }
 
 onMounted(async () => {
@@ -793,7 +823,18 @@ onUnmounted(() => {
             Loading...
           </div>
           <div class="matrix-confirmation-screen" v-else>
-            <table>
+            <!-- Show AI Character Extractor when there are no characters -->
+            <AiCharacterExtractor
+              v-if="!importedMatrix?.characters || importedMatrix.characters.size === 0"
+              :total-characters="1000"
+              page-range="all"
+              :zero-indexed="false"
+              @characters-extracted="handleCharactersExtracted"
+              @extraction-error="handleExtractionError"
+            />
+
+            <!-- Show character table when characters exist -->
+            <table v-else>
               <thead>
                 <tr>
                   <th>#</th>
