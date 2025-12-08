@@ -10,6 +10,7 @@ import { useTaxaStore } from '@/stores/TaxaStore'
 import { useNotifications } from '@/composables/useNotifications'
 import { stacksSchema } from '@/views/project/media/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
+import JSZip from 'jszip'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -21,6 +22,15 @@ const taxaStore = useTaxaStore()
 const mediaViewsStore = useMediaViewsStore()
 const { showError, showSuccess } = useNotifications()
 const isUploading = ref(false)
+
+// Direct-to-S3 upload state
+const uploadProgress = ref(0)
+const uploadPhase = ref('') // 'initiating', 'uploading', 'processing'
+const uploadSpeed = ref(0) // bytes per second
+const estimatedTimeRemaining = ref(0) // seconds
+
+// Threshold for using direct S3 upload (100MB) - smaller files use traditional upload
+const DIRECT_UPLOAD_THRESHOLD = 100 * 1024 * 1024
 
 const isLoaded = computed(
   () =>
@@ -87,6 +97,155 @@ function validateRequiredFields(formData) {
   return errors
 }
 
+/**
+ * Upload file directly to S3 using presigned URL with progress tracking
+ */
+async function uploadToS3WithProgress(uploadUrl, file) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    const startTime = Date.now()
+    let lastLoaded = 0
+    let lastTime = startTime
+
+    xhr.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable) {
+        // Calculate progress percentage
+        uploadProgress.value = Math.round((event.loaded / event.total) * 100)
+
+        // Calculate upload speed (bytes per second)
+        const currentTime = Date.now()
+        const timeDiff = (currentTime - lastTime) / 1000 // seconds
+        if (timeDiff > 0.5) { // Update speed every 0.5 seconds
+          const bytesDiff = event.loaded - lastLoaded
+          uploadSpeed.value = Math.round(bytesDiff / timeDiff)
+          lastLoaded = event.loaded
+          lastTime = currentTime
+
+          // Estimate remaining time
+          if (uploadSpeed.value > 0) {
+            const remainingBytes = event.total - event.loaded
+            estimatedTimeRemaining.value = Math.round(remainingBytes / uploadSpeed.value)
+          }
+        }
+      }
+    })
+
+    xhr.addEventListener('load', () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve()
+      } else {
+        reject(new Error(`S3 upload failed with status ${xhr.status}: ${xhr.statusText}`))
+      }
+    })
+
+    xhr.addEventListener('error', () => {
+      // Check if this is a CORS error
+      if (xhr.status === 0) {
+        reject(new Error('CORS error: S3 bucket needs CORS configuration to allow uploads from this origin. Please contact your administrator.'))
+      } else {
+        reject(new Error(`Network error during S3 upload: ${xhr.statusText || 'Unknown error'}`))
+      }
+    })
+
+    xhr.addEventListener('abort', () => {
+      reject(new Error('Upload was aborted'))
+    })
+
+    // Note: Don't set Content-Type header manually - let the browser set it
+    // The presigned URL already includes Content-Type in the signature
+    xhr.open('PUT', uploadUrl)
+    // Only set Content-Type if it's not already in the URL signature
+    // The presigned URL should handle Content-Type, but we set it to match
+    xhr.setRequestHeader('Content-Type', 'application/zip')
+    xhr.send(file)
+  })
+}
+
+/**
+ * Format bytes for display
+ */
+function formatBytes(bytes) {
+  if (bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
+}
+
+/**
+ * Format seconds for display
+ */
+function formatTime(seconds) {
+  if (seconds < 60) return `${seconds}s`
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`
+  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`
+}
+
+// Supported image extensions for thumbnail extraction
+const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'tif', 'tiff', 'gif', 'bmp', 'webp']
+
+/**
+ * Extract the first image from a ZIP file in the browser.
+ * This avoids downloading the entire ZIP on the backend for thumbnail generation.
+ * 
+ * @param {File} zipFile - The ZIP file to extract from
+ * @returns {Promise<{blob: Blob, filename: string, mimetype: string} | null>}
+ */
+async function extractFirstImageFromZip(zipFile) {
+  try {
+    const zip = await JSZip.loadAsync(zipFile)
+    
+    // Get all file entries, sorted by name for consistent ordering
+    const entries = Object.keys(zip.files)
+      .filter(name => {
+        const file = zip.files[name]
+        // Skip directories and macOS metadata
+        if (file.dir) return false
+        if (name.startsWith('__MACOSX/')) return false
+        if (name.startsWith('._')) return false
+        if (name.includes('/.DS_Store') || name === '.DS_Store') return false
+        if (name.includes('/Thumbs.db') || name === 'Thumbs.db') return false
+        
+        // Check if it's an image
+        const extension = name.split('.').pop()?.toLowerCase() || ''
+        return IMAGE_EXTENSIONS.includes(extension)
+      })
+      .sort()
+    
+    if (entries.length === 0) {
+      console.warn('No image files found in ZIP for thumbnail extraction')
+      return null
+    }
+    
+    // Get the first image file
+    const firstImagePath = entries[0]
+    const imageFile = zip.files[firstImagePath]
+    
+    // Extract the image as a blob
+    const blob = await imageFile.async('blob')
+    const filename = firstImagePath.split('/').pop() || firstImagePath
+    const extension = filename.split('.').pop()?.toLowerCase() || 'jpg'
+    
+    // Determine mimetype
+    const mimetypes = {
+      'png': 'image/png',
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'tif': 'image/tiff',
+      'tiff': 'image/tiff',
+      'gif': 'image/gif',
+      'bmp': 'image/bmp',
+      'webp': 'image/webp',
+    }
+    const mimetype = mimetypes[extension] || 'application/octet-stream'
+    
+    return { blob, filename, mimetype }
+  } catch (error) {
+    console.error('Error extracting image from ZIP:', error)
+    return null
+  }
+}
+
 async function createStacksMedia(event) {
   if (isUploading.value) return // Prevent double submission
   
@@ -103,13 +262,27 @@ async function createStacksMedia(event) {
     showError(errors.join('; '), 'Validation Error')
     return
   }
+
+  // Get the file to check its size
+  const file = formData.get('file')
+  if (!file || !(file instanceof File)) {
+    showError('Please select a ZIP file to upload', 'Validation Error')
+    return
+  }
   
   isUploading.value = true
+  uploadProgress.value = 0
+  uploadPhase.value = ''
+  uploadSpeed.value = 0
+  estimatedTimeRemaining.value = 0
+
   try {
-    const success = await mediaStore.createStacks(projectId, formData)
-    if (!success) {
-      showError('Failed to create stacks media. Please check your input and try again.')
-      return
+    // Use direct S3 upload for large files to avoid proxy timeouts
+    if (file.size > DIRECT_UPLOAD_THRESHOLD) {
+      await uploadViaS3Direct(formData, file)
+    } else {
+      // Use traditional upload for smaller files
+      await uploadTraditional(formData)
     }
 
     showSuccess('CT scan stacks uploaded successfully!')
@@ -132,6 +305,75 @@ async function createStacksMedia(event) {
     showError(errorMessage, 'CT Scan Upload Failed')
   } finally {
     isUploading.value = false
+    uploadPhase.value = ''
+    uploadProgress.value = 0
+  }
+}
+
+/**
+ * Upload using direct-to-S3 presigned URL (for large files)
+ * This bypasses CloudFront/httpd proxy timeouts
+ */
+async function uploadViaS3Direct(formData, file) {
+  // Phase 1: Initiate the upload and extract thumbnail in parallel
+  uploadPhase.value = 'initiating'
+  
+  const metadata = {
+    filename: file.name,
+    filesize: file.size,
+    specimen_id: formData.get('specimen_id'),
+    view_id: formData.get('view_id'),
+    is_copyrighted: formData.get('is_copyrighted'),
+    copyright_permission: formData.get('copyright_permission'),
+    copyright_license: formData.get('copyright_license'),
+    copyright_info: formData.get('copyright_info'),
+    notes: formData.get('notes'),
+  }
+
+  // Start both operations in parallel for efficiency
+  const [initResponse, thumbnailData] = await Promise.all([
+    mediaStore.initiateStacksUpload(projectId, metadata),
+    extractFirstImageFromZip(file)
+  ])
+  
+  if (!initResponse || !initResponse.uploadUrl) {
+    throw new Error('Failed to get upload URL from server')
+  }
+
+  const { mediaId, uploadUrl } = initResponse
+
+  // Phase 2: Upload directly to S3
+  uploadPhase.value = 'uploading'
+  
+  try {
+    await uploadToS3WithProgress(uploadUrl, file)
+  } catch (uploadError) {
+    // If S3 upload fails, we should clean up the pending media record
+    // The backend will handle orphan cleanup, but we inform the user
+    throw new Error(`Upload to storage failed: ${uploadError.message}`)
+  }
+
+  // Phase 3: Complete the upload with the extracted thumbnail
+  // This sends the thumbnail to the backend instead of having the backend download the ZIP
+  uploadPhase.value = 'processing'
+  uploadProgress.value = 100
+  
+  const media = await mediaStore.completeStacksUpload(projectId, mediaId, thumbnailData)
+  
+  if (!media) {
+    throw new Error('Failed to finalize upload')
+  }
+}
+
+/**
+ * Upload using traditional form submission (for smaller files)
+ */
+async function uploadTraditional(formData) {
+  uploadPhase.value = 'uploading'
+  
+  const success = await mediaStore.createStacks(projectId, formData)
+  if (!success) {
+    throw new Error('Failed to create stacks media. Please check your input and try again.')
   }
 }
 
@@ -195,6 +437,36 @@ onMounted(() => {
             </component>
           </div>
         </template>
+        <!-- Upload Progress Indicator -->
+        <div v-if="isUploading" class="upload-progress-container">
+          <div class="progress-header">
+            <span class="progress-phase">
+              <i class="fa fa-spinner fa-spin"></i>
+              <span v-if="uploadPhase === 'initiating'">Preparing upload...</span>
+              <span v-else-if="uploadPhase === 'uploading'">Uploading to storage...</span>
+              <span v-else-if="uploadPhase === 'processing'">Processing CT scan...</span>
+              <span v-else>Uploading...</span>
+            </span>
+            <span class="progress-percent">{{ uploadProgress }}%</span>
+          </div>
+          
+          <div class="progress-bar-container">
+            <div class="progress-bar" :style="{ width: uploadProgress + '%' }"></div>
+          </div>
+          
+          <div v-if="uploadPhase === 'uploading' && uploadSpeed > 0" class="progress-stats">
+            <span class="upload-speed">{{ formatBytes(uploadSpeed) }}/s</span>
+            <span v-if="estimatedTimeRemaining > 0" class="time-remaining">
+              ~{{ formatTime(estimatedTimeRemaining) }} remaining
+            </span>
+          </div>
+          
+          <p class="upload-note">
+            <i class="fa fa-info-circle"></i>
+            Large files upload directly to storage. Please keep this page open.
+          </p>
+        </div>
+
         <div class="btn-form-group">
           <button
             class="btn btn-outline-primary"
@@ -207,7 +479,7 @@ onMounted(() => {
           <button class="btn btn-primary" type="submit" :disabled="isUploading">
             <span v-if="isUploading">
               <i class="fa fa-spinner fa-spin"></i>
-              Uploading Stacks...
+              {{ uploadPhase === 'processing' ? 'Processing...' : 'Uploading...' }}
             </span>
             <span v-else>Upload Stacks</span>
           </button>
@@ -259,5 +531,84 @@ onMounted(() => {
 
 .form-label {
   font-weight: bold;
+}
+
+/* Upload Progress Styles */
+.upload-progress-container {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.progress-phase {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  color: #495057;
+}
+
+.progress-phase i {
+  color: #007bff;
+}
+
+.progress-percent {
+  font-weight: 600;
+  font-size: 18px;
+  color: #007bff;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 12px;
+  background-color: #e9ecef;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #007bff, #0056b3);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.progress-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #6c757d;
+  margin-bottom: 8px;
+}
+
+.upload-speed {
+  font-weight: 500;
+}
+
+.time-remaining {
+  font-style: italic;
+}
+
+.upload-note {
+  font-size: 12px;
+  color: #6c757d;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.upload-note i {
+  color: #17a2b8;
 }
 </style>
