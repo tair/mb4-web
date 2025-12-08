@@ -527,6 +527,50 @@ const isOriginalTiffFile = computed(() => {
   return originalMedia && (originalMedia.MIMETYPE === 'image/tiff' || originalMedia.MIMETYPE === 'image/tif')
 })
 
+// Check if the media file is a ZIP/archive file (CT scans, stacks)
+// These need pre-signed URLs to avoid proxy timeout for large files
+const isZipFile = computed(() => {
+  // Handle both nested structures: props.media_file.media.media and props.media_file.media
+  const mediaData = props.media_file?.media || props.media_file
+  if (!mediaData) return false
+  
+  // Check multiple possible locations for the filename (same pattern as isVideoFile)
+  const filenameChecks = [
+    mediaData?.ORIGINAL_FILENAME,
+    mediaData?.media?.ORIGINAL_FILENAME,
+    mediaData?.original?.ORIGINAL_FILENAME,
+    mediaData?.filename,
+    props.media_file?.filename
+  ]
+  
+  for (const filename of filenameChecks) {
+    if (filename) {
+      const ext = filename.split('.').pop()?.toLowerCase()
+      if (ext === 'zip') return true
+    }
+  }
+  
+  // Fallback: Check nested original structure for MIME type
+  const originalMedia = mediaData?.original || mediaData?.media?.original
+  if (originalMedia) {
+    if (originalMedia.MIMETYPE === 'application/zip' || 
+        originalMedia.MIMETYPE === 'application/x-zip-compressed') {
+      return true
+    }
+    if ((originalMedia.EXTENSION || '').toLowerCase() === 'zip') {
+      return true
+    }
+  }
+  
+  // Fallback: Check USE_ICON for archives without extracted thumbnails
+  const thumbnailMedia = mediaData?.thumbnail || mediaData?.media?.thumbnail
+  if (thumbnailMedia?.USE_ICON === 'archive') {
+    return true
+  }
+  
+  return false
+})
+
 // Get the main display URL - ALWAYS use thumbnail for compact view
 const mainDisplayUrl = computed(() => {
   if (is3DFile.value) {
@@ -736,65 +780,43 @@ const onAnnotationsSaved = () => {
 }
 
 async function confirmDownload(fileSize, fileName) {
-  // CAPTCHA is completed, proceed with the download
-  // For 3D files, videos, and TIFF files, always download the original file regardless of requested size
-  const downloadSize = (is3DFile.value || isVideoFile.value || isOriginalTiffFile.value) ? 'original' : fileSize
+  // Always use pre-signed S3 URL for all downloads - more performant and avoids proxy timeouts
+  // For special file types (3D, video, TIFF, ZIP), always download original regardless of requested size
+  const downloadSize = (is3DFile.value || isVideoFile.value || isOriginalTiffFile.value || isZipFile.value) ? 'original' : fileSize
   
-  let downloadUrl
-  let downloadFileName
-  
-  // For videos and 3D files, use pre-signed URL to avoid proxy timeout for large files
-  if (isVideoFile.value || is3DFile.value) {
-    try {
-      // Use video-url endpoint for videos, media-url for everything else
-      const endpoint = isVideoFile.value 
-        ? `/public/media/${props.project_id}/video-url/${props.media_file.media_id}`
-        : `/public/media/${props.project_id}/media-url/${props.media_file.media_id}`
+  try {
+    // Use media-url endpoint for pre-signed S3 URL (works for all file types)
+    const endpoint = `/public/media/${props.project_id}/media-url/${props.media_file.media_id}`
+    const params = { fileSize: downloadSize, download: 'true' }
+    
+    const response = await apiService.get(endpoint, { params })
+    const data = await response.json()
+    
+    if (data.success && data.url) {
+      const downloadUrl = data.url
+      // Use the filename from the response (backend returns M{mediaId}.{extension})
+      const downloadFileName = data.filename || generateDownloadFilename(props.media_file.media_id, getExtensionFromUrl(downloadUrl))
       
-      const params = isVideoFile.value 
-        ? { download: 'true' }
-        : { fileSize: downloadSize, download: 'true' }
-      
-      const response = await apiService.get(endpoint, { params })
-      const data = await response.json()
-      
-      if (data.success && data.url) {
-        downloadUrl = data.url
-        // Use the filename from the response (backend now returns M{mediaId}.{extension})
-        downloadFileName = data.filename || generateDownloadFilename(props.media_file.media_id, getExtensionFromUrl(downloadUrl))
-      } else {
-        throw new Error(`Failed to get ${isVideoFile.value ? 'video' : 'media'} download URL`)
-      }
-    } catch (error) {
-      console.error(`Error fetching ${isVideoFile.value ? 'video' : 'media'} download URL:`, error)
-      alert(`Failed to download ${isVideoFile.value ? 'video' : 'file'}. Please try again.`)
-      return
-    }
-  } else {
-    // For regular image files, use regular URL (they're usually small)
-    downloadUrl = buildMediaUrl(
-      props.project_id,
-      props.media_file?.media_id,
-      downloadSize
-    )
-    // Extract extension from media file data or URL, default to jpg
-    const extension = getMediaFileExtension() || getExtensionFromUrl(downloadUrl) || 'jpg'
-    downloadFileName = generateDownloadFilename(props.media_file.media_id, extension)
-  }
-  
-  const link = document.createElement('a')
-  link.href = downloadUrl
-  link.download = downloadFileName
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.download = downloadFileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
 
-  showDownloadModal.value = false
-  logDownload({
-    project_id: props.project_id,
-    download_type: DOWNLOAD_TYPES.MEDIA,
-    row_id: props.media_file.media_id,
-  })
+      showDownloadModal.value = false
+      logDownload({
+        project_id: props.project_id,
+        download_type: DOWNLOAD_TYPES.MEDIA,
+        row_id: props.media_file.media_id,
+      })
+    } else {
+      throw new Error('Failed to get download URL')
+    }
+  } catch (error) {
+    console.error('Error fetching download URL:', error)
+    alert('Failed to download file. Please try again.')
+  }
 }
 
 /**

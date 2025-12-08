@@ -124,6 +124,65 @@ export const useMediaStore = defineStore({
         throw error
       }
     },
+    /**
+     * Initiate a direct-to-S3 upload for large CT scan files.
+     * This bypasses CloudFront/httpd proxy timeouts.
+     * 
+     * @param {string} projectId - The project ID
+     * @param {Object} metadata - Upload metadata (filename, filesize, specimen_id, view_id, etc.)
+     * @returns {Promise<{mediaId: number, uploadUrl: string, s3Key: string, expiresIn: number}>}
+     */
+    async initiateStacksUpload(projectId, metadata) {
+      try {
+        const response = await apiService.post(`/projects/${projectId}/media/stacks/initiate`, metadata)
+        if (response.ok) {
+          const responseData = await response.json()
+          return responseData
+        }
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to initiate upload')
+      } catch (error) {
+        console.error('Error in initiateStacksUpload:', error)
+        throw error
+      }
+    },
+    /**
+     * Complete a direct-to-S3 upload after the file has been uploaded.
+     * Optionally accepts a thumbnail image extracted from the ZIP in the browser,
+     * which avoids having the backend download the entire ZIP for thumbnail generation.
+     * 
+     * @param {string} projectId - The project ID
+     * @param {number} mediaId - The media ID from initiateStacksUpload
+     * @param {Object|null} thumbnailData - Optional thumbnail extracted from ZIP {blob, filename, mimetype}
+     * @returns {Promise<Object>} The created media object
+     */
+    async completeStacksUpload(projectId, mediaId, thumbnailData = null) {
+      try {
+        let response
+        
+        if (thumbnailData && thumbnailData.blob) {
+          // Send the thumbnail as multipart form data
+          const formData = new FormData()
+          formData.append('thumbnail', thumbnailData.blob, thumbnailData.filename)
+          response = await apiService.post(`/projects/${projectId}/media/stacks/${mediaId}/complete`, formData)
+        } else {
+          // No thumbnail - backend will try to extract from S3 (fallback)
+          response = await apiService.post(`/projects/${projectId}/media/stacks/${mediaId}/complete`)
+        }
+        
+        if (response.ok) {
+          const responseData = await response.json()
+          const media = responseData.media
+          this.addMedia([media])
+          return media
+        }
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to complete upload')
+      } catch (error) {
+        console.error('Error in completeStacksUpload:', error)
+        throw error
+      }
+    },
     async edit(projectId, mediaId, mediaFormData) {
       const response = await apiService.post(`/projects/${projectId}/media/${mediaId}/edit`, mediaFormData, {
         timeout: 300000, // 5 minutes timeout for large media file uploads
