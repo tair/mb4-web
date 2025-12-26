@@ -412,7 +412,7 @@ const annotationsEnabled = computed(() => {
 })
 
 
-// Get the zoom display URL (3D model for 3D files, video for videos, large image for 2D files)
+// Get the zoom display URL (3D model for 3D files, video for videos, original for TIFFs, large image for 2D files)
 const zoomDisplayUrl = computed(() => {
   if (is3DFile.value) {
     return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
@@ -421,11 +421,15 @@ const zoomDisplayUrl = computed(() => {
     return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
   }
   
-  // For zoom modal, use same smart logic as main display - prefer JPEG variants
-  // CANT FIGURE OUT WHY THIS WORKS.... BUT IT DOES SO KEEPING IT FOR NOW
+  // For TIFF files, use original - AnnotationViewer will decode them client-side
+  if (isOriginalTiffFile.value) {
+    return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
+  }
+  
+  // For non-TIFF images, prefer JPEG variants for browser compatibility
   const media = props.media_file?.media
   if (media) {
-    // Try large first (usually JPEG), finally original
+    // Try original first, then large
     const sizePreference = ['original', 'large']
     for (const size of sizePreference) {
       if (media[size] && media[size].MIMETYPE !== 'image/tiff' && media[size].MIMETYPE !== 'image/tif') {
@@ -765,6 +769,7 @@ function getHitsMessage(mediaObj) {
                   :media-id="media_file.media_id"
                   :project-id="Number(project_id)"
                   :media-url="zoomDisplayUrl"
+                  :is-tiff="isOriginalTiffFile"
                   :can-edit="annotationsEnabled"
                   :link-id="useAnnotationLinkId ? media_file.media_id : null"
                   :save-link-id="media_file.media_id"

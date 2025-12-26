@@ -508,6 +508,7 @@ import ConfirmModal from './ConfirmModal.vue'
 import { annotationService } from '../../services/annotationService.js'
 import { buildMediaUrl } from '../../utils/fileUtils.js'
 import { apiService } from '@/services/apiService.js'
+import UTIF from 'utif2' // Modern TIFF decoder for client-side TIFF rendering
 
 export default {
   name: 'AnnotationViewer',
@@ -571,6 +572,10 @@ export default {
     stateNumber: {
       type: Number,
       default: null
+    },
+    isTiff: {
+      type: Boolean,
+      default: false
     }
   },
 
@@ -636,6 +641,12 @@ export default {
       hasTriedFallback: false,
       imageLoadTimer: null,
       fallbackDelayMs: 3000,
+      
+      // TIFF decoding state
+      tiffDataUrl: null,
+      tiffBlobUrl: null, // Blob URL for large TIFF images (more efficient than data URL)
+      isLoadingTiff: false,
+      tiffLoadError: null,
       
       // Label positioning and dragging
       labelPositions: new Map(), // Store custom label positions
@@ -730,14 +741,27 @@ export default {
     },
     
     mediaUrl: {
-      handler(newUrl) {
+      async handler(newUrl) {
         // Reset fallback state when mediaUrl changes
-        this.currentImageUrl = newUrl
         this.hasTriedFallback = false
         this.imageLoaded = false
         this.isLoadingImage = true
         this.clearImageLoadTimer()
-        this.startImageLoadWatch()
+        this.tiffDataUrl = null
+        
+        // Clean up previous blob URL if exists
+        if (this.tiffBlobUrl) {
+          URL.revokeObjectURL(this.tiffBlobUrl)
+          this.tiffBlobUrl = null
+        }
+        
+        // Handle TIFF files specially - decode client-side
+        if (this.isTiff) {
+          await this.loadTiffImage(newUrl)
+        } else {
+          this.currentImageUrl = newUrl
+          this.startImageLoadWatch()
+        }
         
         // Apply initial zoom when new image is set
         this.$nextTick(() => {
@@ -753,6 +777,7 @@ export default {
   beforeUnmount() {
     this.removeEventListeners()
     this.clearImageLoadTimer()
+    this.cleanupTiffBlobUrl()
   },
 
   methods: {
@@ -2777,6 +2802,9 @@ export default {
 
     // Image load monitoring and timeout fallback
     startImageLoadWatch() {
+      // TIFFs are handled by loadTiffImage, skip timeout fallback
+      if (this.isTiff) return
+      
       this.clearImageLoadTimer()
       this.imageLoadTimer = setTimeout(() => {
         if (!this.imageLoaded && !this.hasTriedFallback) {
@@ -2793,6 +2821,70 @@ export default {
       if (this.imageLoadTimer) {
         clearTimeout(this.imageLoadTimer)
         this.imageLoadTimer = null
+      }
+    },
+    
+    // TIFF decoding using tiff.js library
+    async loadTiffImage(url) {
+      this.isLoadingTiff = true
+      this.isLoadingImage = true
+      this.tiffLoadError = null
+      
+      try {
+        const response = await fetch(url)
+        if (!response.ok) throw new Error('Failed to fetch TIFF')
+        
+        const buffer = await response.arrayBuffer()
+        
+        // Decode TIFF using UTIF (pure JavaScript, handles large files better)
+        const ifds = UTIF.decode(buffer)
+        if (!ifds || ifds.length === 0) throw new Error('Invalid TIFF file')
+        
+        // Decode the first page/image
+        UTIF.decodeImage(buffer, ifds[0])
+        const firstPage = ifds[0]
+        
+        // Convert to RGBA8 format
+        const rgba = UTIF.toRGBA8(firstPage)
+        
+        // Create canvas and draw the decoded image
+        const canvas = document.createElement('canvas')
+        canvas.width = firstPage.width
+        canvas.height = firstPage.height
+        const ctx = canvas.getContext('2d')
+        
+        const imageData = ctx.createImageData(firstPage.width, firstPage.height)
+        imageData.data.set(rgba)
+        ctx.putImageData(imageData, 0, 0)
+        
+        // Use Blob URL instead of data URL for large images (avoids browser limits)
+        // Clean up previous blob URL if exists
+        if (this.tiffBlobUrl) {
+          URL.revokeObjectURL(this.tiffBlobUrl)
+          this.tiffBlobUrl = null
+        }
+        
+        // Convert canvas to blob and create object URL
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'))
+        this.tiffBlobUrl = URL.createObjectURL(blob)
+        this.currentImageUrl = this.tiffBlobUrl
+        
+      } catch (error) {
+        console.error('TIFF decode failed:', error)
+        this.tiffLoadError = error.message
+        // Fallback to large JPEG version
+        this.hasTriedFallback = true
+        this.currentImageUrl = buildMediaUrl(this.projectId, this.mediaId, 'large')
+      } finally {
+        this.isLoadingTiff = false
+      }
+    },
+    
+    // Clean up blob URL when component is destroyed
+    cleanupTiffBlobUrl() {
+      if (this.tiffBlobUrl) {
+        URL.revokeObjectURL(this.tiffBlobUrl)
+        this.tiffBlobUrl = null
       }
     }
   }
