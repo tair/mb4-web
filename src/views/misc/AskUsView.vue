@@ -301,25 +301,27 @@ export default {
         return 'The description must contain at least 75 characters. Please clearly state the problem and what was expected.'
       }
 
-      // Check for HTML links
-      if (/<\w*a.*href=.*>/.test(description)) {
-        return 'Description should not contain external links.'
+      // Check for HTML anchor tags (potential XSS or spam)
+      if (/<\s*a\b[^>]*href/i.test(description)) {
+        return 'Please do not include HTML code in your message. You can paste plain URLs instead.'
       }
 
-      // Check for URLs
-      if (/(http|https):\/\//.test(description)) {
-        return 'Description should not refer to external links.'
+      // Check for external URLs - allow morphobank.org and all its subdomains
+      // The negative lookahead allows any subdomain of morphobank.org (www, beta, dev, etc.)
+      // The (\/|$|\s|:) ensures we block spoofed domains like morphobank.org.fake.com
+      const externalUrlRegex = /https?:\/\/(?!([a-z0-9-]+\.)*morphobank\.org(\/|$|\s|:|#|\?))/i
+      if (externalUrlRegex.test(description)) {
+        return 'Please do not include external website links. Links to morphobank.org pages are allowed.'
       }
 
-      // Check for non-English characters
-      if (/[^\x00-\x7F]/.test(description)) {
-        return 'Description should not contain non-English words. Please reconsider rephrasing your message.'
-      }
+      // Note: We intentionally do NOT check for non-ASCII characters.
+      // Common English typography (en-dashes, em-dashes, curly quotes, etc.) uses non-ASCII characters.
+      // The spam detection library below handles actual spam content.
 
       // Use spam detection library to check for spam content
       const spamResult = SpamDetection.detect(description)
       if (spamResult.isSpam) {
-        return 'Description contains suspicious text. Please reconsider rephrasing your message.'
+        return 'Your message was flagged as potential spam. Please rephrase and try again.'
       }
 
       return ''
