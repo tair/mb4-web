@@ -14,6 +14,7 @@ import { useProjectsStore } from '@/stores/ProjectsStore'
 import { useNotifications } from '@/composables/useNotifications'
 import { getTaxonForMediaId } from '@/views/project/utils'
 import { TaxaFriendlyNames, nameColumnMap } from '@/utils/taxa'
+import { getSpecimenName as getSpecimenDisplayName } from '@/utils/specimens'
 // import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 import FilterDialog from '@/views/project/media/FilterDialog.vue'
 import EditBatchDialog from '@/views/project/media/EditBatchDialog.vue'
@@ -414,6 +415,7 @@ function getViewName(media) {
 
 function getSpecimenName(media) {
   const specimen = specimensStore.getSpecimenById(media.specimen_id)
+  console.log('specimen', specimen)
   return specimen?.specimen_id ? `S${specimen.specimen_id}` : ''
 }
 
@@ -840,7 +842,12 @@ function getMediaTooltipContent(media_file) {
   let tooltip = `<strong>Media ID:</strong> M${media_file.media_id}<br/>`
   
   if (specimen && specimen.specimen_id) {
-    tooltip += `<strong>Specimen:</strong> S${specimen.specimen_id}<br/>`
+    // Get the specimen's taxon to build a proper display name
+    const specimenTaxon = specimen.taxon_id ? taxaStore.getTaxonById(specimen.taxon_id) : null
+    const specimenName = specimenTaxon 
+      ? getSpecimenDisplayName(specimen, specimenTaxon) 
+      : `S${specimen.specimen_id}`
+    tooltip += `<strong>Specimen:</strong> ${escapeHtml(specimenName) || `S${specimen.specimen_id}`}<br/>`
   }
   
   if (view && view.name) {

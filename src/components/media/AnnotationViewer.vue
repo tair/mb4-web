@@ -325,7 +325,7 @@
     <div class="annotation-canvas-container" ref="canvasContainer">
       <img 
         ref="mediaImage"
-        :src="currentImageUrl || mediaUrl"
+        :src="effectiveImageUrl"
         @load="onImageLoad"
         @error="onImageError"
         alt="Media for annotation"
@@ -346,7 +346,8 @@
       <!-- Loading overlay while image is loading or switching sources -->
       <div v-if="isLoadingImage" class="image-loading-overlay">
         <div class="loading-spinner"></div>
-        <div class="loading-text">Loading image…</div>
+        <div class="loading-text">{{ isLoadingTiff ? 'Decoding TIFF image…' : 'Loading image…' }}</div>
+        <div v-if="isLoadingTiff" class="loading-subtext">This may take a moment for large files</div>
       </div>
       
       <!-- Annotation Labels Container - receives same transform as canvas/image -->
@@ -463,7 +464,7 @@
       <div class="overview-container" ref="overviewContainer">
         <img 
           ref="overviewImage"
-          :src="currentImageUrl || mediaUrl"
+          :src="effectiveImageUrl"
           @load="onOverviewImageLoad"
           @click="onOverviewClick"
           alt="Image overview"
@@ -693,6 +694,23 @@ export default {
       }
       // Fall back to mediaId for media-only annotations
       return this.mediaId
+    },
+    
+    // Computed property for the effective image URL to use in the <img> tag
+    // This prevents the browser from trying to load raw TIFF files directly
+    effectiveImageUrl() {
+      // If we're loading a TIFF file via JavaScript decoding, don't set any src
+      // until the decoding is complete. This prevents the browser from trying
+      // to load the raw TIFF (which it can't render) and triggering onImageError.
+      if (this.isTiff && this.isLoadingTiff && !this.currentImageUrl) {
+        // Return a transparent 1x1 pixel data URL as placeholder during TIFF loading
+        // This prevents the img tag from trying to load the raw TIFF URL
+        return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+      }
+      
+      // Use currentImageUrl if available (set after TIFF decode or for non-TIFF images)
+      // Otherwise fall back to mediaUrl for non-TIFF images
+      return this.currentImageUrl || this.mediaUrl
     }
   },
 
@@ -757,6 +775,11 @@ export default {
         
         // Handle TIFF files specially - decode client-side
         if (this.isTiff) {
+          // CRITICAL: Set isLoadingTiff=true and currentImageUrl=null BEFORE calling loadTiffImage
+          // This ensures the effectiveImageUrl computed property returns a placeholder,
+          // preventing the browser from trying to load the raw TIFF file directly
+          this.isLoadingTiff = true
+          this.currentImageUrl = null
           await this.loadTiffImage(newUrl)
         } else {
           this.currentImageUrl = newUrl
@@ -1003,6 +1026,14 @@ export default {
 
     // Image handling
     onImageLoad() {
+      // CRITICAL: If we're still loading a TIFF, don't mark as loaded yet.
+      // The placeholder image (1x1 transparent GIF) loads instantly, but we need
+      // to wait for the actual TIFF decoding to complete before hiding the spinner.
+      if (this.isLoadingTiff) {
+        console.log('Placeholder loaded during TIFF decoding, keeping loading state')
+        return
+      }
+      
       this.imageLoaded = true
       this.isLoadingImage = false
       this.clearImageLoadTimer()
@@ -1036,6 +1067,14 @@ export default {
     },
 
     onImageError() {
+      // CRITICAL: If we're currently loading a TIFF via loadTiffImage(), ignore this error.
+      // The error is caused by the browser trying to render the raw TIFF in the <img> tag
+      // before our JavaScript decoding finishes. This is expected and not a real failure.
+      if (this.isLoadingTiff) {
+        console.log('Ignoring image error during TIFF decoding (expected behavior)')
+        return
+      }
+      
       console.error('Failed to load media image:', this.currentImageUrl || this.mediaUrl)
       
       // Try fallback to 'large' version if we haven't tried it yet
@@ -3911,6 +3950,12 @@ kbd {
   color: #495057;
   font-size: 14px;
   font-weight: 500;
+}
+
+.image-loading-overlay .loading-subtext {
+  color: #6c757d;
+  font-size: 12px;
+  margin-top: 4px;
 }
 
 @keyframes spin {
