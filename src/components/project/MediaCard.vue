@@ -185,13 +185,13 @@ function onLargeImageError() {
 }
 </script>
 <template>
-  <div class="mediaCard card shadow">
+  <div 
+    class="mediaCard card shadow"
+    @mouseenter="onMouseEnter"
+    @mouseleave="onMouseLeave"
+  >
     <slot name="bar"></slot>
-    <div 
-      class="card-image"
-      @mouseenter="onMouseEnter"
-      @mouseleave="onMouseLeave"
-    >
+    <div class="card-image">
       <img
         v-if="image"
         :src="image.url"
@@ -366,7 +366,7 @@ function onLargeImageError() {
 .hover-preview-overlay.visible {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .preview-header {
