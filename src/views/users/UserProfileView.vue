@@ -160,7 +160,7 @@ const removeInstitution = function (institutionId) {
   }
 }
 
-const addInstitution = function (institutionId, institutionName) {
+const addInstitution = function (institutionId, institutionName, active = 1) {
   // check if the institution already exists
   for (let i = 0; i < userData.userForm.institutions.length; i++) {
     const institution = userData.userForm.institutions[i]
@@ -174,6 +174,7 @@ const addInstitution = function (institutionId, institutionName) {
   userData.userForm.institutions.push({
     institution_id: institutionId,
     name: institutionName,
+    active: active,
   })
   
   // Automatically uncheck independent researcher when adding an institution
@@ -233,7 +234,9 @@ const handleInstitutionCreated = (institution) => {
   
   userData.userForm.institutions.push({
     institution_id: institution.institution_id,
-    name: institution.name
+    name: institution.name,
+    active: institution.active || 0,
+    pendingApproval: institution.pendingApproval || institution.active === 0
   })
   
   // Automatically uncheck independent researcher when adding an institution
@@ -244,8 +247,12 @@ const handleInstitutionCreated = (institution) => {
   // Mark as interacted since we're modifying the form
   hasUserInteracted.value = true
   
-  // Show success message
-  showSuccess(`Institution "${institution.name}" has been added to your profile.`)
+  // Show success message with pending notice if applicable
+  if (institution.pendingApproval || institution.active === 0) {
+    showSuccess(`Institution "${institution.name}" has been submitted for approval and added to your profile.`)
+  } else {
+    showSuccess(`Institution "${institution.name}" has been added to your profile.`)
+  }
 }
 
 // Computed button text
@@ -349,6 +356,13 @@ const submitButtonText = computed(() => {
               class="institution-item"
             >
               {{ institution.name }}
+              <span 
+                v-if="institution.active === 0 || institution.active === false || institution.pendingApproval" 
+                class="badge bg-warning text-dark ms-2"
+                title="This institution is pending curator approval. It is currently only visible to you."
+              >
+                Pending Approval
+              </span>
               <a
                 href="#"
                 class="removeLink"
@@ -358,6 +372,10 @@ const submitButtonText = computed(() => {
               </a>
             </li>
           </ul>
+          <p v-if="userData.userForm.institutions?.some(i => i.active === 0 || i.active === false || i.pendingApproval)" class="small text-muted mt-2">
+            <i class="fa fa-info-circle me-1"></i>
+            Institutions marked as "Pending Approval" are awaiting curator review. They are currently only visible to you.
+          </p>
         </div>
 
         <div class="form-group">
@@ -388,10 +406,10 @@ const submitButtonText = computed(() => {
               :key="institution.institution_id"
               :value="institution.institution_id"
               @click="
-                addInstitution(institution.institution_id, institution.name)
+                addInstitution(institution.institution_id, institution.name, institution.active)
               "
             >
-              {{ institution.name }}
+              {{ institution.name }}{{ institution.active === 0 ? ' (Pending Approval)' : '' }}
             </option>
           </select>
           

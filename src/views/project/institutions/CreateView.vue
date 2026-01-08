@@ -67,6 +67,16 @@ const openAddInstitutionDialog = () => {
 const handleInstitutionCreated = (institution) => {
   // Set the selected institution data
   setInstitutionData(institution.name, institution.institution_id)
+  
+  // Show notification about pending approval if applicable
+  if (institution.pendingApproval || institution.active === 0) {
+    showInfo(
+      `Institution "${institution.name}" has been submitted for curator approval. You can use it now, but it will be visible to others once approved.`,
+      'Institution Created'
+    )
+  } else {
+    showSuccess(`Institution "${institution.name}" selected.`)
+  }
 }
 </script>
 
