@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { useInstitutionRequestsStore } from '@/stores/InstitutionRequestsStore.js'
@@ -14,6 +14,15 @@ const isLoaded = ref(false)
 const isSaving = ref(false)
 const editedName = ref('')
 const selectedStatus = ref(0)
+
+// Remap dialog state
+const showRemapDialog = ref(false)
+const remapUsageCount = ref(null)
+const remapSearchQuery = ref('')
+const remapSearchResults = ref([])
+const remapSearching = ref(false)
+const selectedRemapTarget = ref(null)
+const isDeleting = ref(false)
 
 const requestId = computed(() => parseInt(route.params.requestId))
 
@@ -61,22 +70,27 @@ async function saveChanges() {
   
   try {
     let result
+    const statusChanging = selectedStatus.value !== request.value.status
+    const nameChanged = editedName.value.trim() !== request.value.institution?.name
     
     if (selectedStatus.value === 1 && request.value.status !== 1) {
-      // Approving
+      // Approving (status changing to approved)
       result = await store.approveRequest(requestId.value, editedName.value)
       if (result.success) {
         showSuccess('Institution approved successfully! It is now visible to all users.')
       }
     } else if (selectedStatus.value === 2 && request.value.status !== 2) {
-      // Rejecting
+      // Rejecting (status changing to rejected)
       result = await store.rejectRequest(requestId.value)
       if (result.success) {
         showSuccess('Institution request rejected. It will remain visible only to the creator.')
       }
     } else {
-      // Just updating the name or no status change
-      result = await store.approveRequest(requestId.value, editedName.value)
+      // No status change - use updateRequest to only update the name
+      result = await store.updateRequest(requestId.value, { 
+        institutionName: editedName.value,
+        status: selectedStatus.value
+      })
       if (result.success) {
         showSuccess('Changes saved successfully')
       }
@@ -109,8 +123,10 @@ async function deleteRequest() {
       showSuccess('Request and institution deleted successfully')
       router.push('/curator/institution-requests')
     } else {
-      if (result.error?.includes('References exist')) {
-        showError('Cannot delete: This institution is in use by users or projects. Please remap references first.')
+      if (result.error?.includes('references') || result.error?.includes('References exist')) {
+        // Show remap dialog
+        remapUsageCount.value = result.usageCount || { users: 0, projects: 0, total: 0 }
+        showRemapDialog.value = true
       } else {
         showError(result.error || 'Failed to delete request')
       }
@@ -118,6 +134,68 @@ async function deleteRequest() {
   } catch (error) {
     console.error('Error deleting request:', error)
     showError('Failed to delete request')
+  }
+}
+
+// Search for institutions to remap to
+let searchTimeout = null
+watch(remapSearchQuery, (newQuery) => {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  
+  if (!newQuery || newQuery.length < 2) {
+    remapSearchResults.value = []
+    return
+  }
+  
+  searchTimeout = setTimeout(async () => {
+    remapSearching.value = true
+    const institutionId = request.value?.institution?.institution_id
+    const result = await store.searchInstitutions(newQuery, institutionId)
+    remapSearchResults.value = result.institutions || []
+    remapSearching.value = false
+  }, 300)
+})
+
+function selectRemapTarget(institution) {
+  selectedRemapTarget.value = institution
+  remapSearchQuery.value = institution.name
+  remapSearchResults.value = []
+}
+
+function closeRemapDialog() {
+  showRemapDialog.value = false
+  remapUsageCount.value = null
+  remapSearchQuery.value = ''
+  remapSearchResults.value = []
+  selectedRemapTarget.value = null
+}
+
+async function confirmRemapAndDelete() {
+  if (!selectedRemapTarget.value) {
+    showError('Please select an institution to remap references to')
+    return
+  }
+  
+  isDeleting.value = true
+  
+  try {
+    const result = await store.deleteRequest(requestId.value, { 
+      deleteInstitution: true, 
+      remapToId: selectedRemapTarget.value.institution_id 
+    })
+    
+    if (result.success) {
+      showSuccess('References remapped and institution deleted successfully')
+      closeRemapDialog()
+      router.push('/curator/institution-requests')
+    } else {
+      showError(result.error || 'Failed to delete institution')
+    }
+  } catch (error) {
+    console.error('Error deleting with remap:', error)
+    showError('Failed to delete institution')
+  } finally {
+    isDeleting.value = false
   }
 }
 
@@ -167,7 +245,6 @@ function getStatusBadgeClass(status) {
                     type="text" 
                     v-model="editedName" 
                     class="form-control"
-                    :disabled="request.status === 1"
                     maxlength="100"
                   >
                   <small class="text-muted">Max 100 characters</small>
@@ -275,6 +352,77 @@ function getStatusBadgeClass(status) {
         </div>
       </div>
     </div>
+
+    <!-- Remap Dialog Modal -->
+    <div v-if="showRemapDialog" class="modal-backdrop fade show"></div>
+    <div v-if="showRemapDialog" class="modal fade show d-block" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Remap Institution References</h5>
+            <button type="button" class="btn-close" @click="closeRemapDialog" :disabled="isDeleting"></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-warning">
+              <strong>This institution has references that must be remapped before deletion:</strong>
+              <ul class="mb-0 mt-2">
+                <li v-if="remapUsageCount?.users > 0">{{ remapUsageCount.users }} user(s) affiliated</li>
+                <li v-if="remapUsageCount?.projects > 0">{{ remapUsageCount.projects }} project(s) affiliated</li>
+              </ul>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label"><strong>Select institution to remap references to:</strong></label>
+              <input 
+                type="text" 
+                v-model="remapSearchQuery" 
+                class="form-control"
+                placeholder="Search for an institution..."
+                :disabled="isDeleting"
+              >
+              
+              <!-- Search results dropdown -->
+              <div v-if="remapSearchResults.length > 0" class="list-group mt-1 remap-search-results">
+                <button 
+                  v-for="inst in remapSearchResults" 
+                  :key="inst.institution_id"
+                  type="button"
+                  class="list-group-item list-group-item-action"
+                  @click="selectRemapTarget(inst)"
+                >
+                  {{ inst.name }}
+                </button>
+              </div>
+              
+              <div v-if="remapSearching" class="text-muted mt-1">
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                Searching...
+              </div>
+              
+              <div v-if="selectedRemapTarget" class="mt-2">
+                <span class="badge bg-success">
+                  Selected: {{ selectedRemapTarget.name }}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="closeRemapDialog" :disabled="isDeleting">
+              Cancel
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-danger" 
+              @click="confirmRemapAndDelete"
+              :disabled="!selectedRemapTarget || isDeleting"
+            >
+              <span v-if="isDeleting" class="spinner-border spinner-border-sm me-1"></span>
+              Remap & Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </LoadingIndicator>
 </template>
 
@@ -304,6 +452,29 @@ dt:first-child {
 
 dd {
   margin-bottom: 0.5rem;
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+}
+
+.modal {
+  z-index: 1050;
+}
+
+.remap-search-results {
+  position: absolute;
+  z-index: 1060;
+  max-height: 200px;
+  overflow-y: auto;
+  width: calc(100% - 2rem);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
 </style>
 

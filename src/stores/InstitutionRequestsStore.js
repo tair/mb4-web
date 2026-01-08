@@ -206,6 +206,65 @@ export const useInstitutionRequestsStore = defineStore({
     },
     
     /**
+     * Update an institution request (generic update without forcing status)
+     */
+    async updateRequest(requestId, { institutionName, status } = {}) {
+      try {
+        const body = {}
+        if (institutionName !== undefined) body.institutionName = institutionName
+        if (status !== undefined) body.status = status
+        
+        const res = await apiService.put(`/curation-requests/institutions/${requestId}`, body)
+        const data = await res.json()
+        
+        if (data.success) {
+          // Update local state
+          if (this.currentRequest?.request_id === requestId) {
+            this.currentRequest = data.data
+          }
+          
+          // Update list if loaded
+          const index = this.requests.findIndex(r => r.request_id === requestId)
+          if (index !== -1) {
+            this.requests[index] = { ...this.requests[index], ...data.data }
+          }
+          
+          return { success: true, data: data.data }
+        } else {
+          throw new Error(data.message || 'Failed to update request')
+        }
+      } catch (error) {
+        console.error('Error updating institution request:', error)
+        return { success: false, error: error.message }
+      }
+    },
+    
+    /**
+     * Search institutions for remap dropdown
+     */
+    async searchInstitutions(query, excludeId = null) {
+      try {
+        const params = { search: query, limit: 20, active: true }
+        const res = await apiService.get('/curator/institutions', { params })
+        const data = await res.json()
+        
+        if (data.success) {
+          let institutions = data.data.institutions || []
+          // Exclude the institution being deleted
+          if (excludeId) {
+            institutions = institutions.filter(i => i.institution_id !== excludeId)
+          }
+          return { success: true, institutions }
+        } else {
+          throw new Error(data.message || 'Failed to search institutions')
+        }
+      } catch (error) {
+        console.error('Error searching institutions:', error)
+        return { success: false, error: error.message, institutions: [] }
+      }
+    },
+    
+    /**
      * Delete an institution request
      */
     async deleteRequest(requestId, { deleteInstitution = false, remapToId = null } = {}) {
@@ -227,7 +286,12 @@ export const useInstitutionRequestsStore = defineStore({
           
           return { success: true }
         } else {
-          throw new Error(data.message || 'Failed to delete request')
+          // Return the usageCount if present (for remap dialog)
+          return { 
+            success: false, 
+            error: data.message || 'Failed to delete request',
+            usageCount: data.usageCount
+          }
         }
       } catch (error) {
         console.error('Error deleting institution request:', error)
