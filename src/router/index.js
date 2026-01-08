@@ -158,6 +158,16 @@ const router = createRouter({
               name: 'CuratorDuplicationRequestDetail',
               component: () => import('@/views/curator/DuplicationRequestDetailView.vue'),
             },
+            {
+              path: 'institution-requests',
+              name: 'CuratorInstitutionRequestsList',
+              component: () => import('@/views/curator/InstitutionRequestsListView.vue'),
+            },
+            {
+              path: 'institution-requests/:requestId',
+              name: 'CuratorInstitutionRequestDetail',
+              component: () => import('@/views/curator/InstitutionRequestDetailView.vue'),
+            },
           ],
         },
         // User's Projects
