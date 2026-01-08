@@ -1,8 +1,11 @@
+# syntax=docker/dockerfile:1.4
+
 # build stage
 FROM node:lts-alpine as build-stage
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 COPY . .
 RUN npm run build
 
