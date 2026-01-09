@@ -31,7 +31,6 @@ const userCoordinates = ref({
 })
 const maintenanceMode = ref(false)
 const maintenanceMessage = ref('')
-const nextMaintenanceDate = ref('')
 const currentFeaturedIndex = ref(0)
 const currentToolIndex = ref(0)
 const currentPressIndex = ref(0)
@@ -93,7 +92,6 @@ onMounted(async () => {
 
     maintenanceMode.value = maintenanceStatus.enabled
     maintenanceMessage.value = maintenanceStatus.message
-    nextMaintenanceDate.value = maintenanceStatus.nextDate
 
     // Set initial indices
     currentFeaturedIndex.value = 0
@@ -213,7 +211,7 @@ onMounted(() => {
   <div class="home-container">
     <!-- Maintenance Mode Banner -->
     <div v-if="maintenanceMode" class="maintenance-banner">
-      {{ maintenanceMessage.replace('^date', nextMaintenanceDate) }}
+      {{ maintenanceMessage }}
     </div>
 
     <!-- Matrix Area -->
