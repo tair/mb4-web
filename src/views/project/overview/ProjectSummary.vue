@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Tooltip from '@/components/main/Tooltip.vue'
 import { formatBytes, formatNumber } from '@/utils/format'
-import { buildMediaUrl, getBestMediaUrl } from '@/utils/fileUtils.js'
+import { buildMediaUrl } from '@/utils/fileUtils.js'
 // import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore' // No longer needed
 import { ref, onMounted, computed, watchEffect } from 'vue'
 import { useNotifications } from '@/composables/useNotifications'
@@ -129,12 +129,12 @@ watchEffect(() => {
     resolvedExemplarUrl.value = '/images/3DImage.png'
     return
   }
-  // Prefer large, then medium, thumbnail, original
-  resolvedExemplarUrl.value = getBestMediaUrl(
-    mediaJson,
-    ['large', 'medium', 'thumbnail', 'original'],
+  // Directly request large image - the error handler will fall back to thumbnail if needed
+  // This avoids relying on the media JSON having size keys which may be inconsistent
+  resolvedExemplarUrl.value = buildMediaUrl(
     props.projectId,
-    exemplarMedia.value.media_id
+    exemplarMedia.value.media_id,
+    'large'
   )
 })
 
