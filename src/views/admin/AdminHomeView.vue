@@ -3,23 +3,40 @@ import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { apiService } from '@/services/apiService.js'
+import { useAdminUsersStore } from '@/stores/AdminUsersStore.js'
 
 const isLoaded = ref(false)
+const adminUsersStore = useAdminUsersStore()
 
 const maintenanceStatus = ref({
   enabled: false,
   message: '',
 })
 
+const userStats = ref({
+  totalActive: 0,
+  totalInactive: 0,
+  pendingApproval: 0,
+  total: 0,
+})
+
 onMounted(async () => {
   try {
-    const response = await apiService.get('/admin/maintenance')
-    const data = await response.json()
-    if (data.success) {
-      maintenanceStatus.value = data.data
+    const [maintenanceResponse] = await Promise.all([
+      apiService.get('/admin/maintenance'),
+      adminUsersStore.fetchStats().catch(() => {}),
+    ])
+    
+    const maintenanceData = await maintenanceResponse.json()
+    if (maintenanceData.success) {
+      maintenanceStatus.value = maintenanceData.data
+    }
+    
+    if (adminUsersStore.stats) {
+      userStats.value = adminUsersStore.stats
     }
   } catch (error) {
-    console.error('Error loading maintenance status:', error)
+    console.error('Error loading admin dashboard data:', error)
   } finally {
     isLoaded.value = true
   }
@@ -38,11 +55,59 @@ onMounted(async () => {
 
       <!-- Admin Cards -->
       <div class="row">
+        <!-- User Logins Card -->
+        <div class="col-md-6 col-lg-4 mb-4">
+          <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="card-title mb-0 text-white">
+                <i class="fa fa-users me-2"></i>
+                User Logins
+              </h5>
+              <span v-if="userStats.pendingApproval > 0" class="badge bg-warning text-dark">
+                {{ userStats.pendingApproval }} pending
+              </span>
+            </div>
+            <div class="card-body">
+              <div class="row text-center mb-3">
+                <div class="col-4">
+                  <div class="stat-number text-success">{{ userStats.totalActive }}</div>
+                  <div class="stat-label">Active</div>
+                </div>
+                <div class="col-4">
+                  <div class="stat-number text-warning">{{ userStats.totalInactive }}</div>
+                  <div class="stat-label">Inactive</div>
+                </div>
+                <div class="col-4">
+                  <div class="stat-number text-primary">{{ userStats.total }}</div>
+                  <div class="stat-label">Total</div>
+                </div>
+              </div>
+              
+              <div v-if="userStats.pendingApproval > 0" class="alert alert-warning small mb-0">
+                <i class="fa fa-clock me-2"></i>
+                {{ userStats.pendingApproval }} user(s) awaiting approval
+              </div>
+              <div v-else class="text-muted small">
+                <i class="fa fa-check-circle me-2 text-success"></i>
+                No users pending approval
+              </div>
+            </div>
+            <div class="card-footer">
+              <RouterLink to="/admin/users" class="btn btn-primary w-100 btn-admin">
+                Manage Users
+              </RouterLink>
+            </div>
+          </div>
+        </div>
+
         <!-- Maintenance Message Card -->
         <div class="col-md-6 col-lg-4 mb-4">
           <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-              <h5 class="card-title mb-0 text-white">Maintenance Message</h5>
+              <h5 class="card-title mb-0 text-white">
+                <i class="fa fa-wrench me-2"></i>
+                Maintenance Message
+              </h5>
               <span
                 v-if="maintenanceStatus.enabled"
                 class="badge bg-success"
@@ -69,7 +134,7 @@ onMounted(async () => {
               </div>
             </div>
             <div class="card-footer">
-              <RouterLink to="/admin/maintenance" class="btn btn-primary w-100">
+              <RouterLink to="/admin/maintenance" class="btn btn-primary w-100 btn-admin">
                 Manage Maintenance Message
               </RouterLink>
             </div>
@@ -113,5 +178,26 @@ onMounted(async () => {
 
 .bg-light {
   min-height: 200px;
+}
+
+.stat-number {
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-admin {
+  color: #ffffff !important;
+}
+
+.btn-admin:hover {
+  color: #ffffff !important;
 }
 </style>

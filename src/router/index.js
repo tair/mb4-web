@@ -139,6 +139,21 @@ const router = createRouter({
               name: 'AdminMaintenanceView',
               component: () => import('@/views/admin/MaintenanceMessageView.vue'),
             },
+            {
+              path: 'users',
+              name: 'AdminUsersList',
+              component: () => import('@/views/admin/UsersListView.vue'),
+            },
+            {
+              path: 'users/create',
+              name: 'AdminUsersCreate',
+              component: () => import('@/views/admin/UserCreateView.vue'),
+            },
+            {
+              path: 'users/:userId/edit',
+              name: 'AdminUsersEdit',
+              component: () => import('@/views/admin/UserEditView.vue'),
+            },
           ],
         },
 
