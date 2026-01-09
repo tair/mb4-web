@@ -127,12 +127,17 @@ const router = createRouter({
         {
           path: '/admin',
           component: AdminView,
-          beforeEnter: requireSignIn,
+          beforeEnter: requireAdminRole,
           children: [
             {
               path: '',
               name: 'AdminHomeView',
               component: AdminHomeView,
+            },
+            {
+              path: 'maintenance',
+              name: 'AdminMaintenanceView',
+              component: () => import('@/views/admin/MaintenanceMessageView.vue'),
             },
           ],
         },
@@ -392,6 +397,27 @@ function requireSignIn(to) {
   const authStore = useAuthStore()
   if (!authStore.hasValidAuthToken() && to.name !== 'UserLogin') {
     return { name: 'UserLogin' }
+  }
+}
+
+/**
+ * Route guard that requires admin role
+ * Must be used after requireSignIn
+ */
+function requireAdminRole(to) {
+  const authStore = useAuthStore()
+  
+  // First check if signed in
+  if (!authStore.hasValidAuthToken()) {
+    return { name: 'UserLogin' }
+  }
+  
+  // Check admin role
+  if (!authStore.isUserAdministrator) {
+    return { 
+      name: 'HomeView',
+      query: { error: 'Admin privileges required to access this page.' }
+    }
   }
 }
 
