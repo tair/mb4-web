@@ -160,10 +160,10 @@ onMounted(async () => {
                   <i class="fa fa-wrench text-primary me-2"></i>
                   <strong>Tools</strong> - Downloadable resources
                 </li>
-                <li class="mb-2">
+                <!-- <li class="mb-2">
                   <i class="fa fa-bullhorn text-primary me-2"></i>
                   <strong>Announcements</strong> - Time-sensitive messages
-                </li>
+                </li> -->
                 <li class="mb-2">
                   <i class="fa fa-image text-primary me-2"></i>
                   <strong>Matrix Images</strong> - Hero/banner images
@@ -177,7 +177,7 @@ onMounted(async () => {
                   <strong>Press</strong> - News and updates
                 </li>
               </ul>
-            </div>
+              </div>
             <div class="card-footer">
               <RouterLink to="/admin/homepage" class="btn btn-primary w-100 btn-admin">
                 Manage Home Page Content
