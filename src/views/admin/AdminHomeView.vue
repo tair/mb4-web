@@ -141,16 +141,47 @@ onMounted(async () => {
           </div>
         </div>
 
-        <!-- Placeholder for future admin features -->
+        <!-- Home Page Dashboard Card -->
         <div class="col-md-6 col-lg-4 mb-4">
-          <div class="card h-100 bg-light">
-            <div class="card-body d-flex flex-column align-items-center justify-content-center text-center">
-              <div class="text-muted mb-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
-                </svg>
-              </div>
-              <p class="text-muted mb-0">Additional admin features can be added here</p>
+          <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="card-title mb-0 text-white">
+                <i class="fa fa-home me-2"></i>
+                Home Page Dashboard
+              </h5>
+            </div>
+            <div class="card-body">
+              <p class="mb-3">
+                Manage content displayed on the public MorphoBank homepage.
+              </p>
+              
+              <ul class="list-unstyled small mb-0">
+                <li class="mb-2">
+                  <i class="fa fa-wrench text-primary me-2"></i>
+                  <strong>Tools</strong> - Downloadable resources
+                </li>
+                <li class="mb-2">
+                  <i class="fa fa-bullhorn text-primary me-2"></i>
+                  <strong>Announcements</strong> - Time-sensitive messages
+                </li>
+                <li class="mb-2">
+                  <i class="fa fa-image text-primary me-2"></i>
+                  <strong>Matrix Images</strong> - Hero/banner images
+                </li>
+                <li class="mb-2">
+                  <i class="fa fa-star text-primary me-2"></i>
+                  <strong>Featured Projects</strong> - Slideshow selection
+                </li>
+                <li>
+                  <i class="fa fa-newspaper text-primary me-2"></i>
+                  <strong>Press</strong> - News and updates
+                </li>
+              </ul>
+            </div>
+            <div class="card-footer">
+              <RouterLink to="/admin/homepage" class="btn btn-primary w-100 btn-admin">
+                Manage Home Page Content
+              </RouterLink>
             </div>
           </div>
         </div>

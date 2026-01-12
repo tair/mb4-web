@@ -154,6 +154,11 @@ const router = createRouter({
               name: 'AdminUsersEdit',
               component: () => import('@/views/admin/UserEditView.vue'),
             },
+            {
+              path: 'homepage',
+              name: 'AdminHomepageDashboard',
+              component: () => import('@/views/admin/HomePageDashboardView.vue'),
+            },
           ],
         },
 
