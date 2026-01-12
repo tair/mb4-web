@@ -36,11 +36,10 @@ function handleBackdropClick(event) {
 
 <template>
   <Teleport to="body">
-    <div
-      v-if="show"
-      class="modal-backdrop show"
-      @click="handleBackdropClick"
-    >
+    <template v-if="show">
+      <!-- Backdrop as separate element -->
+      <div class="modal-backdrop show" @click="handleCancel"></div>
+      <!-- Modal as sibling, not child -->
       <div class="modal show d-block" tabindex="-1" @click="handleBackdropClick">
         <div class="modal-dialog modal-dialog-centered" @click.stop>
           <div class="modal-content">
@@ -88,7 +87,7 @@ function handleBackdropClick(event) {
           </div>
         </div>
       </div>
-    </div>
+    </template>
   </Teleport>
 </template>
 
@@ -104,10 +103,18 @@ function handleBackdropClick(event) {
 }
 
 .modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   z-index: 1055;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .modal-content {
+  background-color: #ffffff;
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
 </style>
