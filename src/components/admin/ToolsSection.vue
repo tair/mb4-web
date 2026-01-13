@@ -203,7 +203,7 @@ function getImageUrl(tool) {
                   placeholder="https://..."
                 />
                 <small class="text-muted">
-                  Optional. URL to more information.
+                  Optional. URL must include https:// (e.g., https://example.com)
                 </small>
               </div>
             </div>
