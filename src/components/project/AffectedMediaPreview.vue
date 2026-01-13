@@ -50,6 +50,7 @@ function close() {
 }
 
 function confirm() {
+  currentPage.value = 1
   emit('confirm')
 }
 

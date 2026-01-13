@@ -35,7 +35,9 @@ const projectId = computed(() => route.params.id)
 const { showError, showSuccess } = useNotifications()
 
 // State
-const isLoading = ref(false)
+const isApplying = ref(false)
+const isLoadingSpecimen = ref(false)
+const isLoadingCitations = ref(false)
 const applyToSpecimen = ref(false)
 const applyToCitations = ref(false)
 const applyHolderOnly = ref(false)
@@ -46,6 +48,9 @@ const specimenMedia = ref([])
 const citationMedia = ref([])
 const specimenMediaLoaded = ref(false)
 const citationMediaLoaded = ref(false)
+
+// Computed loading state - true when any async operation is in progress
+const isLoading = computed(() => isApplying.value || isLoadingSpecimen.value || isLoadingCitations.value)
 
 // Preview modal
 const showPreview = ref(false)
@@ -88,7 +93,7 @@ const canApply = computed(() => {
 async function loadSpecimenMedia() {
   if (specimenMediaLoaded.value || !props.specimenId || !props.mediaId) return
   
-  isLoading.value = true
+  isLoadingSpecimen.value = true
   try {
     const response = await apiService.get(
       `/projects/${projectId.value}/media/${props.mediaId}/related/by-specimen`
@@ -100,14 +105,14 @@ async function loadSpecimenMedia() {
     console.error('Error loading specimen media:', error)
     showError('Failed to load related media')
   } finally {
-    isLoading.value = false
+    isLoadingSpecimen.value = false
   }
 }
 
 async function loadCitationMedia() {
   if (citationMediaLoaded.value || !props.mediaId) return
   
-  isLoading.value = true
+  isLoadingCitations.value = true
   try {
     const response = await apiService.get(
       `/projects/${projectId.value}/media/${props.mediaId}/related/by-citations`
@@ -119,7 +124,7 @@ async function loadCitationMedia() {
     console.error('Error loading citation media:', error)
     showError('Failed to load related media')
   } finally {
-    isLoading.value = false
+    isLoadingCitations.value = false
   }
 }
 
@@ -151,14 +156,20 @@ function showAffectedPreview(type) {
 }
 
 // Apply copyright settings
-async function applySettings() {
+// Optional `targetCategory` param: 'specimen', 'citations', or null/undefined for all checked
+async function applySettings(targetCategory = null) {
   // Collect target media IDs (removing duplicates)
   const targetMediaIds = new Set()
   
-  if (applyToSpecimen.value) {
+  // If a specific category is provided, only apply to that category
+  // Otherwise, apply to all checked checkboxes
+  const applySpecimen = targetCategory === 'specimen' || (targetCategory === null && applyToSpecimen.value)
+  const applyCitations = targetCategory === 'citations' || (targetCategory === null && applyToCitations.value)
+  
+  if (applySpecimen) {
     specimenMedia.value.forEach(m => targetMediaIds.add(m.media_id))
   }
-  if (applyToCitations.value) {
+  if (applyCitations) {
     citationMedia.value.forEach(m => targetMediaIds.add(m.media_id))
   }
   
@@ -167,7 +178,7 @@ async function applySettings() {
     return
   }
   
-  isLoading.value = true
+  isApplying.value = true
   
   try {
     const endpoint = applyHolderOnly.value 
@@ -189,9 +200,13 @@ async function applySettings() {
       showSuccess(data.message || `Copyright settings applied to ${data.updatedCount} media files`)
       emit('applied', { count: data.updatedCount, holderOnly: applyHolderOnly.value })
       
-      // Reset checkboxes
-      applyToSpecimen.value = false
-      applyToCitations.value = false
+      // Reset the checkbox for the applied category (or all if no specific category)
+      if (targetCategory === 'specimen' || targetCategory === null) {
+        applyToSpecimen.value = false
+      }
+      if (targetCategory === 'citations' || targetCategory === null) {
+        applyToCitations.value = false
+      }
     } else {
       showError(data.message || 'Failed to apply settings')
     }
@@ -199,14 +214,15 @@ async function applySettings() {
     console.error('Error applying copyright:', error)
     showError('Failed to apply copyright settings')
   } finally {
-    isLoading.value = false
+    isApplying.value = false
   }
 }
 
 // Handle preview confirm (apply from preview modal)
+// Apply only to the previewed category, not all checked checkboxes
 function handlePreviewConfirm() {
   showPreview.value = false
-  applySettings()
+  applySettings(previewAction.value)
 }
 </script>
 
