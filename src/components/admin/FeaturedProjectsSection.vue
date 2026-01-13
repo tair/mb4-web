@@ -57,9 +57,8 @@ async function handleRemove(featuredProject) {
     <div class="alert alert-info mb-4">
       <i class="fa fa-info-circle me-2"></i>
       <strong>Featured Projects</strong> are displayed in a slideshow on the
-      homepage. Up to 5 projects are shown at a time. If more than 5 projects
-      are featured, 5 will be randomly selected. If no projects are featured,
-      5 random published projects will be shown.
+      homepage. All featured projects will be shown. If no projects are
+      featured, a selection of published projects will be shown at random.
     </div>
 
     <!-- Form -->
@@ -137,15 +136,6 @@ async function handleRemove(featuredProject) {
         </div>
 
         <div v-else>
-          <div
-            v-if="store.featuredProjects.length > 5"
-            class="alert alert-warning mb-3"
-          >
-            <i class="fa fa-exclamation-triangle me-2"></i>
-            You have {{ store.featuredProjects.length }} featured projects. Only
-            5 will be randomly selected for display on the homepage.
-          </div>
-
           <ul class="list-group">
             <li
               v-for="fp in store.featuredProjects"
