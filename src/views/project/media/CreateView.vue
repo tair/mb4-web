@@ -12,6 +12,7 @@ import { useNotifications } from '@/composables/useNotifications'
 import { NavigationPatterns } from '@/utils/navigationUtils.js'
 import { createSchema } from '@/views/project/media/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
+import CopyrightFormFields from '@/components/project/CopyrightFormFields.vue'
 import '@/assets/css/form.css'
 
 const route = useRoute()
@@ -25,10 +26,7 @@ const mediaViewsStore = useMediaViewsStore()
 const projectsStore = useProjectsStore()
 const { showError, showSuccess } = useNotifications()
 const isSubmitting = ref(false)
-const formData = ref(new FormData())
-const isCopyrighted = ref(false)
-const copyrightPermissionValue = ref(4) // Default value from schema
-const copyrightLicenseValue = ref(1) // Default value from schema
+const copyrightFormRef = ref(null)
 
 const isLoaded = computed(
   () =>
@@ -39,32 +37,14 @@ const isLoaded = computed(
     mediaViewsStore.isLoaded
 )
 
-// Create a computed schema that uses reactive values
-const dynamicCreateSchema = computed(() => {
+// Computed schema that excludes copyright fields (handled by CopyrightFormFields component)
+const filteredCreateSchema = computed(() => {
   const schema = { ...createSchema }
-
-  // Update copyright permission value
-  if (schema.copyright_permission) {
-    schema.copyright_permission = {
-      ...schema.copyright_permission,
-      args: {
-        ...schema.copyright_permission.args,
-        value: copyrightPermissionValue.value,
-      },
-    }
-  }
-
-  // Update copyright license value
-  if (schema.copyright_license) {
-    schema.copyright_license = {
-      ...schema.copyright_license,
-      args: {
-        ...schema.copyright_license.args,
-        value: copyrightLicenseValue.value,
-      },
-    }
-  }
-
+  // Remove copyright fields - they're handled by CopyrightFormFields component
+  delete schema.is_copyrighted
+  delete schema.copyright_permission
+  delete schema.copyright_license
+  delete schema.copyright_info
   return schema
 })
 
@@ -111,59 +91,13 @@ function validateRequiredFields(formData) {
     }
   })
 
-  // Conditional validation for copyright fields
-  const copyrightCheckbox = formData.get('is_copyrighted')
-  const isCopyrighted = copyrightCheckbox === '1' || copyrightCheckbox === 1
-
-  if (isCopyrighted) {
-    // Check copyright_permission - must not be the "not set" option (value 0)
-    const copyrightPermission = formData.get('copyright_permission')
-    const copyrightPermissionValue = parseInt(String(copyrightPermission), 10)
-
-    if (isNaN(copyrightPermissionValue) || copyrightPermissionValue === 0) {
-      errors.push(
-        'Copyright permission must be selected when media is under copyright (cannot use "Copyright permission not set")'
-      )
-    }
-
-    // Validate that copyright_permission is not contradictory
-    // Value 4 = "Copyright expired or work otherwise in public domain"
-    if (copyrightPermissionValue === 4) {
-      errors.push('Cannot select "Copyright expired or work otherwise in public domain" when media is under copyright')
-    }
-
-    // Check copyright_license - must not be the "not set" option (value 0)
-    const copyrightLicense = formData.get('copyright_license')
-    const copyrightLicenseValue = parseInt(String(copyrightLicense), 10)
-
-    if (isNaN(copyrightLicenseValue) || copyrightLicenseValue === 0) {
-      errors.push(
-        'Media reuse license must be selected when media is under copyright (cannot use "Media reuse policy not set")'
-      )
-    }
-
-    // Validate that copyright_license is not contradictory
-    // Value 1 = "CC0 - relinquish copyright"
-    if (copyrightLicenseValue === 1) {
-      errors.push('Cannot select "CC0 - relinquish copyright" when media is under copyright')
-    }
+  // Validate copyright fields using the component's validation
+  if (copyrightFormRef.value) {
+    const copyrightErrors = copyrightFormRef.value.validate()
+    errors.push(...copyrightErrors)
   }
 
   return errors
-}
-
-function handleCopyrightChange(event) {
-  isCopyrighted.value = event.target.checked
-
-  if (isCopyrighted.value) {
-    // When checked, set to "not set" options (value 0)
-    copyrightPermissionValue.value = 0
-    copyrightLicenseValue.value = 0
-  } else {
-    // When unchecked, revert to default values from schema
-    copyrightPermissionValue.value = 4 // Default from schema
-    copyrightLicenseValue.value = 1 // Default from schema
-  }
 }
 
 async function createMedia(event) {
@@ -195,19 +129,6 @@ async function createMedia(event) {
 
   // Remove the is_exemplar field from formData as the backend doesn't expect it
   formData.delete('is_exemplar')
-
-  // Ensure copyright fields are always included with appropriate values
-  if (!isCopyrighted.value) {
-    // When not copyrighted, set the default values
-    formData.set(
-      'copyright_permission',
-      copyrightPermissionValue.value.toString()
-    )
-    formData.set('copyright_license', copyrightLicenseValue.value.toString())
-    // Don't set copyright_info when not copyrighted, or set it to empty
-    formData.set('copyright_info', '')
-  }
-  // If copyrighted, the fields should already be in formData from the visible form
 
   try {
     const result = await mediaStore.create(projectId, formData)
@@ -279,18 +200,13 @@ onMounted(() => {
   <LoadingIndicator :isLoaded="isLoaded">
     <form @submit.prevent="createMedia">
       <div class="row setup-content">
+        <!-- Non-copyright fields from schema -->
         <template
-          v-for="(definition, index) in dynamicCreateSchema"
+          v-for="(definition, index) in filteredCreateSchema"
           :key="index"
         >
           <div
-            v-if="
-              !definition.existed &&
-              ((index !== 'copyright_permission' &&
-                index !== 'copyright_license' &&
-                index !== 'copyright_info') ||
-                isCopyrighted)
-            "
+            v-if="!definition.existed"
             class="form-group"
           >
             <label :for="index" class="form-label">
@@ -302,16 +218,21 @@ onMounted(() => {
               :is="definition.view"
               :name="index"
               v-bind="definition.args"
-              @change="
-                index === 'is_copyrighted'
-                  ? handleCopyrightChange($event)
-                  : null
-              "
             >
             </component>
           </div>
         </template>
 
+        <!-- Copyright Fields Component -->
+        <div class="form-group">
+          <CopyrightFormFields
+            ref="copyrightFormRef"
+            :initial-is-copyrighted="false"
+            :initial-copyright-permission="4"
+            :initial-copyright-license="1"
+            :initial-copyright-info="''"
+          />
+        </div>
 
         <div class="btn-form-group">
           <button

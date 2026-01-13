@@ -13,8 +13,10 @@ import { AccessControlService, EntityType } from '@/lib/access-control.js'
 import { useNotifications } from '@/composables/useNotifications'
 import { NavigationPatterns } from '@/utils/navigationUtils.js'
 import { editSchema } from '@/views/project/media/schema.js'
+import { apiService } from '@/services/apiService.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaDetailsCompCompact from '@/components/project/MediaDetailsCompCompact.vue'
+import CopyrightFormFields from '@/components/project/CopyrightFormFields.vue'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id)
@@ -29,6 +31,7 @@ const authStore = useAuthStore()
 const projectsStore = useProjectsStore()
 const { showError, showSuccess } = useNotifications()
 const isSubmitting = ref(false)
+const copyrightFormRef = ref(null)
 
 
 const isLoaded = computed(
@@ -41,6 +44,20 @@ const isLoaded = computed(
     projectsStore.isLoaded
 )
 const media = computed(() => mediaStore.getMediaById(mediaId))
+
+// Check if media has citations/bibliographic references (placeholder until citations store is loaded)
+const hasCitations = ref(false)
+
+// Computed schema that excludes copyright fields (handled by CopyrightFormFields component)
+const filteredEditSchema = computed(() => {
+  const schema = { ...editSchema }
+  // Remove copyright fields - they're handled by CopyrightFormFields component
+  delete schema.is_copyrighted
+  delete schema.copyright_permission
+  delete schema.copyright_license
+  delete schema.copyright_info
+  return schema
+})
 
 // Get current project to check if it's published
 const project = computed(() => projectsStore.getProjectById(projectId))
@@ -164,42 +181,21 @@ function isFieldDisabled(field) {
   return false
 }
 
+// Handle bulk copyright apply completion
+function handleBulkApplied(event) {
+  showSuccess(`Copyright settings applied to ${event.count} media files`)
+  // Optionally refresh the media store to reflect changes
+  mediaStore.fetchMedia(projectId)
+}
+
 // Validation function for required fields and conditional copyright validation
 function validateFormData(formData) {
   const errors = []
   
-  // Conditional validation for copyright fields
-  const copyrightCheckbox = formData.get('is_copyrighted')
-  const isCopyrighted = copyrightCheckbox === '1' || copyrightCheckbox === 1
-  
-  if (isCopyrighted) {
-    // Check copyright_permission - must not be the default "not set" option (value 0)
-    const copyrightPermission = formData.get('copyright_permission')
-    const copyrightPermissionValue = parseInt(String(copyrightPermission), 10)
-    
-    if (isNaN(copyrightPermissionValue) || copyrightPermissionValue === 0) {
-      errors.push('Copyright permission must be selected when media is under copyright (cannot use "Copyright permission not set")')
-    }
-    
-    // Validate that copyright_permission is not contradictory
-    // Value 4 = "Copyright expired or work otherwise in public domain"
-    if (copyrightPermissionValue === 4) {
-      errors.push('Cannot select "Copyright expired or work otherwise in public domain" when media is under copyright')
-    }
-    
-    // Check copyright_license - must not be the default "not set" option (value 0)
-    const copyrightLicense = formData.get('copyright_license')
-    const copyrightLicenseValue = parseInt(String(copyrightLicense), 10)
-    
-    if (isNaN(copyrightLicenseValue) || copyrightLicenseValue === 0) {
-      errors.push('Media reuse license must be selected when media is under copyright (cannot use "Media reuse policy not set")')
-    }
-    
-    // Validate that copyright_license is not contradictory
-    // Value 1 = "CC0 - relinquish copyright"
-    if (copyrightLicenseValue === 1) {
-      errors.push('Cannot select "CC0 - relinquish copyright" when media is under copyright')
-    }
+  // Validate copyright fields using the component's validation
+  if (copyrightFormRef.value) {
+    const copyrightErrors = copyrightFormRef.value.validate()
+    errors.push(...copyrightErrors)
   }
   
   return errors
@@ -273,6 +269,20 @@ async function editMedia(event) {
 
 
 
+// Load citations count for bulk apply feature
+async function loadCitationsStatus() {
+  try {
+    const response = await apiService.get(
+      `/projects/${projectId}/media/${mediaId}/citations`
+    )
+    const data = await response.json()
+    hasCitations.value = data.citations && data.citations.length > 0
+  } catch (error) {
+    console.error('Error loading citations status:', error)
+    hasCitations.value = false
+  }
+}
+
 onMounted(() => {
   // Ensure auth store is loaded from localStorage
   if (!authStore.user?.access) {
@@ -297,6 +307,9 @@ onMounted(() => {
   if (!projectsStore.isLoaded) {
     projectsStore.fetchProjects()
   }
+  
+  // Load citations status for bulk apply feature
+  loadCitationsStatus()
 })
 </script>
 <template>
@@ -335,14 +348,14 @@ onMounted(() => {
 
 
     <form @submit.prevent="editMedia">
-      <div class="row setup-content">        
-        <div v-for="(definition, index) in editSchema" :key="index" class="mb-3">
+      <div class="row setup-content">
+        <!-- Non-copyright fields from schema -->
+        <div v-for="(definition, index) in filteredEditSchema" :key="index" class="mb-3">
           <label for="index" class="form-label">
             {{ definition.label }}
             <span v-if="isFieldDisabled(index)" class="text-muted ms-1"
               >(read-only)</span
             >
-
           </label>
           <component
             :key="index"
@@ -355,6 +368,22 @@ onMounted(() => {
           </component>
         </div>
         
+        <!-- Copyright Fields Component -->
+        <div class="mb-3">
+          <CopyrightFormFields
+            ref="copyrightFormRef"
+            :initial-is-copyrighted="media?.is_copyrighted"
+            :initial-copyright-permission="media?.copyright_permission || 0"
+            :initial-copyright-license="media?.copyright_license || 0"
+            :initial-copyright-info="media?.copyright_info || ''"
+            :media-id="mediaId"
+            :disabled="!canEditMedia"
+            :show-bulk-apply="true"
+            :specimen-id="media?.specimen_id"
+            :has-citations="hasCitations"
+            @bulk-applied="handleBulkApplied"
+          />
+        </div>
         
         <div class="btn-form-group">
           <RouterLink :to="{ name: 'MyProjectMediaView' }">
