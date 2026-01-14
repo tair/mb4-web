@@ -25,6 +25,11 @@ const props = defineProps({
   disabled: {
     type: Boolean,
     default: false
+  },
+  // Whether the parent form has unsaved changes
+  hasUnsavedChanges: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -48,6 +53,11 @@ const specimenMedia = ref([])
 const citationMedia = ref([])
 const specimenMediaLoaded = ref(false)
 const citationMediaLoaded = ref(false)
+
+// Track which mediaId each in-flight request was started for
+// This prevents stale responses from overwriting state after mediaId changes
+const specimenRequestMediaId = ref(null)
+const citationRequestMediaId = ref(null)
 
 // Computed loading state - true when any async operation is in progress
 const isLoading = computed(() => isApplying.value || isLoadingSpecimen.value || isLoadingCitations.value)
@@ -93,42 +103,107 @@ const canApply = computed(() => {
 async function loadSpecimenMedia() {
   if (specimenMediaLoaded.value || !props.specimenId || !props.mediaId) return
   
+  // Capture the mediaId at request start to detect stale responses
+  const requestMediaId = props.mediaId
+  specimenRequestMediaId.value = requestMediaId
+  
   isLoadingSpecimen.value = true
   try {
     const response = await apiService.get(
-      `/projects/${projectId.value}/media/${props.mediaId}/related/by-specimen`
+      `/projects/${projectId.value}/media/${requestMediaId}/related/by-specimen`
     )
     const data = await response.json()
-    specimenMedia.value = data.media || []
-    specimenMediaLoaded.value = true
+    
+    // Only update state if mediaId hasn't changed during the request
+    // This prevents stale data from overwriting state after navigation
+    if (props.mediaId === requestMediaId) {
+      specimenMedia.value = data.media || []
+      specimenMediaLoaded.value = true
+    }
   } catch (error) {
-    console.error('Error loading specimen media:', error)
-    showError('Failed to load related media')
+    // Only show error if still on the same media
+    if (props.mediaId === requestMediaId) {
+      console.error('Error loading specimen media:', error)
+      showError('Failed to load related media')
+    }
   } finally {
-    isLoadingSpecimen.value = false
+    // Only clear loading state if this was the active request
+    if (specimenRequestMediaId.value === requestMediaId) {
+      isLoadingSpecimen.value = false
+    }
   }
 }
 
 async function loadCitationMedia() {
   if (citationMediaLoaded.value || !props.mediaId) return
   
+  // Capture the mediaId at request start to detect stale responses
+  const requestMediaId = props.mediaId
+  citationRequestMediaId.value = requestMediaId
+  
   isLoadingCitations.value = true
   try {
     const response = await apiService.get(
-      `/projects/${projectId.value}/media/${props.mediaId}/related/by-citations`
+      `/projects/${projectId.value}/media/${requestMediaId}/related/by-citations`
     )
     const data = await response.json()
-    citationMedia.value = data.media || []
-    citationMediaLoaded.value = true
+    
+    // Only update state if mediaId hasn't changed during the request
+    // This prevents stale data from overwriting state after navigation
+    if (props.mediaId === requestMediaId) {
+      citationMedia.value = data.media || []
+      citationMediaLoaded.value = true
+    }
   } catch (error) {
-    console.error('Error loading citation media:', error)
-    showError('Failed to load related media')
+    // Only show error if still on the same media
+    if (props.mediaId === requestMediaId) {
+      console.error('Error loading citation media:', error)
+      showError('Failed to load related media')
+    }
   } finally {
-    isLoadingCitations.value = false
+    // Only clear loading state if this was the active request
+    if (citationRequestMediaId.value === requestMediaId) {
+      isLoadingCitations.value = false
+    }
   }
 }
 
+// Reset all related state - only called when mediaId changes
+function resetAllState() {
+  applyToSpecimen.value = false
+  applyToCitations.value = false
+  specimenMedia.value = []
+  citationMedia.value = []
+  specimenMediaLoaded.value = false
+  citationMediaLoaded.value = false
+  
+  // Clear request tracking to invalidate any in-flight requests
+  // When they complete, they'll see the mediaId mismatch and discard results
+  specimenRequestMediaId.value = null
+  citationRequestMediaId.value = null
+  isLoadingSpecimen.value = false
+  isLoadingCitations.value = false
+  
+  // Reset apply state so the Apply button isn't stuck disabled
+  // when navigating to a new media while an apply request is in-flight
+  isApplying.value = false
+  
+  // Also reset preview state to prevent stale data mismatch
+  // If preview remains open while mediaId changes, the displayed snapshot
+  // would become outdated vs. the current specimenMedia/citationMedia arrays
+  showPreview.value = false
+  previewMedia.value = []
+  previewTitle.value = ''
+  previewAction.value = null
+}
+
+// Reset state when mediaId changes (viewing a different media file)
+watch(() => props.mediaId, () => {
+  resetAllState()
+})
+
 // Watch for checkbox changes to load data
+// NOTE: We do NOT clear data when unchecking - keep it cached to avoid race conditions
 watch(applyToSpecimen, (newVal) => {
   if (newVal && !specimenMediaLoaded.value) {
     loadSpecimenMedia()
@@ -144,11 +219,13 @@ watch(applyToCitations, (newVal) => {
 // Show preview of affected media
 function showAffectedPreview(type) {
   if (type === 'specimen') {
-    previewMedia.value = specimenMedia.value
+    // Create a COPY of the array to prevent shared reference issues
+    previewMedia.value = [...specimenMedia.value]
     previewTitle.value = 'Media with Same Specimen'
     previewAction.value = 'specimen'
   } else if (type === 'citations') {
-    previewMedia.value = citationMedia.value
+    // Create a COPY of the array to prevent shared reference issues
+    previewMedia.value = [...citationMedia.value]
     previewTitle.value = 'Media with Same Citations'
     previewAction.value = 'citations'
   }
@@ -166,15 +243,47 @@ async function applySettings(targetCategory = null) {
   const applySpecimen = targetCategory === 'specimen' || (targetCategory === null && applyToSpecimen.value)
   const applyCitations = targetCategory === 'citations' || (targetCategory === null && applyToCitations.value)
   
+  
+  // First check: are any categories selected?
+  if (!applySpecimen && !applyCitations) {
+    showError('Please select at least one category to apply settings to')
+    return
+  }
+  
+  // Validate that data is loaded before trying to apply
+  if (applySpecimen && !specimenMediaLoaded.value) {
+    showError('Specimen media data is not loaded. Please try again.')
+    return
+  }
+  if (applyCitations && !citationMediaLoaded.value) {
+    showError('Citation media data is not loaded. Please try again.')
+    return
+  }
+  
   if (applySpecimen) {
-    specimenMedia.value.forEach(m => targetMediaIds.add(m.media_id))
+    specimenMedia.value.forEach(m => {
+      if (m.media_id) {
+        targetMediaIds.add(m.media_id)
+      }
+    })
   }
   if (applyCitations) {
-    citationMedia.value.forEach(m => targetMediaIds.add(m.media_id))
+    citationMedia.value.forEach(m => {
+      if (m.media_id) {
+        targetMediaIds.add(m.media_id)
+      }
+    })
   }
   
   if (targetMediaIds.size === 0) {
-    showError('No media selected to apply settings to')
+    // Provide more helpful error message
+    if (applySpecimen && specimenMedia.value.length === 0) {
+      showError('No specimen media found to apply settings to')
+    } else if (applyCitations && citationMedia.value.length === 0) {
+      showError('No citation media found to apply settings to')
+    } else {
+      showError('No valid media found to apply settings to')
+    }
     return
   }
   
@@ -236,6 +345,14 @@ function handlePreviewConfirm() {
     </div>
     
     <div class="bulk-apply-options">
+      <!-- Warning for unsaved changes -->
+      <div v-if="hasUnsavedChanges" class="alert alert-warning py-2 mb-3">
+        <i class="fa-solid fa-exclamation-triangle me-2"></i>
+        <strong>Save your changes first!</strong> 
+        Bulk apply uses the saved copyright settings from the database. 
+        Please save this media before applying to other files.
+      </div>
+      
       <!-- Apply to same specimen -->
       <div v-if="canApplyToSpecimen" class="form-check mb-2">
         <input
@@ -330,8 +447,8 @@ function handlePreviewConfirm() {
         <button
           type="button"
           class="btn btn-primary btn-sm"
-          :disabled="!canApply"
-          @click="applySettings"
+          :disabled="!canApply || hasUnsavedChanges"
+          @click="applySettings()"
         >
           <i class="fa-solid fa-copy me-1"></i>
           Apply to {{ selectedMediaCount }} Media
@@ -347,6 +464,7 @@ function handlePreviewConfirm() {
       :show="showPreview"
       :media="previewMedia"
       :title="previewTitle"
+      :project-id="projectId"
       @close="showPreview = false"
       @confirm="handlePreviewConfirm"
     />

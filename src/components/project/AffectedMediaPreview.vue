@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
+import { buildMediaUrl } from '@/utils/fileUtils.js'
 
 const props = defineProps({
   media: {
@@ -13,6 +14,10 @@ const props = defineProps({
   show: {
     type: Boolean,
     default: false
+  },
+  projectId: {
+    type: [Number, String],
+    required: true
   }
 })
 
@@ -56,9 +61,8 @@ function confirm() {
 
 // Get thumbnail URL for media
 function getThumbnailUrl(mediaItem) {
-  if (mediaItem.thumbnail?.S3_KEY) {
-    // Construct S3 URL (this would need to be adjusted based on your S3 configuration)
-    return `/api/media/${mediaItem.media_id}/thumbnail`
+  if (mediaItem.media_id && props.projectId) {
+    return buildMediaUrl(props.projectId, mediaItem.media_id, 'thumbnail')
   }
   return null
 }
@@ -139,7 +143,8 @@ function getThumbnailUrl(mediaItem) {
       
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" @click="close">
-          Cancel
+          <i class="fa-solid fa-times me-1"></i>
+          Close Preview
         </button>
         <button 
           type="button" 
@@ -148,7 +153,7 @@ function getThumbnailUrl(mediaItem) {
           @click="confirm"
         >
           <i class="fa-solid fa-check me-2"></i>
-          Apply to {{ media.length }} Media
+          Confirm & Apply to {{ media.length }} Media
         </button>
       </div>
     </div>
