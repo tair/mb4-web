@@ -184,6 +184,10 @@ function resetAllState() {
   isLoadingSpecimen.value = false
   isLoadingCitations.value = false
   
+  // Reset apply state so the Apply button isn't stuck disabled
+  // when navigating to a new media while an apply request is in-flight
+  isApplying.value = false
+  
   // Also reset preview state to prevent stale data mismatch
   // If preview remains open while mediaId changes, the displayed snapshot
   // would become outdated vs. the current specimenMedia/citationMedia arrays
