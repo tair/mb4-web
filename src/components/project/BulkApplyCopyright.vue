@@ -128,7 +128,23 @@ async function loadCitationMedia() {
   }
 }
 
+// Reset all related state - only called when mediaId changes
+function resetAllState() {
+  applyToSpecimen.value = false
+  applyToCitations.value = false
+  specimenMedia.value = []
+  citationMedia.value = []
+  specimenMediaLoaded.value = false
+  citationMediaLoaded.value = false
+}
+
+// Reset state when mediaId changes (viewing a different media file)
+watch(() => props.mediaId, () => {
+  resetAllState()
+})
+
 // Watch for checkbox changes to load data
+// NOTE: We do NOT clear data when unchecking - keep it cached to avoid race conditions
 watch(applyToSpecimen, (newVal) => {
   if (newVal && !specimenMediaLoaded.value) {
     loadSpecimenMedia()
@@ -144,11 +160,13 @@ watch(applyToCitations, (newVal) => {
 // Show preview of affected media
 function showAffectedPreview(type) {
   if (type === 'specimen') {
-    previewMedia.value = specimenMedia.value
+    // Create a COPY of the array to prevent shared reference issues
+    previewMedia.value = [...specimenMedia.value]
     previewTitle.value = 'Media with Same Specimen'
     previewAction.value = 'specimen'
   } else if (type === 'citations') {
-    previewMedia.value = citationMedia.value
+    // Create a COPY of the array to prevent shared reference issues
+    previewMedia.value = [...citationMedia.value]
     previewTitle.value = 'Media with Same Citations'
     previewAction.value = 'citations'
   }
@@ -166,15 +184,59 @@ async function applySettings(targetCategory = null) {
   const applySpecimen = targetCategory === 'specimen' || (targetCategory === null && applyToSpecimen.value)
   const applyCitations = targetCategory === 'citations' || (targetCategory === null && applyToCitations.value)
   
+  // Debug logging to help diagnose issues
+  console.log('[BulkApplyCopyright] applySettings called:', {
+    targetCategory,
+    applyToSpecimen: applyToSpecimen.value,
+    applyToCitations: applyToCitations.value,
+    applySpecimen,
+    applyCitations,
+    specimenMediaLoaded: specimenMediaLoaded.value,
+    specimenMediaLength: specimenMedia.value.length,
+    citationMediaLoaded: citationMediaLoaded.value,
+    citationMediaLength: citationMedia.value.length
+  })
+  
+  // First check: are any categories selected?
+  if (!applySpecimen && !applyCitations) {
+    showError('Please select at least one category to apply settings to')
+    return
+  }
+  
+  // Validate that data is loaded before trying to apply
+  if (applySpecimen && !specimenMediaLoaded.value) {
+    showError('Specimen media data is not loaded. Please try again.')
+    return
+  }
+  if (applyCitations && !citationMediaLoaded.value) {
+    showError('Citation media data is not loaded. Please try again.')
+    return
+  }
+  
   if (applySpecimen) {
-    specimenMedia.value.forEach(m => targetMediaIds.add(m.media_id))
+    specimenMedia.value.forEach(m => {
+      if (m.media_id) {
+        targetMediaIds.add(m.media_id)
+      }
+    })
   }
   if (applyCitations) {
-    citationMedia.value.forEach(m => targetMediaIds.add(m.media_id))
+    citationMedia.value.forEach(m => {
+      if (m.media_id) {
+        targetMediaIds.add(m.media_id)
+      }
+    })
   }
   
   if (targetMediaIds.size === 0) {
-    showError('No media selected to apply settings to')
+    // Provide more helpful error message
+    if (applySpecimen && specimenMedia.value.length === 0) {
+      showError('No specimen media found to apply settings to')
+    } else if (applyCitations && citationMedia.value.length === 0) {
+      showError('No citation media found to apply settings to')
+    } else {
+      showError('No valid media found to apply settings to')
+    }
     return
   }
   
@@ -331,7 +393,7 @@ function handlePreviewConfirm() {
           type="button"
           class="btn btn-primary btn-sm"
           :disabled="!canApply"
-          @click="applySettings"
+          @click="applySettings()"
         >
           <i class="fa-solid fa-copy me-1"></i>
           Apply to {{ selectedMediaCount }} Media
@@ -347,6 +409,7 @@ function handlePreviewConfirm() {
       :show="showPreview"
       :media="previewMedia"
       :title="previewTitle"
+      :project-id="projectId"
       @close="showPreview = false"
       @confirm="handlePreviewConfirm"
     />

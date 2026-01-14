@@ -415,7 +415,7 @@ function getViewName(media) {
 
 function getSpecimenName(media) {
   const specimen = specimensStore.getSpecimenById(media.specimen_id)
-  console.log('specimen', specimen)
+  // console.log('specimen', specimen)
   return specimen?.specimen_id ? `S${specimen.specimen_id}` : ''
 }
 
