@@ -184,18 +184,6 @@ async function applySettings(targetCategory = null) {
   const applySpecimen = targetCategory === 'specimen' || (targetCategory === null && applyToSpecimen.value)
   const applyCitations = targetCategory === 'citations' || (targetCategory === null && applyToCitations.value)
   
-  // Debug logging to help diagnose issues
-  console.log('[BulkApplyCopyright] applySettings called:', {
-    targetCategory,
-    applyToSpecimen: applyToSpecimen.value,
-    applyToCitations: applyToCitations.value,
-    applySpecimen,
-    applyCitations,
-    specimenMediaLoaded: specimenMediaLoaded.value,
-    specimenMediaLength: specimenMedia.value.length,
-    citationMediaLoaded: citationMediaLoaded.value,
-    citationMediaLength: citationMedia.value.length
-  })
   
   // First check: are any categories selected?
   if (!applySpecimen && !applyCitations) {
