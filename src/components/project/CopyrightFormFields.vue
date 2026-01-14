@@ -147,6 +147,10 @@ watch(() => props.initialCopyrightInfo, (newVal) => {
   copyrightInfo.value = newVal || ''
 })
 
+watch(() => props.initialDocumentId, (newVal) => {
+  documentId.value = newVal || null
+})
+
 // Handle copyright checkbox change
 function handleCopyrightChange(event) {
   isCopyrighted.value = event.target.checked
@@ -255,12 +259,19 @@ const hasUnsavedChanges = computed(() => {
                                 props.initialIsCopyrighted === '1'
   
   // Compare current form values with initial props
+  // Use || 0 fallback to match initialization logic (parseInt returns NaN for null/undefined)
   const copyrightedChanged = isCopyrighted.value !== initialCopyrightedVal
-  const permissionChanged = copyrightPermission.value !== parseInt(props.initialCopyrightPermission, 10)
-  const licenseChanged = copyrightLicense.value !== parseInt(props.initialCopyrightLicense, 10)
+  const permissionChanged = copyrightPermission.value !== (parseInt(props.initialCopyrightPermission, 10) || 0)
+  const licenseChanged = copyrightLicense.value !== (parseInt(props.initialCopyrightLicense, 10) || 0)
   const infoChanged = copyrightInfo.value !== (props.initialCopyrightInfo || '')
   
-  return copyrightedChanged || permissionChanged || licenseChanged || infoChanged
+  // Track document ID changes (relevant when permission type is 2)
+  // Normalize both values to null for comparison (handle undefined, null, empty string, etc.)
+  const currentDocId = documentId.value || null
+  const initialDocId = props.initialDocumentId || null
+  const documentChanged = currentDocId !== initialDocId
+  
+  return copyrightedChanged || permissionChanged || licenseChanged || infoChanged || documentChanged
 })
 
 // Expose the validate method and current values
