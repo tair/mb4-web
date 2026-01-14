@@ -246,6 +246,23 @@ function validate() {
   return errors
 }
 
+// Computed: detect if form has unsaved changes compared to initial props
+// This is used to warn users before bulk applying (which reads from database, not form state)
+const hasUnsavedChanges = computed(() => {
+  // Normalize initial copyrighted value
+  const initialCopyrightedVal = props.initialIsCopyrighted === true || 
+                                props.initialIsCopyrighted === 1 || 
+                                props.initialIsCopyrighted === '1'
+  
+  // Compare current form values with initial props
+  const copyrightedChanged = isCopyrighted.value !== initialCopyrightedVal
+  const permissionChanged = copyrightPermission.value !== parseInt(props.initialCopyrightPermission, 10)
+  const licenseChanged = copyrightLicense.value !== parseInt(props.initialCopyrightLicense, 10)
+  const infoChanged = copyrightInfo.value !== (props.initialCopyrightInfo || '')
+  
+  return copyrightedChanged || permissionChanged || licenseChanged || infoChanged
+})
+
 // Expose the validate method and current values
 defineExpose({
   validate,
@@ -253,7 +270,8 @@ defineExpose({
   copyrightPermission,
   copyrightLicense,
   copyrightInfo,
-  documentId
+  documentId,
+  hasUnsavedChanges
 })
 </script>
 
@@ -389,6 +407,7 @@ defineExpose({
       :has-citations="hasCitations"
       :copyright-info="copyrightInfo"
       :disabled="disabled"
+      :has-unsaved-changes="hasUnsavedChanges"
       @applied="$emit('bulk-applied', $event)"
     />
   </div>
