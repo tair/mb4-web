@@ -346,11 +346,11 @@ function handlePreviewConfirm() {
     
     <div class="bulk-apply-options">
       <!-- Warning for unsaved changes -->
-      <div v-if="hasUnsavedChanges" class="alert alert-warning py-2 mb-3">
-        <i class="fa-solid fa-exclamation-triangle me-2"></i>
-        <strong>Save your changes first!</strong> 
-        Bulk apply uses the saved copyright settings from the database. 
-        Please save this media before applying to other files.
+      <div v-if="hasUnsavedChanges" class="alert alert-info py-2 mb-3">
+        <i class="fa-solid fa-info-circle me-2"></i>
+        <strong>Note:</strong> 
+        You have unsaved changes. Bulk apply will use the <em>saved</em> copyright settings from the database, 
+        not your current form changes. Save first if you want to apply your new settings.
       </div>
       
       <!-- Apply to same specimen -->
@@ -447,7 +447,7 @@ function handlePreviewConfirm() {
         <button
           type="button"
           class="btn btn-primary btn-sm"
-          :disabled="!canApply || hasUnsavedChanges"
+          :disabled="!canApply"
           @click="applySettings()"
         >
           <i class="fa-solid fa-copy me-1"></i>
