@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, RouterLink } from 'vue-router'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import DeleteDialog from '@/views/project/specimens/DeleteDialog.vue'
@@ -13,6 +13,7 @@ import {
   nameColumnMap,
   sortTaxaAlphabetically,
 } from '@/utils/taxa'
+import { getSpecimenName } from '@/utils/specimens'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -171,6 +172,17 @@ function setRank(event) {
   const text = event.target.value
   rank.value = text
 }
+
+function getMediaLinkForSpecimen(specimen) {
+  const taxon = taxaStore.getTaxonById(specimen.taxon_id)
+  // Get clean taxon name without extinct marker or specimen reference
+  const cleanTaxonName = getTaxonName(taxon, TaxaColumns.GENUS, false).trim()
+  return {
+    name: 'MyProjectMediaView',
+    params: { id: projectId },
+    query: { search: cleanTaxonName }
+  }
+}
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
@@ -293,6 +305,14 @@ function setRank(event) {
                   :specimen="specimen"
                   :taxon="taxaStore.getTaxonById(specimen.taxon_id)"
                 />
+                <span v-if="specimen.media_count > 0" class="ms-2 text-muted small">
+                  (<RouterLink
+                    :to="getMediaLinkForSpecimen(specimen)"
+                    class="text-decoration-none"
+                  >
+                    {{ specimen.media_count }} media
+                  </RouterLink>)
+                </span>
               </div>
               <div class="list-group-item-buttons">
                 <RouterLink

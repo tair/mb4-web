@@ -15,12 +15,17 @@ const mediaId = route.params.mediaId
 const thumbnailView = ref(true)
 const orderByOptions = mediaStore.getOrderByOptions
 let orderBySelection = ref(mediaStore.getDefaultOrderBy)
-let searchStr = ref(null)
+let searchStr = ref(route.query.search || null)
 
 onMounted(async () => {
   await mediaStore.fetchMediaFiles(projectId)
   // need to get project title
   await projectStore.fetchProject(projectId)
+  
+  // If there's a search query parameter, perform the search
+  if (searchStr.value) {
+    searchByStr()
+  }
 })
 
 let selectedPage = ref(mediaStore.currentPage)

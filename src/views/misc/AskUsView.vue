@@ -199,7 +199,7 @@
 </template>
 
 <script>
-import { reactive, ref } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import Alert from '../../components/main/Alert.vue'
 import SpamDetection from 'spam-detection'
 import { useAuthStore } from '@/stores/AuthStore.js'
@@ -243,6 +243,18 @@ export default {
     const alert = reactive({
       customMessage: '',
       type: 'success',
+    })
+
+    // Prefill name and email if user is logged in
+    onMounted(() => {
+      if (authStore.user) {
+        if (authStore.user.name) {
+          formData.name = authStore.user.name
+        }
+        if (authStore.user.userEmail) {
+          formData.email = authStore.user.userEmail
+        }
+      }
     })
 
     const triggerFileInput = () => {

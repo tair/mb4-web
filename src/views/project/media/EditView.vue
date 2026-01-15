@@ -258,7 +258,12 @@ async function editMedia(event) {
     }
 
     showSuccess('Media updated successfully!')
-    await NavigationPatterns.afterEdit(projectId, 'media')
+    // Navigate back to media list, preserving any filter query params from the referrer
+    const referrerQuery = route.query || {}
+    await router.push({ 
+      path: `/myprojects/${projectId}/media`,
+      query: referrerQuery
+    })
   } catch (error) {
     console.error('Error editing media:', error)
     showError('Failed to modify media', 'Update Failed')
