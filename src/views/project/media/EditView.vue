@@ -259,8 +259,9 @@ async function editMedia(event) {
 
     showSuccess('Media updated successfully!')
     // Navigate back to media list, preserving any filter query params from the referrer
+    // Use replace to remove edit form from browser history (user usually doesn't need to return to edit form)
     const referrerQuery = route.query || {}
-    await router.push({ 
+    await router.replace({ 
       path: `/myprojects/${projectId}/media`,
       query: referrerQuery
     })

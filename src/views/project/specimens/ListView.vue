@@ -174,13 +174,25 @@ function setRank(event) {
 }
 
 function getMediaLinkForSpecimen(specimen) {
-  const taxon = taxaStore.getTaxonById(specimen.taxon_id)
-  // Get clean taxon name without extinct marker or specimen reference
-  const cleanTaxonName = getTaxonName(taxon, TaxaColumns.GENUS, false).trim()
+  let searchQuery = ''
+  
+  if (specimen.taxon_id) {
+    // Identified specimen - search by taxon name
+    const taxon = taxaStore.getTaxonById(specimen.taxon_id)
+    searchQuery = getTaxonName(taxon, TaxaColumns.GENUS, false).trim()
+  } else {
+    // Unidentified specimen - search by institution/catalog info
+    const parts = []
+    if (specimen.institution_code) parts.push(specimen.institution_code)
+    if (specimen.collection_code) parts.push(specimen.collection_code)
+    if (specimen.catalog_number) parts.push(specimen.catalog_number)
+    searchQuery = parts.join(' ')
+  }
+  
   return {
     name: 'MyProjectMediaView',
     params: { id: projectId },
-    query: { search: cleanTaxonName }
+    query: { search: searchQuery }
   }
 }
 </script>

@@ -658,6 +658,14 @@ onMounted(async () => {
           params.forEach((value, key) => {
             newQuery[key] = value
           })
+          
+          // Preserve existing non-filter query params like search
+          Object.keys(route.query).forEach(key => {
+            if (!['taxa', 'views', 'submitters', 'licenses', 'permissions', 'repositories', 'status', 'other'].includes(key)) {
+              newQuery[key] = route.query[key]
+            }
+          })
+          
           router.replace({ path: route.path, query: newQuery })
         }
       } catch (e) {

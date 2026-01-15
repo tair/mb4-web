@@ -107,7 +107,16 @@ function getCleanTaxonName(specimenName) {
   let cleanName = specimenName.replace(/<[^>]*>/g, '')
   // Remove extinct marker (†)
   cleanName = cleanName.replace(/†/g, '')
-  // Remove specimen reference parts like (unvouchered) or (institution:catalog)
+  
+  // Check if this is an unidentified specimen (starts with parenthesis or has no taxon name)
+  // Unidentified specimens will have format like "(institution/code:catalog)" or "(unvouchered)"
+  const trimmed = cleanName.trim()
+  if (trimmed.startsWith('(')) {
+    // This is an unidentified specimen - return the reference info without outer parentheses
+    return trimmed.replace(/^\(|\)$/g, '').trim()
+  }
+  
+  // Identified specimen - remove specimen reference parts like (unvouchered) or (institution:catalog)
   cleanName = cleanName.replace(/\s*\([^)]*\)\s*$/g, '')
   // Remove author and year information (text after italicized name, including parentheses)
   // This handles patterns like "Homo erectus Darwin, 1859" or "Homo erectus (Darwin, 1859)"
