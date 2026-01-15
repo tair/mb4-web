@@ -1523,12 +1523,16 @@ onMounted(() => {
   height: 250px; /* Reduced height */
   position: relative;
   overflow: hidden;
+  background-color: #f8f9fa; /* Light background for letterboxing */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .card-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain; /* Shows full image without cropping */
 }
 
 .card-desc {
