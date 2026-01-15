@@ -317,7 +317,7 @@ function getMediaLinkForSpecimen(specimen) {
                   :specimen="specimen"
                   :taxon="taxaStore.getTaxonById(specimen.taxon_id)"
                 />
-                <span v-if="specimen.media_count > 0" class="ms-2 text-muted small">
+                <span v-if="specimen.media_count > 0" class="ms-2 text-muted small" style="white-space: nowrap;">
                   (<RouterLink
                     :to="getMediaLinkForSpecimen(specimen)"
                     class="text-decoration-none"

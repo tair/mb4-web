@@ -73,26 +73,54 @@ export const usePublicMediaStore = defineStore({
           searchInObject(item, searchStr, includeFields)
         )
       } else {
-        const includeFields = [
-          'media_id',
-          'view_name',
-          'user_name',
-          'copyright_holder',
-          'taxon_name',
-          'higher_taxon_phylum',
-          'higher_taxon_class',
-          'higher_taxon_order',
-          'higher_taxon_superfamily',
-          'higher_taxon_family',
-          'higher_taxon_subfamily',
-          'genus',
-          'specific_epithet',
-          'specimen_name',
-          'notes',
-        ]
-        this.media_files = this.full_media_files.filter((item) =>
-          searchInObject(item, searchStr, includeFields)
-        )
+        // Helper function to strip HTML tags from a string
+        const stripHtml = (str) => {
+          if (!str) return ''
+          return str.replace(/<[^>]*>/g, '').replace(/†/g, '').trim()
+        }
+        
+        const searchLower = searchStr.toLowerCase().trim()
+        this.media_files = this.full_media_files.filter((item) => {
+          const mediaIdStr = `M${item.media_id}`.toLowerCase()
+          const viewName = (item.view_name || '').toLowerCase()
+          const userName = (item.user_name || '').toLowerCase()
+          const copyrightHolder = (item.copyright_holder || '').toLowerCase()
+          const notes = (item.notes || '').toLowerCase()
+          
+          // Strip HTML tags from taxon_name and specimen_name before searching
+          const taxonName = stripHtml(item.taxon_name).toLowerCase()
+          const specimenName = stripHtml(item.specimen_name).toLowerCase()
+          
+          // Search individual taxonomy fields
+          const genus = (item.genus || '').toLowerCase()
+          const specificEpithet = (item.specific_epithet || '').toLowerCase()
+          
+          // Search higher taxonomy fields
+          const higherTaxonPhylum = (item.higher_taxon_phylum || '').toLowerCase()
+          const higherTaxonClass = (item.higher_taxon_class || '').toLowerCase()
+          const higherTaxonOrder = (item.higher_taxon_order || '').toLowerCase()
+          const higherTaxonSuperfamily = (item.higher_taxon_superfamily || '').toLowerCase()
+          const higherTaxonFamily = (item.higher_taxon_family || '').toLowerCase()
+          const higherTaxonSubfamily = (item.higher_taxon_subfamily || '').toLowerCase()
+          
+          return (
+            mediaIdStr.includes(searchLower) ||
+            viewName.includes(searchLower) ||
+            userName.includes(searchLower) ||
+            copyrightHolder.includes(searchLower) ||
+            taxonName.includes(searchLower) ||
+            specimenName.includes(searchLower) ||
+            genus.includes(searchLower) ||
+            specificEpithet.includes(searchLower) ||
+            higherTaxonPhylum.includes(searchLower) ||
+            higherTaxonClass.includes(searchLower) ||
+            higherTaxonOrder.includes(searchLower) ||
+            higherTaxonSuperfamily.includes(searchLower) ||
+            higherTaxonFamily.includes(searchLower) ||
+            higherTaxonSubfamily.includes(searchLower) ||
+            notes.includes(searchLower)
+          )
+        })
       }
     },
 
