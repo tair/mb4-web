@@ -91,9 +91,17 @@ export const usePublicMediaStore = defineStore({
           const taxonName = stripHtml(item.taxon_name).toLowerCase()
           const specimenName = stripHtml(item.specimen_name).toLowerCase()
           
-          // Also search individual taxonomy fields as fallback
+          // Search individual taxonomy fields
           const genus = (item.genus || '').toLowerCase()
           const specificEpithet = (item.specific_epithet || '').toLowerCase()
+          
+          // Search higher taxonomy fields
+          const higherTaxonPhylum = (item.higher_taxon_phylum || '').toLowerCase()
+          const higherTaxonClass = (item.higher_taxon_class || '').toLowerCase()
+          const higherTaxonOrder = (item.higher_taxon_order || '').toLowerCase()
+          const higherTaxonSuperfamily = (item.higher_taxon_superfamily || '').toLowerCase()
+          const higherTaxonFamily = (item.higher_taxon_family || '').toLowerCase()
+          const higherTaxonSubfamily = (item.higher_taxon_subfamily || '').toLowerCase()
           
           return (
             mediaIdStr.includes(searchLower) ||
@@ -104,6 +112,12 @@ export const usePublicMediaStore = defineStore({
             specimenName.includes(searchLower) ||
             genus.includes(searchLower) ||
             specificEpithet.includes(searchLower) ||
+            higherTaxonPhylum.includes(searchLower) ||
+            higherTaxonClass.includes(searchLower) ||
+            higherTaxonOrder.includes(searchLower) ||
+            higherTaxonSuperfamily.includes(searchLower) ||
+            higherTaxonFamily.includes(searchLower) ||
+            higherTaxonSubfamily.includes(searchLower) ||
             notes.includes(searchLower)
           )
         })
