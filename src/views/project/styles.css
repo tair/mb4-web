@@ -64,6 +64,12 @@
 
 .list-group-item-name {
   display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.list-group-item-name-with-media {
+  display: flex;
   flex-direction: row;
   align-items: baseline;
   flex-grow: 1;

@@ -312,7 +312,7 @@ function getMediaLinkForSpecimen(specimen) {
                 type="checkbox"
                 v-model="specimen.selected"
               />
-              <div class="list-group-item-name">
+              <div class="list-group-item-name-with-media">
                 <SpecimenName
                   :specimen="specimen"
                   :taxon="taxaStore.getTaxonById(specimen.taxon_id)"
