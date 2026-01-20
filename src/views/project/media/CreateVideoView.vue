@@ -23,6 +23,7 @@ const mediaViewsStore = useMediaViewsStore()
 const { showError, showSuccess } = useNotifications()
 const isUploading = ref(false)
 const copyrightFormRef = ref(null)
+const selectedSpecimenId = ref(null)
 
 const isLoaded = computed(
   () =>
@@ -70,6 +71,11 @@ function validateRequiredFields(formData) {
   }
   
   return errors
+}
+
+// Handle specimen selection for auto-populate copyright feature
+function handleSpecimenSelect(item) {
+  selectedSpecimenId.value = item ? item.specimen_id : null
 }
 
 async function createVideoMedia(event) {
@@ -163,17 +169,17 @@ onMounted(() => {
     <form @submit.prevent="createVideoMedia">
       <div class="row setup-content">
         <!-- Non-copyright fields from schema -->
-        <template v-for="(definition, index) in filteredVideoSchema" :key="index">
+        <template v-for="(definition, fieldName) in filteredVideoSchema" :key="fieldName">
           <div v-if="!definition.existed" class="form-group">
-            <label :for="index" class="form-label">
+            <label :for="fieldName" class="form-label">
               {{ definition.label }}
               <span v-if="definition.required" class="required">Required</span>
             </label>
             <component
-              :key="index"
               :is="definition.view"
-              :name="index"
+              :name="fieldName"
               v-bind="definition.args"
+              v-on="fieldName === 'specimen_id' ? { select: handleSpecimenSelect } : {}"
             >
             </component>
           </div>
@@ -187,6 +193,8 @@ onMounted(() => {
             :initial-copyright-permission="4"
             :initial-copyright-license="1"
             :initial-copyright-info="''"
+            :enable-autopopulate="true"
+            :specimen-id-for-autopopulate="selectedSpecimenId"
           />
         </div>
         
