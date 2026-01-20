@@ -87,7 +87,17 @@ function statesMatch(importedStates, projectStates) {
   return true
 }
 
-// Detect characters that exist in the project with the same name but different states
+// Helper to get character type name for display
+function getCharacterTypeName(type) {
+  switch (type) {
+    case 0: return 'Discrete'
+    case 1: return 'Continuous'
+    case 2: return 'Meristic'
+    default: return 'Unknown'
+  }
+}
+
+// Detect characters that exist in the project with the same name but different states or types
 const conflictingCharacters = computed(() => {
   // Skip conflict detection for merge operations (editing same matrix)
   if (route.query.merge === 'true') return []
@@ -103,13 +113,27 @@ const conflictingCharacters = computed(() => {
     const projectChar = projectCharactersMap.get(character.name)
     if (!projectChar) continue  // New character, no conflict
     
-    // Skip continuous and meristic characters (they don't have discrete states)
+    // Check for type mismatch first - this is always a conflict
+    if (character.type !== projectChar.type) {
+      conflicts.push({
+        name: character.name,
+        conflictType: 'type',
+        importedType: getCharacterTypeName(character.type),
+        existingType: getCharacterTypeName(projectChar.type),
+        importedStates: character.states ? character.states.map(s => s.name) : [],
+        existingStates: projectChar.states ? projectChar.states.map(s => s.name) : []
+      })
+      continue
+    }
+    
+    // Skip state comparison for continuous and meristic characters (they don't have discrete states)
     if (character.type === 1 || character.type === 2) continue
     
-    // Compare states
+    // Compare states for discrete characters
     if (!statesMatch(character.states, projectChar.states)) {
       conflicts.push({
         name: character.name,
+        conflictType: 'states',
         importedStates: character.states ? character.states.map(s => s.name) : [],
         existingStates: projectChar.states ? projectChar.states.map(s => s.name) : []
       })
@@ -347,6 +371,11 @@ async function moveToCharacters() {
 
 function moveToReview() {
   moveToStep('step-3')
+  return false
+}
+
+function moveBackToCharacters() {
+  moveToStep('step-2')
   return false
 }
 
@@ -1032,10 +1061,10 @@ onUnmounted(() => {
             <div class="alert alert-danger">
               <h6>
                 <i class="fa-solid fa-triangle-exclamation me-2"></i>
-                {{ conflictingCharacters.length }} character{{ conflictingCharacters.length > 1 ? 's have' : ' has' }} conflicting states
+                {{ conflictingCharacters.length }} character{{ conflictingCharacters.length > 1 ? 's have' : ' has' }} conflicts
               </h6>
               <p>
-                The following characters already exist in this project but have different states.
+                The following characters already exist in this project but have different types or states.
                 To avoid data corruption, you must rename these characters in your matrix file before uploading.
               </p>
             </div>
@@ -1045,26 +1074,45 @@ onUnmounted(() => {
                 <thead>
                   <tr>
                     <th>Character Name</th>
-                    <th>States in Your File</th>
-                    <th>Existing States in Project</th>
+                    <th>Conflict Type</th>
+                    <th>In Your File</th>
+                    <th>In Project</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="conflict in conflictingCharacters" :key="conflict.name">
                     <td class="conflict-character-name">{{ conflict.name }}</td>
                     <td>
-                      <ol class="conflict-states-list">
-                        <li v-for="(state, idx) in conflict.importedStates" :key="idx">
-                          {{ state }}
-                        </li>
-                      </ol>
+                      <span v-if="conflict.conflictType === 'type'" class="badge bg-warning text-dark">
+                        Type Mismatch
+                      </span>
+                      <span v-else class="badge bg-danger">
+                        State Mismatch
+                      </span>
                     </td>
                     <td>
-                      <ol class="conflict-states-list">
-                        <li v-for="(state, idx) in conflict.existingStates" :key="idx">
-                          {{ state }}
-                        </li>
-                      </ol>
+                      <template v-if="conflict.conflictType === 'type'">
+                        <strong>Type:</strong> {{ conflict.importedType }}
+                      </template>
+                      <template v-else>
+                        <ol class="conflict-states-list">
+                          <li v-for="(state, idx) in conflict.importedStates" :key="idx">
+                            {{ state }}
+                          </li>
+                        </ol>
+                      </template>
+                    </td>
+                    <td>
+                      <template v-if="conflict.conflictType === 'type'">
+                        <strong>Type:</strong> {{ conflict.existingType }}
+                      </template>
+                      <template v-else>
+                        <ol class="conflict-states-list">
+                          <li v-for="(state, idx) in conflict.existingStates" :key="idx">
+                            {{ state }}
+                          </li>
+                        </ol>
+                      </template>
                     </td>
                   </tr>
                 </tbody>
@@ -1075,7 +1123,7 @@ onUnmounted(() => {
               <p><strong>To resolve this issue:</strong></p>
               <ol>
                 <li>Go back to the Import step</li>
-                <li>Edit your matrix file to rename the conflicting characters to unique names or use the same states names for the same character in your file</li>
+                <li>Edit your matrix file to rename the conflicting characters to unique names, or ensure matching character names have the same type and states</li>
                 <li>Re-upload the modified file</li>
               </ol>
             </div>
@@ -1092,7 +1140,7 @@ onUnmounted(() => {
             <button
               class="btn btn-primary btn-step-prev"
               type="button"
-              @click="moveToCharacters"
+              @click="moveBackToCharacters"
             >
               Prev
             </button>
