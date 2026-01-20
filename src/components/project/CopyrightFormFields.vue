@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/AuthStore'
+import { useCopyrightAutopopulate } from '@/composables/useCopyrightAutopopulate.js'
 import Checkbox from '@/components/project/Checkbox.vue'
 import SelectInput from '@/components/project/SelectInput.vue'
 import TextArea from '@/components/project/TextArea.vue'
@@ -54,6 +55,16 @@ const props = defineProps({
   hasCitations: {
     type: Boolean,
     default: false
+  },
+  // Enable auto-populate feature (for create views)
+  enableAutopopulate: {
+    type: Boolean,
+    default: false
+  },
+  // Specimen ID for auto-populate (from form selection)
+  specimenIdForAutopopulate: {
+    type: [Number, String],
+    default: null
   }
 })
 
@@ -68,12 +79,19 @@ const emit = defineEmits([
 
 const authStore = useAuthStore()
 
+// Auto-populate composable
+const autopopulate = props.enableAutopopulate ? useCopyrightAutopopulate() : null
+
 // Reactive state
 const isCopyrighted = ref(false)
 const copyrightPermission = ref(0)
 const copyrightLicense = ref(0)
 const copyrightInfo = ref('')
 const documentId = ref(null)
+
+// Track if copyright was auto-populated (for UI indicator)
+const wasAutopopulated = ref(false)
+const isAutopopulating = ref(false)
 
 // Copyright permission options
 const copyrightPermissionOptions = {
@@ -150,6 +168,85 @@ watch(() => props.initialCopyrightInfo, (newVal) => {
 watch(() => props.initialDocumentId, (newVal) => {
   documentId.value = newVal || null
 })
+
+// Auto-populate function - extracted so it can be called from multiple watchers
+async function tryAutopopulateCopyright() {
+  // Reset the success indicator whenever specimen changes
+  // This must happen before any early returns to prevent stale success messages
+  wasAutopopulated.value = false
+  
+  // Only auto-populate if:
+  // 1. Feature is enabled (autopopulate exists and toggle is ON)
+  // 2. Specimen ID is provided
+  // 3. We're in create mode (no mediaId means create mode)
+  if (!autopopulate || !autopopulate.isEnabled.value || !props.specimenIdForAutopopulate || props.mediaId) {
+    return
+  }
+  
+  // Don't auto-populate if user has manually changed values from defaults
+  // Defaults in create mode: isCopyrighted=false, permission=4, license=1, info=''
+  const isAtDefaults = !isCopyrighted.value && 
+                       copyrightPermission.value === 4 && 
+                       copyrightLicense.value === 1 && 
+                       copyrightInfo.value.trim() === ''
+  
+  if (!isAtDefaults) {
+    // User has manually changed values, don't overwrite
+    return
+  }
+  
+  // Capture the specimen ID to detect race conditions
+  const specimenIdAtStart = props.specimenIdForAutopopulate
+  
+  isAutopopulating.value = true
+  
+  try {
+    const copyright = await autopopulate.fetchCopyrightForSpecimen(specimenIdAtStart)
+    
+    // Race condition check: verify the specimen hasn't changed while the request was in flight
+    if (specimenIdAtStart !== props.specimenIdForAutopopulate) {
+      // Specimen changed while fetching, discard these results
+      return
+    }
+    
+    if (copyright) {
+      // Auto-populate the fields
+      isCopyrighted.value = copyright.is_copyrighted === 1 || copyright.is_copyrighted === true
+      copyrightPermission.value = parseInt(copyright.copyright_permission, 10) || 0
+      copyrightLicense.value = parseInt(copyright.copyright_license, 10) || 0
+      copyrightInfo.value = copyright.copyright_info || ''
+      
+      // Emit updates
+      emit('update:isCopyrighted', isCopyrighted.value)
+      emit('update:copyrightPermission', copyrightPermission.value)
+      emit('update:copyrightLicense', copyrightLicense.value)
+      emit('update:copyrightInfo', copyrightInfo.value)
+      
+      wasAutopopulated.value = true
+    }
+  } catch (error) {
+    console.error('Error auto-populating copyright:', error)
+    wasAutopopulated.value = false
+  } finally {
+    isAutopopulating.value = false
+  }
+}
+
+// Auto-populate when specimen is selected (and toggle is already ON)
+watch(() => props.specimenIdForAutopopulate, () => {
+  tryAutopopulateCopyright()
+}, { immediate: false })
+
+// Handle auto-populate toggle click - toggle state AND trigger auto-populate
+function handleAutopopulateToggle() {
+  if (!autopopulate) return
+  autopopulate.toggle()
+  // After toggling, if now enabled, try to auto-populate
+  // We need to check the NEW state after toggle
+  if (autopopulate.isEnabled.value) {
+    tryAutopopulateCopyright()
+  }
+}
 
 // Handle copyright checkbox change
 function handleCopyrightChange(event) {
@@ -288,6 +385,34 @@ defineExpose({
 
 <template>
   <div class="copyright-form-fields">
+    <!-- Auto-populate Toggle (only shown in create mode) -->
+    <div v-if="enableAutopopulate && autopopulate" class="autopopulate-section">
+      <div class="autopopulate-toggle">
+        <input
+          type="checkbox"
+          class="form-check-input"
+          id="autopopulateCopyright"
+          :checked="autopopulate.isEnabled.value"
+          :disabled="disabled"
+          @change="handleAutopopulateToggle"
+        />
+        <label class="autopopulate-label" for="autopopulateCopyright">
+          <span class="autopopulate-title">Auto-populate copyright</span>
+          <span class="autopopulate-description">
+            Copy copyright settings from previously uploaded images of the same specimen (empty if no copyright is found for the specimen)
+          </span>
+        </label>
+      </div>
+      <div v-if="isAutopopulating" class="autopopulate-status">
+        <i class="fa fa-spinner fa-spin"></i>
+        <span>Checking for existing copyright...</span>
+      </div>
+      <div v-else-if="wasAutopopulated" class="autopopulate-status autopopulate-success">
+        <i class="fa-solid fa-check-circle"></i>
+        <span>Copyright settings copied from existing images</span>
+      </div>
+    </div>
+    
     <!-- Is Copyrighted Checkbox -->
     <div class="form-group">
       <label class="form-label">
@@ -442,6 +567,78 @@ defineExpose({
 
 .required::before {
   content: '* ';
+}
+
+/* Auto-populate section styles */
+.autopopulate-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.autopopulate-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.autopopulate-toggle .form-check-input {
+  margin-top: 0.25rem;
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  cursor: pointer;
+}
+
+.autopopulate-toggle .form-check-input:checked {
+  background-color: #198754;
+  border-color: #198754;
+}
+
+.autopopulate-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  cursor: pointer;
+}
+
+.autopopulate-title {
+  font-weight: 600;
+  color: #212529;
+  font-size: 0.95rem;
+}
+
+.autopopulate-description {
+  font-size: 0.85rem;
+  color: #6c757d;
+  line-height: 1.4;
+}
+
+.autopopulate-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: #fff;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.autopopulate-status i {
+  font-size: 0.9rem;
+}
+
+.autopopulate-status.autopopulate-success {
+  color: #198754;
+  background: #d1e7dd;
+}
+
+.autopopulate-status.autopopulate-success i {
+  color: #198754;
 }
 </style>
 
