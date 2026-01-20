@@ -72,6 +72,76 @@ const duplicatedCharacters = computed(() => {
   return duplicateCharactersNames
 })
 
+// Helper function to check if character states match between imported and existing characters
+function statesMatch(importedStates, projectStates) {
+  // If either is null/undefined, consider it a match (no conflict)
+  if (!importedStates || !projectStates) return true
+  // If lengths differ, states don't match
+  if (importedStates.length !== projectStates.length) return false
+  // Compare state names in order
+  for (let i = 0; i < importedStates.length; i++) {
+    if (importedStates[i].name !== projectStates[i].name) {
+      return false
+    }
+  }
+  return true
+}
+
+// Helper to get character type name for display
+function getCharacterTypeName(type) {
+  switch (type) {
+    case 0: return 'Discrete'
+    case 1: return 'Continuous'
+    case 2: return 'Meristic'
+    default: return 'Unknown'
+  }
+}
+
+// Detect characters that exist in the project with the same name but different states or types
+const conflictingCharacters = computed(() => {
+  // Skip conflict detection for merge operations (editing same matrix)
+  if (route.query.merge === 'true') return []
+  
+  if (!importedMatrix.characters || !charactersStore.isLoaded) return []
+  
+  const conflicts = []
+  const projectCharactersMap = new Map(
+    charactersStore.characters.map(c => [c.name, c])
+  )
+  
+  for (const character of importedMatrix.characters.values()) {
+    const projectChar = projectCharactersMap.get(character.name)
+    if (!projectChar) continue  // New character, no conflict
+    
+    // Check for type mismatch first - this is always a conflict
+    if (character.type !== projectChar.type) {
+      conflicts.push({
+        name: character.name,
+        conflictType: 'type',
+        importedType: getCharacterTypeName(character.type),
+        existingType: getCharacterTypeName(projectChar.type),
+        importedStates: character.states ? character.states.map(s => s.name) : [],
+        existingStates: projectChar.states ? projectChar.states.map(s => s.name) : []
+      })
+      continue
+    }
+    
+    // Skip state comparison for continuous and meristic characters (they don't have discrete states)
+    if (character.type === 1 || character.type === 2) continue
+    
+    // Compare states for discrete characters
+    if (!statesMatch(character.states, projectChar.states)) {
+      conflicts.push({
+        name: character.name,
+        conflictType: 'states',
+        importedStates: character.states ? character.states.map(s => s.name) : [],
+        existingStates: projectChar.states ? projectChar.states.map(s => s.name) : []
+      })
+    }
+  }
+  return conflicts
+})
+
 let editingCharacter = ref({})
 function editCharacter(character) {
   editingCharacter.value = JSON.parse(JSON.stringify(character))
@@ -299,8 +369,18 @@ async function moveToCharacters() {
   return false
 }
 
-function moveToTaxa() {
+function moveToReview() {
   moveToStep('step-3')
+  return false
+}
+
+function moveBackToCharacters() {
+  moveToStep('step-2')
+  return false
+}
+
+function moveToTaxa() {
+  moveToStep('step-4')
   return false
 }
 
@@ -597,6 +677,17 @@ onUnmounted(() => {
         >
           {{ route.query.merge === 'true' ? '2' : '3' }}
         </a>
+        <p>Review</p>
+      </div>
+      <div class="matrix-import-step">
+        <a
+          href="#step-4"
+          type="button"
+          class="btn btn-default btn-circle"
+          disabled="disabled"
+        >
+          {{ route.query.merge === 'true' ? '3' : '4' }}
+        </a>
         <p>Taxa</p>
       </div>
     </div>
@@ -867,7 +958,7 @@ onUnmounted(() => {
               type="button"
               class="btn btn-primary btn-step-next"
               :disabled="incompletedCharactersCount > 0"
-              @click="moveToTaxa"
+              @click="moveToReview"
             >
               Next
             </button>
@@ -964,6 +1055,120 @@ onUnmounted(() => {
           </div>
         </div>
         <div class="row setup-content" id="step-3">
+          <h5>Character Conflict Review</h5>
+          
+          <div v-if="conflictingCharacters.length > 0" class="conflict-warning">
+            <div class="alert alert-danger">
+              <h6>
+                <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                {{ conflictingCharacters.length }} character{{ conflictingCharacters.length > 1 ? 's have' : ' has' }} conflicts
+              </h6>
+              <p>
+                The following characters already exist in this project but have different types or states.
+                To avoid data corruption, you must rename these characters in your matrix file before uploading.
+              </p>
+            </div>
+            
+            <div class="matrix-confirmation-screen">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Character Name</th>
+                    <th>Conflict Type</th>
+                    <th>In Your File</th>
+                    <th>In Project</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="conflict in conflictingCharacters" :key="conflict.name">
+                    <td class="conflict-character-name">{{ conflict.name }}</td>
+                    <td>
+                      <span v-if="conflict.conflictType === 'type'" class="badge bg-warning text-dark">
+                        Type Mismatch
+                      </span>
+                      <span v-else class="badge bg-danger">
+                        State Mismatch
+                      </span>
+                    </td>
+                    <td>
+                      <template v-if="conflict.conflictType === 'type'">
+                        <strong>Type:</strong> {{ conflict.importedType }}
+                      </template>
+                      <template v-else>
+                        <ol class="conflict-states-list">
+                          <li v-for="(state, idx) in conflict.importedStates" :key="idx">
+                            {{ state }}
+                          </li>
+                        </ol>
+                      </template>
+                    </td>
+                    <td>
+                      <template v-if="conflict.conflictType === 'type'">
+                        <strong>Type:</strong> {{ conflict.existingType }}
+                      </template>
+                      <template v-else>
+                        <ol class="conflict-states-list">
+                          <li v-for="(state, idx) in conflict.existingStates" :key="idx">
+                            {{ state }}
+                          </li>
+                        </ol>
+                      </template>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="conflict-instructions mt-3">
+              <p><strong>To resolve this issue:</strong></p>
+              <ol>
+                <li>Go back to the Import step</li>
+                <li>
+                  Edit your matrix file using one of the following options:
+                  <ul style="list-style-type: none; padding-left: 0;">
+                    <li>
+                      <strong>a.</strong> Rename the duplicated characters (e.g, add a number at the end character-2) to make them unique.
+                    </li>
+                    <li style="margin-left: 2rem;">
+                      <strong>OR</strong>
+                    </li>
+                    <li>
+                      <strong>b.</strong> Rename the character states to make them consistent.
+                    </li>
+                  </ul>
+                </li>
+                <li>Re-upload the modified file</li>
+              </ol>
+            </div>
+          </div>
+          
+          <div v-else class="no-conflicts">
+            <div class="alert alert-success">
+              <i class="fa-solid fa-check-circle me-2"></i>
+              No character conflicts detected. All characters in your file are either new or match existing project characters.
+            </div>
+          </div>
+          
+          <div class="btn-step-group">
+            <button
+              class="btn btn-primary btn-step-prev"
+              type="button"
+              @click="moveBackToCharacters"
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary btn-step-next"
+              :disabled="conflictingCharacters.length > 0"
+              @click="moveToTaxa"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+        
+        <div class="row setup-content" id="step-4">
           <h5>
             We found {{ importedMatrix?.taxa?.size }} taxa in your matrix.
           </h5>
@@ -1007,7 +1212,7 @@ onUnmounted(() => {
             <button
               class="btn btn-primary btn-step-prev"
               type="button"
-              @click="moveToCharacters"
+              @click="moveToReview"
             >
               Prev
             </button>
@@ -1180,6 +1385,10 @@ onUnmounted(() => {
   display: none;
 }
 
+#step-4 {
+  display: none;
+}
+
 .flagged {
   color: red;
 }
@@ -1313,5 +1522,61 @@ div.matrix-confirmation-screen table td {
 
 .csv-upload-instructions p:last-child {
   margin-bottom: 0;
+}
+
+/* Conflict Review Step Styles */
+.conflict-warning {
+  margin-top: 15px;
+}
+
+.conflict-warning .alert-danger {
+  border-left: 4px solid #dc3545;
+}
+
+.conflict-warning .alert-danger h6 {
+  color: #dc3545;
+  margin-bottom: 10px;
+}
+
+.conflict-character-name {
+  font-weight: bold;
+  color: #dc3545;
+}
+
+.conflict-states-list {
+  counter-reset: item -1;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.conflict-states-list li {
+  display: block;
+  font-size: 12px;
+}
+
+.conflict-states-list li::before {
+  content: '(' counter(item) ') ';
+  counter-increment: item;
+  margin-left: -18px;
+}
+
+.conflict-instructions {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 15px;
+}
+
+.conflict-instructions ol {
+  margin-bottom: 0;
+  padding-left: 20px;
+}
+
+.no-conflicts {
+  margin-top: 15px;
+}
+
+.no-conflicts .alert-success {
+  border-left: 4px solid #28a745;
 }
 </style>
