@@ -84,10 +84,10 @@
           @click="toggleHideAllLabels"
           class="btn btn-outline"
           :class="{ active: hideAllLabels }"
-          title="Hide all labels"
+          title="Hide all labels and annotation points"
         >
           <span class="mode-icon">👁️</span>
-          {{ hideAllLabels ? 'Show Labels' : 'Hide All' }}
+          {{ hideAllLabels ? 'Show All' : 'Hide All' }}
         </button>
       </div>
       
@@ -138,7 +138,7 @@
               <h6>Label Display</h6>
               <div class="help-item shortcut-item">
                 <kbd>Tab</kbd>
-                <span class="shortcut-description">Toggle hide all labels</span>
+                <span class="shortcut-description">Toggle hide all labels and annotation points</span>
               </div>
               <div class="help-item shortcut-item">
                 <kbd>L</kbd>
@@ -283,7 +283,7 @@
             <div class="help-item">
               <span class="help-icon-display">👁️</span>
               <div class="help-text">
-                <strong>Hide All Labels</strong> - Temporarily hide all labels and connection lines to view annotations without clutter
+                <strong>Hide All</strong> - Temporarily hide all labels, connection lines, and annotation points to view the image without clutter
               </div>
             </div>
           </div>
@@ -1572,6 +1572,11 @@ export default {
     },
 
     drawAnnotation(annotation) {
+      // If "Hide All Labels" is enabled, don't draw any annotation shapes
+      if (this.hideAllLabels) {
+        return
+      }
+
       const isSelected = this.selectedAnnotation?.annotation_id === annotation.annotation_id
       
       this.ctx.strokeStyle = isSelected ? '#007bff' : '#ff6b6b'
