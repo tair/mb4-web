@@ -1123,7 +1123,20 @@ onUnmounted(() => {
               <p><strong>To resolve this issue:</strong></p>
               <ol>
                 <li>Go back to the Import step</li>
-                <li>Edit your matrix file to rename the conflicting characters to unique names, or ensure matching character names have the same type and states</li>
+                <li>
+                  Edit your matrix file using one of the following options:
+                  <ul style="list-style-type: none; padding-left: 0;">
+                    <li>
+                      <strong>a.</strong> Rename the duplicated characters (e.g, add a number at the end character-2) to make them unique.
+                    </li>
+                    <li style="margin-left: 2rem;">
+                      <strong>OR</strong>
+                    </li>
+                    <li>
+                      <strong>b.</strong> Rename the character states to make them consistent.
+                    </li>
+                  </ul>
+                </li>
                 <li>Re-upload the modified file</li>
               </ol>
             </div>
