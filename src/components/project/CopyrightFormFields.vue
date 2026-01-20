@@ -171,6 +171,10 @@ watch(() => props.initialDocumentId, (newVal) => {
 
 // Auto-populate function - extracted so it can be called from multiple watchers
 async function tryAutopopulateCopyright() {
+  // Reset the success indicator whenever specimen changes
+  // This must happen before any early returns to prevent stale success messages
+  wasAutopopulated.value = false
+  
   // Only auto-populate if:
   // 1. Feature is enabled (autopopulate exists and toggle is ON)
   // 2. Specimen ID is provided
@@ -191,11 +195,19 @@ async function tryAutopopulateCopyright() {
     return
   }
   
+  // Capture the specimen ID to detect race conditions
+  const specimenIdAtStart = props.specimenIdForAutopopulate
+  
   isAutopopulating.value = true
-  wasAutopopulated.value = false
   
   try {
-    const copyright = await autopopulate.fetchCopyrightForSpecimen(props.specimenIdForAutopopulate)
+    const copyright = await autopopulate.fetchCopyrightForSpecimen(specimenIdAtStart)
+    
+    // Race condition check: verify the specimen hasn't changed while the request was in flight
+    if (specimenIdAtStart !== props.specimenIdForAutopopulate) {
+      // Specimen changed while fetching, discard these results
+      return
+    }
     
     if (copyright) {
       // Auto-populate the fields
