@@ -92,6 +92,8 @@ const filteredTaxa = computed(() => {
     searchStr.value
   )
   
+  if (!taxa) return null
+  
   // Add media counts to each taxon
   return taxa.map(taxon => ({
     ...taxon,
@@ -102,6 +104,8 @@ const filteredTaxa = computed(() => {
 const supraTaxa = computed(() => {
   const taxa = projectStore.getSupraTaxa()
   
+  if (!taxa) return null
+  
   // Add media counts to each taxon
   return taxa.map(taxon => ({
     ...taxon,
@@ -111,6 +115,8 @@ const supraTaxa = computed(() => {
 
 const genusTaxa = computed(() => {
   const taxa = projectStore.getGenusTaxa()
+  
+  if (!taxa) return null
   
   // Add media counts to each taxon
   return taxa.map(taxon => ({
