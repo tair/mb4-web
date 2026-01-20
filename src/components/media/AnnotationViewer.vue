@@ -84,10 +84,10 @@
           @click="toggleHideAllLabels"
           class="btn btn-outline"
           :class="{ active: hideAllLabels }"
-          title="Hide all labels"
+          title="Hide all labels and annotation points"
         >
           <span class="mode-icon">👁️</span>
-          {{ hideAllLabels ? 'Show Labels' : 'Hide All' }}
+          {{ hideAllLabels ? 'Show All' : 'Hide All' }}
         </button>
       </div>
       
@@ -138,7 +138,7 @@
               <h6>Label Display</h6>
               <div class="help-item shortcut-item">
                 <kbd>Tab</kbd>
-                <span class="shortcut-description">Toggle hide all labels</span>
+                <span class="shortcut-description">Toggle hide all labels and annotation points</span>
               </div>
               <div class="help-item shortcut-item">
                 <kbd>L</kbd>
@@ -283,7 +283,7 @@
             <div class="help-item">
               <span class="help-icon-display">👁️</span>
               <div class="help-text">
-                <strong>Hide All Labels</strong> - Temporarily hide all labels and connection lines to view annotations without clutter
+                <strong>Hide All</strong> - Temporarily hide all labels, connection lines, and annotation points to view the image without clutter
               </div>
             </div>
           </div>
@@ -1171,13 +1171,37 @@ export default {
     },
 
     // Zoom and Pan methods
+    adjustZoomToCenter(oldZoom, newZoom) {
+      // Adjust offset to keep the viewport center fixed when zooming
+      // This compensates for the top-left transform-origin
+      const container = this.$refs.canvasContainer
+      if (!container) return
+      
+      const containerWidth = container.clientWidth
+      const containerHeight = container.clientHeight
+      
+      // Calculate offset adjustment to keep center point fixed
+      const offsetDeltaX = (containerWidth / 2) * (1 / newZoom - 1 / oldZoom)
+      const offsetDeltaY = (containerHeight / 2) * (1 / newZoom - 1 / oldZoom)
+      
+      // Apply the adjustment
+      this.viewerOffset.x += offsetDeltaX
+      this.viewerOffset.y += offsetDeltaY
+    },
+
     zoomIn() {
-      this.viewerZoom = Math.min(this.viewerZoom * 1.2, 5)
+      const oldZoom = this.viewerZoom
+      const newZoom = Math.min(this.viewerZoom * 1.2, 5)
+      this.adjustZoomToCenter(oldZoom, newZoom)
+      this.viewerZoom = newZoom
       this.updateImageTransform()
     },
 
     zoomOut() {
-      this.viewerZoom = Math.max(this.viewerZoom / 1.2, 0.1)
+      const oldZoom = this.viewerZoom
+      const newZoom = Math.max(this.viewerZoom / 1.2, 0.1)
+      this.adjustZoomToCenter(oldZoom, newZoom)
+      this.viewerZoom = newZoom
       this.updateImageTransform()
     },
 
@@ -1299,7 +1323,10 @@ export default {
 
     onCanvasWheel(event) {
       const delta = event.deltaY > 0 ? 0.9 : 1.1
-      this.viewerZoom = Math.max(0.1, Math.min(5, this.viewerZoom * delta))
+      const oldZoom = this.viewerZoom
+      const newZoom = Math.max(0.1, Math.min(5, this.viewerZoom * delta))
+      this.adjustZoomToCenter(oldZoom, newZoom)
+      this.viewerZoom = newZoom
       this.updateImageTransform()
     },
 
@@ -1545,6 +1572,11 @@ export default {
     },
 
     drawAnnotation(annotation) {
+      // If "Hide All Labels" is enabled, don't draw any annotation shapes
+      if (this.hideAllLabels) {
+        return
+      }
+
       const isSelected = this.selectedAnnotation?.annotation_id === annotation.annotation_id
       
       this.ctx.strokeStyle = isSelected ? '#007bff' : '#ff6b6b'
