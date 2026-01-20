@@ -1171,13 +1171,37 @@ export default {
     },
 
     // Zoom and Pan methods
+    adjustZoomToCenter(oldZoom, newZoom) {
+      // Adjust offset to keep the viewport center fixed when zooming
+      // This compensates for the top-left transform-origin
+      const container = this.$refs.canvasContainer
+      if (!container) return
+      
+      const containerWidth = container.clientWidth
+      const containerHeight = container.clientHeight
+      
+      // Calculate offset adjustment to keep center point fixed
+      const offsetDeltaX = (containerWidth / 2) * (1 / newZoom - 1 / oldZoom)
+      const offsetDeltaY = (containerHeight / 2) * (1 / newZoom - 1 / oldZoom)
+      
+      // Apply the adjustment
+      this.viewerOffset.x += offsetDeltaX
+      this.viewerOffset.y += offsetDeltaY
+    },
+
     zoomIn() {
-      this.viewerZoom = Math.min(this.viewerZoom * 1.2, 5)
+      const oldZoom = this.viewerZoom
+      const newZoom = Math.min(this.viewerZoom * 1.2, 5)
+      this.adjustZoomToCenter(oldZoom, newZoom)
+      this.viewerZoom = newZoom
       this.updateImageTransform()
     },
 
     zoomOut() {
-      this.viewerZoom = Math.max(this.viewerZoom / 1.2, 0.1)
+      const oldZoom = this.viewerZoom
+      const newZoom = Math.max(this.viewerZoom / 1.2, 0.1)
+      this.adjustZoomToCenter(oldZoom, newZoom)
+      this.viewerZoom = newZoom
       this.updateImageTransform()
     },
 
@@ -1299,7 +1323,10 @@ export default {
 
     onCanvasWheel(event) {
       const delta = event.deltaY > 0 ? 0.9 : 1.1
-      this.viewerZoom = Math.max(0.1, Math.min(5, this.viewerZoom * delta))
+      const oldZoom = this.viewerZoom
+      const newZoom = Math.max(0.1, Math.min(5, this.viewerZoom * delta))
+      this.adjustZoomToCenter(oldZoom, newZoom)
+      this.viewerZoom = newZoom
       this.updateImageTransform()
     },
 
