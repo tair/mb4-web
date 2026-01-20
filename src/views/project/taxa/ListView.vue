@@ -12,12 +12,24 @@ import Tooltip from '@/components/main/Tooltip.vue'
 import {
   TAXA_COLUMN_NAMES,
   TaxaColumns,
+  getTaxonName,
   nameColumnMap,
   sortTaxaAlphabetically,
 } from '@/utils/taxa'
 
 const route = useRoute()
 const projectId = route.params.id
+
+function getMediaLinkForTaxon(taxon) {
+  // Build search query from taxon name (genus + specific_epithet)
+  const searchQuery = getTaxonName(taxon, TaxaColumns.GENUS, false).trim()
+  
+  return {
+    name: 'MyProjectMediaView',
+    params: { id: projectId },
+    query: { search: searchQuery }
+  }
+}
 
 const taxaToDelete = ref([])
 
@@ -411,8 +423,16 @@ function validateSelectedTaxaAtPbdb() {
                 type="checkbox"
                 v-model="taxon.selected"
               />
-              <div class="list-group-item-name">
+              <div class="list-group-item-name-with-media">
                 <TaxonomicName :showExtinctMarker="true" :taxon="taxon" />
+                <span v-if="taxon.media_count > 0" class="ms-2 text-muted small" style="white-space: nowrap;">
+                  (<RouterLink
+                    :to="getMediaLinkForTaxon(taxon)"
+                    class="text-decoration-none"
+                  >
+                    {{ taxon.media_count }} media
+                  </RouterLink>)
+                </span>
               </div>
               <div class="list-group-item-buttons">
                 <RouterLink

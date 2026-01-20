@@ -1,15 +1,18 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
+import { usePublicMediaStore } from '@/stores/PublicMediaStore.js'
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
 import Tooltip from '@/components/main/Tooltip.vue'
 import { logView, HIT_TYPES } from '@/lib/analytics.js'
 
 const route = useRoute()
+const router = useRouter()
 const projectId = route.params.id
 const taxaId = route.params.taxaId
 const projectStore = usePublicProjectDetailsStore()
+const mediaStore = usePublicMediaStore()
 
 const filterByOptions = computed(() => {
   return projectStore.getTaxaFilterFields()
@@ -51,22 +54,75 @@ const letters = computed(() => {
   return uniqueLetters
 })
 
+// Helper function to normalize taxon name for matching
+function normalizeTaxonName(name) {
+  if (!name) return ''
+  // Strip HTML tags, extinct marker, and trim
+  return name.replace(/<[^>]*>/g, '').replace(/†/g, '').trim().toLowerCase()
+}
+
+// Compute media counts for each taxon by matching taxon_name
+const taxonMediaCounts = computed(() => {
+  if (!mediaStore.full_media_files) return {}
+  
+  const counts = {}
+  for (const media of mediaStore.full_media_files) {
+    if (media.taxon_name) {
+      const normalizedName = normalizeTaxonName(media.taxon_name)
+      if (normalizedName) {
+        counts[normalizedName] = (counts[normalizedName] || 0) + 1
+      }
+    }
+  }
+  return counts
+})
+
+// Helper function to get media count for a taxon
+function getMediaCountForTaxon(taxon) {
+  const normalizedName = normalizeTaxonName(taxon.taxon_name)
+  return taxonMediaCounts.value[normalizedName] || 0
+}
+
 const filteredTaxa = computed(() => {
-  return projectStore.getFilteredTaxa(
+  const taxa = projectStore.getFilteredTaxa(
     filterType.value,
     selectedFilterByOption.value,
     selectedLetter.value,
     selectedPartitionByOption.value,
     searchStr.value
   )
+  
+  if (!taxa) return null
+  
+  // Add media counts to each taxon
+  return taxa.map(taxon => ({
+    ...taxon,
+    media_count: getMediaCountForTaxon(taxon)
+  }))
 })
 
 const supraTaxa = computed(() => {
-  return projectStore.getSupraTaxa()
+  const taxa = projectStore.getSupraTaxa()
+  
+  if (!taxa) return null
+  
+  // Add media counts to each taxon
+  return taxa.map(taxon => ({
+    ...taxon,
+    media_count: getMediaCountForTaxon(taxon)
+  }))
 })
 
 const genusTaxa = computed(() => {
-  return projectStore.getGenusTaxa()
+  const taxa = projectStore.getGenusTaxa()
+  
+  if (!taxa) return null
+  
+  // Add media counts to each taxon
+  return taxa.map(taxon => ({
+    ...taxon,
+    media_count: getMediaCountForTaxon(taxon)
+  }))
 })
 
 function onFilterBy(type) {
@@ -98,8 +154,31 @@ function getTaxonNameDisplay(taxonName, lookupFailed, pbdbVerified) {
   return display
 }
 
-onMounted(() => {
-  projectStore.fetchProject(projectId)
+function getCleanTaxonName(taxonName) {
+  // Strip HTML tags
+  let cleanName = taxonName.replace(/<[^>]*>/g, '')
+  // Remove extinct marker (†)
+  cleanName = cleanName.replace(/†/g, '')
+  // Remove author and year information
+  cleanName = cleanName.replace(/\s+\([^)]+,\s*\d{4}\)/g, '') // Remove (Author, Year)
+  cleanName = cleanName.replace(/\s+[A-Z][a-z]+,\s*\d{4}/g, '') // Remove Author, Year
+  
+  return cleanName.trim()
+}
+
+function navigateToMediaWithTaxon(taxonName) {
+  const cleanName = getCleanTaxonName(taxonName)
+  router.push({
+    name: 'ProjectMediaView',
+    params: { id: projectId },
+    query: { search: cleanName }
+  })
+}
+
+onMounted(async () => {
+  await projectStore.fetchProject(projectId)
+  // Load media files to calculate media counts
+  await mediaStore.fetchMediaFiles(projectId)
   // Track taxa page view
   logView({ project_id: projectId, hit_type: HIT_TYPES.TAXA })
 })
@@ -199,8 +278,19 @@ onMounted(() => {
               'list-group-item',
             ]"
           >
-            <span v-html="taxa.taxon_name" class="me-2"></span>
-            <Tooltip :content="taxa.notes" v-if="taxa.notes"></Tooltip>
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+              <span v-html="taxa.taxon_name" class="me-2"></span>
+              <span v-if="taxa.media_count > 0" class="text-muted small" style="white-space: nowrap;">
+                (<a
+                  href="#"
+                  @click.prevent="navigateToMediaWithTaxon(taxa.taxon_name)"
+                  class="text-decoration-none"
+                >
+                  {{ taxa.media_count }} media
+                </a>)
+              </span>
+              <Tooltip :content="taxa.notes" v-if="taxa.notes"></Tooltip>
+            </div>
           </li>
         </ul>
       </div>
@@ -229,17 +319,28 @@ onMounted(() => {
               'list-group-item',
             ]"
           >
-            <span
-              v-html="
-                getTaxonNameDisplay(
-                  taxa.taxon_name,
-                  taxa.lookup_failed,
-                  taxa.pbdb_verified
-                )
-              "
-              class="me-2"
-            ></span>
-            <Tooltip :content="taxa.notes" v-if="taxa.notes"></Tooltip>
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+              <span
+                v-html="
+                  getTaxonNameDisplay(
+                    taxa.taxon_name,
+                    taxa.lookup_failed,
+                    taxa.pbdb_verified
+                  )
+                "
+                class="me-2"
+              ></span>
+              <span v-if="taxa.media_count > 0" class="text-muted small" style="white-space: nowrap;">
+                (<a
+                  href="#"
+                  @click.prevent="navigateToMediaWithTaxon(taxa.taxon_name)"
+                  class="text-decoration-none"
+                >
+                  {{ taxa.media_count }} media
+                </a>)
+              </span>
+              <Tooltip :content="taxa.notes" v-if="taxa.notes"></Tooltip>
+            </div>
           </li>
         </ul>
       </div>
@@ -275,17 +376,28 @@ onMounted(() => {
               'list-group-item',
             ]"
           >
-            <span
-              v-html="
-                getTaxonNameDisplay(
-                  taxa.taxon_name,
-                  taxa.lookup_failed,
-                  taxa.pbdb_verified
-                )
-              "
-              class="me-2"
-            ></span>
-            <Tooltip :content="taxa.notes" v-if="taxa.notes"></Tooltip>
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+              <span
+                v-html="
+                  getTaxonNameDisplay(
+                    taxa.taxon_name,
+                    taxa.lookup_failed,
+                    taxa.pbdb_verified
+                  )
+                "
+                class="me-2"
+              ></span>
+              <span v-if="taxa.media_count > 0" class="text-muted small" style="white-space: nowrap;">
+                (<a
+                  href="#"
+                  @click.prevent="navigateToMediaWithTaxon(taxa.taxon_name)"
+                  class="text-decoration-none"
+                >
+                  {{ taxa.media_count }} media
+                </a>)
+              </span>
+              <Tooltip :content="taxa.notes" v-if="taxa.notes"></Tooltip>
+            </div>
           </li>
         </ul>
       </div>
