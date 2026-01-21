@@ -105,6 +105,21 @@ const taxa = computed(() => {
   return sortTaxaAlphabetically(taxaList, TaxaColumns.GENUS)
 })
 
+// Search input for filtering taxa list
+const searchTaxa = ref('')
+
+// Filtered taxa list based on search input
+const filteredTaxaList = computed(() => {
+  if (!searchTaxa.value.trim()) {
+    return taxa.value
+  }
+  const searchLower = searchTaxa.value.toLowerCase().trim()
+  return taxa.value.filter((taxon: any) => {
+    const taxonName = getTaxonName(taxon).toLowerCase()
+    return taxonName.includes(searchLower)
+  })
+})
+
 const menuCollapsed = ref({
   filterTaxa: true,
   filterView: true,
@@ -435,6 +450,12 @@ onMounted(() => {
                 <div id="filterTaxa" class="accordion-collapse collapse">
                   <div class="accordion-body">
                     <div v-if="taxa.length > 0">
+                      <input
+                        type="text"
+                        v-model="searchTaxa"
+                        class="form-control mb-2"
+                        placeholder="Search taxa..."
+                      />
                       <div class="selection-section">
                         <span @click="setCheckboxes('filterTaxa', false)"
                           >Clear All</span
@@ -444,7 +465,7 @@ onMounted(() => {
                         >
                       </div>
                       <div class="checkbox-group">
-                        <label v-for="taxon in taxa" :key="taxon.taxon_id">
+                        <label v-for="taxon in filteredTaxaList" :key="taxon.taxon_id">
                           <input
                             type="checkbox"
                             name="filterTaxa"
