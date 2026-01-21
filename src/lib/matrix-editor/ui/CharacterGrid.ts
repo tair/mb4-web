@@ -219,6 +219,9 @@ export class CharacterGrid extends Component {
       this.addSelectedItems(tr)
       this.highlightedElement = tr
 
+      // Dispatch SELECT event so listeners (e.g., CharacterListDialog) can update UI state
+      this.dispatchEvent(new Event(EventType.SELECT))
+
       // Focus the grid for keyboard navigation
       this.focus()
     }
