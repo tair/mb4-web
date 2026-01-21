@@ -104,15 +104,20 @@ export class CharacterSearchDialog extends Dialog {
   }
 
   /**
-   * Handles events when character rules are removed.
-   * @param e The event that triggerd this callback
+   * Handles events when a character search result is clicked.
+   * Navigates to and highlights the selected character in the grid.
+   * @param e The event that triggered this callback
    */
   private onHandleGridClick(e: CustomEvent<CharacterSearchResult>) {
     const characterId = parseInt(e.detail.characterId, 10)
-    const column = characterId
-      ? this.matrixModel.getCharacterIndexById(characterId)
-      : -1
+    if (!characterId || isNaN(characterId)) {
+      return
+    }
+
+    const column = this.matrixModel.getCharacterIndexById(characterId)
+    if (column >= 0) {
     window.dispatchEvent(GoToCharacterEvents.create(column))
+    }
   }
 
   /**
