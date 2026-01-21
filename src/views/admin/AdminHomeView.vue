@@ -185,6 +185,88 @@ onMounted(async () => {
             </div>
           </div>
         </div>
+
+        <!-- Site Statistics Card -->
+        <div class="col-md-6 col-lg-4 mb-4">
+          <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="card-title mb-0 text-white">
+                <i class="fa fa-chart-bar me-2"></i>
+                Site Statistics
+              </h5>
+            </div>
+            <div class="card-body">
+              <p class="mb-3">
+                View comprehensive site-wide analytics including logins, sessions, downloads, uploads, and user registrations.
+              </p>
+              
+              <ul class="list-unstyled small mb-0">
+                <li class="mb-2">
+                  <i class="fa fa-users text-primary me-2"></i>
+                  <strong>Members & Projects</strong> - Registration and project creation stats
+                </li>
+                <li class="mb-2">
+                  <i class="fa fa-sign-in-alt text-primary me-2"></i>
+                  <strong>Logins & Sessions</strong> - User activity tracking
+                </li>
+                <li class="mb-2">
+                  <i class="fa fa-download text-primary me-2"></i>
+                  <strong>Downloads</strong> - File download tracking by type
+                </li>
+                <li>
+                  <i class="fa fa-upload text-primary me-2"></i>
+                  <strong>Uploads</strong> - File upload tracking by type
+                </li>
+              </ul>
+            </div>
+            <div class="card-footer">
+              <RouterLink to="/admin/statistics" class="btn btn-primary w-100 btn-admin">
+                View Site Statistics
+              </RouterLink>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project Statistics Card -->
+        <div class="col-md-6 col-lg-4 mb-4">
+          <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="card-title mb-0 text-white">
+                <i class="fa fa-table me-2"></i>
+                Project Statistics
+              </h5>
+            </div>
+            <div class="card-body">
+              <p class="mb-3">
+                View detailed per-project metrics including matrices, media, notes, and API usage statistics.
+              </p>
+              
+              <ul class="list-unstyled small mb-0">
+                <li class="mb-2">
+                  <i class="fa fa-globe text-primary me-2"></i>
+                  <strong>Global Totals</strong> - Site-wide statistics overview
+                </li>
+                <li class="mb-2">
+                  <i class="fa fa-project-diagram text-primary me-2"></i>
+                  <strong>Per-Project Details</strong> - Individual project metrics
+                </li>
+                <li class="mb-2">
+                  <i class="fa fa-code text-primary me-2"></i>
+                  <strong>Source Tracking</strong> - HTML5 vs FLASH editor usage
+                </li>
+                <li>
+                  <i class="fa fa-plug text-primary me-2"></i>
+                  <strong>API Usage</strong> - CIPRES and Taxon Check stats
+                </li>
+              </ul>
+            </div>
+            <div class="card-footer">
+              <RouterLink to="/admin/statistics/projects" class="btn btn-primary w-100 btn-admin">
+                View Project Statistics
+              </RouterLink>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </LoadingIndicator>
