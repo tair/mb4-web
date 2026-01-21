@@ -108,6 +108,10 @@ const taxa = computed(() => {
 // Search input for filtering taxa list
 const searchTaxa = ref('')
 
+// Reactive set to track selected taxa IDs (persists across search filtering)
+// Initialized empty, will be populated after filter is loaded
+const selectedTaxaIds = ref<Set<number>>(new Set())
+
 // Filtered taxa list based on search input
 const filteredTaxaList = computed(() => {
   if (!searchTaxa.value.trim()) {
@@ -119,6 +123,17 @@ const filteredTaxaList = computed(() => {
     return taxonName.includes(searchLower)
   })
 })
+
+// Handle taxa checkbox toggle
+function toggleTaxonSelection(taxonId: number, checked: boolean) {
+  if (checked) {
+    selectedTaxaIds.value.add(taxonId)
+  } else {
+    selectedTaxaIds.value.delete(taxonId)
+  }
+  // Trigger reactivity by creating a new Set
+  selectedTaxaIds.value = new Set(selectedTaxaIds.value)
+}
 
 const menuCollapsed = ref({
   filterTaxa: true,
@@ -150,6 +165,9 @@ function getFilter(): MediaFilter {
   }
 }
 
+// Initialize selectedTaxaIds from the loaded filter
+selectedTaxaIds.value = new Set(filter.filterTaxa)
+
 async function handleSubmitClicked(event: Event) {
   const target = event.currentTarget as any
   const formData = new FormData(target)
@@ -164,11 +182,14 @@ async function handleSubmitClicked(event: Event) {
   filter.filterStatus = []
   filter.filterOther = {}
 
+  // Set taxa filter from reactive selectedTaxaIds (preserves selections across search)
+  filter.filterTaxa = Array.from(selectedTaxaIds.value)
+
   // Set the filters with the new values.
   for (const [key, value] of formData.entries()) {
     switch (key) {
       case 'filterTaxa':
-        filter.filterTaxa.push(parseInt(value as string))
+        // Skip - already handled via selectedTaxaIds
         break
       case 'filterView':
         filter.filterView.push(parseInt(value as string))
@@ -229,6 +250,23 @@ function setCheckboxes(id: string, value: boolean) {
       checkbox.checked = value
     }
   }
+  
+  // Update reactive selectedTaxaIds for taxa checkboxes
+  if (id === 'filterTaxa') {
+    if (value) {
+      // Add all visible taxa to existing selections (preserves hidden selections)
+      for (const taxon of filteredTaxaList.value) {
+        selectedTaxaIds.value.add(taxon.taxon_id)
+      }
+      selectedTaxaIds.value = new Set(selectedTaxaIds.value)
+    } else {
+      // Clear all visible taxa from selection (preserves hidden selections)
+      for (const taxon of filteredTaxaList.value) {
+        selectedTaxaIds.value.delete(taxon.taxon_id)
+      }
+      selectedTaxaIds.value = new Set(selectedTaxaIds.value)
+    }
+  }
   return false
 }
 
@@ -248,6 +286,9 @@ function clearAllFiltersInModal() {
     filterStatus: [],
     filterOther: {}
   })
+  
+  // Reset reactive selectedTaxaIds
+  selectedTaxaIds.value = new Set()
   
   // Clear sessionStorage
   sessionStorage.removeItem(serializedfilterName)
@@ -411,6 +452,10 @@ onMounted(() => {
           filterOther: {}
         })
       }
+      // Sync reactive selectedTaxaIds from filter
+      selectedTaxaIds.value = new Set(filter.filterTaxa)
+      // Reset search input
+      searchTaxa.value = ''
       updateCheckboxStates()
     })
   }
@@ -471,9 +516,8 @@ onMounted(() => {
                             name="filterTaxa"
                             :value="taxon.taxon_id"
                             :disabled="menuCollapsed['filterTaxa']"
-                            :checked="
-                              filter.filterTaxa.includes(taxon.taxon_id)
-                            "
+                            :checked="selectedTaxaIds.has(taxon.taxon_id)"
+                            @change="toggleTaxonSelection(taxon.taxon_id, ($event.target as HTMLInputElement).checked)"
                           />
                           <TaxonomicName
                             :showExtinctMarker="true"
