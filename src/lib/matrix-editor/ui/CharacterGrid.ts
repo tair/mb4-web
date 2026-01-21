@@ -182,15 +182,45 @@ export class CharacterGrid extends Component {
   }
 
   /**
-   * Go to the character
+   * Go to the character, scroll to it, and select/highlight it
    * @param index The index to go to
    */
   goToCharacter(index: number) {
+    if (index < 0) {
+      return
+    }
+
     const element = this.getElement()
-    const thead = element.getElementsByTagName('tbody')[0]
-    const tr = thead.getElementsByTagName('tr')[index]
-    if (tr) {
-      this.scrollToTrElement(tr)
+    const tbody = element.getElementsByTagName('tbody')[0]
+    const tr = tbody.getElementsByTagName('tr')[index] as HTMLElement
+
+    if (tr && tr.dataset['characterId']) {
+      // Clear previous selection
+      this.removeSelectedItems()
+
+      // Find the actual scrollable container by checking parent elements
+      let scrollParent: HTMLElement | null = tr.parentElement
+      while (scrollParent) {
+        const style = window.getComputedStyle(scrollParent)
+        const overflowY = style.overflowY
+        if (overflowY === 'auto' || overflowY === 'scroll') {
+          // Found the scrollable parent - calculate scroll position to center the row
+          const containerHeight = scrollParent.clientHeight
+          const rowTop = tr.offsetTop
+          const rowHeight = tr.offsetHeight
+          const scrollTo = rowTop - (containerHeight / 2) + (rowHeight / 2)
+          scrollParent.scrollTop = Math.max(0, scrollTo)
+          break
+        }
+        scrollParent = scrollParent.parentElement
+      }
+
+      // Select and highlight the row
+      this.addSelectedItems(tr)
+      this.highlightedElement = tr
+
+      // Focus the grid for keyboard navigation
+      this.focus()
     }
   }
 
