@@ -364,6 +364,7 @@ export const useAdminStatisticsStore = defineStore('adminStatistics', () => {
    */
   async function fetchProjectDetails(projectId) {
     isLoadingDetail.value = true
+    selectedProjectDetails.value = null
     error.value = null
     try {
       const response = await apiService.get(`/admin/statistics/projects/${projectId}`)

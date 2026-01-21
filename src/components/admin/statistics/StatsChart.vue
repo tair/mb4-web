@@ -12,7 +12,7 @@
           <span class="visually-hidden">Loading...</span>
         </div>
       </div>
-      <div v-else-if="!chartData || chartData.length === 0" class="text-center py-4 text-muted">
+      <div v-else-if="!chartData || chartData.length === 0 || !hasNonZeroData" class="text-center py-4 text-muted">
         No data available
       </div>
       <div v-else class="chart-container">
@@ -35,7 +35,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 
 const props = defineProps({
   title: {
@@ -66,7 +66,6 @@ const props = defineProps({
 })
 
 const chartCanvas = ref(null)
-let chartInstance = null
 
 const total = computed(() => {
   if (!props.data || props.data.length === 0) return 0
@@ -82,8 +81,13 @@ const chartData = computed(() => {
   return props.data || []
 })
 
+const hasNonZeroData = computed(() => {
+  if (!chartData.value || chartData.value.length === 0) return false
+  return chartData.value.some(item => (item.value || 0) > 0)
+})
+
 function initChart() {
-  if (!chartCanvas.value || chartData.value.length === 0) return
+  if (!chartCanvas.value || chartData.value.length === 0 || !hasNonZeroData.value) return
   
   // Simple canvas-based chart rendering
   // For production, consider using Chart.js or similar library
@@ -94,9 +98,10 @@ function initChart() {
   
   ctx.clearRect(0, 0, width, height)
   
-  if (chartData.value.length === 0) return
-  
   const maxValue = Math.max(...chartData.value.map(d => d.value || 0))
+  
+  // Guard against division by zero (shouldn't happen due to hasNonZeroData check, but safety first)
+  if (maxValue === 0) return
   const barWidth = width / chartData.value.length - 10
   const padding = 40
   
@@ -136,20 +141,12 @@ function initChart() {
   })
 }
 
-watch([chartData, chartType], () => {
-  if (chartInstance) {
-    initChart()
-  }
+watch([chartData, () => props.chartType], () => {
+  initChart()
 })
 
 onMounted(() => {
   initChart()
-})
-
-onBeforeUnmount(() => {
-  if (chartInstance) {
-    chartInstance = null
-  }
 })
 </script>
 
