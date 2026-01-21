@@ -159,6 +159,16 @@ const router = createRouter({
               name: 'AdminHomepageDashboard',
               component: () => import('@/views/admin/HomePageDashboardView.vue'),
             },
+            {
+              path: 'statistics',
+              name: 'AdminSiteStatistics',
+              component: () => import('@/views/admin/SiteStatisticsView.vue'),
+            },
+            {
+              path: 'statistics/projects',
+              name: 'AdminProjectStatistics',
+              component: () => import('@/views/admin/ProjectStatisticsView.vue'),
+            },
           ],
         },
 
