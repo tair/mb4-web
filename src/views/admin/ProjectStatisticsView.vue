@@ -14,11 +14,11 @@
 
       <!-- Global Totals -->
       <StatsTotalsCard
-        v-if="projectStatsTotals"
+        v-if="projectStatsTotals || isLoadingProjectStats"
         title="Global Totals"
         icon="fa fa-globe"
         :stats="projectStatsTotals"
-        :loading="isLoadingProjectStats"
+        :loading="isLoadingProjectStats && !projectStatsTotals"
       />
 
       <!-- Search Bar -->
