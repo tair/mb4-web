@@ -192,30 +192,30 @@ onMounted(async () => {
             <div class="card-header d-flex justify-content-between align-items-center">
               <h5 class="card-title mb-0 text-white">
                 <i class="fa fa-chart-bar me-2"></i>
-                Site Statistics
+                Site Activity Statistics
               </h5>
             </div>
             <div class="card-body">
               <p class="mb-3">
-                View comprehensive site-wide analytics including logins, sessions, downloads, uploads, and user registrations.
+                View all-time site totals and date range activity including projects created/published, user registrations, and media uploads.
               </p>
               
               <ul class="list-unstyled small mb-0">
                 <li class="mb-2">
-                  <i class="fa fa-users text-primary me-2"></i>
-                  <strong>Members & Projects</strong> - Registration and project creation stats
+                  <i class="fa fa-database text-primary me-2"></i>
+                  <strong>All-Time Totals</strong> - Projects, users, matrices, media, taxa, and more
                 </li>
                 <li class="mb-2">
-                  <i class="fa fa-sign-in-alt text-primary me-2"></i>
-                  <strong>Logins & Sessions</strong> - User activity tracking
+                  <i class="fa fa-calendar text-primary me-2"></i>
+                  <strong>Date Range Activity</strong> - Projects created/published, user registrations
                 </li>
                 <li class="mb-2">
-                  <i class="fa fa-download text-primary me-2"></i>
-                  <strong>Downloads</strong> - File download tracking by type
+                  <i class="fa fa-upload text-primary me-2"></i>
+                  <strong>Media Uploads</strong> - Upload tracking by date range
                 </li>
                 <li>
-                  <i class="fa fa-upload text-primary me-2"></i>
-                  <strong>Uploads</strong> - File upload tracking by type
+                  <i class="fa fa-list text-primary me-2"></i>
+                  <strong>Detailed Records</strong> - View registrations, publications, and uploads
                 </li>
               </ul>
             </div>
@@ -233,12 +233,12 @@ onMounted(async () => {
             <div class="card-header d-flex justify-content-between align-items-center">
               <h5 class="card-title mb-0 text-white">
                 <i class="fa fa-table me-2"></i>
-                Project Statistics
+                Project List & Statistics
               </h5>
             </div>
             <div class="card-body">
               <p class="mb-3">
-                View detailed per-project metrics including matrices, media, notes, and API usage statistics.
+                View global totals and browse all projects with per-project statistics including matrices, taxa, media, documents, and members.
               </p>
               
               <ul class="list-unstyled small mb-0">
@@ -247,16 +247,16 @@ onMounted(async () => {
                   <strong>Global Totals</strong> - Site-wide statistics overview
                 </li>
                 <li class="mb-2">
-                  <i class="fa fa-project-diagram text-primary me-2"></i>
-                  <strong>Per-Project Details</strong> - Individual project metrics
+                  <i class="fa fa-table text-primary me-2"></i>
+                  <strong>Project List</strong> - Searchable table of all projects
                 </li>
                 <li class="mb-2">
-                  <i class="fa fa-code text-primary me-2"></i>
-                  <strong>Source Tracking</strong> - HTML5 vs FLASH editor usage
+                  <i class="fa fa-chart-bar text-primary me-2"></i>
+                  <strong>Per-Project Metrics</strong> - Matrices, taxa, media, docs, members counts
                 </li>
                 <li>
-                  <i class="fa fa-plug text-primary me-2"></i>
-                  <strong>API Usage</strong> - CIPRES and Taxon Check stats
+                  <i class="fa fa-info-circle text-primary me-2"></i>
+                  <strong>Project Details</strong> - View detailed statistics for each project
                 </li>
               </ul>
             </div>
