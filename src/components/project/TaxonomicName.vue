@@ -18,6 +18,13 @@ const SUB_COLUMN_NAMES = [
   TaxaColumns.GENUS,
 ]
 
+const isExtinct = computed(() => {
+  const value = props.taxon['is_extinct']
+  // Handle various possible values: 1, '1', true should show marker
+  // 0, '0', false, null, undefined should not show marker
+  return value === 1 || value === '1' || value === true
+})
+
 const higherOrderName = computed(() => {
   const otu = getOtu()
   let gotOtu = false
@@ -84,15 +91,7 @@ function getAuthor() {
 </script>
 <template>
   <span class="taxonName">
-    <template v-if="showExtinctMarker">
-      {{
-        taxon['is_extinct'] &&
-        taxon['is_extinct'] !== '0' &&
-        taxon['is_extinct'] !== 0
-          ? '†'
-          : ''
-      }}
-    </template>
+    <template v-if="showExtinctMarker && isExtinct">†</template>
     <span v-if="higherOrderName">
       {{ higherOrderName }}
     </span>
