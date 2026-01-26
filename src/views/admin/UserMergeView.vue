@@ -46,17 +46,25 @@ async function handleSourceSearch() {
   }
   
   sourceSearchTimer = setTimeout(async () => {
+    // Capture query at time of request to detect stale responses
+    const queryAtRequest = sourceSearchQuery.value
     isSearchingSource.value = true
     try {
-      const results = await adminUsersStore.searchUsers(sourceSearchQuery.value)
-      // Filter out already selected target user
-      sourceSearchResults.value = results.filter(
-        u => !selectedTargetUser.value || u.user_id !== selectedTargetUser.value.user_id
-      )
+      const results = await adminUsersStore.searchUsers(queryAtRequest)
+      // Only update results if query hasn't changed during the request
+      if (sourceSearchQuery.value === queryAtRequest) {
+        // Filter out already selected target user
+        sourceSearchResults.value = results.filter(
+          u => !selectedTargetUser.value || u.user_id !== selectedTargetUser.value.user_id
+        )
+      }
     } catch (error) {
       console.error('Error searching users:', error)
     } finally {
-      isSearchingSource.value = false
+      // Only clear loading state if this is still the current query
+      if (sourceSearchQuery.value === queryAtRequest) {
+        isSearchingSource.value = false
+      }
     }
   }, 300)
 }
@@ -71,17 +79,25 @@ async function handleTargetSearch() {
   }
   
   targetSearchTimer = setTimeout(async () => {
+    // Capture query at time of request to detect stale responses
+    const queryAtRequest = targetSearchQuery.value
     isSearchingTarget.value = true
     try {
-      const results = await adminUsersStore.searchUsers(targetSearchQuery.value)
-      // Filter out already selected source user
-      targetSearchResults.value = results.filter(
-        u => !selectedSourceUser.value || u.user_id !== selectedSourceUser.value.user_id
-      )
+      const results = await adminUsersStore.searchUsers(queryAtRequest)
+      // Only update results if query hasn't changed during the request
+      if (targetSearchQuery.value === queryAtRequest) {
+        // Filter out already selected source user
+        targetSearchResults.value = results.filter(
+          u => !selectedSourceUser.value || u.user_id !== selectedSourceUser.value.user_id
+        )
+      }
     } catch (error) {
       console.error('Error searching users:', error)
     } finally {
-      isSearchingTarget.value = false
+      // Only clear loading state if this is still the current query
+      if (targetSearchQuery.value === queryAtRequest) {
+        isSearchingTarget.value = false
+      }
     }
   }, 300)
 }
