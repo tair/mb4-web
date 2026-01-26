@@ -37,11 +37,11 @@ body {
 }
 
 .text-mb {
-  color: #ef782f;
+  color: var(--theme-orange);
 }
 
 .mb-color {
-  color: #ef782f;
+  color: var(--theme-orange);
 }
 
 .table-scroll {
@@ -55,7 +55,7 @@ a {
 }
 
 a:link {
-  color: #ef782f;
+  color: var(--theme-orange);
 }
 
 a[role='button']:link,
@@ -64,12 +64,12 @@ a[role='button']:hover {
 }
 
 .nav-link {
-  color: #ef782f !important;
+  color: var(--theme-orange) !important;
 }
 
 .card-header {
   color: white;
-  background-color: #ef782f;
+  background-color: var(--theme-orange);
 }
 
 /* Button styles are now imported from buttons.css */

@@ -1,6 +1,6 @@
 <template>
   <div class="card shadow-sm border-0">
-    <div class="card-header text-white d-flex justify-content-between align-items-center py-3" style="background-color: #ef782f;">
+    <div class="card-header text-white d-flex justify-content-between align-items-center py-3" style="background-color: var(--theme-orange);">
       <h5 class="card-title mb-0 text-white">
         <i class="fa fa-table me-2"></i>
         Project Statistics

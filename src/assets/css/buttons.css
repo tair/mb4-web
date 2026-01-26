@@ -1,6 +1,8 @@
 :root {
-  --mb-orange: #ef782f;
+  --mb-orange: #F17B17;
+  --theme-orange: #F17B17;
   --mb-orange-hover: #d86c13;
+  --theme-orange-hover: #d86c13;
   --mb-orange-disabled: #f6ba95;
 }
 

@@ -78,7 +78,7 @@ const projectId = route.params.id
   width: 250px;
 }
 .matrix-choose-link {
-  color: #f60;
+  color: var(--theme-orange);
   font-size: 18px;
   font-weight: bold;
   line-height: 24px;

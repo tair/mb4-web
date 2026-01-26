@@ -1313,7 +1313,7 @@ onUnmounted(() => {
 }
 
 .matrix-import-step p {
-  color: #ef782f;
+  color: var(--theme-orange);
   font-size: 12px;
   margin-top: 10px;
 }
@@ -1343,9 +1343,9 @@ onUnmounted(() => {
 
 .btn-circle {
   background-color: #fff;
-  border: 1px #ef782f solid;
+  border: 1px var(--theme-orange) solid;
   border-radius: 15px;
-  color: #ef782f;
+  color: var(--theme-orange);
   font-size: 12px;
   height: 30px;
   line-height: 1.428571429;
@@ -1360,7 +1360,7 @@ onUnmounted(() => {
 }
 
 .btn-primary.btn-circle {
-  background-color: #ef782f;
+  background-color: var(--theme-orange);
   color: #fff;
 }
 

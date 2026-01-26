@@ -1349,7 +1349,7 @@ ol.selectList li:hover span.remove {
 }
 
 .addMediaDialog .searchControls .mediaInput:focus {
-  border-color: #ef782f;
+  border-color: var(--theme-orange);
   box-shadow: none;
 }
 
@@ -1651,7 +1651,7 @@ ol.selectList li:hover span.remove {
 }
 
 .addCitationDialog .citationInput:focus {
-  border-color: #ef782f;
+  border-color: var(--theme-orange);
   box-shadow: none;
 }
 

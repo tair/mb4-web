@@ -331,7 +331,7 @@ function updateCopyrightPreference(preference) {
 }
 
 .formErrors {
-  color: #ef782f;
+  color: var(--theme-orange);
   font-weight: bold;
 }
 

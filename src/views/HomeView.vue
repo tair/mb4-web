@@ -804,7 +804,7 @@ onMounted(() => {
 }
 
 .action-button.public {
-  background: #ef782f;
+  background: var(--theme-orange);
   color: white;
 }
 
@@ -1095,7 +1095,7 @@ onMounted(() => {
 
 .browse-link:hover .browse-icon {
   transform: scale(1.1);
-  color: #e27b58;
+  color: var(--theme-orange);
 }
 
 .browse-icon {
@@ -1321,7 +1321,7 @@ onMounted(() => {
   transform: translateX(-50%);
   width: 60px;
   height: 3px;
-  background: #ef782f;
+  background: var(--theme-orange);
   border-radius: 2px;
 }
 
@@ -1374,7 +1374,7 @@ onMounted(() => {
 .supporting-members-link {
   display: inline-block;
   padding: 0.75rem 1.5rem;
-  background: #ef782f;
+  background: var(--theme-orange);
   color: white;
   text-decoration: none;
   border-radius: 8px;
@@ -1383,7 +1383,7 @@ onMounted(() => {
 }
 
 .supporting-members-link:hover {
-  background: #d86c13;
+  background: var(--theme-orange-hover);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(239, 120, 47, 0.2);
 }
@@ -1542,7 +1542,7 @@ onMounted(() => {
 }
 
 .card-id {
-  color: #ef782f;
+  color: var(--theme-orange);
   font-size: 16px;
   display: block;
   margin-bottom: 6px;
@@ -1626,7 +1626,7 @@ onMounted(() => {
 }
 
 .dot.active {
-  background-color: #ef782f;
+  background-color: var(--theme-orange);
 }
 
 @media (max-width: 1024px) {
