@@ -27,13 +27,13 @@ const projectId = route.params.id
         Documents
       </RouterLink>
       folder instead:
-
-      <ul>
-        <li>Combined data (molecular and phenomic)</li>
-        <li>Molecular data only</li>
-        <li>Discrete phenomic data without embedded character and state descriptions</li>
-      </ul>
     </p>
+
+    <ul>
+      <li>Combined data (molecular and phenomic)</li>
+      <li>Molecular data only</li>
+      <li>Discrete phenomic data without embedded character and state descriptions</li>
+    </ul>
     <div class="alert alert-warning">Warning: The following features in NEXUS blocks are not supported by MorphoBank and will be dropped upon import: EXSET, WTSET, UserType, STEP MATRIX.</div>
 
     <div class="matrix-choose">
