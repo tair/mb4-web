@@ -212,10 +212,16 @@ onMounted(async () => {
               Manage all registered users in the system
             </p>
           </div>
-          <RouterLink to="/admin/users/create" class="btn btn-primary btn-admin">
-            <i class="fa fa-plus me-2"></i>
-            Create New User
-          </RouterLink>
+          <div class="d-flex gap-2">
+            <RouterLink to="/admin/users/merge" class="btn btn-outline-primary">
+              <i class="fa fa-compress-arrows-alt me-2"></i>
+              Merge Users
+            </RouterLink>
+            <RouterLink to="/admin/users/create" class="btn btn-primary btn-admin">
+              <i class="fa fa-plus me-2"></i>
+              Create New User
+            </RouterLink>
+          </div>
         </div>
       </div>
 

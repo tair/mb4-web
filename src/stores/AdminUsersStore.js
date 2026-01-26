@@ -403,6 +403,81 @@ export const useAdminUsersStore = defineStore({
         return []
       }
     },
+
+    /**
+     * Get user's data usage across all tables (for merge preview)
+     */
+    async getUserUsage(userId) {
+      try {
+        const response = await apiService.get(`/admin/users/${userId}/usage`)
+        const data = await response.json()
+
+        if (data.success) {
+          return data.data
+        } else {
+          throw new Error(data.message || 'Failed to get user usage')
+        }
+      } catch (e) {
+        console.error('Error getting user usage:', e)
+        this.error = e.message || 'Failed to get user usage'
+        throw e
+      }
+    },
+
+    /**
+     * Merge one user's data into another user
+     * @param {number} sourceUserId - User ID to merge from (will have data transferred)
+     * @param {number} targetUserId - User ID to merge into (will receive data)
+     * @param {boolean} deleteSourceUser - Whether to soft-delete the source user after merge
+     */
+    async mergeUsers(sourceUserId, targetUserId, deleteSourceUser = false) {
+      try {
+        const response = await apiService.post('/admin/users/merge', {
+          sourceUserId,
+          targetUserId,
+          deleteSourceUser,
+        })
+        const data = await response.json()
+
+        if (data.success) {
+          // Refresh the list after merge
+          await this.fetchUsers()
+          return data.data
+        } else {
+          throw new Error(data.message || 'Failed to merge users')
+        }
+      } catch (e) {
+        console.error('Error merging users:', e)
+        this.error = e.message || 'Failed to merge users'
+        throw e
+      }
+    },
+
+    /**
+     * Search users for autocomplete (lightweight search)
+     */
+    async searchUsers(query) {
+      try {
+        const response = await apiService.get('/admin/users', {
+          params: {
+            search: query,
+            status: 'all',
+            perPage: 20,
+            page: 1,
+          },
+        })
+        const data = await response.json()
+
+        if (data.success) {
+          return data.data.users
+        } else {
+          throw new Error(data.message || 'Failed to search users')
+        }
+      } catch (e) {
+        console.error('Error searching users:', e)
+        return []
+      }
+    },
   },
 })
 

@@ -150,6 +150,11 @@ const router = createRouter({
               component: () => import('@/views/admin/UserCreateView.vue'),
             },
             {
+              path: 'users/merge',
+              name: 'AdminUsersMerge',
+              component: () => import('@/views/admin/UserMergeView.vue'),
+            },
+            {
               path: 'users/:userId/edit',
               name: 'AdminUsersEdit',
               component: () => import('@/views/admin/UserEditView.vue'),
