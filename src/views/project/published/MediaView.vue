@@ -32,6 +32,9 @@ const isCaptchaVerified = ref(false)
 // Tooltip constants
 const downloadSelectedTooltip = 'Download original files for all selected media items.'
 
+// Timeout ID for debouncing CAPTCHA regeneration
+let captchaTimeoutId = null
+
 onMounted(async () => {
   await mediaStore.fetchMediaFiles(projectId)
   // need to get project title
@@ -141,9 +144,16 @@ const verifyMathAnswer = () => {
   const userAnswer = parseInt(userMathAnswer.value)
   isCaptchaVerified.value = userAnswer === mathAnswer.value
   
+  // Clear any existing timeout to prevent multiple regenerations
+  if (captchaTimeoutId !== null) {
+    clearTimeout(captchaTimeoutId)
+    captchaTimeoutId = null
+  }
+  
   if (!isCaptchaVerified.value && userMathAnswer.value !== '') {
     // Give user feedback but don't immediately regenerate
-    setTimeout(() => {
+    captchaTimeoutId = setTimeout(() => {
+      captchaTimeoutId = null
       if (!isCaptchaVerified.value && userMathAnswer.value !== '') {
         generateMathQuestion()
       }
