@@ -443,5 +443,30 @@ export const useAuthStore = defineStore({
         }
       }
     },
+
+    async unlinkORCID() {
+      try {
+        const url = '/auth/unlink-orcid'
+        const res = await apiService.post(url, {})
+        
+        if (res.ok) {
+          // Clear local ORCID state
+          this.orcid = {
+            orcid: null,
+            name: null,
+            accessToken: null,
+            refreshToken: null,
+          }
+          localStorage.removeItem('orcid-user')
+          return { success: true }
+        } else {
+          const data = await res.json()
+          return { success: false, message: data.message || 'Failed to unlink ORCID' }
+        }
+      } catch (e) {
+        console.error('Error unlinking ORCID:', e)
+        return { success: false, message: e.message || 'Failed to unlink ORCID' }
+      }
+    },
   },
 })

@@ -28,6 +28,7 @@ const userData = reactive({
 })
 const hasUserInteracted = ref(false)
 const orcidLoginUrl = ref(null)
+const unlinkingOrcid = ref(false)
 const searchTerm = ref(null)
 const institutionList = ref([])
 const searchLoading = ref(false)
@@ -141,6 +142,30 @@ const searchInstitutions = async () => {
     showError('Error loading institutions')
     console.error(err)
     searchLoading.value = false
+  }
+}
+
+const unlinkORCID = async () => {
+  if (!confirm('Are you sure you want to unlink your ORCID? You can link it again later.')) {
+    return
+  }
+  
+  try {
+    unlinkingOrcid.value = true
+    const result = await authStore.unlinkORCID()
+    
+    if (result.success) {
+      // Update local user data to reflect the change
+      userData.user.orcid = null
+      showSuccess('ORCID successfully unlinked from your account')
+    } else {
+      showError(result.message || 'Failed to unlink ORCID')
+    }
+  } catch (e) {
+    showError('Error unlinking ORCID')
+    console.error('Error unlinking ORCID:', e)
+  } finally {
+    unlinkingOrcid.value = false
   }
 }
 
@@ -455,14 +480,32 @@ const submitButtonText = computed(() => {
                 Link Account with ORCID
               </a>
             </div>
-            <div v-else class="orcid-linked">
-              <img
-                alt="ORCID logo"
-                src="/ORCIDiD_iconvector.svg"
-                title="ORCID iD"
-                class="orcid-icon"
-              />
-              {{ userData.user.orcid }}
+            <div v-else class="orcid-linked-container">
+              <div class="orcid-linked">
+                <img
+                  alt="ORCID logo"
+                  src="/ORCIDiD_iconvector.svg"
+                  title="ORCID iD"
+                  class="orcid-icon"
+                />
+                <a 
+                  :href="`https://orcid.org/${userData.user.orcid}`" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  class="orcid-link"
+                >
+                  {{ userData.user.orcid }}
+                </a>
+              </div>
+              <button 
+                type="button" 
+                class="btn btn-sm btn-outline-danger ms-3"
+                @click="unlinkORCID"
+                :disabled="unlinkingOrcid"
+              >
+                <span v-if="unlinkingOrcid">Unlinking...</span>
+                <span v-else>Unlink ORCID</span>
+              </button>
             </div>
           </div>
         </div>
