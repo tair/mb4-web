@@ -1296,13 +1296,15 @@ function fixMediaWithoutViews() {
         <div class="col-5">
           <div class="mb-2">
             <label for="filter" class="me-2">Search for:</label>
-            <input id="filter" v-model="searchStr" class="me-2" />
-            <button @click="searchByStr()" class="btn btn-primary me-2">
-              Submit
-            </button>
-            <button @click="onResetSearch()" class="btn btn-primary btn-white">
-              Clear
-            </button>
+            <input id="filter" v-model="searchStr" />
+            <div class="mt-2">
+              <button @click="searchByStr()" class="btn btn-sm btn-primary me-2">
+                Submit
+              </button>
+              <button @click="onResetSearch()" class="btn btn-sm btn-primary btn-white">
+                Clear
+              </button>
+            </div>
           </div>
           <div class="mb-2">
             <label for="show-filter" class="me-2">Show:</label>
