@@ -1,11 +1,13 @@
 import { MatrixModel } from '../../MatrixModel'
 import * as TaxaChangedEvents from '../../events/TaxaChangedEvent'
+import * as TaxaAddedEvents from '../../events/TaxaAddedEvent'
 import { Dialog } from '../Dialog'
 import {
   DraggableSelect,
   DraggableSelectDroppedEvent,
 } from '../DraggableSelect'
 import { ConfirmDialog } from './ConfirmDialog'
+import { CreateCompositeTaxonDialog } from './CreateCompositeTaxonDialog'
 import * as mb from '../../mb'
 import { ModalDefaultButtons } from '../Modal'
 import { AlertDialog } from './Alert'
@@ -28,6 +30,7 @@ export class TaxaListDialog extends Dialog {
   private readonly matrixModel: MatrixModel
   private readonly taxaInMatrixSelect: DraggableSelect
   private readonly taxaNotInMatrixSelect: DraggableSelect
+  private createCompositeButton: HTMLButtonElement | null = null
 
   /**
    * @param matrixModel The data associated with the matrix.
@@ -66,12 +69,23 @@ export class TaxaListDialog extends Dialog {
     this.taxaNotInMatrixSelect.setEnabled(false)
     this.taxaNotInMatrixSelect.render(availableTaxaSelect)
     this.setAvailableTaxaInMatrixSelect()
+
+    // Get reference to create composite button
+    this.createCompositeButton = this.getElementByClass<HTMLButtonElement>('createCompositeBtn')
+    
+    // Hide button if project is published
+    if (this.matrixModel.isPublished() && this.createCompositeButton) {
+      this.createCompositeButton.style.display = 'none'
+    }
   }
 
   protected override enterDocument() {
     super.enterDocument()
     this.getHandler()
       .listen(this.matrixModel, TaxaChangedEvents.TYPE, () =>
+        this.handleTaxaChange()
+      )
+      .listen(this.matrixModel, TaxaAddedEvents.TYPE, () =>
         this.handleTaxaChange()
       )
       .listen(
@@ -85,6 +99,13 @@ export class TaxaListDialog extends Dialog {
         DraggableSelect.DroppedEventType,
         () => this.handleDropOutMatrix()
       )
+
+    // Listen for create composite button click
+    if (this.createCompositeButton) {
+      this.getHandler().listen(this.createCompositeButton, 'click', () =>
+        this.handleCreateCompositeClick()
+      )
+    }
   }
 
   protected override finalizeDom(): void {
@@ -265,6 +286,15 @@ export class TaxaListDialog extends Dialog {
   }
 
   /**
+   * Handles the create composite button click.
+   * Opens the CreateCompositeTaxonDialog.
+   */
+  private handleCreateCompositeClick() {
+    const dialog = new CreateCompositeTaxonDialog(this.matrixModel)
+    dialog.setVisible(true)
+  }
+
+  /**
    * @return The HTML content of the dialog.
    */
   private static htmlContent(): string {
@@ -287,8 +317,16 @@ export class TaxaListDialog extends Dialog {
         <i>
           Drag taxa from one list to the other to add and remove them from the
           matrix. To select contiguous taxa, press the hold the SHIFT key; for
-          non-contiguous taxa, use the COMMAND key (Mac) or CTRL key (PC).'
+          non-contiguous taxa, use the COMMAND key (Mac) or CTRL key (PC).
         </i>
+      </div>
+      <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
+        <button type="button" class="btn btn-outline-primary createCompositeBtn">
+          <i class="fa-solid fa-layer-group"></i> Create Composite Taxon
+        </button>
+        <small class="text-muted ms-2">
+          Combine multiple taxa rows into a single composite row with merged scores.
+        </small>
       </div>`
   }
 }

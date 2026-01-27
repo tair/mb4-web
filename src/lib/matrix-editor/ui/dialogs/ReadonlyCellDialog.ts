@@ -22,6 +22,7 @@ import { ImageViewerDialog } from './ImageViewerDialog'
  * @param matrixModel The data associated with the matrix
  * @param taxonId the id of the taxon to render for this dialog
  * @param characterId the id of the character to render for this dialog
+ * @param isComposite whether this cell belongs to a composite taxon
  */
 export class ReadonlyCellDialog extends Dialog {
   /**
@@ -33,13 +34,15 @@ export class ReadonlyCellDialog extends Dialog {
   private readonly taxonId: number
   private readonly characterId: number
   private readonly tabNavigator: TabNavigator
+  private readonly isComposite: boolean
 
-  constructor(matrixModel: MatrixModel, taxonId: number, characterId: number) {
+  constructor(matrixModel: MatrixModel, taxonId: number, characterId: number, isComposite: boolean = false) {
     super()
 
     this.matrixModel = matrixModel
     this.taxonId = taxonId
     this.characterId = characterId
+    this.isComposite = isComposite
 
     this.tabNavigator = new TabNavigator()
     this.registerDisposable(this.tabNavigator)
@@ -58,7 +61,7 @@ export class ReadonlyCellDialog extends Dialog {
     element.classList.add('cellDialog', 'modal-lg', 'readonly')
 
     const contentElement = this.getContentElement()
-    contentElement.innerHTML = ReadonlyCellDialog.htmlContent()
+    contentElement.innerHTML = ReadonlyCellDialog.htmlContent(this.isComposite)
 
     this.tabNavigator.addTab(
       'Scores',
@@ -136,8 +139,16 @@ export class ReadonlyCellDialog extends Dialog {
   /**
    * @return The HTML content of the dialog
    */
-  private static htmlContent(): string {
-    return '<div class="cell-name"></div>'
+  private static htmlContent(isComposite: boolean): string {
+    const compositeMessage = isComposite
+      ? `<div class="alert alert-info composite-cell-notice">
+          <i class="fa-solid fa-circle-info me-2"></i>
+          <strong>Composite Taxon Cell</strong>: This cell belongs to a composite taxon and is 
+          automatically calculated from its source taxa. To change this value, edit the cells 
+          of the source taxa instead.
+        </div>`
+      : ''
+    return `<div class="cell-name"></div>${compositeMessage}`
   }
 }
 

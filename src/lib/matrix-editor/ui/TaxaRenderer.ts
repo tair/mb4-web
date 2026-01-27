@@ -79,11 +79,15 @@ export abstract class TaxaRenderer {
    * Taxon Name HTML
    */
   static NameContent(data: any): string {
+    const compositeIcon = data.isComposite
+      ? '<span class="composite-indicator" title="Composite taxon (combined from multiple source taxa)">&#x1F4E6;</span> '
+      : ''
     return (
       '<span class="name"' +
       (data.title ? 'title="' + mb.htmlEscape(data.title) + '"' : '') +
       '>' +
       (data.access ? '&nbsp;' : '&#128274;') +
+      compositeIcon +
       '[' +
       data.number +
       '] ' +
@@ -105,6 +109,12 @@ export class TaxaNameRenderer extends TaxaRenderer {
     const tr = document.createElement('tr')
     const td = document.createElement('td')
     td.dataset['taxonId'] = String(taxon.getId())
+    
+    // Add composite class for styling
+    if (taxon.isComposite()) {
+      tr.classList.add('composite-taxon')
+    }
+    
     td.innerHTML = TaxaRenderer.NameContent({
       access: taxon.hasAccess(this.projectProperties) || this.isPublished(),
       number:
@@ -112,6 +122,7 @@ export class TaxaNameRenderer extends TaxaRenderer {
         this.projectProperties!.getUserPreferences().getDefaultNumberingMode(),
       name: taxon.getDisplayName(),
       title: taxon.getName() + '\n\n' + taxon.getNotes(),
+      isComposite: taxon.isComposite(),
     })
     tr.appendChild(td)
     return tr
@@ -130,6 +141,12 @@ export class TaxaNameImageRenderer extends TaxaRenderer {
     const tr = document.createElement('tr')
     const td = document.createElement('td')
     td.dataset['taxonId'] = String(taxon.getId())
+    
+    // Add composite class for styling
+    if (taxon.isComposite()) {
+      tr.classList.add('composite-taxon')
+    }
+    
     const hasAccess =
       taxon.hasAccess(this.projectProperties) || this.isPublished()
     td.innerHTML = TaxaRenderer.NameContent({
@@ -139,6 +156,7 @@ export class TaxaNameImageRenderer extends TaxaRenderer {
         this.projectProperties!.getUserPreferences().getDefaultNumberingMode(),
       name: taxon.getDisplayName(),
       title: taxon.getName() + '\n\n' + taxon.getNotes(),
+      isComposite: taxon.isComposite(),
     })
     const media = taxon.getMedia()
     const images = new ImageRenderer('T')

@@ -10,6 +10,7 @@ import { RuleCheckerDialog } from './dialogs/RuleCheckerDialog'
 import { TaxaListDialog } from './dialogs/TaxaListDialog'
 import { WarningsDialog } from './dialogs/WarningsDialog'
 import { CellDialog } from './dialogs/CellDialog'
+import { ReadonlyCellDialog } from './dialogs/ReadonlyCellDialog'
 import { CharacterDialog } from './dialogs/CharacterDialog'
 import { TaxonDialog } from './dialogs/TaxonDialog'
 import { EventType } from './Component'
@@ -229,6 +230,11 @@ class MatrixEditorGridHandler extends MatrixGridHandler {
     taxonId: number,
     characterId: number
   ) {
+    // Check if the taxon is a composite - composite cells are read-only
+    const taxon = matrixModel.getTaxa().getById(taxonId)
+    if (taxon && taxon.isComposite()) {
+      return new ReadonlyCellDialog(matrixModel, taxonId, characterId, true /* isComposite */)
+    }
     return new CellDialog(matrixModel, taxonId, characterId)
   }
 }

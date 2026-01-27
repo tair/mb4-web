@@ -525,6 +525,101 @@ export class MatrixModel extends EventTarget {
   }
 
   /**
+   * Creates a composite taxon from multiple source taxa.
+   * The composite taxon will have combined scores from all source taxa.
+   *
+   * @param sourceTaxaIds Array of taxon IDs to combine
+   * @param genus Genus name for the composite taxon (required)
+   * @param specificEpithet Species name (optional)
+   * @param subspecificEpithet Subspecies name (optional)
+   */
+  createCompositeTaxon(
+    sourceTaxaIds: number[],
+    genus: string,
+    specificEpithet: string = '',
+    subspecificEpithet: string = ''
+  ): Promise<void> {
+    const request = new Request('createCompositeTaxon')
+      .addParameter('id', this.matrixId)
+      .addParameter('source_taxa_ids', sourceTaxaIds)
+      .addParameter('genus', genus)
+      .addParameter('specific_epithet', specificEpithet)
+      .addParameter('subspecific_epithet', subspecificEpithet)
+    return this.loader
+      .send(request)
+      .then((results: { [key: string]: any }) => {
+        // Add the new composite taxon to the taxa list
+        const taxonData = results['taxon']
+        if (taxonData) {
+          const newTaxon = new Taxon(taxonData)
+          this.taxa.addAt([newTaxon], this.taxa.size())
+          this.partitionTaxa = null
+        }
+
+        // Update cells with the new composite taxon's scores
+        const cells = results['cells'] || []
+        this.cells.clearAndAddCellStates(cells)
+
+        const taxonId = results['taxon_id']
+        this.dispatchEvent(TaxaAddedEvents.create([taxonId]))
+        this.dispatchEvent(CellsRefreshedEvent.create())
+      })
+      .catch((error) => this.onError(error))
+  }
+
+  /**
+   * Deletes a composite taxon.
+   *
+   * @param compositeTaxonId The composite_taxon_id to delete
+   */
+  deleteCompositeTaxon(compositeTaxonId: number): Promise<void> {
+    const request = new Request('deleteCompositeTaxon')
+      .addParameter('id', this.matrixId)
+      .addParameter('composite_taxon_id', compositeTaxonId)
+    return this.loader
+      .send(request)
+      .then((results: { [key: string]: any }) => {
+        const taxonId = results['taxon_id']
+        if (taxonId) {
+          // Remove the composite taxon from the taxa list
+          this.taxa.removeByIds([taxonId])
+          this.cells.clearScoresForTaxonId([taxonId])
+          this.partitionTaxa = null
+          this.dispatchEvent(TaxaRemovedEvents.create([taxonId]))
+          this.dispatchEvent(CellsRefreshedEvent.create())
+        }
+      })
+      .catch((error) => this.onError(error))
+  }
+
+  /**
+   * Manually recalculates scores for a composite taxon.
+   *
+   * @param compositeTaxonId The composite_taxon_id to recalculate
+   */
+  recalculateCompositeTaxon(compositeTaxonId: number): Promise<void> {
+    const request = new Request('recalculateCompositeTaxon')
+      .addParameter('id', this.matrixId)
+      .addParameter('composite_taxon_id', compositeTaxonId)
+    return this.loader
+      .send(request)
+      .then((results: { [key: string]: any }) => {
+        const taxonId = results['taxon_id']
+        const cells = results['cells'] || []
+
+        // Clear old cells and add new ones
+        if (taxonId) {
+          this.cells.clearScoresForTaxonId([taxonId])
+        }
+        this.cells.clearAndAddCellStates(cells)
+
+        this.dispatchEvent(CellsChangedEvents.create([taxonId], []))
+        this.dispatchEvent(CellsRefreshedEvent.create())
+      })
+      .catch((error) => this.onError(error))
+  }
+
+  /**
    * Adds media to a taxon
    *
    * @param taxaIds the taxon ids to add the media
@@ -1455,6 +1550,16 @@ export class MatrixModel extends EventTarget {
           characterIdsSet.add(cell['cid'])
         }
 
+        // Handle updated composite cells if any source taxa were modified
+        const compositeCells = results['composite_cells'] || []
+        if (compositeCells.length > 0) {
+          this.cells.clearAndAddCellStates(compositeCells)
+          for (const cell of compositeCells) {
+            taxaIdsSet.add(cell['tid'])
+            characterIdsSet.add(cell['cid'])
+          }
+        }
+
         // Update last scored on
         const timestamp = results['ts']
         const changedCharacterIds = Array.from(characterIdsSet.values())
@@ -1510,6 +1615,16 @@ export class MatrixModel extends EventTarget {
           const cell = cells[x]
           taxaIdsSet.add(cell['tid'])
           characterIdsSet.add(cell['cid'])
+        }
+
+        // Handle updated composite cells if any source taxa were modified
+        const compositeCells = results['composite_cells'] || []
+        if (compositeCells.length > 0) {
+          this.cells.clearAndAddCellStates(compositeCells)
+          for (const cell of compositeCells) {
+            taxaIdsSet.add(cell['tid'])
+            characterIdsSet.add(cell['cid'])
+          }
         }
 
         // Update last scored on
@@ -2888,6 +3003,8 @@ export class MatrixModel extends EventTarget {
     const cells = this.cells.getCell(taxonId, characterId)
     const cellInfo = this.cells.getCellInfo(taxonId, characterId)
     const character = this.characters.getById(characterId)
+    const taxon = this.taxa.getById(taxonId)
+    const isComposite = taxon ? taxon.isComposite() : false
     const cellsInfo: CellObject = {
       character_id: characterId,
       taxon_id: taxonId,
@@ -2899,6 +3016,7 @@ export class MatrixModel extends EventTarget {
       unread_comment_count: cellInfo.getUnreadCommentCount(),
       media: cellInfo.getMedia(),
       readonly: this.readonly,
+      is_composite: isComposite,
       states: [],
     }
 
@@ -3056,5 +3174,6 @@ export type CellObject = {
   media: CellMedia[]
   readonly: boolean
   is_uncertain?: boolean
+  is_composite?: boolean
   states: CellDiscreteStatesObject[]
 }
