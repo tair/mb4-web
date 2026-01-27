@@ -42,11 +42,12 @@ function setInstitutionData(name: string, id: number) {
 </script>
 
 <template>
-  <div class="modal" id="viewEditModal" tabindex="-1">
+  <div class="modal" id="viewEditModal" data-bs-keyboard="true" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Edit</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" v-if="institution">
           Please make any changes to the institution below:

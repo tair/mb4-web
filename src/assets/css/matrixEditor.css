@@ -647,7 +647,7 @@ div.matrixgridCells table {
 .characterOrderingDialog .orderingSelect,
 .taxaListDialog .taxaSelect {
   width: 100%;
-  height: 220px;
+  height: 280px;
 }
 
 .characterOrderingDialog .unorderedCharacterSelect,
@@ -655,7 +655,7 @@ div.matrixgridCells table {
 .taxaListDialog .availableTaxaSelect,
 .taxaListDialog .currentTaxaSelect {
   font-weight: bold;
-  height: 200px;
+  height: 260px;
   vertical-align: top;
   width: 47%;
 }
@@ -704,6 +704,25 @@ ol.draggableSelect li.dead:hover {
 
 ol.draggableSelect li.droppable {
   border-top: 2px solid #000;
+}
+
+ol.draggableSelect li.filtered-out {
+  display: none;
+}
+
+.taxaListDialog .taxa-list-header {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.taxaListDialog .searchInMatrix,
+.taxaListDialog .searchNotInMatrix {
+  margin-bottom: 8px;
+}
+
+.taxaListDialog .currentTaxaSelect ol.draggableSelect,
+.taxaListDialog .availableTaxaSelect ol.draggableSelect {
+  height: calc(100% - 60px);
 }
 
 .savingLabel {

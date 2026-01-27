@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted, watch } from 'vue'
 
 const props = defineProps({
   show: {
@@ -32,6 +32,20 @@ function handleBackdropClick(event) {
     handleCancel()
   }
 }
+
+function handleEscape(event) {
+  if (event.key === 'Escape' && props.show) {
+    handleCancel()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', handleEscape)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleEscape)
+})
 </script>
 
 <template>

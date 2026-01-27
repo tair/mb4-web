@@ -338,6 +338,13 @@ export default {
 
     // Show metadata if this is an existing annotation
     this.showMetadata = !!this.localAnnotation.annotation_id
+
+    // Add escape key listener
+    document.addEventListener('keydown', this.handleEscape)
+  },
+
+  beforeUnmount() {
+    document.removeEventListener('keydown', this.handleEscape)
   },
 
   methods: {
@@ -379,6 +386,12 @@ export default {
     onOverlayClick() {
       // Allow clicking overlay to close modal
       this.cancel()
+    },
+
+    handleEscape(event) {
+      if (event.key === 'Escape') {
+        this.cancel()
+      }
     },
 
     getTypeIcon(type) {

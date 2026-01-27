@@ -70,6 +70,7 @@ onMounted(() => {
     class="modal fade"
     id="taxaEditModal"
     data-bs-backdrop="static"
+    data-bs-keyboard="true"
     tabindex="-1"
   >
     <form @submit.prevent="handleSubmitClicked">
@@ -79,6 +80,7 @@ onMounted(() => {
             <h5 class="modal-title">
               Applying batch changes to media search results
             </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <div class="accordion" id="accordionMediaEditModal">

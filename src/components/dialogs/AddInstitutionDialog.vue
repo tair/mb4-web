@@ -143,6 +143,7 @@ function handleModalShown() {
     class="modal fade"
     id="addInstitutionModal"
     data-bs-backdrop="static"
+    data-bs-keyboard="true"
     tabindex="-1"
     @shown.bs.modal="handleModalShown"
   >
@@ -150,6 +151,7 @@ function handleModalShown() {
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Add New Institution</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <!-- Search Section -->

@@ -46,6 +46,7 @@ async function handleDeleteButtonClicked() {
     class="modal fade"
     id="mediaDeleteModal"
     data-bs-backdrop="static"
+    data-bs-keyboard="true"
     tabindex="-1"
   >
     <div class="modal-dialog">
@@ -55,6 +56,7 @@ async function handleDeleteButtonClicked() {
             <i class="fa fa-exclamation-triangle text-warning me-2"></i>
             Confirm Media Deletion
           </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <p>

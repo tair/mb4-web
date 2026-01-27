@@ -106,6 +106,23 @@ export class TaxaListDialog extends Dialog {
         this.handleCreateCompositeClick()
       )
     }
+
+    // Listen for search input changes
+    const searchInMatrixInput =
+      this.getElementByClass<HTMLInputElement>('searchInMatrix')
+    if (searchInMatrixInput) {
+      this.getHandler().listen(searchInMatrixInput, 'input', (e: Event) =>
+        this.handleSearchInMatrix(e)
+      )
+    }
+
+    const searchNotInMatrixInput =
+      this.getElementByClass<HTMLInputElement>('searchNotInMatrix')
+    if (searchNotInMatrixInput) {
+      this.getHandler().listen(searchNotInMatrixInput, 'input', (e: Event) =>
+        this.handleSearchNotInMatrix(e)
+      )
+    }
   }
 
   protected override finalizeDom(): void {
@@ -295,6 +312,45 @@ export class TaxaListDialog extends Dialog {
   }
 
   /**
+   * Filters the taxa list based on search query.
+   * @param select The DraggableSelect component to filter.
+   * @param query The search query.
+   */
+  private filterTaxaList(select: DraggableSelect, query: string) {
+    const element = select.getElement()
+    const items = element.querySelectorAll('li')
+    const lowerQuery = query.toLowerCase().trim()
+
+    items.forEach((item) => {
+      if (item.classList.contains('dead')) {
+        return
+      }
+      const text = item.textContent?.toLowerCase() || ''
+      if (lowerQuery === '' || text.includes(lowerQuery)) {
+        item.classList.remove('filtered-out')
+      } else {
+        item.classList.add('filtered-out')
+      }
+    })
+  }
+
+  /**
+   * Handles the search input for taxa in matrix.
+   */
+  private handleSearchInMatrix(e: Event) {
+    const input = e.target as HTMLInputElement
+    this.filterTaxaList(this.taxaInMatrixSelect, input.value)
+  }
+
+  /**
+   * Handles the search input for taxa not in matrix.
+   */
+  private handleSearchNotInMatrix(e: Event) {
+    const input = e.target as HTMLInputElement
+    this.filterTaxaList(this.taxaNotInMatrixSelect, input.value)
+  }
+
+  /**
    * @return The HTML content of the dialog.
    */
   private static htmlContent(): string {
@@ -307,10 +363,12 @@ export class TaxaListDialog extends Dialog {
       </div>
       <div class="taxaSelect nonSelectable">
         <span class="currentTaxaSelect">
-          Taxa in this matrix
+          <div class="taxa-list-header">Taxa in this matrix</div>
+          <input type="text" class="form-control form-control-sm searchInMatrix" placeholder="Search taxa..." />
         </span>
         <span class="availableTaxaSelect">
-          Taxa in project but not in this matrix
+          <div class="taxa-list-header">Taxa in project but not in this matrix</div>
+          <input type="text" class="form-control form-control-sm searchNotInMatrix" placeholder="Search taxa..." />
         </span>
       </div>
       <div style="margin-top: 10px">

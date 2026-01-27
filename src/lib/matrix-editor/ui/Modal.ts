@@ -54,6 +54,7 @@ export class Modal extends Component {
     super.createDom()
     const element = this.getElement()
     element.classList.add('modal', 'fade')
+    element.setAttribute('tabindex', '-1')
     element.innerHTML = this.createModel()
   }
 
@@ -75,7 +76,10 @@ export class Modal extends Component {
 
   protected override finalizeDom() {
     const element = this.getElement()
-    this.modal = new BootstrapModal(element, { backdrop: this.hasBackdrop })
+    this.modal = new BootstrapModal(element, {
+      backdrop: this.hasBackdrop,
+      keyboard: true,
+    })
     this.modal.show()
   }
 

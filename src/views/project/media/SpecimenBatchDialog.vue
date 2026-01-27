@@ -153,6 +153,7 @@ onMounted(() => {
     class="modal fade"
     id="specimenBatchModal"
     data-bs-backdrop="static"
+    data-bs-keyboard="true"
     tabindex="-1"
   >
     <form @submit.prevent="handleSubmitClicked">
@@ -162,6 +163,7 @@ onMounted(() => {
             <h5 class="modal-title">
               Assign Specimen to {{ selectedCount }} Media Items
             </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
 
