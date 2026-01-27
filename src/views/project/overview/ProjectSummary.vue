@@ -217,13 +217,13 @@ function popDownloadAlert() {
             <template v-if="overview.journal_year">
               <span class="text-dark">{{ overview.journal_year }}</span>
             </template>
-            <template v-if="overview.journal_year && (overview.article_title || overview.name)">
+            <template v-if="(overview.article_authors || overview.journal_year) && (overview.article_title || overview.name)">
               <span class="text-muted">. </span>
             </template>
             <template v-if="overview.article_title || overview.name">
               <span class="fw-medium text-dark">{{ overview.article_title || overview.name }}</span>
             </template>
-            <template v-if="(overview.article_title || overview.name) && overview.journal_title">
+            <template v-if="(overview.article_authors || overview.journal_year || overview.article_title || overview.name) && overview.journal_title">
               <span class="text-muted">. </span>
             </template>
             <template v-if="overview.journal_title">
