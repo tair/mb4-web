@@ -213,6 +213,49 @@ export class Taxon extends  AbstractItem {
       }
     }
   }
+
+  /**
+   * @return Whether this taxon is a composite taxon (combined from multiple source taxa)
+   */
+  isComposite(): boolean {
+    return !!this.taxonObject['ctid']
+  }
+
+  /**
+   * @return The composite taxon ID if this is a composite, null otherwise
+   */
+  getCompositeTaxonId(): number | null {
+    return this.taxonObject['ctid'] || null
+  }
+
+  /**
+   * @return The composite taxon name if this is a composite, null otherwise
+   */
+  getCompositeName(): string | null {
+    return this.taxonObject['ctn'] || null
+  }
+
+  /**
+   * @return Array of source taxon IDs if this is a composite, empty array otherwise
+   */
+  getSourceTaxaIds(): number[] {
+    return this.taxonObject['cts'] || []
+  }
+
+  /**
+   * @return Whether this taxon is used as a source for a composite taxon
+   */
+  isSourceForComposite(): boolean {
+    return !!this.taxonObject['isSource']
+  }
+
+  /**
+   * Set whether this taxon is a source for a composite
+   * @param isSource Whether this taxon is a source
+   */
+  setIsSourceForComposite(isSource: boolean) {
+    this.taxonObject['isSource'] = isSource
+  }
 }
 
 /**

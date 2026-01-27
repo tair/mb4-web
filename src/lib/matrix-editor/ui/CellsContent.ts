@@ -44,6 +44,12 @@ export function CellStateNumberContent(data: { [key: string]: any }): string {
   for (let x = 0; x < data.cells.length; x++) {
     output.push(data.cells[x].state_number)
   }
+  // For composite taxa with partial uncertainty, append "?" to show some sources are unscored
+  if (data.is_uncertain && data.is_composite) {
+    output.push('?')
+    // Use comma for composite taxa to show "0, 2, ?" instead of "0/2/?"
+    return output.join(', ')
+  }
   const joiner = data.is_uncertain ? '/' : ', '
   return output.join(joiner)
 }
@@ -55,6 +61,12 @@ export function CellStateNameContent(data: { [key: string]: any }): string {
   const output: string[] = []
   for (let x = 0; x < data.cells.length; x++) {
     output.push(data.cells[x].state_name)
+  }
+  // For composite taxa with partial uncertainty, append "?" to show some sources are unscored
+  if (data.is_uncertain && data.is_composite) {
+    output.push('?')
+    // Use comma for composite taxa to show "state1, state2, ?" instead of "state1/state2/?"
+    return output.join(', ')
   }
   const joiner = data.is_uncertain ? '/' : ', '
   return output.join(joiner)
@@ -92,6 +104,12 @@ export function CellStateNameNumberContent(data: {
     }
     output.push(cell.state_name + ' (' + cell.state_number + ')')
   }
+  // For composite taxa with partial uncertainty, append "?" to show some sources are unscored
+  if (data.is_uncertain && data.is_composite) {
+    output.push('?')
+    // Use comma for composite taxa to show "state1 (0), state2 (1), ?" instead of "state1 (0)/state2 (1)/?"
+    return output.join(', ')
+  }
   const joiner = data.is_uncertain ? '/' : ', '
   return output.join(joiner)
 }
@@ -109,5 +127,5 @@ export function CellContent(
       end_value: data.states[0].end_value,
     })
   }
-  return content({ cells: data.states, is_uncertain: data.is_uncertain })
+  return content({ cells: data.states, is_uncertain: data.is_uncertain, is_composite: data.is_composite })
 }

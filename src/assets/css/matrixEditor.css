@@ -2393,3 +2393,55 @@ div.loadingMessage > div,
 .cellDialog .cellDataPane .scoringGrid .activeStateRow {
   color: red;
 }
+
+/* Composite Taxon Styles */
+.composite-taxon {
+  background-color: rgba(100, 149, 237, 0.1) !important;
+}
+
+.composite-taxon td {
+  border-left: 3px solid #6495ed !important;
+}
+
+.composite-indicator {
+  font-size: 0.85em;
+  margin-right: 2px;
+}
+
+/* Create Composite Taxon Dialog */
+.createCompositeTaxonDialog .modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.createCompositeTaxonDialog .composite-taxon-form {
+  padding: 10px;
+}
+
+.createCompositeTaxonDialog .sourceTaxaSelect {
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  overflow: auto;
+  height: 250px;
+  max-height: 250px;
+}
+
+.createCompositeTaxonDialog .alert {
+  font-size: 0.9em;
+}
+
+.createCompositeTaxonDialog .alert ul {
+  padding-left: 20px;
+}
+
+/* Taxa List Dialog - Create Composite Button */
+.taxaListDialog .createCompositeBtn {
+  margin-top: 5px;
+}
+
+/* Composite Cell Notice in ReadonlyCellDialog */
+.cellDialog .composite-cell-notice {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  font-size: 0.9em;
+}
