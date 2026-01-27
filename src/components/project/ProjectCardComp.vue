@@ -89,7 +89,7 @@ const mediaUrl = computed(() => {
   height: 90px;
 }
 .theme-color-text {
-  color: #ef782f !important;
+  color: var(--theme-orange) !important;
 }
 .stat-item {
   display: flex;

@@ -389,7 +389,7 @@ async function canEditTaxon(taxon) {
 .taxa-list-box {
   width: 400px;
   padding: 5px;
-  border: double #e67a28;
+  border: double var(--theme-orange);
   min-height: 150px;
   margin: 0px;
 }
@@ -397,7 +397,7 @@ async function canEditTaxon(taxon) {
 .box-title {
   padding: 5px;
   font-size: 16px;
-  background-color: #e67a28;
+  background-color: var(--theme-orange);
   color: #FFF;
   margin: 0px 0px 5px 0px;
   text-align: center;

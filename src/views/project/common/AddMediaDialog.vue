@@ -241,7 +241,7 @@ function reset() {
 }
 
 .mediaInput:focus {
-  border-color: #ef782f;
+  border-color: var(--theme-orange);
   box-shadow: none;
 }
 

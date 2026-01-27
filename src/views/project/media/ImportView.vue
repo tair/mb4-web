@@ -979,7 +979,7 @@ function getTimestampInfo(taxon: any) {
 }
 
 .text-morpho-orange {
-  color: #ef782f !important;
+  color: var(--theme-orange) !important;
 }
 
 .timestamp-info {

@@ -904,7 +904,7 @@ onMounted(() => {
 }
 
 .selection-section span {
-  color: #ef782f;
+  color: var(--theme-orange);
   text-decoration: underline;
   padding: 0 5px;
 }

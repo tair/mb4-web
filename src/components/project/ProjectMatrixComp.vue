@@ -1783,8 +1783,8 @@ onMounted(() => {
 /* Orange themed view and edit buttons */
 .view-btn,
 .pencil-btn {
-  background-color: var(--theme-orange, #ef782f) !important;
-  border-color: var(--theme-orange, #ef782f) !important;
+  background-color: var(--theme-orange, #F17B17) !important;
+  border-color: var(--theme-orange, #F17B17) !important;
   color: white !important;
 }
 

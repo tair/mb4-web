@@ -52,7 +52,7 @@ function toTop() {
   background-color: transparent;
   border: none;
   cursor: pointer;
-  color: #ef782f;
+  color: var(--theme-orange);
 }
 
 .filters button.active,

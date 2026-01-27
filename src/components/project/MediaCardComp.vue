@@ -180,7 +180,7 @@ function hideEnlargedImage(imgId) {
   position: absolute;
   top: 50%;
   z-index: 10;
-  border: 2px solid orange;
+  border: 2px solid var(--theme-orange);
   background-color: white;
   max-width: 600px;
 }

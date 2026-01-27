@@ -407,6 +407,6 @@ onMounted(async () => {
 
 <style scoped>
 :deep(.highlight) {
-  color: #ef782f;
+  color: var(--theme-orange);
 }
 </style>

@@ -89,14 +89,14 @@ const morphoBankStatsText = computed(() => {
         <a
           href="#"
           @click="onSorted('asc')"
-          :style="{ color: is_asc ? '#ef782f' : 'gray' }"
+          :style="{ color: is_asc ? 'var(--theme-orange)' : 'gray' }"
           ><i class="fa-solid fa-arrow-up fa-xl"></i
         ></a>
 
         <a
           href="#"
           @click="onSorted('desc')"
-          :style="{ color: !is_asc ? '#ef782f' : 'gray' }"
+          :style="{ color: !is_asc ? 'var(--theme-orange)' : 'gray' }"
           ><i class="fa-solid fa-arrow-down fa-xl"></i
         ></a>
       </div>

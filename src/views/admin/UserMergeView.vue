@@ -703,7 +703,7 @@ onMounted(() => {
 
 /* Orange theme badge */
 .badge-orange {
-  background-color: var(--theme-orange, #ef782f);
+  background-color: var(--theme-orange, #F17B17);
   color: white;
 }
 </style>

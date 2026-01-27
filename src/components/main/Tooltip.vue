@@ -28,6 +28,6 @@ const displayContent = props.displayContent || null
 
 <style scoped>
 .theme-color {
-  color: #ef782f;
+  color: var(--theme-orange);
 }
 </style>
