@@ -318,8 +318,11 @@ const isZipFile = computed(() => {
   if (!mediaData) return false
   
   // Check multiple possible locations for the filename (same pattern as isVideoFile)
+  // Note: original_filename can be at root level (props.media_file) or nested
   const filenameChecks = [
+    props.media_file?.original_filename,  // Root level lowercase (common in list views)
     mediaData?.ORIGINAL_FILENAME,
+    mediaData?.original_filename,
     mediaData?.media?.ORIGINAL_FILENAME,
     mediaData?.original?.ORIGINAL_FILENAME,
     mediaData?.filename,
@@ -354,10 +357,13 @@ const isZipFile = computed(() => {
   return false
 })
 
-// Get the main display URL (3D icon for 3D files, video thumbnail for videos, actual image for 2D files)
+// Get the main display URL (3D icon for 3D files, CT scan icon for zip files, video thumbnail for videos, actual image for 2D files)
 const mainDisplayUrl = computed(() => {
   if (is3DFile.value) {
     return '/images/3DImage.png'
+  }
+  if (isZipFile.value) {
+    return '/images/CTScan.png'
   }
   if (isVideoFile.value) {
     // For videos, show a thumbnail if available, otherwise show video icon
@@ -412,10 +418,14 @@ const annotationsEnabled = computed(() => {
 })
 
 
-// Get the zoom display URL (3D model for 3D files, video for videos, original for TIFFs, large image for 2D files)
+// Get the zoom display URL (3D model for 3D files, CT scan icon for zip files, video for videos, original for TIFFs, large image for 2D files)
 const zoomDisplayUrl = computed(() => {
   if (is3DFile.value) {
     return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
+  }
+  if (isZipFile.value) {
+    // ZIP files (CT scans) cannot be rendered in the browser, show static image
+    return '/images/CTScan.png'
   }
   if (isVideoFile.value) {
     return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')

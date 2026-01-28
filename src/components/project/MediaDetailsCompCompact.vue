@@ -535,8 +535,11 @@ const isZipFile = computed(() => {
   if (!mediaData) return false
   
   // Check multiple possible locations for the filename (same pattern as isVideoFile)
+  // Note: original_filename can be at root level (props.media_file) or nested
   const filenameChecks = [
+    props.media_file?.original_filename,  // Root level lowercase (common in list views)
     mediaData?.ORIGINAL_FILENAME,
+    mediaData?.original_filename,
     mediaData?.media?.ORIGINAL_FILENAME,
     mediaData?.original?.ORIGINAL_FILENAME,
     mediaData?.filename,
@@ -575,6 +578,9 @@ const isZipFile = computed(() => {
 const mainDisplayUrl = computed(() => {
   if (is3DFile.value) {
     return '/images/3DImage.png'
+  }
+  if (isZipFile.value) {
+    return '/images/CTScan.png'
   }
   if (isVideoFile.value) {
     // For videos, show a thumbnail if available, otherwise show video icon
@@ -684,6 +690,10 @@ watch(showZoomModal, (isOpen) => {
 const zoomDisplayUrl = computed(() => {
   if (is3DFile.value) {
     return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
+  }
+  if (isZipFile.value) {
+    // ZIP files (CT scans) cannot be rendered in the browser, show static image
+    return '/images/CTScan.png'
   }
   if (isVideoFile.value) {
     return buildMediaUrl(props.project_id, props.media_file?.media_id, 'original')
