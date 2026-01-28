@@ -1,12 +1,14 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { apiService } from '@/services/apiService.js'
 import { useAdminUsersStore } from '@/stores/AdminUsersStore.js'
+import { useAdminTasksStore } from '@/stores/AdminTasksStore.js'
 
 const isLoaded = ref(false)
 const adminUsersStore = useAdminUsersStore()
+const adminTasksStore = useAdminTasksStore()
 
 const maintenanceStatus = ref({
   enabled: false,
@@ -20,11 +22,16 @@ const userStats = ref({
   total: 0,
 })
 
+// Computed for task health
+const taskHealthStatus = computed(() => adminTasksStore.healthStatus)
+const taskQuickStats = computed(() => adminTasksStore.quickStats)
+
 onMounted(async () => {
   try {
     const [maintenanceResponse] = await Promise.all([
       apiService.get('/admin/maintenance'),
       adminUsersStore.fetchStats().catch(() => {}),
+      adminTasksStore.fetchTaskSummary().catch(() => {}),
     ])
     
     const maintenanceData = await maintenanceResponse.json()
@@ -263,6 +270,82 @@ onMounted(async () => {
             <div class="card-footer">
               <RouterLink to="/admin/statistics/projects" class="btn btn-primary w-100 btn-admin">
                 View Project Statistics
+              </RouterLink>
+            </div>
+          </div>
+        </div>
+
+        <!-- Background Tasks Monitor Card -->
+        <div class="col-md-6 col-lg-4 mb-4">
+          <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="card-title mb-0 text-white">
+                <i class="fa fa-tasks me-2"></i>
+                Background Tasks
+              </h5>
+              <span 
+                v-if="taskHealthStatus"
+                class="badge"
+                :class="{
+                  'bg-success': taskHealthStatus === 'healthy',
+                  'bg-warning text-dark': taskHealthStatus === 'warning',
+                  'bg-danger': taskHealthStatus === 'critical'
+                }"
+              >
+                {{ taskHealthStatus }}
+              </span>
+            </div>
+            <div class="card-body">
+              <div v-if="taskQuickStats" class="row text-center mb-3">
+                <div class="col-3">
+                  <div class="stat-number text-secondary">{{ taskQuickStats.pending }}</div>
+                  <div class="stat-label">Pending</div>
+                </div>
+                <div class="col-3">
+                  <div class="stat-number text-primary">{{ taskQuickStats.processing }}</div>
+                  <div class="stat-label">Active</div>
+                </div>
+                <div class="col-3">
+                  <div class="stat-number text-success">{{ taskQuickStats.completed24h }}</div>
+                  <div class="stat-label">Done</div>
+                </div>
+                <div class="col-3">
+                  <div class="stat-number text-danger">{{ taskQuickStats.failed24h }}</div>
+                  <div class="stat-label">Failed</div>
+                </div>
+              </div>
+              
+              <div v-if="taskQuickStats?.stuckCount > 0" class="alert alert-danger small mb-3 py-2">
+                <i class="fa fa-exclamation-triangle me-2"></i>
+                {{ taskQuickStats.stuckCount }} stuck task(s) need attention
+              </div>
+              <div v-else-if="taskQuickStats?.failureRate24h > 5" class="alert alert-warning small mb-3 py-2">
+                <i class="fa fa-exclamation-circle me-2"></i>
+                {{ taskQuickStats.failureRate24h }}% failure rate (24h)
+              </div>
+              <div v-else class="text-muted small mb-3">
+                <i class="fa fa-check-circle text-success me-2"></i>
+                Cron jobs and async processes running normally
+              </div>
+              
+              <ul class="list-unstyled small mb-0">
+                <li class="mb-2">
+                  <i class="fa fa-sync text-primary me-2"></i>
+                  <strong>Task Queue</strong> - DOI, Email, Exports
+                </li>
+                <li class="mb-2">
+                  <i class="fa fa-server text-primary me-2"></i>
+                  <strong>CIPRES</strong> - Phylogenetic analysis jobs
+                </li>
+                <li>
+                  <i class="fa fa-clock text-primary me-2"></i>
+                  <strong>Scheduler</strong> - Cron job status
+                </li>
+              </ul>
+            </div>
+            <div class="card-footer">
+              <RouterLink to="/admin/tasks" class="btn btn-primary w-100 btn-admin">
+                View Tasks Monitor
               </RouterLink>
             </div>
           </div>

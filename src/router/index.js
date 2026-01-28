@@ -174,6 +174,11 @@ const router = createRouter({
               name: 'AdminProjectStatistics',
               component: () => import('@/views/admin/ProjectStatisticsView.vue'),
             },
+            {
+              path: 'tasks',
+              name: 'AdminTasksMonitor',
+              component: () => import('@/views/admin/TasksMonitorView.vue'),
+            },
           ],
         },
 
