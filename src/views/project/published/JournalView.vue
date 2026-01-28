@@ -55,7 +55,7 @@ const morphoBankStatsText = computed(() => {
         have published data in MorphoBank
       </div>
 
-      <div class="d-grid gap-2 d-sm-flex _offset2 mb-4" id="top">
+      <div class="alphabet-nav d-grid gap-2 d-sm-flex" id="top">
         <div :key="n" v-for="(char, n) in projectsStore.journals.chars">
           <a :href="`#${char}`" class="fw-bold">{{ char }}</a>
         </div>
@@ -63,16 +63,16 @@ const morphoBankStatsText = computed(() => {
 
       <div :key="n" v-for="(author, n) in projectsStore.journals['journals']">
         <div
-          class="fw-bold mt-3"
+          class="letter-section fw-bold mt-3"
           v-if="
             /[a-zA-Z]/.test(getNormalizedCharAt1(n)) &&
             prev_char != getNormalizedCharAt1(n)
           "
+          :id="`${getNormalizedCharAt1(n)}`"
+          style="scroll-margin-top: 140px;"
         >
-          <a :id="`${getNormalizedCharAt1(n)}`" href="#top">
-            <p class="_offset">
-              {{ (prev_char = getNormalizedCharAt1(n)) }}
-            </p>
+          <a href="#top" class="letter-anchor">
+            {{ (prev_char = getNormalizedCharAt1(n)) }}
           </a>
         </div>
 
@@ -126,13 +126,22 @@ const morphoBankStatsText = computed(() => {
   </GenericLoaderComp>
 </template>
 
-<style>
-._offset {
-  padding-top: 100px;
-  margin-top: -100px;
+<style scoped>
+.alphabet-nav {
+  position: sticky;
+  top: 75px;
+  background-color: #fff;
+  padding: 12px 0;
+  margin: 0 -12px;
+  padding-left: 12px;
+  padding-right: 12px;
+  z-index: 50;
+  border-bottom: 1px solid #e9ecef;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
-._offset2 {
-  padding-top: 300px;
-  margin-top: -300px;
+
+.letter-anchor {
+  display: block;
+  scroll-margin-top: 180px;
 }
 </style>
