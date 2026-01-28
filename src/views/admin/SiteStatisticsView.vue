@@ -406,7 +406,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAdminStatisticsStore } from '@/stores/AdminStatisticsStore.js'
 import { apiService } from '@/services/apiService.js'
 
@@ -484,6 +484,11 @@ onMounted(async () => {
   } catch (error) {
     console.error('Error loading site statistics:', error)
   }
+  document.addEventListener('keydown', handleEscape)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleEscape)
 })
 
 // Instant switch for preset ranges - no network request needed  
@@ -578,6 +583,12 @@ async function showUploadDetails() {
 function closeDetailModal() {
   showDetailModal.value = false
   detailModalData.value = null
+}
+
+function handleEscape(event) {
+  if (event.key === 'Escape' && showDetailModal.value) {
+    closeDetailModal()
+  }
 }
 
 function formatDate(timestamp) {

@@ -466,6 +466,7 @@ onMounted(() => {
     class="modal fade"
     id="mediaFilterModal"
     data-bs-backdrop="static"
+    data-bs-keyboard="true"
     tabindex="-1"
   >
     <form @submit.prevent="handleSubmitClicked">

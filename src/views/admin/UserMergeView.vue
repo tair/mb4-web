@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import { useAdminUsersStore } from '@/stores/AdminUsersStore.js'
@@ -173,6 +173,13 @@ function closeConfirmDialog() {
   showConfirmDialog.value = false
 }
 
+// Handle escape key to close dialog
+function handleEscape(event) {
+  if (event.key === 'Escape' && showConfirmDialog.value) {
+    closeConfirmDialog()
+  }
+}
+
 // Perform merge
 async function performMerge() {
   if (!canMerge.value) return
@@ -200,6 +207,11 @@ async function performMerge() {
 // Initialize
 onMounted(() => {
   isLoaded.value = true
+  document.addEventListener('keydown', handleEscape)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleEscape)
 })
 </script>
 

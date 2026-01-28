@@ -118,12 +118,14 @@ async function deleteBibliographies(referenceIds: number[]) {
     class="modal fade"
     id="bibliographyDeleteModal"
     data-bs-backdrop="static"
+    data-bs-keyboard="true"
     tabindex="-1"
   >
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Confirm</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" v-if="bibliographies.length">
           <div v-if="loading" class="text-center">

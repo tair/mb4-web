@@ -58,6 +58,7 @@ function clearError() {
     class="modal fade"
     id="addCitationModal"
     data-bs-backdrop="static"
+    data-bs-keyboard="true"
     tabindex="-1"
   >
     <form @submit.prevent="createCitation">
@@ -70,6 +71,7 @@ function clearError() {
                 content="Choose from the Bibliography added to this project. Type in the author last name or part of the title to narrow choices. Add to the Bibliography first, then select here."
               ></Tooltip>
             </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <template v-for="(definition, index) in schema" :key="index">

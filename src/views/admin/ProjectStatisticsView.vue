@@ -180,7 +180,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAdminStatisticsStore } from '@/stores/AdminStatisticsStore.js'
 import StatsTotalsCard from '@/components/admin/statistics/StatsTotalsCard.vue'
 import ProjectStatsTable from '@/components/admin/statistics/ProjectStatsTable.vue'
@@ -224,6 +224,12 @@ function closeDetailsModal() {
   showDetailsModal.value = false
 }
 
+function handleEscape(event) {
+  if (event.key === 'Escape' && showDetailsModal.value) {
+    closeDetailsModal()
+  }
+}
+
 function formatDate(timestamp) {
   if (!timestamp) return 'Never'
   const date = new Date(timestamp * 1000)
@@ -232,6 +238,11 @@ function formatDate(timestamp) {
 
 onMounted(async () => {
   await store.fetchProjectStatistics()
+  document.addEventListener('keydown', handleEscape)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleEscape)
 })
 </script>
 

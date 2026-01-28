@@ -61,6 +61,7 @@ async function editCitation(event) {
     class="modal fade"
     id="editCitationModal"
     data-bs-backdrop="static"
+    data-bs-keyboard="true"
     tabindex="-1"
   >
     <form @submit.prevent="editCitation">
@@ -68,6 +69,7 @@ async function editCitation(event) {
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Edit Citation</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body" v-if="citation">
             <!-- Show bibliography as read-only text -->

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { buildMediaUrl } from '@/utils/fileUtils.js'
 
 const props = defineProps({
@@ -66,6 +66,21 @@ function getThumbnailUrl(mediaItem) {
   }
   return null
 }
+
+// Handle escape key to close modal
+function handleEscape(event) {
+  if (event.key === 'Escape' && props.show) {
+    close()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', handleEscape)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleEscape)
+})
 </script>
 
 <template>

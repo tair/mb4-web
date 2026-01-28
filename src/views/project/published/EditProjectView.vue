@@ -786,17 +786,27 @@ const selectedExemplarMedia = computed(() => {
   return curatedMedia.value.find(m => m.media_id === formData.exemplar_media_id)
 })
 
+// Handle escape key to close delete dialog
+function handleEscape(event) {
+  if (event.key === 'Escape' && showDeleteDialog.value) {
+    hideDeleteConfirmation()
+  }
+}
+
 onMounted(async () => {
   // Load journals first, then load project data (which needs journals list to check if journal exists)
   await loadJournals()
   await Promise.all([loadProjectData(), loadProjectUsers(), fetchCuratedMedia(), fetchMediaViews()])
   // Add click outside event listener
   document.addEventListener('click', handleJournalClickOutside)
+  // Add escape key listener
+  document.addEventListener('keydown', handleEscape)
 })
 
 // Clean up event listener
 onUnmounted(() => {
   document.removeEventListener('click', handleJournalClickOutside)
+  document.removeEventListener('keydown', handleEscape)
 })
 
 async function loadProjectData() {

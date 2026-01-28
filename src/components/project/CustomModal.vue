@@ -17,9 +17,20 @@ export default {
       default: false,
     },
   },
+  mounted() {
+    document.addEventListener('keydown', this.handleEscape)
+  },
+  beforeUnmount() {
+    document.removeEventListener('keydown', this.handleEscape)
+  },
   methods: {
     close() {
       this.$emit('close')
+    },
+    handleEscape(event) {
+      if (event.key === 'Escape' && this.isVisible) {
+        this.close()
+      }
     },
   },
 }
