@@ -8,7 +8,7 @@ import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { getTaxonForMediaId } from '@/views/project/utils'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaCard from '@/components/project/MediaCard.vue'
-import { buildMediaUrl } from '@/utils/fileUtils.js'
+import { buildMediaUrl, isZipMedia } from '@/utils/fileUtils.js'
 import { useNotifications } from '@/composables/useNotifications'
 import CurationBatchDialog from './CurationBatchDialog.vue'
 import ViewBatchDialog from './ViewBatchDialog.vue'
@@ -81,12 +81,19 @@ function getMediaThumbnailUrl(media) {
         width: 120,
         height: 120,
       }
-    } else {
+    }
+    // Check if this is a ZIP/archive file (CT scans) that should use the CT scan icon
+    if (isZipMedia(media)) {
       return {
-        url: buildMediaUrl(projectId, media.media_id, 'thumbnail'),
+        url: '/images/CTScan.png',
         width: 120,
         height: 120,
       }
+    }
+    return {
+      url: buildMediaUrl(projectId, media.media_id, 'thumbnail'),
+      width: 120,
+      height: 120,
     }
   }
   // Fallback to existing thumbnail object
@@ -97,6 +104,10 @@ function getMediaThumbnailUrl(media) {
 function getMediaLargeUrl(media) {
   // Skip preview for 3D media (no large image available)
   if (media.media_type === '3d') {
+    return null
+  }
+  // Skip preview for ZIP/archive media (CT scans - no large image available)
+  if (isZipMedia(media)) {
     return null
   }
   if (media.media_id) {

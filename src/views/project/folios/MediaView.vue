@@ -12,7 +12,7 @@ import AddMediaDialog from '@/views/project/common/AddMediaDialog.vue'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaCard from '@/components/project/MediaCard.vue'
 import DeleteDialog from '@/views/project/common/DeleteDialog.vue'
-import { buildMediaUrl } from '@/utils/fileUtils.js'
+import { buildMediaUrl, isZipMedia } from '@/utils/fileUtils.js'
 // @ts-ignore
 import Draggable from 'vuedraggable'
 
@@ -176,11 +176,18 @@ async function refresh() {
 // Helper function to create S3 media URLs for MediaCard
 function getMediaThumbnailUrl(media: any) {
   if (media.media_id) {
+    let url: string
     // Check if this is a 3D file that should use the 3D icon
-    const url =
-      media.media_type === '3d'
-        ? '/images/3DImage.png'
-        : buildMediaUrl(projectId, media.media_id, 'thumbnail')
+    if (media.media_type === '3d') {
+      url = '/images/3DImage.png'
+    }
+    // Check if this is a ZIP/archive file (CT scans) that should use the CT scan icon
+    else if (isZipMedia(media)) {
+      url = '/images/CTScan.png'
+    }
+    else {
+      url = buildMediaUrl(projectId, media.media_id, 'thumbnail')
+    }
     return {
       url: url,
       width: media.thumbnail?.WIDTH || media.thumbnail?.width || 120,

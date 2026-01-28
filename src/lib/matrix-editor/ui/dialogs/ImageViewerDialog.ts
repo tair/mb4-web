@@ -156,6 +156,55 @@ export class ImageViewerDialog extends Modal {
   }
 
   /**
+   * Check if the media file is a ZIP/archive file (CT scans, stacks)
+   * These cannot be rendered in the browser and should use a static placeholder image.
+   */
+  private isZipFile(): boolean {
+    // Check USE_ICON for archives
+    if (this.mediaData?.media?.thumbnail?.USE_ICON === 'archive' || 
+        this.mediaData?.media?.original?.USE_ICON === 'archive') {
+      return true
+    }
+    
+    // Check matrix editor media structure
+    if (this.mediaData?.media_type === 'zip' || this.mediaData?.media_type === 'archive' ||
+        this.mediaData?.type === 'zip' || this.mediaData?.type === 'archive') {
+      return true
+    }
+    
+    // Check filename extension for .zip
+    const filenameChecks = [
+      this.mediaData?.media?.ORIGINAL_FILENAME,
+      this.mediaData?.media?.original?.ORIGINAL_FILENAME,
+      this.mediaData?.media?.original?.FILENAME,
+      this.mediaData?.filename,
+      this.mediaData?.original_filename
+    ]
+    
+    for (const filename of filenameChecks) {
+      if (filename) {
+        const ext = filename.split('.').pop()?.toLowerCase()
+        if (ext === 'zip') return true
+      }
+    }
+    
+    // Check MIME type
+    const mimeChecks = [
+      this.mediaData?.media?.original?.MIMETYPE,
+      this.mediaData?.original_mimetype,
+      this.mediaData?.mimetype
+    ]
+    
+    for (const mime of mimeChecks) {
+      if (mime === 'application/zip' || mime === 'application/x-zip-compressed') {
+        return true
+      }
+    }
+    
+    return false
+  }
+
+  /**
    * Build media URL for different file sizes using the static utility method
    */
   private buildMediaUrl(fileType: string = 'original'): string {
@@ -171,6 +220,10 @@ export class ImageViewerDialog extends Modal {
   private getZoomDisplayUrl(): string {
     if (this.is3DFile()) {
       return this.buildMediaUrl('original')
+    }
+    if (this.isZipFile()) {
+      // ZIP files (CT scans) cannot be rendered in the browser, show static image
+      return '/images/CTScan.png'
     }
     if (this.isVideoFile()) {
       return this.buildMediaUrl('original')
@@ -354,6 +407,8 @@ export class ImageViewerDialog extends Modal {
   
     if (this.is3DFile()) {
       this.create3DViewer(container)
+    } else if (this.isZipFile()) {
+      this.createZipViewer(container)
     } else if (this.isVideoFile()) {
       await this.createVideoPlayer(container)
     } else {
@@ -365,8 +420,8 @@ export class ImageViewerDialog extends Modal {
     errorOverlay.style.display = 'none'
     container.style.display = 'flex'
 
-    // Setup annotations for image viewers (not for 3D files or videos)
-    if (!this.is3DFile() && !this.isVideoFile()) {
+    // Setup annotations for image viewers (not for 3D files, videos, or zip files)
+    if (!this.is3DFile() && !this.isVideoFile() && !this.isZipFile()) {
       this.setupAnnotations()
     }
   }
@@ -384,6 +439,33 @@ export class ImageViewerDialog extends Modal {
         <img src="/images/3DImage.png" alt="3D Model" class="threejs-icon" />
         <p>3D Model</p>
         <p class="format-info">Format: 3D</p>
+        <button class="btn btn-secondary download-btn">Download Original File</button>
+      </div>
+    `
+
+    const downloadBtn = viewer.querySelector('.download-btn') as HTMLButtonElement
+    if (downloadBtn) {
+      downloadBtn.onclick = () => {
+        this.downloadOriginalFile()
+      }
+    }
+
+    container.appendChild(viewer)
+    this.currentMediaElement = viewer
+  }
+
+  /**
+   * Create ZIP/CT scan file viewer (placeholder with icon)
+   * ZIP files cannot be rendered in the browser, so we show a static placeholder
+   */
+  private createZipViewer(container: HTMLElement) {
+    const viewer = document.createElement('div')
+    viewer.className = 'ctscan-viewer-placeholder'
+    viewer.innerHTML = `
+      <div class="ctscan-content">
+        <img src="/images/CTScan.png" alt="CT Scan" class="ctscan-icon" />
+        <p>CT Scan / Archive</p>
+        <p class="format-info">Format: ZIP Archive</p>
         <button class="btn btn-secondary download-btn">Download Original File</button>
       </div>
     `

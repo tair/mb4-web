@@ -1,5 +1,6 @@
 <script setup>
-import { buildMediaUrl } from '@/utils/fileUtils.js'
+import { computed } from 'vue'
+import { buildMediaUrl, isZipMedia } from '@/utils/fileUtils.js'
 
 const props = defineProps({
   media_file: {
@@ -18,6 +19,28 @@ const props = defineProps({
     type: [Number, String],
     required: false,
   },
+})
+
+// Check if the media file is a 3D file
+const is3DFile = computed(() => {
+  return props.media_file?.media?.thumbnail?.USE_ICON === '3d' || props.media_file?.media_type === '3d'
+})
+
+// Check if the media file is a ZIP/archive file (CT scans)
+// Pass the full media_file object since original_filename may be at root level
+const isZipFile = computed(() => {
+  return isZipMedia(props.media_file) || isZipMedia(props.media_file?.media)
+})
+
+// Get the thumbnail URL based on media type
+const thumbnailUrl = computed(() => {
+  if (is3DFile.value) {
+    return '/images/3DImage.png'
+  }
+  if (isZipFile.value) {
+    return '/images/CTScan.png'
+  }
+  return buildMediaUrl(props.project_id, props.media_file?.media_id, 'thumbnail')
 })
 
 function truncateNote(note) {
@@ -67,15 +90,7 @@ function hideEnlargedImage(imgId) {
     >
       <div class="align-self-center media-image-top mt-2">
         <img
-          :src="
-            media_file.media.thumbnail?.USE_ICON === '3d' || media_file.media_type === '3d'
-              ? '/images/3DImage.png'
-              : buildMediaUrl(
-                  props.project_id,
-                  props.media_file?.media_id,
-                  'thumbnail'
-                )
-          "
+          :src="thumbnailUrl"
           :style="{
             width: 120 + 'px',
             height: 120 + 'px',
