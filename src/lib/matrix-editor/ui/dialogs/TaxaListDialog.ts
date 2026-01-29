@@ -384,6 +384,8 @@ export class TaxaListDialog extends Dialog {
         </button>
         <small class="text-muted ms-2">
           Combine multiple taxa rows into a single composite row with merged scores.
+          <br />
+          <em>Note: This is an experimental feature and we may change how it works based on feedback.</em>
         </small>
       </div>`
   }
