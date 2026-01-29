@@ -265,15 +265,18 @@ export class NexusParser extends AbstractParser {
           
           if (this.tokenizer.consumeTokenIfMatch([Token.TAXON])) {
             if (this.tokenizer.consumeTokenIfMatch([Token.EQUAL]) && this.tokenizer.isToken([Token.NUMBER])) {
-              taxaNumber = this.convertNumber(this.tokenizer.getTokenValue())
+              // NEXUS uses 1-based indexing, convert to 0-based array index
+              taxaNumber = this.convertNumber(this.tokenizer.getTokenValue()) - 1
             }
           } else if (this.tokenizer.consumeTokenIfMatch([Token.CHARACTER])) {
             if (this.tokenizer.consumeTokenIfMatch([Token.EQUAL]) && this.tokenizer.isToken([Token.NUMBER])) {
-              characterNumber = this.convertNumber(this.tokenizer.getTokenValue())
+              // NEXUS uses 1-based indexing, convert to 0-based array index
+              characterNumber = this.convertNumber(this.tokenizer.getTokenValue()) - 1
             }
           } else if (this.tokenizer.consumeTokenIfMatch([Token.STATE])) {
             if (this.tokenizer.consumeTokenIfMatch([Token.EQUAL]) && this.tokenizer.isToken([Token.NUMBER])) {
-              stateNumber = this.convertNumber(this.tokenizer.getTokenValue())
+              // NEXUS uses 1-based indexing, convert to 0-based array index
+              stateNumber = this.convertNumber(this.tokenizer.getTokenValue()) - 1
             }
           } else if (this.tokenizer.consumeTokenIfMatch([Token.TEXT])) {
             if (this.tokenizer.consumeTokenIfMatch([Token.EQUAL])) {
@@ -286,6 +289,9 @@ export class NexusParser extends AbstractParser {
               // taxa list per Nexus file. TAXA = title
               this.tokenizer.getTokenValue()
             }
+          } else {
+            // Consume unknown tokens to prevent infinite loop
+            this.tokenizer.consumeToken()
           }
         }
 
@@ -294,29 +300,38 @@ export class NexusParser extends AbstractParser {
           continue
         }
 
+        // Validate indices are within bounds before using them
         if (taxaNumber != undefined && characterNumber != undefined) {
-          this.matrixObject.setCellNote(
-            taxaNames[taxaNumber],
-            characterNames[characterNumber],
-            text
-          )
+          if (taxaNumber >= 0 && taxaNumber < taxaNames.length &&
+              characterNumber >= 0 && characterNumber < characterNames.length) {
+            this.matrixObject.setCellNote(
+              taxaNames[taxaNumber],
+              characterNames[characterNumber],
+              text
+            )
+          }
         } else if (stateNumber != undefined && characterNumber != undefined) {
-          this.matrixObject.setCharacterStateNote(
-            characterNames[characterNumber],
-            stateNumber,
-            text
-          )
+          if (characterNumber >= 0 && characterNumber < characterNames.length &&
+              stateNumber >= 0) {
+            this.matrixObject.setCharacterStateNote(
+              characterNames[characterNumber],
+              stateNumber,
+              text
+            )
+          }
         } else if (characterNumber != undefined) {
-          this.matrixObject.setCharacterNote(
-            characterNames[characterNumber],
-            text
-          )
+          if (characterNumber >= 0 && characterNumber < characterNames.length) {
+            this.matrixObject.setCharacterNote(
+              characterNames[characterNumber],
+              text
+            )
+          }
         } else if (taxaNumber != undefined) {
-          this.matrixObject.setTaxonNote(taxaNames[taxaNumber], text)
-        } else {
-          // Skip notes without proper context
-          continue
+          if (taxaNumber >= 0 && taxaNumber < taxaNames.length) {
+            this.matrixObject.setTaxonNote(taxaNames[taxaNumber], text)
+          }
         }
+        // Skip notes without proper context or out of bounds
       } else {
         this.skipToSemicolon()
       }
