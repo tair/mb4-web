@@ -314,7 +314,9 @@ export class Cell {
   }
 
   toJson(): any {
-    if (this.uncertain == undefined || this.note == undefined) {
+    // Only return the simple score if BOTH uncertain AND note are undefined
+    // Using && ensures that if either property is set, we return the full object
+    if (this.uncertain == undefined && this.note == undefined) {
       return this.score
     }
     const obj: any = {
