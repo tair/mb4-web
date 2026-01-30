@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { buildMediaUrl, isZipMedia } from '@/utils/fileUtils.js'
+import TaxonomicName from '@/components/project/TaxonomicName.vue'
 
 const props = defineProps({
   media_file: {
@@ -105,8 +106,11 @@ function hideEnlargedImage(imgId) {
         <div>
           {{ 'M' + media_file.media_id }}
         </div>
+        <div v-if="media_file.taxon || media_file.genus" class="truncate-multiline mt-1">
+          <TaxonomicName :showExtinctMarker="true" :taxon="media_file.taxon || media_file" />
+        </div>
         <div
-          v-if="media_file.taxon_name"
+          v-else-if="media_file.taxon_name"
           v-html="media_file.taxon_name"
           class="truncate-multiline mt-1"
         ></div>
@@ -167,7 +171,7 @@ function hideEnlargedImage(imgId) {
   </div>
 </template>
 
-<style>
+<style scoped>
 .media-card {
   width: 12rem;
   height: 15rem;
@@ -183,23 +187,18 @@ function hideEnlargedImage(imgId) {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+/* Ensure TaxonomicName inherits the card's font size */
+.media-card :deep(.taxonName) {
+  font-size: inherit;
+}
+/* Ensure italic tags inside TaxonomicName still work */
+.media-card :deep(.taxonName i) {
+  font-style: italic !important;
+}
 .image-container {
   position: relative;
   display: inline-block;
 }
-/* ENLARGED IMAGE STYLES - COMMENTED OUT (can be restored if needed) */
-/*
-
-.enlarged-image {
-  display: none;
-  position: absolute;
-  top: 50%;
-  z-index: 10;
-  border: 2px solid var(--theme-orange);
-  background-color: white;
-  max-width: 600px;
-}
-*/
 .cc-icon {
   max-width: 88px;
   height: auto;

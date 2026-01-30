@@ -238,6 +238,13 @@ function onLargeImageError() {
         
         <!-- Right: Metadata Fields -->
         <div class="preview-metadata">
+          <div class="metadata-row" v-if="taxon">
+            <span class="metadata-label">Taxon:</span>
+            <span class="metadata-value">
+              <TaxonomicName :showExtinctMarker="true" :taxon="taxon" />
+            </span>
+          </div>
+          
           <div class="metadata-row">
             <span class="metadata-label">Specimen:</span>
             <span class="metadata-value">{{ specimenName || 'NA' }}</span>
@@ -343,6 +350,15 @@ function onLargeImageError() {
   height: 15rem;
   font-size: 12px;
   position: relative;
+}
+
+/* Ensure TaxonomicName inherits the card's font size */
+.mediaCard :deep(.taxonName) {
+  font-size: inherit;
+}
+/* Ensure italic tags inside TaxonomicName still work */
+.mediaCard :deep(.taxonName i) {
+  font-style: italic !important;
 }
 
 /* Detailed Hover Preview Card Styles */

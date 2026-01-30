@@ -115,4 +115,8 @@ function getAuthor() {
 .taxonName span {
   margin-right: 5px;
 }
+/* Ensure italic tags always work */
+.taxonName i {
+  font-style: italic !important;
+}
 </style>
