@@ -444,6 +444,7 @@ const convertedMediaList = computed(() => {
     },
     // Add computed display fields
     taxon_name: getTaxonName(media),
+    taxon: getTaxon(media), // Include taxon object for proper formatting
     view_name: getViewName(media),
     specimen_name: getSpecimenName(media),
     user_name: getUserName(media),
