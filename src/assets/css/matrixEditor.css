@@ -644,24 +644,35 @@ div.matrixgridCells table {
   display: inline-block;
 }
 
-.characterOrderingDialog .orderingSelect,
-.taxaListDialog .taxaSelect {
+.characterOrderingDialog .orderingSelect {
   width: 100%;
   height: 280px;
 }
 
+.taxaListDialog .taxaSelect {
+  width: 100%;
+  display: flex;
+  gap: 10px;
+}
+
 .characterOrderingDialog .unorderedCharacterSelect,
-.characterOrderingDialog .orderedCharacterSelect,
-.taxaListDialog .availableTaxaSelect,
-.taxaListDialog .currentTaxaSelect {
+.characterOrderingDialog .orderedCharacterSelect {
   font-weight: bold;
   height: 260px;
   vertical-align: top;
   width: 47%;
 }
 
-.characterOrderingDialog .unorderedCharacterSelect,
+.taxaListDialog .availableTaxaSelect,
 .taxaListDialog .currentTaxaSelect {
+  font-weight: bold;
+  height: 420px;
+  vertical-align: top;
+  flex: 1;
+  min-width: 0;
+}
+
+.characterOrderingDialog .unorderedCharacterSelect {
   padding-right: 10px;
 }
 
@@ -706,23 +717,109 @@ ol.draggableSelect li.droppable {
   border-top: 2px solid #000;
 }
 
-ol.draggableSelect li.filtered-out {
-  display: none;
-}
-
 .taxaListDialog .taxa-list-header {
   font-weight: bold;
   margin-bottom: 5px;
 }
 
-.taxaListDialog .searchInMatrix,
-.taxaListDialog .searchNotInMatrix {
-  margin-bottom: 8px;
+/* Help row with info icon */
+.taxaListDialog .taxa-list-help-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.taxaListDialog .taxa-list-info-wrapper {
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+}
+
+.taxaListDialog .taxa-list-info-icon {
+  color: #e07020;
+  font-size: 18px;
+  transition: color 0.15s ease;
+}
+
+.taxaListDialog .taxa-list-info-wrapper:hover .taxa-list-info-icon {
+  color: #c05a10;
+}
+
+.taxaListDialog .taxa-list-help-hint {
+  font-size: 13px;
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Taxa List Info Popover Styling */
+.taxa-list-tooltip.popover {
+  --bs-popover-max-width: 360px;
+  --bs-popover-bg: #fff;
+  --bs-popover-body-color: #333;
+  --bs-popover-border-color: #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1100 !important;
+}
+
+.taxa-list-tooltip .popover-body {
+  padding: 14px 16px;
+}
+
+.taxa-list-tooltip .popover-arrow::after {
+  border-bottom-color: #fff;
+}
+
+.taxa-list-tooltip-content {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.taxa-list-tooltip-content p {
+  margin: 0 0 10px 0;
+}
+
+.taxa-list-tooltip-content p:last-child {
+  margin-bottom: 0;
+}
+
+.taxa-list-tooltip-content b {
+  color: #e07020;
+  font-weight: 600;
 }
 
 .taxaListDialog .currentTaxaSelect ol.draggableSelect,
 .taxaListDialog .availableTaxaSelect ol.draggableSelect {
-  height: calc(100% - 60px);
+  height: calc(100% - 30px);
+}
+
+/* Move to Position Row Styling */
+.taxaListDialog .movePositionRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #dee2e6;
+}
+
+.taxaListDialog .movePositionRow label {
+  margin: 0;
+  font-weight: 500;
+  color: #495057;
+  white-space: nowrap;
+}
+
+.taxaListDialog .movePositionInput {
+  width: 80px;
+  padding: 4px 8px;
+  font-size: 14px;
+}
+
+.taxaListDialog .movePositionBtn {
+  padding: 4px 12px;
+  font-size: 14px;
 }
 
 .savingLabel {
