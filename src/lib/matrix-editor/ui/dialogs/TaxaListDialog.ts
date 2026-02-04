@@ -10,7 +10,7 @@ import { ConfirmDialog } from './ConfirmDialog'
 import { CreateCompositeTaxonDialog } from './CreateCompositeTaxonDialog'
 import * as mb from '../../mb'
 import { ModalDefaultButtons } from '../Modal'
-import { AlertDialog } from './Alert'
+import { Popover } from 'bootstrap'
 
 /**
  * The Taxon list dialog which adds and removes taxa within this matrix.
@@ -31,6 +31,19 @@ export class TaxaListDialog extends Dialog {
   private readonly taxaInMatrixSelect: DraggableSelect
   private readonly taxaNotInMatrixSelect: DraggableSelect
   private createCompositeButton: HTMLButtonElement | null = null
+  private infoPopover: Popover | null = null
+
+  /**
+   * The tooltip HTML content for the info icon.
+   */
+  private static readonly infoTooltipHtml = `
+    <div class="taxa-list-tooltip-content">
+      <p><b>Missing a taxon?</b> Add it first under the "Taxa" tab for it to appear here.</p>
+      <p><b>How to use:</b> Drag taxa between lists to add or remove them from the matrix.</p>
+      <p><b>Selection tips:</b> Hold <b>Shift</b> for contiguous selection, <b>⌘</b> (Mac) or <b>Ctrl</b> (PC) for non-contiguous.</p>
+      <p><b>Move to position:</b> Select taxa, enter a row number, and click Move to reorder without dragging.</p>
+    </div>
+  `
 
   /**
    * @param matrixModel The data associated with the matrix.
@@ -77,10 +90,35 @@ export class TaxaListDialog extends Dialog {
     if (this.matrixModel.isPublished() && this.createCompositeButton) {
       this.createCompositeButton.style.display = 'none'
     }
+
+  }
+
+  override dispose() {
+    if (this.infoPopover) {
+      this.infoPopover.dispose()
+      this.infoPopover = null
+    }
+    super.dispose()
   }
 
   protected override enterDocument() {
     super.enterDocument()
+
+    const element = this.getElement()
+
+    // Initialize the info popover
+    const infoIcon = element.querySelector('#taxaListInfoIcon') as HTMLElement
+    if (infoIcon) {
+      this.infoPopover = new Popover(infoIcon, {
+        html: true,
+        placement: 'bottom',
+        trigger: 'hover focus',
+        customClass: 'taxa-list-tooltip',
+        container: 'body',
+        content: TaxaListDialog.infoTooltipHtml,
+      })
+    }
+
     this.getHandler()
       .listen(this.matrixModel, TaxaChangedEvents.TYPE, () =>
         this.handleTaxaChange()
@@ -107,21 +145,23 @@ export class TaxaListDialog extends Dialog {
       )
     }
 
-    // Listen for search input changes
-    const searchInMatrixInput =
-      this.getElementByClass<HTMLInputElement>('searchInMatrix')
-    if (searchInMatrixInput) {
-      this.getHandler().listen(searchInMatrixInput, 'input', (e: Event) =>
-        this.handleSearchInMatrix(e)
+    // Listen for move to position button click
+    const movePositionBtn = element.querySelector<HTMLButtonElement>('.movePositionBtn')
+    if (movePositionBtn) {
+      this.getHandler().listen(movePositionBtn, 'click', () =>
+        this.handleMoveToPosition()
       )
     }
 
-    const searchNotInMatrixInput =
-      this.getElementByClass<HTMLInputElement>('searchNotInMatrix')
-    if (searchNotInMatrixInput) {
-      this.getHandler().listen(searchNotInMatrixInput, 'input', (e: Event) =>
-        this.handleSearchNotInMatrix(e)
-      )
+    // Allow Enter key to trigger move
+    const movePositionInput = element.querySelector<HTMLInputElement>('.movePositionInput')
+    if (movePositionInput) {
+      this.getHandler().listen(movePositionInput, 'keydown', (e: KeyboardEvent) => {
+        if (e.key === 'Enter') {
+          e.preventDefault()
+          this.handleMoveToPosition()
+        }
+      })
     }
   }
 
@@ -312,42 +352,74 @@ export class TaxaListDialog extends Dialog {
   }
 
   /**
-   * Filters the taxa list based on search query.
-   * @param select The DraggableSelect component to filter.
-   * @param query The search query.
+   * Handles the move to position button click.
+   * Moves selected taxa to the specified position.
    */
-  private filterTaxaList(select: DraggableSelect, query: string) {
-    const element = select.getElement()
-    const items = element.querySelectorAll('li')
-    const lowerQuery = query.toLowerCase().trim()
+  private handleMoveToPosition() {
+    const element = this.getElement()
+    const positionInput = element.querySelector<HTMLInputElement>('.movePositionInput')
+    if (!positionInput) {
+      return
+    }
 
-    items.forEach((item) => {
-      if (item.classList.contains('dead')) {
-        return
-      }
-      const text = item.textContent?.toLowerCase() || ''
-      if (lowerQuery === '' || text.includes(lowerQuery)) {
-        item.classList.remove('filtered-out')
-      } else {
-        item.classList.add('filtered-out')
-      }
-    })
-  }
+    const positionValue = positionInput.value.trim()
+    if (!positionValue) {
+      alert('Please enter a position number')
+      return
+    }
 
-  /**
-   * Handles the search input for taxa in matrix.
-   */
-  private handleSearchInMatrix(e: Event) {
-    const input = e.target as HTMLInputElement
-    this.filterTaxaList(this.taxaInMatrixSelect, input.value)
-  }
+    const userPreferences = this.matrixModel.getUserPreferences()
+    const numberingMode = userPreferences.getDefaultNumberingMode()
+    
+    // Parse the position (user enters 1-based or 0-based depending on numbering mode)
+    const targetPosition = parseInt(positionValue, 10)
+    if (isNaN(targetPosition)) {
+      alert('Please enter a valid number')
+      return
+    }
 
-  /**
-   * Handles the search input for taxa not in matrix.
-   */
-  private handleSearchNotInMatrix(e: Event) {
-    const input = e.target as HTMLInputElement
-    this.filterTaxaList(this.taxaNotInMatrixSelect, input.value)
+    // Convert to 0-based index for the API
+    // User enters 1 for first position when display is 1-indexed (numberingMode=0)
+    const position = targetPosition - 1 + numberingMode
+
+    const taxonIdsToMove = mb.convertToNumberArray(
+      this.taxaInMatrixSelect.getSelectedValues()
+    )
+
+    if (taxonIdsToMove.length === 0) {
+      alert('Please select taxa to move')
+      return
+    }
+
+    const taxa = this.matrixModel.getTaxa()
+    const maxPosition = taxa.size()
+
+    if (position < 0 || position >= maxPosition) {
+      alert(`Position must be between ${1 - numberingMode} and ${maxPosition - numberingMode}`)
+      return
+    }
+
+    // If moving a single taxon to its current position, no need to reorder
+    if (
+      taxonIdsToMove.length === 1 &&
+      this.matrixModel.getTaxonIndexById(taxonIdsToMove[0]) === position
+    ) {
+      return
+    }
+
+    this.savingLabel.saving()
+    this.matrixModel
+      .reorderTaxa(taxonIdsToMove, position)
+      .then(() => {
+        this.setTaxaInMatrixSelect()
+        this.taxaInMatrixSelect.redraw()
+        this.savingLabel.saved()
+        positionInput.value = ''
+      })
+      .catch((e) => {
+        this.savingLabel.failed()
+        alert(e)
+      })
   }
 
   /**
@@ -355,28 +427,24 @@ export class TaxaListDialog extends Dialog {
    */
   private static htmlContent(): string {
     return `
-      <div style="margin-bottom: 10px">
-        <i>
-          Don't see the taxon you want to add? Please add it first under the
-          "Taxa" tab for it to show up here.
-        </i>
+      <div class="taxa-list-help-row">
+        <span class="taxa-list-info-wrapper" id="taxaListInfoIcon" tabindex="0">
+          <i class="fa-solid fa-circle-info taxa-list-info-icon"></i>
+        </span>
+        <span class="taxa-list-help-hint">Hover for instructions</span>
       </div>
       <div class="taxaSelect nonSelectable">
         <span class="currentTaxaSelect">
           <div class="taxa-list-header">Taxa in this matrix</div>
-          <input type="text" class="form-control form-control-sm searchInMatrix" placeholder="Search taxa..." />
         </span>
         <span class="availableTaxaSelect">
           <div class="taxa-list-header">Taxa in project but not in this matrix</div>
-          <input type="text" class="form-control form-control-sm searchNotInMatrix" placeholder="Search taxa..." />
         </span>
       </div>
-      <div style="margin-top: 10px">
-        <i>
-          Drag taxa from one list to the other to add and remove them from the
-          matrix. To select contiguous taxa, press the hold the SHIFT key; for
-          non-contiguous taxa, use the COMMAND key (Mac) or CTRL key (PC).
-        </i>
+      <div class="movePositionRow">
+        <label>Move selected to position:</label>
+        <input type="number" class="form-control movePositionInput" min="1" placeholder="#">
+        <button type="button" class="btn btn-outline-secondary movePositionBtn">Move</button>
       </div>
       <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
         <button type="button" class="btn btn-outline-primary createCompositeBtn">
