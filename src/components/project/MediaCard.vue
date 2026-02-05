@@ -195,8 +195,6 @@ function onLargeImageError() {
       <img
         v-if="image"
         :src="image.url"
-        :width="image.width"
-        :height="image.height"
         class="loading thumbnail-image"
       />
       <span v-else></span>
@@ -315,9 +313,16 @@ function onLargeImageError() {
   height: 8rem;
   margin: 5px auto;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .thumbnail-image {
+  max-width: 120px;
+  max-height: 100%;
+  object-fit: contain;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
