@@ -93,12 +93,9 @@ function hideEnlargedImage(imgId) {
         <img
           :src="thumbnailUrl"
           :style="{
-            width: 120 + 'px',
-            height: 120 + 'px',
-            backgroundSize: '20px',
-            backgroundRepeat: 'no-repeat',
-            backgroundImage: 'url(' + '/images/loader.png' + ')',
-            backgroundPosition: '10px 10px',
+            maxWidth: 120 + 'px',
+            maxHeight: 120 + 'px',
+            objectFit: 'contain',
           }"
         />
       </div>
@@ -179,6 +176,10 @@ function hideEnlargedImage(imgId) {
 }
 .media-image-top {
   height: 8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 .truncate-multiline {
   display: -webkit-box;
