@@ -195,7 +195,7 @@ function onLargeImageError() {
       <img
         v-if="image"
         :src="image.url"
-        class="thumbnail-image"
+        class="loading thumbnail-image"
       />
       <span v-else></span>
     </div>

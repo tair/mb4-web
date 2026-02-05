@@ -96,6 +96,10 @@ function hideEnlargedImage(imgId) {
             maxWidth: 120 + 'px',
             maxHeight: 120 + 'px',
             objectFit: 'contain',
+            backgroundSize: '20px',
+            backgroundRepeat: 'no-repeat',
+            backgroundImage: 'url(' + '/images/loader.png' + ')',
+            backgroundPosition: '10px 10px',
           }"
         />
       </div>
