@@ -27,6 +27,7 @@ const uploadError = ref('')
 const uploadTask = ref({ id: null, status: null })
 const projectId = route.params.id
 const isConvertingCsv = ref(false)
+const showAiExtractor = ref(false)
 const uploadType = computed(() => route.query.uploadType || 'nexus')
 
 // Taxonomic unit options for dropdown
@@ -603,6 +604,9 @@ function handleCharactersExtracted(extractedCharacters) {
     character.characterNumber = characterIndex
     importedMatrix.characters.set(characterIndex, character)
   }
+
+  // Collapse the AI extractor after adding characters
+  showAiExtractor.value = false
 }
 
 // Handle extraction errors
@@ -914,18 +918,33 @@ onUnmounted(() => {
             Loading...
           </div>
           <div class="matrix-confirmation-screen" v-else>
-            <!-- Show AI Character Extractor when there are no characters -->
+            <!-- AI Character Extractor: shown by default when no characters, toggled via button otherwise -->
+            <div v-if="importedMatrix?.characters && importedMatrix.characters.size > 0" class="ai-extractor-toggle">
+              <button
+                type="button"
+                class="btn btn-outline-primary btn-sm ai-toggle-btn"
+                @click="showAiExtractor = !showAiExtractor"
+              >
+                <span class="ai-icon">&#x2728;</span>
+                {{ showAiExtractor ? 'Hide AI Extractor' : 'Add Characters from PDF' }}
+              </button>
+              <span class="ai-toggle-hint">
+                Use AI to extract additional characters from a PDF and add them to the matrix.
+              </span>
+            </div>
+
             <AiCharacterExtractor
-              v-if="!importedMatrix?.characters || importedMatrix.characters.size === 0"
+              v-if="!importedMatrix?.characters || importedMatrix.characters.size === 0 || showAiExtractor"
               :total-characters="1000"
               page-range="all"
               :zero-indexed="false"
+              :existing-characters="importedMatrix?.characters"
               @characters-extracted="handleCharactersExtracted"
               @extraction-error="handleExtractionError"
             />
 
             <!-- Show character table when characters exist -->
-            <table v-else>
+            <table v-if="importedMatrix?.characters && importedMatrix.characters.size > 0">
               <thead>
                 <tr>
                   <th>#</th>
@@ -1619,5 +1638,33 @@ div.matrix-confirmation-screen table td {
 
 .no-conflicts .alert-success {
   border-left: 4px solid #28a745;
+}
+
+.ai-extractor-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: #f0f7ff;
+  border: 1px solid #bee3f8;
+  border-radius: 8px;
+}
+
+.ai-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ai-icon {
+  font-size: 16px;
+}
+
+.ai-toggle-hint {
+  color: #5a6c7d;
+  font-size: 13px;
 }
 </style>

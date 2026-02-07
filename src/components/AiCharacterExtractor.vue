@@ -47,6 +47,11 @@
           Successfully extracted {{ extractedCharacters.length }} character(s). 
           Select the characters you want to add to the matrix.
         </p>
+
+        <!-- Duplicate Warning -->
+        <div v-if="duplicateCount > 0" class="duplicate-warning">
+          <strong>{{ duplicateCount }} duplicate(s) detected</strong> — characters with the same name already exist in the matrix and have been deselected. You can still select them if needed.
+        </div>
         
         <!-- Selection Info -->
         <div class="selection-info">
@@ -78,7 +83,7 @@
             <tr 
               v-for="(character, index) in extractedCharacters" 
               :key="index"
-              :class="{ 'selected': selectedCharacters[index] }"
+              :class="{ 'selected': selectedCharacters[index], 'duplicate-row': duplicateFlags[index] }"
             >
               <td class="checkbox-column">
                 <input
@@ -87,7 +92,10 @@
                 />
               </td>
               <td>{{ index + 1 }}</td>
-              <td>{{ character.name }}</td>
+              <td>
+                {{ character.name }}
+                <span v-if="duplicateFlags[index]" class="duplicate-badge">duplicate</span>
+              </td>
               <td>
                 <ol v-if="character.states">
                   <li v-for="(state, stateIndex) in character.states" :key="stateIndex">
@@ -146,6 +154,10 @@ const props = defineProps({
   zeroIndexed: {
     type: Boolean,
     default: false
+  },
+  existingCharacters: {
+    type: Map,
+    default: () => new Map()
   }
 })
 
@@ -254,8 +266,8 @@ async function extractCharactersFromPdf() {
 
     // Store extracted characters and show review screen
     extractedCharacters.value = characters
-    // Initialize all characters as selected by default
-    selectedCharacters.value = new Array(characters.length).fill(true)
+    // Initialize selection: auto-deselect duplicates
+    selectedCharacters.value = characters.map(c => !isDuplicate(c))
     showReview.value = true
     uploadError.value = ''
 
@@ -267,6 +279,25 @@ async function extractCharactersFromPdf() {
     isProcessingPdf.value = false
   }
 }
+
+// Check if an extracted character is a duplicate of an existing one
+function isDuplicate(character) {
+  if (!props.existingCharacters || props.existingCharacters.size === 0) return false
+  const name = character.name.trim().toLowerCase()
+  for (const existing of props.existingCharacters.values()) {
+    if (existing.name && existing.name.trim().toLowerCase() === name) return true
+  }
+  return false
+}
+
+// Computed: mark which extracted characters are duplicates
+const duplicateFlags = computed(() => {
+  return extractedCharacters.value.map(c => isDuplicate(c))
+})
+
+const duplicateCount = computed(() => {
+  return duplicateFlags.value.filter(Boolean).length
+})
 
 // Computed properties for selection state
 const selectedCount = computed(() => {
@@ -554,6 +585,32 @@ function handleCancel() {
 
 .matrix-review-table tr.selected:hover {
   background-color: #d1e7fd !important;
+}
+
+.matrix-review-table tr.duplicate-row {
+  opacity: 0.6;
+}
+
+.duplicate-badge {
+  display: inline-block;
+  background: #e67e22;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 10px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.duplicate-warning {
+  margin-top: 12px;
+  padding: 10px 16px;
+  background: #fef3cd;
+  border: 1px solid #f0c36d;
+  border-radius: 6px;
+  color: #856404;
+  font-size: 13px;
 }
 
 .matrix-review-table td ol {
