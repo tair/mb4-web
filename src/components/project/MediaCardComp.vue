@@ -1,5 +1,7 @@
 <script setup>
-import { buildMediaUrl } from '@/utils/fileUtils.js'
+import { computed } from 'vue'
+import { buildMediaUrl, isZipMedia } from '@/utils/fileUtils.js'
+import TaxonomicName from '@/components/project/TaxonomicName.vue'
 
 const props = defineProps({
   media_file: {
@@ -18,6 +20,28 @@ const props = defineProps({
     type: [Number, String],
     required: false,
   },
+})
+
+// Check if the media file is a 3D file
+const is3DFile = computed(() => {
+  return props.media_file?.media?.thumbnail?.USE_ICON === '3d' || props.media_file?.media_type === '3d'
+})
+
+// Check if the media file is a ZIP/archive file (CT scans)
+// Pass the full media_file object since original_filename may be at root level
+const isZipFile = computed(() => {
+  return isZipMedia(props.media_file) || isZipMedia(props.media_file?.media)
+})
+
+// Get the thumbnail URL based on media type
+const thumbnailUrl = computed(() => {
+  if (is3DFile.value) {
+    return '/images/3DImage.png'
+  }
+  if (isZipFile.value) {
+    return '/images/CTScan.png'
+  }
+  return buildMediaUrl(props.project_id, props.media_file?.media_id, 'thumbnail')
 })
 
 function truncateNote(note) {
@@ -67,15 +91,7 @@ function hideEnlargedImage(imgId) {
     >
       <div class="align-self-center media-image-top mt-2">
         <img
-          :src="
-            media_file.media.thumbnail?.USE_ICON === '3d' || media_file.media_type === '3d'
-              ? '/images/3DImage.png'
-              : buildMediaUrl(
-                  props.project_id,
-                  props.media_file?.media_id,
-                  'thumbnail'
-                )
-          "
+          :src="thumbnailUrl"
           :style="{
             width: 120 + 'px',
             height: 120 + 'px',
@@ -90,8 +106,11 @@ function hideEnlargedImage(imgId) {
         <div>
           {{ 'M' + media_file.media_id }}
         </div>
+        <div v-if="media_file.taxon || media_file.genus" class="truncate-multiline mt-1">
+          <TaxonomicName :showExtinctMarker="true" :taxon="media_file.taxon || media_file" />
+        </div>
         <div
-          v-if="media_file.taxon_name"
+          v-else-if="media_file.taxon_name"
           v-html="media_file.taxon_name"
           class="truncate-multiline mt-1"
         ></div>
@@ -152,7 +171,7 @@ function hideEnlargedImage(imgId) {
   </div>
 </template>
 
-<style>
+<style scoped>
 .media-card {
   width: 12rem;
   height: 15rem;
@@ -168,23 +187,18 @@ function hideEnlargedImage(imgId) {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+/* Ensure TaxonomicName inherits the card's font size */
+.media-card :deep(.taxonName) {
+  font-size: inherit;
+}
+/* Ensure italic tags inside TaxonomicName still work */
+.media-card :deep(.taxonName i) {
+  font-style: italic !important;
+}
 .image-container {
   position: relative;
   display: inline-block;
 }
-/* ENLARGED IMAGE STYLES - COMMENTED OUT (can be restored if needed) */
-/*
-
-.enlarged-image {
-  display: none;
-  position: absolute;
-  top: 50%;
-  z-index: 10;
-  border: 2px solid orange;
-  background-color: white;
-  max-width: 600px;
-}
-*/
 .cc-icon {
   max-width: 88px;
   height: auto;

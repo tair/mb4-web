@@ -15,12 +15,26 @@ export function capitalizeFirstLetter(text: any): string {
     return ''
   }
 
-  const firstChar = text[0]
-  const rest = text.substring(1)
+  // Find the first alphabetic character
+  let firstAlphaIndex = -1
+  for (let i = 0; i < text.length; i++) {
+    if (/[a-zA-Z]/.test(text[i])) {
+      firstAlphaIndex = i
+      break
+    }
+  }
 
-  const upper = firstChar?.toLocaleUpperCase?.() ?? ''
-  const lower = rest?.toLocaleLowerCase?.() ?? ''
-  return upper + lower
+  // If no alphabetic characters, return the original text
+  if (firstAlphaIndex === -1) {
+    return text
+  }
+
+  // Build the result: prefix + capitalized first alpha + lowercase rest
+  const prefix = text.substring(0, firstAlphaIndex)
+  const firstAlpha = text[firstAlphaIndex].toLocaleUpperCase()
+  const rest = text.substring(firstAlphaIndex + 1).toLocaleLowerCase()
+
+  return prefix + firstAlpha + rest
 }
 
 export function countOccurences(text: string, reg: RegExp): number {

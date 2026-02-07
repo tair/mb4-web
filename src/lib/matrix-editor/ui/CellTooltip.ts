@@ -76,7 +76,7 @@ export class CellTooltip {
     let tooltip = 'Status: ' + statusDisplayText[cellInfo.status] + '\n\n'
     for (let x = 0; x < cellInfo.states.length; x++) {
       const state = cellInfo.states[x]
-      if (state.state_number) {
+      if (state.state_number != null) {
         switch (state.state_number) {
           case 'NPA':
             tooltip += 'NPA - not presently available\n'

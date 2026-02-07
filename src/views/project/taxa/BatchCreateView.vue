@@ -225,7 +225,7 @@ function removeTaxon(index: number) {
 }
 
 .taxon-form-remove-field {
-  color: var(--theme-orange, #ef782f);
+  color: var(--theme-orange, #F17B17);
   cursor: pointer;
   padding-left: 0.5rem;
 }
@@ -235,7 +235,7 @@ function removeTaxon(index: number) {
 }
 
 .taxon-form-remove {
-  color: var(--theme-orange, #ef782f);
+  color: var(--theme-orange, #F17B17);
   font-weight: bold;
   cursor: pointer;
 }

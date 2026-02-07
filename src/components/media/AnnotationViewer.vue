@@ -84,10 +84,10 @@
           @click="toggleHideAllLabels"
           class="btn btn-outline"
           :class="{ active: hideAllLabels }"
-          title="Hide all labels"
+          title="Hide all labels and annotation points"
         >
           <span class="mode-icon">👁️</span>
-          {{ hideAllLabels ? 'Show Labels' : 'Hide All' }}
+          {{ hideAllLabels ? 'Show All' : 'Hide All' }}
         </button>
       </div>
       
@@ -138,7 +138,7 @@
               <h6>Label Display</h6>
               <div class="help-item shortcut-item">
                 <kbd>Tab</kbd>
-                <span class="shortcut-description">Toggle hide all labels</span>
+                <span class="shortcut-description">Toggle hide all labels and annotation points</span>
               </div>
               <div class="help-item shortcut-item">
                 <kbd>L</kbd>
@@ -283,7 +283,7 @@
             <div class="help-item">
               <span class="help-icon-display">👁️</span>
               <div class="help-text">
-                <strong>Hide All Labels</strong> - Temporarily hide all labels and connection lines to view annotations without clutter
+                <strong>Hide All</strong> - Temporarily hide all labels, connection lines, and annotation points to view the image without clutter
               </div>
             </div>
           </div>
@@ -325,7 +325,7 @@
     <div class="annotation-canvas-container" ref="canvasContainer">
       <img 
         ref="mediaImage"
-        :src="currentImageUrl || mediaUrl"
+        :src="effectiveImageUrl"
         @load="onImageLoad"
         @error="onImageError"
         alt="Media for annotation"
@@ -346,7 +346,8 @@
       <!-- Loading overlay while image is loading or switching sources -->
       <div v-if="isLoadingImage" class="image-loading-overlay">
         <div class="loading-spinner"></div>
-        <div class="loading-text">Loading image…</div>
+        <div class="loading-text">{{ isLoadingTiff ? 'Decoding TIFF image…' : 'Loading image…' }}</div>
+        <div v-if="isLoadingTiff" class="loading-subtext">This may take a moment for large files</div>
       </div>
       
       <!-- Annotation Labels Container - receives same transform as canvas/image -->
@@ -463,7 +464,7 @@
       <div class="overview-container" ref="overviewContainer">
         <img 
           ref="overviewImage"
-          :src="currentImageUrl || mediaUrl"
+          :src="effectiveImageUrl"
           @load="onOverviewImageLoad"
           @click="onOverviewClick"
           alt="Image overview"
@@ -508,6 +509,7 @@ import ConfirmModal from './ConfirmModal.vue'
 import { annotationService } from '../../services/annotationService.js'
 import { buildMediaUrl } from '../../utils/fileUtils.js'
 import { apiService } from '@/services/apiService.js'
+import UTIF from 'utif2' // Modern TIFF decoder for client-side TIFF rendering
 
 export default {
   name: 'AnnotationViewer',
@@ -571,6 +573,10 @@ export default {
     stateNumber: {
       type: Number,
       default: null
+    },
+    isTiff: {
+      type: Boolean,
+      default: false
     }
   },
 
@@ -637,6 +643,12 @@ export default {
       imageLoadTimer: null,
       fallbackDelayMs: 3000,
       
+      // TIFF decoding state
+      tiffDataUrl: null,
+      tiffBlobUrl: null, // Blob URL for large TIFF images (more efficient than data URL)
+      isLoadingTiff: false,
+      tiffLoadError: null,
+      
       // Label positioning and dragging
       labelPositions: new Map(), // Store custom label positions
       isDraggingLabel: false,
@@ -682,6 +694,23 @@ export default {
       }
       // Fall back to mediaId for media-only annotations
       return this.mediaId
+    },
+    
+    // Computed property for the effective image URL to use in the <img> tag
+    // This prevents the browser from trying to load raw TIFF files directly
+    effectiveImageUrl() {
+      // If we're loading a TIFF file via JavaScript decoding, don't set any src
+      // until the decoding is complete. This prevents the browser from trying
+      // to load the raw TIFF (which it can't render) and triggering onImageError.
+      if (this.isTiff && this.isLoadingTiff && !this.currentImageUrl) {
+        // Return a transparent 1x1 pixel data URL as placeholder during TIFF loading
+        // This prevents the img tag from trying to load the raw TIFF URL
+        return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+      }
+      
+      // Use currentImageUrl if available (set after TIFF decode or for non-TIFF images)
+      // Otherwise fall back to mediaUrl for non-TIFF images
+      return this.currentImageUrl || this.mediaUrl
     }
   },
 
@@ -730,14 +759,32 @@ export default {
     },
     
     mediaUrl: {
-      handler(newUrl) {
+      async handler(newUrl) {
         // Reset fallback state when mediaUrl changes
-        this.currentImageUrl = newUrl
         this.hasTriedFallback = false
         this.imageLoaded = false
         this.isLoadingImage = true
         this.clearImageLoadTimer()
-        this.startImageLoadWatch()
+        this.tiffDataUrl = null
+        
+        // Clean up previous blob URL if exists
+        if (this.tiffBlobUrl) {
+          URL.revokeObjectURL(this.tiffBlobUrl)
+          this.tiffBlobUrl = null
+        }
+        
+        // Handle TIFF files specially - decode client-side
+        if (this.isTiff) {
+          // CRITICAL: Set isLoadingTiff=true and currentImageUrl=null BEFORE calling loadTiffImage
+          // This ensures the effectiveImageUrl computed property returns a placeholder,
+          // preventing the browser from trying to load the raw TIFF file directly
+          this.isLoadingTiff = true
+          this.currentImageUrl = null
+          await this.loadTiffImage(newUrl)
+        } else {
+          this.currentImageUrl = newUrl
+          this.startImageLoadWatch()
+        }
         
         // Apply initial zoom when new image is set
         this.$nextTick(() => {
@@ -753,6 +800,7 @@ export default {
   beforeUnmount() {
     this.removeEventListeners()
     this.clearImageLoadTimer()
+    this.cleanupTiffBlobUrl()
   },
 
   methods: {
@@ -978,6 +1026,14 @@ export default {
 
     // Image handling
     onImageLoad() {
+      // CRITICAL: If we're still loading a TIFF, don't mark as loaded yet.
+      // The placeholder image (1x1 transparent GIF) loads instantly, but we need
+      // to wait for the actual TIFF decoding to complete before hiding the spinner.
+      if (this.isLoadingTiff) {
+        console.log('Placeholder loaded during TIFF decoding, keeping loading state')
+        return
+      }
+      
       this.imageLoaded = true
       this.isLoadingImage = false
       this.clearImageLoadTimer()
@@ -1011,6 +1067,14 @@ export default {
     },
 
     onImageError() {
+      // CRITICAL: If we're currently loading a TIFF via loadTiffImage(), ignore this error.
+      // The error is caused by the browser trying to render the raw TIFF in the <img> tag
+      // before our JavaScript decoding finishes. This is expected and not a real failure.
+      if (this.isLoadingTiff) {
+        console.log('Ignoring image error during TIFF decoding (expected behavior)')
+        return
+      }
+      
       console.error('Failed to load media image:', this.currentImageUrl || this.mediaUrl)
       
       // Try fallback to 'large' version if we haven't tried it yet
@@ -1107,13 +1171,37 @@ export default {
     },
 
     // Zoom and Pan methods
+    adjustZoomToCenter(oldZoom, newZoom) {
+      // Adjust offset to keep the viewport center fixed when zooming
+      // This compensates for the top-left transform-origin
+      const container = this.$refs.canvasContainer
+      if (!container) return
+      
+      const containerWidth = container.clientWidth
+      const containerHeight = container.clientHeight
+      
+      // Calculate offset adjustment to keep center point fixed
+      const offsetDeltaX = (containerWidth / 2) * (1 / newZoom - 1 / oldZoom)
+      const offsetDeltaY = (containerHeight / 2) * (1 / newZoom - 1 / oldZoom)
+      
+      // Apply the adjustment
+      this.viewerOffset.x += offsetDeltaX
+      this.viewerOffset.y += offsetDeltaY
+    },
+
     zoomIn() {
-      this.viewerZoom = Math.min(this.viewerZoom * 1.2, 5)
+      const oldZoom = this.viewerZoom
+      const newZoom = Math.min(this.viewerZoom * 1.2, 5)
+      this.adjustZoomToCenter(oldZoom, newZoom)
+      this.viewerZoom = newZoom
       this.updateImageTransform()
     },
 
     zoomOut() {
-      this.viewerZoom = Math.max(this.viewerZoom / 1.2, 0.1)
+      const oldZoom = this.viewerZoom
+      const newZoom = Math.max(this.viewerZoom / 1.2, 0.1)
+      this.adjustZoomToCenter(oldZoom, newZoom)
+      this.viewerZoom = newZoom
       this.updateImageTransform()
     },
 
@@ -1235,7 +1323,10 @@ export default {
 
     onCanvasWheel(event) {
       const delta = event.deltaY > 0 ? 0.9 : 1.1
-      this.viewerZoom = Math.max(0.1, Math.min(5, this.viewerZoom * delta))
+      const oldZoom = this.viewerZoom
+      const newZoom = Math.max(0.1, Math.min(5, this.viewerZoom * delta))
+      this.adjustZoomToCenter(oldZoom, newZoom)
+      this.viewerZoom = newZoom
       this.updateImageTransform()
     },
 
@@ -1481,6 +1572,11 @@ export default {
     },
 
     drawAnnotation(annotation) {
+      // If "Hide All Labels" is enabled, don't draw any annotation shapes
+      if (this.hideAllLabels) {
+        return
+      }
+
       const isSelected = this.selectedAnnotation?.annotation_id === annotation.annotation_id
       
       this.ctx.strokeStyle = isSelected ? '#007bff' : '#ff6b6b'
@@ -2777,6 +2873,9 @@ export default {
 
     // Image load monitoring and timeout fallback
     startImageLoadWatch() {
+      // TIFFs are handled by loadTiffImage, skip timeout fallback
+      if (this.isTiff) return
+      
       this.clearImageLoadTimer()
       this.imageLoadTimer = setTimeout(() => {
         if (!this.imageLoaded && !this.hasTriedFallback) {
@@ -2793,6 +2892,70 @@ export default {
       if (this.imageLoadTimer) {
         clearTimeout(this.imageLoadTimer)
         this.imageLoadTimer = null
+      }
+    },
+    
+    // TIFF decoding using tiff.js library
+    async loadTiffImage(url) {
+      this.isLoadingTiff = true
+      this.isLoadingImage = true
+      this.tiffLoadError = null
+      
+      try {
+        const response = await fetch(url)
+        if (!response.ok) throw new Error('Failed to fetch TIFF')
+        
+        const buffer = await response.arrayBuffer()
+        
+        // Decode TIFF using UTIF (pure JavaScript, handles large files better)
+        const ifds = UTIF.decode(buffer)
+        if (!ifds || ifds.length === 0) throw new Error('Invalid TIFF file')
+        
+        // Decode the first page/image
+        UTIF.decodeImage(buffer, ifds[0])
+        const firstPage = ifds[0]
+        
+        // Convert to RGBA8 format
+        const rgba = UTIF.toRGBA8(firstPage)
+        
+        // Create canvas and draw the decoded image
+        const canvas = document.createElement('canvas')
+        canvas.width = firstPage.width
+        canvas.height = firstPage.height
+        const ctx = canvas.getContext('2d')
+        
+        const imageData = ctx.createImageData(firstPage.width, firstPage.height)
+        imageData.data.set(rgba)
+        ctx.putImageData(imageData, 0, 0)
+        
+        // Use Blob URL instead of data URL for large images (avoids browser limits)
+        // Clean up previous blob URL if exists
+        if (this.tiffBlobUrl) {
+          URL.revokeObjectURL(this.tiffBlobUrl)
+          this.tiffBlobUrl = null
+        }
+        
+        // Convert canvas to blob and create object URL
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'))
+        this.tiffBlobUrl = URL.createObjectURL(blob)
+        this.currentImageUrl = this.tiffBlobUrl
+        
+      } catch (error) {
+        console.error('TIFF decode failed:', error)
+        this.tiffLoadError = error.message
+        // Fallback to large JPEG version
+        this.hasTriedFallback = true
+        this.currentImageUrl = buildMediaUrl(this.projectId, this.mediaId, 'large')
+      } finally {
+        this.isLoadingTiff = false
+      }
+    },
+    
+    // Clean up blob URL when component is destroyed
+    cleanupTiffBlobUrl() {
+      if (this.tiffBlobUrl) {
+        URL.revokeObjectURL(this.tiffBlobUrl)
+        this.tiffBlobUrl = null
       }
     }
   }
@@ -3819,6 +3982,12 @@ kbd {
   color: #495057;
   font-size: 14px;
   font-weight: 500;
+}
+
+.image-loading-overlay .loading-subtext {
+  color: #6c757d;
+  font-size: 12px;
+  margin-top: 4px;
 }
 
 @keyframes spin {

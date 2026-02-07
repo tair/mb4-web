@@ -1,15 +1,18 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
+import { usePublicMediaStore } from '@/stores/PublicMediaStore.js'
 import ProjectLoaderComp from '@/components/project/ProjectLoaderComp.vue'
 import SpecimenDetailsComp from '@/components/project/SpecimenDetailsComp.vue'
 import { logView, HIT_TYPES } from '@/lib/analytics.js'
 
 const route = useRoute()
+const router = useRouter()
 const projectId = route.params.id
 const specimenId = route.params.specimenId
 const projectStore = usePublicProjectDetailsStore()
+const mediaStore = usePublicMediaStore()
 
 const filterByOptions = computed(() => {
   return projectStore.getSpecimenFilterFields()
@@ -45,12 +48,41 @@ const letters = computed(() => {
   return uniqueLetters
 })
 
+// Compute media counts for each specimen
+const specimenMediaCounts = computed(() => {
+  if (!mediaStore.full_media_files) return {}
+  
+  const counts = {}
+  for (const media of mediaStore.full_media_files) {
+    if (media.specimen_id) {
+      counts[media.specimen_id] = (counts[media.specimen_id] || 0) + 1
+    }
+  }
+  return counts
+})
+
 const filteredSpecimens = computed(() => {
-  return projectStore.getFilteredSpecimen(
+  const specimens = projectStore.getFilteredSpecimen(
     selectAll.value,
     selectedFilterByOption.value,
     selectedLetter.value
   )
+  
+  // Add media counts to each specimen
+  return specimens.map(specimen => ({
+    ...specimen,
+    media_count: specimenMediaCounts.value[specimen.specimen_id] || 0
+  }))
+})
+
+const unidentifiedSpecimens = computed(() => {
+  const specimens = projectStore.unidentified_specimen_details || []
+  
+  // Add media counts to each unidentified specimen
+  return specimens.map(specimen => ({
+    ...specimen,
+    media_count: specimenMediaCounts.value[specimen.specimen_id] || 0
+  }))
 })
 
 function onSelectLetter(letter) {
@@ -66,12 +98,8 @@ function onResetFilter() {
 
 let showUnidentified = ref(false)
 
-const unidentifiedSpecimens = computed(() => {
-  return projectStore.unidentified_specimen_details
-})
-
 const hasUnidentified = computed(() => {
-  const specimens = unidentifiedSpecimens.value
+  const specimens = projectStore.unidentified_specimen_details
   return specimens && specimens.length > 0
 })
 
@@ -97,9 +125,44 @@ function onShowDetails(specimen_detail) {
   }
 }
 
-onMounted(() => {
-  projectStore.fetchProject(projectId)
+onMounted(async () => {
+  await projectStore.fetchProject(projectId)
+  // Load media files to calculate media counts
+  await mediaStore.fetchMediaFiles(projectId)
 })
+
+function getCleanTaxonName(specimenName) {
+  // Strip HTML tags
+  let cleanName = specimenName.replace(/<[^>]*>/g, '')
+  // Remove extinct marker (†)
+  cleanName = cleanName.replace(/†/g, '')
+  
+  // Check if this is an unidentified specimen (starts with parenthesis or has no taxon name)
+  // Unidentified specimens will have format like "(institution/code:catalog)" or "(unvouchered)"
+  const trimmed = cleanName.trim()
+  if (trimmed.startsWith('(')) {
+    // This is an unidentified specimen - return the reference info without outer parentheses
+    return trimmed.replace(/^\(|\)$/g, '').trim()
+  }
+  
+  // Identified specimen - remove specimen reference parts like (unvouchered) or (institution:catalog)
+  cleanName = cleanName.replace(/\s*\([^)]*\)\s*$/g, '')
+  // Remove author and year information (text after italicized name, including parentheses)
+  // This handles patterns like "Homo erectus Darwin, 1859" or "Homo erectus (Darwin, 1859)"
+  cleanName = cleanName.replace(/\s+\([^)]+,\s*\d{4}\)/g, '') // Remove (Author, Year)
+  cleanName = cleanName.replace(/\s+[A-Z][a-z]+,\s*\d{4}/g, '') // Remove Author, Year
+  
+  return cleanName.trim()
+}
+
+function navigateToMediaWithSpecimen(specimenName) {
+  const cleanName = getCleanTaxonName(specimenName)
+  router.push({
+    name: 'ProjectMediaView',
+    params: { id: projectId },
+    query: { search: cleanName }
+  })
+}
 </script>
 
 <template>
@@ -214,12 +277,24 @@ onMounted(() => {
               'list-group-item',
             ]"
           >
-            <a
-              class="nav-link"
-              href="#"
-              @click="onShowDetails(specimen)"
-              v-html="specimen.specimen_name"
-            ></a>
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+              <a
+                class="nav-link"
+                href="#"
+                @click="onShowDetails(specimen)"
+                v-html="specimen.specimen_name"
+                style="flex: 0 1 auto;"
+              ></a>
+              <span v-if="specimen.media_count > 0" class="text-muted small" style="white-space: nowrap;">
+                (<a
+                  href="#"
+                  @click.prevent="navigateToMediaWithSpecimen(specimen.specimen_name)"
+                  class="text-decoration-none"
+                >
+                  {{ specimen.media_count }} media
+                </a>)
+              </span>
+            </div>
           </li>
         </ul>
         <ul class="list-group mt-2" v-else>
@@ -231,12 +306,24 @@ onMounted(() => {
               'list-group-item',
             ]"
           >
-            <a
-              class="nav-link"
-              href="#"
-              @click="onShowDetails(specimen)"
-              v-html="specimen.specimen_name"
-            ></a>
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+              <a
+                class="nav-link"
+                href="#"
+                @click="onShowDetails(specimen)"
+                v-html="specimen.specimen_name"
+                style="flex: 0 1 auto;"
+              ></a>
+              <span v-if="specimen.media_count > 0" class="text-muted small" style="white-space: nowrap;">
+                (<a
+                  href="#"
+                  @click.prevent="navigateToMediaWithSpecimen(specimen.specimen_name)"
+                  class="text-decoration-none"
+                >
+                  {{ specimen.media_count }} media
+                </a>)
+              </span>
+            </div>
           </li>
         </ul>
       </div>

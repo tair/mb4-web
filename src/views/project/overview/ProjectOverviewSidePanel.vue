@@ -57,7 +57,20 @@ const isCurator = computed(() => authStore.isUserCurator)
 const isLoggedIn = computed(() => !!authStore.user?.userId)
 
 const canEditProjectInfo = computed(() => isOwner.value || isCurator.value)
-const canEditInstitutions = computed(() => isCurator.value)
+const canEditInstitutions = computed(() => {
+  // Curators always have access
+  if (isCurator.value) return true
+  
+  // Check if user is a project admin
+  const currentUserId = authStore.user?.userId
+  if (currentUserId && projectUsersStore.isLoaded) {
+    const membership = projectUsersStore.getUserById(currentUserId)
+    if (membership?.admin === true) {
+      return true
+    }
+  }
+  return false
+})
 const canPublish = computed(() => isOwner.value || isCurator.value)
 const canManageMembers = computed(() => isOwner.value || isCurator.value)
 const canEditMemberGroups = computed(() => isOwner.value || isCurator.value)

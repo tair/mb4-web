@@ -205,7 +205,6 @@ export class RuleCheckerDialog extends Dialog {
   private redrawRules(violations: Object[]) {
     const rows: DataRow[] = []
     const characters = this.matrixModel.getCharacters()
-    const characterRules = this.matrixModel.getCharacterRules()
     const taxa = this.matrixModel.getTaxa()
     const cells = this.matrixModel.getCells()
     const projectPreferences = this.matrixModel.getProjectProperties()
@@ -220,7 +219,7 @@ export class RuleCheckerDialog extends Dialog {
     }
     const polymorphicList: boolean[] = []
     for (let x = 0; x < violations.length; x++) {
-      const violation = violations[x] as { [key: string]: number }
+      const violation = violations[x] as { [key: string]: any }
 
       // Get objects properties
       const ruleCharacterId = violation['rcid']
@@ -228,6 +227,7 @@ export class RuleCheckerDialog extends Dialog {
       const taxonId = violation['tid']
       const actionId = violation['aid']
       const stateId = violation['sid']
+      const action = violation['action']
       const taxon = taxa.getById(taxonId)
       if (taxon == null) {
         continue
@@ -254,16 +254,31 @@ export class RuleCheckerDialog extends Dialog {
       const isPolymorphicText = isPolymorphic
         ? 'Mother character is polymorphic'
         : '-'
-      const characterRule = characterRules.getRulesForActionId(actionId)
-      if (characterRule == null) {
-        continue
+      // Use server-provided action type instead of looking up from local cache
+      const isMediaRule = action === 'ADD_MEDIA'
+
+      // Get current state info from server response
+      const currentStateId = violation['csid']
+      const currentIsNpa = violation['cnpa']
+      let currentStateName: string
+      if (currentStateId === null && !currentIsNpa) {
+        currentStateName = 'not scored'
+      } else if (currentIsNpa) {
+        currentStateName = 'NPA'
+      } else if (currentStateId === 0) {
+        currentStateName = '[-] (inapplicable)'
+      } else {
+        const currentState = character.getCharacterStateById(currentStateId)
+        currentStateName = currentState
+          ? '[' + currentState.getNumber() + '] ' + currentState.getName()
+          : 'unknown'
       }
-      const isMediaRule = characterRule.isAction('ADD_MEDIA')
+
       const violationText = isMediaRule
         ? 'Media must be replicated'
         : isPolymorphic
         ? 'User must decide state'
-        : 'State should be set to ' + stateName
+        : 'Currently: ' + currentStateName + ' → should be: ' + stateName
       const isDisabled = !taxon.hasAccess(projectPreferences)
       const checkbox = new Checkbox(actionId)
       checkbox.setEnabled(!isDisabled)

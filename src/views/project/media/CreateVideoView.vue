@@ -10,6 +10,7 @@ import { useTaxaStore } from '@/stores/TaxaStore'
 import { useNotifications } from '@/composables/useNotifications'
 import { videoSchema } from '@/views/project/media/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
+import CopyrightFormFields from '@/components/project/CopyrightFormFields.vue'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -21,6 +22,8 @@ const taxaStore = useTaxaStore()
 const mediaViewsStore = useMediaViewsStore()
 const { showError, showSuccess } = useNotifications()
 const isUploading = ref(false)
+const copyrightFormRef = ref(null)
+const selectedSpecimenId = ref(null)
 
 const isLoaded = computed(
   () =>
@@ -30,6 +33,17 @@ const isLoaded = computed(
     taxaStore.isLoaded &&
     mediaViewsStore.isLoaded
 )
+
+// Computed schema that excludes copyright fields (handled by CopyrightFormFields component)
+const filteredVideoSchema = computed(() => {
+  const schema = { ...videoSchema }
+  // Remove copyright fields - they're handled by CopyrightFormFields component
+  delete schema.is_copyrighted
+  delete schema.copyright_permission
+  delete schema.copyright_license
+  delete schema.copyright_info
+  return schema
+})
 
 function validateRequiredFields(formData) {
   const errors = []
@@ -50,41 +64,18 @@ function validateRequiredFields(formData) {
     }
   })
   
-  // Conditional validation for copyright fields
-  const copyrightCheckbox = formData.get('is_copyrighted')
-  const isCopyrighted = copyrightCheckbox === '1' || copyrightCheckbox === 1
-  
-  if (isCopyrighted) {
-    // Check copyright_permission - must not be the default "not set" option (value 0)
-    const copyrightPermission = formData.get('copyright_permission')
-    const copyrightPermissionValue = parseInt(String(copyrightPermission), 10)
-    
-    if (isNaN(copyrightPermissionValue) || copyrightPermissionValue === 0) {
-      errors.push('Copyright permission must be selected when media is under copyright (cannot use "Copyright permission not set")')
-    }
-    
-    // Validate that copyright_permission is not contradictory
-    // Value 4 = "Copyright expired or work otherwise in public domain"
-    if (copyrightPermissionValue === 4) {
-      errors.push('Cannot select "Copyright expired or work otherwise in public domain" when media is under copyright')
-    }
-    
-    // Check copyright_license - must not be the default "not set" option (value 0)
-    const copyrightLicense = formData.get('copyright_license')
-    const copyrightLicenseValue = parseInt(String(copyrightLicense), 10)
-    
-    if (isNaN(copyrightLicenseValue) || copyrightLicenseValue === 0) {
-      errors.push('Media reuse license must be selected when media is under copyright (cannot use "Media reuse policy not set")')
-    }
-    
-    // Validate that copyright_license is not contradictory
-    // Value 1 = "CC0 - relinquish copyright"
-    if (copyrightLicenseValue === 1) {
-      errors.push('Cannot select "CC0 - relinquish copyright" when media is under copyright')
-    }
+  // Validate copyright fields using the component's validation
+  if (copyrightFormRef.value) {
+    const copyrightErrors = copyrightFormRef.value.validate()
+    errors.push(...copyrightErrors)
   }
   
   return errors
+}
+
+// Handle specimen selection for auto-populate copyright feature
+function handleSpecimenSelect(item) {
+  selectedSpecimenId.value = item ? item.specimen_id : null
 }
 
 async function createVideoMedia(event) {
@@ -177,21 +168,36 @@ onMounted(() => {
     </header>
     <form @submit.prevent="createVideoMedia">
       <div class="row setup-content">
-        <template v-for="(definition, index) in videoSchema" :key="index">
+        <!-- Non-copyright fields from schema -->
+        <template v-for="(definition, fieldName) in filteredVideoSchema" :key="fieldName">
           <div v-if="!definition.existed" class="form-group">
-            <label :for="index" class="form-label">
+            <label :for="fieldName" class="form-label">
               {{ definition.label }}
               <span v-if="definition.required" class="required">Required</span>
             </label>
             <component
-              :key="index"
               :is="definition.view"
-              :name="index"
+              :name="fieldName"
               v-bind="definition.args"
+              v-on="fieldName === 'specimen_id' ? { select: handleSpecimenSelect } : {}"
             >
             </component>
           </div>
         </template>
+        
+        <!-- Copyright Fields Component -->
+        <div class="form-group">
+          <CopyrightFormFields
+            ref="copyrightFormRef"
+            :initial-is-copyrighted="false"
+            :initial-copyright-permission="4"
+            :initial-copyright-license="1"
+            :initial-copyright-info="''"
+            :enable-autopopulate="true"
+            :specimen-id-for-autopopulate="selectedSpecimenId"
+          />
+        </div>
+        
         <div class="btn-form-group">
           <button
             class="btn btn-outline-primary"

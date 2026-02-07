@@ -31,7 +31,6 @@ const userCoordinates = ref({
 })
 const maintenanceMode = ref(false)
 const maintenanceMessage = ref('')
-const nextMaintenanceDate = ref('')
 const currentFeaturedIndex = ref(0)
 const currentToolIndex = ref(0)
 const currentPressIndex = ref(0)
@@ -93,7 +92,6 @@ onMounted(async () => {
 
     maintenanceMode.value = maintenanceStatus.enabled
     maintenanceMessage.value = maintenanceStatus.message
-    nextMaintenanceDate.value = maintenanceStatus.nextDate
 
     // Set initial indices
     currentFeaturedIndex.value = 0
@@ -213,7 +211,7 @@ onMounted(() => {
   <div class="home-container">
     <!-- Maintenance Mode Banner -->
     <div v-if="maintenanceMode" class="maintenance-banner">
-      {{ maintenanceMessage.replace('^date', nextMaintenanceDate) }}
+      {{ maintenanceMessage }}
     </div>
 
     <!-- Matrix Area -->
@@ -806,7 +804,7 @@ onMounted(() => {
 }
 
 .action-button.public {
-  background: #ef782f;
+  background: var(--theme-orange);
   color: white;
 }
 
@@ -1097,7 +1095,7 @@ onMounted(() => {
 
 .browse-link:hover .browse-icon {
   transform: scale(1.1);
-  color: #e27b58;
+  color: var(--theme-orange);
 }
 
 .browse-icon {
@@ -1323,7 +1321,7 @@ onMounted(() => {
   transform: translateX(-50%);
   width: 60px;
   height: 3px;
-  background: #ef782f;
+  background: var(--theme-orange);
   border-radius: 2px;
 }
 
@@ -1376,7 +1374,7 @@ onMounted(() => {
 .supporting-members-link {
   display: inline-block;
   padding: 0.75rem 1.5rem;
-  background: #ef782f;
+  background: var(--theme-orange);
   color: white;
   text-decoration: none;
   border-radius: 8px;
@@ -1385,7 +1383,7 @@ onMounted(() => {
 }
 
 .supporting-members-link:hover {
-  background: #d86c13;
+  background: var(--theme-orange-hover);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(239, 120, 47, 0.2);
 }
@@ -1525,12 +1523,16 @@ onMounted(() => {
   height: 250px; /* Reduced height */
   position: relative;
   overflow: hidden;
+  background-color: #f8f9fa; /* Light background for letterboxing */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .card-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain; /* Shows full image without cropping */
 }
 
 .card-desc {
@@ -1540,7 +1542,7 @@ onMounted(() => {
 }
 
 .card-id {
-  color: #ef782f;
+  color: var(--theme-orange);
   font-size: 16px;
   display: block;
   margin-bottom: 6px;
@@ -1624,7 +1626,7 @@ onMounted(() => {
 }
 
 .dot.active {
-  background-color: #ef782f;
+  background-color: var(--theme-orange);
 }
 
 @media (max-width: 1024px) {

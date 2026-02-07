@@ -127,12 +127,57 @@ const router = createRouter({
         {
           path: '/admin',
           component: AdminView,
-          beforeEnter: requireSignIn,
+          beforeEnter: requireAdminRole,
           children: [
             {
               path: '',
               name: 'AdminHomeView',
               component: AdminHomeView,
+            },
+            {
+              path: 'maintenance',
+              name: 'AdminMaintenanceView',
+              component: () => import('@/views/admin/MaintenanceMessageView.vue'),
+            },
+            {
+              path: 'users',
+              name: 'AdminUsersList',
+              component: () => import('@/views/admin/UsersListView.vue'),
+            },
+            {
+              path: 'users/create',
+              name: 'AdminUsersCreate',
+              component: () => import('@/views/admin/UserCreateView.vue'),
+            },
+            {
+              path: 'users/merge',
+              name: 'AdminUsersMerge',
+              component: () => import('@/views/admin/UserMergeView.vue'),
+            },
+            {
+              path: 'users/:userId/edit',
+              name: 'AdminUsersEdit',
+              component: () => import('@/views/admin/UserEditView.vue'),
+            },
+            {
+              path: 'homepage',
+              name: 'AdminHomepageDashboard',
+              component: () => import('@/views/admin/HomePageDashboardView.vue'),
+            },
+            {
+              path: 'statistics',
+              name: 'AdminSiteStatistics',
+              component: () => import('@/views/admin/SiteStatisticsView.vue'),
+            },
+            {
+              path: 'statistics/projects',
+              name: 'AdminProjectStatistics',
+              component: () => import('@/views/admin/ProjectStatisticsView.vue'),
+            },
+            {
+              path: 'tasks',
+              name: 'AdminTasksMonitor',
+              component: () => import('@/views/admin/TasksMonitorView.vue'),
             },
           ],
         },
@@ -157,6 +202,16 @@ const router = createRouter({
               path: 'duplication-requests/:requestId',
               name: 'CuratorDuplicationRequestDetail',
               component: () => import('@/views/curator/DuplicationRequestDetailView.vue'),
+            },
+            {
+              path: 'institution-requests',
+              name: 'CuratorInstitutionRequestsList',
+              component: () => import('@/views/curator/InstitutionRequestsListView.vue'),
+            },
+            {
+              path: 'institution-requests/:requestId',
+              name: 'CuratorInstitutionRequestDetail',
+              component: () => import('@/views/curator/InstitutionRequestDetailView.vue'),
             },
           ],
         },
@@ -382,6 +437,27 @@ function requireSignIn(to) {
   const authStore = useAuthStore()
   if (!authStore.hasValidAuthToken() && to.name !== 'UserLogin') {
     return { name: 'UserLogin' }
+  }
+}
+
+/**
+ * Route guard that requires admin role
+ * Must be used after requireSignIn
+ */
+function requireAdminRole(to) {
+  const authStore = useAuthStore()
+  
+  // First check if signed in
+  if (!authStore.hasValidAuthToken()) {
+    return { name: 'UserLogin' }
+  }
+  
+  // Check admin role
+  if (!authStore.isUserAdministrator) {
+    return { 
+      name: 'HomeView',
+      query: { error: 'Admin privileges required to access this page.' }
+    }
   }
 }
 

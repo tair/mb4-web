@@ -121,17 +121,17 @@ function clearAuthor(i: number) {
   align-self: flex-start;
   padding: 0.25rem 0.5rem;
   font-size: 0.875rem;
-  color: #fd7e14;
-  border-color: #fd7e14;
+  color: var(--theme-orange);
+  border-color: var(--theme-orange);
 }
 
 .add-more-btn:hover {
-  background-color: #fd7e14;
+  background-color: var(--theme-orange);
   color: white;
 }
 
 .clear-link {
-  color: #fd7e14;
+  color: var(--theme-orange);
   text-decoration: none;
   font-size: 0.875rem;
   padding: 0.25rem 0.5rem;
@@ -141,7 +141,7 @@ function clearAuthor(i: number) {
 
 .clear-link:hover {
   color: white;
-  background-color: #fd7e14;
+  background-color: var(--theme-orange);
   text-decoration: none;
 }
 </style>

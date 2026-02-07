@@ -17,16 +17,25 @@ const projectId = route.params.id
 
   <div>
     <p>
-      MorphoBank can accept Nexus or TNT files that have the character and state
-      description embedded in the file. If your file contains combined data
-      (molecular and phenomic), molecular data only, continuous phenomic data or
-      discrete phenomic data but no embedded character and state descriptions
-      please load it to the
-      <RouterLink class="m-0 p-0" :to="`/myprojects/${projectId}/documents`">
+      MorphoBank can accept Nexus or TNT files that have the character and
+      state descriptions embedded in the file. If your file contains any of
+      the following, please load it to the
+      <RouterLink
+        class="m-0 p-0"
+        :to="`/myprojects/${projectId}/documents`"
+      >
         Documents
       </RouterLink>
-      folder.
+      folder instead:
     </p>
+
+    <ul>
+      <li>Combined data (molecular and phenomic)</li>
+      <li>Molecular data only</li>
+      <li>Discrete phenomic data without embedded character and state descriptions</li>
+    </ul>
+    <div class="alert alert-warning">Warning: The following features in NEXUS blocks are not supported by MorphoBank and will be dropped upon import: EXSET, WTSET, UserType, STEP MATRIX.</div>
+
     <div class="matrix-choose">
       <div class="matrix-choose-item">
         <RouterLink
@@ -69,7 +78,7 @@ const projectId = route.params.id
   width: 250px;
 }
 .matrix-choose-link {
-  color: #f60;
+  color: var(--theme-orange);
   font-size: 18px;
   font-weight: bold;
   line-height: 24px;

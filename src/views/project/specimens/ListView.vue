@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, RouterLink } from 'vue-router'
 import { useSpecimensStore } from '@/stores/SpecimensStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
 import DeleteDialog from '@/views/project/specimens/DeleteDialog.vue'
@@ -13,6 +13,7 @@ import {
   nameColumnMap,
   sortTaxaAlphabetically,
 } from '@/utils/taxa'
+import { getSpecimenName } from '@/utils/specimens'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -171,6 +172,29 @@ function setRank(event) {
   const text = event.target.value
   rank.value = text
 }
+
+function getMediaLinkForSpecimen(specimen) {
+  let searchQuery = ''
+  
+  if (specimen.taxon_id) {
+    // Identified specimen - search by taxon name
+    const taxon = taxaStore.getTaxonById(specimen.taxon_id)
+    searchQuery = getTaxonName(taxon, TaxaColumns.GENUS, false).trim()
+  } else {
+    // Unidentified specimen - search by institution/catalog info
+    const parts = []
+    if (specimen.institution_code) parts.push(specimen.institution_code)
+    if (specimen.collection_code) parts.push(specimen.collection_code)
+    if (specimen.catalog_number) parts.push(specimen.catalog_number)
+    searchQuery = parts.join(' ')
+  }
+  
+  return {
+    name: 'MyProjectMediaView',
+    params: { id: projectId },
+    query: { search: searchQuery }
+  }
+}
 </script>
 <template>
   <LoadingIndicator :isLoaded="isLoaded">
@@ -288,11 +312,19 @@ function setRank(event) {
                 type="checkbox"
                 v-model="specimen.selected"
               />
-              <div class="list-group-item-name">
+              <div class="list-group-item-name-with-media">
                 <SpecimenName
                   :specimen="specimen"
                   :taxon="taxaStore.getTaxonById(specimen.taxon_id)"
                 />
+                <span v-if="specimen.media_count > 0" class="ms-2 text-muted small" style="white-space: nowrap;">
+                  (<RouterLink
+                    :to="getMediaLinkForSpecimen(specimen)"
+                    class="text-decoration-none"
+                  >
+                    {{ specimen.media_count }} media
+                  </RouterLink>)
+                </span>
               </div>
               <div class="list-group-item-buttons">
                 <RouterLink

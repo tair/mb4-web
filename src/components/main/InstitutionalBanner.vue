@@ -356,7 +356,7 @@ function onImageError(event: Event) {
 }
 
 .institution-text strong {
-  color: #ef782f;
+  color: var(--theme-orange);
   font-weight: 600;
 }
 
@@ -369,7 +369,7 @@ function onImageError(event: Event) {
 }
 
 .subscribe-link {
-  color: #ef782f;
+  color: var(--theme-orange);
   text-decoration: underline;
   font-weight: 500;
 }
@@ -392,7 +392,7 @@ function onImageError(event: Event) {
 
 .cta-button {
   display: inline-block;
-  background: #ef782f;
+  background: var(--theme-orange);
   color: #fff;
   border: 1px solid transparent;
   border-radius: 3px;
@@ -442,7 +442,7 @@ function onImageError(event: Event) {
 }
 
 .carousel-nav {
-  background: #ef782f;
+  background: var(--theme-orange);
   color: white;
   border: none;
   border-radius: 50%;

@@ -108,6 +108,11 @@ function getBestMediaUrl(
     return '/images/3DImage.png'
   }
 
+  // Check if this is a ZIP/archive file (CT scans) that should use the CT scan icon
+  if (isZipMedia(media)) {
+    return '/images/CTScan.png'
+  }
+
   // For videos, we want to show generated thumbnails if they exist, 
   // only fall back to icon if no thumbnails were generated
   if ((media.thumbnail?.USE_ICON === 'video' || media.media_type === 'video') && !media.thumbnail?.s3_key) {
@@ -206,6 +211,90 @@ function is3DMedia(media) {
 }
 
 /**
+ * Determine whether media represents a ZIP/archive file (CT scans, stacks)
+ * These cannot be rendered in the browser and should use a static placeholder image.
+ * @param {Object} media - Media object with various possible structures
+ * @returns {boolean}
+ */
+function isZipMedia(media) {
+  if (!media) return false
+  
+  // Check USE_ICON for archives (various nested structures)
+  const useIconChecks = [
+    media?.thumbnail?.USE_ICON,
+    media?.original?.USE_ICON,
+    media?.media?.thumbnail?.USE_ICON,
+    media?.media?.original?.USE_ICON
+  ]
+  for (const useIcon of useIconChecks) {
+    if (useIcon === 'archive') {
+      return true
+    }
+  }
+  
+  // Check media_type field
+  const mediaType = (media?.media_type || '').toString().toLowerCase()
+  if (mediaType === 'zip' || mediaType === 'archive') {
+    return true
+  }
+  
+  // Check filename extension for .zip - check many possible locations
+  // The original_filename can be at root level, in nested media object, or in original object
+  const filenameChecks = [
+    media?.original_filename,          // Root level (common in list views)
+    media?.ORIGINAL_FILENAME,          // Root level uppercase
+    media?.filename,                   // Root level
+    media?.media?.ORIGINAL_FILENAME,   // Nested in media object
+    media?.media?.original_filename,   // Nested in media object lowercase
+    media?.media?.filename,            // Nested in media object
+    media?.original?.ORIGINAL_FILENAME, // In original object
+    media?.original?.FILENAME,         // In original object
+    media?.media?.original?.ORIGINAL_FILENAME,  // Deep nested
+    media?.media?.original?.FILENAME   // Deep nested
+  ]
+  
+  for (const filename of filenameChecks) {
+    if (filename && typeof filename === 'string') {
+      const ext = filename.split('.').pop()?.toLowerCase()
+      if (ext === 'zip') return true
+    }
+  }
+  
+  // Check MIME type - various nested structures
+  const mimeChecks = [
+    media?.original?.MIMETYPE,
+    media?.MIMETYPE,
+    media?.mime_type,
+    media?.mimetype,
+    media?.media?.original?.MIMETYPE,
+    media?.media?.MIMETYPE
+  ]
+  
+  for (const mime of mimeChecks) {
+    if (mime === 'application/zip' || mime === 'application/x-zip-compressed') {
+      return true
+    }
+  }
+  
+  // Check extension field
+  const extChecks = [
+    media?.original?.EXTENSION,
+    media?.EXTENSION,
+    media?.extension,
+    media?.media?.original?.EXTENSION,
+    media?.media?.EXTENSION
+  ]
+  
+  for (const ext of extChecks) {
+    if (ext && ext.toLowerCase() === 'zip') {
+      return true
+    }
+  }
+  
+  return false
+}
+
+/**
  * Attempt to determine the original file extension from the media object
  * @param {Object|string|null} media
  * @returns {string|null}
@@ -272,6 +361,9 @@ function buildS3OriginalImageUrl(projectId, mediaId, mediaObj = null) {
   if (is3DMedia(mediaObj)) {
     return '/images/3DImage.png'
   }
+  if (isZipMedia(mediaObj)) {
+    return '/images/CTScan.png'
+  }
   const ext = detectOriginalExtension(mediaObj)
   // If original extension isn't browser-friendly (e.g., tiff), fall back to derived large JPEG
   if (!isBrowserFriendlyImageExtension(ext)) {
@@ -285,4 +377,4 @@ function buildS3OriginalImageUrl(projectId, mediaId, mediaObj = null) {
   )
 }
 
-export { buildS3OriginalImageUrl, is3DMedia, detectOriginalExtension }
+export { buildS3OriginalImageUrl, is3DMedia, isZipMedia, detectOriginalExtension }

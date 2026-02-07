@@ -14,6 +14,8 @@ const errorMessage = ref('')
 const hasError = ref(false)
 const newInstitutionName = ref('')
 const showCreateForm = ref(false)
+const showSuccessMessage = ref(false)
+const successMessage = ref('')
 
 async function searchInstitutions() {
   if (searchTerm.value.trim() === '') {
@@ -71,12 +73,22 @@ async function createInstitution() {
     })
     const data = await response.json()
     
-    // Call the callback with the new institution
+    // Show success message with pending approval notice
+    showSuccessMessage.value = true
+    successMessage.value = `"${data.institution.name}" has been submitted for approval. You can use it immediately, but it will only be visible to others once a curator approves it.`
+    
+    // Call the callback with the new institution (include pending status)
     if (props.onInstitutionCreated) {
-      props.onInstitutionCreated(data.institution)
+      props.onInstitutionCreated({
+        ...data.institution,
+        pendingApproval: true
+      })
     }
     
-    closeModal()
+    // Close modal after a short delay so user sees the success message
+    setTimeout(() => {
+      closeModal()
+    }, 3000)
   } catch (error) {
     hasError.value = true
     // Check if it's a conflict error (409) based on error message
@@ -111,6 +123,8 @@ function resetForm() {
   hasError.value = false
   errorMessage.value = ''
   searchLoading.value = false
+  showSuccessMessage.value = false
+  successMessage.value = ''
 }
 
 // Auto-focus search input when modal opens
@@ -129,6 +143,7 @@ function handleModalShown() {
     class="modal fade"
     id="addInstitutionModal"
     data-bs-backdrop="static"
+    data-bs-keyboard="true"
     tabindex="-1"
     @shown.bs.modal="handleModalShown"
   >
@@ -136,6 +151,7 @@ function handleModalShown() {
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Add New Institution</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <!-- Search Section -->
@@ -202,6 +218,13 @@ function handleModalShown() {
           <!-- Error Message -->
           <div v-if="hasError && !showCreateForm" class="alert alert-danger">
             {{ errorMessage }}
+          </div>
+          
+          <!-- Success Message with Pending Approval Notice -->
+          <div v-if="showSuccessMessage" class="alert alert-success">
+            <i class="fa fa-check-circle me-2"></i>
+            <strong>Institution Created!</strong>
+            <p class="mb-0 mt-2">{{ successMessage }}</p>
           </div>
         </div>
 

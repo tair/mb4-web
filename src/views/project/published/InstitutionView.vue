@@ -57,7 +57,7 @@ const morphoBankStatsText = computed(() => {
             href="#"
             @click="onSorted('name', 'asc')"
             :style="{
-              color: sort_field === 'name' && is_asc_name ? '#ef782f' : 'gray',
+              color: sort_field === 'name' && is_asc_name ? 'var(--theme-orange)' : 'gray',
             }"
             ><i class="fa-solid fa-arrow-up"></i
           ></a>
@@ -66,7 +66,7 @@ const morphoBankStatsText = computed(() => {
             href="#"
             @click="onSorted('name', 'desc')"
             :style="{
-              color: sort_field === 'name' && !is_asc_name ? '#ef782f' : 'gray',
+              color: sort_field === 'name' && !is_asc_name ? 'var(--theme-orange)' : 'gray',
             }"
             ><i class="fa-solid fa-arrow-down"></i
           ></a>
@@ -79,7 +79,7 @@ const morphoBankStatsText = computed(() => {
             @click="onSorted('count', 'asc')"
             :style="{
               color:
-                sort_field === 'count' && is_asc_count ? '#ef782f' : 'gray',
+                sort_field === 'count' && is_asc_count ? 'var(--theme-orange)' : 'gray',
             }"
             ><i class="fa-solid fa-arrow-up"></i
           ></a>
@@ -89,7 +89,7 @@ const morphoBankStatsText = computed(() => {
             @click="onSorted('count', 'desc')"
             :style="{
               color:
-                sort_field === 'count' && !is_asc_count ? '#ef782f' : 'gray',
+                sort_field === 'count' && !is_asc_count ? 'var(--theme-orange)' : 'gray',
             }"
             ><i class="fa-solid fa-arrow-down"></i
           ></a>

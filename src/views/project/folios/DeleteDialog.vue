@@ -38,11 +38,12 @@ async function deleteFolios(folioIds: number[]) {
 }
 </script>
 <template>
-  <div class="modal" id="folioDeleteModal" tabindex="-1">
+  <div class="modal" id="folioDeleteModal" data-bs-keyboard="true" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Confirm</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" v-if="folios.length">
           Really delete folios:

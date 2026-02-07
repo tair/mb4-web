@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Tooltip from '@/components/main/Tooltip.vue'
 import { formatBytes, formatNumber } from '@/utils/format'
-import { buildMediaUrl, getBestMediaUrl } from '@/utils/fileUtils.js'
+import { buildMediaUrl } from '@/utils/fileUtils.js'
 // import { useProjectOverviewStore } from '@/stores/ProjectOverviewStore' // No longer needed
 import { ref, onMounted, computed, watchEffect } from 'vue'
 import { useNotifications } from '@/composables/useNotifications'
@@ -129,12 +129,12 @@ watchEffect(() => {
     resolvedExemplarUrl.value = '/images/3DImage.png'
     return
   }
-  // Prefer large, then medium, thumbnail, original
-  resolvedExemplarUrl.value = getBestMediaUrl(
-    mediaJson,
-    ['large', 'medium', 'thumbnail', 'original'],
+  // Directly request large image - the error handler will fall back to thumbnail if needed
+  // This avoids relying on the media JSON having size keys which may be inconsistent
+  resolvedExemplarUrl.value = buildMediaUrl(
     props.projectId,
-    exemplarMedia.value.media_id
+    exemplarMedia.value.media_id,
+    'large'
   )
 })
 
@@ -217,13 +217,13 @@ function popDownloadAlert() {
             <template v-if="overview.journal_year">
               <span class="text-dark">{{ overview.journal_year }}</span>
             </template>
-            <template v-if="overview.journal_year && (overview.article_title || overview.name)">
+            <template v-if="(overview.article_authors || overview.journal_year) && (overview.article_title || overview.name)">
               <span class="text-muted">. </span>
             </template>
             <template v-if="overview.article_title || overview.name">
               <span class="fw-medium text-dark">{{ overview.article_title || overview.name }}</span>
             </template>
-            <template v-if="(overview.article_title || overview.name) && overview.journal_title">
+            <template v-if="(overview.article_authors || overview.journal_year || overview.article_title || overview.name) && overview.journal_title">
               <span class="text-muted">. </span>
             </template>
             <template v-if="overview.journal_title">

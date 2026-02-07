@@ -342,8 +342,8 @@ onUnmounted(() => {
 }
 
 .btn-primary {
-  background-color: #ef782f;
-  border-color: #ef782f;
+  background-color: var(--theme-orange);
+  border-color: var(--theme-orange);
   color: #fff;
 }
 
@@ -354,12 +354,12 @@ onUnmounted(() => {
 
 .btn-outline-primary {
   background-color: transparent;
-  border-color: #ef782f;
-  color: #ef782f;
+  border-color: var(--theme-orange);
+  color: var(--theme-orange);
 }
 
 .btn-outline-primary:hover {
-  background-color: #ef782f;
+  background-color: var(--theme-orange);
   color: #fff;
 }
 

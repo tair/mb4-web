@@ -123,15 +123,6 @@ export class CharacterGrid extends Component {
   redraw() {
     const element = this.getElement()
     mb.removeChildren(element)
-    
-    const characters = this.matrixModel.getCharacters()
-    
-    // If there are no characters, show PDF upload UI
-    if (characters.size() === 0) {
-      this.renderPdfUploadUI(element)
-      return
-    }
-    
     const table = document.createElement('table')
     const thead = document.createElement('thead')
     const tr = document.createElement('tr')
@@ -172,6 +163,7 @@ export class CharacterGrid extends Component {
       parseInt(element.dataset['characterId'] as string, 10)
     )
     this.selectedItems = []
+    const characters = this.matrixModel.getCharacters()
     for (let x = 0, l = characters.size(); x < l; x++) {
       const character = characters.getAt(x)
       const characterRow = this.createCharacter(character)
@@ -190,193 +182,48 @@ export class CharacterGrid extends Component {
   }
 
   /**
-   * Renders the PDF upload UI when there are no characters
-   */
-  private renderPdfUploadUI(element: HTMLElement) {
-    const container = document.createElement('div')
-    container.className = 'pdf-upload-container'
-    container.style.cssText = 'padding: 40px; text-align: center; background: #f9f9f9; border-radius: 8px; margin: 20px;'
-    
-    const heading = document.createElement('h3')
-    heading.textContent = 'No Characters Found'
-    heading.style.cssText = 'color: #333; margin-bottom: 20px;'
-    
-    const description = document.createElement('p')
-    description.textContent = 'This matrix has no characters defined. You can extract characters from a PDF document.'
-    description.style.cssText = 'color: #666; margin-bottom: 30px; font-size: 14px;'
-    
-    const uploadForm = document.createElement('div')
-    uploadForm.style.cssText = 'margin: 20px 0;'
-    
-    const fileInput = document.createElement('input')
-    fileInput.type = 'file'
-    fileInput.accept = '.pdf'
-    fileInput.id = 'pdf-character-upload'
-    fileInput.style.cssText = 'margin-bottom: 15px;'
-    
-    const uploadButton = document.createElement('button')
-    uploadButton.textContent = 'Extract Characters from PDF'
-    uploadButton.className = 'btn btn-primary'
-    uploadButton.style.cssText = 'padding: 10px 20px; margin-left: 10px;'
-    uploadButton.disabled = true
-    
-    const statusDiv = document.createElement('div')
-    statusDiv.id = 'pdf-upload-status'
-    statusDiv.style.cssText = 'margin-top: 20px; min-height: 30px;'
-    
-    // Enable button when file is selected
-    fileInput.addEventListener('change', () => {
-      uploadButton.disabled = !fileInput.files || fileInput.files.length === 0
-    })
-    
-    // Handle upload
-    uploadButton.addEventListener('click', async () => {
-      if (!fileInput.files || fileInput.files.length === 0) {
-        return
-      }
-      
-      uploadButton.disabled = true
-      statusDiv.innerHTML = '<div style="color: #0066cc;">Processing PDF... This may take a moment.</div>'
-      
-      try {
-        await this.handlePdfUpload(fileInput.files[0], statusDiv)
-      } catch (error) {
-        statusDiv.innerHTML = `<div style="color: #cc0000;">Error: ${error instanceof Error ? error.message : 'Unknown error'}</div>`
-        uploadButton.disabled = false
-      }
-    })
-    
-    uploadForm.appendChild(fileInput)
-    uploadForm.appendChild(uploadButton)
-    
-    container.appendChild(heading)
-    container.appendChild(description)
-    container.appendChild(uploadForm)
-    container.appendChild(statusDiv)
-    
-    element.appendChild(container)
-  }
-
-  /**
-   * Handles the PDF upload and character extraction
-   */
-  private async handlePdfUpload(file: File, statusDiv: HTMLElement): Promise<void> {
-    const formData = new FormData()
-    formData.append('pdf_file', file)
-    
-    // Add default parameters for PDF processing
-    // Use a large number (1000) to extract all available characters
-    formData.append('total_characters', '1000')
-    formData.append('page_range', 'all')
-    formData.append('zero_indexed', 'false')
-    
-    try {
-      // Import apiService
-      const { apiService } = await import('@/services/apiService.js')
-      
-      const response = await apiService.post('/curator/process-pdf', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      })
-      
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`Server returned ${response.status}: ${errorText}`)
-      }
-      
-      const result = await response.json()
-      
-      if (!result.success) {
-        const errorMsg = result.error || result.message || 'PDF processing failed'
-        throw new Error(errorMsg)
-      }
-      
-      // Process the extracted characters
-      await this.createCharactersFromPdfResponse(result, statusDiv)
-      
-    } catch (error) {
-      console.error('PDF upload error:', error)
-      throw error
-    }
-  }
-
-  /**
-   * Creates characters from the PDF extraction response
-   */
-  private async createCharactersFromPdfResponse(result: any, statusDiv: HTMLElement): Promise<void> {
-    statusDiv.innerHTML = '<div style="color: #0066cc;">Creating characters...</div>'
-    
-    try {
-      const characterStates = result.character_states || []
-      
-      if (characterStates.length === 0) {
-        throw new Error('No characters were extracted from the PDF')
-      }
-      
-      const characters = this.matrixModel.getCharacters()
-      
-      // Create characters one by one
-      for (let i = 0; i < characterStates.length; i++) {
-        const charData = characterStates[i]
-        const characterName = charData.character
-        const states = charData.states || []
-        
-        // Add the character at the end (index = current number of characters)
-        await this.matrixModel.addCharacter(
-          characterName,
-          i, // index
-          'discrete' // charType
-        )
-        
-        // Get the newly created character (it should be the last one)
-        const newCharacter = characters.getAt(characters.size() - 1)
-        if (newCharacter) {
-          const characterId = newCharacter.getId()
-          
-          // Prepare states in the format expected by updateCharacter
-          const stateObjects = states.map((stateName: string, index: number) => ({
-            id: -(index + 1), // negative ID for new states
-            r: index, // rank/position
-            n: stateName // name
-          }))
-          
-          // Update the character with its states
-          await this.matrixModel.updateCharacter(
-            characterId,
-            characterName,
-            '', // description
-            0, // ordering (unordered)
-            stateObjects,
-            false // not a minor edit
-          )
-        }
-      }
-      
-      // Reload the character grid to show the new characters
-      statusDiv.innerHTML = `<div style="color: #008800;">Successfully extracted and created ${characterStates.length} character(s) from PDF!</div>`
-      
-      // Reload the page after a short delay to show the success message
-      setTimeout(() => {
-        window.location.reload()
-      }, 2000)
-      
-    } catch (error) {
-      console.error('Error creating characters:', error)
-      throw new Error(`Failed to create characters: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    }
-  }
-
-  /**
-   * Go to the character
+   * Go to the character, scroll to it, and select/highlight it
    * @param index The index to go to
    */
   goToCharacter(index: number) {
+    if (index < 0) {
+      return
+    }
+
     const element = this.getElement()
-    const thead = element.getElementsByTagName('tbody')[0]
-    const tr = thead.getElementsByTagName('tr')[index]
-    if (tr) {
-      this.scrollToTrElement(tr)
+    const tbody = element.getElementsByTagName('tbody')[0]
+    const tr = tbody.getElementsByTagName('tr')[index] as HTMLElement
+
+    if (tr && tr.dataset['characterId']) {
+      // Clear previous selection
+      this.removeSelectedItems()
+
+      // Find the actual scrollable container by checking parent elements
+      let scrollParent: HTMLElement | null = tr.parentElement
+      while (scrollParent) {
+        const style = window.getComputedStyle(scrollParent)
+        const overflowY = style.overflowY
+        if (overflowY === 'auto' || overflowY === 'scroll') {
+          // Found the scrollable parent - calculate scroll position to center the row
+          const containerHeight = scrollParent.clientHeight
+          const rowTop = tr.offsetTop
+          const rowHeight = tr.offsetHeight
+          const scrollTo = rowTop - (containerHeight / 2) + (rowHeight / 2)
+          scrollParent.scrollTop = Math.max(0, scrollTo)
+          break
+        }
+        scrollParent = scrollParent.parentElement
+      }
+
+      // Select and highlight the row
+      this.addSelectedItems(tr)
+      this.highlightedElement = tr
+
+      // Dispatch SELECT event so listeners (e.g., CharacterListDialog) can update UI state
+      this.dispatchEvent(new Event(EventType.SELECT))
+
+      // Focus the grid for keyboard navigation
+      this.focus()
     }
   }
 

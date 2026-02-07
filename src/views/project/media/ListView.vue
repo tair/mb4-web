@@ -14,6 +14,7 @@ import { useProjectsStore } from '@/stores/ProjectsStore'
 import { useNotifications } from '@/composables/useNotifications'
 import { getTaxonForMediaId } from '@/views/project/utils'
 import { TaxaFriendlyNames, nameColumnMap } from '@/utils/taxa'
+import { getSpecimenName as getSpecimenDisplayName } from '@/utils/specimens'
 // import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 import FilterDialog from '@/views/project/media/FilterDialog.vue'
 import EditBatchDialog from '@/views/project/media/EditBatchDialog.vue'
@@ -25,6 +26,7 @@ import { Tooltip } from 'bootstrap'
 import { apiService } from '@/services/apiService.js'
 
 const route = useRoute()
+const router = useRouter()
 const projectId = parseInt(route.params.id)
 
 const mediaStore = useMediaStore()
@@ -55,7 +57,7 @@ const projectExemplarMediaId = computed(() => {
 const mediaToDelete = ref([])
 const sortFunction = ref(sortByMediaId)
 const thumbnailView = ref(true)
-const searchStr = ref('')
+const searchStr = ref(route.query.search || '')
 const selectedPage = ref(1)
 const selectedPageSize = ref(25)
 
@@ -69,26 +71,111 @@ const hoveredMedia = reactive({})
 const serializedFilterName = `mediaFilter[${projectId}]`
 const filterUpdateTrigger = ref(0) // Trigger for reactivity
 
+// Helper functions for URL-based filter serialization
+function serializeFiltersToUrl(filter) {
+  const params = new URLSearchParams()
+  
+  if (filter.filterTaxa && filter.filterTaxa.length > 0) {
+    params.set('taxa', filter.filterTaxa.join(','))
+  }
+  if (filter.filterView && filter.filterView.length > 0) {
+    params.set('views', filter.filterView.join(','))
+  }
+  if (filter.filterSubmitter && filter.filterSubmitter.length > 0) {
+    params.set('submitters', filter.filterSubmitter.join(','))
+  }
+  if (filter.filterCopyrightLicense && filter.filterCopyrightLicense.length > 0) {
+    params.set('licenses', filter.filterCopyrightLicense.join(','))
+  }
+  if (filter.filterCopyrightPermission && filter.filterCopyrightPermission.length > 0) {
+    params.set('permissions', filter.filterCopyrightPermission.join(','))
+  }
+  if (filter.filterSpecimenRepository && filter.filterSpecimenRepository.length > 0) {
+    params.set('repositories', filter.filterSpecimenRepository.join(','))
+  }
+  if (filter.filterStatus && filter.filterStatus.length > 0) {
+    params.set('status', filter.filterStatus.join(','))
+  }
+  if (filter.filterOther && Object.keys(filter.filterOther).length > 0) {
+    params.set('other', Object.keys(filter.filterOther).filter(k => filter.filterOther[k]).join(','))
+  }
+  
+  return params.toString()
+}
+
+function deserializeFiltersFromUrl(queryParams) {
+  const filter = {
+    filterTaxa: [],
+    filterView: [],
+    filterSubmitter: [],
+    filterCopyrightLicense: [],
+    filterCopyrightPermission: [],
+    filterSpecimenRepository: [],
+    filterStatus: [],
+    filterOther: {}
+  }
+  
+  if (queryParams.taxa) {
+    filter.filterTaxa = queryParams.taxa.split(',').map(id => parseInt(id)).filter(id => !isNaN(id))
+  }
+  if (queryParams.views) {
+    filter.filterView = queryParams.views.split(',').map(id => parseInt(id)).filter(id => !isNaN(id))
+  }
+  if (queryParams.submitters) {
+    filter.filterSubmitter = queryParams.submitters.split(',').map(id => parseInt(id)).filter(id => !isNaN(id))
+  }
+  if (queryParams.licenses) {
+    filter.filterCopyrightLicense = queryParams.licenses.split(',').map(id => parseInt(id)).filter(id => !isNaN(id))
+  }
+  if (queryParams.permissions) {
+    filter.filterCopyrightPermission = queryParams.permissions.split(',').map(id => parseInt(id)).filter(id => !isNaN(id))
+  }
+  if (queryParams.repositories) {
+    filter.filterSpecimenRepository = queryParams.repositories.split(',').filter(r => r.trim() !== '')
+  }
+  if (queryParams.status) {
+    filter.filterStatus = queryParams.status.split(',').map(id => parseInt(id)).filter(id => !isNaN(id))
+  }
+  if (queryParams.other) {
+    const otherKeys = queryParams.other.split(',').filter(k => k.trim() !== '')
+    otherKeys.forEach(key => {
+      filter.filterOther[key] = true
+    })
+  }
+  
+  return filter
+}
+
+function hasActiveFiltersInObj(filter) {
+  return (
+    (filter.filterTaxa && filter.filterTaxa.length > 0) ||
+    (filter.filterView && filter.filterView.length > 0) ||
+    (filter.filterSubmitter && filter.filterSubmitter.length > 0) ||
+    (filter.filterCopyrightLicense && filter.filterCopyrightLicense.length > 0) ||
+    (filter.filterCopyrightPermission && filter.filterCopyrightPermission.length > 0) ||
+    (filter.filterSpecimenRepository && filter.filterSpecimenRepository.length > 0) ||
+    (filter.filterStatus && filter.filterStatus.length > 0) ||
+    (filter.filterOther && Object.keys(filter.filterOther).length > 0)
+  )
+}
+
 const activeFilters = computed(() => {
   // Access the trigger to ensure reactivity
   filterUpdateTrigger.value
   
+  // First check URL query params (takes precedence)
+  const urlFilter = deserializeFiltersFromUrl(route.query)
+  if (hasActiveFiltersInObj(urlFilter)) {
+    return urlFilter
+  }
+  
+  // Fall back to sessionStorage for backward compatibility
   const existingFilter = sessionStorage.getItem(serializedFilterName)
   if (!existingFilter) return null
   
   try {
     const filter = JSON.parse(existingFilter)
-    const hasActiveFilters = 
-      (filter.filterTaxa && filter.filterTaxa.length > 0) ||
-      (filter.filterView && filter.filterView.length > 0) ||
-      (filter.filterSubmitter && filter.filterSubmitter.length > 0) ||
-      (filter.filterCopyrightLicense && filter.filterCopyrightLicense.length > 0) ||
-      (filter.filterCopyrightPermission && filter.filterCopyrightPermission.length > 0) ||
-      (filter.filterSpecimenRepository && filter.filterSpecimenRepository.length > 0) ||
-      (filter.filterStatus && filter.filterStatus.length > 0) ||
-      (filter.filterOther && Object.keys(filter.filterOther).length > 0)
-    
-    return hasActiveFilters ? filter : null
+    return hasActiveFiltersInObj(filter) ? filter : null
   } catch (e) {
     console.error('Error parsing filter from sessionStorage:', e)
     return null
@@ -103,6 +190,23 @@ function clearAllFilters(event) {
       clearFilter(key)
     }
   })
+  
+  // Clear URL query params
+  router.push({ 
+    path: route.path,
+    query: { 
+      ...route.query,
+      taxa: undefined,
+      views: undefined,
+      submitters: undefined,
+      licenses: undefined,
+      permissions: undefined,
+      repositories: undefined,
+      status: undefined,
+      other: undefined
+    }
+  })
+  
   // Trigger reactivity update
   filterUpdateTrigger.value++
   
@@ -123,6 +227,40 @@ function clearAllFilters(event) {
 
 // Function to trigger filter updates (called by FilterDialog)
 function onFiltersUpdated() {
+  // Update URL with current filter state from sessionStorage
+  const existingFilter = sessionStorage.getItem(serializedFilterName)
+  if (existingFilter) {
+    try {
+      const filter = JSON.parse(existingFilter)
+      const queryString = serializeFiltersToUrl(filter)
+      const params = new URLSearchParams(queryString)
+      const newQuery = {}
+      params.forEach((value, key) => {
+        newQuery[key] = value
+      })
+      
+      // Preserve existing non-filter query params like search
+      Object.keys(route.query).forEach(key => {
+        if (!['taxa', 'views', 'submitters', 'licenses', 'permissions', 'repositories', 'status', 'other'].includes(key)) {
+          newQuery[key] = route.query[key]
+        }
+      })
+      
+      router.push({ path: route.path, query: newQuery })
+    } catch (e) {
+      console.error('Error updating URL with filter state:', e)
+    }
+  } else {
+    // No filters, clear filter params from URL
+    const newQuery = {}
+    Object.keys(route.query).forEach(key => {
+      if (!['taxa', 'views', 'submitters', 'licenses', 'permissions', 'repositories', 'status', 'other'].includes(key)) {
+        newQuery[key] = route.query[key]
+      }
+    })
+    router.push({ path: route.path, query: newQuery })
+  }
+  
   filterUpdateTrigger.value++
 }
 
@@ -306,6 +444,7 @@ const convertedMediaList = computed(() => {
     },
     // Add computed display fields
     taxon_name: getTaxonName(media),
+    taxon: getTaxon(media), // Include taxon object for proper formatting
     view_name: getViewName(media),
     specimen_name: getSpecimenName(media),
     user_name: getUserName(media),
@@ -414,6 +553,7 @@ function getViewName(media) {
 
 function getSpecimenName(media) {
   const specimen = specimensStore.getSpecimenById(media.specimen_id)
+  // console.log('specimen', specimen)
   return specimen?.specimen_id ? `S${specimen.specimen_id}` : ''
 }
 
@@ -496,16 +636,53 @@ onMounted(async () => {
     foliosStore.fetch(projectId)
   }
   
-  // Initialize filters from sessionStorage if they exist
-  const existingFilter = sessionStorage.getItem(serializedFilterName)
-  if (existingFilter) {
+  // Initialize filters - prioritize URL query params over sessionStorage
+  let filterToApply = null
+  
+  // Check URL query params first
+  const urlFilter = deserializeFiltersFromUrl(route.query)
+  if (hasActiveFiltersInObj(urlFilter)) {
+    filterToApply = urlFilter
+    // Sync to sessionStorage for FilterDialog
+    sessionStorage.setItem(serializedFilterName, JSON.stringify(urlFilter))
+  } else {
+    // Fall back to sessionStorage
+    const existingFilter = sessionStorage.getItem(serializedFilterName)
+    if (existingFilter) {
+      try {
+        filterToApply = JSON.parse(existingFilter)
+        // Sync sessionStorage filter to URL
+        const queryString = serializeFiltersToUrl(filterToApply)
+        if (queryString) {
+          const params = new URLSearchParams(queryString)
+          const newQuery = {}
+          params.forEach((value, key) => {
+            newQuery[key] = value
+          })
+          
+          // Preserve existing non-filter query params like search
+          Object.keys(route.query).forEach(key => {
+            if (!['taxa', 'views', 'submitters', 'licenses', 'permissions', 'repositories', 'status', 'other'].includes(key)) {
+              newQuery[key] = route.query[key]
+            }
+          })
+          
+          router.replace({ path: route.path, query: newQuery })
+        }
+      } catch (e) {
+        console.error('Error parsing filter from sessionStorage:', e)
+      }
+    }
+  }
+  
+  // Apply the filter if one was found
+  if (filterToApply) {
     try {
       const { applyFilter } = await import('@/views/project/media/filter')
-      const filter = JSON.parse(existingFilter)
-      await applyFilter(projectId, filter, setFilter, clearFilter)
+      await applyFilter(projectId, filterToApply, setFilter, clearFilter)
       filterUpdateTrigger.value++
     } catch (e) {
-      console.error('Error applying existing filters:', e)
+      console.error('Error applying filters:', e)
     }
   }
   
@@ -840,7 +1017,12 @@ function getMediaTooltipContent(media_file) {
   let tooltip = `<strong>Media ID:</strong> M${media_file.media_id}<br/>`
   
   if (specimen && specimen.specimen_id) {
-    tooltip += `<strong>Specimen:</strong> S${specimen.specimen_id}<br/>`
+    // Get the specimen's taxon to build a proper display name
+    const specimenTaxon = specimen.taxon_id ? taxaStore.getTaxonById(specimen.taxon_id) : null
+    const specimenName = specimenTaxon 
+      ? getSpecimenDisplayName(specimen, specimenTaxon) 
+      : `S${specimen.specimen_id}`
+    tooltip += `<strong>Specimen:</strong> ${escapeHtml(specimenName) || `S${specimen.specimen_id}`}<br/>`
   }
   
   if (view && view.name) {
@@ -1115,13 +1297,15 @@ function fixMediaWithoutViews() {
         <div class="col-5">
           <div class="mb-2">
             <label for="filter" class="me-2">Search for:</label>
-            <input id="filter" v-model="searchStr" class="me-2" />
-            <button @click="searchByStr()" class="btn btn-primary me-2">
-              Submit
-            </button>
-            <button @click="onResetSearch()" class="btn btn-primary btn-white">
-              Clear
-            </button>
+            <input id="filter" v-model="searchStr" />
+            <div class="mt-2">
+              <button @click="searchByStr()" class="btn btn-sm btn-primary me-2">
+                Submit
+              </button>
+              <button @click="onResetSearch()" class="btn btn-sm btn-primary btn-white">
+                Clear
+              </button>
+            </div>
           </div>
           <div class="mb-2">
             <label for="show-filter" class="me-2">Show:</label>
@@ -1443,7 +1627,10 @@ function fixMediaWithoutViews() {
             </transition>
 
             <RouterLink
-              :to="`/myprojects/${projectId}/media/${media_file.media_id}/edit`"
+              :to="{ 
+                path: `/myprojects/${projectId}/media/${media_file.media_id}/edit`,
+                query: route.query
+              }"
               class="nav-link"
             >
               <!-- Checkbox for selection (project-specific feature) -->

@@ -8,7 +8,7 @@ import { useMediaViewsStore } from '@/stores/MediaViewsStore'
 import { getTaxonForMediaId } from '@/views/project/utils'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import MediaCard from '@/components/project/MediaCard.vue'
-import { buildMediaUrl } from '@/utils/fileUtils.js'
+import { buildMediaUrl, isZipMedia } from '@/utils/fileUtils.js'
 import { useNotifications } from '@/composables/useNotifications'
 import CurationBatchDialog from './CurationBatchDialog.vue'
 import ViewBatchDialog from './ViewBatchDialog.vue'
@@ -81,16 +81,72 @@ function getMediaThumbnailUrl(media) {
         width: 120,
         height: 120,
       }
-    } else {
+    }
+    // Check if this is a ZIP/archive file (CT scans) that should use the CT scan icon
+    if (isZipMedia(media)) {
       return {
-        url: buildMediaUrl(projectId, media.media_id, 'thumbnail'),
+        url: '/images/CTScan.png',
         width: 120,
         height: 120,
       }
     }
+    return {
+      url: buildMediaUrl(projectId, media.media_id, 'thumbnail'),
+      width: 120,
+      height: 120,
+    }
   }
   // Fallback to existing thumbnail object
   return media.thumbnail
+}
+
+// Helper function to get large image URL for hover preview
+function getMediaLargeUrl(media) {
+  // Skip preview for 3D media (no large image available)
+  if (media.media_type === '3d') {
+    return null
+  }
+  // Skip preview for ZIP/archive media (CT scans - no large image available)
+  if (isZipMedia(media)) {
+    return null
+  }
+  if (media.media_id) {
+    return buildMediaUrl(projectId, media.media_id, 'large')
+  }
+  return null
+}
+
+// Helper function to get specimen name for hover preview
+function getSpecimenName(media) {
+  if (!media.specimen_id) return null
+  
+  const specimen = specimensStore.getSpecimenById(media.specimen_id)
+  if (!specimen) return null
+  
+  // Build a display name from the specimen and its taxon
+  const taxon = specimen.taxon_id ? taxaStore.getTaxonById(specimen.taxon_id) : null
+  
+  if (taxon) {
+    // Build taxon name: genus + specific_epithet
+    let name = ''
+    if (taxon.genus) name += taxon.genus
+    if (taxon.specific_epithet) name += ' ' + taxon.specific_epithet
+    
+    // Add specimen reference (institution code, catalog number, etc.)
+    if (specimen.reference_source === 0) {
+      let ref = specimen.institution_code || ''
+      if (specimen.collection_code) ref += '/' + specimen.collection_code
+      if (specimen.catalog_number) ref += ':' + specimen.catalog_number
+      if (ref) name += ' (' + ref + ')'
+    } else if (specimen.reference_source === 1) {
+      name += ' (unvouchered)'
+    }
+    
+    return name.trim() || `S${specimen.specimen_id}`
+  }
+  
+  // Fallback to specimen ID
+  return `S${specimen.specimen_id}`
 }
 
 async function releaseSelectedMedia() {
@@ -426,6 +482,9 @@ watch(
             :image="getMediaThumbnailUrl(media)"
             :viewName="mediaViewsStore.getMediaViewById(media.view_id)?.name"
             :taxon="getTaxonForMediaId(media)"
+            :largeImageUrl="getMediaLargeUrl(media)"
+            :mediaData="media"
+            :specimenName="getSpecimenName(media)"
           >
             <template #bar>
               <input

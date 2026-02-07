@@ -121,12 +121,14 @@ async function handleDelete() {
     class="modal fade"
     id="taxaDeleteModal"
     data-bs-backdrop="static"
+    data-bs-keyboard="true"
     tabindex="-1"
   >
     <div class="modal-dialog modal-lg modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Delete taxa</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" v-if="usages == null">Loading...</div>
         <div class="modal-body" v-else-if="taxa.length">

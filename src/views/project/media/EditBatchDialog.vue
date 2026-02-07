@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { Modal } from 'bootstrap'
 import { useNotifications } from '@/composables/useNotifications'
+import { useAuthStore } from '@/stores/AuthStore'
 import { schema } from '@/views/project/media/schema.js'
 import { useBibliographiesStore } from '@/stores/BibliographiesStore'
 import { useFoliosStore } from '@/stores/FoliosStore'
@@ -17,8 +18,28 @@ const projectId = route.params.id
 
 const bibliographiesStore = useBibliographiesStore()
 const foliosStore = useFoliosStore()
+const authStore = useAuthStore()
 const { showError, showSuccess } = useNotifications()
 const isSubmitting = ref(false)
+
+// Reactive copyright state for UI behaviors
+const isCopyrighted = ref(false)
+const copyrightPermission = ref(0)
+const copyrightLicense = ref(0)
+const copyrightInfo = ref('')
+
+// Computed: Show license field (hide when permission=4 - expired/public domain)
+const showLicenseField = computed(() => {
+  return copyrightPermission.value !== 4
+})
+
+// Watch permission changes to auto-fill copyright holder
+watch(copyrightPermission, (newVal) => {
+  // Auto-fill copyright holder when user owns copyright (permission=1)
+  if (newVal === 1 && authStore.user?.name) {
+    copyrightInfo.value = authStore.user.name
+  }
+})
 
 const menuCollapsed = ref({
   mediaEditCopyright: true,
@@ -30,40 +51,36 @@ const menuCollapsed = ref({
   mediaEditModalPublication: true,
 })
 
-function validateFormData(formData: FormData) {
+function validateFormData() {
   const errors: string[] = []
   
-  // Conditional validation for copyright fields
-  const copyrightCheckbox = formData.get('is_copyrighted')
-  const isCopyrighted = copyrightCheckbox === '1' || parseInt(copyrightCheckbox as string) === 1
-  
-  if (isCopyrighted) {
-    // Check copyright_permission - must not be the default "not set" option (value 0)
-    const copyrightPermission = formData.get('copyright_permission')
-    const copyrightPermissionValue = parseInt(String(copyrightPermission), 10)
+  if (isCopyrighted.value) {
+    const permValue = copyrightPermission.value
+    const licValue = copyrightLicense.value
     
-    if (isNaN(copyrightPermissionValue) || copyrightPermissionValue === 0) {
-      errors.push('Copyright permission must be selected when media is under copyright (cannot use "Copyright permission not set")')
+    // Permission must be set
+    if (permValue === 0) {
+      errors.push('Copyright permission must be selected when media is under copyright')
     }
     
-    // Validate that copyright_permission is not contradictory
-    // Value 4 = "Copyright expired or work otherwise in public domain"
-    if (copyrightPermissionValue === 4) {
+    // Permission 4 (expired) is contradictory when copyright is checked
+    if (permValue === 4) {
       errors.push('Cannot select "Copyright expired or work otherwise in public domain" when media is under copyright')
     }
     
-    // Check copyright_license - must not be the default "not set" option (value 0)
-    const copyrightLicense = formData.get('copyright_license')
-    const copyrightLicenseValue = parseInt(String(copyrightLicense), 10)
-    
-    if (isNaN(copyrightLicenseValue) || copyrightLicenseValue === 0) {
-      errors.push('Media reuse license must be selected when media is under copyright (cannot use "Media reuse policy not set")')
+    // License must be set (unless permission is 4 where it's hidden)
+    if (showLicenseField.value && licValue === 0) {
+      errors.push('Media reuse license must be selected when media is under copyright')
     }
     
-    // Validate that copyright_license is not contradictory
-    // Value 1 = "CC0 - relinquish copyright"
-    if (copyrightLicenseValue === 1) {
+    // CC0 is contradictory when copyright is checked
+    if (licValue === 1) {
       errors.push('Cannot select "CC0 - relinquish copyright" when media is under copyright')
+    }
+    
+    // Copyright holder required for permissions 2, 3, 5
+    if ([2, 3, 5].includes(permValue) && !copyrightInfo.value?.trim()) {
+      errors.push('Copyright holder must be entered for this permission type')
     }
   }
   
@@ -90,26 +107,12 @@ async function handleSubmitClicked(event: Event) {
     
     // Copyright fields - only include if accordion is expanded
     if (isExpanded('mediaEditCopyright')) {
-      // Handle checkbox - if not in formData, it means unchecked
-      if (formData.has('is_copyrighted')) {
-        json.is_copyrighted = formData.get('is_copyrighted')
-      } else {
-        json.is_copyrighted = '0'
-      }
-      
-      // Always include these fields from the form when copyright accordion is expanded
-      const copyrightPermission = formData.get('copyright_permission')
-      const copyrightLicense = formData.get('copyright_license')
-      const copyrightInfo = formData.get('copyright_info')
-      
-      if (copyrightPermission !== null) {
-        json.copyright_permission = copyrightPermission
-      }
-      if (copyrightLicense !== null) {
-        json.copyright_license = copyrightLicense
-      }
-      if (copyrightInfo !== null && copyrightInfo !== '') {
-        json.copyright_info = copyrightInfo
+      // Use reactive state values
+      json.is_copyrighted = isCopyrighted.value ? '1' : '0'
+      json.copyright_permission = copyrightPermission.value
+      json.copyright_license = copyrightLicense.value
+      if (copyrightInfo.value) {
+        json.copyright_info = copyrightInfo.value
       }
     }
     
@@ -155,8 +158,18 @@ async function handleSubmitClicked(event: Event) {
       }
     }
     
-    // Validate form data
-    const errors = validateFormData(formData)
+    // Validate copyright form data only if copyright accordion is expanded
+    if (isExpanded('mediaEditCopyright')) {
+      const errors = validateFormData()
+      if (errors.length > 0) {
+        showError(errors.join('; '), 'Validation Error')
+        isSubmitting.value = false
+        return
+      }
+    }
+    
+    // Validate form data (no copyright validation needed here anymore)
+    const errors: string[] = []
     if (errors.length > 0) {
       showError(errors.join('; '), 'Validation Error')
       isSubmitting.value = false
@@ -215,6 +228,7 @@ onMounted(() => {
     class="modal fade"
     id="mediaEditModal"
     data-bs-backdrop="static"
+    data-bs-keyboard="true"
     tabindex="-1"
   >
     <form @submit.prevent="handleSubmitClicked">
@@ -224,6 +238,7 @@ onMounted(() => {
             <h5 class="modal-title">
               Applying batch changes to media search results
             </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <div class="accordion" id="accordionMediaEditModal">
@@ -244,47 +259,83 @@ onMounted(() => {
                   id="mediaEditCopyright"
                   class="accordion-collapse collapse"
                 >
-                  <div class="form-group">
-                    <label class="form-label">
-                      {{ schema.is_copyrighted.label }}
-                    </label>
-                    <component
-                      :is="schema.is_copyrighted.view"
-                      name="is_copyrighted"
-                    >
-                    </component>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">
-                      {{ schema.copyright_permission.label }}
-                    </label>
-                    <component
-                      :is="schema.copyright_permission.view"
-                      name="copyright_permission"
-                      v-bind="schema.copyright_permission.args"
-                    >
-                    </component>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">
-                      {{ schema.copyright_license.label }}
-                    </label>
-                    <component
-                      :is="schema.copyright_license.view"
-                      name="copyright_license"
-                      v-bind="schema.copyright_license.args"
-                    >
-                    </component>
-                  </div>
+                  <div class="accordion-body">
+                    <!-- Is Copyrighted Checkbox -->
+                    <div class="form-group mb-3">
+                      <label class="form-label">Is under copyright?</label>
+                      <div class="form-check">
+                        <input
+                          type="checkbox"
+                          class="form-check-input"
+                          name="is_copyrighted"
+                          :value="1"
+                          v-model="isCopyrighted"
+                        />
+                        <small class="text-muted">
+                          Leave unchecked to release media to public domain (CC0).
+                        </small>
+                      </div>
+                    </div>
 
-                  <div class="form-group">
-                    <label class="form-label">
-                      {{ schema.copyright_info.label }}
-                    </label>
-                    <component
-                      :is="schema.copyright_info.view"
-                      name="copyright_info"
-                    ></component>
+                    <!-- Copyright fields (shown when copyrighted) -->
+                    <div v-if="isCopyrighted" class="copyright-details">
+                      <!-- Copyright Permission -->
+                      <div class="form-group mb-3">
+                        <label class="form-label">Copyright permission</label>
+                        <select
+                          class="form-select"
+                          name="copyright_permission"
+                          v-model.number="copyrightPermission"
+                        >
+                          <option :value="0">Copyright permission not set</option>
+                          <option :value="1">Person loading media owns copyright and grants permission for use of media on MorphoBank</option>
+                          <option :value="2">Permission to use media on MorphoBank granted by copyright holder</option>
+                          <option :value="3">Permission pending</option>
+                          <option :value="4">Copyright expired or work otherwise in public domain</option>
+                          <option :value="5">Copyright permission not yet requested</option>
+                        </select>
+                      </div>
+
+                      <!-- Copyright License (hidden when permission=4) -->
+                      <div v-if="showLicenseField" class="form-group mb-3">
+                        <label class="form-label">Media reuse license</label>
+                        <select
+                          class="form-select"
+                          name="copyright_license"
+                          v-model.number="copyrightLicense"
+                        >
+                          <option :value="0">Media reuse policy not set</option>
+                          <option :value="1">CC0 - relinquish copyright</option>
+                          <option :value="2">Attribution CC BY - reuse with attribution</option>
+                          <option :value="3">Attribution-NonCommercial CC BY-NC - reuse but noncommercial</option>
+                          <option :value="4">Attribution-ShareAlike CC BY-SA - reuse here and applied to future uses</option>
+                          <option :value="5">Attribution- CC BY-NC-SA - reuse here and applied to future uses but noncommercial</option>
+                          <option :value="6">Attribution-NoDerivs CC BY-ND - reuse but no changes</option>
+                          <option :value="7">Attribution-NonCommercial-NoDerivs CC BY-NC-ND - reuse noncommerical no changes</option>
+                          <option :value="8">Media released for onetime use, no reuse without permission</option>
+                          <option :value="20">Unknown - Will set before project publication</option>
+                        </select>
+                      </div>
+
+                      <!-- Copyright Holder -->
+                      <div class="form-group mb-3">
+                        <label class="form-label">
+                          Copyright holder
+                          <span v-if="[2, 3, 5].includes(copyrightPermission)" class="text-danger">*</span>
+                        </label>
+                        <textarea
+                          class="form-control"
+                          name="copyright_info"
+                          rows="2"
+                          v-model="copyrightInfo"
+                          placeholder="Enter the name of the copyright holder"
+                        ></textarea>
+                        <small v-if="copyrightPermission === 1" class="text-muted">
+                          <i class="fa-solid fa-check-circle text-success me-1"></i>
+                          Auto-filled with your name since you own the copyright.
+                        </small>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -495,5 +546,11 @@ onMounted(() => {
 <style scoped>
 .form-label {
   font-weight: bold;
+}
+
+.copyright-details {
+  padding-left: 0.5rem;
+  border-left: 3px solid #dee2e6;
+  margin-top: 0.5rem;
 }
 </style>
