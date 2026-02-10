@@ -12,8 +12,46 @@ const messages = ref(null)
 const showRegister = ref(null)
 const showSignin = ref(null)
 const authCode = route.query.code
+const orcidError = route.query.error
+const orcidErrorDescription = route.query.error_description
+
+function escapeHtml(text) {
+  if (!text) return text
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
 
 onMounted(async () => {
+  // Handle ORCID OAuth errors (e.g., user denied access, invalid scope)
+  if (orcidError) {
+    console.error('[ORCID Auth] Error from ORCID:', orcidError, orcidErrorDescription)
+    const safeError = escapeHtml(orcidError)
+    const safeDescription = escapeHtml(orcidErrorDescription)
+    messages.value = {
+      msg: `ORCID authentication failed: ${safeDescription || safeError}.<br>Please try again or contact support.`,
+    }
+    showSignin.value = true
+    showRegister.value = false
+    loading.value = false
+    return
+  }
+
+  // Check if we have an auth code
+  if (!authCode) {
+    console.error('[ORCID Auth] No auth code received from ORCID')
+    messages.value = {
+      msg: "No authorization code received from ORCID.<br>Please try again.",
+    }
+    showSignin.value = true
+    showRegister.value = false
+    loading.value = false
+    return
+  }
+
   try {
     const setProfileMsg = await authStore.setORCIDProfile(authCode)
     if (authStore.user && authStore.user.authToken) {
