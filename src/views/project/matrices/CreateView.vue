@@ -417,11 +417,21 @@ let isUploading = ref(false)
 
 async function uploadMatrix() {
   isUploading.value = true
+  uploadError.value = ''
   
   // Frontend validation to prevent malformed matrices from reaching backend
   const validationResult = validateMatrixForUpload(importedMatrix)
   if (!validationResult.ok) {
+    console.error('Matrix validation failed:', validationResult.message, {
+      hasCharacters: !!importedMatrix.characters,
+      characterCount: importedMatrix.characters?.size,
+      hasTaxa: !!importedMatrix.taxa,
+      taxaCount: importedMatrix.taxa?.size,
+      hasCells: !!importedMatrix.cells,
+      cellCount: importedMatrix.cells?.size,
+    })
     showError(validationResult.message)
+    uploadError.value = validationResult.message
     isUploading.value = false
     return
   }
@@ -593,6 +603,11 @@ function convertNewlines(text) {
 
 // Handle characters extracted from AI
 function handleCharactersExtracted(extractedCharacters) {
+  // Track whether the matrix had named characters before this extraction.
+  // If not, the cells from the MATRIX block are for unnamed/declared characters
+  // and don't correspond to the AI-extracted characters — they must be cleared.
+  const hadNamedCharacters = importedMatrix.characters && importedMatrix.characters.size > 0
+
   // Initialize characters Map if it doesn't exist
   if (!importedMatrix.characters) {
     importedMatrix.characters = new Map()
@@ -607,16 +622,54 @@ function handleCharactersExtracted(extractedCharacters) {
     importedMatrix.characters.set(characterIndex, character)
   }
 
+  // Normalize cells to match taxa:
+  // The parser may create phantom cell entries (e.g. when NCHAR dimension is missing
+  // and cell data strings get misread as taxon names), or cells may use different key
+  // formats than taxa (underscores vs spaces). Rebuild cells aligned with taxa keys.
+  if (importedMatrix.cells && importedMatrix.taxa) {
+    const normalizeKey = (k) => k.toLowerCase().replace(/_/g, ' ').trim()
+    const taxaKeys = Array.from(importedMatrix.taxa.keys())
+
+    // Build a lookup from normalized cell key → original cell key
+    const cellsByNormalized = new Map()
+    for (const cellKey of importedMatrix.cells.keys()) {
+      cellsByNormalized.set(normalizeKey(cellKey), cellKey)
+    }
+
+    // Build new cells Map aligned with taxa
+    const normalizedCells = new Map()
+    for (const taxonKey of taxaKeys) {
+      // Try exact match first, then normalized match
+      if (importedMatrix.cells.has(taxonKey)) {
+        normalizedCells.set(taxonKey, importedMatrix.cells.get(taxonKey))
+      } else {
+        const normKey = normalizeKey(taxonKey)
+        const matchingCellKey = cellsByNormalized.get(normKey)
+        if (matchingCellKey) {
+          normalizedCells.set(taxonKey, importedMatrix.cells.get(matchingCellKey))
+        } else {
+          normalizedCells.set(taxonKey, [])
+        }
+      }
+    }
+    importedMatrix.cells = normalizedCells
+
+    // If the matrix had no named characters before, the existing cell data is from
+    // the MATRIX block's unnamed/declared characters and doesn't correspond to the
+    // AI-extracted characters. Clear it so padding creates clean '?' rows.
+    if (!hadNamedCharacters) {
+      for (const taxonKey of importedMatrix.cells.keys()) {
+        importedMatrix.cells.set(taxonKey, [])
+      }
+    }
+  }
+
   // Pad every taxon's cell row with '?' for each newly added character
   // so the matrix dimensions stay consistent (cells per row == total characters)
-  if (importedMatrix.cells && importedMatrix.taxa) {
+  if (importedMatrix.cells) {
     const missingSymbol = importedMatrix.parameters?.MISSING ?? '?'
-    for (const taxonName of importedMatrix.taxa.keys()) {
-      let cellRow = importedMatrix.cells.get(taxonName)
-      if (!cellRow) {
-        cellRow = []
-        importedMatrix.cells.set(taxonName, cellRow)
-      }
+    for (const cellKey of importedMatrix.cells.keys()) {
+      const cellRow = importedMatrix.cells.get(cellKey)
       for (let i = 0; i < newCharCount; i++) {
         cellRow.push(new Cell(missingSymbol))
       }
@@ -1285,6 +1338,10 @@ onUnmounted(() => {
                 </tr>
               </tbody>
             </table>
+          </div>
+          <!-- Upload Error Display (visible on taxa step) -->
+          <div v-if="uploadError" class="alert alert-danger mt-3 mb-0">
+            {{ uploadError }}
           </div>
           <div class="btn-step-group">
             <button
