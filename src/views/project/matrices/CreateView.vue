@@ -7,7 +7,7 @@ import { useTaxaStore } from '@/stores/TaxaStore'
 import { useFileTransferStore } from '@/stores/FileTransferStore'
 import { useNotifications } from '@/composables/useNotifications'
 import { NavigationPatterns } from '@/utils/navigationUtils.js'
-import { CharacterStateIncompleteType } from '@/lib/matrix-parser/MatrixObject.ts'
+import { CharacterStateIncompleteType, Cell } from '@/lib/matrix-parser/MatrixObject.ts'
 import { getIncompleteStateText } from '@/lib/matrix-parser/text.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
 import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
@@ -598,11 +598,29 @@ function handleCharactersExtracted(extractedCharacters) {
     importedMatrix.characters = new Map()
   }
 
+  const newCharCount = extractedCharacters.length
+
   // Add each extracted character to the importedMatrix
   for (const character of extractedCharacters) {
     const characterIndex = importedMatrix.characters.size
     character.characterNumber = characterIndex
     importedMatrix.characters.set(characterIndex, character)
+  }
+
+  // Pad every taxon's cell row with '?' for each newly added character
+  // so the matrix dimensions stay consistent (cells per row == total characters)
+  if (importedMatrix.cells && importedMatrix.taxa) {
+    const missingSymbol = importedMatrix.parameters?.MISSING ?? '?'
+    for (const taxonName of importedMatrix.taxa.keys()) {
+      let cellRow = importedMatrix.cells.get(taxonName)
+      if (!cellRow) {
+        cellRow = []
+        importedMatrix.cells.set(taxonName, cellRow)
+      }
+      for (let i = 0; i < newCharCount; i++) {
+        cellRow.push(new Cell(missingSymbol))
+      }
+    }
   }
 
   // Collapse the AI extractor after adding characters
