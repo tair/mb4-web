@@ -619,7 +619,7 @@ function handleCharactersExtracted(extractedCharacters) {
   for (const character of extractedCharacters) {
     const characterIndex = importedMatrix.characters.size
     character.characterNumber = characterIndex
-    importedMatrix.characters.set(characterIndex, character)
+    importedMatrix.characters.set(character.name, character)
   }
 
   // Normalize cells to match taxa:
