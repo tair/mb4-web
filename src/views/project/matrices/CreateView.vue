@@ -613,7 +613,8 @@ function handleCharactersExtracted(extractedCharacters) {
     importedMatrix.characters = new Map()
   }
 
-  const newCharCount = extractedCharacters.length
+  // Track the initial character count to calculate actual new characters added
+  const initialCharCount = importedMatrix.characters.size
 
   // Add each extracted character to the importedMatrix
   for (const character of extractedCharacters) {
@@ -621,6 +622,9 @@ function handleCharactersExtracted(extractedCharacters) {
     character.characterNumber = characterIndex
     importedMatrix.characters.set(character.name, character)
   }
+
+  // Calculate the actual number of new characters added (not overwritten)
+  const newCharCount = importedMatrix.characters.size - initialCharCount
 
   // Normalize cells to match taxa:
   // The parser may create phantom cell entries (e.g. when NCHAR dimension is missing
