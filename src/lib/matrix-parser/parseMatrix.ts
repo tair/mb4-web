@@ -39,9 +39,13 @@ export function parseMatrixWithErrors(file: string): ParseMatrixResult {
     return { matrixObject, error: null }
   } catch (error) {
     if (error instanceof MatrixValidationError) {
-      // Special case: if it's an undefined characters error, still parse the matrix
-      // but return both the matrixObject and the error so the UI can handle it
-      if (error.errorType === MatrixErrorType.UNDEFINED_CHARACTERS) {
+      // Special case: if it's a characters error (missing or undefined), still parse
+      // the matrix but return both the matrixObject and the error so the UI can
+      // handle it — e.g. allow the user to add characters via the AI extractor.
+      if (
+        error.errorType === MatrixErrorType.UNDEFINED_CHARACTERS ||
+        error.errorType === MatrixErrorType.NO_CHARACTERS
+      ) {
         // Try to parse without validation
         try {
           const parserFactory = new ParserFactory()
