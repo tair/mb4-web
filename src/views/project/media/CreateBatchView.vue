@@ -113,7 +113,18 @@ async function createBatch(event) {
     // Extract specific error messages from backend response
     let errorMessage = 'Failed to create media. Please try again.'
     
-    if (error.response?.data?.message) {
+    // Check for timeout/gateway errors (502, 503, 504 or "Bad Gateway" message)
+    const isTimeoutError = 
+      error.response?.status === 502 || 
+      error.response?.status === 503 || 
+      error.response?.status === 504 ||
+      error.message?.toLowerCase().includes('bad gateway') ||
+      error.message?.toLowerCase().includes('gateway timeout') ||
+      error.message?.toLowerCase().includes('timeout')
+    
+    if (isTimeoutError) {
+      errorMessage = 'The batch upload timed out. This usually happens when the upload takes too long due to slow internet connection or a large batch size. Please try again with a smaller batch (fewer files in your ZIP archive).'
+    } else if (error.response?.data?.message) {
       errorMessage = error.response.data.message
     } else if (error.response?.data?.error) {
       errorMessage = error.response.data.error
@@ -169,6 +180,12 @@ onMounted(() => {
         <RouterLink :to="`/myprojects/${projectId}/media/create`"
           >standard media upload form</RouterLink
         >
+      </div>
+      <div class="caution-box">
+        <i class="fa fa-exclamation-triangle"></i>
+        <strong>Caution:</strong> Batch uploads may fail due to timeout if your internet bandwidth is slow. 
+        It is recommended to use smaller batches where possible. If you experience upload failures, 
+        try reducing the number of files in your ZIP archive.
       </div>
     </div>
   </header>
@@ -229,5 +246,21 @@ onMounted(() => {
 <style scoped>
 .form-label {
   font-weight: bold;
+}
+
+.caution-box {
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin-top: 12px;
+  color: #856404;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.caution-box i {
+  color: #e0a800;
+  margin-right: 6px;
 }
 </style>
