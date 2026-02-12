@@ -209,32 +209,6 @@ async function extractCharactersFromPdf() {
       },
     })
 
-    if (!response.ok) {
-      let errorMsg = `Server returned ${response.status}`
-      // Read the body once as text
-      const bodyText = await response.text()
-      try {
-        // Attempt to parse as JSON
-        const errorData = JSON.parse(bodyText)
-        // Handle FastAPI validation errors
-        if (errorData.detail) {
-          if (Array.isArray(errorData.detail)) {
-            errorMsg = errorData.detail.map(e => `${e.loc?.join('.')}: ${e.msg}`).join(', ')
-          } else if (typeof errorData.detail === 'string') {
-            errorMsg = errorData.detail
-          } else {
-            errorMsg = JSON.stringify(errorData.detail)
-          }
-        } else if (errorData.error) {
-          errorMsg = errorData.error
-        }
-      } catch (e) {
-        // If JSON parsing fails, treat bodyText as plain text
-        if (bodyText) errorMsg += `: ${bodyText}`
-      }
-      throw new Error(errorMsg)
-    }
-
     const result = await response.json()
 
     if (!result.success) {
