@@ -7,7 +7,7 @@ import { useTaxaStore } from '@/stores/TaxaStore'
 import { useFileTransferStore } from '@/stores/FileTransferStore'
 import { useNotifications } from '@/composables/useNotifications'
 import { NavigationPatterns } from '@/utils/navigationUtils.js'
-import { CharacterStateIncompleteType } from '@/lib/matrix-parser/MatrixObject.ts'
+import { CharacterStateIncompleteType, Cell } from '@/lib/matrix-parser/MatrixObject.ts'
 import { getIncompleteStateText } from '@/lib/matrix-parser/text.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
 import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
@@ -15,6 +15,7 @@ import { getTaxonomicUnitOptions } from '@/utils/taxa'
 import { convertCsvToMatrix } from '@/utils/csvConverter.js'
 import router from '@/router'
 import { apiService } from '@/services/apiService.js'
+import AiCharacterExtractor from '@/components/AiCharacterExtractor.vue'
 
 const route = useRoute()
 const taxaStore = useTaxaStore()
@@ -26,6 +27,7 @@ const uploadError = ref('')
 const uploadTask = ref({ id: null, status: null })
 const projectId = route.params.id
 const isConvertingCsv = ref(false)
+const showAiExtractor = ref(false)
 const uploadType = computed(() => route.query.uploadType || 'nexus')
 
 // Taxonomic unit options for dropdown
@@ -275,16 +277,24 @@ async function importMatrix(event) {
     try {
       const result = parser.parseMatrixWithErrors(reader.result)
       if (result.error) {
-        // Display validation error below the upload field (not notification)
-        uploadError.value = result.error.userMessage
-        // Clear the file input
-        const fileInput = document.getElementById('upload')
-        if (fileInput) {
-          fileInput.value = ''
+        // Check if this is the "no characters" error - if so, we'll allow proceeding with an empty matrix
+        const isNoCharactersError = result.error.userMessage?.includes('does not explicitly define names for all characters')
+        
+        if (isNoCharactersError && result.matrixObject) {
+          // Allow proceeding with empty matrix - user can add characters via PDF on the characters screen
+          Object.assign(importedMatrix, result.matrixObject)
+          uploadError.value = '' // Clear error, we'll handle this in the characters screen
+        } else {
+          // Display validation error below the upload field (not notification)
+          uploadError.value = result.error.userMessage
+          // Clear the file input
+          const fileInput = document.getElementById('upload')
+          if (fileInput) {
+            fileInput.value = ''
+          }
+          return
         }
-        return
-      }
-      if (result.matrixObject) {
+      } else if (result.matrixObject) {
         Object.assign(importedMatrix, result.matrixObject)
         uploadError.value = '' // Clear error on success
       } else {
@@ -407,11 +417,21 @@ let isUploading = ref(false)
 
 async function uploadMatrix() {
   isUploading.value = true
+  uploadError.value = ''
   
   // Frontend validation to prevent malformed matrices from reaching backend
   const validationResult = validateMatrixForUpload(importedMatrix)
   if (!validationResult.ok) {
+    console.error('Matrix validation failed:', validationResult.message, {
+      hasCharacters: !!importedMatrix.characters,
+      characterCount: importedMatrix.characters?.size,
+      hasTaxa: !!importedMatrix.taxa,
+      taxaCount: importedMatrix.taxa?.size,
+      hasCells: !!importedMatrix.cells,
+      cellCount: importedMatrix.cells?.size,
+    })
     showError(validationResult.message)
+    uploadError.value = validationResult.message
     isUploading.value = false
     return
   }
@@ -579,6 +599,95 @@ function cancelImport() {
 
 function convertNewlines(text) {
   return text.replace(/\n/g, '<br>')
+}
+
+// Handle characters extracted from AI
+function handleCharactersExtracted(extractedCharacters) {
+  // Track whether the matrix had named characters before this extraction.
+  // If not, the cells from the MATRIX block are for unnamed/declared characters
+  // and don't correspond to the AI-extracted characters — they must be cleared.
+  const hadNamedCharacters = importedMatrix.characters && importedMatrix.characters.size > 0
+
+  // Initialize characters Map if it doesn't exist
+  if (!importedMatrix.characters) {
+    importedMatrix.characters = new Map()
+  }
+
+  // Track the initial character count to calculate actual new characters added
+  const initialCharCount = importedMatrix.characters.size
+
+  // Add each extracted character to the importedMatrix
+  for (const character of extractedCharacters) {
+    const characterIndex = importedMatrix.characters.size
+    character.characterNumber = characterIndex
+    importedMatrix.characters.set(character.name, character)
+  }
+
+  // Calculate the actual number of new characters added (not overwritten)
+  const newCharCount = importedMatrix.characters.size - initialCharCount
+
+  // Normalize cells to match taxa:
+  // The parser may create phantom cell entries (e.g. when NCHAR dimension is missing
+  // and cell data strings get misread as taxon names), or cells may use different key
+  // formats than taxa (underscores vs spaces). Rebuild cells aligned with taxa keys.
+  if (importedMatrix.cells && importedMatrix.taxa) {
+    const normalizeKey = (k) => k.toLowerCase().replace(/_/g, ' ').trim()
+    const taxaKeys = Array.from(importedMatrix.taxa.keys())
+
+    // Build a lookup from normalized cell key → original cell key
+    const cellsByNormalized = new Map()
+    for (const cellKey of importedMatrix.cells.keys()) {
+      cellsByNormalized.set(normalizeKey(cellKey), cellKey)
+    }
+
+    // Build new cells Map aligned with taxa
+    const normalizedCells = new Map()
+    for (const taxonKey of taxaKeys) {
+      // Try exact match first, then normalized match
+      if (importedMatrix.cells.has(taxonKey)) {
+        normalizedCells.set(taxonKey, importedMatrix.cells.get(taxonKey))
+      } else {
+        const normKey = normalizeKey(taxonKey)
+        const matchingCellKey = cellsByNormalized.get(normKey)
+        if (matchingCellKey) {
+          normalizedCells.set(taxonKey, importedMatrix.cells.get(matchingCellKey))
+        } else {
+          normalizedCells.set(taxonKey, [])
+        }
+      }
+    }
+    importedMatrix.cells = normalizedCells
+
+    // If the matrix had no named characters before, the existing cell data is from
+    // the MATRIX block's unnamed/declared characters and doesn't correspond to the
+    // AI-extracted characters. Clear it so padding creates clean '?' rows.
+    if (!hadNamedCharacters) {
+      for (const taxonKey of importedMatrix.cells.keys()) {
+        importedMatrix.cells.set(taxonKey, [])
+      }
+    }
+  }
+
+  // Pad every taxon's cell row with '?' for each newly added character
+  // so the matrix dimensions stay consistent (cells per row == total characters)
+  if (importedMatrix.cells) {
+    const missingSymbol = importedMatrix.parameters?.MISSING ?? '?'
+    for (const cellKey of importedMatrix.cells.keys()) {
+      const cellRow = importedMatrix.cells.get(cellKey)
+      for (let i = 0; i < newCharCount; i++) {
+        cellRow.push(new Cell(missingSymbol))
+      }
+    }
+  }
+
+  // Collapse the AI extractor after adding characters
+  showAiExtractor.value = false
+}
+
+// Handle extraction errors
+function handleExtractionError(error) {
+  console.error('AI extraction error:', error)
+  showError(error instanceof Error ? error.message : 'Failed to extract characters')
 }
 
 onMounted(async () => {
@@ -884,7 +993,33 @@ onUnmounted(() => {
             Loading...
           </div>
           <div class="matrix-confirmation-screen" v-else>
-            <table>
+            <!-- AI Character Extractor: shown by default when no characters, toggled via button otherwise -->
+            <div v-if="importedMatrix?.characters && importedMatrix.characters.size > 0" class="ai-extractor-toggle">
+              <button
+                type="button"
+                class="btn btn-outline-primary btn-sm ai-toggle-btn"
+                @click="showAiExtractor = !showAiExtractor"
+              >
+                <span class="ai-icon">&#x2728;</span>
+                {{ showAiExtractor ? 'Hide AI Extractor' : 'Add Characters from PDF' }}
+              </button>
+              <span class="ai-toggle-hint">
+                Use AI to extract additional characters from a PDF and add them to the matrix.
+              </span>
+            </div>
+
+            <AiCharacterExtractor
+              v-if="!importedMatrix?.characters || importedMatrix.characters.size === 0 || showAiExtractor"
+              :total-characters="1000"
+              page-range="all"
+              :zero-indexed="false"
+              :existing-characters="importedMatrix?.characters"
+              @characters-extracted="handleCharactersExtracted"
+              @extraction-error="handleExtractionError"
+            />
+
+            <!-- Show character table when characters exist -->
+            <table v-if="importedMatrix?.characters && importedMatrix.characters.size > 0">
               <thead>
                 <tr>
                   <th>#</th>
@@ -1207,6 +1342,10 @@ onUnmounted(() => {
                 </tr>
               </tbody>
             </table>
+          </div>
+          <!-- Upload Error Display (visible on taxa step) -->
+          <div v-if="uploadError" class="alert alert-danger mt-3 mb-0">
+            {{ uploadError }}
           </div>
           <div class="btn-step-group">
             <button
@@ -1578,5 +1717,33 @@ div.matrix-confirmation-screen table td {
 
 .no-conflicts .alert-success {
   border-left: 4px solid #28a745;
+}
+
+.ai-extractor-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: #f0f7ff;
+  border: 1px solid #bee3f8;
+  border-radius: 8px;
+}
+
+.ai-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ai-icon {
+  font-size: 16px;
+}
+
+.ai-toggle-hint {
+  color: #5a6c7d;
+  font-size: 13px;
 }
 </style>

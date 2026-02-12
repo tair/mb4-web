@@ -1,6 +1,6 @@
 import { ParserFactory } from './ParserFactory'
 import type { MatrixObject } from './MatrixObject'
-import { MatrixValidationError } from './MatrixObject'
+import { MatrixValidationError, MatrixErrorType } from './MatrixObject'
 import { validate } from './MatrixValidator'
 
 export interface ParseMatrixResult {
@@ -39,6 +39,28 @@ export function parseMatrixWithErrors(file: string): ParseMatrixResult {
     return { matrixObject, error: null }
   } catch (error) {
     if (error instanceof MatrixValidationError) {
+      // Special case: if it's a characters error (missing or undefined), still parse
+      // the matrix but return both the matrixObject and the error so the UI can
+      // handle it — e.g. allow the user to add characters via the AI extractor.
+      if (
+        error.errorType === MatrixErrorType.UNDEFINED_CHARACTERS ||
+        error.errorType === MatrixErrorType.NO_CHARACTERS
+      ) {
+        // Try to parse without validation
+        try {
+          const parserFactory = new ParserFactory()
+          const parser = parserFactory.getParserForFile(file)
+          if (parser) {
+            const matrixObject = parser.parse()
+            // Return the matrix object along with the error so UI can decide what to do
+            return { matrixObject, error }
+          }
+        } catch (parseError) {
+          // Log parsing failures in the no-validation retry for debugging
+          console.warn('Failed to reparse matrix without validation:', parseError)
+        }
+      }
+      
       return { matrixObject: null, error }
     }
     
