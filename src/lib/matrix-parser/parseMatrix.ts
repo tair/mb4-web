@@ -1,6 +1,6 @@
 import { ParserFactory } from './ParserFactory'
 import type { MatrixObject } from './MatrixObject'
-import { MatrixValidationError } from './MatrixObject'
+import { MatrixValidationError, MatrixErrorType } from './MatrixObject'
 import { validate } from './MatrixValidator'
 
 export interface ParseMatrixResult {
@@ -39,11 +39,9 @@ export function parseMatrixWithErrors(file: string): ParseMatrixResult {
     return { matrixObject, error: null }
   } catch (error) {
     if (error instanceof MatrixValidationError) {
-      // Special case: if it's a "no characters" error, still parse the matrix
+      // Special case: if it's an undefined characters error, still parse the matrix
       // but return both the matrixObject and the error so the UI can handle it
-      const isNoCharactersError = error.userMessage?.includes('does not explicitly define names for all characters')
-      
-      if (isNoCharactersError) {
+      if (error.errorType === MatrixErrorType.UNDEFINED_CHARACTERS) {
         // Try to parse without validation
         try {
           const parserFactory = new ParserFactory()
@@ -54,7 +52,8 @@ export function parseMatrixWithErrors(file: string): ParseMatrixResult {
             return { matrixObject, error }
           }
         } catch (parseError) {
-          // If parsing fails, fall through to return just the error
+          // Log parsing failures in the no-validation retry for debugging
+          console.warn('Failed to reparse matrix without validation:', parseError)
         }
       }
       

@@ -139,7 +139,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { apiService } from '@/services/apiService.js'
-import { Character, CharacterState } from '@/lib/matrix-parser/MatrixObject.ts'
+import { Character, CharacterState, CharacterType } from '@/lib/matrix-parser/MatrixObject.ts'
 
 // Props
 const props = defineProps({
@@ -211,8 +211,11 @@ async function extractCharactersFromPdf() {
 
     if (!response.ok) {
       let errorMsg = `Server returned ${response.status}`
+      // Read the body once as text
+      const bodyText = await response.text()
       try {
-        const errorData = await response.json()
+        // Attempt to parse as JSON
+        const errorData = JSON.parse(bodyText)
         // Handle FastAPI validation errors
         if (errorData.detail) {
           if (Array.isArray(errorData.detail)) {
@@ -226,9 +229,8 @@ async function extractCharactersFromPdf() {
           errorMsg = errorData.error
         }
       } catch (e) {
-        // If JSON parsing fails, try text
-        const errorText = await response.text()
-        if (errorText) errorMsg += `: ${errorText}`
+        // If JSON parsing fails, treat bodyText as plain text
+        if (bodyText) errorMsg += `: ${bodyText}`
       }
       throw new Error(errorMsg)
     }
@@ -254,10 +256,12 @@ async function extractCharactersFromPdf() {
       
       // Create character with proper constructor parameters
       const character = new Character(i, charData.character)
-      character.type = 0 // discrete
+      character.type = CharacterType.DISCRETE
       
       // Add states using the proper constructor (just pass the name string)
-      character.states = charData.states.map((stateName) => 
+      // Guard against missing or non-array states
+      const states = Array.isArray(charData.states) ? charData.states : []
+      character.states = states.map((stateName) => 
         new CharacterState(stateName)
       )
       
