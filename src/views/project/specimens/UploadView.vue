@@ -37,13 +37,13 @@ async function parseContent(content: string) {
       ['catalog number', 'catalog_number'],
       ['institution code', 'institution_code'],
       ['collection code', 'collection_code'],
+      ['notes', 'description'],
     ])
     const taxaColumnsMap: Map<string, string> = new Map([
       ['author', 'scientific_name_author'],
       ['author*', 'scientific_name_author'],
       ['year', 'scientific_name_year'],
       ['year*', 'scientific_name_year'],
-      ['notes', 'notes'],
     ])
     nameColumnMap.forEach((value, key) =>
       taxaColumnsMap.set(value.toLowerCase(), key)
