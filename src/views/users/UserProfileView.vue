@@ -468,6 +468,16 @@ const submitButtonText = computed(() => {
         <h2 class="section-heading">ORCID</h2>
         <div class="section-dividing-line"></div>
 
+        <div v-if="userData.user.orcidWriteAccessRequired" class="alert alert-warning mt-3">
+          <strong>Action Required:</strong> Your ORCID account is linked with read-only permission.
+          To allow MorphoBank to add your published works to your ORCID record, please
+          re-authenticate with write permission.
+          <a :href="orcidLoginUrl" class="btn btn-sm btn-warning ms-2">
+            <img src="/ORCIDiD_iconvector.svg" class="orcid-icon" alt="ORCID" />
+            Grant Write Permission
+          </a>
+        </div>
+
         <div class="form-group">
           <div class="orcid-container">
             <div v-if="!userData.user.orcid">
@@ -496,6 +506,8 @@ const submitButtonText = computed(() => {
                 >
                   {{ userData.user.orcid }}
                 </a>
+                <span v-if="userData.user.orcidWriteAccess" class="badge bg-success ms-2">Read &amp; Write</span>
+                <span v-else class="badge bg-secondary ms-2">Read Only</span>
               </div>
               <button 
                 type="button" 

@@ -11,6 +11,8 @@ export const useUserStore = defineStore({
       lastName: null,
       email: null,
       orcid: null,
+      orcidWriteAccess: false,
+      orcidWriteAccessRequired: false,
       institutions: null,
       isInstitutionUnaffiliated: false,
     },
@@ -72,6 +74,8 @@ export const useUserStore = defineStore({
       this.originalUser.lastName = responseData.lname
       this.originalUser.email = responseData.email
       this.originalUser.orcid = responseData.orcid
+      this.originalUser.orcidWriteAccess = !!responseData.orcid_write_access
+      this.originalUser.orcidWriteAccessRequired = !!responseData.orcid_write_access_required
       this.originalUser.institutions = responseData.institutions
       this.originalUser.isInstitutionUnaffiliated = responseData.is_institution_unaffiliated || false
     },
