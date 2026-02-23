@@ -13,6 +13,7 @@ export const useUserStore = defineStore({
       orcid: null,
       orcidWriteAccess: false,
       orcidWriteAccessRequired: false,
+      orcidOptOut: false,
       institutions: null,
       isInstitutionUnaffiliated: false,
     },
@@ -22,6 +23,7 @@ export const useUserStore = defineStore({
       email: null,
       newPassword: null,
       newPasswordConfirm: null,
+      orcidOptOut: false,
       institutions: null,
       isInstitutionUnaffiliated: false,
     },
@@ -76,6 +78,7 @@ export const useUserStore = defineStore({
       this.originalUser.orcid = responseData.orcid
       this.originalUser.orcidWriteAccess = !!responseData.orcid_write_access
       this.originalUser.orcidWriteAccessRequired = !!responseData.orcid_write_access_required
+      this.originalUser.orcidOptOut = !!responseData.orcid_opt_out
       this.originalUser.institutions = responseData.institutions
       this.originalUser.isInstitutionUnaffiliated = responseData.is_institution_unaffiliated || false
     },
@@ -84,6 +87,7 @@ export const useUserStore = defineStore({
       this.userForm.firstName = this.originalUser.firstName
       this.userForm.lastName = this.originalUser.lastName
       this.userForm.email = this.originalUser.email
+      this.userForm.orcidOptOut = this.originalUser.orcidOptOut
       this.userForm.institutions = [...this.originalUser.institutions]
       this.userForm.isInstitutionUnaffiliated = this.originalUser.isInstitutionUnaffiliated
     },
