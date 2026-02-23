@@ -155,8 +155,9 @@ const unlinkORCID = async () => {
     const result = await authStore.unlinkORCID()
     
     if (result.success) {
-      // Update local user data to reflect the change
       userData.user.orcid = null
+      userData.user.orcidWriteAccess = false
+      userData.user.orcidWriteAccessRequired = false
       showSuccess('ORCID successfully unlinked from your account')
     } else {
       showError(result.message || 'Failed to unlink ORCID')
@@ -481,6 +482,15 @@ const submitButtonText = computed(() => {
               </a>
             </div>
             <div v-else class="orcid-linked-container">
+              <div v-if="userData.user.orcidWriteAccessRequired" class="alert alert-warning mb-3">
+                <strong>Action Required:</strong> Your ORCID account is linked with read-only permission.
+                To allow MorphoBank to add your published works to your ORCID record, please
+                re-authenticate with write permission.
+                <a :href="orcidLoginUrl" class="btn btn-sm btn-warning ms-2">
+                  <img src="/ORCIDiD_iconvector.svg" class="orcid-icon" alt="ORCID" />
+                  Grant Write Permission
+                </a>
+              </div>
               <div class="orcid-linked">
                 <img
                   alt="ORCID logo"
@@ -496,6 +506,8 @@ const submitButtonText = computed(() => {
                 >
                   {{ userData.user.orcid }}
                 </a>
+                <span v-if="userData.user.orcidWriteAccess" class="badge bg-success ms-2">Read &amp; Write</span>
+                <span v-else class="badge bg-secondary ms-2">Read Only</span>
               </div>
               <button 
                 type="button" 

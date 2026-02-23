@@ -538,6 +538,8 @@ onMounted(async () => {
                 >
                   {{ user.orcid }}
                 </a>
+                <span v-if="user.orcidWriteAccess" class="badge bg-success ms-1">Read &amp; Write</span>
+                <span v-else class="badge bg-secondary ms-1">Read Only</span>
               </div>
               <div v-if="user?.lastConfirmedProfileOn" class="mb-2">
                 <strong>Profile Confirmed:</strong>
