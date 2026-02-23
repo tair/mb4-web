@@ -108,6 +108,16 @@ export const useProjectUsersStore = defineStore({
       return users
     },
     async updateOrcidOptOut(projectId, optOut) {
+      const authStore = useAuthStore()
+      const userId = authStore.user?.userId
+      const user = userId ? this.map.get(userId) : null
+      const previousValue = user?.orcid_publish_opt_out
+
+      // Optimistic update so the checkbox reflects the new value immediately
+      if (user) {
+        user.orcid_publish_opt_out = optOut ? 1 : 0
+      }
+
       try {
         const response = await apiService.post(
           `/projects/${projectId}/users/orcid-opt-out`,
@@ -115,17 +125,22 @@ export const useProjectUsersStore = defineStore({
         )
         if (response.ok) {
           const data = await response.json()
-          const authStore = useAuthStore()
-          const userId = authStore.user?.userId
-          if (userId && this.map.has(userId)) {
-            const user = this.map.get(userId)
+          if (user) {
             user.orcid_publish_opt_out = data.orcid_publish_opt_out
           }
           return true
         }
+        // Rollback on non-ok response
+        if (user) {
+          user.orcid_publish_opt_out = previousValue
+        }
         return false
       } catch (error) {
         console.error('Error updating ORCID opt-out:', error)
+        // Rollback on error
+        if (user) {
+          user.orcid_publish_opt_out = previousValue
+        }
         return false
       }
     },

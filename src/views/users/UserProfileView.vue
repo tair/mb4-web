@@ -155,8 +155,9 @@ const unlinkORCID = async () => {
     const result = await authStore.unlinkORCID()
     
     if (result.success) {
-      // Update local user data to reflect the change
       userData.user.orcid = null
+      userData.user.orcidWriteAccess = false
+      userData.user.orcidWriteAccessRequired = false
       showSuccess('ORCID successfully unlinked from your account')
     } else {
       showError(result.message || 'Failed to unlink ORCID')
@@ -468,16 +469,6 @@ const submitButtonText = computed(() => {
         <h2 class="section-heading">ORCID</h2>
         <div class="section-dividing-line"></div>
 
-        <div v-if="userData.user.orcidWriteAccessRequired" class="alert alert-warning mt-3">
-          <strong>Action Required:</strong> Your ORCID account is linked with read-only permission.
-          To allow MorphoBank to add your published works to your ORCID record, please
-          re-authenticate with write permission.
-          <a :href="orcidLoginUrl" class="btn btn-sm btn-warning ms-2">
-            <img src="/ORCIDiD_iconvector.svg" class="orcid-icon" alt="ORCID" />
-            Grant Write Permission
-          </a>
-        </div>
-
         <div class="form-group">
           <div class="orcid-container">
             <div v-if="!userData.user.orcid">
@@ -491,6 +482,15 @@ const submitButtonText = computed(() => {
               </a>
             </div>
             <div v-else class="orcid-linked-container">
+              <div v-if="userData.user.orcidWriteAccessRequired" class="alert alert-warning mb-3">
+                <strong>Action Required:</strong> Your ORCID account is linked with read-only permission.
+                To allow MorphoBank to add your published works to your ORCID record, please
+                re-authenticate with write permission.
+                <a :href="orcidLoginUrl" class="btn btn-sm btn-warning ms-2">
+                  <img src="/ORCIDiD_iconvector.svg" class="orcid-icon" alt="ORCID" />
+                  Grant Write Permission
+                </a>
+              </div>
               <div class="orcid-linked">
                 <img
                   alt="ORCID logo"
