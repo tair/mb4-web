@@ -522,6 +522,24 @@ const submitButtonText = computed(() => {
           </div>
         </div>
 
+        <div v-if="userData.user.orcid" class="form-group">
+          <label class="form-check">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              v-model="userData.userForm.orcidOptOut"
+              @focus="handleFieldFocus"
+            />
+            <span class="form-check-label">
+              Opt out of ORCID publishing for all projects
+            </span>
+          </label>
+          <p class="field-description">
+            When checked, MorphoBank will not push any published works to your ORCID record.
+            You can also opt out on a per-project basis from each project's overview page.
+          </p>
+        </div>
+
         <div class="form-buttons">
           <button class="btn btn-primary" type="submit">
             {{ submitButtonText }}
