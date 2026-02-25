@@ -317,7 +317,7 @@ onMounted(async () => {
                       >
                         {{ user.email }}
                       </RouterLink>
-                      <span v-if="user.orcid" class="ms-2" title="ORCID linked">
+                      <span v-if="user.orcid" class="ms-2" :title="user.orcidWriteAccess ? 'ORCID linked (Read & Write)' : 'ORCID linked (Read Only)'">
                         <img
                           src="/ORCIDiD_iconvector.svg"
                           alt="ORCID"

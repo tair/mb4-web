@@ -22,6 +22,7 @@ export const useAuthStore = defineStore({
       accessToken: null,
       refreshToken: null,
       name: null,
+      scope: null,
     },
   }),
   getters: {
@@ -66,6 +67,7 @@ export const useAuthStore = defineStore({
         accessToken: null,
         refreshToken: null,
         name: null,
+        scope: null,
       }
       this.err = null
       localStorage.removeItem('mb-user')
@@ -355,6 +357,7 @@ export const useAuthStore = defineStore({
           name: resData.orcidProfile.name,
           accessToken: resData.orcidProfile.access_token,
           refreshToken: resData.orcidProfile.refresh_token,
+          scope: resData.orcidProfile.scope,
         }
         this.orcid = orcidObj
         localStorage.setItem('orcid-user', JSON.stringify(orcidObj))
@@ -441,6 +444,27 @@ export const useAuthStore = defineStore({
           showRegister: false,
           redirectToProfile: true, // redirect to profile page to re-link in case the user is logged in
         }
+      }
+    },
+
+    async unlinkORCID() {
+      try {
+        const url = '/auth/unlink-orcid'
+        await apiService.post(url, {})
+        
+        // Clear local ORCID state
+        this.orcid = {
+          orcid: null,
+          name: null,
+          accessToken: null,
+          refreshToken: null,
+          scope: null,
+        }
+        localStorage.removeItem('orcid-user')
+        return { success: true }
+      } catch (e) {
+        console.error('Error unlinking ORCID:', e)
+        return { success: false, message: e.message || 'Failed to unlink ORCID' }
       }
     },
   },
