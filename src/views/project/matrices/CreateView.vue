@@ -27,7 +27,6 @@ const uploadError = ref('')
 const uploadTask = ref({ id: null, status: null })
 const projectId = route.params.id
 const isConvertingCsv = ref(false)
-const showAiExtractor = ref(false)
 const uploadType = computed(() => route.query.uploadType || 'nexus')
 
 // Taxonomic unit options for dropdown
@@ -680,8 +679,6 @@ function handleCharactersExtracted(extractedCharacters) {
     }
   }
 
-  // Collapse the AI extractor after adding characters
-  showAiExtractor.value = false
 }
 
 // Handle extraction errors
@@ -861,10 +858,8 @@ onUnmounted(() => {
               <p><strong>Mixed continuous and discrete character CSV or Excel files are currently NOT handled.</strong></p>
             </div>
             <p v-else>
-              Note - your matrix must have character names for all the
-              characters and these character names must each be different. If
-              this is a file with combined molecular and morphological data, or
-              molecular data only, it must be submitted to the Documents area.
+              If your matrix does not have character names and states, you will
+              have a chance to upload a PDF with that information in the next screen.
             </p>
             <div class="form-group">
               <label for="matrix-notes">
@@ -982,7 +977,7 @@ onUnmounted(() => {
             Please review the characters that will be merged into your existing
             matrix.
           </p>
-          <p v-else>
+          <p v-else-if="importedMatrix?.characters?.size > 0">
             Please confirm that the character and their states are correct.
           </p>
           <div
@@ -993,27 +988,11 @@ onUnmounted(() => {
             Loading...
           </div>
           <div class="matrix-confirmation-screen" v-else>
-            <!-- AI Character Extractor: shown by default when no characters, toggled via button otherwise -->
-            <div v-if="importedMatrix?.characters && importedMatrix.characters.size > 0" class="ai-extractor-toggle">
-              <button
-                type="button"
-                class="btn btn-outline-primary btn-sm ai-toggle-btn"
-                @click="showAiExtractor = !showAiExtractor"
-              >
-                <span class="ai-icon">&#x2728;</span>
-                {{ showAiExtractor ? 'Hide AI Extractor' : 'Add Characters from PDF' }}
-              </button>
-              <span class="ai-toggle-hint">
-                Use AI to extract additional characters from a PDF and add them to the matrix.
-              </span>
-            </div>
-
             <AiCharacterExtractor
-              v-if="!importedMatrix?.characters || importedMatrix.characters.size === 0 || showAiExtractor"
+              v-if="!importedMatrix?.characters || importedMatrix.characters.size === 0"
               :total-characters="1000"
               page-range="all"
               :zero-indexed="false"
-              :existing-characters="importedMatrix?.characters"
               @characters-extracted="handleCharactersExtracted"
               @extraction-error="handleExtractionError"
             />
