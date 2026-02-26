@@ -246,8 +246,23 @@ class ApiService {
           errorData?.code || 'PRECONDITION_FAILED'
         )
         
-      case 422:
-        throw createError(`Validation error: ${errorMessage}`, 'VALIDATION_ERROR')
+      case 422: {
+        // Handle FastAPI validation errors which use the 'detail' field
+        let validationMessage = errorMessage
+        if (errorData && errorData.detail) {
+          if (Array.isArray(errorData.detail)) {
+            // FastAPI field-level validation errors: [{loc: [...], msg: "...", type: "..."}, ...]
+            validationMessage = errorData.detail
+              .map(e => `${e.loc?.join('.')}: ${e.msg}`)
+              .join(', ')
+          } else if (typeof errorData.detail === 'string') {
+            validationMessage = errorData.detail
+          } else {
+            validationMessage = JSON.stringify(errorData.detail)
+          }
+        }
+        throw createError(`Validation error: ${validationMessage}`, 'VALIDATION_ERROR')
+      }
         
       case 429:
         throw createError('Too many requests. Please try again later.', 'RATE_LIMITED', true)

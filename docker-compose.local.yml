@@ -9,6 +9,9 @@ services:
             target: dev-stage
         image: mb4-web-dev:1.0
         container_name: mb4-web-container-dev
+        environment:
+            - CHOKIDAR_USEPOLLING=true
+            - VITE_USE_POLLING=true
         volumes:
             - .:/app
             - /app/node_modules
