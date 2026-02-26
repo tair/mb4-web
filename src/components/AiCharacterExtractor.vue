@@ -69,7 +69,7 @@ const fileInputRef = ref(null)
 
 function handlePdfFileSelect(event) {
   const file = event.target.files[0]
-  if (file && file.type === 'application/pdf') {
+  if (file && (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'))) {
     pdfFile.value = file
     uploadError.value = ''
   } else {
@@ -141,6 +141,7 @@ async function extractCharactersFromPdf() {
 
     if (skippedCount > 0) {
       showWarning(
+        'Warning',
         `${skippedCount} entr${skippedCount === 1 ? 'y' : 'ies'} with missing or empty character name${skippedCount === 1 ? ' was' : ' were'} skipped.`
       )
     }
