@@ -677,6 +677,18 @@ function handleCharactersExtracted(extractedCharacters) {
       for (const taxonKey of importedMatrix.cells.keys()) {
         importedMatrix.cells.set(taxonKey, [])
       }
+    } else {
+      // The parser pads cell rows to NCHAR (declared dimension). For
+      // UNDEFINED_CHARACTERS matrices NCHAR > characters.size, so rows are
+      // longer than the named-character count. Trim them to initialCharCount
+      // now; the padding loop below will then bring every row to exactly
+      // initialCharCount + newCharCount == characters.size.
+      for (const taxonKey of importedMatrix.cells.keys()) {
+        const row = importedMatrix.cells.get(taxonKey)
+        if (row.length > initialCharCount) {
+          importedMatrix.cells.set(taxonKey, row.slice(0, initialCharCount))
+        }
+      }
     }
   }
 
@@ -1709,33 +1721,5 @@ div.matrix-confirmation-screen table td {
 
 .no-conflicts .alert-success {
   border-left: 4px solid #28a745;
-}
-
-.ai-extractor-toggle {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding: 12px 16px;
-  background: #f0f7ff;
-  border: 1px solid #bee3f8;
-  border-radius: 8px;
-}
-
-.ai-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.ai-icon {
-  font-size: 16px;
-}
-
-.ai-toggle-hint {
-  color: #5a6c7d;
-  font-size: 13px;
 }
 </style>
