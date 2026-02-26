@@ -41,6 +41,7 @@
 import { ref } from 'vue'
 import { apiService } from '@/services/apiService.js'
 import { Character, CharacterState, CharacterType } from '@/lib/matrix-parser/MatrixObject.ts'
+import { useNotifications } from '@/composables/useNotifications'
 
 const props = defineProps({
   totalCharacters: {
@@ -58,6 +59,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['charactersExtracted', 'extractionError'])
+
+const { showWarning } = useNotifications()
 
 const pdfFile = ref(null)
 const isProcessingPdf = ref(false)
@@ -111,13 +114,29 @@ async function extractCharactersFromPdf() {
     }
 
     const characters = []
+    let skippedCount = 0
     for (let i = 0; i < characterStates.length; i++) {
       const charData = characterStates[i]
-      const character = new Character(i, charData.character)
+      const name = charData?.character
+      if (name == null || String(name).trim() === '') {
+        skippedCount++
+        continue
+      }
+      const character = new Character(characters.length, String(name).trim())
       character.type = CharacterType.DISCRETE
       const states = Array.isArray(charData.states) ? charData.states : []
       character.states = states.map((stateName) => new CharacterState(stateName))
       characters.push(character)
+    }
+
+    if (skippedCount > 0) {
+      showWarning(
+        `${skippedCount} entr${skippedCount === 1 ? 'y' : 'ies'} with missing or empty character name${skippedCount === 1 ? ' was' : ' were'} skipped.`
+      )
+    }
+
+    if (characters.length === 0) {
+      throw new Error('No valid characters were extracted. All entries had missing or empty character names.')
     }
 
     emit('charactersExtracted', characters)

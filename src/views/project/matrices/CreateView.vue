@@ -7,7 +7,7 @@ import { useTaxaStore } from '@/stores/TaxaStore'
 import { useFileTransferStore } from '@/stores/FileTransferStore'
 import { useNotifications } from '@/composables/useNotifications'
 import { NavigationPatterns } from '@/utils/navigationUtils.js'
-import { CharacterStateIncompleteType, Cell } from '@/lib/matrix-parser/MatrixObject.ts'
+import { CharacterStateIncompleteType, Cell, MatrixErrorType } from '@/lib/matrix-parser/MatrixObject.ts'
 import { getIncompleteStateText } from '@/lib/matrix-parser/text.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
 import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
@@ -277,7 +277,8 @@ async function importMatrix(event) {
       const result = parser.parseMatrixWithErrors(reader.result)
       if (result.error) {
         // Check if this is the "no characters" error - if so, we'll allow proceeding with an empty matrix
-        const isNoCharactersError = result.error.userMessage?.includes('does not explicitly define names for all characters')
+        const isNoCharactersError = result.error.errorType === MatrixErrorType.NO_CHARACTERS
+          || result.error.errorType === MatrixErrorType.UNDEFINED_CHARACTERS
         
         if (isNoCharactersError && result.matrixObject) {
           // Allow proceeding with empty matrix - user can add characters via PDF on the characters screen
@@ -615,11 +616,23 @@ function handleCharactersExtracted(extractedCharacters) {
   // Track the initial character count to calculate actual new characters added
   const initialCharCount = importedMatrix.characters.size
 
-  // Add each extracted character to the importedMatrix
+  // Add each extracted character to the importedMatrix, deduplicating names
+  // to prevent Map.set from overwriting existing entries (which would corrupt
+  // characterNumber sequencing since Map.size doesn't increment on overwrite).
   for (const character of extractedCharacters) {
     const characterIndex = importedMatrix.characters.size
     character.characterNumber = characterIndex
-    importedMatrix.characters.set(character.name, character)
+
+    let insertName = character.name
+    if (importedMatrix.characters.has(insertName)) {
+      const baseName = character.name
+      for (let i = 2; importedMatrix.characters.has(insertName); i++) {
+        insertName = `${baseName} - ${i}`
+      }
+      character.duplicateCharacter = baseName
+      character.name = insertName
+    }
+    importedMatrix.characters.set(insertName, character)
   }
 
   // Calculate the actual number of new characters added (not overwritten)
