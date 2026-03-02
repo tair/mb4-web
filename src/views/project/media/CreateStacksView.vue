@@ -407,8 +407,10 @@ onMounted(() => {
     <div class="alert alert-info">
       <i class="fa fa-info-circle"></i>
       Upload a ZIP archive containing CT scan slices in DICOM (.dcm, .dicom) or TIFF (.tif, .tiff) formats.
-      The ZIP is stored as-is; slices are not unpacked into separate media files. A thumbnail is generated from the first image file found in the archive.
+      The ZIP is stored as-is; slices are not unpacked into separate media files.
       <strong>The maximum accepted file size for a ZIP archive is 4 GB.</strong>
+      <br />
+      <strong>Note:</strong> Larger files require high bandwidth connections to avoid upload timeouts. If you experience timeout errors with large files, consider splitting the archive into smaller parts or ensuring you have a stable, high-speed internet connection.
     </div>
     <form @submit.prevent="createStacksMedia">
       <div class="row setup-content">
