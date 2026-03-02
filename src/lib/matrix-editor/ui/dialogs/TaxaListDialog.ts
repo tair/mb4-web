@@ -448,7 +448,7 @@ export class TaxaListDialog extends Dialog {
       </div>
       <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
         <button type="button" class="btn btn-outline-primary createCompositeBtn">
-          <i class="fa-solid fa-layer-group"></i> Create Composite Taxon
+          <i class="fa-solid fa-layer-group"></i> Create Composite Taxon/OTU
         </button>
         <small class="text-muted ms-2">
           Combine multiple taxa rows into a single composite row with merged scores.

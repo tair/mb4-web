@@ -31,7 +31,7 @@ export class CreateCompositeTaxonDialog extends Dialog {
 
   protected override initialize(): void {
     super.initialize()
-    this.setTitle('Create Composite Taxon')
+    this.setTitle('Create Composite Taxon/OTU')
     this.setDisposeOnHide(true)
     this.addButton(ModalDefaultButtons.CANCEL)
   }
@@ -229,7 +229,7 @@ export class CreateCompositeTaxonDialog extends Dialog {
 
         <div class="d-flex justify-content-end">
           <button type="button" class="btn btn-primary createCompositeBtn" disabled>
-            Create Composite Taxon
+            Create Composite Taxon/OTU
           </button>
         </div>
       </div>
