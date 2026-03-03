@@ -261,6 +261,7 @@ const submitForm = async () => {
     orcid: state.orcid,
     accessToken: state.accessToken,
     refreshToken: state.refreshToken,
+    orcidWriteAccess: authStore.orcid.scope?.includes('/activities/update') || false,
   }
 
   try {

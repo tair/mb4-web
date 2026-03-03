@@ -638,11 +638,21 @@ async function parseMatrixFile(file) {
             cellsArray: [],
           }
 
-          // Process characters
+          // Process characters, deduplicating names to prevent Map overwrites
+          // that would corrupt characterNumber sequencing.
           const characters = matrixObject.getCharacters()
           characters.forEach((character, index) => {
             character.characterNumber = index
-            convertedMatrix.characters.set(character.name, character)
+            let insertName = character.name
+            if (convertedMatrix.characters.has(insertName)) {
+              const baseName = character.name
+              for (let i = 2; convertedMatrix.characters.has(insertName); i++) {
+                insertName = `${baseName} - ${i}`
+              }
+              character.duplicateCharacter = baseName
+              character.name = insertName
+            }
+            convertedMatrix.characters.set(insertName, character)
           })
 
           // Process taxa

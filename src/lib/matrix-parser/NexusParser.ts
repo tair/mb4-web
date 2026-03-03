@@ -489,7 +489,14 @@ export class NexusParser extends AbstractParser {
   }
 
   private doMatrixCommand(): void {
-    const characterCount = this.matrixObject.getCharacterCount()
+    // Use the declared NCHAR dimension (stored as 'CHARS') if available,
+    // falling back to the number of named characters. This is critical for
+    // files without CHARLABELS: characters.size would be 0 but the MATRIX
+    // block still has NCHAR cells per row. Without this, cell data (e.g.
+    // "01010") would be misread as taxon names, doubling the cell entries.
+    const characterCount =
+      this.matrixObject.getDimensions()['CHARS'] ??
+      this.matrixObject.getCharacterCount()
     const shouldAddTaxa = !this.matrixObject.getTaxonCount()
 
     while (this.untilToken([Token.SEMICOLON])) {
