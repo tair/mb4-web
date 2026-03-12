@@ -66,7 +66,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js'
 
 // Dynamic loader imports for better performance
 const loaderCache = new Map()
@@ -314,9 +314,6 @@ let controls = null
 let currentModel = null
 let animationId = null
 
-// Control states
-const autoRotate = ref(false) // Disabled by default - manual control only
-
 onMounted(() => {
   initThreeJS()
   loadModel()
@@ -356,29 +353,34 @@ function initThreeJS() {
   )
   camera.position.set(5, 5, 5)
 
-  // Renderer
-  renderer = new THREE.WebGLRenderer({ 
-    antialias: true,
-    powerPreference: "high-performance",
-    alpha: false
-  })
+  // Renderer - wrap in try/catch to handle WebGL context failures gracefully
+  try {
+    renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: "high-performance",
+      alpha: false
+    })
+  } catch (e) {
+    error.value = 'WebGL is not available in your browser. Please enable hardware acceleration in your browser settings or try a different browser.'
+    return
+  }
   renderer.setSize(containerWidth, containerHeight)
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFSoftShadowMap
-  
+
   // Performance optimizations
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
   renderer.outputEncoding = THREE.sRGBEncoding
-  
+
   viewerContainer.value.appendChild(renderer.domElement)
 
-  // Controls
-  controls = new OrbitControls(camera, renderer.domElement)
-  controls.enableDamping = true
-  controls.dampingFactor = 0.05
-  controls.enableZoom = true
-  controls.autoRotate = autoRotate.value
-  controls.autoRotateSpeed = 2.0
+  // Controls - TrackballControls allows full 360° rotation in all axes
+  controls = new TrackballControls(camera, renderer.domElement)
+  controls.rotateSpeed = 5.0
+  controls.zoomSpeed = 1.2
+  controls.panSpeed = 0.8
+  controls.dynamicDampingFactor = 0.1
+  controls.staticMoving = false
 
   // Lighting
   setupLighting()
@@ -428,7 +430,7 @@ function setupLighting() {
 }
 
 async function loadModel() {
-  if (!props.modelUrl || !props.fileExtension) return
+  if (!props.modelUrl || !props.fileExtension || !renderer) return
 
   const signature = `${props.modelUrl}|${props.fileExtension.toLowerCase()}`
 
@@ -824,14 +826,16 @@ function zoomCamera(direction) {
   const direction3D = new THREE.Vector3()
   
   // Get the direction from camera to target
-  direction3D.subVectors(camera.position, controls.target).normalize()
+  direction3D.subVectors(camera.position, controls.target)
+  const distance = direction3D.length()
+  direction3D.normalize()
 
   if (direction === 'in') {
     // Move camera closer to target
-    camera.position.add(direction3D.multiplyScalar(-zoomFactor * controls.getDistance()))
+    camera.position.add(direction3D.multiplyScalar(-zoomFactor * distance))
   } else if (direction === 'out') {
     // Move camera away from target
-    camera.position.add(direction3D.multiplyScalar(zoomFactor * controls.getDistance()))
+    camera.position.add(direction3D.multiplyScalar(zoomFactor * distance))
   }
 
   controls.update()
