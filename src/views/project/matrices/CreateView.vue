@@ -281,11 +281,10 @@ async function importMatrix(event) {
     try {
       const result = parser.parseMatrixWithErrors(reader.result)
       if (result.error) {
-        // Check if this is the "no characters" error - if so, we'll allow proceeding with an empty matrix
-        const isNoCharactersError = result.error.errorType === MatrixErrorType.NO_CHARACTERS
-          || result.error.errorType === MatrixErrorType.UNDEFINED_CHARACTERS
+        // Allow missing character definitions so users can fill characters in this wizard.
+        const isUndefinedCharactersError = result.error.errorType === MatrixErrorType.UNDEFINED_CHARACTERS
         
-        if (isNoCharactersError && result.matrixObject) {
+        if (isUndefinedCharactersError && result.matrixObject) {
           // Allow proceeding with empty matrix - user can add characters via PDF on the characters screen
           Object.assign(importedMatrix, result.matrixObject)
           uploadError.value = '' // Clear error, we'll handle this in the characters screen
@@ -1100,7 +1099,7 @@ onUnmounted(() => {
             <button
               type="button"
               class="btn btn-primary btn-step-next"
-              :disabled="incompletedCharactersCount > 0"
+              :disabled="incompletedCharactersCount > 0 || !importedMatrix?.characters || importedMatrix.characters.size === 0"
               @click="moveToReview"
             >
               Next
