@@ -11,7 +11,6 @@ import { useNotifications } from '@/composables/useNotifications'
 import { stacksSchema } from '@/views/project/media/schema.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import CopyrightFormFields from '@/components/project/CopyrightFormFields.vue'
-import JSZip from 'jszip'
 
 const route = useRoute()
 const projectId = route.params.id
@@ -172,71 +171,6 @@ function formatTime(seconds) {
   return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`
 }
 
-// Supported image extensions for thumbnail extraction
-const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'tif', 'tiff', 'gif', 'bmp', 'webp']
-
-/**
- * Extract the first image from a ZIP file in the browser.
- * This avoids downloading the entire ZIP on the backend for thumbnail generation.
- * 
- * @param {File} zipFile - The ZIP file to extract from
- * @returns {Promise<{blob: Blob, filename: string, mimetype: string} | null>}
- */
-async function extractFirstImageFromZip(zipFile) {
-  try {
-    const zip = await JSZip.loadAsync(zipFile)
-    
-    // Get all file entries, sorted by name for consistent ordering
-    const entries = Object.keys(zip.files)
-      .filter(name => {
-        const file = zip.files[name]
-        // Skip directories and macOS metadata
-        if (file.dir) return false
-        if (name.startsWith('__MACOSX/')) return false
-        if (name.startsWith('._')) return false
-        if (name.includes('/.DS_Store') || name === '.DS_Store') return false
-        if (name.includes('/Thumbs.db') || name === 'Thumbs.db') return false
-        
-        // Check if it's an image
-        const extension = name.split('.').pop()?.toLowerCase() || ''
-        return IMAGE_EXTENSIONS.includes(extension)
-      })
-      .sort()
-    
-    if (entries.length === 0) {
-      console.warn('No image files found in ZIP for thumbnail extraction')
-      return null
-    }
-    
-    // Get the first image file
-    const firstImagePath = entries[0]
-    const imageFile = zip.files[firstImagePath]
-    
-    // Extract the image as a blob
-    const blob = await imageFile.async('blob')
-    const filename = firstImagePath.split('/').pop() || firstImagePath
-    const extension = filename.split('.').pop()?.toLowerCase() || 'jpg'
-    
-    // Determine mimetype
-    const mimetypes = {
-      'png': 'image/png',
-      'jpg': 'image/jpeg',
-      'jpeg': 'image/jpeg',
-      'tif': 'image/tiff',
-      'tiff': 'image/tiff',
-      'gif': 'image/gif',
-      'bmp': 'image/bmp',
-      'webp': 'image/webp',
-    }
-    const mimetype = mimetypes[extension] || 'application/octet-stream'
-    
-    return { blob, filename, mimetype }
-  } catch (error) {
-    console.error('Error extracting image from ZIP:', error)
-    return null
-  }
-}
-
 async function createStacksMedia(event) {
   if (isUploading.value) return // Prevent double submission
   
@@ -306,7 +240,7 @@ async function createStacksMedia(event) {
  * This bypasses CloudFront/httpd proxy timeouts
  */
 async function uploadViaS3Direct(formData, file) {
-  // Phase 1: Initiate the upload and extract thumbnail in parallel
+  // Phase 1: Initiate the upload
   uploadPhase.value = 'initiating'
   
   const metadata = {
@@ -321,11 +255,7 @@ async function uploadViaS3Direct(formData, file) {
     notes: formData.get('notes'),
   }
 
-  // Start both operations in parallel for efficiency
-  const [initResponse, thumbnailData] = await Promise.all([
-    mediaStore.initiateStacksUpload(projectId, metadata),
-    extractFirstImageFromZip(file)
-  ])
+  const initResponse = await mediaStore.initiateStacksUpload(projectId, metadata)
   
   if (!initResponse || !initResponse.uploadUrl) {
     throw new Error('Failed to get upload URL from server')
@@ -339,17 +269,14 @@ async function uploadViaS3Direct(formData, file) {
   try {
     await uploadToS3WithProgress(uploadUrl, file)
   } catch (uploadError) {
-    // If S3 upload fails, we should clean up the pending media record
-    // The backend will handle orphan cleanup, but we inform the user
     throw new Error(`Upload to storage failed: ${uploadError.message}`)
   }
 
-  // Phase 3: Complete the upload with the extracted thumbnail
-  // This sends the thumbnail to the backend instead of having the backend download the ZIP
+  // Phase 3: Complete the upload (UI uses a static CT scan icon, no thumbnail needed)
   uploadPhase.value = 'processing'
   uploadProgress.value = 100
   
-  const media = await mediaStore.completeStacksUpload(projectId, mediaId, thumbnailData)
+  const media = await mediaStore.completeStacksUpload(projectId, mediaId)
   
   if (!media) {
     throw new Error('Failed to finalize upload')
