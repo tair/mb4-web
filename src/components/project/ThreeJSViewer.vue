@@ -382,6 +382,10 @@ function initThreeJS() {
   controls.dynamicDampingFactor = 0.1
   controls.staticMoving = false
 
+  // TrackballControls caches screen dimensions at construction;
+  // recalculate on resize so mouse mapping stays correct.
+  window.addEventListener('resize', onWindowResize)
+
   // Lighting
   setupLighting()
 
@@ -887,18 +891,26 @@ function cleanup() {
   if (controls) {
     controls.dispose()
   }
-  
+
+  window.removeEventListener('resize', onWindowResize)
+
   // Clear loader cache to free memory
   loaderCache.clear()
 }
 
+function onWindowResize() {
+  if (controls) {
+    controls.handleResize()
+  }
+}
+
 // Mouse interaction helpers (for touch devices)
 function onMouseDown(event) {
-  // Handled by OrbitControls
+  // Handled by TrackballControls
 }
 
 function onMouseMove(event) {
-  // Handled by OrbitControls
+  // Handled by TrackballControls
 }
 
 function onMouseUp(event) {
