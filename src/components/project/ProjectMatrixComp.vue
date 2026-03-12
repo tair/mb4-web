@@ -10,6 +10,7 @@ import { logDownload, DOWNLOAD_TYPES } from '@/lib/analytics.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import { getTaxonomicUnitOptions } from '@/utils/taxa'
 import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
+import { generateUniqueNameWithPostfix } from '@/lib/matrix-parser/MatrixObject.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
 import { useCharactersStore } from '@/stores/CharactersStore'
 import { useTaxaStore } from '@/stores/TaxaStore'
@@ -643,13 +644,12 @@ async function parseMatrixFile(file) {
           const characters = matrixObject.getCharacters()
           characters.forEach((character, index) => {
             character.characterNumber = index
-            let insertName = character.name
-            if (convertedMatrix.characters.has(insertName)) {
-              const baseName = character.name
-              for (let i = 2; convertedMatrix.characters.has(insertName); i++) {
-                insertName = `${baseName} - ${i}`
-              }
-              character.duplicateCharacter = baseName
+            const insertName = generateUniqueNameWithPostfix(
+              character.name,
+              (name) => convertedMatrix.characters.has(name)
+            )
+            if (insertName !== character.name) {
+              character.duplicateCharacter = character.name
               character.name = insertName
             }
             convertedMatrix.characters.set(insertName, character)
