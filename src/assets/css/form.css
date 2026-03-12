@@ -109,6 +109,22 @@
   height: 20px;
 }
 
+.orcid-linked-container {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.orcid-link {
+  color: #a6ce39;
+  text-decoration: none;
+}
+
+.orcid-link:hover {
+  text-decoration: underline;
+}
+
 .orcid-container {
   display: flex;
   align-items: center;

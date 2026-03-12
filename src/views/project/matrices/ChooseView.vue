@@ -18,8 +18,11 @@ const projectId = route.params.id
   <div>
     <p>
       MorphoBank can accept Nexus or TNT files that have the character and
-      state descriptions embedded in the file. If your file contains any of
-      the following, please load it to the
+      state descriptions embedded in the file. It can also process Nexus
+      files that don't have the character states in the file itself, if
+      there is a separate document that contains the character and state
+      descriptions. If your file contains any of the following, please
+      load it to the
       <RouterLink
         class="m-0 p-0"
         :to="`/myprojects/${projectId}/documents`"
