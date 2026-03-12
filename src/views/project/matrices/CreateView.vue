@@ -7,7 +7,12 @@ import { useTaxaStore } from '@/stores/TaxaStore'
 import { useFileTransferStore } from '@/stores/FileTransferStore'
 import { useNotifications } from '@/composables/useNotifications'
 import { NavigationPatterns } from '@/utils/navigationUtils.js'
-import { CharacterStateIncompleteType, Cell } from '@/lib/matrix-parser/MatrixObject.ts'
+import {
+  CharacterStateIncompleteType,
+  Cell,
+  MatrixErrorType,
+  generateUniqueNameWithPostfix,
+} from '@/lib/matrix-parser/MatrixObject.ts'
 import { getIncompleteStateText } from '@/lib/matrix-parser/text.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
 import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
@@ -277,7 +282,8 @@ async function importMatrix(event) {
       const result = parser.parseMatrixWithErrors(reader.result)
       if (result.error) {
         // Check if this is the "no characters" error - if so, we'll allow proceeding with an empty matrix
-        const isNoCharactersError = result.error.userMessage?.includes('does not explicitly define names for all characters')
+        const isNoCharactersError = result.error.errorType === MatrixErrorType.NO_CHARACTERS
+          || result.error.errorType === MatrixErrorType.UNDEFINED_CHARACTERS
         
         if (isNoCharactersError && result.matrixObject) {
           // Allow proceeding with empty matrix - user can add characters via PDF on the characters screen
@@ -615,11 +621,22 @@ function handleCharactersExtracted(extractedCharacters) {
   // Track the initial character count to calculate actual new characters added
   const initialCharCount = importedMatrix.characters.size
 
-  // Add each extracted character to the importedMatrix
+  // Add each extracted character to the importedMatrix, deduplicating names
+  // to prevent Map.set from overwriting existing entries (which would corrupt
+  // characterNumber sequencing since Map.size doesn't increment on overwrite).
   for (const character of extractedCharacters) {
     const characterIndex = importedMatrix.characters.size
     character.characterNumber = characterIndex
-    importedMatrix.characters.set(character.name, character)
+
+    const insertName = generateUniqueNameWithPostfix(
+      character.name,
+      (name) => importedMatrix.characters.has(name)
+    )
+    if (insertName !== character.name) {
+      character.duplicateCharacter = character.name
+      character.name = insertName
+    }
+    importedMatrix.characters.set(insertName, character)
   }
 
   // Calculate the actual number of new characters added (not overwritten)
@@ -663,6 +680,18 @@ function handleCharactersExtracted(extractedCharacters) {
     if (!hadNamedCharacters) {
       for (const taxonKey of importedMatrix.cells.keys()) {
         importedMatrix.cells.set(taxonKey, [])
+      }
+    } else {
+      // The parser pads cell rows to NCHAR (declared dimension). For
+      // UNDEFINED_CHARACTERS matrices NCHAR > characters.size, so rows are
+      // longer than the named-character count. Trim them to initialCharCount
+      // now; the padding loop below will then bring every row to exactly
+      // initialCharCount + newCharCount == characters.size.
+      for (const taxonKey of importedMatrix.cells.keys()) {
+        const row = importedMatrix.cells.get(taxonKey)
+        if (row.length > initialCharCount) {
+          importedMatrix.cells.set(taxonKey, row.slice(0, initialCharCount))
+        }
       }
     }
   }
@@ -1696,33 +1725,5 @@ div.matrix-confirmation-screen table td {
 
 .no-conflicts .alert-success {
   border-left: 4px solid #28a745;
-}
-
-.ai-extractor-toggle {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding: 12px 16px;
-  background: #f0f7ff;
-  border: 1px solid #bee3f8;
-  border-radius: 8px;
-}
-
-.ai-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.ai-icon {
-  font-size: 16px;
-}
-
-.ai-toggle-hint {
-  color: #5a6c7d;
-  font-size: 13px;
 }
 </style>

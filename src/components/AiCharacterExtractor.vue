@@ -41,6 +41,7 @@
 import { ref } from 'vue'
 import { apiService } from '@/services/apiService.js'
 import { Character, CharacterState, CharacterType } from '@/lib/matrix-parser/MatrixObject.ts'
+import { useNotifications } from '@/composables/useNotifications'
 
 const props = defineProps({
   totalCharacters: {
@@ -59,6 +60,8 @@ const props = defineProps({
 
 const emit = defineEmits(['charactersExtracted', 'extractionError'])
 
+const { showWarning } = useNotifications()
+
 const pdfFile = ref(null)
 const isProcessingPdf = ref(false)
 const uploadError = ref('')
@@ -66,7 +69,7 @@ const fileInputRef = ref(null)
 
 function handlePdfFileSelect(event) {
   const file = event.target.files[0]
-  if (file && file.type === 'application/pdf') {
+  if (file && (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'))) {
     pdfFile.value = file
     uploadError.value = ''
   } else {
@@ -97,10 +100,20 @@ async function extractCharactersFromPdf() {
       },
     })
 
-    const result = await response.json()
+    const bodyText = await response.text()
+    let result
+    try {
+      result = JSON.parse(bodyText)
+    } catch {
+      throw new Error(bodyText || 'PDF processing failed')
+    }
 
     if (!result.success) {
-      const errorMsg = result.error || result.message || 'PDF processing failed'
+      const errorMsg =
+        (typeof result.detail === 'string' ? result.detail : null) ||
+        result.error ||
+        result.message ||
+        'PDF processing failed'
       throw new Error(errorMsg)
     }
 
@@ -111,13 +124,30 @@ async function extractCharactersFromPdf() {
     }
 
     const characters = []
+    let skippedCount = 0
     for (let i = 0; i < characterStates.length; i++) {
       const charData = characterStates[i]
-      const character = new Character(i, charData.character)
+      const name = charData?.character
+      if (name == null || String(name).trim() === '') {
+        skippedCount++
+        continue
+      }
+      const character = new Character(characters.length, String(name).trim())
       character.type = CharacterType.DISCRETE
       const states = Array.isArray(charData.states) ? charData.states : []
       character.states = states.map((stateName) => new CharacterState(stateName))
       characters.push(character)
+    }
+
+    if (skippedCount > 0) {
+      showWarning(
+        'Warning',
+        `${skippedCount} entr${skippedCount === 1 ? 'y' : 'ies'} with missing or empty character name${skippedCount === 1 ? ' was' : ' were'} skipped.`
+      )
+    }
+
+    if (characters.length === 0) {
+      throw new Error('No valid characters were extracted. All entries had missing or empty character names.')
     }
 
     emit('charactersExtracted', characters)
@@ -151,10 +181,6 @@ async function extractCharactersFromPdf() {
 .upload-section {
   padding: 40px;
   text-align: center;
-}
-
-.review-section {
-  padding: 30px;
 }
 
 .extractor-title {
@@ -243,15 +269,6 @@ async function extractCharactersFromPdf() {
   border-radius: 6px;
   padding: 12px;
 }
-
-.success-message {
-  color: #27ae60;
-  background: #d5f4e6;
-  border: 1px solid #27ae60;
-  border-radius: 6px;
-  padding: 12px;
-}
-
 
 @media (min-width: 768px) {
   .upload-controls {

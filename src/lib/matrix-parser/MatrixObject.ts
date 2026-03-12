@@ -1,3 +1,22 @@
+/**
+ * Generates a unique name by appending " - N" when the name is already taken.
+ * Single source of truth for character/taxon name deduplication.
+ *
+ * @param name Base name (e.g. "Homo Sapien")
+ * @param isNameTaken Predicate that returns true if the name is already in use
+ * @returns The original name if not taken, otherwise "name - 2", "name - 3", etc.
+ */
+export function generateUniqueNameWithPostfix(
+  name: string,
+  isNameTaken: (name: string) => boolean
+): string {
+  let serializedName = name
+  for (let i = 2; isNameTaken(serializedName); i++) {
+    serializedName = `${name} - ${i}`
+  }
+  return serializedName
+}
+
 export class MatrixObject {
   private dataType: DataType
   private readonly format: string
@@ -248,11 +267,7 @@ export class MatrixObject {
     name: string,
     isNameTaken: (name: string) => boolean
   ): string {
-    let serializedName = name
-    for (let i = 2; isNameTaken(serializedName); i++) {
-      serializedName = `${name} - ${i}`
-    }
-    return serializedName
+    return generateUniqueNameWithPostfix(name, isNameTaken)
   }
 
   private determineCharacterType(characterNumber: number): CharacterType {
