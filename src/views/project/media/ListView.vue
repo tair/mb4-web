@@ -1028,7 +1028,13 @@ function getMediaTooltipContent(media_file) {
   if (view && view.name) {
     tooltip += `<strong>View:</strong> ${escapeHtml(view.name)}<br/>`
   }
-  
+
+  if (media_file.is_sided == 1) {
+    tooltip += `<strong>Side:</strong> Left<br/>`
+  } else if (media_file.is_sided == 2) {
+    tooltip += `<strong>Side:</strong> Right<br/>`
+  }
+
   if (taxon) {
     const taxonName = getTaxonName(media_file)
     if (taxonName) {
