@@ -148,27 +148,14 @@ export const useMediaStore = defineStore({
     },
     /**
      * Complete a direct-to-S3 upload after the file has been uploaded.
-     * Optionally accepts a thumbnail image extracted from the ZIP in the browser,
-     * which avoids having the backend download the entire ZIP for thumbnail generation.
      * 
      * @param {string} projectId - The project ID
      * @param {number} mediaId - The media ID from initiateStacksUpload
-     * @param {Object|null} thumbnailData - Optional thumbnail extracted from ZIP {blob, filename, mimetype}
      * @returns {Promise<Object>} The created media object
      */
-    async completeStacksUpload(projectId, mediaId, thumbnailData = null) {
+    async completeStacksUpload(projectId, mediaId) {
       try {
-        let response
-        
-        if (thumbnailData && thumbnailData.blob) {
-          // Send the thumbnail as multipart form data
-          const formData = new FormData()
-          formData.append('thumbnail', thumbnailData.blob, thumbnailData.filename)
-          response = await apiService.post(`/projects/${projectId}/media/stacks/${mediaId}/complete`, formData)
-        } else {
-          // No thumbnail - backend will try to extract from S3 (fallback)
-          response = await apiService.post(`/projects/${projectId}/media/stacks/${mediaId}/complete`)
-        }
+        const response = await apiService.post(`/projects/${projectId}/media/stacks/${mediaId}/complete`)
         
         if (response.ok) {
           const responseData = await response.json()
