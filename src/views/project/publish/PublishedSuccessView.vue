@@ -124,23 +124,30 @@ onMounted(async () => {
   }
 
   orcidState.value = 'pending'
+  pollOrcidStatus(projectId)
+})
+
+async function pollOrcidStatus(projectId, attempt = 1) {
+  const maxAttempts = 3
+  const delay = attempt === 1 ? 8000 : 5000
 
   setTimeout(async () => {
     try {
       const response = await apiService.get(
         `/projects/${projectId}/publishing/orcid-status`
       )
-      if (!response.ok) {
-        orcidState.value = 'failed'
-        return
-      }
       const data = await response.json()
-      orcidState.value = data.orcidState
+
+      if (data.orcidState === 'pending' && attempt < maxAttempts) {
+        pollOrcidStatus(projectId, attempt + 1)
+      } else {
+        orcidState.value = data.orcidState
+      }
     } catch (e) {
       orcidState.value = 'failed'
     }
-  }, 8000)
-})
+  }, delay)
+}
 
 function formatDate(timestamp) {
   if (!timestamp) return ''
