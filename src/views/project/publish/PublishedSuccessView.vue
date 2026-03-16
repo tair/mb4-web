@@ -22,6 +22,48 @@
       </div>
     </div>
 
+    <!-- ORCID Status Banners -->
+    <!-- Read-only: prompt to grant write access -->
+    <div v-if="orcidState === 'read_only'" class="orcid-banner orcid-banner-info">
+      <img src="/ORCIDiD_iconvector.svg" class="orcid-banner-icon" alt="ORCID" />
+      <div>
+        <strong>Your ORCID record wasn't updated.</strong>
+        MorphoBank can automatically add published projects to your ORCID record — but we need write access first.
+        Grant it once and we'll take care of the rest.
+        <a :href="orcidLoginUrl" class="btn btn-sm btn-outline-primary ms-2">
+          Grant Write Access
+        </a>
+      </div>
+    </div>
+
+    <!-- Pending: async task still running -->
+    <div v-else-if="orcidState === 'pending'" class="orcid-banner orcid-banner-info">
+      <img src="/ORCIDiD_iconvector.svg" class="orcid-banner-icon" alt="ORCID" />
+      <div>
+        <i class="fa-solid fa-spinner fa-spin me-1"></i>
+        Adding this project to your ORCID record...
+      </div>
+    </div>
+
+    <!-- Success: ORCID work created -->
+    <div v-else-if="orcidState === 'success'" class="orcid-banner orcid-banner-success">
+      <img src="/ORCIDiD_iconvector.svg" class="orcid-banner-icon" alt="ORCID" />
+      <div>
+        <strong>Added to your ORCID record.</strong>
+        This project has been automatically added to your ORCID profile.
+      </div>
+    </div>
+
+    <!-- Failed: ORCID API error -->
+    <div v-else-if="orcidState === 'failed'" class="orcid-banner orcid-banner-warning">
+      <img src="/ORCIDiD_iconvector.svg" class="orcid-banner-icon" alt="ORCID" />
+      <div>
+        <strong>Your ORCID record couldn't be updated.</strong>
+        The project was published successfully, but we weren't able to reach ORCID.
+        You can add it manually from your ORCID profile, or we'll try again next time.
+      </div>
+    </div>
+
     <div class="success-actions">
       <button
         v-if="publicationResult?.projectId"
@@ -35,6 +77,11 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
+import { useUserStore } from '@/stores/UserStore.js'
+import { useAuthStore } from '@/stores/AuthStore.js'
+import { apiService } from '@/services/apiService.js'
+
 const props = defineProps({
   publicationResult: {
     type: Object,
@@ -43,6 +90,50 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['returnToOverview', 'viewPublishedProject'])
+
+const userStore = useUserStore()
+const authStore = useAuthStore()
+const orcidState = ref(null)
+const orcidLoginUrl = ref(null)
+
+onMounted(async () => {
+  const user = userStore.originalUser
+  if (!user?.orcid) {
+    orcidState.value = 'not_connected'
+    return
+  }
+
+  // orcidWriteAccessRequired accounts for worksEnabled feature flag
+  if (user.orcidWriteAccessRequired) {
+    orcidState.value = 'read_only'
+    orcidLoginUrl.value = await authStore.getOrcidLoginUrl()
+    return
+  }
+
+  // If user has ORCID but no write access and works is disabled, no banner needed
+  if (!user.orcidWriteAccess) {
+    orcidState.value = 'not_connected'
+    return
+  }
+
+  // User has write access — show pending, then poll for actual result
+  orcidState.value = 'pending'
+
+  const projectId = props.publicationResult?.projectId
+  if (!projectId) return
+
+  setTimeout(async () => {
+    try {
+      const response = await apiService.get(
+        `/projects/${projectId}/publishing/orcid-status`
+      )
+      const data = await response.json()
+      orcidState.value = data.orcidState
+    } catch (e) {
+      orcidState.value = 'failed'
+    }
+  }, 8000)
+})
 
 function formatDate(timestamp) {
   if (!timestamp) return ''
@@ -79,7 +170,7 @@ function formatDate(timestamp) {
 }
 
 .success-details {
-  margin-bottom: 40px;
+  margin-bottom: 20px;
 }
 
 .success-details p {
@@ -106,6 +197,43 @@ function formatDate(timestamp) {
 .info-item strong {
   color: #333;
   margin-right: 8px;
+}
+
+/* ORCID Banner Styles */
+.orcid-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: left;
+  max-width: 600px;
+  margin: 0 auto 30px auto;
+}
+
+.orcid-banner-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.orcid-banner-info {
+  background: #d1ecf1;
+  border: 1px solid #bee5eb;
+  color: #0c5460;
+}
+
+.orcid-banner-success {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
+
+.orcid-banner-warning {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
 }
 
 .success-actions {
