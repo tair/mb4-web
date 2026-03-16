@@ -24,7 +24,7 @@ const publicationResult = ref(null)
 const orcidLoginUrl = ref(null)
 
 const showOrcidWriteBanner = computed(() => {
-  return userStore.originalUser?.orcidWriteAccessRequired
+  return userStore.originalUser?.orcidWriteAccessRequired && orcidLoginUrl.value
 })
 
 // Use store-backed unpublished items

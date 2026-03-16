@@ -24,7 +24,7 @@
 
     <!-- ORCID Status Banners -->
     <!-- Read-only: prompt to grant write access -->
-    <div v-if="orcidState === 'read_only'" class="orcid-banner orcid-banner-info">
+    <div v-if="orcidState === 'read_only' && orcidLoginUrl" class="orcid-banner orcid-banner-info">
       <img src="/ORCIDiD_iconvector.svg" class="orcid-banner-icon" alt="ORCID" />
       <div>
         <strong>Your ORCID record wasn't updated.</strong>
@@ -116,17 +116,24 @@ onMounted(async () => {
     return
   }
 
-  // User has write access — show pending, then poll for actual result
-  orcidState.value = 'pending'
-
+  // User has write access — poll backend for actual result
   const projectId = props.publicationResult?.projectId
-  if (!projectId) return
+  if (!projectId) {
+    orcidState.value = 'not_connected'
+    return
+  }
+
+  orcidState.value = 'pending'
 
   setTimeout(async () => {
     try {
       const response = await apiService.get(
         `/projects/${projectId}/publishing/orcid-status`
       )
+      if (!response.ok) {
+        orcidState.value = 'failed'
+        return
+      }
       const data = await response.json()
       orcidState.value = data.orcidState
     } catch (e) {
