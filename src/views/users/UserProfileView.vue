@@ -538,6 +538,9 @@ const submitButtonText = computed(() => {
             When checked, MorphoBank will not push any published works to your ORCID record.
             You can also opt out on a per-project basis from each project's overview page.
           </p>
+          <p class="field-description text-muted" style="font-size: 0.85em;">
+            MorphoBank will only ever add projects you publish. You can revoke access at any time from your ORCID settings.
+          </p>
         </div>
 
         <div class="form-buttons">
