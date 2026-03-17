@@ -107,7 +107,7 @@ async function extractCharactersFromPdf() {
     try {
       result = JSON.parse(bodyText)
     } catch {
-      throw new Error(bodyText || 'PDF processing failed')
+      throw new Error(bodyText || 'Document processing failed')
     }
 
     if (!result.success) {
@@ -115,14 +115,14 @@ async function extractCharactersFromPdf() {
         (typeof result.detail === 'string' ? result.detail : null) ||
         result.error ||
         result.message ||
-        'PDF processing failed'
+        'Document processing failed'
       throw new Error(errorMsg)
     }
 
     const characterStates = result.character_states || []
     
     if (characterStates.length === 0) {
-      throw new Error('No characters were extracted from the PDF')
+      throw new Error('No characters were extracted from the document')
     }
 
     const characters = []
