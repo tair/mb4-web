@@ -165,7 +165,7 @@ function handleViewPublishedProject(publishedProjectId) {
             <strong>Add this to your ORCID record automatically.</strong>
             Your ORCID is connected but set to read only. Grant write access and
             MorphoBank will add published projects to your ORCID profile for you.
-            <a :href="orcidLoginUrl" class="btn btn-sm btn-outline-primary ms-2">
+            <a :href="orcidLoginUrl" class="orcid-grant-link">
               Grant Write Access
             </a>
             <br />

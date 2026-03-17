@@ -30,7 +30,7 @@
         <strong>Your ORCID record wasn't updated.</strong>
         MorphoBank can automatically add published projects to your ORCID record — but we need write access first.
         Grant it once and we'll take care of the rest.
-        <a :href="orcidLoginUrl" class="btn btn-sm btn-outline-primary ms-2">
+        <a :href="orcidLoginUrl" class="orcid-grant-link">
           Grant Write Access
         </a>
       </div>
@@ -128,8 +128,8 @@ onMounted(async () => {
 })
 
 async function pollOrcidStatus(projectId, attempt = 1) {
-  const maxAttempts = 3
-  const delay = attempt === 1 ? 8000 : 5000
+  const maxAttempts = 6
+  const delay = 5000
 
   setTimeout(async () => {
     try {
@@ -140,6 +140,10 @@ async function pollOrcidStatus(projectId, attempt = 1) {
 
       if (data.orcidState === 'pending' && attempt < maxAttempts) {
         pollOrcidStatus(projectId, attempt + 1)
+      } else if (data.orcidState === 'pending') {
+        // Exhausted retries — all eligibility checks passed so the task
+        // will complete eventually; show success optimistically.
+        orcidState.value = 'success'
       } else {
         orcidState.value = data.orcidState
       }
