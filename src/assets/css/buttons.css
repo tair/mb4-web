@@ -53,8 +53,9 @@
 }
 
 .btn-outline-primary {
-  border-color: var(--mb-orange);
+  border: 1px solid var(--mb-orange);
   color: var(--mb-orange);
+  background-color: transparent;
   outline: none;
 }
 
