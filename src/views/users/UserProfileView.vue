@@ -146,7 +146,7 @@ const searchInstitutions = async () => {
 }
 
 const unlinkORCID = async () => {
-  if (!confirm('Are you sure you want to unlink your ORCID? You can link it again later.')) {
+  if (!confirm('Are you sure you want to unlink your ORCID? You can link it again later.\n\nNote: ORCID may remember your previous authorization. To fully reset permissions, visit your ORCID account\'s Trusted Organizations settings.')) {
     return
   }
   
