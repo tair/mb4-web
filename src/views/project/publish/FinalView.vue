@@ -2,6 +2,8 @@
 import { onMounted, ref, computed, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePublishWorkflowStore } from '@/stores/PublishWorkflowStore.js'
+import { useUserStore } from '@/stores/UserStore.js'
+import { useAuthStore } from '@/stores/AuthStore.js'
 import LoadingIndicator from '@/components/project/LoadingIndicator.vue'
 import UnpublishedItemsNotice from '@/components/project/UnpublishedItemsNotice.vue'
 import PublishedSuccessView from '@/views/project/publish/PublishedSuccessView.vue'
@@ -9,6 +11,8 @@ import PublishedSuccessView from '@/views/project/publish/PublishedSuccessView.v
 const route = useRoute()
 const router = useRouter()
 const publishStore = usePublishWorkflowStore()
+const userStore = useUserStore()
+const authStore = useAuthStore()
 const projectId = route.params.id
 
 const isLoaded = ref(false)
@@ -17,6 +21,11 @@ const errorMessage = ref(null)
 const successMessage = ref(null)
 const publishingComplete = ref(false)
 const publicationResult = ref(null)
+const orcidLoginUrl = ref(null)
+
+const showOrcidWriteBanner = computed(() => {
+  return userStore.originalUser?.orcidWriteAccessRequired && orcidLoginUrl.value
+})
 
 // Use store-backed unpublished items
 const unpublishedItems = computed(() => publishStore.unpublishedItems)
@@ -50,6 +59,16 @@ onMounted(async () => {
     }
   } catch (e) {
     // Best-effort only; ignore errors
+  }
+
+  // Fetch ORCID login URL and user data for banner
+  try {
+    if (!userStore.originalUser?.email) {
+      await userStore.fetchCurrentUser()
+    }
+    orcidLoginUrl.value = await authStore.getOrcidLoginUrl()
+  } catch (e) {
+    // Best-effort; banner just won't show
   }
 
   // Simulate loading delay
@@ -137,6 +156,21 @@ function handleViewPublishedProject(publishedProjectId) {
         <div v-if="errorMessage" class="alert alert-danger" role="alert">
           <i class="fa-solid fa-exclamation-triangle me-2"></i>
           {{ errorMessage }}
+        </div>
+
+        <!-- ORCID Write Access Banner -->
+        <div v-if="showOrcidWriteBanner" class="orcid-publish-banner">
+          <img src="/ORCIDiD_iconvector.svg" class="orcid-banner-icon" alt="ORCID" />
+          <div>
+            <strong>Add this to your ORCID record automatically.</strong>
+            Your ORCID is connected but set to read only. Grant write access and
+            MorphoBank will add published projects to your ORCID profile for you.
+            <a :href="orcidLoginUrl" class="orcid-grant-link">
+              Grant Write Access
+            </a>
+            <br />
+            <small class="text-muted">Or continue below — you can always enable this later in your profile settings.</small>
+          </div>
         </div>
 
         <!-- Primary Action Button (centered) -->
@@ -391,6 +425,25 @@ function handleViewPublishedProject(publishedProjectId) {
   padding: 10px;
   border: 2px solid #ededed;
   border-radius: 4px;
+}
+
+.orcid-publish-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 15px;
+  margin-bottom: 20px;
+  background: #d1ecf1;
+  border: 1px solid #bee5eb;
+  border-radius: 8px;
+  color: #0c5460;
+}
+
+.orcid-banner-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 @media (max-width: 768px) {

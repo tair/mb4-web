@@ -146,7 +146,7 @@ const searchInstitutions = async () => {
 }
 
 const unlinkORCID = async () => {
-  if (!confirm('Are you sure you want to unlink your ORCID? You can link it again later.')) {
+  if (!confirm('Are you sure you want to unlink your ORCID? You can link it again later.\n\nNote: ORCID may remember your previous authorization. To fully reset permissions, visit your ORCID account\'s Trusted Organizations settings.')) {
     return
   }
   
@@ -537,6 +537,9 @@ const submitButtonText = computed(() => {
           <p class="field-description">
             When checked, MorphoBank will not push any published works to your ORCID record.
             You can also opt out on a per-project basis from each project's overview page.
+          </p>
+          <p class="field-description text-muted" style="font-size: 0.85em;">
+            MorphoBank will only ever add projects you publish. You can revoke access at any time from your ORCID settings.
           </p>
         </div>
 

@@ -53,8 +53,9 @@
 }
 
 .btn-outline-primary {
-  border-color: var(--mb-orange);
+  border: 1px solid var(--mb-orange);
   color: var(--mb-orange);
+  background-color: transparent;
   outline: none;
 }
 
@@ -75,4 +76,25 @@
 
 .btn-link:hover {
   text-decoration: underline;
-} 
+}
+
+.orcid-grant-link {
+  display: inline-block;
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--mb-orange);
+  background-color: transparent;
+  border: 1px solid var(--mb-orange);
+  border-radius: 4px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 8px;
+}
+
+.orcid-grant-link:hover {
+  background-color: var(--mb-orange);
+  color: white;
+  text-decoration: none;
+}
