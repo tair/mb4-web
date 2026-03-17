@@ -3,13 +3,13 @@
     <div class="upload-section">
       <h3 class="extractor-title">AI Character Extractor</h3>
       <p class="extractor-description">
-        Upload a PDF document containing character descriptions and let AI extract them automatically.
+        Upload a PDF or Word document containing character descriptions and let AI extract them automatically.
       </p>
       
       <div class="upload-controls">
         <input
           type="file"
-          accept=".pdf"
+          accept=".pdf,.docx"
           ref="fileInputRef"
           id="pdf-character-upload"
           class="file-input"
@@ -24,7 +24,7 @@
           <span v-if="isProcessingPdf">
             <span class="spinner"></span> Processing...
           </span>
-          <span v-else>Extract Characters from PDF</span>
+          <span v-else>Extract Characters</span>
         </button>
       </div>
       
@@ -69,18 +69,20 @@ const fileInputRef = ref(null)
 
 function handlePdfFileSelect(event) {
   const file = event.target.files[0]
-  if (file && (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'))) {
+  const validExtensions = ['.pdf', '.docx']
+  const isValid = file && validExtensions.some(ext => file.name.toLowerCase().endsWith(ext))
+  if (isValid) {
     pdfFile.value = file
     uploadError.value = ''
   } else {
     pdfFile.value = null
-    uploadError.value = 'Please select a valid PDF file'
+    uploadError.value = 'Please select a valid PDF or Word (.docx) file'
   }
 }
 
 async function extractCharactersFromPdf() {
   if (!pdfFile.value) {
-    uploadError.value = 'Please select a PDF file first'
+    uploadError.value = 'Please select a file first'
     return
   }
 
@@ -105,7 +107,7 @@ async function extractCharactersFromPdf() {
     try {
       result = JSON.parse(bodyText)
     } catch {
-      throw new Error(bodyText || 'PDF processing failed')
+      throw new Error(bodyText || 'Document processing failed')
     }
 
     if (!result.success) {
@@ -113,14 +115,14 @@ async function extractCharactersFromPdf() {
         (typeof result.detail === 'string' ? result.detail : null) ||
         result.error ||
         result.message ||
-        'PDF processing failed'
+        'Document processing failed'
       throw new Error(errorMsg)
     }
 
     const characterStates = result.character_states || []
     
     if (characterStates.length === 0) {
-      throw new Error('No characters were extracted from the PDF')
+      throw new Error('No characters were extracted from the document')
     }
 
     const characters = []
