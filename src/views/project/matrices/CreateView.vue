@@ -7,7 +7,12 @@ import { useTaxaStore } from '@/stores/TaxaStore'
 import { useFileTransferStore } from '@/stores/FileTransferStore'
 import { useNotifications } from '@/composables/useNotifications'
 import { NavigationPatterns } from '@/utils/navigationUtils.js'
-import { CharacterStateIncompleteType, Cell, MatrixErrorType } from '@/lib/matrix-parser/MatrixObject.ts'
+import {
+  CharacterStateIncompleteType,
+  Cell,
+  MatrixErrorType,
+  generateUniqueNameWithPostfix,
+} from '@/lib/matrix-parser/MatrixObject.ts'
 import { getIncompleteStateText } from '@/lib/matrix-parser/text.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
 import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
@@ -623,13 +628,12 @@ function handleCharactersExtracted(extractedCharacters) {
     const characterIndex = importedMatrix.characters.size
     character.characterNumber = characterIndex
 
-    let insertName = character.name
-    if (importedMatrix.characters.has(insertName)) {
-      const baseName = character.name
-      for (let i = 2; importedMatrix.characters.has(insertName); i++) {
-        insertName = `${baseName} - ${i}`
-      }
-      character.duplicateCharacter = baseName
+    const insertName = generateUniqueNameWithPostfix(
+      character.name,
+      (name) => importedMatrix.characters.has(name)
+    )
+    if (insertName !== character.name) {
+      character.duplicateCharacter = character.name
       character.name = insertName
     }
     importedMatrix.characters.set(insertName, character)
