@@ -446,28 +446,6 @@ function handleViewPublishedProject(publishedProjectId) {
   margin-top: 2px;
 }
 
-.orcid-grant-link {
-  display: inline-block;
-  padding: 6px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--mb-orange, #F17B17);
-  background-color: transparent;
-  border: 1px solid var(--mb-orange, #F17B17);
-  border-radius: 4px;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: auto;
-  margin-left: 8px;
-}
-
-.orcid-grant-link:hover {
-  background-color: var(--mb-orange, #F17B17);
-  color: white;
-  text-decoration: none;
-}
-
 @media (max-width: 768px) {
   .publish-actions,
   .secondary-actions {
