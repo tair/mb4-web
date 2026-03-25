@@ -14,6 +14,16 @@
               </a>
             </div>
             <div class="col-auto">
+              <a
+                class="nav-link p-1 me-3"
+                href="https://phoenixbioinfo.org/morphobank/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Become a Member
+              </a>
+            </div>
+            <div class="col-auto">
               <RouterLink class="nav-link p-1 me-3" to="/terms">
                 Privacy Policy
               </RouterLink>

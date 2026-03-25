@@ -224,6 +224,14 @@ function onImageError(event: Event) {
                 </p>
                 <div class="cta-row">
                   <span class="cta-text">Let your librarian know that you want to help support MorphoBank.</span>
+                  <a
+                    href="https://phoenixbioinfo.org/morphobank/"
+                    class="cta-button"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    More Information
+                  </a>
                   <a 
                     href="https://ui.arabidopsis.org/#/contentaccess/subscription/institution?partnerId=morphobank&redirect=https:%2F%2Fmorphobank.org"
                     class="cta-button"
@@ -366,17 +374,6 @@ function onImageError(event: Event) {
   font-style: italic;
   display: block;
   margin-top: 4px;
-}
-
-.subscribe-link {
-  color: var(--theme-orange);
-  text-decoration: underline;
-  font-weight: 500;
-}
-
-.subscribe-link:hover {
-  color: #d63384;
-  text-decoration: none;
 }
 
 .cta-row {
