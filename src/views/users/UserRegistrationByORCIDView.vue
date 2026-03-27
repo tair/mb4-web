@@ -185,7 +185,7 @@
 import { reactive, ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/AuthStore.js'
 import { useMessageStore } from '@/stores/MessageStore.js'
-import { getPasswordPattern, getPasswordRule } from '@/utils/util.js'
+import { getPasswordPattern, getPasswordRule, getOrcidTooltip } from '@/utils/util.js'
 import router from '../../router'
 import { apiService } from '@/services/apiService.js'
 import Tooltip from '@/components/main/Tooltip.vue'
@@ -193,7 +193,7 @@ import Alert from '@/components/main/Alert.vue'
 
 const authStore = useAuthStore()
 const messageStore = useMessageStore()
-const orcidTooltip = '<strong>What is ORCID?</strong><br>ORCID provides a unique identifier for researchers, ensuring your work is correctly attributed to you. <a href="/orcid">Learn more</a>'
+const orcidTooltip = getOrcidTooltip()
 const passwordTooltipText = getPasswordRule()
 const confirmPasswordText = 'Please enter the password exactly as above.'
 const orcidLoginUrl = ref(null)

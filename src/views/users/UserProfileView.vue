@@ -5,7 +5,7 @@ import { useUserStore } from '@/stores/UserStore.js'
 import { useAuthStore } from '@/stores/AuthStore.js'
 import { useMessageStore } from '@/stores/MessageStore.js'
 import { useNotifications } from '@/composables/useNotifications.ts'
-import { getPasswordPattern, getPasswordRule } from '@/utils/util.js'
+import { getPasswordPattern, getPasswordRule, getOrcidTooltip } from '@/utils/util.js'
 import Tooltip from '@/components/main/Tooltip.vue'
 import FormLayout from '@/components/main/FormLayout.vue'
 import AddInstitutionDialog from '@/components/dialogs/AddInstitutionDialog.vue'
@@ -38,7 +38,7 @@ const insititutionalTootipText =
   'Scientists on MorphoBank are often affiliated with more than one institution and those can be entered here. When you change institutions, your older, published projects will remain credited to the institution you belonged to at the time the paper was published on MorphoBank'
 const independentResearcherTooltipText = 
   'Check this if you have no institutional affiliation. Any listed institutions will be immediately removed from the form and saved when you click Update.'
-const orcidTooltip = '<strong>What is ORCID?</strong><br>ORCID provides a unique identifier for researchers, ensuring your work is correctly attributed to you. <a href="/orcid">Learn more</a>'
+const orcidTooltip = getOrcidTooltip()
 const passwordTooltipText = getPasswordRule()
 
 onMounted(async () => {

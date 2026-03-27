@@ -7,6 +7,7 @@ import router from '../../router'
 import Alert from '@/components/main/Alert.vue'
 import Tooltip from '@/components/main/Tooltip.vue'
 import { useNotifications } from '@/composables/useNotifications'
+import { getOrcidTooltip } from '@/utils/util.js'
 
 const authStore = useAuthStore()
 const route = useRoute()
@@ -75,7 +76,7 @@ const submitForm = async () => {
   }
 }
 
-const orcidTooltip = '<strong>What is ORCID?</strong><br>ORCID provides a unique identifier for researchers, ensuring your work is correctly attributed to you. <a href="/orcid">Learn more</a>'
+const orcidTooltip = getOrcidTooltip()
 
 const orcidLoginUrl = ref(null)
 

@@ -84,6 +84,10 @@ export function getSpecimenTypeTooltipText() {
   return 'A "vouchered" specimen is used to describe images or media of a member of a species whose remains are housed in a repository (museum, university) and have been given a collection number. An unvouchered specimen is used to describe a 2D or 3D image that does not have such data due to historical recording keeping practices, or because the species has been observed in the wild, or because the image is a composite of many individuals.'
 }
 
+export function getOrcidTooltip() {
+  return '<strong>What is ORCID?</strong><br>ORCID provides a unique identifier for researchers, ensuring your work is correctly attributed to you. <a href="/orcid">Learn more</a>'
+}
+
 export function getTaxonTooltipText() {
   return 'Before you add a specimen you must first add the Taxon to your MorphoBank project. Once the taxon is added just type the first few letters of its name and it will appear automatically'
 }
