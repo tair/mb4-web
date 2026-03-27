@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/AuthStore.js'
 import { useMessageStore } from '@/stores/MessageStore.js'
 import router from '../../router'
 import Alert from '@/components/main/Alert.vue'
+import Tooltip from '@/components/main/Tooltip.vue'
 import { useNotifications } from '@/composables/useNotifications'
 
 const authStore = useAuthStore()
@@ -74,6 +75,8 @@ const submitForm = async () => {
   }
 }
 
+const orcidTooltip = '<strong>What is ORCID?</strong><br>ORCID provides a unique identifier for researchers, ensuring your work is correctly attributed to you. <a href="https://orcid.org" target="_blank" rel="noopener noreferrer">Learn more at orcid.org</a>'
+
 const orcidLoginUrl = ref(null)
 
 onMounted(async () => {
@@ -110,6 +113,9 @@ onBeforeUnmount(() => {
           <span class="orcid-text">Sign in with ORCID</span>
         </div></a
       >
+      <div class="text-center mt-2">
+        <small class="text-muted">What is ORCID? <Tooltip :content="orcidTooltip" :interactive="true" /></small>
+      </div>
     </div>
 
     <!-- Or Separator -->
