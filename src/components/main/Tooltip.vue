@@ -3,6 +3,7 @@ interface Props {
   content: string
   displayStyle?: string
   displayContent?: string | null
+  interactive?: boolean
 }
 
 const props = defineProps<Props>()
@@ -16,11 +17,12 @@ const displayContent = props.displayContent || null
   <tippy
     :content="props.content"
     :allowHTML="true"
+    :interactive="props.interactive || false"
     v-if="displayStyle === 'question'"
   >
     <i class="fa-solid fa-circle-question theme-color"></i>
   </tippy>
-  <tippy :content="props.content" :allowHTML="true" v-else>
+  <tippy :content="props.content" :allowHTML="true" :interactive="props.interactive || false" v-else>
     <div v-html="displayContent"></div>
   </tippy>
   <div class="sr-only">{{ props.content }}</div>

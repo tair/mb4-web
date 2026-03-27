@@ -10,6 +10,7 @@
               in with your ORCID will create a new account for you based on that
               ID.
             </p>
+            <p><small>What is ORCID? <Tooltip :content="orcidTooltip" :interactive="true" /></small></p>
             <router-link to="/users/login" id="loginLink"
               >Click here to Login.</router-link
             >
@@ -170,6 +171,7 @@ import Alert from '@/components/main/Alert.vue'
 
 const authStore = useAuthStore()
 const messageStore = useMessageStore()
+const orcidTooltip = '<strong>What is ORCID?</strong><br>ORCID provides a unique identifier for researchers, ensuring your work is correctly attributed to you. <a href="/orcid">Learn more</a>'
 const passwordTooltipText = getPasswordRule()
 const confirmPasswordText = 'Please enter the password exactly as above.'
 
