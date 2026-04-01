@@ -131,10 +131,9 @@ async function extractCharactersFromPdf() {
     )
     if (continuousChars.length > 0) {
       throw new Error(
-        `This document contains ${continuousChars.length} continuous (numeric measurement) ` +
-        `character${continuousChars.length === 1 ? '' : 's'}. ` +
-        `The AI extractor only reliably processes discrete characters. ` +
-        `Please upload the full matrix file in TNT format to preserve all character data.`
+        'This matrix contains both discrete and continuous characters. ' +
+        'The AI parsing tool only supports discrete character matrices and would produce errors if allowed to continue. ' +
+        'Please upload your matrix file and character information file to the Documents section of your project.'
       )
     }
 
