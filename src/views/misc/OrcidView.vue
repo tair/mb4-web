@@ -91,9 +91,9 @@ onMounted(async () => {
             </div>
             <h3>Unique Attribution</h3>
             <p>
-              Ensure your morphological matrices and phylogenetic analyses are
-              always correctly attributed to you, regardless of name changes or
-              shared names with other researchers.
+              Ensure your MorphoBank projects and their linked morphological
+              matrices are always correctly attributed to you, regardless of
+              name changes or shared names with other researchers.
             </p>
           </div>
           <div class="benefit-card">
