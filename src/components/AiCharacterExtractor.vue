@@ -120,9 +120,22 @@ async function extractCharactersFromPdf() {
     }
 
     const characterStates = result.character_states || []
-    
+
     if (characterStates.length === 0) {
       throw new Error('No characters were extracted from the document')
+    }
+
+    // Check for continuous characters
+    const continuousChars = characterStates.filter(
+      (c) => c.type === 'continuous'
+    )
+    if (continuousChars.length > 0) {
+      throw new Error(
+        `This document contains ${continuousChars.length} continuous (numeric measurement) ` +
+        `character${continuousChars.length === 1 ? '' : 's'}. ` +
+        `The AI extractor only reliably processes discrete characters. ` +
+        `Please upload the full matrix file in TNT format to preserve all character data.`
+      )
     }
 
     const characters = []
