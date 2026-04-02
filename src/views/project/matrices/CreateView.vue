@@ -39,6 +39,7 @@ const taxonomicUnits = getTaxonomicUnitOptions()
 
 const importedMatrix = reactive({})
 const isProcessingMatrix = ref(false)
+const isAiExtracted = ref(false)
 const defaultNumbering = computed(() =>
   importedMatrix.format == 'NEXUS' ? 1 : 0
 )
@@ -608,6 +609,7 @@ function convertNewlines(text) {
 
 // Handle characters extracted from AI
 function handleCharactersExtracted(extractedCharacters) {
+  isAiExtracted.value = true
   // Track whether the matrix had named characters before this extraction.
   // If not, the cells from the MATRIX block are for unnamed/declared characters
   // and don't correspond to the AI-extracted characters — they must be cleared.
@@ -1025,6 +1027,12 @@ onUnmounted(() => {
               @characters-extracted="handleCharactersExtracted"
               @extraction-error="handleExtractionError"
             />
+
+            <!-- Beta warning for AI-extracted characters -->
+            <div v-if="isAiExtracted && importedMatrix?.characters && importedMatrix.characters.size > 0" class="ai-beta-warning">
+              <span class="beta-badge">Beta</span>
+              These characters were extracted using AI and may contain errors. Please review them carefully before proceeding.
+            </div>
 
             <!-- Show character table when characters exist -->
             <table v-if="importedMatrix?.characters && importedMatrix.characters.size > 0">
@@ -1543,6 +1551,29 @@ onUnmounted(() => {
 .incomplete-state-warning {
   color: red;
   font-style: italic;
+}
+
+.ai-beta-warning {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #856404;
+}
+
+.ai-beta-warning .beta-badge {
+  display: inline-block;
+  background: #e67e22;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 8px;
 }
 
 .duplicate-characters {

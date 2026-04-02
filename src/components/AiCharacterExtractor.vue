@@ -1,7 +1,7 @@
 <template>
   <div class="ai-character-extractor">
     <div class="upload-section">
-      <h3 class="extractor-title">AI Character Extractor</h3>
+      <h3 class="extractor-title">AI Character Extractor <span class="beta-badge">Beta</span></h3>
       <p class="extractor-description">
         Upload a PDF or Word document containing character descriptions and let AI extract them automatically.
       </p>
@@ -205,6 +205,20 @@ async function extractCharactersFromPdf() {
   margin-bottom: 15px;
   font-size: 24px;
   font-weight: 600;
+}
+
+.beta-badge {
+  display: inline-block;
+  background: #e67e22;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  vertical-align: middle;
+  margin-left: 8px;
 }
 
 .extractor-description {
