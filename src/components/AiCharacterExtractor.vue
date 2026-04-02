@@ -1,7 +1,7 @@
 <template>
   <div class="ai-character-extractor">
     <div class="upload-section">
-      <h3 class="extractor-title">AI Character Extractor</h3>
+      <h3 class="extractor-title">AI Character Extractor <span class="beta-badge">Beta</span></h3>
       <p class="extractor-description">
         Upload a PDF or Word document containing character descriptions and let AI extract them automatically.
       </p>
@@ -120,9 +120,24 @@ async function extractCharactersFromPdf() {
     }
 
     const characterStates = result.character_states || []
-    
+
     if (characterStates.length === 0) {
       throw new Error('No characters were extracted from the document')
+    }
+
+    // Check for continuous characters
+    const continuousChars = characterStates.filter(
+      (c) => c.type === 'continuous'
+    )
+    if (continuousChars.length > 0) {
+      const msg =
+        'This matrix contains both discrete and continuous characters. ' +
+        'The AI parsing tool only supports discrete character matrices and would produce errors if allowed to continue. ' +
+        'Please upload your matrix file and character information file to the Documents section of your project.'
+      uploadError.value = msg
+      emit('extractionError', new Error(msg))
+      isProcessingPdf.value = false
+      return
     }
 
     const characters = []
@@ -190,6 +205,20 @@ async function extractCharactersFromPdf() {
   margin-bottom: 15px;
   font-size: 24px;
   font-weight: 600;
+}
+
+.beta-badge {
+  display: inline-block;
+  background: #e67e22;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  vertical-align: middle;
+  margin-left: 8px;
 }
 
 .extractor-description {
