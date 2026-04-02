@@ -554,7 +554,7 @@ onMounted(() => {
       <!-- Press Section -->
       <div v-if="press.length" class="press-section">
         <div class="section-header">
-          <h2 class="section-title">MorphoBank Updates</h2>
+          <h2 class="section-title">News</h2>
           <router-link to="/news" class="view-all-link"
             >View All <i class="fa-solid fa-arrow-right"></i
           ></router-link>

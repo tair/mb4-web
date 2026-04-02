@@ -41,11 +41,11 @@
                 Donate
               </a>
             </div>
-            <!-- <div class="col-auto">
+            <div class="col-auto">
               <RouterLink class="nav-link p-1 me-3" to="/news">
                 News
               </RouterLink>
-            </div> -->
+            </div>
 
             <div class="col-auto">
               <a
