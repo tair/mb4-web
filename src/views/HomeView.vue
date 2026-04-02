@@ -553,7 +553,12 @@ onMounted(() => {
 
       <!-- Press Section -->
       <div v-if="press.length" class="press-section">
-        <h2 class="section-title">MorphoBank Updates</h2>
+        <div class="section-header">
+          <h2 class="section-title">MorphoBank Updates</h2>
+          <router-link to="/news" class="view-all-link"
+            >View All <i class="fa-solid fa-arrow-right"></i
+          ></router-link>
+        </div>
         <div class="card-slideshow">
           <div
             class="nav-arrow left"
@@ -1286,6 +1291,37 @@ onMounted(() => {
   padding: 1.5rem;
   background: white;
   border-bottom: 1px solid #eee;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  border-bottom: 1px solid #eee;
+}
+
+.section-header .section-title {
+  border-bottom: none;
+}
+
+.view-all-link {
+  padding-right: 1.5rem;
+  color: var(--theme-orange);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.view-all-link:hover {
+  color: var(--theme-orange-hover);
+}
+
+.view-all-link i {
+  margin-left: 0.25rem;
+  font-size: 0.8rem;
 }
 
 /* Sponsors Section */
