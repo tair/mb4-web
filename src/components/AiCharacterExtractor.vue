@@ -130,10 +130,13 @@ async function extractCharactersFromPdf() {
       (c) => c.type === 'continuous'
     )
     if (continuousChars.length > 0) {
-      uploadError.value =
+      const msg =
         'This matrix contains both discrete and continuous characters. ' +
         'The AI parsing tool only supports discrete character matrices and would produce errors if allowed to continue. ' +
         'Please upload your matrix file and character information file to the Documents section of your project.'
+      uploadError.value = msg
+      emit('extractionError', new Error(msg))
+      isProcessingPdf.value = false
       return
     }
 
