@@ -28,6 +28,7 @@ const userData = reactive({
 })
 const hasUserInteracted = ref(false)
 const orcidLoginUrl = ref(null)
+const unlinkingOrcid = ref(false)
 const searchTerm = ref(null)
 const institutionList = ref([])
 const searchLoading = ref(false)
@@ -37,6 +38,7 @@ const insititutionalTootipText =
   'Scientists on MorphoBank are often affiliated with more than one institution and those can be entered here. When you change institutions, your older, published projects will remain credited to the institution you belonged to at the time the paper was published on MorphoBank'
 const independentResearcherTooltipText = 
   'Check this if you have no institutional affiliation. Any listed institutions will be immediately removed from the form and saved when you click Update.'
+const orcidTooltip = '<strong>What is ORCID?</strong><br>ORCID provides a unique identifier for researchers, ensuring your work is correctly attributed to you. <a href="/orcid">Learn more</a>'
 const passwordTooltipText = getPasswordRule()
 
 onMounted(async () => {
@@ -141,6 +143,31 @@ const searchInstitutions = async () => {
     showError('Error loading institutions')
     console.error(err)
     searchLoading.value = false
+  }
+}
+
+const unlinkORCID = async () => {
+  if (!confirm('Are you sure you want to unlink your ORCID? You can link it again later.\n\nNote: ORCID may remember your previous authorization. To fully reset permissions, visit your ORCID account\'s Trusted Organizations settings.')) {
+    return
+  }
+  
+  try {
+    unlinkingOrcid.value = true
+    const result = await authStore.unlinkORCID()
+    
+    if (result.success) {
+      userData.user.orcid = null
+      userData.user.orcidWriteAccess = false
+      userData.user.orcidWriteAccessRequired = false
+      showSuccess('ORCID successfully unlinked from your account')
+    } else {
+      showError(result.message || 'Failed to unlink ORCID')
+    }
+  } catch (e) {
+    showError('Error unlinking ORCID')
+    console.error('Error unlinking ORCID:', e)
+  } finally {
+    unlinkingOrcid.value = false
   }
 }
 
@@ -440,7 +467,7 @@ const submitButtonText = computed(() => {
         </div>
 
         <!-- ORCID Section -->
-        <h2 class="section-heading">ORCID</h2>
+        <h2 class="section-heading">ORCID <Tooltip :content="orcidTooltip" :interactive="true" /></h2>
         <div class="section-dividing-line"></div>
 
         <div class="form-group">
@@ -455,16 +482,66 @@ const submitButtonText = computed(() => {
                 Link Account with ORCID
               </a>
             </div>
-            <div v-else class="orcid-linked">
-              <img
-                alt="ORCID logo"
-                src="/ORCIDiD_iconvector.svg"
-                title="ORCID iD"
-                class="orcid-icon"
-              />
-              {{ userData.user.orcid }}
+            <div v-else class="orcid-linked-container">
+              <div v-if="userData.user.orcidWriteAccessRequired" class="alert alert-warning mb-3">
+                <strong>Action Required:</strong> Your ORCID account is linked with read-only permission.
+                To allow MorphoBank to add your published works to your ORCID record, please
+                re-authenticate with write permission.
+                <a :href="orcidLoginUrl" class="btn btn-sm btn-warning ms-2">
+                  <img src="/ORCIDiD_iconvector.svg" class="orcid-icon" alt="ORCID" />
+                  Grant Write Permission
+                </a>
+              </div>
+              <div class="orcid-linked">
+                <img
+                  alt="ORCID logo"
+                  src="/ORCIDiD_iconvector.svg"
+                  title="ORCID iD"
+                  class="orcid-icon"
+                />
+                <a 
+                  :href="`https://orcid.org/${userData.user.orcid}`" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  class="orcid-link"
+                >
+                  {{ userData.user.orcid }}
+                </a>
+                <span v-if="userData.user.orcidWriteAccess" class="badge bg-success ms-2">Read &amp; Write</span>
+                <span v-else class="badge bg-secondary ms-2">Read Only</span>
+              </div>
+              <button 
+                type="button" 
+                class="btn btn-sm btn-outline-danger ms-3"
+                @click="unlinkORCID"
+                :disabled="unlinkingOrcid"
+              >
+                <span v-if="unlinkingOrcid">Unlinking...</span>
+                <span v-else>Unlink ORCID</span>
+              </button>
             </div>
           </div>
+        </div>
+
+        <div v-if="userData.user.orcid" class="form-group">
+          <label class="form-check">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              v-model="userData.userForm.orcidOptOut"
+              @focus="handleFieldFocus"
+            />
+            <span class="form-check-label">
+              Opt out of ORCID publishing for all projects
+            </span>
+          </label>
+          <p class="field-description">
+            When checked, MorphoBank will not push any published works to your ORCID record.
+            You can also opt out on a per-project basis from each project's overview page.
+          </p>
+          <p class="field-description text-muted" style="font-size: 0.85em;">
+            MorphoBank will only ever add projects you publish. You can revoke access at any time from your ORCID settings.
+          </p>
         </div>
 
         <div class="form-buttons">

@@ -10,6 +10,7 @@
               in with your ORCID will create a new account for you based on that
               ID.
             </p>
+            <p><small>What is ORCID? <Tooltip :content="orcidTooltip" :interactive="true" /></small></p>
           </div>
           <div><br /><i>* indicates required fields.</i></div>
         </div>
@@ -192,6 +193,7 @@ import Alert from '@/components/main/Alert.vue'
 
 const authStore = useAuthStore()
 const messageStore = useMessageStore()
+const orcidTooltip = '<strong>What is ORCID?</strong><br>ORCID provides a unique identifier for researchers, ensuring your work is correctly attributed to you. <a href="/orcid">Learn more</a>'
 const passwordTooltipText = getPasswordRule()
 const confirmPasswordText = 'Please enter the password exactly as above.'
 const orcidLoginUrl = ref(null)
@@ -261,6 +263,7 @@ const submitForm = async () => {
     orcid: state.orcid,
     accessToken: state.accessToken,
     refreshToken: state.refreshToken,
+    orcidWriteAccess: authStore.orcid.scope?.includes('/activities/update') || false,
   }
 
   try {

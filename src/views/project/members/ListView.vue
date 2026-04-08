@@ -17,7 +17,6 @@ const userToDelete = ref({})
 
 // Check if current user is project admin or system curator or administrator
 const isCurrentUserProjectAdmin = computed(() => {
-  // System curators have full access
   if (authStore.isUserCurator || authStore.isUserAdministrator) return true
   
   const currentUserId = authStore.user?.userId
@@ -25,6 +24,18 @@ const isCurrentUserProjectAdmin = computed(() => {
   
   const userMembership = projectUsersStore.getUserById(currentUserId)
   return userMembership?.admin === true
+})
+
+const currentUserMembership = computed(() => {
+  const userId = authStore.user?.userId
+  return userId ? projectUsersStore.getUserById(userId) : null
+})
+
+const orcidOptOut = computed({
+  get: () => !!currentUserMembership.value?.orcid_publish_opt_out,
+  set: (value) => {
+    projectUsersStore.updateOrcidOptOut(projectId, value)
+  },
 })
 const users = computed(() =>
   projectUsersStore.users.sort((a, b) => {
@@ -72,6 +83,23 @@ onMounted(() => {
           <span> Add New Member </span>
         </button>
       </RouterLink>
+    </div>
+    <div v-if="currentUserMembership" class="card mt-3 mb-3">
+      <div class="card-body">
+        <label class="form-check">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            v-model="orcidOptOut"
+          />
+          <span class="form-check-label">
+            Opt out of ORCID publishing for this project
+          </span>
+        </label>
+        <div class="text-muted small mt-1">
+          When checked, your published works from this project will not be pushed to your ORCID record.
+        </div>
+      </div>
     </div>
     <MembersComp
       :users="users"

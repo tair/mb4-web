@@ -11,6 +11,7 @@ type User = {
   lname: string
   email: string
   membership_type: number
+  orcid_publish_opt_out?: number
 }
 defineProps<{
   users: User[]
@@ -74,6 +75,9 @@ const isCurrentUserProjectAdmin = computed(() => {
         }}
       </div>
       <div v-if="user.admin" class="fw-bold">Project Administrator</div>
+      <div v-if="user.orcid_publish_opt_out" class="text-muted small">
+        <i class="fa-solid fa-circle-xmark"></i> Opted out of ORCID publishing
+      </div>
     </li>
   </ul>
 </template>

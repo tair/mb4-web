@@ -21,6 +21,18 @@ const authStore = useAuthStore()
 const projectUsersStore = useProjectUsersStore()
 const isRefreshing = ref(false)
 
+const currentUserMembership = computed(() => {
+  const userId = authStore.user?.userId
+  return userId ? projectUsersStore.getUserById(userId) : null
+})
+
+const orcidOptOut = computed({
+  get: () => !!currentUserMembership.value?.orcid_publish_opt_out,
+  set: (value) => {
+    projectUsersStore.updateOrcidOptOut(props.projectId, value)
+  },
+})
+
 // Ensure project users are loaded for permission checks
 onMounted(async () => {
   if (!projectUsersStore.isLoaded && props.projectId) {
@@ -282,6 +294,28 @@ const refreshStatistics = async () => {
             }}
           </li>
         </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORCID Publishing Preferences -->
+  <div v-if="currentUserMembership" class="mb-3">
+    <div class="card shadow">
+      <div class="card-header fw-bold">ORCID Publishing</div>
+      <div class="card-body small">
+        <label class="form-check mb-0">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            v-model="orcidOptOut"
+          />
+          <span class="form-check-label">
+            Opt out of ORCID publishing for this project
+          </span>
+        </label>
+        <div class="text-muted mt-1">
+          When checked, your published works from this project will not be pushed to your ORCID record.
+        </div>
       </div>
     </div>
   </div>
