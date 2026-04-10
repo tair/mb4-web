@@ -7,7 +7,12 @@ import { useTaxaStore } from '@/stores/TaxaStore'
 import { useFileTransferStore } from '@/stores/FileTransferStore'
 import { useNotifications } from '@/composables/useNotifications'
 import { NavigationPatterns } from '@/utils/navigationUtils.js'
-import { CharacterStateIncompleteType } from '@/lib/matrix-parser/MatrixObject.ts'
+import {
+  CharacterStateIncompleteType,
+  Cell,
+  MatrixErrorType,
+  generateUniqueNameWithPostfix,
+} from '@/lib/matrix-parser/MatrixObject.ts'
 import { getIncompleteStateText } from '@/lib/matrix-parser/text.ts'
 import { mergeMatrix } from '@/lib/MatrixMerger.js'
 import { serializeMatrix } from '@/lib/MatrixSerializer.ts'
@@ -15,6 +20,7 @@ import { getTaxonomicUnitOptions } from '@/utils/taxa'
 import { convertCsvToMatrix } from '@/utils/csvConverter.js'
 import router from '@/router'
 import { apiService } from '@/services/apiService.js'
+import AiCharacterExtractor from '@/components/AiCharacterExtractor.vue'
 
 const route = useRoute()
 const taxaStore = useTaxaStore()
@@ -33,6 +39,7 @@ const taxonomicUnits = getTaxonomicUnitOptions()
 
 const importedMatrix = reactive({})
 const isProcessingMatrix = ref(false)
+const isAiExtracted = ref(false)
 const defaultNumbering = computed(() =>
   importedMatrix.format == 'NEXUS' ? 1 : 0
 )
@@ -275,16 +282,25 @@ async function importMatrix(event) {
     try {
       const result = parser.parseMatrixWithErrors(reader.result)
       if (result.error) {
-        // Display validation error below the upload field (not notification)
-        uploadError.value = result.error.userMessage
-        // Clear the file input
-        const fileInput = document.getElementById('upload')
-        if (fileInput) {
-          fileInput.value = ''
+        // Check if this is the "no characters" error - if so, we'll allow proceeding with an empty matrix
+        const isNoCharactersError = result.error.errorType === MatrixErrorType.NO_CHARACTERS
+          || result.error.errorType === MatrixErrorType.UNDEFINED_CHARACTERS
+        
+        if (isNoCharactersError && result.matrixObject) {
+          // Allow proceeding with empty matrix - user can add characters via PDF on the characters screen
+          Object.assign(importedMatrix, result.matrixObject)
+          uploadError.value = '' // Clear error, we'll handle this in the characters screen
+        } else {
+          // Display validation error below the upload field (not notification)
+          uploadError.value = result.error.userMessage
+          // Clear the file input
+          const fileInput = document.getElementById('upload')
+          if (fileInput) {
+            fileInput.value = ''
+          }
+          return
         }
-        return
-      }
-      if (result.matrixObject) {
+      } else if (result.matrixObject) {
         Object.assign(importedMatrix, result.matrixObject)
         uploadError.value = '' // Clear error on success
       } else {
@@ -407,11 +423,21 @@ let isUploading = ref(false)
 
 async function uploadMatrix() {
   isUploading.value = true
+  uploadError.value = ''
   
   // Frontend validation to prevent malformed matrices from reaching backend
   const validationResult = validateMatrixForUpload(importedMatrix)
   if (!validationResult.ok) {
+    console.error('Matrix validation failed:', validationResult.message, {
+      hasCharacters: !!importedMatrix.characters,
+      characterCount: importedMatrix.characters?.size,
+      hasTaxa: !!importedMatrix.taxa,
+      taxaCount: importedMatrix.taxa?.size,
+      hasCells: !!importedMatrix.cells,
+      cellCount: importedMatrix.cells?.size,
+    })
     showError(validationResult.message)
+    uploadError.value = validationResult.message
     isUploading.value = false
     return
   }
@@ -579,6 +605,117 @@ function cancelImport() {
 
 function convertNewlines(text) {
   return text.replace(/\n/g, '<br>')
+}
+
+// Handle characters extracted from AI
+function handleCharactersExtracted(extractedCharacters) {
+  isAiExtracted.value = true
+  // Track whether the matrix had named characters before this extraction.
+  // If not, the cells from the MATRIX block are for unnamed/declared characters
+  // and don't correspond to the AI-extracted characters — they must be cleared.
+  const hadNamedCharacters = importedMatrix.characters && importedMatrix.characters.size > 0
+
+  // Initialize characters Map if it doesn't exist
+  if (!importedMatrix.characters) {
+    importedMatrix.characters = new Map()
+  }
+
+  // Track the initial character count to calculate actual new characters added
+  const initialCharCount = importedMatrix.characters.size
+
+  // Add each extracted character to the importedMatrix, deduplicating names
+  // to prevent Map.set from overwriting existing entries (which would corrupt
+  // characterNumber sequencing since Map.size doesn't increment on overwrite).
+  for (const character of extractedCharacters) {
+    const characterIndex = importedMatrix.characters.size
+    character.characterNumber = characterIndex
+
+    const insertName = generateUniqueNameWithPostfix(
+      character.name,
+      (name) => importedMatrix.characters.has(name)
+    )
+    if (insertName !== character.name) {
+      character.duplicateCharacter = character.name
+      character.name = insertName
+    }
+    importedMatrix.characters.set(insertName, character)
+  }
+
+  // Calculate the actual number of new characters added (not overwritten)
+  const newCharCount = importedMatrix.characters.size - initialCharCount
+
+  // Normalize cells to match taxa:
+  // The parser may create phantom cell entries (e.g. when NCHAR dimension is missing
+  // and cell data strings get misread as taxon names), or cells may use different key
+  // formats than taxa (underscores vs spaces). Rebuild cells aligned with taxa keys.
+  if (importedMatrix.cells && importedMatrix.taxa) {
+    const normalizeKey = (k) => k.toLowerCase().replace(/_/g, ' ').trim()
+    const taxaKeys = Array.from(importedMatrix.taxa.keys())
+
+    // Build a lookup from normalized cell key → original cell key
+    const cellsByNormalized = new Map()
+    for (const cellKey of importedMatrix.cells.keys()) {
+      cellsByNormalized.set(normalizeKey(cellKey), cellKey)
+    }
+
+    // Build new cells Map aligned with taxa
+    const normalizedCells = new Map()
+    for (const taxonKey of taxaKeys) {
+      // Try exact match first, then normalized match
+      if (importedMatrix.cells.has(taxonKey)) {
+        normalizedCells.set(taxonKey, importedMatrix.cells.get(taxonKey))
+      } else {
+        const normKey = normalizeKey(taxonKey)
+        const matchingCellKey = cellsByNormalized.get(normKey)
+        if (matchingCellKey) {
+          normalizedCells.set(taxonKey, importedMatrix.cells.get(matchingCellKey))
+        } else {
+          normalizedCells.set(taxonKey, [])
+        }
+      }
+    }
+    importedMatrix.cells = normalizedCells
+
+    // If the matrix had no named characters before, the existing cell data is from
+    // the MATRIX block's unnamed/declared characters and doesn't correspond to the
+    // AI-extracted characters. Clear it so padding creates clean '?' rows.
+    if (!hadNamedCharacters) {
+      for (const taxonKey of importedMatrix.cells.keys()) {
+        importedMatrix.cells.set(taxonKey, [])
+      }
+    } else {
+      // The parser pads cell rows to NCHAR (declared dimension). For
+      // UNDEFINED_CHARACTERS matrices NCHAR > characters.size, so rows are
+      // longer than the named-character count. Trim them to initialCharCount
+      // now; the padding loop below will then bring every row to exactly
+      // initialCharCount + newCharCount == characters.size.
+      for (const taxonKey of importedMatrix.cells.keys()) {
+        const row = importedMatrix.cells.get(taxonKey)
+        if (row.length > initialCharCount) {
+          importedMatrix.cells.set(taxonKey, row.slice(0, initialCharCount))
+        }
+      }
+    }
+  }
+
+  // Pad every taxon's cell row with '?' for each newly added character
+  // so the matrix dimensions stay consistent (cells per row == total characters)
+  if (importedMatrix.cells) {
+    const missingSymbol = importedMatrix.parameters?.MISSING ?? '?'
+    for (const cellKey of importedMatrix.cells.keys()) {
+      const cellRow = importedMatrix.cells.get(cellKey)
+      for (let i = 0; i < newCharCount; i++) {
+        cellRow.push(new Cell(missingSymbol))
+      }
+    }
+  }
+
+}
+
+// Handle extraction errors
+function handleExtractionError(error) {
+  console.error('AI extraction error:', error)
+  showError(error instanceof Error ? error.message : 'Failed to extract characters')
 }
 
 onMounted(async () => {
@@ -752,10 +889,8 @@ onUnmounted(() => {
               <p><strong>Mixed continuous and discrete character CSV or Excel files are currently NOT handled.</strong></p>
             </div>
             <p v-else>
-              Note - your matrix must have character names for all the
-              characters and these character names must each be different. If
-              this is a file with combined molecular and morphological data, or
-              molecular data only, it must be submitted to the Documents area.
+              If your matrix does not have character names and states, you will
+              have a chance to upload a PDF with that information in the next screen.
             </p>
             <div class="form-group">
               <label for="matrix-notes">
@@ -873,7 +1008,7 @@ onUnmounted(() => {
             Please review the characters that will be merged into your existing
             matrix.
           </p>
-          <p v-else>
+          <p v-else-if="importedMatrix?.characters?.size > 0">
             Please confirm that the character and their states are correct.
           </p>
           <div
@@ -884,7 +1019,23 @@ onUnmounted(() => {
             Loading...
           </div>
           <div class="matrix-confirmation-screen" v-else>
-            <table>
+            <AiCharacterExtractor
+              v-if="!importedMatrix?.characters || importedMatrix.characters.size === 0"
+              :total-characters="1000"
+              page-range="all"
+              :zero-indexed="false"
+              @characters-extracted="handleCharactersExtracted"
+              @extraction-error="handleExtractionError"
+            />
+
+            <!-- Beta warning for AI-extracted characters -->
+            <div v-if="isAiExtracted && importedMatrix?.characters && importedMatrix.characters.size > 0" class="ai-beta-warning">
+              <span class="beta-badge">Beta</span>
+              These characters were extracted using AI and may contain errors. Please review them carefully before proceeding.
+            </div>
+
+            <!-- Show character table when characters exist -->
+            <table v-if="importedMatrix?.characters && importedMatrix.characters.size > 0">
               <thead>
                 <tr>
                   <th>#</th>
@@ -1208,6 +1359,10 @@ onUnmounted(() => {
               </tbody>
             </table>
           </div>
+          <!-- Upload Error Display (visible on taxa step) -->
+          <div v-if="uploadError" class="alert alert-danger mt-3 mb-0">
+            {{ uploadError }}
+          </div>
           <div class="btn-step-group">
             <button
               class="btn btn-primary btn-step-prev"
@@ -1396,6 +1551,29 @@ onUnmounted(() => {
 .incomplete-state-warning {
   color: red;
   font-style: italic;
+}
+
+.ai-beta-warning {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #856404;
+}
+
+.ai-beta-warning .beta-badge {
+  display: inline-block;
+  background: #e67e22;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 8px;
 }
 
 .duplicate-characters {
