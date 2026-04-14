@@ -67,7 +67,7 @@ const router = createRouter({
         },
         {
           path: '/news',
-          name: 'MewsView',
+          name: 'NewsView',
           component: NewsView,
         },
         {
