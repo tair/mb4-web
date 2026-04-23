@@ -734,6 +734,7 @@ export default {
       if (this.$refs.mediaImage) {
         this.updateImageTransform()
       }
+      this.syncImageIfAlreadyDecoded()
     }, 50)
     
     // Watch for refs to become available
@@ -792,6 +793,9 @@ export default {
             this.updateImageTransform()
           }
         })
+        
+        // Cache-complete images may never fire <img> @load; dismiss overlay and init canvas
+        this.syncImageIfAlreadyDecoded()
       },
       immediate: true
     }
@@ -1034,6 +1038,13 @@ export default {
         return
       }
       
+      // Deduplicate: the same <img> can fire @load and also be completed synchronously
+      // from the browser cache (re-opening the same media in another cell).
+      if (this.imageLoaded) {
+        this.syncCanvasToCurrentImage()
+        return
+      }
+      
       this.imageLoaded = true
       this.isLoadingImage = false
       this.clearImageLoadTimer()
@@ -1086,11 +1097,49 @@ export default {
         this.imageLoaded = false
         this.isLoadingImage = true
         this.startImageLoadWatch()
+        this.syncImageIfAlreadyDecoded()
         return
       }
       
       // If fallback also failed, show error
       this.showSaveStatus('Failed to load image (tried original and large versions)', 'error')
+    },
+
+    /**
+     * If the <img> already has decodeable pixels (e.g. served from the HTTP cache when the
+     * same file is opened again in a different cell), the load event can fire before @load
+     * is bound or not fire at all. Without onImageLoad, the loading overlay never dismisses.
+     */
+    syncImageIfAlreadyDecoded() {
+      this.$nextTick(() => {
+        this.tryRunImageLoadFromDecodableImage()
+        requestAnimationFrame(() => {
+          this.tryRunImageLoadFromDecodableImage()
+        })
+      })
+    },
+
+    tryRunImageLoadFromDecodableImage() {
+      if (this.isLoadingTiff) {
+        return
+      }
+      const img = this.$refs.mediaImage
+      if (!img || !img.complete) {
+        return
+      }
+      if (img.naturalWidth < 1 || img.naturalHeight < 1) {
+        return
+      }
+      this.onImageLoad()
+    },
+
+    /** Re-layout canvas if the image is already fully loaded (used after idempotent onImageLoad). */
+    syncCanvasToCurrentImage() {
+      this.$nextTick(() => {
+        this.setupCanvas()
+        this.updateImageTransform()
+        this.drawAnnotations()
+      })
     },
 
     setupCanvas() {
@@ -2884,6 +2933,7 @@ export default {
           this.isLoadingImage = true
           this.imageLoaded = false
           this.clearImageLoadTimer()
+          this.syncImageIfAlreadyDecoded()
         }
       }, this.fallbackDelayMs)
     },
