@@ -862,9 +862,9 @@ export default {
         this._containerResizeObserver.disconnect()
         this._containerResizeObserver = null
       }
-      if (this._annotationResizeRaf != null) {
-        cancelAnimationFrame(this._annotationResizeRaf)
-        this._annotationResizeRaf = null
+      if (this._containerResizeRaf != null) {
+        cancelAnimationFrame(this._containerResizeRaf)
+        this._containerResizeRaf = null
       }
       if (this._roFallbackTimer) {
         clearTimeout(this._roFallbackTimer)
