@@ -747,6 +747,11 @@ export default {
       }
       checkRefs()
     })
+
+    // Re-run layout when the modal body gets a non-zero size (cached images can decode before this).
+    this.$nextTick(() => {
+      this.setupAnnotationContainerSizeObserver()
+    })
   },
 
   watch: {
@@ -792,12 +797,15 @@ export default {
             this.updateImageTransform()
           }
         })
+        
+        this.syncImageIfAlreadyDecoded()
       },
       immediate: true
     }
   },
 
   beforeUnmount() {
+    this.teardownAnnotationContainerSizeObserver()
     this.removeEventListeners()
     this.clearImageLoadTimer()
     this.cleanupTiffBlobUrl()
@@ -819,6 +827,49 @@ export default {
       document.removeEventListener('mousemove', this.onDocumentMouseMove)
       document.removeEventListener('mouseup', this.onDocumentMouseUp)
       window.removeEventListener('resize', this.onWindowResize)
+    },
+
+    // Re-layout when the viewing area gets real dimensions (e.g. matrix modal after animation).
+    setupAnnotationContainerSizeObserver() {
+      this.teardownAnnotationContainerSizeObserver()
+      const el = this.$refs.canvasContainer
+      if (!el) {
+        return
+      }
+      if (typeof ResizeObserver === 'undefined') {
+        this._roFallbackTimer = setTimeout(() => this.syncCanvasToCurrentImage(), 200)
+        return
+      }
+      this._containerResizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.contentRect.width < 1 || entry.contentRect.height < 1) {
+            continue
+          }
+          if (this._containerResizeRaf != null) {
+            cancelAnimationFrame(this._containerResizeRaf)
+          }
+          this._containerResizeRaf = requestAnimationFrame(() => {
+            this._containerResizeRaf = null
+            this.syncCanvasToCurrentImage()
+          })
+        }
+      })
+      this._containerResizeObserver.observe(el)
+    },
+
+    teardownAnnotationContainerSizeObserver() {
+      if (this._containerResizeObserver) {
+        this._containerResizeObserver.disconnect()
+        this._containerResizeObserver = null
+      }
+      if (this._containerResizeRaf != null) {
+        cancelAnimationFrame(this._containerResizeRaf)
+        this._containerResizeRaf = null
+      }
+      if (this._roFallbackTimer) {
+        clearTimeout(this._roFallbackTimer)
+        this._roFallbackTimer = null
+      }
     },
 
     toggleHelp() {
@@ -1034,6 +1085,13 @@ export default {
         return
       }
       
+      // Deduplicate: the same <img> can fire @load and also be completed synchronously
+      // from the browser cache (re-opening the same media in another cell).
+      if (this.imageLoaded) {
+        this.syncCanvasToCurrentImage()
+        return
+      }
+      
       this.imageLoaded = true
       this.isLoadingImage = false
       this.clearImageLoadTimer()
@@ -1086,11 +1144,47 @@ export default {
         this.imageLoaded = false
         this.isLoadingImage = true
         this.startImageLoadWatch()
+        this.syncImageIfAlreadyDecoded()
         return
       }
       
       // If fallback also failed, show error
       this.showSaveStatus('Failed to load image (tried original and large versions)', 'error')
+    },
+
+    // If the <img> is already decoded (cache), @load may not run—still run the same init as onImageLoad.
+    syncImageIfAlreadyDecoded() {
+      this.$nextTick(() => {
+        this.tryRunImageLoadFromDecodableImage()
+        requestAnimationFrame(() => {
+          this.tryRunImageLoadFromDecodableImage()
+        })
+      })
+    },
+
+    tryRunImageLoadFromDecodableImage() {
+      if (this.isLoadingTiff) {
+        return
+      }
+      const img = this.$refs.mediaImage
+      if (!img || !img.complete) {
+        return
+      }
+      if (img.naturalWidth < 1 || img.naturalHeight < 1) {
+        return
+      }
+      this.onImageLoad()
+    },
+
+    syncCanvasToCurrentImage() {
+      if (!this.imageLoaded) {
+        return
+      }
+      this.$nextTick(() => {
+        this.setupCanvas()
+        this.updateImageTransform()
+        this.drawAnnotations()
+      })
     },
 
     setupCanvas() {
@@ -1109,6 +1203,11 @@ export default {
       
       if (naturalWidth === 0 || naturalHeight === 0) {
         // Image not fully loaded yet
+        return
+      }
+
+      // Modal (e.g. matrix ImageViewer) may not have been laid out yet; skip until we have a real box
+      if (containerWidth < 1 || containerHeight < 1) {
         return
       }
       
@@ -2356,10 +2455,10 @@ export default {
         // Emit event for parent component
         this.$emit('annotationsLoaded', this.annotations.length)
         
-        // Draw annotations on canvas
         this.$nextTick(() => {
-          this.drawAnnotations()
-          
+          if (this.imageLoaded) {
+            this.syncCanvasToCurrentImage()
+          }
           // Wait for image to load before forcing label update
           setTimeout(() => {
             if (this.$refs.mediaImage && this.$refs.canvasContainer) {
@@ -2884,6 +2983,7 @@ export default {
           this.isLoadingImage = true
           this.imageLoaded = false
           this.clearImageLoadTimer()
+          this.syncImageIfAlreadyDecoded()
         }
       }, this.fallbackDelayMs)
     },
