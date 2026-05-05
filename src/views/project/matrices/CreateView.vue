@@ -610,18 +610,11 @@ function convertNewlines(text) {
 // Handle characters extracted from AI
 function handleCharactersExtracted(extractedCharacters) {
   isAiExtracted.value = true
-  // Track whether the matrix had named characters before this extraction.
-  // If not, the cells from the MATRIX block are for unnamed/declared characters
-  // and don't correspond to the AI-extracted characters — they must be cleared.
-  const hadNamedCharacters = importedMatrix.characters && importedMatrix.characters.size > 0
 
   // Initialize characters Map if it doesn't exist
   if (!importedMatrix.characters) {
     importedMatrix.characters = new Map()
   }
-
-  // Track the initial character count to calculate actual new characters added
-  const initialCharCount = importedMatrix.characters.size
 
   // Add each extracted character to the importedMatrix, deduplicating names
   // to prevent Map.set from overwriting existing entries (which would corrupt
@@ -640,9 +633,6 @@ function handleCharactersExtracted(extractedCharacters) {
     }
     importedMatrix.characters.set(insertName, character)
   }
-
-  // Calculate the actual number of new characters added (not overwritten)
-  const newCharCount = importedMatrix.characters.size - initialCharCount
 
   // Normalize cells to match taxa:
   // The parser may create phantom cell entries (e.g. when NCHAR dimension is missing
@@ -675,41 +665,28 @@ function handleCharactersExtracted(extractedCharacters) {
       }
     }
     importedMatrix.cells = normalizedCells
-
-    // If the matrix had no named characters before, the existing cell data is from
-    // the MATRIX block's unnamed/declared characters and doesn't correspond to the
-    // AI-extracted characters. Clear it so padding creates clean '?' rows.
-    if (!hadNamedCharacters) {
-      for (const taxonKey of importedMatrix.cells.keys()) {
-        importedMatrix.cells.set(taxonKey, [])
-      }
-    } else {
-      // The parser pads cell rows to NCHAR (declared dimension). For
-      // UNDEFINED_CHARACTERS matrices NCHAR > characters.size, so rows are
-      // longer than the named-character count. Trim them to initialCharCount
-      // now; the padding loop below will then bring every row to exactly
-      // initialCharCount + newCharCount == characters.size.
-      for (const taxonKey of importedMatrix.cells.keys()) {
-        const row = importedMatrix.cells.get(taxonKey)
-        if (row.length > initialCharCount) {
-          importedMatrix.cells.set(taxonKey, row.slice(0, initialCharCount))
-        }
-      }
-    }
   }
 
-  // Pad every taxon's cell row with '?' for each newly added character
-  // so the matrix dimensions stay consistent (cells per row == total characters)
+  // Reconcile cell row width with the total character count. The .nex MATRIX
+  // block scores correspond positionally to the AI-extracted characters (that
+  // is the whole point of AI extraction — name the unnamed/declared columns),
+  // so existing cell data must be preserved. Pad rows shorter than the new
+  // total with the missing symbol; trim defensively if any row exceeds it.
+  // (MB4-448: prior logic cleared all rows when characters.size was 0 before
+  // extraction, which is exactly the AI-extractor flow — wiping every score.)
   if (importedMatrix.cells) {
     const missingSymbol = importedMatrix.parameters?.MISSING ?? '?'
+    const targetLength = importedMatrix.characters.size
     for (const cellKey of importedMatrix.cells.keys()) {
       const cellRow = importedMatrix.cells.get(cellKey)
-      for (let i = 0; i < newCharCount; i++) {
+      while (cellRow.length < targetLength) {
         cellRow.push(new Cell(missingSymbol))
+      }
+      if (cellRow.length > targetLength) {
+        importedMatrix.cells.set(cellKey, cellRow.slice(0, targetLength))
       }
     }
   }
-
 }
 
 // Handle extraction errors
