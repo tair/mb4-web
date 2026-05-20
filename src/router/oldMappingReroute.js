@@ -359,12 +359,26 @@ export const legacyRoutes = [
     redirect: createProjectRedirect('/project/:projectId/bibliography', '/projects/journal_year'),
   },
   {
+    path: '/Projects/FoliosList/folio_id/:folioId/project_id/:projectId',
+    redirect: (to) => `/project/${to.params.projectId}/folios/${to.params.folioId}`,
+  },
+  {
     path: '/Projects/FoliosList/project_id/:projectId',
     redirect: (to) => `/project/${to.params.projectId}/folios`,
   },
   {
     path: '/Projects/FoliosList',
-    redirect: createProjectRedirect('/project/:projectId/folios', '/projects/journal_year'),
+    redirect: (to) => {
+      const projectId = to.query.project_id
+      const folioId = to.query.folio_id
+      if (projectId && /^\d+$/.test(projectId)) {
+        if (folioId && /^\d+$/.test(folioId)) {
+          return { path: `/project/${projectId}/folios/${folioId}`, query: {} }
+        }
+        return { path: `/project/${projectId}/folios`, query: {} }
+      }
+      return '/projects/journal_year'
+    },
   },
 
   // Unimplemented published project pages

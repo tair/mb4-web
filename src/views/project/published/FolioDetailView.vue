@@ -15,28 +15,36 @@ const projectId = route.params.id
 const folioId = route.params.folioId
 const folioInfo = ref(null)
 const mediaFiles = ref(null)
+const loading = ref(true)
+const error = ref(null)
 
-onMounted(() => {
-  projectStore
-    .fetchProject(projectId)
-    .then(() => {
-      folioInfo.value = projectStore.getFolioInfo(folioId)
-    })
-    .then(() => {
-      mediaStore.fetchMediaFiles(projectId).then(() => {
-        mediaFiles.value = mediaStore.getMediaFilesByIdList(
-          folioInfo.value?.media_files
-        )
+onMounted(async () => {
+  try {
+    await projectStore.fetchProject(projectId)
+    folioInfo.value = projectStore.getFolioInfo(folioId)
+
+    if (!folioInfo.value) {
+      error.value = `Folio F${folioId} not found in this project.`
+      return
+    }
+
+    await mediaStore.fetchMediaFiles(projectId)
+    mediaFiles.value = mediaStore.getMediaFilesByIdList(
+      folioInfo.value?.media_files
+    )
+
+    if (projectId && folioId) {
+      logView({
+        project_id: projectId,
+        hit_type: HIT_TYPES.FOLIO,
+        row_id: folioId,
       })
-    })
-
-  // Track folio view only when there's a specific folio ID
-  if (projectId && folioId) {
-    logView({
-      project_id: projectId,
-      hit_type: HIT_TYPES.FOLIO,
-      row_id: folioId,
-    })
+    }
+  } catch (e) {
+    console.error('Error loading folio detail:', e)
+    error.value = 'Error loading folio media.'
+  } finally {
+    loading.value = false
   }
 })
 
@@ -47,8 +55,8 @@ function generateFoliosListRoute() {
 
 <template>
   <ProjectLoaderComp
-    :isLoading="mediaStore.isLoading"
-    :errorMessage="mediaStore.media_files ? null : 'No media data available.'"
+    :isLoading="loading"
+    :errorMessage="error"
     basePath="project"
   >
     <p>
