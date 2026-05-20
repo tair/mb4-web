@@ -373,9 +373,9 @@ export const legacyRoutes = [
       const folioId = to.query.folio_id
       if (projectId && /^\d+$/.test(projectId)) {
         if (folioId && /^\d+$/.test(folioId)) {
-          return `/project/${projectId}/folios/${folioId}`
+          return { path: `/project/${projectId}/folios/${folioId}`, query: {} }
         }
-        return `/project/${projectId}/folios`
+        return { path: `/project/${projectId}/folios`, query: {} }
       }
       return '/projects/journal_year'
     },
