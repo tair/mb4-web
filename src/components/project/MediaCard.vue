@@ -185,30 +185,37 @@ function onLargeImageError() {
 }
 </script>
 <template>
-  <div 
-    class="mediaCard card shadow"
-    @mouseenter="onMouseEnter"
-    @mouseleave="onMouseLeave"
-  >
+  <div class="mediaCard card shadow">
     <slot name="bar"></slot>
-    <div class="card-image">
-      <img
-        v-if="image"
-        :src="image.url"
-        class="loading thumbnail-image"
-      />
-      <span v-else></span>
-    </div>
-    <div class="card-body">
-      <div class="card-text">
-        <div>M{{ mediaId }}</div>
-        <TaxonomicName v-if="taxon" :showExtinctMarker="true" :taxon="taxon" />
-        <div v-if="viewName">
-          {{ viewName }}
+    <!--
+      Hover handlers live on this zone (image + taxon names) rather than the
+      whole card, so hovering over the checkbox bar does not trigger the
+      preview popup and users can click the checkbox freely.
+    -->
+    <div
+      class="card-hover-zone"
+      @mouseenter="onMouseEnter"
+      @mouseleave="onMouseLeave"
+    >
+      <div class="card-image">
+        <img
+          v-if="image"
+          :src="image.url"
+          class="loading thumbnail-image"
+        />
+        <span v-else></span>
+      </div>
+      <div class="card-body">
+        <div class="card-text">
+          <div>M{{ mediaId }}</div>
+          <TaxonomicName v-if="taxon" :showExtinctMarker="true" :taxon="taxon" />
+          <div v-if="viewName">
+            {{ viewName }}
+          </div>
         </div>
       </div>
     </div>
-    
+
     <!-- Detailed Hover Preview Card -->
     <div 
       v-if="hasDetailedPreview && !largeImageFailed"
@@ -307,6 +314,14 @@ function onLargeImageError() {
   background-repeat: no-repeat;
   background-image: url('/images/loader.png');
   background-position: 10px 10px;
+}
+
+/* Wraps the image and taxon names; scopes the hover preview to this area only */
+.card-hover-zone {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .card-image {
