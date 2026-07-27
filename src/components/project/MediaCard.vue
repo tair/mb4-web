@@ -45,7 +45,8 @@ const props = defineProps<{
 const isHovering = ref(false)
 const isLargeImageLoaded = ref(false)
 const largeImageFailed = ref(false)
-let hoverTimeout: ReturnType<typeof setTimeout> | null = null
+let showTimeout: ReturnType<typeof setTimeout> | null = null
+let hideTimeout: ReturnType<typeof setTimeout> | null = null
 
 // Helper functions for displaying field values
 function getSideName(is_sided?: number): string {
@@ -145,22 +146,40 @@ const hasDetailedPreview = computed(() => {
 
 function onMouseEnter() {
   if (!hasDetailedPreview.value) return
-  
+
   // Start loading the large image immediately
   preloadLargeImage()
-  
+
+  // Cancel any pending hide so moving between the two hover targets (the
+  // thumbnail image and the card body) across the margin between them does
+  // not make the preview flicker.
+  if (hideTimeout) {
+    clearTimeout(hideTimeout)
+    hideTimeout = null
+  }
+
+  if (isHovering.value || showTimeout) return
+
   // Delay showing the preview to avoid flickering on quick mouse movements
-  hoverTimeout = setTimeout(() => {
+  showTimeout = setTimeout(() => {
     isHovering.value = true
+    showTimeout = null
   }, 200)
 }
 
 function onMouseLeave() {
-  if (hoverTimeout) {
-    clearTimeout(hoverTimeout)
-    hoverTimeout = null
+  // Cancel a pending show if the mouse left before the delay elapsed
+  if (showTimeout) {
+    clearTimeout(showTimeout)
+    showTimeout = null
   }
-  isHovering.value = false
+
+  // Delay hiding briefly so moving from the image to the card body (or vice
+  // versa) re-enters a hover target before the preview is dismissed.
+  hideTimeout = setTimeout(() => {
+    isHovering.value = false
+    hideTimeout = null
+  }, 80)
 }
 
 function preloadLargeImage() {
@@ -188,30 +207,31 @@ function onLargeImageError() {
   <div class="mediaCard card shadow">
     <slot name="bar"></slot>
     <!--
-      Hover handlers live on this zone (image + taxon names) rather than the
-      whole card, so hovering over the checkbox bar does not trigger the
-      preview popup and users can click the checkbox freely.
+      The hover preview is triggered from the thumbnail image itself and the
+      card body (taxon names) only. The checkbox bar and the empty margins
+      around the image are deliberately excluded, so users can click the
+      checkbox freely and the preview does not pop up from dead space.
     -->
+    <div class="card-image">
+      <img
+        v-if="image"
+        :src="image.url"
+        class="loading thumbnail-image"
+        @mouseenter="onMouseEnter"
+        @mouseleave="onMouseLeave"
+      />
+      <span v-else></span>
+    </div>
     <div
-      class="card-hover-zone"
+      class="card-body"
       @mouseenter="onMouseEnter"
       @mouseleave="onMouseLeave"
     >
-      <div class="card-image">
-        <img
-          v-if="image"
-          :src="image.url"
-          class="loading thumbnail-image"
-        />
-        <span v-else></span>
-      </div>
-      <div class="card-body">
-        <div class="card-text">
-          <div>M{{ mediaId }}</div>
-          <TaxonomicName v-if="taxon" :showExtinctMarker="true" :taxon="taxon" />
-          <div v-if="viewName">
-            {{ viewName }}
-          </div>
+      <div class="card-text">
+        <div>M{{ mediaId }}</div>
+        <TaxonomicName v-if="taxon" :showExtinctMarker="true" :taxon="taxon" />
+        <div v-if="viewName">
+          {{ viewName }}
         </div>
       </div>
     </div>
@@ -314,14 +334,6 @@ function onLargeImageError() {
   background-repeat: no-repeat;
   background-image: url('/images/loader.png');
   background-position: 10px 10px;
-}
-
-/* Wraps the image and taxon names; scopes the hover preview to this area only */
-.card-hover-zone {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
 }
 
 .card-image {
