@@ -4,7 +4,7 @@ import { apiService } from '@/services/apiService.js'
 
 // The S3 dumps are written by a queued task after publishing, so a freshly
 // published project can briefly 404 before its files exist.
-async function fetchDumpWithRetry(path, attempts = 4, delayMs = 3000) {
+async function fetchDumpWithRetry(path, attempts = 3, delayMs = 2000) {
   for (let attempt = 1; ; attempt++) {
     try {
       return await apiService.get(path)
