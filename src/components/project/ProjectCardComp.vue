@@ -2,18 +2,21 @@
 import { RouterLink } from 'vue-router'
 import { buildMediaUrl } from '@/utils/fileUtils.js'
 import { apiService } from '@/services/apiService.js'
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 const props = defineProps({
   project: Object,
 })
 
-// Check if this is a 3D media file using USE_ICON
+// Media JSON keys are stored in either upper or lower case
+function mediaProp(media, key) {
+  return media?.[key.toUpperCase()] ?? media?.[key.toLowerCase()]
+}
+
 const is3DFile = computed(() => {
-  return props.project?.image_props?.media?.USE_ICON === '3d'
+  return mediaProp(props.project?.image_props?.media, 'USE_ICON') === '3d'
 })
 
-// Build journal cover URL from path
 const journalCoverUrl = computed(() => {
   if (!props.project?.journal_cover_path) {
     return null
@@ -21,42 +24,43 @@ const journalCoverUrl = computed(() => {
   return apiService.buildUrl(props.project.journal_cover_path)
 })
 
-// Get the appropriate media URL (3D icon for 3D media, image URL for others)
 const mediaUrl = computed(() => {
   const imageProps = props.project?.image_props
-  
-  // Check if this is a 3D file that should use the 3D icon
   if (is3DFile.value) {
     return '/images/3DImage.png'
   }
-
-  // First approach: Use S3_KEY directly if available (current format)
-  const s3Key = imageProps?.media?.S3_KEY
+  // Prefer the direct S3 large derivative; the serve endpoint is the fallback
+  const s3Key = mediaProp(imageProps?.media, 'S3_KEY')
   if (s3Key) {
-    // Replace thumbnail with large for better display quality
-    // S3_KEY format: media_files/images/{project_id}/{media_id}/{project_id}_{media_id}_{variant}.jpg
-    const largeS3Key = s3Key.replace(/_thumbnail\./, '_large.')
-    return apiService.buildUrl(`/s3/${largeS3Key}`)
+    return apiService.buildUrl(
+      `/s3/${s3Key.replace(/_thumbnail\./, '_large.')}`
+    )
   }
-  
-  // Second approach: Extract media_id from FILENAME (legacy format)
-  const filename = imageProps?.media?.FILENAME
-  if (filename) {
-    // Match both _preview and _thumbnail formats
-    const match = filename.match(/media_files_media_(\d+)_(?:preview|thumbnail)/)
-    if (match) {
-      const mediaId = match[1]
-      return buildMediaUrl(props.project.project_id, mediaId, 'large')
-    }
-  }
-  
-  // Third approach: Use media_id directly if provided (future format after backend update)
   if (imageProps?.media_id) {
     return buildMediaUrl(props.project.project_id, imageProps.media_id, 'large')
   }
-
   return null
 })
+
+// Fallback chain when the image fails to load: large -> thumbnail -> placeholder
+const resolvedMediaUrl = ref(mediaUrl.value)
+watch(mediaUrl, (url) => {
+  resolvedMediaUrl.value = url
+})
+
+function onMediaImgError(e) {
+  const mediaId = props.project?.image_props?.media_id
+  const currentSrc = e?.target?.src || ''
+  if (mediaId && !currentSrc.includes('/thumbnail')) {
+    resolvedMediaUrl.value = buildMediaUrl(
+      props.project.project_id,
+      mediaId,
+      'thumbnail'
+    )
+    return
+  }
+  resolvedMediaUrl.value = '/images/image_not_found.png'
+}
 </script>
 <style scoped>
 .thumb {
@@ -131,9 +135,10 @@ const mediaUrl = computed(() => {
         </div>
         <div class="col d-flex align-items-stretch thumb">
           <img
-            v-if="mediaUrl"
-            :src="mediaUrl"
+            v-if="resolvedMediaUrl"
+            :src="resolvedMediaUrl"
             class="card-img-top"
+            @error="onMediaImgError"
           />
         </div>
       </div>
