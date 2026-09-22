@@ -2,6 +2,21 @@ import { defineStore } from 'pinia'
 import { searchInObject } from '@/utils/util.js'
 import { apiService } from '@/services/apiService.js'
 
+// The S3 dumps are written by a queued task after publishing, so a freshly
+// published project can briefly 404 before its files exist.
+async function fetchDumpWithRetry(path, attempts = 4, delayMs = 3000) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await apiService.get(path)
+    } catch (e) {
+      if (e?.response?.status !== 404 || attempt >= attempts) {
+        throw e
+      }
+      await new Promise((resolve) => setTimeout(resolve, delayMs))
+    }
+  }
+}
+
 export const usePublicProjectDetailsStore = defineStore({
   id: 'publicProjectDetails',
   state: () => ({
@@ -148,11 +163,12 @@ export const usePublicProjectDetailsStore = defineStore({
       this.err = null
 
       try {
-        //const url = `https://mb4-data.s3.us-west-2.amazonaws.com/prj_details/prj_${id}.json`
-        const res = await apiService.get(`/s3/prj_details/prj_${id}.json`)
+        const res = await fetchDumpWithRetry(`/s3/prj_details/prj_${id}.json`)
         const resData = await res.json()
 
-        const resStats = await apiService.get(`/s3/prj_stats/prj_${id}.json`)
+        const resStats = await fetchDumpWithRetry(
+          `/s3/prj_stats/prj_${id}.json`
+        )
         const resStatsData = await resStats.json()
 
         this.overview = resData.overview

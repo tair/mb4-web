@@ -8,7 +8,8 @@
     <div class="success-details">
       <p>
         Your project has been successfully published and is now publicly
-        available.
+        available. The public project pages may take a moment to appear
+        while the published data is being prepared.
       </p>
 
       <div v-if="publicationResult" class="publication-info">
