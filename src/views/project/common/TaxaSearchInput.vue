@@ -1,4 +1,5 @@
 <script setup>
+import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { getTaxonName } from '@/utils/taxa'
 import { useTaxaStore } from '@/stores/TaxaStore'
@@ -24,6 +25,10 @@ const projectId = route.params.id
 
 const taxaStore = useTaxaStore()
 
+// Taxa may have been edited elsewhere (another tab, the matrix editor) since
+// the store was loaded, so refresh it whenever the picker is shown.
+onMounted(() => taxaStore.fetch(projectId))
+
 function getTaxonNumber(taxon) {
   return taxon.taxon_id
 }
@@ -48,6 +53,9 @@ async function searchTaxa(text) {
   })
   const responseData = await response.json()
   const taxonIds = responseData.results
+  if (taxonIds.some((taxonId) => !taxaStore.getTaxonById(taxonId))) {
+    await taxaStore.fetch(projectId)
+  }
   return taxaStore.taxa.filter((taxon) => taxonIds.includes(taxon.taxon_id))
 }
 
