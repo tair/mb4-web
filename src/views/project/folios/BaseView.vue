@@ -22,6 +22,7 @@ onMounted(() => {
   <LoadingIndicator :isLoaded="isLoaded">
     <header>
       <b>Editing: </b>
+      <span class="fw-bold">{{ 'F' + folio.folio_id }}</span>
       {{ folio.name }}
     </header>
     <ul class="nav nav-tabs">
