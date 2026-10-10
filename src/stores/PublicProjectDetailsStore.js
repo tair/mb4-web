@@ -3,13 +3,21 @@ import { searchInObject } from '@/utils/util.js'
 import { apiService } from '@/services/apiService.js'
 
 // The S3 dumps are written by a queued task after publishing, so a freshly
-// published project can briefly 404 before its files exist.
+// published project can 404 until its files exist. A short retry covers the
+// common case; longer waits are handled by the notReady polling below.
+const NOT_READY_POLL_MS = 10000
+const NOT_READY_MAX_POLLS = 30
+
+function isNotFound(e) {
+  return e?.response?.status === 404
+}
+
 async function fetchDumpWithRetry(path, attempts = 3, delayMs = 2000) {
   for (let attempt = 1; ; attempt++) {
     try {
       return await apiService.get(path)
     } catch (e) {
-      if (e?.response?.status !== 404 || attempt >= attempts) {
+      if (!isNotFound(e) || attempt >= attempts) {
         throw e
       }
       await new Promise((resolve) => setTimeout(resolve, delayMs))
@@ -23,6 +31,14 @@ export const usePublicProjectDetailsStore = defineStore({
     loading: false,
     loaded: false,
     err: null,
+    // The project is published but its public data files are not in S3 yet.
+    notReady: false,
+    notReadyPolls: 0,
+    notReadyTimer: null,
+    // Bumped whenever polling is cancelled so an in-flight fetch does not
+    // schedule a new poll afterwards.
+    notReadyEpoch: 0,
+    publishedCheckMessage: null,
 
     // this will NOT be null if we already fetched a project.
     // on all project pages (matrix, taxa, etc), data will be
@@ -145,31 +161,38 @@ export const usePublicProjectDetailsStore = defineStore({
   },
   actions: {
     async fetchProject(id) {
-      // Prevent duplicate requests for the same project
-      if (this.loading || (this.project_id && this.project_id === String(id))) {
+      const projectId = String(id)
+      if (this.loading || (this.loaded && this.project_id === projectId)) {
+        return
+      }
+      if (this.project_id !== projectId) {
+        this.clearNotReady()
+        this.clearProjectData()
+      } else if (this.notReadyTimer) {
+        // A poll for this project is already scheduled.
         return
       }
 
-      // If we already have an error for this project ID, don't retry immediately
-      if (this.err && this.project_id === String(id)) {
-        console.log(
-          'fetchProject: already have an error for this project ID, not retrying'
-        )
-        return
-      }
+      const epoch = this.notReadyEpoch
 
-      this.loading = true
+      // Background polls keep the "being prepared" state visible instead of
+      // flashing the loading indicator every attempt.
+      this.loading = !this.notReady
       this.loaded = false
       this.err = null
 
       try {
         const res = await fetchDumpWithRetry(`/s3/prj_details/prj_${id}.json`)
+        if (epoch !== this.notReadyEpoch) return
         const resData = await res.json()
+        if (epoch !== this.notReadyEpoch) return
 
         const resStats = await fetchDumpWithRetry(
           `/s3/prj_stats/prj_${id}.json`
         )
+        if (epoch !== this.notReadyEpoch) return
         const resStatsData = await resStats.json()
+        if (epoch !== this.notReadyEpoch) return
 
         this.overview = resData.overview
         this.stats = resStatsData
@@ -189,15 +212,85 @@ export const usePublicProjectDetailsStore = defineStore({
         this.unidentified_specimen_details =
           resData.unidentified_specimen_details
 
-        this.project_id = id
+        this.project_id = projectId
         this.loaded = true
+        this.loading = false
+        this.clearNotReady()
       } catch (e) {
         console.error(`store:projectDetails:fetchProject(): ${e}`)
-        this.err = 'Error fetching project list.'
-        this.project_id = String(id) // Set project_id even on error to prevent retry loops
+        if (epoch !== this.notReadyEpoch) return
+        this.project_id = projectId
+        const missingDump = isNotFound(e)
+        const published =
+          missingDump &&
+          (this.notReady || (await this.isPublished(projectId, epoch)))
+        if (epoch !== this.notReadyEpoch) return
+        if (published && this.notReadyPolls < NOT_READY_MAX_POLLS) {
+          this.notReady = true
+          this.notReadyPolls++
+          this.notReadyTimer = setTimeout(() => {
+            this.notReadyTimer = null
+            this.fetchProject(projectId)
+          }, NOT_READY_POLL_MS)
+        } else {
+          this.loading = false
+          this.clearNotReady()
+          if (published) {
+            this.err =
+              'The public pages for this project are still being prepared. Please try again later.'
+          } else if (missingDump) {
+            this.err =
+              this.publishedCheckMessage || 'This project is not available.'
+          } else {
+            this.err = 'Error fetching project details.'
+          }
+        }
       } finally {
-        this.loading = false
+        // A cancelled fetch must not clobber the state of a newer one.
+        if (epoch === this.notReadyEpoch) {
+          this.loading = false
+        }
       }
+    },
+    // The public project endpoint answers 200 only for published projects, so
+    // it tells a dump that is still being written apart from a bad project id.
+    async isPublished(projectId, epoch) {
+      let message = null
+      let published = false
+      try {
+        await apiService.get(`/public/projects/${projectId}`)
+        published = true
+      } catch (e) {
+        message = e?.data?.message || null
+      }
+      if (epoch === this.notReadyEpoch) {
+        this.publishedCheckMessage = message
+      }
+      return published
+    },
+    clearProjectData() {
+      this.overview = null
+      this.stats = null
+      this.taxa_details = null
+      this.partitions = null
+      this.bibliography = null
+      this.docs = null
+      this.folios = null
+      this.matrices = null
+      this.media_views = null
+      this.specimen_details = null
+      this.unidentified_specimen_details = null
+    },
+    clearNotReady() {
+      if (this.notReadyTimer) {
+        clearTimeout(this.notReadyTimer)
+      }
+      this.notReady = false
+      this.notReadyPolls = 0
+      this.notReadyTimer = null
+      this.notReadyEpoch++
+      // Any in-flight fetch is now stale, so let a new one start.
+      this.loading = false
     },
     isDownloadValid(id) {
       // hardcoded value to prevent download from extra large project
