@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import PublishedProjectSideNav from '@/components/project/PublishedProjectSideNav.vue'
 import ProjectTitleComp from '@/components/project/ProjectTitleComp.vue'
+import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
+
+const projectStore = usePublicProjectDetailsStore()
 
 defineProps<{
   isLoading: boolean
@@ -20,8 +23,13 @@ defineProps<{
       </div>
 
       <div class="col-10">
-        <div v-if="errorMessage">
-          <strong>{{ errorMessage }}</strong>
+        <div v-if="projectStore.notReady" class="py-3">
+          <div class="spinner-border spinner-border-sm text-success me-2"></div>
+          This project was published recently and its public pages are still
+          being prepared. This page will update automatically.
+        </div>
+        <div v-else-if="projectStore.err || errorMessage">
+          <strong>{{ projectStore.err || errorMessage }}</strong>
         </div>
         <div v-else>
           <ProjectTitleComp></ProjectTitleComp>
