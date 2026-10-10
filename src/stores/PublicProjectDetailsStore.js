@@ -35,6 +35,9 @@ export const usePublicProjectDetailsStore = defineStore({
     notReady: false,
     notReadyPolls: 0,
     notReadyTimer: null,
+    // Bumped whenever polling is cancelled so an in-flight fetch does not
+    // schedule a new poll afterwards.
+    notReadyEpoch: 0,
     publishedCheckMessage: null,
 
     // this will NOT be null if we already fetched a project.
@@ -164,10 +167,13 @@ export const usePublicProjectDetailsStore = defineStore({
       }
       if (this.project_id !== projectId) {
         this.clearNotReady()
+        this.clearProjectData()
       } else if (this.notReadyTimer) {
         // A poll for this project is already scheduled.
         return
       }
+
+      const epoch = this.notReadyEpoch
 
       // Background polls keep the "being prepared" state visible instead of
       // flashing the loading indicator every attempt.
@@ -208,12 +214,14 @@ export const usePublicProjectDetailsStore = defineStore({
       } catch (e) {
         console.error(`store:projectDetails:fetchProject(): ${e}`)
         this.project_id = projectId
+        if (epoch !== this.notReadyEpoch) {
+          return
+        }
         const missingDump = isNotFound(e)
-        if (
+        const published =
           missingDump &&
-          this.notReadyPolls < NOT_READY_MAX_POLLS &&
-          (await this.isPublished(projectId))
-        ) {
+          (this.notReady || (await this.isPublished(projectId)))
+        if (published && this.notReadyPolls < NOT_READY_MAX_POLLS) {
           this.notReady = true
           this.notReadyPolls++
           this.notReadyTimer = setTimeout(() => {
@@ -222,9 +230,15 @@ export const usePublicProjectDetailsStore = defineStore({
           }, NOT_READY_POLL_MS)
         } else {
           this.clearNotReady()
-          this.err = missingDump
-            ? this.publishedCheckMessage || 'This project is not available.'
-            : 'Error fetching project details.'
+          if (published) {
+            this.err =
+              'The public pages for this project are still being prepared. Please try again later.'
+          } else if (missingDump) {
+            this.err =
+              this.publishedCheckMessage || 'This project is not available.'
+          } else {
+            this.err = 'Error fetching project details.'
+          }
         }
       } finally {
         this.loading = false
@@ -242,6 +256,19 @@ export const usePublicProjectDetailsStore = defineStore({
         return false
       }
     },
+    clearProjectData() {
+      this.overview = null
+      this.stats = null
+      this.taxa_details = null
+      this.partitions = null
+      this.bibliography = null
+      this.docs = null
+      this.folios = null
+      this.matrices = null
+      this.media_views = null
+      this.specimen_details = null
+      this.unidentified_specimen_details = null
+    },
     clearNotReady() {
       if (this.notReadyTimer) {
         clearTimeout(this.notReadyTimer)
@@ -249,6 +276,7 @@ export const usePublicProjectDetailsStore = defineStore({
       this.notReady = false
       this.notReadyPolls = 0
       this.notReadyTimer = null
+      this.notReadyEpoch++
     },
     isDownloadValid(id) {
       // hardcoded value to prevent download from extra large project
