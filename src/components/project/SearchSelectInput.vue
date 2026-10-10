@@ -158,13 +158,18 @@ function handleBlur() {
       type="search"
 
     />
-    <ul v-if="items.length > 0" class="results" @scroll="handleResultsScroll">
+    <ul
+      v-if="items.length > 0"
+      class="results"
+      @scroll="handleResultsScroll"
+      @mousedown.prevent
+    >
       <template v-for="item in visibleItems">
         <li @mousedown="handleSelect(item)">
           <slot name="item" v-bind="item"></slot>
         </li>
       </template>
-      <li v-if="hiddenCount > 0" class="no-results" @mousedown.prevent>
+      <li v-if="hiddenCount > 0" class="no-results">
         Showing {{ visibleItems.length }} of {{ items.length }}. Scroll for
         more or type to narrow the results.
       </li>
