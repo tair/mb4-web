@@ -119,7 +119,14 @@ export const useTaxaStore = defineStore({
     addTaxa(taxa) {
       for (const taxon of taxa) {
         const taxonId = taxon.taxon_id
-        this.map.set(taxonId, taxon)
+        const existing = this.map.get(taxonId)
+        if (existing) {
+          // Update in place so UI state held on the object (e.g. selection)
+          // survives a refresh.
+          Object.assign(existing, taxon)
+        } else {
+          this.map.set(taxonId, taxon)
+        }
       }
     },
     getTaxonById(taxonId) {
