@@ -183,12 +183,16 @@ export const usePublicProjectDetailsStore = defineStore({
 
       try {
         const res = await fetchDumpWithRetry(`/s3/prj_details/prj_${id}.json`)
+        if (epoch !== this.notReadyEpoch) return
         const resData = await res.json()
+        if (epoch !== this.notReadyEpoch) return
 
         const resStats = await fetchDumpWithRetry(
           `/s3/prj_stats/prj_${id}.json`
         )
+        if (epoch !== this.notReadyEpoch) return
         const resStatsData = await resStats.json()
+        if (epoch !== this.notReadyEpoch) return
 
         this.overview = resData.overview
         this.stats = resStatsData
@@ -210,17 +214,17 @@ export const usePublicProjectDetailsStore = defineStore({
 
         this.project_id = projectId
         this.loaded = true
+        this.loading = false
         this.clearNotReady()
       } catch (e) {
         console.error(`store:projectDetails:fetchProject(): ${e}`)
+        if (epoch !== this.notReadyEpoch) return
         this.project_id = projectId
-        if (epoch !== this.notReadyEpoch) {
-          return
-        }
         const missingDump = isNotFound(e)
         const published =
           missingDump &&
-          (this.notReady || (await this.isPublished(projectId)))
+          (this.notReady || (await this.isPublished(projectId, epoch)))
+        if (epoch !== this.notReadyEpoch) return
         if (published && this.notReadyPolls < NOT_READY_MAX_POLLS) {
           this.notReady = true
           this.notReadyPolls++
@@ -229,6 +233,7 @@ export const usePublicProjectDetailsStore = defineStore({
             this.fetchProject(projectId)
           }, NOT_READY_POLL_MS)
         } else {
+          this.loading = false
           this.clearNotReady()
           if (published) {
             this.err =
@@ -241,20 +246,27 @@ export const usePublicProjectDetailsStore = defineStore({
           }
         }
       } finally {
-        this.loading = false
+        // A cancelled fetch must not clobber the state of a newer one.
+        if (epoch === this.notReadyEpoch) {
+          this.loading = false
+        }
       }
     },
     // The public project endpoint answers 200 only for published projects, so
     // it tells a dump that is still being written apart from a bad project id.
-    async isPublished(projectId) {
-      this.publishedCheckMessage = null
+    async isPublished(projectId, epoch) {
+      let message = null
+      let published = false
       try {
         await apiService.get(`/public/projects/${projectId}`)
-        return true
+        published = true
       } catch (e) {
-        this.publishedCheckMessage = e?.data?.message || null
-        return false
+        message = e?.data?.message || null
       }
+      if (epoch === this.notReadyEpoch) {
+        this.publishedCheckMessage = message
+      }
+      return published
     },
     clearProjectData() {
       this.overview = null
@@ -277,6 +289,8 @@ export const usePublicProjectDetailsStore = defineStore({
       this.notReadyPolls = 0
       this.notReadyTimer = null
       this.notReadyEpoch++
+      // Any in-flight fetch is now stale, so let a new one start.
+      this.loading = false
     },
     isDownloadValid(id) {
       // hardcoded value to prevent download from extra large project

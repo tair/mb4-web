@@ -2,9 +2,11 @@
 import PublishedProjectSideNav from '@/components/project/PublishedProjectSideNav.vue'
 import ProjectTitleComp from '@/components/project/ProjectTitleComp.vue'
 import { computed, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { usePublicProjectDetailsStore } from '@/stores/PublicProjectDetailsStore.js'
 
 const projectStore = usePublicProjectDetailsStore()
+const route = useRoute()
 
 const props = defineProps<{
   isLoading: boolean
@@ -13,11 +15,18 @@ const props = defineProps<{
   projectId?: string | number
 }>()
 
-// Only trust the store's error when it belongs to the project being shown.
+// Only show store-driven states that belong to the project being displayed.
+const displayedProjectId = computed(() => props.projectId ?? route.params.id)
+const storeMatchesDisplayedProject = computed(
+  () =>
+    !displayedProjectId.value ||
+    String(displayedProjectId.value) === projectStore.project_id
+)
+const notReady = computed(
+  () => storeMatchesDisplayedProject.value && projectStore.notReady
+)
 const storeError = computed(() =>
-  !props.projectId || String(props.projectId) === projectStore.project_id
-    ? projectStore.err
-    : null
+  storeMatchesDisplayedProject.value ? projectStore.err : null
 )
 
 // Stop polling for a not-yet-prepared project once its pages are left; a
@@ -36,8 +45,11 @@ onUnmounted(() => projectStore.clearNotReady())
       </div>
 
       <div class="col-10">
-        <div v-if="projectStore.notReady" class="py-3">
-          <div class="spinner-border spinner-border-sm text-success me-2"></div>
+        <div v-if="notReady" class="py-3" role="status" aria-live="polite">
+          <div
+            class="spinner-border spinner-border-sm text-success me-2"
+            aria-hidden="true"
+          ></div>
           This project was published recently and its public pages are still
           being prepared. This page will update automatically.
         </div>
