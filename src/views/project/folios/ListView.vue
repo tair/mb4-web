@@ -107,7 +107,10 @@ function refresh() {
                 v-model="folio.selected"
               />
               <div class="list-group-item-name">
-                {{ folio.name }}
+                <div>
+                  <span class="fw-bold">{{ 'F' + folio.folio_id }}</span>
+                  {{ folio.name }}
+                </div>
               </div>
               <div class="list-group-item-buttons">
                 <RouterLink
