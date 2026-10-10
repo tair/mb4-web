@@ -34,16 +34,14 @@ function getTaxonNumber(taxon) {
 }
 
 async function searchTaxa(text) {
-  // If no search text, return first 50 taxa sorted alphabetically
+  // With no search text, offer every taxon alphabetically; the dropdown
+  // renders them incrementally as the user scrolls.
   if (!text || text.length < 1) {
-    return taxaStore.taxa
-      .slice() // Create a copy to avoid mutating original array
-      .sort((a, b) => {
-        const nameA = getTaxonName(a).toLowerCase()
-        const nameB = getTaxonName(b).toLowerCase()
-        return nameA.localeCompare(nameB)
-      })
-      .slice(0, 50) // Limit to first 50 results
+    return taxaStore.taxa.slice().sort((a, b) => {
+      const nameA = getTaxonName(a).toLowerCase()
+      const nameB = getTaxonName(b).toLowerCase()
+      return nameA.localeCompare(nameB)
+    })
   }
 
   // For search text, use the search API
