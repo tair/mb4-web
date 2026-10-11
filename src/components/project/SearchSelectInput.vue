@@ -28,6 +28,26 @@ const props = defineProps<{
 
 const emit = defineEmits(['select', 'updateTextboxString'])
 const items = ref([])
+
+// Long result lists are rendered in pages as the user scrolls the dropdown.
+const PAGE_SIZE = 50
+const visibleCount = ref(PAGE_SIZE)
+const visibleItems = computed(() => items.value.slice(0, visibleCount.value))
+const hiddenCount = computed(() =>
+  Math.max(items.value.length - visibleCount.value, 0)
+)
+watch(items, () => {
+  visibleCount.value = PAGE_SIZE
+})
+
+function handleResultsScroll(event: Event) {
+  const list = event.target as HTMLElement
+  const nearBottom =
+    list.scrollTop + list.clientHeight >= list.scrollHeight - 20
+  if (nearBottom && hiddenCount.value > 0) {
+    visibleCount.value += PAGE_SIZE
+  }
+}
 const item = computed(() => props.getItem(props.initialValue))
 
 // Initialize text as empty, will be updated by watcher
@@ -138,12 +158,21 @@ function handleBlur() {
       type="search"
 
     />
-    <ul v-if="items.length > 0" class="results">
-      <template v-for="item in items">
+    <ul
+      v-if="items.length > 0"
+      class="results"
+      @scroll="handleResultsScroll"
+      @mousedown.prevent
+    >
+      <template v-for="item in visibleItems">
         <li @mousedown="handleSelect(item)">
           <slot name="item" v-bind="item"></slot>
         </li>
       </template>
+      <li v-if="hiddenCount > 0" class="no-results">
+        Showing {{ visibleItems.length }} of {{ items.length }}. Scroll for
+        more or type to narrow the results.
+      </li>
     </ul>
     <ul v-else-if="isSearching" class="results">
       <li class="no-results">No matching search results found</li>
@@ -156,7 +185,7 @@ ul.results {
   border: solid 1px #ccc;
   left: -1px;
   list-style: none;
-  max-height: 100px;
+  max-height: 240px;
   min-height: 50px;
   overflow-x: hidden;
   overflow-y: scroll;
