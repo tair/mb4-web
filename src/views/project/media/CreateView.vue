@@ -1,4 +1,5 @@
 <script setup>
+import { isLargeUpload } from '@/utils/fileUtils.js'
 import router from '@/router'
 import { onMounted, computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -123,10 +124,10 @@ async function createMedia(event) {
     return
   }
 
-  isSubmitting.value = true
-
   // Keep the outcome visible if the user navigates away during a long upload
   const persistent = isLargeUpload(formData.get('file'))
+
+  isSubmitting.value = true
 
   // Check if this should be set as project exemplar
   const exemplarValue = formData.get('is_exemplar')
