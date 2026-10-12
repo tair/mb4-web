@@ -294,10 +294,10 @@ class ApiService {
           }
         }
         
-        // Default server error, preferring the server's own explanation
+        // Default server error, preferring the server's user-facing message
+        // (never the raw `error` field, which may carry internal details)
         throw createError(
-          (errorData && (errorData.message || errorData.error)) ||
-            'Server error. Please try again later.',
+          errorData?.message || 'Server error. Please try again later.',
           'SERVER_ERROR',
           true
         )
