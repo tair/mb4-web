@@ -1,4 +1,5 @@
 <script setup>
+import { isLargeUpload } from '@/utils/fileUtils.js'
 import router from '@/router'
 import { onMounted, computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -98,14 +99,32 @@ async function createBatch(event) {
 
   isSubmitting.value = true
 
+  // Keep the outcome visible if the user navigates away during a long upload
+  const persistent = isLargeUpload(formData.get('file'))
+
   try {
-    const success = await mediaStore.createBatch(projectId, formData)
-    if (!success) {
-      showError('Failed to create batch media. Please check your input and try again.')
+    const result = await mediaStore.createBatch(projectId, formData)
+    if (!result) {
+      showError(
+        'Failed to create batch media. Please check your input and try again.',
+        undefined,
+        { persistent }
+      )
       return
     }
 
-    showSuccess('Batch media uploaded successfully!')
+    if (result.failedFiles.length > 0) {
+      const details = result.failedFiles
+        .map((f) => `${f.filename}: ${f.error}`)
+        .join('; ')
+      showError(
+        `${result.created} file(s) uploaded, ${result.failedFiles.length} failed. ${details}`,
+        'Some files were not uploaded',
+        { persistent: true }
+      )
+    } else {
+      showSuccess('Batch media uploaded successfully!', undefined, { persistent })
+    }
     await NavigationPatterns.afterBatchOperation(projectId, 'media')
   } catch (error) {
     console.error('Batch upload error:', error)
@@ -133,7 +152,7 @@ async function createBatch(event) {
     }
     
     // Display the error as notification
-    showError(errorMessage, 'Batch Upload Failed')
+    showError(errorMessage, 'Batch Upload Failed', { persistent })
   } finally {
     isSubmitting.value = false
   }

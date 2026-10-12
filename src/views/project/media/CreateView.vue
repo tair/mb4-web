@@ -125,6 +125,9 @@ async function createMedia(event) {
 
   isSubmitting.value = true
 
+  // Keep the outcome visible if the user navigates away during a long upload
+  const persistent = isLargeUpload(formData.get('file'))
+
   // Check if this should be set as project exemplar
   const exemplarValue = formData.get('is_exemplar')
   const isExemplar =
@@ -140,7 +143,11 @@ async function createMedia(event) {
     const result = await mediaStore.create(projectId, formData)
 
     if (!result) {
-      showError('Failed to create media. Please check your input and try again.')
+      showError(
+        'Failed to create media. Please check your input and try again.',
+        undefined,
+        { persistent }
+      )
       return
     }
 
@@ -161,7 +168,7 @@ async function createMedia(event) {
       }
     }
 
-    showSuccess('Media uploaded successfully!')
+    showSuccess('Media uploaded successfully!', undefined, { persistent })
     await NavigationPatterns.afterComplexResourceCreate(projectId, 'media')
   } catch (error) {
     console.error('Media upload error:', error)
@@ -178,7 +185,7 @@ async function createMedia(event) {
     }
 
     // Display the error as notification
-    showError(errorMessage, 'Media Upload Failed')
+    showError(errorMessage, 'Media Upload Failed', { persistent })
   } finally {
     isSubmitting.value = false
   }
