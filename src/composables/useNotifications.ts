@@ -7,12 +7,14 @@ import { useNotificationStore } from '@/stores/NotificationStore'
 export function useNotifications() {
   const notificationStore = useNotificationStore()
 
-  const showError = (message: string, title?: string) => {
-    return notificationStore.showError(message, { title })
+  type Options = { persistent?: boolean; duration?: number }
+
+  const showError = (message: string, title?: string, options: Options = {}) => {
+    return notificationStore.showError(message, { title, ...options })
   }
 
-  const showSuccess = (message: string, title?: string) => {
-    return notificationStore.showSuccess(message, { title })
+  const showSuccess = (message: string, title?: string, options: Options = {}) => {
+    return notificationStore.showSuccess(message, { title, ...options })
   }
 
   const showWarning = (title: string, message: string) => {

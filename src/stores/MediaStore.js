@@ -67,7 +67,10 @@ export const useMediaStore = defineStore({
           const responseData = await response.json()
           const media = responseData.media
           this.addMedia(media)
-          return true
+          return {
+            created: media.length,
+            failedFiles: responseData.summary?.failedFiles || [],
+          }
         }
         return false
       } catch (error) {

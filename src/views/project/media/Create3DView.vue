@@ -1,4 +1,5 @@
 <script setup>
+import { isLargeUpload } from '@/utils/fileUtils.js'
 import router from '@/router'
 import { onMounted, computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -96,14 +97,21 @@ async function create3DMedia(event) {
   }
   
   isUploading.value = true
+  // Keep the outcome visible if the user navigates away during a long upload
+  const persistent = isLargeUpload(formData.get('file'))
+
   try {
     const success = await mediaStore.create3D(projectId, formData)
     if (!success) {
-      showError('Failed to create 3D media. Please check your input and try again.')
+      showError(
+        'Failed to create 3D media. Please check your input and try again.',
+        undefined,
+        { persistent }
+      )
       return
     }
 
-    showSuccess('3D media uploaded successfully!')
+    showSuccess('3D media uploaded successfully!', undefined, { persistent })
     router.push({ path: `/myprojects/${projectId}/media` })
   } catch (error) {
     console.error('3D upload error:', error)
@@ -120,7 +128,7 @@ async function create3DMedia(event) {
     }
     
     // Display the error as notification
-    showError(errorMessage, '3D Upload Failed')
+    showError(errorMessage, '3D Upload Failed', { persistent })
   } finally {
     isUploading.value = false
   }

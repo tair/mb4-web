@@ -207,6 +207,12 @@ class ApiService {
       error.retry = retry
       error.response = response
       error.data = errorData
+      // Callers commonly read error.response.data; expose the parsed body there too
+      try {
+        response.data = errorData
+      } catch (e) {
+        // Response may be immutable in some environments
+      }
       return error
     }
 
@@ -288,8 +294,13 @@ class ApiService {
           }
         }
         
-        // Default server error
-        throw createError('Server error. Please try again later.', 'SERVER_ERROR', true)
+        // Default server error, preferring the server's user-facing message
+        // (never the raw `error` field, which may carry internal details)
+        throw createError(
+          errorData?.message || 'Server error. Please try again later.',
+          'SERVER_ERROR',
+          true
+        )
 
       default:
         // Check if response data includes retry information

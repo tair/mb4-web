@@ -1,4 +1,5 @@
 <script setup>
+import { isLargeUpload } from '@/utils/fileUtils.js'
 import router from '@/router'
 import { onMounted, computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -123,6 +124,9 @@ async function createMedia(event) {
     return
   }
 
+  // Keep the outcome visible if the user navigates away during a long upload
+  const persistent = isLargeUpload(formData.get('file'))
+
   isSubmitting.value = true
 
   // Check if this should be set as project exemplar
@@ -140,7 +144,11 @@ async function createMedia(event) {
     const result = await mediaStore.create(projectId, formData)
 
     if (!result) {
-      showError('Failed to create media. Please check your input and try again.')
+      showError(
+        'Failed to create media. Please check your input and try again.',
+        undefined,
+        { persistent }
+      )
       return
     }
 
@@ -161,7 +169,7 @@ async function createMedia(event) {
       }
     }
 
-    showSuccess('Media uploaded successfully!')
+    showSuccess('Media uploaded successfully!', undefined, { persistent })
     await NavigationPatterns.afterComplexResourceCreate(projectId, 'media')
   } catch (error) {
     console.error('Media upload error:', error)
@@ -178,7 +186,7 @@ async function createMedia(event) {
     }
 
     // Display the error as notification
-    showError(errorMessage, 'Media Upload Failed')
+    showError(errorMessage, 'Media Upload Failed', { persistent })
   } finally {
     isSubmitting.value = false
   }

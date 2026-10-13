@@ -378,3 +378,11 @@ function buildS3OriginalImageUrl(projectId, mediaId, mediaObj = null) {
 }
 
 export { buildS3OriginalImageUrl, is3DMedia, isZipMedia, detectOriginalExtension }
+
+// Uploads above this size take long enough that the user may have left the
+// page, so their outcome notifications should not auto-dismiss.
+export const LARGE_UPLOAD_BYTES = 100 * 1024 * 1024
+
+export function isLargeUpload(file) {
+  return file instanceof File && file.size > LARGE_UPLOAD_BYTES
+}
