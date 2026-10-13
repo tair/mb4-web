@@ -19,4 +19,5 @@ export default function startMatrixViewer(
     published
   )
   viewer.start()
+  return viewer
 }

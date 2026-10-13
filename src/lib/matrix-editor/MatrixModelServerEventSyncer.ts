@@ -36,7 +36,16 @@ export class MatrixModelServerEventSyncer {
 
   private url: string
   private throttledSync: Throttle
+  private serverEvents: EventSource | null = null
+  private reconnectTimer: number = 0
+  private disposed: boolean = false
   private focusListenersAttached: boolean = false
+  private readonly onVisibilityChange = () => {
+    if (document.visibilityState === 'visible') {
+      this.throttledSync.fire()
+    }
+  }
+  private readonly onWindowFocus = () => this.throttledSync.fire()
 
   constructor(
     protected readonly matrixModel: MatrixModel,
@@ -54,6 +63,9 @@ export class MatrixModelServerEventSyncer {
    * Sets up the event listeners for matrix mcollaboration.
    */
   start() {
+    if (this.disposed) {
+      return
+    }
     const userId = this.matrixModel.getProjectProperties().getUserId()
     if (userId == null) {
       return
@@ -67,6 +79,7 @@ export class MatrixModelServerEventSyncer {
 
     const userLocation = this.url + userId + '/sync'
     const serverEvents = new EventSource(userLocation)
+    this.serverEvents = serverEvents
     
     serverEvents.addEventListener('sync', () => this.onHandleEventSourceSync())
     serverEvents.addEventListener('init', (e) =>
@@ -95,12 +108,32 @@ export class MatrixModelServerEventSyncer {
       return
     }
     this.focusListenersAttached = true
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        this.throttledSync.fire()
-      }
-    })
-    window.addEventListener('focus', () => this.throttledSync.fire())
+    document.addEventListener('visibilitychange', this.onVisibilityChange)
+    window.addEventListener('focus', this.onWindowFocus)
+  }
+
+  /**
+   * Stops syncing: removes the global listeners, cancels any pending sync or
+   * reconnect, and closes the server connection. Called when the editor view
+   * is unmounted so a removed editor cannot keep fetching changes.
+   */
+  dispose() {
+    this.disposed = true
+    if (this.focusListenersAttached) {
+      document.removeEventListener('visibilitychange', this.onVisibilityChange)
+      window.removeEventListener('focus', this.onWindowFocus)
+      this.focusListenersAttached = false
+    }
+    this.throttledSync.dispose()
+    if (this.reconnectTimer) {
+      window.clearTimeout(this.reconnectTimer)
+      this.reconnectTimer = 0
+    }
+    if (this.serverEvents) {
+      this.serverEvents.close()
+      this.serverEvents = null
+    }
+    this.matrixModel.setClientId(null)
   }
 
   /**
@@ -121,7 +154,8 @@ export class MatrixModelServerEventSyncer {
       // Clear client ID since connection is lost
       this.matrixModel.setClientId(null)
       // Attempt to reconnect after a delay
-      setTimeout(() => {
+      this.reconnectTimer = window.setTimeout(() => {
+        this.reconnectTimer = 0
         this.start()
       }, 5000)
     }

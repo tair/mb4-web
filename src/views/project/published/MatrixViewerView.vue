@@ -2,7 +2,7 @@
 import { useRoute } from 'vue-router'
 import startMatrixViewer from '@/lib/matrix-editor/startMatrixViewer'
 import '@/assets/css/matrixEditor.css'
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import { logView, HIT_TYPES } from '@/lib/analytics.js'
 import { apiService } from '@/services/apiService.js'
 
@@ -29,12 +29,14 @@ onMounted(() => {
   }
 })
 
-startMatrixViewer(
+const viewer = startMatrixViewer(
   projectId,
   matrixId,
   isStreaming,
   apiService.buildUrl(''),
   published
 )
+
+onUnmounted(() => viewer.dispose())
 </script>
 <template></template>

@@ -47,6 +47,11 @@ export abstract class AbstractMatrixAccessor {
     )
   }
 
+  /** Stops background syncing; call when the hosting view is unmounted. */
+  dispose() {
+    this.matrixModelSyncer.dispose()
+  }
+
   /** Starts the loading sequence. */
   public abstract start(): void
 

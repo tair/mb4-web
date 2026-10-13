@@ -12,4 +12,5 @@ export default function startMatrixEditor(
 ) {
   const editor = new MatrixEditor(projectId, matrixId, streaming, location)
   editor.start()
+  return editor
 }
