@@ -36,6 +36,7 @@ export class MatrixModelServerEventSyncer {
 
   private url: string
   private throttledSync: Throttle
+  private focusListenersAttached: boolean = false
 
   constructor(
     protected readonly matrixModel: MatrixModel,
@@ -62,6 +63,7 @@ export class MatrixModelServerEventSyncer {
       CellEditEvents.TYPE,
       (e: CustomEvent<CellEditEvent>) => this.onHandleMatrixCellClick(e)
     )
+    this.attachFocusListeners()
 
     const userLocation = this.url + userId + '/sync'
     const serverEvents = new EventSource(userLocation)
@@ -79,6 +81,26 @@ export class MatrixModelServerEventSyncer {
     serverEvents.addEventListener('close', () =>
       this.onHandleEventSourceClose()
     )
+  }
+
+  /**
+   * Syncs when the user comes back to this tab. Server events only cover
+   * changes made inside the editor by other users; edits made elsewhere
+   * (e.g. renaming a taxon on the project's taxa list in another tab) are
+   * otherwise not seen until a reload. Attached once; start() is re-entered
+   * on reconnect.
+   */
+  private attachFocusListeners() {
+    if (this.focusListenersAttached) {
+      return
+    }
+    this.focusListenersAttached = true
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        this.throttledSync.fire()
+      }
+    })
+    window.addEventListener('focus', () => this.throttledSync.fire())
   }
 
   /**
