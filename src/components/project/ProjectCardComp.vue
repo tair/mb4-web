@@ -137,7 +137,7 @@ function onMediaImgError(e) {
             @error="journalCoverFailed = true"
           />
           <div
-            v-if="!resolvedJournalCoverUrl && project.journal_in_press"
+            v-if="!resolvedJournalCoverUrl && project.journal_in_press == 1"
             class="in-press"
           >
             In<br />Press
