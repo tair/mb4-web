@@ -24,6 +24,15 @@ const journalCoverUrl = computed(() => {
   return apiService.buildUrl(props.project.journal_cover_path)
 })
 
+// Hide the cover (and fall back to the in-press badge) if its file is missing
+const journalCoverFailed = ref(false)
+watch(journalCoverUrl, () => {
+  journalCoverFailed.value = false
+})
+const resolvedJournalCoverUrl = computed(() =>
+  journalCoverFailed.value ? null : journalCoverUrl.value
+)
+
 const mediaUrl = computed(() => {
   const imageProps = props.project?.image_props
   if (is3DFile.value) {
@@ -122,12 +131,13 @@ function onMediaImgError(e) {
       <div class="border-bottom row thumb-row">
         <div class="col align-items-stretch thumb">
           <img
-            v-if="journalCoverUrl"
-            :src="journalCoverUrl"
+            v-if="resolvedJournalCoverUrl"
+            :src="resolvedJournalCoverUrl"
             class="card-img-top"
+            @error="journalCoverFailed = true"
           />
           <div
-            v-if="!journalCoverUrl && project.journal_in_press"
+            v-if="!resolvedJournalCoverUrl && project.journal_in_press"
             class="in-press"
           >
             In<br />Press
