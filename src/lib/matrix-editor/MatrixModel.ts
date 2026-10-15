@@ -1655,6 +1655,7 @@ export class MatrixModel extends EventTarget {
     }
     const request = new Request('fetchChanges')
       .addParameter('id', this.matrixId)
+      .addParameter('client_id', this.clientId)
       .setRetries(0)
       .setTimeoutInterval(
         /* 5 minutes */
