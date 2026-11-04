@@ -89,12 +89,19 @@ export class MatrixGrid extends Component {
    */
   protected highlightedCells: Element[] = []
 
+  /**
+   * The partition that was active the last time the grid handled a partition
+   * event. Used to tell a partition switch apart from a partition refresh.
+   */
+  protected lastPartitionId: number | null
+
   constructor(
     protected matrixModel: MatrixModel,
     protected gridHandler: MatrixGridHandler,
     protected projectId: number
   ) {
     super()
+    this.lastPartitionId = this.matrixModel.getCurrentPartitionId()
     this.cellRenderer = new CellStateNameImageRenderer()
 
     this.taxaRenderer = new TaxaNameImageRenderer()
@@ -1263,7 +1270,16 @@ export class MatrixGrid extends Component {
    * Handlers events when the partition has changed.
    */
   protected onPartitionChanged() {
-    this.onHandleScrollBy(1, 1)
+    // Only jump back to the top-left cell when the user actually switched
+    // partitions. Partition refreshes from syncs (e.g. another user editing a
+    // partition) should not move the user's view.
+    const partitionId = this.matrixModel.getCurrentPartitionId()
+    if (partitionId !== this.lastPartitionId) {
+      this.lastPartitionId = partitionId
+      this.onHandleScrollBy(1, 1)
+    } else {
+      this.redrawCells()
+    }
     this.redrawScrollbars()
     return true
   }
