@@ -43,10 +43,15 @@ import { apiService } from '@/services/apiService.js'
 import { Character, CharacterState, CharacterType } from '@/lib/matrix-parser/MatrixObject.ts'
 import { useNotifications } from '@/composables/useNotifications'
 
+// Cap sent to the AI when the matrix's own character count is unknown.
+const UNBOUNDED_CHARACTER_CAP = 1000
+
 const props = defineProps({
+  // The matrix's character count. 0 means unknown: the extracted names are then
+  // accepted without a count check.
   totalCharacters: {
     type: Number,
-    default: 1000
+    default: 0
   },
   pageRange: {
     type: String,
@@ -92,7 +97,10 @@ async function extractCharactersFromPdf() {
   try {
     const formData = new FormData()
     formData.append('pdf_file', pdfFile.value)
-    formData.append('total_characters', String(props.totalCharacters))
+    formData.append(
+      'total_characters',
+      String(props.totalCharacters > 0 ? props.totalCharacters : UNBOUNDED_CHARACTER_CAP)
+    )
     formData.append('page_range', props.pageRange)
     formData.append('zero_indexed', String(props.zeroIndexed))
 
@@ -156,15 +164,25 @@ async function extractCharactersFromPdf() {
       characters.push(character)
     }
 
+    if (characters.length === 0) {
+      throw new Error('No valid characters were extracted. All entries had missing or empty character names.')
+    }
+
+    // The extracted names become the matrix's columns one for one, so a differing
+    // count leaves columns unnamed or unscored (MB4-466).
+    if (props.totalCharacters > 0 && characters.length !== props.totalCharacters) {
+      throw new Error(
+        `Your document contains ${characters.length} character name${characters.length === 1 ? '' : 's'} ` +
+          `but the matrix has ${props.totalCharacters} character${props.totalCharacters === 1 ? '' : 's'}. ` +
+          'These must match. Please correct the document or the matrix file and upload again.'
+      )
+    }
+
     if (skippedCount > 0) {
       showWarning(
         'Warning',
         `${skippedCount} entr${skippedCount === 1 ? 'y' : 'ies'} with missing or empty character name${skippedCount === 1 ? ' was' : ' were'} skipped.`
       )
-    }
-
-    if (characters.length === 0) {
-      throw new Error('No valid characters were extracted. All entries had missing or empty character names.')
     }
 
     emit('charactersExtracted', characters)
