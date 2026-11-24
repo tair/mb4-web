@@ -43,6 +43,25 @@ const isAiExtracted = ref(false)
 const defaultNumbering = computed(() =>
   importedMatrix.format == 'NEXUS' ? 1 : 0
 )
+// NCHAR as declared by the file, falling back to the widest scored row when the
+// format carries no dimensions. 0 means the count is unknown.
+const expectedCharacterCount = computed(() => {
+  const dimensions = importedMatrix.dimensions || {}
+  const declaredCharacters = dimensions['NCHAR'] ?? dimensions['CHARS']
+  if (declaredCharacters > 0) {
+    return declaredCharacters
+  }
+
+  let widestRow = 0
+  if (importedMatrix.cells) {
+    for (const cellRow of importedMatrix.cells.values()) {
+      if (cellRow.length > widestRow) {
+        widestRow = cellRow.length
+      }
+    }
+  }
+  return widestRow
+})
 const incompletedCharactersCount = computed(() => {
   let count = 0
   if (!importedMatrix.characters) {
@@ -609,6 +628,17 @@ function convertNewlines(text) {
 
 // Handle characters extracted from AI
 function handleCharactersExtracted(extractedCharacters) {
+  // Bail before mutating importedMatrix: the padding loop below would otherwise
+  // fill the surplus columns with the missing symbol and hide the gap (MB4-466).
+  const expectedCount = expectedCharacterCount.value
+  if (expectedCount > 0 && extractedCharacters.length !== expectedCount) {
+    showError(
+      `Extracted ${extractedCharacters.length} character names but the matrix has ` +
+        `${expectedCount} characters. These must match, so the matrix was left unchanged.`
+    )
+    return
+  }
+
   isAiExtracted.value = true
 
   // Initialize characters Map if it doesn't exist
@@ -998,7 +1028,7 @@ onUnmounted(() => {
           <div class="matrix-confirmation-screen" v-else>
             <AiCharacterExtractor
               v-if="!importedMatrix?.characters || importedMatrix.characters.size === 0"
-              :total-characters="1000"
+              :total-characters="expectedCharacterCount"
               page-range="all"
               :zero-indexed="false"
               @characters-extracted="handleCharactersExtracted"
