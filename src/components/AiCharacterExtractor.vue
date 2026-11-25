@@ -27,7 +27,12 @@
           <span v-else>Extract Characters</span>
         </button>
       </div>
-      
+
+      <p v-if="isProcessingPdf" class="progress-note">
+        Reading your document ({{ formattedElapsed }}). Long character lists can take a few
+        minutes; please keep this page open.
+      </p>
+
       <div v-if="uploadError" class="status-message">
         <div class="error-message">
           <strong>Error:</strong> {{ uploadError }}
@@ -38,13 +43,25 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import { apiService } from '@/services/apiService.js'
 import { Character, CharacterState, CharacterType } from '@/lib/matrix-parser/MatrixObject.ts'
 import { useNotifications } from '@/composables/useNotifications'
 
 // Cap sent to the AI when the matrix's own character count is unknown.
 const UNBOUNDED_CHARACTER_CAP = 1000
+
+// Extraction runs as a background job on the server, because it can take longer
+// than the proxies in front of the API keep one request open. The component
+// starts the job, then polls for its result.
+const POLL_INTERVAL_MS = 3000
+const MAX_WAIT_MS = 10 * 60 * 1000
+// Consecutive failed polls tolerated before giving up, so a brief network
+// blip does not lose a job that is still running.
+const MAX_POLL_FAILURES = 3
+
+// Thrown when the component unmounts while a job is running.
+class ExtractionCancelled extends Error {}
 
 const props = defineProps({
   // The matrix's character count. 0 means unknown: the extracted names are then
@@ -71,6 +88,92 @@ const pdfFile = ref(null)
 const isProcessingPdf = ref(false)
 const uploadError = ref('')
 const fileInputRef = ref(null)
+const elapsedSeconds = ref(0)
+let unmounted = false
+
+const formattedElapsed = computed(() => {
+  const minutes = Math.floor(elapsedSeconds.value / 60)
+  const seconds = String(elapsedSeconds.value % 60).padStart(2, '0')
+  return `${minutes}:${seconds}`
+})
+
+onBeforeUnmount(() => {
+  unmounted = true
+})
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+/**
+ * Runs the extraction and returns the curator API's response body.
+ */
+async function requestExtraction(formData) {
+  let jobId
+  try {
+    const response = await apiService.post('/curator/process-pdf/jobs', formData)
+    jobId = (await response.json()).jobId
+  } catch (error) {
+    // An API without job endpoints, while it is being deployed: wait on the
+    // request instead.
+    if (error.code === 'NOT_FOUND') {
+      const response = await apiService.post('/curator/process-pdf', formData)
+      return parseJsonBody(response)
+    }
+    throw error
+  }
+  return pollForResult(jobId)
+}
+
+async function pollForResult(jobId) {
+  const deadline = Date.now() + MAX_WAIT_MS
+  let failedPolls = 0
+
+  while (Date.now() < deadline) {
+    await wait(POLL_INTERVAL_MS)
+    if (unmounted) {
+      throw new ExtractionCancelled()
+    }
+
+    let job
+    try {
+      const response = await apiService.get(`/curator/process-pdf/jobs/${jobId}`)
+      job = await response.json()
+      failedPolls = 0
+    } catch (error) {
+      if (error.code === 'NOT_FOUND') {
+        throw new Error(
+          'The document processing job was lost, possibly because the server restarted. Please try again.'
+        )
+      }
+      failedPolls++
+      if (failedPolls >= MAX_POLL_FAILURES) {
+        throw error
+      }
+      continue
+    }
+
+    if (job.status === 'done') {
+      return job.result
+    }
+    if (job.status === 'failed') {
+      throw new Error(
+        job.error?.message || job.error?.error || 'Document processing failed'
+      )
+    }
+  }
+
+  throw new Error(
+    'Document processing is taking longer than expected. Please try again, or upload a shorter document.'
+  )
+}
+
+async function parseJsonBody(response) {
+  const bodyText = await response.text()
+  try {
+    return JSON.parse(bodyText)
+  } catch {
+    throw new Error(bodyText || 'Document processing failed')
+  }
+}
 
 function handlePdfFileSelect(event) {
   const file = event.target.files[0]
@@ -93,6 +196,11 @@ async function extractCharactersFromPdf() {
 
   isProcessingPdf.value = true
   uploadError.value = ''
+  elapsedSeconds.value = 0
+  const startedAt = Date.now()
+  const elapsedTimer = setInterval(() => {
+    elapsedSeconds.value = Math.floor((Date.now() - startedAt) / 1000)
+  }, 1000)
 
   try {
     const formData = new FormData()
@@ -104,19 +212,7 @@ async function extractCharactersFromPdf() {
     formData.append('page_range', props.pageRange)
     formData.append('zero_indexed', String(props.zeroIndexed))
 
-    const response = await apiService.post('/curator/process-pdf', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    })
-
-    const bodyText = await response.text()
-    let result
-    try {
-      result = JSON.parse(bodyText)
-    } catch {
-      throw new Error(bodyText || 'Document processing failed')
-    }
+    const result = await requestExtraction(formData)
 
     if (!result.success) {
       const errorMsg =
@@ -195,10 +291,14 @@ async function extractCharactersFromPdf() {
     }
 
   } catch (error) {
+    if (error instanceof ExtractionCancelled) {
+      return
+    }
     console.error('PDF upload error:', error)
     uploadError.value = error instanceof Error ? error.message : 'Unknown error occurred'
     emit('extractionError', error)
   } finally {
+    clearInterval(elapsedTimer)
     isProcessingPdf.value = false
   }
 }
@@ -301,6 +401,12 @@ async function extractCharactersFromPdf() {
   to {
     transform: rotate(360deg);
   }
+}
+
+.progress-note {
+  color: #5a6c7d;
+  font-size: 14px;
+  margin: 0;
 }
 
 .status-message {
